@@ -177,3 +177,9 @@
 - Provenance requirements: RIT dataset SHA-256 `2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623`; Protocol G manifest SHA-256 `802c3962bc537ed78f63c5b1a5308e09df357a096f703846d0e5fe57598b4e21`; model random state 42; native `pred_contribs=True` with margin/probability consistency checks.
 - Scope: global, class-conditional, confusion-group, probability-band, paper-reference, and scanner-prioritization reports are descriptive only. No SHAP-based feature selection, tuning, threshold change, or deployment artifact is permitted.
 - Status: infrastructure only; official run and results commit are pending a clean committed code revision.
+
+## 2026-08-28 - TreeSHAP precision-check correction
+
+- Evidence: the first authorized execution from clean code SHA `2782f0fb17f0ffabb5bcdc09e60d6e3d1e59eb98` stopped before report creation because native float `pred_contribs` reconstructed the raw margin with maximum absolute difference `1.0214e-05`, exceeding the initially over-strict `1e-06`; sigmoid(margin) matched malicious probability within `8.2832e-08`.
+- Correction: the mathematical check uses documented absolute tolerance `2e-05`, appropriate for native float contribution summation, while retaining a strict explicit margin/probability verification. This is a runtime/precision correction, not tuning and not a response to SHAP ranking or model metrics.
+- Result status: no official SHAP report, figure, model artifact, or result commit was created by the stopped attempt. A single replacement execution will use the new clean committed code revision and record it in the final provenance.

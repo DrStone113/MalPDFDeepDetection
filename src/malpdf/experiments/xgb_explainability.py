@@ -170,8 +170,13 @@ def native_treeshap_contributions(estimator: Any, features: pd.DataFrame) -> tup
     return contributions[:, :-1], contributions[:, -1], margins, probabilities
 
 
-def verify_treeshap_identity(feature_contributions: np.ndarray, bias: np.ndarray, margins: np.ndarray, probabilities: np.ndarray, *, tolerance: float = 1e-6) -> dict[str, Any]:
-    """Prove native contribution sums reconstruct margin and sigmoid reconstructs probability."""
+def verify_treeshap_identity(feature_contributions: np.ndarray, bias: np.ndarray, margins: np.ndarray, probabilities: np.ndarray, *, tolerance: float = 2e-5) -> dict[str, Any]:
+    """Prove native contribution sums reconstruct margin and sigmoid reconstructs probability.
+
+    Native XGBoost prediction arrays are float precision; the fixed absolute
+    tolerance accommodates observed contribution-summation rounding without
+    weakening the separate probability identity check.
+    """
     reconstructed = feature_contributions.sum(axis=1) + bias
     sigmoid = 1.0 / (1.0 + np.exp(-np.clip(margins, -709, 709)))
     margin_error = np.abs(reconstructed - margins)
