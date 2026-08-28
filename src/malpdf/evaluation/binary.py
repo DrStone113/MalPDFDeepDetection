@@ -92,17 +92,36 @@ def fit_predict_and_measure(
     train_start = perf_counter()
     estimator.fit(train_features, train_labels)
     training_seconds = perf_counter() - train_start
+    predictions, positive_scores, score_source, runtime = predict_and_measure(
+        estimator, test_features
+    )
+    return (
+        predictions,
+        positive_scores,
+        score_source,
+        {
+            "training_seconds": training_seconds,
+            "test_inference_total_seconds": runtime["inference_total_seconds"],
+            "test_inference_milliseconds_per_sample": runtime[
+                "inference_milliseconds_per_sample"
+            ],
+        },
+    )
 
+
+def predict_and_measure(
+    estimator: Any, features: Any
+) -> tuple[np.ndarray, np.ndarray | None, str | None, dict[str, float]]:
+    """Time one complete inference pass without fitting the estimator."""
     inference_start = perf_counter()
-    predictions = np.asarray(estimator.predict(test_features))
-    positive_scores, score_source = continuous_positive_scores(estimator, test_features)
+    predictions = np.asarray(estimator.predict(features))
+    positive_scores, score_source = continuous_positive_scores(estimator, features)
     inference_seconds = perf_counter() - inference_start
-    test_count = len(test_features)
+    sample_count = len(features)
     runtime = {
-        "training_seconds": training_seconds,
-        "test_inference_total_seconds": inference_seconds,
-        "test_inference_milliseconds_per_sample": (
-            0.0 if test_count == 0 else inference_seconds * 1000 / test_count
+        "inference_total_seconds": inference_seconds,
+        "inference_milliseconds_per_sample": (
+            0.0 if sample_count == 0 else inference_seconds * 1000 / sample_count
         ),
     }
     return predictions, positive_scores, score_source, runtime

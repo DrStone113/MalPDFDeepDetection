@@ -43,3 +43,14 @@
 - Limitations: this is one project-selected split seed, not a multi-seed study or cross-validation; runtime is hardware/software specific; Protocol G has not been benchmarked.
 - Outputs: tracked reports under `reports/experiments/protocol_p/seed42/`; fitted binaries remain ignored under `artifacts/`. The pre-fix XGBoost failure record is retained separately for provenance.
 - Next: inspect Protocol P results, then run the pre-existing Protocol G benchmark under its separate duplicate-feature-disjoint protocol.
+
+## 2026-08-28 - Protocol G Benchmark Runner
+
+- Purpose: add an executable fixed-baseline runner for feature-vector-disjoint generalization without running the official benchmark yet.
+- Methodology: reuse the immutable seed-42 Protocol G manifest (train 14,602 rows/8,600 groups; validation 4,868/3,386; test 4,867/3,385; 24,337 rows and 15,371 groups total). Models fit only train; validation and test are each evaluated once without tuning, threshold selection, or model selection.
+- Terminology: groups represent identical static feature vectors (feature-equivalent groups), not proven duplicate PDF files; the local CSV lacks per-PDF SHA-256 hashes.
+- Reuse: Protocol P model factories, preprocessing, missing-value compatibility handling, binary metrics, timing, environment metadata, and fixed configurations are used unchanged.
+- Leakage protections: hard preflight verifies manifest checksum/provenance, all rows and sample IDs, labels, group label purity, group overlap, and exact feature-vector partition disjointness before any fit.
+- Validation: `.\.venv\Scripts\python.exe -m pytest -q` - 34 passed; `.\.venv\Scripts\python.exe -m pip check` - no broken requirements; `git diff --check` passed. Static preflight also verified the saved manifest SHA-256 `802c3962bc537ed78f63c5b1a5308e09df357a096f703846d0e5fe57598b4e21` and all expected leakage/split invariants.
+- Results: no official Protocol G metrics have been generated.
+- Next: commit this runner, then run the seed-42 Protocol G baseline from the resulting clean code commit when explicitly requested.
