@@ -1,0 +1,251 @@
+split_seed,model_name,model,metric,protocol_g_test_minus_protocol_p_test,comparison_note
+42,decision_tree,Decision Tree,accuracy,-0.019152446025663017,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,decision_tree,Decision Tree,accuracy,-0.01841182521632556,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,decision_tree,Decision Tree,accuracy,-0.008997534921939221,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,decision_tree,Decision Tree,accuracy,-0.019234362050257525,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,decision_tree,Decision Tree,accuracy,-0.01064560531164327,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,decision_tree,Decision Tree,f1_macro,-0.01944118566484243,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,decision_tree,Decision Tree,f1_macro,-0.018654931317281687,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,decision_tree,Decision Tree,f1_macro,-0.009107220227698387,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,decision_tree,Decision Tree,f1_macro,-0.019537658096115407,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,decision_tree,Decision Tree,f1_macro,-0.01078879491418705,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,decision_tree,Decision Tree,f1_malicious,-0.02186731454305746,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,decision_tree,Decision Tree,f1_malicious,-0.020812204451459704,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,decision_tree,Decision Tree,f1_malicious,-0.010122739234812994,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,decision_tree,Decision Tree,f1_malicious,-0.022030508883184252,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,decision_tree,Decision Tree,f1_malicious,-0.012058023140747443,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,decision_tree,Decision Tree,mcc,-0.038169083106112445,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,decision_tree,Decision Tree,mcc,-0.03676208287459537,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,decision_tree,Decision Tree,mcc,-0.01806554509182956,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,decision_tree,Decision Tree,mcc,-0.03811536050878539,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,decision_tree,Decision Tree,mcc,-0.021278269863408417,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,decision_tree,Decision Tree,pr_auc,-0.021164442868348177,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,decision_tree,Decision Tree,pr_auc,-0.02137084136714862,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,decision_tree,Decision Tree,pr_auc,-0.009949108627793968,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,decision_tree,Decision Tree,pr_auc,-0.020242009811526573,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,decision_tree,Decision Tree,pr_auc,-0.010569605787263625,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,decision_tree,Decision Tree,precision_macro,-0.016847466747792805,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,decision_tree,Decision Tree,precision_macro,-0.01646508294026583,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,decision_tree,Decision Tree,precision_macro,-0.00805887344920364,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,decision_tree,Decision Tree,precision_macro,-0.016511622799192938,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,decision_tree,Decision Tree,precision_macro,-0.009206575922890314,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,decision_tree,Decision Tree,precision_malicious,0.00308824365307403,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,decision_tree,Decision Tree,precision_malicious,0.0007574395028060454,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,decision_tree,Decision Tree,precision_malicious,0.0014540156432707452,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,decision_tree,Decision Tree,precision_malicious,0.005591291540539611,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,decision_tree,Decision Tree,precision_malicious,0.004538043586453044,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,decision_tree,Decision Tree,recall_macro,-0.02131362488384303,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,decision_tree,Decision Tree,recall_macro,-0.020291126120781655,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,decision_tree,Decision Tree,recall_macro,-0.01000530846488168,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,decision_tree,Decision Tree,recall_macro,-0.02159244378085423,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,decision_tree,Decision Tree,recall_macro,-0.012068716240039246,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,decision_tree,Decision Tree,recall_malicious,-0.04595048939429325,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,decision_tree,Decision Tree,recall_malicious,-0.04171469740634004,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,decision_tree,Decision Tree,recall_malicious,-0.021520734098278482,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,decision_tree,Decision Tree,recall_malicious,-0.048472752291196186,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,decision_tree,Decision Tree,recall_malicious,-0.028292052859776207,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,decision_tree,Decision Tree,roc_auc,-0.02131362488384314,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,decision_tree,Decision Tree,roc_auc,-0.020291126120781988,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,decision_tree,Decision Tree,roc_auc,-0.01000530846488179,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,decision_tree,Decision Tree,roc_auc,-0.021592443780854342,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,decision_tree,Decision Tree,roc_auc,-0.012068716240039468,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,gaussian_naive_bayes,GaussianNB,accuracy,0.1174419509655269,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,gaussian_naive_bayes,GaussianNB,accuracy,0.08889036708407483,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,gaussian_naive_bayes,GaussianNB,accuracy,0.023582580115037,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,gaussian_naive_bayes,GaussianNB,accuracy,0.12809127052395697,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,gaussian_naive_bayes,GaussianNB,accuracy,0.04548844793275997,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,gaussian_naive_bayes,GaussianNB,f1_macro,0.15453896045433024,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,gaussian_naive_bayes,GaussianNB,f1_macro,0.11060841343551298,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,gaussian_naive_bayes,GaussianNB,f1_macro,0.03738346544308824,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,gaussian_naive_bayes,GaussianNB,f1_macro,0.15640674701658475,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,gaussian_naive_bayes,GaussianNB,f1_macro,0.06584443926155281,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,gaussian_naive_bayes,GaussianNB,f1_malicious,0.05975536109161095,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,gaussian_naive_bayes,GaussianNB,f1_malicious,0.04886737128593299,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,gaussian_naive_bayes,GaussianNB,f1_malicious,0.008060307420467039,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,gaussian_naive_bayes,GaussianNB,f1_malicious,0.07107359547689862,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,gaussian_naive_bayes,GaussianNB,f1_malicious,0.02023903829893925,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,gaussian_naive_bayes,GaussianNB,mcc,0.1467547461583199,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,gaussian_naive_bayes,GaussianNB,mcc,0.11455876932635567,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,gaussian_naive_bayes,GaussianNB,mcc,0.01563185017485641,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,gaussian_naive_bayes,GaussianNB,mcc,0.16551231226490526,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,gaussian_naive_bayes,GaussianNB,mcc,0.05049134230217456,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,gaussian_naive_bayes,GaussianNB,pr_auc,-0.219380259002798,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,gaussian_naive_bayes,GaussianNB,pr_auc,0.07134193327485994,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,gaussian_naive_bayes,GaussianNB,pr_auc,-0.17475966429644751,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,gaussian_naive_bayes,GaussianNB,pr_auc,0.09708774700500067,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,gaussian_naive_bayes,GaussianNB,pr_auc,-0.24450803668134102,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,gaussian_naive_bayes,GaussianNB,precision_macro,0.021832224467025152,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,gaussian_naive_bayes,GaussianNB,precision_macro,0.0243791640609331,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,gaussian_naive_bayes,GaussianNB,precision_macro,-0.014670336422103025,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,gaussian_naive_bayes,GaussianNB,precision_macro,0.03830334227896626,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,gaussian_naive_bayes,GaussianNB,precision_macro,-0.0027931707288388896,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,gaussian_naive_bayes,GaussianNB,precision_malicious,0.08937506714718002,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,gaussian_naive_bayes,GaussianNB,precision_malicious,0.07144962806537225,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,gaussian_naive_bayes,GaussianNB,precision_malicious,0.016177319952622282,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,gaussian_naive_bayes,GaussianNB,precision_malicious,0.1093420478422219,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,gaussian_naive_bayes,GaussianNB,precision_malicious,0.031098825397525842,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,gaussian_naive_bayes,GaussianNB,recall_macro,0.10476882283144484,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,gaussian_naive_bayes,GaussianNB,recall_macro,0.07986623057646502,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,gaussian_naive_bayes,GaussianNB,recall_macro,0.019918387974775853,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,gaussian_naive_bayes,GaussianNB,recall_macro,0.11455451563818997,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,gaussian_naive_bayes,GaussianNB,recall_macro,0.04013725368027665,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,gaussian_naive_bayes,GaussianNB,recall_malicious,-0.0402737752161384,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,gaussian_naive_bayes,GaussianNB,recall_malicious,-0.02351883583872083,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,gaussian_naive_bayes,GaussianNB,recall_malicious,-0.02161107557283315,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,gaussian_naive_bayes,GaussianNB,recall_malicious,-0.04027637147233676,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,gaussian_naive_bayes,GaussianNB,recall_malicious,-0.021445076200119706,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,gaussian_naive_bayes,GaussianNB,roc_auc,-0.14271736230297027,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,gaussian_naive_bayes,GaussianNB,roc_auc,0.06487713882236923,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,gaussian_naive_bayes,GaussianNB,roc_auc,-0.11435742196956411,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,gaussian_naive_bayes,GaussianNB,roc_auc,0.08684139755343612,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,gaussian_naive_bayes,GaussianNB,roc_auc,-0.18350910235088047,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,logistic_regression,Logistic Regression,accuracy,-0.028738039070162036,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,logistic_regression,Logistic Regression,accuracy,-0.03753293650545764,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,logistic_regression,Logistic Regression,accuracy,-0.026129827444535625,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,logistic_regression,Logistic Regression,accuracy,-0.02598490428808098,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,logistic_regression,Logistic Regression,accuracy,-0.032723966126744664,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,logistic_regression,Logistic Regression,f1_macro,-0.030155046478881675,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,logistic_regression,Logistic Regression,f1_macro,-0.03925058551198046,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,logistic_regression,Logistic Regression,f1_macro,-0.027025259739828167,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,logistic_regression,Logistic Regression,f1_macro,-0.027430659962761395,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,logistic_regression,Logistic Regression,f1_macro,-0.033928454577196066,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,logistic_regression,Logistic Regression,f1_malicious,-0.037785124963044314,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,logistic_regression,Logistic Regression,f1_malicious,-0.048746702542689646,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,logistic_regression,Logistic Regression,f1_malicious,-0.0324377886796402,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,logistic_regression,Logistic Regression,f1_malicious,-0.035016501252460475,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,logistic_regression,Logistic Regression,f1_malicious,-0.04108945050562107,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,logistic_regression,Logistic Regression,mcc,-0.05445112703464927,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,logistic_regression,Logistic Regression,mcc,-0.07270145986498955,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,logistic_regression,Logistic Regression,mcc,-0.05104581652015561,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,logistic_regression,Logistic Regression,mcc,-0.04851464485400925,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,logistic_regression,Logistic Regression,mcc,-0.06407792698725956,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,logistic_regression,Logistic Regression,pr_auc,-0.016711497949528198,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,logistic_regression,Logistic Regression,pr_auc,-0.012247506756113968,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,logistic_regression,Logistic Regression,pr_auc,-0.009506064655038005,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,logistic_regression,Logistic Regression,pr_auc,-0.014433001804651235,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,logistic_regression,Logistic Regression,pr_auc,-0.006705809153578657,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,logistic_regression,Logistic Regression,precision_macro,-0.021164659201102998,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,logistic_regression,Logistic Regression,precision_macro,-0.030143423879742337,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,logistic_regression,Logistic Regression,precision_macro,-0.022139760505387795,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,logistic_regression,Logistic Regression,precision_macro,-0.017638451342140593,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,logistic_regression,Logistic Regression,precision_macro,-0.02762850641200465,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,logistic_regression,Logistic Regression,precision_malicious,0.015742243058087135,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,logistic_regression,Logistic Regression,precision_malicious,0.008483811189026413,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,logistic_regression,Logistic Regression,precision_malicious,-0.001007667152870373,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,logistic_regression,Logistic Regression,precision_malicious,0.0232840285856738,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,logistic_regression,Logistic Regression,precision_malicious,0.0007587170046006175,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,logistic_regression,Logistic Regression,recall_macro,-0.03317500801318751,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,logistic_regression,Logistic Regression,recall_macro,-0.04245160386716351,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,logistic_regression,Logistic Regression,recall_macro,-0.028858270420376808,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,logistic_regression,Logistic Regression,recall_macro,-0.030752603873454798,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,logistic_regression,Logistic Regression,recall_macro,-0.0363886066943897,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,logistic_regression,Logistic Regression,recall_malicious,-0.08372406989121672,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,logistic_regression,Logistic Regression,recall_malicious,-0.09849871485318162,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,logistic_regression,Logistic Regression,recall_malicious,-0.060055184530165895,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,logistic_regression,Logistic Regression,recall_malicious,-0.08507477217851855,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,logistic_regression,Logistic Regression,recall_malicious,-0.07813757561596191,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,logistic_regression,Logistic Regression,roc_auc,-0.01618591724853835,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,logistic_regression,Logistic Regression,roc_auc,-0.01079573090252195,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,logistic_regression,Logistic Regression,roc_auc,-0.01450686040993765,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,logistic_regression,Logistic Regression,roc_auc,-0.011804924910981396,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,logistic_regression,Logistic Regression,roc_auc,-0.013359394765175225,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,random_forest,Random Forest,accuracy,-0.016233622070999765,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,random_forest,Random Forest,accuracy,-0.024410603904450046,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,random_forest,Random Forest,accuracy,-0.01857025472473295,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,random_forest,Random Forest,accuracy,-0.02136991888929196,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,random_forest,Random Forest,accuracy,-0.010274788418775938,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,random_forest,Random Forest,f1_macro,-0.016464526801794444,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,random_forest,Random Forest,f1_macro,-0.024778309748079153,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,random_forest,Random Forest,f1_macro,-0.018828107554712425,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,random_forest,Random Forest,f1_macro,-0.021692244374899583,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,random_forest,Random Forest,f1_macro,-0.01039888155719626,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,random_forest,Random Forest,f1_malicious,-0.01842936531627759,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,random_forest,Random Forest,f1_malicious,-0.02781466165888924,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,random_forest,Random Forest,f1_malicious,-0.021044841776607037,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,random_forest,Random Forest,f1_malicious,-0.02435616602350843,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,random_forest,Random Forest,f1_malicious,-0.011540898898313445,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,random_forest,Random Forest,mcc,-0.03199067004220568,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,random_forest,Random Forest,mcc,-0.047975218461425606,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,random_forest,Random Forest,mcc,-0.03655474315921525,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,random_forest,Random Forest,mcc,-0.041938945421377216,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,random_forest,Random Forest,mcc,-0.02040454970844563,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,random_forest,Random Forest,pr_auc,-0.0013949758430866765,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,random_forest,Random Forest,pr_auc,-0.004427688391855589,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,random_forest,Random Forest,pr_auc,-0.0012557442398010155,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,random_forest,Random Forest,pr_auc,-0.0066901838327760865,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,random_forest,Random Forest,pr_auc,-0.0009939360466315605,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,random_forest,Random Forest,precision_macro,-0.014226733533498792,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,random_forest,Random Forest,precision_macro,-0.02131843080500717,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,random_forest,Random Forest,precision_macro,-0.01608907781372715,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,random_forest,Random Forest,precision_macro,-0.018457569993455936,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,random_forest,Random Forest,precision_macro,-0.009158447671021919,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,random_forest,Random Forest,precision_malicious,-0.0006495605317027309,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,random_forest,Random Forest,precision_malicious,-0.001674185446075227,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,random_forest,Random Forest,precision_malicious,0.0012309063169427814,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,random_forest,Random Forest,precision_malicious,0.00038599261314720135,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,random_forest,Random Forest,precision_malicious,-0.00034657750896704975,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,random_forest,Random Forest,recall_macro,-0.01775244314175417,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,random_forest,Random Forest,recall_macro,-0.026635651855976383,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,random_forest,Random Forest,recall_macro,-0.02045220490809918,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,random_forest,Random Forest,recall_macro,-0.023462408902978127,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,random_forest,Random Forest,recall_macro,-0.011241954850447766,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,random_forest,Random Forest,recall_malicious,-0.03505140587273159,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,random_forest,Random Forest,recall_malicious,-0.051986785055949225,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,random_forest,Random Forest,recall_malicious,-0.04196207409752584,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,random_forest,Random Forest,recall_malicious,-0.047302489809694426,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,random_forest,Random Forest,recall_malicious,-0.022257055326219577,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,random_forest,Random Forest,roc_auc,-0.0013444402668245647,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,random_forest,Random Forest,roc_auc,-0.004554260011185196,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,random_forest,Random Forest,roc_auc,-0.0011466483565462093,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,random_forest,Random Forest,roc_auc,-0.008117649048030473,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,random_forest,Random Forest,roc_auc,-0.0009395952041987288,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,xgboost,XGBoost,accuracy,-0.015616888274950336,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,xgboost,XGBoost,accuracy,-0.022725754030084366,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,xgboost,XGBoost,accuracy,-0.015447822514379594,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,xgboost,XGBoost,accuracy,-0.02005487293139685,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,xgboost,XGBoost,accuracy,-0.006288861362193199,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,xgboost,XGBoost,f1_macro,-0.01581795261938579,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,xgboost,XGBoost,f1_macro,-0.02306038167941815,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,xgboost,XGBoost,f1_macro,-0.015644184999944022,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,xgboost,XGBoost,f1_macro,-0.020337654222036594,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,xgboost,XGBoost,f1_macro,-0.006363112937464832,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,xgboost,XGBoost,f1_malicious,-0.017611223850883206,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,xgboost,XGBoost,f1_malicious,-0.025858047479599855,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,xgboost,XGBoost,f1_malicious,-0.017406440671833612,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,xgboost,XGBoost,f1_malicious,-0.02275292686365682,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,xgboost,XGBoost,f1_malicious,-0.007055534134326913,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,xgboost,XGBoost,mcc,-0.030967548534936773,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,xgboost,XGBoost,mcc,-0.04469008379485262,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,xgboost,XGBoost,mcc,-0.03054548820847036,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,xgboost,XGBoost,mcc,-0.039566131972773255,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,xgboost,XGBoost,mcc,-0.012495836902212454,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,xgboost,XGBoost,pr_auc,-0.0016684119624827964,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,xgboost,XGBoost,pr_auc,-0.005203962193604417,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,xgboost,XGBoost,pr_auc,-0.0020293082022038167,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,xgboost,XGBoost,pr_auc,-0.006799021209526801,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,xgboost,XGBoost,pr_auc,-0.0005064128044249827,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,xgboost,XGBoost,precision_macro,-0.013971183515618324,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,xgboost,XGBoost,precision_macro,-0.019621882611528196,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,xgboost,XGBoost,precision_macro,-0.013397914684041834,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,xgboost,XGBoost,precision_macro,-0.017539343131908525,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,xgboost,XGBoost,precision_macro,-0.005475730236195631,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,xgboost,XGBoost,precision_malicious,-0.001786980191651355,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,xgboost,XGBoost,precision_malicious,0.0015920175383825619,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,xgboost,XGBoost,precision_malicious,0.0025649874120897698,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,xgboost,XGBoost,precision_malicious,0.00019045910304815727,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,xgboost,XGBoost,precision_malicious,0.0014871503301517874,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,xgboost,XGBoost,recall_macro,-0.016988814290166965,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,xgboost,XGBoost,recall_macro,-0.02504985009616656,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,xgboost,XGBoost,recall_macro,-0.01713925056463239,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,xgboost,XGBoost,recall_macro,-0.02201325028412704,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,xgboost,XGBoost,recall_macro,-0.0070178413077610635,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,xgboost,XGBoost,recall_malicious,-0.032617415686580054,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,xgboost,XGBoost,recall_malicious,-0.05153503647739954,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,xgboost,XGBoost,recall_malicious,-0.036469409760382376,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,xgboost,XGBoost,recall_malicious,-0.04432847833424203,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,xgboost,XGBoost,recall_malicious,-0.01531985876366282,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+42,xgboost,XGBoost,roc_auc,-0.0018776163595891626,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+43,xgboost,XGBoost,roc_auc,-0.005943162183921213,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+44,xgboost,XGBoost,roc_auc,-0.0022316627031180314,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+45,xgboost,XGBoost,roc_auc,-0.009348055202463401,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.
+46,xgboost,XGBoost,roc_auc,-0.0003243159580648136,Paired by split-seed label across distinct protocol splits; not a sample-level paired observation.

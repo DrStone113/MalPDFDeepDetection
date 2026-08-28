@@ -1,0 +1,82 @@
+{
+  "experiment": "rit-pdfmal-2026-protocol-p-vs-g-multiseed-robustness",
+  "experiment_run_id": "official-seeds42-46",
+  "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+  "benchmark_code_commit": "2147d0a1e12162ac7092fe797260f0c12a5fe3d6",
+  "git_working_tree_at_start": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "request": {
+    "protocols": [
+      "P",
+      "G"
+    ],
+    "split_seeds": [
+      42,
+      43,
+      44,
+      45,
+      46
+    ],
+    "models": [
+      "logistic_regression",
+      "random_forest",
+      "decision_tree",
+      "gaussian_naive_bayes",
+      "xgboost"
+    ],
+    "matrix_status": "official_fixed_matrix",
+    "model_random_state": 42
+  },
+  "fixed_design": {
+    "experiment": "rit-pdfmal-2026-protocol-p-vs-g-multiseed-robustness",
+    "dataset": {
+      "expected_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623"
+    },
+    "split_seeds": [
+      42,
+      43,
+      44,
+      45,
+      46
+    ],
+    "model_random_state": 42,
+    "models": [
+      "logistic_regression",
+      "random_forest",
+      "decision_tree",
+      "gaussian_naive_bayes",
+      "xgboost"
+    ],
+    "protocols": {
+      "P": {
+        "feature_variant": "P-drop3constant",
+        "split": "row_level_stratified_75_25",
+        "evaluation_partition": "test"
+      },
+      "G": {
+        "feature_variant": "G-drop3constant",
+        "split": "duplicate_feature_group_aware_approximately_stratified_60_20_20",
+        "evaluation_partitions": [
+          "validation",
+          "test"
+        ]
+      }
+    },
+    "seed42_baseline_reuse": {
+      "protocol_p_metrics": "reports/experiments/protocol_p/seed42/metrics.json",
+      "protocol_g_metrics": "reports/experiments/protocol_g/seed42/metrics.json",
+      "protocol_p_manifest_root": "data/processed/protocol_p",
+      "protocol_g_manifest": "data/processed/rit-pdfmal-2026_split_manifest.csv"
+    },
+    "constraints": [
+      "No hyperparameter tuning, threshold tuning, feature selection, or preprocessing changes.",
+      "New split seeds may vary split assignment only; model_random_state remains 42.",
+      "Seed 42 reuses completed baseline results and must not be regenerated or overwritten.",
+      "Protocol G groups are identical static feature vectors, not proven duplicate PDF files."
+    ]
+  },
+  "timestamp_utc": "2026-08-28T10:58:21.123298Z",
+  "methodological_note": "Protocol P is paper-aligned; Protocol G is stricter feature-vector-disjoint evaluation. They are not directly equivalent paper reproductions."
+}

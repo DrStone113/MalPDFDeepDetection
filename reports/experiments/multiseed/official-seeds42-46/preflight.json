@@ -1,0 +1,20 @@
+{
+  "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+  "benchmark_code_commit": "2147d0a1e12162ac7092fe797260f0c12a5fe3d6",
+  "baseline_references": {
+    "protocol_p_metrics": {
+      "path": "C:\\Project\\MalPDFDeepDetection\\reports\\experiments\\protocol_p\\seed42\\metrics.json",
+      "sha256": "72795bfaf6ce062cc41df37306ec6eed6632b7efa6dbc46e68e7091812e43ac1",
+      "benchmark_code_commit": "3e970ef2df0460fb4a51b10418c9af7564339419",
+      "run_count": 10
+    },
+    "protocol_g_metrics": {
+      "path": "C:\\Project\\MalPDFDeepDetection\\reports\\experiments\\protocol_g\\seed42\\metrics.json",
+      "sha256": "e8f4f1a2c2e12b5a9d12164fa279bfe41577a66beb622a7b54b5d546d9afc5a8",
+      "benchmark_code_commit": "c2aefaaca8cd2257ed610efeba88f24a7cbbb460",
+      "run_count": 10
+    }
+  },
+  "protocol_p_seed42_manifest": "C:\\Project\\MalPDFDeepDetection\\data\\processed\\protocol_p\\p-seed42-19fcc091\\protocol_p_split_manifest.csv",
+  "protocol_g_seed42_manifest": "C:\\Project\\MalPDFDeepDetection\\data\\processed\\rit-pdfmal-2026_split_manifest.csv"
+}

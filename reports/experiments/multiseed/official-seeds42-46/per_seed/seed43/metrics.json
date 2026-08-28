@@ -1,0 +1,3280 @@
+{
+  "experiment_run_id": "official-seeds42-46",
+  "split_seed": 43,
+  "runs": [
+    {
+      "protocol": "P",
+      "split_seed": 43,
+      "model_random_state": 42,
+      "model_name": "logistic_regression",
+      "feature_variant": "P-drop3constant",
+      "feature_count": 38,
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T10:58:28.612800Z",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "split_manifest": "C:\\Project\\MalPDFDeepDetection\\data\\processed\\multiseed\\official-seeds42-46\\protocol_p_seed43_manifest.csv",
+      "split_manifest_sha256": "12e9f606b9b1091c40ddc22f5c5281c5380abe04b4e6900fdf4d8647ada0e18c",
+      "split_result": {
+        "protocol": "P",
+        "purpose": "Paper-aligned reproduction attempt, not an exact paper reproduction.",
+        "split_algorithm": "sklearn.model_selection.train_test_split with shuffle=True, stratify=Label, test_size=0.25, and project-selected random_state.",
+        "paper_seed_status": "The paper does not publish a split seed; this seed is a project choice.",
+        "seed": 43,
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "split_proportions": {
+          "train": 0.75,
+          "test": 0.25
+        },
+        "split_statistics": {
+          "train": {
+            "row_count": 18252,
+            "percentage_of_rows": 74.996918,
+            "label_distribution": [
+              {
+                "raw_label": 0,
+                "count": 9926,
+                "percentage": 54.383081
+              },
+              {
+                "raw_label": 1,
+                "count": 8326,
+                "percentage": 45.616919
+              }
+            ],
+            "benign_label_0_count": 9926,
+            "malicious_label_1_count": 8326
+          },
+          "test": {
+            "row_count": 6085,
+            "percentage_of_rows": 25.003082,
+            "label_distribution": [
+              {
+                "raw_label": 0,
+                "count": 3309,
+                "percentage": 54.379622
+              },
+              {
+                "raw_label": 1,
+                "count": 2776,
+                "percentage": 45.620378
+              }
+            ],
+            "benign_label_0_count": 3309,
+            "malicious_label_1_count": 2776
+          }
+        },
+        "validation": {
+          "all_rows_assigned_exactly_once": {
+            "is_valid": true,
+            "source_row_count": 24337,
+            "manifest_row_count": 24337
+          },
+          "train_test_disjoint": {
+            "is_valid": true,
+            "overlap_count": 0
+          },
+          "target_labels_preserved": {
+            "is_valid": true,
+            "source_distribution": [
+              {
+                "raw_label": 0,
+                "count": 13235,
+                "percentage": 54.382216
+              },
+              {
+                "raw_label": 1,
+                "count": 11102,
+                "percentage": 45.617784
+              }
+            ],
+            "manifest_distribution": [
+              {
+                "raw_label": 0,
+                "count": 13235,
+                "percentage": 54.382216
+              },
+              {
+                "raw_label": 1,
+                "count": 11102,
+                "percentage": 45.617784
+              }
+            ]
+          },
+          "stratification": {
+            "is_valid": true,
+            "tolerance_percentage_points": 0.1,
+            "split_statistics": {
+              "train": {
+                "row_count": 18252,
+                "percentage_of_rows": 74.996918,
+                "label_distribution": [
+                  {
+                    "raw_label": 0,
+                    "count": 9926,
+                    "percentage": 54.383081
+                  },
+                  {
+                    "raw_label": 1,
+                    "count": 8326,
+                    "percentage": 45.616919
+                  }
+                ],
+                "benign_label_0_count": 9926,
+                "malicious_label_1_count": 8326
+              },
+              "test": {
+                "row_count": 6085,
+                "percentage_of_rows": 25.003082,
+                "label_distribution": [
+                  {
+                    "raw_label": 0,
+                    "count": 3309,
+                    "percentage": 54.379622
+                  },
+                  {
+                    "raw_label": 1,
+                    "count": 2776,
+                    "percentage": 45.620378
+                  }
+                ],
+                "benign_label_0_count": 3309,
+                "malicious_label_1_count": 2776
+              }
+            }
+          }
+        },
+        "feature_variants": [
+          {
+            "name": "P-all41",
+            "description": "All 41 published local non-hash predictive features; no feature removal.",
+            "removed_columns": []
+          },
+          {
+            "name": "P-drop3constant",
+            "description": "Only the paper-described constant-zero columns are removed.",
+            "removed_columns": [
+              "Acroform",
+              "Colors",
+              "BaseEncoding"
+            ]
+          }
+        ]
+      },
+      "model_configuration": {
+        "paper_model_name": "Logistic Regression (LR)",
+        "preprocessing": {
+          "name": "StandardScaler",
+          "fit_scope": "training partition only",
+          "paper_status": "Scaling is a project assumption; the paper does not specify it."
+        },
+        "parameters": {
+          "C": 1.0,
+          "class_weight": null,
+          "fit_intercept": true,
+          "l1_ratio": 0.0,
+          "max_iter": 1000,
+          "random_state": 42,
+          "solver": "liblinear",
+          "tol": 0.0001
+        },
+        "regularization_assumption": "L2 regularization, represented by l1_ratio=0.0 for scikit-learn 1.8+ compatibility. This is a project assumption; the paper does not specify it."
+      },
+      "preprocessing_configuration": {
+        "name": "StandardScaler",
+        "fit_scope": "training partition only",
+        "paper_status": "Scaling is a project assumption; the paper does not specify it."
+      },
+      "benchmark_code_commit": "2147d0a1e12162ac7092fe797260f0c12a5fe3d6",
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "2147d0a1e12162ac7092fe797260f0c12a5fe3d6",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        }
+      },
+      "reused_seed42_baseline": false,
+      "evaluations": {
+        "test": {
+          "metrics": {
+            "accuracy": 0.9271980279375514,
+            "precision_malicious": 0.923719578641482,
+            "recall_malicious": 0.9160662824207493,
+            "f1_malicious": 0.9198770121179237,
+            "precision_macro": 0.9268958037265034,
+            "recall_macro": 0.9263015002312269,
+            "f1_macro": 0.9265850954280328,
+            "roc_auc": 0.9818151069086755,
+            "pr_auc": 0.9790015430840349,
+            "mcc": 0.8531970969735508,
+            "tn": 3099,
+            "fp": 210,
+            "fn": 233,
+            "tp": 2543
+          },
+          "score_source": "predict_proba",
+          "runtime": {
+            "inference_total_seconds": 0.007356699999945704,
+            "inference_milliseconds_per_sample": 0.001208989317986147
+          },
+          "confusion_counts": {
+            "tn": 3099,
+            "fp": 210,
+            "fn": 233,
+            "tp": 2543
+          }
+        }
+      },
+      "training": {
+        "training_seconds": 0.2883500999996613
+      },
+      "model_artifact": "C:\\Project\\MalPDFDeepDetection\\artifacts\\multiseed\\official-seeds42-46\\models\\p_seed43_logistic_regression.joblib",
+      "error": null
+    },
+    {
+      "protocol": "P",
+      "split_seed": 43,
+      "model_random_state": 42,
+      "model_name": "random_forest",
+      "feature_variant": "P-drop3constant",
+      "feature_count": 38,
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T10:58:30.011322Z",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "split_manifest": "C:\\Project\\MalPDFDeepDetection\\data\\processed\\multiseed\\official-seeds42-46\\protocol_p_seed43_manifest.csv",
+      "split_manifest_sha256": "12e9f606b9b1091c40ddc22f5c5281c5380abe04b4e6900fdf4d8647ada0e18c",
+      "split_result": {
+        "protocol": "P",
+        "purpose": "Paper-aligned reproduction attempt, not an exact paper reproduction.",
+        "split_algorithm": "sklearn.model_selection.train_test_split with shuffle=True, stratify=Label, test_size=0.25, and project-selected random_state.",
+        "paper_seed_status": "The paper does not publish a split seed; this seed is a project choice.",
+        "seed": 43,
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "split_proportions": {
+          "train": 0.75,
+          "test": 0.25
+        },
+        "split_statistics": {
+          "train": {
+            "row_count": 18252,
+            "percentage_of_rows": 74.996918,
+            "label_distribution": [
+              {
+                "raw_label": 0,
+                "count": 9926,
+                "percentage": 54.383081
+              },
+              {
+                "raw_label": 1,
+                "count": 8326,
+                "percentage": 45.616919
+              }
+            ],
+            "benign_label_0_count": 9926,
+            "malicious_label_1_count": 8326
+          },
+          "test": {
+            "row_count": 6085,
+            "percentage_of_rows": 25.003082,
+            "label_distribution": [
+              {
+                "raw_label": 0,
+                "count": 3309,
+                "percentage": 54.379622
+              },
+              {
+                "raw_label": 1,
+                "count": 2776,
+                "percentage": 45.620378
+              }
+            ],
+            "benign_label_0_count": 3309,
+            "malicious_label_1_count": 2776
+          }
+        },
+        "validation": {
+          "all_rows_assigned_exactly_once": {
+            "is_valid": true,
+            "source_row_count": 24337,
+            "manifest_row_count": 24337
+          },
+          "train_test_disjoint": {
+            "is_valid": true,
+            "overlap_count": 0
+          },
+          "target_labels_preserved": {
+            "is_valid": true,
+            "source_distribution": [
+              {
+                "raw_label": 0,
+                "count": 13235,
+                "percentage": 54.382216
+              },
+              {
+                "raw_label": 1,
+                "count": 11102,
+                "percentage": 45.617784
+              }
+            ],
+            "manifest_distribution": [
+              {
+                "raw_label": 0,
+                "count": 13235,
+                "percentage": 54.382216
+              },
+              {
+                "raw_label": 1,
+                "count": 11102,
+                "percentage": 45.617784
+              }
+            ]
+          },
+          "stratification": {
+            "is_valid": true,
+            "tolerance_percentage_points": 0.1,
+            "split_statistics": {
+              "train": {
+                "row_count": 18252,
+                "percentage_of_rows": 74.996918,
+                "label_distribution": [
+                  {
+                    "raw_label": 0,
+                    "count": 9926,
+                    "percentage": 54.383081
+                  },
+                  {
+                    "raw_label": 1,
+                    "count": 8326,
+                    "percentage": 45.616919
+                  }
+                ],
+                "benign_label_0_count": 9926,
+                "malicious_label_1_count": 8326
+              },
+              "test": {
+                "row_count": 6085,
+                "percentage_of_rows": 25.003082,
+                "label_distribution": [
+                  {
+                    "raw_label": 0,
+                    "count": 3309,
+                    "percentage": 54.379622
+                  },
+                  {
+                    "raw_label": 1,
+                    "count": 2776,
+                    "percentage": 45.620378
+                  }
+                ],
+                "benign_label_0_count": 3309,
+                "malicious_label_1_count": 2776
+              }
+            }
+          }
+        },
+        "feature_variants": [
+          {
+            "name": "P-all41",
+            "description": "All 41 published local non-hash predictive features; no feature removal.",
+            "removed_columns": []
+          },
+          {
+            "name": "P-drop3constant",
+            "description": "Only the paper-described constant-zero columns are removed.",
+            "removed_columns": [
+              "Acroform",
+              "Colors",
+              "BaseEncoding"
+            ]
+          }
+        ]
+      },
+      "model_configuration": {
+        "paper_model_name": "Random Forest (RF)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "bootstrap": true,
+          "class_weight": null,
+          "criterion": "gini",
+          "max_depth": null,
+          "max_features": "sqrt",
+          "min_samples_leaf": 1,
+          "min_samples_split": 2,
+          "n_estimators": 200,
+          "n_jobs": 1,
+          "random_state": 42
+        }
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "benchmark_code_commit": "2147d0a1e12162ac7092fe797260f0c12a5fe3d6",
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "2147d0a1e12162ac7092fe797260f0c12a5fe3d6",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        }
+      },
+      "reused_seed42_baseline": false,
+      "evaluations": {
+        "test": {
+          "metrics": {
+            "accuracy": 0.9935907970419063,
+            "precision_malicious": 0.9992703392922291,
+            "recall_malicious": 0.986671469740634,
+            "f1_malicious": 0.9929309407286568,
+            "precision_macro": 0.9941028729953969,
+            "recall_macro": 0.9930335287657537,
+            "f1_macro": 0.993534461796765,
+            "roc_auc": 0.9996173434951225,
+            "pr_auc": 0.9996001380747453,
+            "mcc": 0.9871358225618551,
+            "tn": 3307,
+            "fp": 2,
+            "fn": 37,
+            "tp": 2739
+          },
+          "score_source": "predict_proba",
+          "runtime": {
+            "inference_total_seconds": 0.1276837000004889,
+            "inference_milliseconds_per_sample": 0.02098335250624304
+          },
+          "confusion_counts": {
+            "tn": 3307,
+            "fp": 2,
+            "fn": 37,
+            "tp": 2739
+          }
+        }
+      },
+      "training": {
+        "training_seconds": 2.21984330000123
+      },
+      "model_artifact": "C:\\Project\\MalPDFDeepDetection\\artifacts\\multiseed\\official-seeds42-46\\models\\p_seed43_random_forest.joblib",
+      "error": null
+    },
+    {
+      "protocol": "P",
+      "split_seed": 43,
+      "model_random_state": 42,
+      "model_name": "decision_tree",
+      "feature_variant": "P-drop3constant",
+      "feature_count": 38,
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T10:58:33.445234Z",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "split_manifest": "C:\\Project\\MalPDFDeepDetection\\data\\processed\\multiseed\\official-seeds42-46\\protocol_p_seed43_manifest.csv",
+      "split_manifest_sha256": "12e9f606b9b1091c40ddc22f5c5281c5380abe04b4e6900fdf4d8647ada0e18c",
+      "split_result": {
+        "protocol": "P",
+        "purpose": "Paper-aligned reproduction attempt, not an exact paper reproduction.",
+        "split_algorithm": "sklearn.model_selection.train_test_split with shuffle=True, stratify=Label, test_size=0.25, and project-selected random_state.",
+        "paper_seed_status": "The paper does not publish a split seed; this seed is a project choice.",
+        "seed": 43,
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "split_proportions": {
+          "train": 0.75,
+          "test": 0.25
+        },
+        "split_statistics": {
+          "train": {
+            "row_count": 18252,
+            "percentage_of_rows": 74.996918,
+            "label_distribution": [
+              {
+                "raw_label": 0,
+                "count": 9926,
+                "percentage": 54.383081
+              },
+              {
+                "raw_label": 1,
+                "count": 8326,
+                "percentage": 45.616919
+              }
+            ],
+            "benign_label_0_count": 9926,
+            "malicious_label_1_count": 8326
+          },
+          "test": {
+            "row_count": 6085,
+            "percentage_of_rows": 25.003082,
+            "label_distribution": [
+              {
+                "raw_label": 0,
+                "count": 3309,
+                "percentage": 54.379622
+              },
+              {
+                "raw_label": 1,
+                "count": 2776,
+                "percentage": 45.620378
+              }
+            ],
+            "benign_label_0_count": 3309,
+            "malicious_label_1_count": 2776
+          }
+        },
+        "validation": {
+          "all_rows_assigned_exactly_once": {
+            "is_valid": true,
+            "source_row_count": 24337,
+            "manifest_row_count": 24337
+          },
+          "train_test_disjoint": {
+            "is_valid": true,
+            "overlap_count": 0
+          },
+          "target_labels_preserved": {
+            "is_valid": true,
+            "source_distribution": [
+              {
+                "raw_label": 0,
+                "count": 13235,
+                "percentage": 54.382216
+              },
+              {
+                "raw_label": 1,
+                "count": 11102,
+                "percentage": 45.617784
+              }
+            ],
+            "manifest_distribution": [
+              {
+                "raw_label": 0,
+                "count": 13235,
+                "percentage": 54.382216
+              },
+              {
+                "raw_label": 1,
+                "count": 11102,
+                "percentage": 45.617784
+              }
+            ]
+          },
+          "stratification": {
+            "is_valid": true,
+            "tolerance_percentage_points": 0.1,
+            "split_statistics": {
+              "train": {
+                "row_count": 18252,
+                "percentage_of_rows": 74.996918,
+                "label_distribution": [
+                  {
+                    "raw_label": 0,
+                    "count": 9926,
+                    "percentage": 54.383081
+                  },
+                  {
+                    "raw_label": 1,
+                    "count": 8326,
+                    "percentage": 45.616919
+                  }
+                ],
+                "benign_label_0_count": 9926,
+                "malicious_label_1_count": 8326
+              },
+              "test": {
+                "row_count": 6085,
+                "percentage_of_rows": 25.003082,
+                "label_distribution": [
+                  {
+                    "raw_label": 0,
+                    "count": 3309,
+                    "percentage": 54.379622
+                  },
+                  {
+                    "raw_label": 1,
+                    "count": 2776,
+                    "percentage": 45.620378
+                  }
+                ],
+                "benign_label_0_count": 3309,
+                "malicious_label_1_count": 2776
+              }
+            }
+          }
+        },
+        "feature_variants": [
+          {
+            "name": "P-all41",
+            "description": "All 41 published local non-hash predictive features; no feature removal.",
+            "removed_columns": []
+          },
+          {
+            "name": "P-drop3constant",
+            "description": "Only the paper-described constant-zero columns are removed.",
+            "removed_columns": [
+              "Acroform",
+              "Colors",
+              "BaseEncoding"
+            ]
+          }
+        ]
+      },
+      "model_configuration": {
+        "paper_model_name": "Decision Tree (DT)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "class_weight": null,
+          "criterion": "gini",
+          "max_depth": null,
+          "max_features": null,
+          "min_samples_leaf": 1,
+          "min_samples_split": 2,
+          "random_state": 42,
+          "splitter": "best"
+        }
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "benchmark_code_commit": "2147d0a1e12162ac7092fe797260f0c12a5fe3d6",
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "2147d0a1e12162ac7092fe797260f0c12a5fe3d6",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        }
+      },
+      "reused_seed42_baseline": false,
+      "evaluations": {
+        "test": {
+          "metrics": {
+            "accuracy": 0.9896466721446179,
+            "precision_malicious": 0.9856784819190835,
+            "recall_malicious": 0.9917146974063401,
+            "f1_malicious": 0.988687376548752,
+            "precision_macro": 0.9893459238270994,
+            "recall_macro": 0.9898132266119037,
+            "f1_macro": 0.9895716840325945,
+            "roc_auc": 0.9898132266119039,
+            "pr_auc": 0.9812916237962259,
+            "mcc": 0.9791590389290894,
+            "tn": 3269,
+            "fp": 40,
+            "fn": 23,
+            "tp": 2753
+          },
+          "score_source": "predict_proba",
+          "runtime": {
+            "inference_total_seconds": 0.0038404999977501575,
+            "inference_milliseconds_per_sample": 0.0006311421524651039
+          },
+          "confusion_counts": {
+            "tn": 3269,
+            "fp": 40,
+            "fn": 23,
+            "tp": 2753
+          }
+        }
+      },
+      "training": {
+        "training_seconds": 0.10798829999839654
+      },
+      "model_artifact": "C:\\Project\\MalPDFDeepDetection\\artifacts\\multiseed\\official-seeds42-46\\models\\p_seed43_decision_tree.joblib",
+      "error": null
+    },
+    {
+      "protocol": "P",
+      "split_seed": 43,
+      "model_random_state": 42,
+      "model_name": "gaussian_naive_bayes",
+      "feature_variant": "P-drop3constant",
+      "feature_count": 38,
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T10:58:34.616251Z",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "split_manifest": "C:\\Project\\MalPDFDeepDetection\\data\\processed\\multiseed\\official-seeds42-46\\protocol_p_seed43_manifest.csv",
+      "split_manifest_sha256": "12e9f606b9b1091c40ddc22f5c5281c5380abe04b4e6900fdf4d8647ada0e18c",
+      "split_result": {
+        "protocol": "P",
+        "purpose": "Paper-aligned reproduction attempt, not an exact paper reproduction.",
+        "split_algorithm": "sklearn.model_selection.train_test_split with shuffle=True, stratify=Label, test_size=0.25, and project-selected random_state.",
+        "paper_seed_status": "The paper does not publish a split seed; this seed is a project choice.",
+        "seed": 43,
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "split_proportions": {
+          "train": 0.75,
+          "test": 0.25
+        },
+        "split_statistics": {
+          "train": {
+            "row_count": 18252,
+            "percentage_of_rows": 74.996918,
+            "label_distribution": [
+              {
+                "raw_label": 0,
+                "count": 9926,
+                "percentage": 54.383081
+              },
+              {
+                "raw_label": 1,
+                "count": 8326,
+                "percentage": 45.616919
+              }
+            ],
+            "benign_label_0_count": 9926,
+            "malicious_label_1_count": 8326
+          },
+          "test": {
+            "row_count": 6085,
+            "percentage_of_rows": 25.003082,
+            "label_distribution": [
+              {
+                "raw_label": 0,
+                "count": 3309,
+                "percentage": 54.379622
+              },
+              {
+                "raw_label": 1,
+                "count": 2776,
+                "percentage": 45.620378
+              }
+            ],
+            "benign_label_0_count": 3309,
+            "malicious_label_1_count": 2776
+          }
+        },
+        "validation": {
+          "all_rows_assigned_exactly_once": {
+            "is_valid": true,
+            "source_row_count": 24337,
+            "manifest_row_count": 24337
+          },
+          "train_test_disjoint": {
+            "is_valid": true,
+            "overlap_count": 0
+          },
+          "target_labels_preserved": {
+            "is_valid": true,
+            "source_distribution": [
+              {
+                "raw_label": 0,
+                "count": 13235,
+                "percentage": 54.382216
+              },
+              {
+                "raw_label": 1,
+                "count": 11102,
+                "percentage": 45.617784
+              }
+            ],
+            "manifest_distribution": [
+              {
+                "raw_label": 0,
+                "count": 13235,
+                "percentage": 54.382216
+              },
+              {
+                "raw_label": 1,
+                "count": 11102,
+                "percentage": 45.617784
+              }
+            ]
+          },
+          "stratification": {
+            "is_valid": true,
+            "tolerance_percentage_points": 0.1,
+            "split_statistics": {
+              "train": {
+                "row_count": 18252,
+                "percentage_of_rows": 74.996918,
+                "label_distribution": [
+                  {
+                    "raw_label": 0,
+                    "count": 9926,
+                    "percentage": 54.383081
+                  },
+                  {
+                    "raw_label": 1,
+                    "count": 8326,
+                    "percentage": 45.616919
+                  }
+                ],
+                "benign_label_0_count": 9926,
+                "malicious_label_1_count": 8326
+              },
+              "test": {
+                "row_count": 6085,
+                "percentage_of_rows": 25.003082,
+                "label_distribution": [
+                  {
+                    "raw_label": 0,
+                    "count": 3309,
+                    "percentage": 54.379622
+                  },
+                  {
+                    "raw_label": 1,
+                    "count": 2776,
+                    "percentage": 45.620378
+                  }
+                ],
+                "benign_label_0_count": 3309,
+                "malicious_label_1_count": 2776
+              }
+            }
+          }
+        },
+        "feature_variants": [
+          {
+            "name": "P-all41",
+            "description": "All 41 published local non-hash predictive features; no feature removal.",
+            "removed_columns": []
+          },
+          {
+            "name": "P-drop3constant",
+            "description": "Only the paper-described constant-zero columns are removed.",
+            "removed_columns": [
+              "Acroform",
+              "Colors",
+              "BaseEncoding"
+            ]
+          }
+        ]
+      },
+      "model_configuration": {
+        "paper_model_name": "Gaussian Naive-Bayes (GNB)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is added; the paper gives no documented reason for it."
+        },
+        "parameters": {
+          "priors": null,
+          "var_smoothing": 1e-09
+        }
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is added; the paper gives no documented reason for it."
+      },
+      "benchmark_code_commit": "2147d0a1e12162ac7092fe797260f0c12a5fe3d6",
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "2147d0a1e12162ac7092fe797260f0c12a5fe3d6",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        }
+      },
+      "reused_seed42_baseline": false,
+      "evaluations": {
+        "test": {
+          "metrics": {
+            "accuracy": 0.6294165981922761,
+            "precision_malicious": 0.5526368963426955,
+            "recall_malicious": 0.9852305475504323,
+            "f1_malicious": 0.7080906148867314,
+            "precision_macro": 0.7582726735234604,
+            "recall_macro": 0.6580731160236295,
+            "f1_macro": 0.600389514417494,
+            "roc_auc": 0.7346769203369032,
+            "pr_auc": 0.6156944090215121,
+            "mcc": 0.40410872936677306,
+            "tn": 1095,
+            "fp": 2214,
+            "fn": 41,
+            "tp": 2735
+          },
+          "score_source": "predict_proba",
+          "runtime": {
+            "inference_total_seconds": 0.00999749999755295,
+            "inference_milliseconds_per_sample": 0.0016429745271245603
+          },
+          "confusion_counts": {
+            "tn": 1095,
+            "fp": 2214,
+            "fn": 41,
+            "tp": 2735
+          }
+        }
+      },
+      "training": {
+        "training_seconds": 0.009912399997119792
+      },
+      "model_artifact": "C:\\Project\\MalPDFDeepDetection\\artifacts\\multiseed\\official-seeds42-46\\models\\p_seed43_gaussian_naive_bayes.joblib",
+      "error": null
+    },
+    {
+      "protocol": "P",
+      "split_seed": 43,
+      "model_random_state": 42,
+      "model_name": "xgboost",
+      "feature_variant": "P-drop3constant",
+      "feature_count": 38,
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T10:58:35.682664Z",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "split_manifest": "C:\\Project\\MalPDFDeepDetection\\data\\processed\\multiseed\\official-seeds42-46\\protocol_p_seed43_manifest.csv",
+      "split_manifest_sha256": "12e9f606b9b1091c40ddc22f5c5281c5380abe04b4e6900fdf4d8647ada0e18c",
+      "split_result": {
+        "protocol": "P",
+        "purpose": "Paper-aligned reproduction attempt, not an exact paper reproduction.",
+        "split_algorithm": "sklearn.model_selection.train_test_split with shuffle=True, stratify=Label, test_size=0.25, and project-selected random_state.",
+        "paper_seed_status": "The paper does not publish a split seed; this seed is a project choice.",
+        "seed": 43,
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "split_proportions": {
+          "train": 0.75,
+          "test": 0.25
+        },
+        "split_statistics": {
+          "train": {
+            "row_count": 18252,
+            "percentage_of_rows": 74.996918,
+            "label_distribution": [
+              {
+                "raw_label": 0,
+                "count": 9926,
+                "percentage": 54.383081
+              },
+              {
+                "raw_label": 1,
+                "count": 8326,
+                "percentage": 45.616919
+              }
+            ],
+            "benign_label_0_count": 9926,
+            "malicious_label_1_count": 8326
+          },
+          "test": {
+            "row_count": 6085,
+            "percentage_of_rows": 25.003082,
+            "label_distribution": [
+              {
+                "raw_label": 0,
+                "count": 3309,
+                "percentage": 54.379622
+              },
+              {
+                "raw_label": 1,
+                "count": 2776,
+                "percentage": 45.620378
+              }
+            ],
+            "benign_label_0_count": 3309,
+            "malicious_label_1_count": 2776
+          }
+        },
+        "validation": {
+          "all_rows_assigned_exactly_once": {
+            "is_valid": true,
+            "source_row_count": 24337,
+            "manifest_row_count": 24337
+          },
+          "train_test_disjoint": {
+            "is_valid": true,
+            "overlap_count": 0
+          },
+          "target_labels_preserved": {
+            "is_valid": true,
+            "source_distribution": [
+              {
+                "raw_label": 0,
+                "count": 13235,
+                "percentage": 54.382216
+              },
+              {
+                "raw_label": 1,
+                "count": 11102,
+                "percentage": 45.617784
+              }
+            ],
+            "manifest_distribution": [
+              {
+                "raw_label": 0,
+                "count": 13235,
+                "percentage": 54.382216
+              },
+              {
+                "raw_label": 1,
+                "count": 11102,
+                "percentage": 45.617784
+              }
+            ]
+          },
+          "stratification": {
+            "is_valid": true,
+            "tolerance_percentage_points": 0.1,
+            "split_statistics": {
+              "train": {
+                "row_count": 18252,
+                "percentage_of_rows": 74.996918,
+                "label_distribution": [
+                  {
+                    "raw_label": 0,
+                    "count": 9926,
+                    "percentage": 54.383081
+                  },
+                  {
+                    "raw_label": 1,
+                    "count": 8326,
+                    "percentage": 45.616919
+                  }
+                ],
+                "benign_label_0_count": 9926,
+                "malicious_label_1_count": 8326
+              },
+              "test": {
+                "row_count": 6085,
+                "percentage_of_rows": 25.003082,
+                "label_distribution": [
+                  {
+                    "raw_label": 0,
+                    "count": 3309,
+                    "percentage": 54.379622
+                  },
+                  {
+                    "raw_label": 1,
+                    "count": 2776,
+                    "percentage": 45.620378
+                  }
+                ],
+                "benign_label_0_count": 3309,
+                "malicious_label_1_count": 2776
+              }
+            }
+          }
+        },
+        "feature_variants": [
+          {
+            "name": "P-all41",
+            "description": "All 41 published local non-hash predictive features; no feature removal.",
+            "removed_columns": []
+          },
+          {
+            "name": "P-drop3constant",
+            "description": "Only the paper-described constant-zero columns are removed.",
+            "removed_columns": [
+              "Acroform",
+              "Colors",
+              "BaseEncoding"
+            ]
+          }
+        ]
+      },
+      "model_configuration": {
+        "paper_model_name": "eXtreme Gradient Boost (XGB)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "base_score": 0.5,
+          "booster": "gbtree",
+          "colsample_bylevel": 1.0,
+          "colsample_bynode": 1.0,
+          "colsample_bytree": 1.0,
+          "eval_metric": "logloss",
+          "gamma": 0.0,
+          "learning_rate": 0.1,
+          "max_delta_step": 0.0,
+          "max_depth": 6,
+          "min_child_weight": 1.0,
+          "missing": "NaN",
+          "n_estimators": 200,
+          "n_jobs": 1,
+          "objective": "binary:logistic",
+          "random_state": 42,
+          "reg_alpha": 0.0,
+          "reg_lambda": 1.0,
+          "scale_pos_weight": 1.0,
+          "subsample": 1.0,
+          "tree_method": "hist",
+          "verbosity": 0
+        },
+        "missing_value_assumption": "The JSON-safe string 'NaN' is converted to the explicit IEEE NaN missing-value sentinel required by XGBoost 3.2 at runtime. This fixes a library compatibility error; it does not alter feature values or tune the model."
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "benchmark_code_commit": "2147d0a1e12162ac7092fe797260f0c12a5fe3d6",
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "2147d0a1e12162ac7092fe797260f0c12a5fe3d6",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        }
+      },
+      "reused_seed42_baseline": false,
+      "evaluations": {
+        "test": {
+          "metrics": {
+            "accuracy": 0.9937551355792933,
+            "precision_malicious": 0.9960144927536232,
+            "recall_malicious": 0.9902737752161384,
+            "f1_malicious": 0.993135838150289,
+            "precision_macro": 0.9939470960008717,
+            "recall_macro": 0.9934747540329709,
+            "f1_macro": 0.9937038853096938,
+            "roc_auc": 0.9995621495127689,
+            "pr_auc": 0.9996030599632165,
+            "mcc": 0.987421737059359,
+            "tn": 3298,
+            "fp": 11,
+            "fn": 27,
+            "tp": 2749
+          },
+          "score_source": "predict_proba",
+          "runtime": {
+            "inference_total_seconds": 0.03152380000028643,
+            "inference_milliseconds_per_sample": 0.005180575184927926
+          },
+          "confusion_counts": {
+            "tn": 3298,
+            "fp": 11,
+            "fn": 27,
+            "tp": 2749
+          }
+        }
+      },
+      "training": {
+        "training_seconds": 0.4978289000027871
+      },
+      "model_artifact": "C:\\Project\\MalPDFDeepDetection\\artifacts\\multiseed\\official-seeds42-46\\models\\p_seed43_xgboost.joblib",
+      "error": null
+    },
+    {
+      "protocol": "G",
+      "split_seed": 43,
+      "model_random_state": 42,
+      "model_name": "logistic_regression",
+      "feature_variant": "G-drop3constant",
+      "feature_count": 38,
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T10:58:37.270716Z",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "split_manifest": "C:\\Project\\MalPDFDeepDetection\\data\\processed\\multiseed\\official-seeds42-46\\protocol_g_seed43_manifest.csv",
+      "split_manifest_sha256": "40a0efd9bdd183e1766ad26bed23bc2d7150b8a3d1ba32ac9b2a72d1478d3c41",
+      "split_result": {
+        "seed": 43,
+        "target_column": "Label",
+        "split_proportions": {
+          "train": 0.6,
+          "validation": 0.2,
+          "test": 0.2
+        },
+        "group_statistics": {
+          "total_groups": 15371,
+          "singleton_groups": 14820,
+          "duplicate_groups": 551,
+          "group_size": {
+            "minimum": 1,
+            "median": 1.0,
+            "mean": 1.5833062260100188,
+            "maximum": 1760
+          },
+          "top_20_largest_duplicate_groups": [
+            {
+              "duplicate_group_id": "group_8921066f0ac13af5d9a6e82ca13f5d66a780a827fdfcdebc56f051753687410c",
+              "group_size": 1760,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_670973cb3521fe94080732d952e97ae692550da70c206b4aefb6256c513d7241",
+              "group_size": 842,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_0c2f3c219a7ef02788593f87781accde2d5aebad8cc068193be183a57ec8fb3f",
+              "group_size": 497,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_4eb0ab4eab8fec854c619f2b2faeeb97c4fc74928af476cfe96b80ee48aa9dd1",
+              "group_size": 434,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_4c305631818e7901f2427a3e32f6581bd436aac3ba9049ddb003744144deedb0",
+              "group_size": 421,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_b9c39820b0e632cbbc02a98fe5df1cd72399e2249c4e65f1258ff93932732718",
+              "group_size": 417,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_7032220414105c19277809fc53b184176a0d6d521ad69178c1b3d16bbc41b686",
+              "group_size": 310,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_f51743760b3b0045f0b82194476c7fbc809cc78927e8630a0778b0a2bc2b9274",
+              "group_size": 237,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_ffd980e3fab9c9aa16cf69ee7ab47ddcfc3c3f6323fe3a740742150d39982d5a",
+              "group_size": 218,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_e58efca04622b3ff8eeb4f045923a7a8c8e17961e81f740cd0f016d913184af2",
+              "group_size": 213,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_43c43c0dfc9aa9a8de24ad60a19be211c78f9f00750cf7d739cc7f95b20fd526",
+              "group_size": 157,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_fd9a869be1e1b5d18d0d315a406ac2d68e92749e4de9fbed4265f1af24e9bf20",
+              "group_size": 121,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_1ccf85f677db27dc4270cd82a94baf056b72bcaeda678607a01cf0f41bece82b",
+              "group_size": 109,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_6cab63c8430a221e71429c21cd9fc7daed5bb9d08fefcaa677b8874984c78970",
+              "group_size": 95,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_f47f6f8c06727e28ceda1244645f3a6de61d36c5e51e8b0f32569c7dd04cfaa0",
+              "group_size": 93,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_ea00057b80837649dbb721308122afc93cc3ee1508232094973552d17d35a0f1",
+              "group_size": 81,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_75cf1a27e3090062210c3f036c363a5c131097a229b540631aa026393b23f1b1",
+              "group_size": 75,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_0d6d335974ed841ef3f0273c1aafdfebc8945c211017f78812d3bbdddced7bc9",
+              "group_size": 68,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_59c010b31ec69909952f9706f15d3e41f495c108725889c41619f70d899b8b87",
+              "group_size": 60,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_63116248bc021168e5135a20553d9f9a526f6d548f853917507afda89d986b6d",
+              "group_size": 60,
+              "raw_label": 1
+            }
+          ],
+          "label_distribution_by_group": [
+            {
+              "raw_label": 0,
+              "group_count": 13149,
+              "group_percentage": 85.544207,
+              "row_count": 13235,
+              "row_percentage": 54.382216
+            },
+            {
+              "raw_label": 1,
+              "group_count": 2222,
+              "group_percentage": 14.455793,
+              "row_count": 11102,
+              "row_percentage": 45.617784
+            }
+          ],
+          "target_label_purity": {
+            "all_groups_have_one_target_label": true,
+            "conflicting_group_count": 0,
+            "conflicting_group_ids": []
+          }
+        },
+        "split_statistics": {
+          "train": {
+            "row_count": 14602,
+            "percentage_of_total_rows": 59.999178,
+            "unique_group_count": 8600,
+            "benign": {
+              "raw_label": 0,
+              "count": 7941,
+              "percentage_of_split": 54.382961
+            },
+            "malicious": {
+              "raw_label": 1,
+              "count": 6661,
+              "percentage_of_split": 45.617039
+            },
+            "raw_label_distribution": [
+              {
+                "raw_label": 0,
+                "count": 7941,
+                "percentage": 54.382961
+              },
+              {
+                "raw_label": 1,
+                "count": 6661,
+                "percentage": 45.617039
+              }
+            ]
+          },
+          "validation": {
+            "row_count": 4868,
+            "percentage_of_total_rows": 20.002465,
+            "unique_group_count": 3386,
+            "benign": {
+              "raw_label": 0,
+              "count": 2647,
+              "percentage_of_split": 54.375514
+            },
+            "malicious": {
+              "raw_label": 1,
+              "count": 2221,
+              "percentage_of_split": 45.624486
+            },
+            "raw_label_distribution": [
+              {
+                "raw_label": 0,
+                "count": 2647,
+                "percentage": 54.375514
+              },
+              {
+                "raw_label": 1,
+                "count": 2221,
+                "percentage": 45.624486
+              }
+            ]
+          },
+          "test": {
+            "row_count": 4867,
+            "percentage_of_total_rows": 19.998356,
+            "unique_group_count": 3385,
+            "benign": {
+              "raw_label": 0,
+              "count": 2647,
+              "percentage_of_split": 54.386686
+            },
+            "malicious": {
+              "raw_label": 1,
+              "count": 2220,
+              "percentage_of_split": 45.613314
+            },
+            "raw_label_distribution": [
+              {
+                "raw_label": 0,
+                "count": 2647,
+                "percentage": 54.386686
+              },
+              {
+                "raw_label": 1,
+                "count": 2220,
+                "percentage": 45.613314
+              }
+            ]
+          }
+        },
+        "hard_validation": {
+          "zero_group_overlap": {
+            "train_validation": 0,
+            "train_test": 0,
+            "validation_test": 0,
+            "is_valid": true
+          },
+          "zero_feature_vector_duplicate_leakage": {
+            "train_validation": 0,
+            "train_test": 0,
+            "validation_test": 0,
+            "is_valid": true,
+            "basis": "Duplicate-group IDs are SHA-256 hashes of all feature values excluding Label."
+          },
+          "all_rows_assigned_exactly_once": {
+            "manifest_row_count": 24337,
+            "source_row_count": 24337,
+            "unique_sample_identifier_count": 24337,
+            "is_valid": true
+          },
+          "target_labels_preserved": {
+            "is_valid": true,
+            "source_distribution": [
+              {
+                "raw_label": 0,
+                "count": 13235,
+                "percentage": 54.382216
+              },
+              {
+                "raw_label": 1,
+                "count": 11102,
+                "percentage": 45.617784
+              }
+            ],
+            "manifest_distribution": [
+              {
+                "raw_label": 0,
+                "count": 13235,
+                "percentage": 54.382216
+              },
+              {
+                "raw_label": 1,
+                "count": 11102,
+                "percentage": 45.617784
+              }
+            ]
+          },
+          "one_split_per_duplicate_group": {
+            "is_valid": true
+          }
+        }
+      },
+      "model_configuration": {
+        "paper_model_name": "Logistic Regression (LR)",
+        "preprocessing": {
+          "name": "StandardScaler",
+          "fit_scope": "training partition only",
+          "paper_status": "Scaling is a project assumption; the paper does not specify it."
+        },
+        "parameters": {
+          "C": 1.0,
+          "class_weight": null,
+          "fit_intercept": true,
+          "l1_ratio": 0.0,
+          "max_iter": 1000,
+          "random_state": 42,
+          "solver": "liblinear",
+          "tol": 0.0001
+        },
+        "regularization_assumption": "L2 regularization, represented by l1_ratio=0.0 for scikit-learn 1.8+ compatibility. This is a project assumption; the paper does not specify it."
+      },
+      "preprocessing_configuration": {
+        "name": "StandardScaler",
+        "fit_scope": "training partition only",
+        "paper_status": "Scaling is a project assumption; the paper does not specify it."
+      },
+      "benchmark_code_commit": "2147d0a1e12162ac7092fe797260f0c12a5fe3d6",
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "2147d0a1e12162ac7092fe797260f0c12a5fe3d6",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        }
+      },
+      "reused_seed42_baseline": false,
+      "evaluations": {
+        "validation": {
+          "metrics": {
+            "accuracy": 0.9044782251437962,
+            "precision_malicious": 0.9447821681864235,
+            "recall_malicious": 0.8397118415128321,
+            "f1_malicious": 0.8891537544696066,
+            "precision_macro": 0.9108845187856789,
+            "recall_macro": 0.8992665743264954,
+            "f1_macro": 0.9026169422050253,
+            "roc_auc": 0.9659824047918458,
+            "pr_auc": 0.9665534982746575,
+            "mcc": 0.8100677854583493,
+            "tn": 2538,
+            "fp": 109,
+            "fn": 356,
+            "tp": 1865
+          },
+          "score_source": "predict_proba",
+          "runtime": {
+            "inference_total_seconds": 0.004457800001546275,
+            "inference_milliseconds_per_sample": 0.0009157354152724476
+          },
+          "confusion_counts": {
+            "tn": 2538,
+            "fp": 109,
+            "fn": 356,
+            "tp": 1865
+          }
+        },
+        "test": {
+          "metrics": {
+            "accuracy": 0.8896650914320937,
+            "precision_malicious": 0.9322033898305084,
+            "recall_malicious": 0.8175675675675675,
+            "f1_malicious": 0.871130309575234,
+            "precision_macro": 0.896752379846761,
+            "recall_macro": 0.8838498963640633,
+            "f1_macro": 0.8873345099160523,
+            "roc_auc": 0.9710193760061535,
+            "pr_auc": 0.9667540363279209,
+            "mcc": 0.7804956371085613,
+            "tn": 2515,
+            "fp": 132,
+            "fn": 405,
+            "tp": 1815
+          },
+          "score_source": "predict_proba",
+          "runtime": {
+            "inference_total_seconds": 0.004548000000795582,
+            "inference_milliseconds_per_sample": 0.0009344565442357884
+          },
+          "confusion_counts": {
+            "tn": 2515,
+            "fp": 132,
+            "fn": 405,
+            "tp": 1815
+          }
+        }
+      },
+      "training": {
+        "training_seconds": 0.17356569999901694
+      },
+      "model_artifact": "C:\\Project\\MalPDFDeepDetection\\artifacts\\multiseed\\official-seeds42-46\\models\\g_seed43_logistic_regression.joblib",
+      "error": null
+    },
+    {
+      "protocol": "G",
+      "split_seed": 43,
+      "model_random_state": 42,
+      "model_name": "random_forest",
+      "feature_variant": "G-drop3constant",
+      "feature_count": 38,
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T10:58:38.497768Z",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "split_manifest": "C:\\Project\\MalPDFDeepDetection\\data\\processed\\multiseed\\official-seeds42-46\\protocol_g_seed43_manifest.csv",
+      "split_manifest_sha256": "40a0efd9bdd183e1766ad26bed23bc2d7150b8a3d1ba32ac9b2a72d1478d3c41",
+      "split_result": {
+        "seed": 43,
+        "target_column": "Label",
+        "split_proportions": {
+          "train": 0.6,
+          "validation": 0.2,
+          "test": 0.2
+        },
+        "group_statistics": {
+          "total_groups": 15371,
+          "singleton_groups": 14820,
+          "duplicate_groups": 551,
+          "group_size": {
+            "minimum": 1,
+            "median": 1.0,
+            "mean": 1.5833062260100188,
+            "maximum": 1760
+          },
+          "top_20_largest_duplicate_groups": [
+            {
+              "duplicate_group_id": "group_8921066f0ac13af5d9a6e82ca13f5d66a780a827fdfcdebc56f051753687410c",
+              "group_size": 1760,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_670973cb3521fe94080732d952e97ae692550da70c206b4aefb6256c513d7241",
+              "group_size": 842,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_0c2f3c219a7ef02788593f87781accde2d5aebad8cc068193be183a57ec8fb3f",
+              "group_size": 497,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_4eb0ab4eab8fec854c619f2b2faeeb97c4fc74928af476cfe96b80ee48aa9dd1",
+              "group_size": 434,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_4c305631818e7901f2427a3e32f6581bd436aac3ba9049ddb003744144deedb0",
+              "group_size": 421,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_b9c39820b0e632cbbc02a98fe5df1cd72399e2249c4e65f1258ff93932732718",
+              "group_size": 417,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_7032220414105c19277809fc53b184176a0d6d521ad69178c1b3d16bbc41b686",
+              "group_size": 310,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_f51743760b3b0045f0b82194476c7fbc809cc78927e8630a0778b0a2bc2b9274",
+              "group_size": 237,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_ffd980e3fab9c9aa16cf69ee7ab47ddcfc3c3f6323fe3a740742150d39982d5a",
+              "group_size": 218,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_e58efca04622b3ff8eeb4f045923a7a8c8e17961e81f740cd0f016d913184af2",
+              "group_size": 213,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_43c43c0dfc9aa9a8de24ad60a19be211c78f9f00750cf7d739cc7f95b20fd526",
+              "group_size": 157,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_fd9a869be1e1b5d18d0d315a406ac2d68e92749e4de9fbed4265f1af24e9bf20",
+              "group_size": 121,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_1ccf85f677db27dc4270cd82a94baf056b72bcaeda678607a01cf0f41bece82b",
+              "group_size": 109,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_6cab63c8430a221e71429c21cd9fc7daed5bb9d08fefcaa677b8874984c78970",
+              "group_size": 95,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_f47f6f8c06727e28ceda1244645f3a6de61d36c5e51e8b0f32569c7dd04cfaa0",
+              "group_size": 93,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_ea00057b80837649dbb721308122afc93cc3ee1508232094973552d17d35a0f1",
+              "group_size": 81,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_75cf1a27e3090062210c3f036c363a5c131097a229b540631aa026393b23f1b1",
+              "group_size": 75,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_0d6d335974ed841ef3f0273c1aafdfebc8945c211017f78812d3bbdddced7bc9",
+              "group_size": 68,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_59c010b31ec69909952f9706f15d3e41f495c108725889c41619f70d899b8b87",
+              "group_size": 60,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_63116248bc021168e5135a20553d9f9a526f6d548f853917507afda89d986b6d",
+              "group_size": 60,
+              "raw_label": 1
+            }
+          ],
+          "label_distribution_by_group": [
+            {
+              "raw_label": 0,
+              "group_count": 13149,
+              "group_percentage": 85.544207,
+              "row_count": 13235,
+              "row_percentage": 54.382216
+            },
+            {
+              "raw_label": 1,
+              "group_count": 2222,
+              "group_percentage": 14.455793,
+              "row_count": 11102,
+              "row_percentage": 45.617784
+            }
+          ],
+          "target_label_purity": {
+            "all_groups_have_one_target_label": true,
+            "conflicting_group_count": 0,
+            "conflicting_group_ids": []
+          }
+        },
+        "split_statistics": {
+          "train": {
+            "row_count": 14602,
+            "percentage_of_total_rows": 59.999178,
+            "unique_group_count": 8600,
+            "benign": {
+              "raw_label": 0,
+              "count": 7941,
+              "percentage_of_split": 54.382961
+            },
+            "malicious": {
+              "raw_label": 1,
+              "count": 6661,
+              "percentage_of_split": 45.617039
+            },
+            "raw_label_distribution": [
+              {
+                "raw_label": 0,
+                "count": 7941,
+                "percentage": 54.382961
+              },
+              {
+                "raw_label": 1,
+                "count": 6661,
+                "percentage": 45.617039
+              }
+            ]
+          },
+          "validation": {
+            "row_count": 4868,
+            "percentage_of_total_rows": 20.002465,
+            "unique_group_count": 3386,
+            "benign": {
+              "raw_label": 0,
+              "count": 2647,
+              "percentage_of_split": 54.375514
+            },
+            "malicious": {
+              "raw_label": 1,
+              "count": 2221,
+              "percentage_of_split": 45.624486
+            },
+            "raw_label_distribution": [
+              {
+                "raw_label": 0,
+                "count": 2647,
+                "percentage": 54.375514
+              },
+              {
+                "raw_label": 1,
+                "count": 2221,
+                "percentage": 45.624486
+              }
+            ]
+          },
+          "test": {
+            "row_count": 4867,
+            "percentage_of_total_rows": 19.998356,
+            "unique_group_count": 3385,
+            "benign": {
+              "raw_label": 0,
+              "count": 2647,
+              "percentage_of_split": 54.386686
+            },
+            "malicious": {
+              "raw_label": 1,
+              "count": 2220,
+              "percentage_of_split": 45.613314
+            },
+            "raw_label_distribution": [
+              {
+                "raw_label": 0,
+                "count": 2647,
+                "percentage": 54.386686
+              },
+              {
+                "raw_label": 1,
+                "count": 2220,
+                "percentage": 45.613314
+              }
+            ]
+          }
+        },
+        "hard_validation": {
+          "zero_group_overlap": {
+            "train_validation": 0,
+            "train_test": 0,
+            "validation_test": 0,
+            "is_valid": true
+          },
+          "zero_feature_vector_duplicate_leakage": {
+            "train_validation": 0,
+            "train_test": 0,
+            "validation_test": 0,
+            "is_valid": true,
+            "basis": "Duplicate-group IDs are SHA-256 hashes of all feature values excluding Label."
+          },
+          "all_rows_assigned_exactly_once": {
+            "manifest_row_count": 24337,
+            "source_row_count": 24337,
+            "unique_sample_identifier_count": 24337,
+            "is_valid": true
+          },
+          "target_labels_preserved": {
+            "is_valid": true,
+            "source_distribution": [
+              {
+                "raw_label": 0,
+                "count": 13235,
+                "percentage": 54.382216
+              },
+              {
+                "raw_label": 1,
+                "count": 11102,
+                "percentage": 45.617784
+              }
+            ],
+            "manifest_distribution": [
+              {
+                "raw_label": 0,
+                "count": 13235,
+                "percentage": 54.382216
+              },
+              {
+                "raw_label": 1,
+                "count": 11102,
+                "percentage": 45.617784
+              }
+            ]
+          },
+          "one_split_per_duplicate_group": {
+            "is_valid": true
+          }
+        }
+      },
+      "model_configuration": {
+        "paper_model_name": "Random Forest (RF)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "bootstrap": true,
+          "class_weight": null,
+          "criterion": "gini",
+          "max_depth": null,
+          "max_features": "sqrt",
+          "min_samples_leaf": 1,
+          "min_samples_split": 2,
+          "n_estimators": 200,
+          "n_jobs": 1,
+          "random_state": 42
+        }
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "benchmark_code_commit": "2147d0a1e12162ac7092fe797260f0c12a5fe3d6",
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "2147d0a1e12162ac7092fe797260f0c12a5fe3d6",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        }
+      },
+      "reused_seed42_baseline": false,
+      "evaluations": {
+        "validation": {
+          "metrics": {
+            "accuracy": 0.9728841413311422,
+            "precision_malicious": 0.9985680190930788,
+            "recall_malicious": 0.9419180549302116,
+            "f1_malicious": 0.969416126042632,
+            "precision_macro": 0.976024002334134,
+            "recall_macro": 0.9703923482055667,
+            "f1_macro": 0.9725309412500983,
+            "roc_auc": 0.9970271238905614,
+            "pr_auc": 0.9970707656690844,
+            "mcc": 0.9463995948016154,
+            "tn": 2644,
+            "fp": 3,
+            "fn": 129,
+            "tp": 2092
+          },
+          "score_source": "predict_proba",
+          "runtime": {
+            "inference_total_seconds": 0.1034947000007378,
+            "inference_milliseconds_per_sample": 0.021260209531786728
+          },
+          "confusion_counts": {
+            "tn": 2644,
+            "fp": 3,
+            "fn": 129,
+            "tp": 2092
+          }
+        },
+        "test": {
+          "metrics": {
+            "accuracy": 0.9691801931374563,
+            "precision_malicious": 0.9975961538461539,
+            "recall_malicious": 0.9346846846846847,
+            "f1_malicious": 0.9651162790697675,
+            "precision_macro": 0.9727844421903895,
+            "recall_macro": 0.9663978769097772,
+            "f1_macro": 0.9687561520486858,
+            "roc_auc": 0.9950630834839373,
+            "pr_auc": 0.9951724496828896,
+            "mcc": 0.9391606041004295,
+            "tn": 2642,
+            "fp": 5,
+            "fn": 145,
+            "tp": 2075
+          },
+          "score_source": "predict_proba",
+          "runtime": {
+            "inference_total_seconds": 0.10202200000276207,
+            "inference_milliseconds_per_sample": 0.02096198890543704
+          },
+          "confusion_counts": {
+            "tn": 2642,
+            "fp": 5,
+            "fn": 145,
+            "tp": 2075
+          }
+        }
+      },
+      "training": {
+        "training_seconds": 1.5669134999989183
+      },
+      "model_artifact": "C:\\Project\\MalPDFDeepDetection\\artifacts\\multiseed\\official-seeds42-46\\models\\g_seed43_random_forest.joblib",
+      "error": null
+    },
+    {
+      "protocol": "G",
+      "split_seed": 43,
+      "model_random_state": 42,
+      "model_name": "decision_tree",
+      "feature_variant": "G-drop3constant",
+      "feature_count": 38,
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T10:58:41.353490Z",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "split_manifest": "C:\\Project\\MalPDFDeepDetection\\data\\processed\\multiseed\\official-seeds42-46\\protocol_g_seed43_manifest.csv",
+      "split_manifest_sha256": "40a0efd9bdd183e1766ad26bed23bc2d7150b8a3d1ba32ac9b2a72d1478d3c41",
+      "split_result": {
+        "seed": 43,
+        "target_column": "Label",
+        "split_proportions": {
+          "train": 0.6,
+          "validation": 0.2,
+          "test": 0.2
+        },
+        "group_statistics": {
+          "total_groups": 15371,
+          "singleton_groups": 14820,
+          "duplicate_groups": 551,
+          "group_size": {
+            "minimum": 1,
+            "median": 1.0,
+            "mean": 1.5833062260100188,
+            "maximum": 1760
+          },
+          "top_20_largest_duplicate_groups": [
+            {
+              "duplicate_group_id": "group_8921066f0ac13af5d9a6e82ca13f5d66a780a827fdfcdebc56f051753687410c",
+              "group_size": 1760,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_670973cb3521fe94080732d952e97ae692550da70c206b4aefb6256c513d7241",
+              "group_size": 842,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_0c2f3c219a7ef02788593f87781accde2d5aebad8cc068193be183a57ec8fb3f",
+              "group_size": 497,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_4eb0ab4eab8fec854c619f2b2faeeb97c4fc74928af476cfe96b80ee48aa9dd1",
+              "group_size": 434,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_4c305631818e7901f2427a3e32f6581bd436aac3ba9049ddb003744144deedb0",
+              "group_size": 421,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_b9c39820b0e632cbbc02a98fe5df1cd72399e2249c4e65f1258ff93932732718",
+              "group_size": 417,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_7032220414105c19277809fc53b184176a0d6d521ad69178c1b3d16bbc41b686",
+              "group_size": 310,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_f51743760b3b0045f0b82194476c7fbc809cc78927e8630a0778b0a2bc2b9274",
+              "group_size": 237,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_ffd980e3fab9c9aa16cf69ee7ab47ddcfc3c3f6323fe3a740742150d39982d5a",
+              "group_size": 218,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_e58efca04622b3ff8eeb4f045923a7a8c8e17961e81f740cd0f016d913184af2",
+              "group_size": 213,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_43c43c0dfc9aa9a8de24ad60a19be211c78f9f00750cf7d739cc7f95b20fd526",
+              "group_size": 157,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_fd9a869be1e1b5d18d0d315a406ac2d68e92749e4de9fbed4265f1af24e9bf20",
+              "group_size": 121,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_1ccf85f677db27dc4270cd82a94baf056b72bcaeda678607a01cf0f41bece82b",
+              "group_size": 109,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_6cab63c8430a221e71429c21cd9fc7daed5bb9d08fefcaa677b8874984c78970",
+              "group_size": 95,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_f47f6f8c06727e28ceda1244645f3a6de61d36c5e51e8b0f32569c7dd04cfaa0",
+              "group_size": 93,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_ea00057b80837649dbb721308122afc93cc3ee1508232094973552d17d35a0f1",
+              "group_size": 81,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_75cf1a27e3090062210c3f036c363a5c131097a229b540631aa026393b23f1b1",
+              "group_size": 75,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_0d6d335974ed841ef3f0273c1aafdfebc8945c211017f78812d3bbdddced7bc9",
+              "group_size": 68,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_59c010b31ec69909952f9706f15d3e41f495c108725889c41619f70d899b8b87",
+              "group_size": 60,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_63116248bc021168e5135a20553d9f9a526f6d548f853917507afda89d986b6d",
+              "group_size": 60,
+              "raw_label": 1
+            }
+          ],
+          "label_distribution_by_group": [
+            {
+              "raw_label": 0,
+              "group_count": 13149,
+              "group_percentage": 85.544207,
+              "row_count": 13235,
+              "row_percentage": 54.382216
+            },
+            {
+              "raw_label": 1,
+              "group_count": 2222,
+              "group_percentage": 14.455793,
+              "row_count": 11102,
+              "row_percentage": 45.617784
+            }
+          ],
+          "target_label_purity": {
+            "all_groups_have_one_target_label": true,
+            "conflicting_group_count": 0,
+            "conflicting_group_ids": []
+          }
+        },
+        "split_statistics": {
+          "train": {
+            "row_count": 14602,
+            "percentage_of_total_rows": 59.999178,
+            "unique_group_count": 8600,
+            "benign": {
+              "raw_label": 0,
+              "count": 7941,
+              "percentage_of_split": 54.382961
+            },
+            "malicious": {
+              "raw_label": 1,
+              "count": 6661,
+              "percentage_of_split": 45.617039
+            },
+            "raw_label_distribution": [
+              {
+                "raw_label": 0,
+                "count": 7941,
+                "percentage": 54.382961
+              },
+              {
+                "raw_label": 1,
+                "count": 6661,
+                "percentage": 45.617039
+              }
+            ]
+          },
+          "validation": {
+            "row_count": 4868,
+            "percentage_of_total_rows": 20.002465,
+            "unique_group_count": 3386,
+            "benign": {
+              "raw_label": 0,
+              "count": 2647,
+              "percentage_of_split": 54.375514
+            },
+            "malicious": {
+              "raw_label": 1,
+              "count": 2221,
+              "percentage_of_split": 45.624486
+            },
+            "raw_label_distribution": [
+              {
+                "raw_label": 0,
+                "count": 2647,
+                "percentage": 54.375514
+              },
+              {
+                "raw_label": 1,
+                "count": 2221,
+                "percentage": 45.624486
+              }
+            ]
+          },
+          "test": {
+            "row_count": 4867,
+            "percentage_of_total_rows": 19.998356,
+            "unique_group_count": 3385,
+            "benign": {
+              "raw_label": 0,
+              "count": 2647,
+              "percentage_of_split": 54.386686
+            },
+            "malicious": {
+              "raw_label": 1,
+              "count": 2220,
+              "percentage_of_split": 45.613314
+            },
+            "raw_label_distribution": [
+              {
+                "raw_label": 0,
+                "count": 2647,
+                "percentage": 54.386686
+              },
+              {
+                "raw_label": 1,
+                "count": 2220,
+                "percentage": 45.613314
+              }
+            ]
+          }
+        },
+        "hard_validation": {
+          "zero_group_overlap": {
+            "train_validation": 0,
+            "train_test": 0,
+            "validation_test": 0,
+            "is_valid": true
+          },
+          "zero_feature_vector_duplicate_leakage": {
+            "train_validation": 0,
+            "train_test": 0,
+            "validation_test": 0,
+            "is_valid": true,
+            "basis": "Duplicate-group IDs are SHA-256 hashes of all feature values excluding Label."
+          },
+          "all_rows_assigned_exactly_once": {
+            "manifest_row_count": 24337,
+            "source_row_count": 24337,
+            "unique_sample_identifier_count": 24337,
+            "is_valid": true
+          },
+          "target_labels_preserved": {
+            "is_valid": true,
+            "source_distribution": [
+              {
+                "raw_label": 0,
+                "count": 13235,
+                "percentage": 54.382216
+              },
+              {
+                "raw_label": 1,
+                "count": 11102,
+                "percentage": 45.617784
+              }
+            ],
+            "manifest_distribution": [
+              {
+                "raw_label": 0,
+                "count": 13235,
+                "percentage": 54.382216
+              },
+              {
+                "raw_label": 1,
+                "count": 11102,
+                "percentage": 45.617784
+              }
+            ]
+          },
+          "one_split_per_duplicate_group": {
+            "is_valid": true
+          }
+        }
+      },
+      "model_configuration": {
+        "paper_model_name": "Decision Tree (DT)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "class_weight": null,
+          "criterion": "gini",
+          "max_depth": null,
+          "max_features": null,
+          "min_samples_leaf": 1,
+          "min_samples_split": 2,
+          "random_state": 42,
+          "splitter": "best"
+        }
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "benchmark_code_commit": "2147d0a1e12162ac7092fe797260f0c12a5fe3d6",
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "2147d0a1e12162ac7092fe797260f0c12a5fe3d6",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        }
+      },
+      "reused_seed42_baseline": false,
+      "evaluations": {
+        "validation": {
+          "metrics": {
+            "accuracy": 0.9700082169268693,
+            "precision_malicious": 0.9850397381954185,
+            "recall_malicious": 0.9486717694732103,
+            "f1_malicious": 0.9665137614678899,
+            "precision_macro": 0.9716330973864598,
+            "recall_macro": 0.9682913059681881,
+            "f1_macro": 0.969678011686326,
+            "roc_auc": 0.968291305968188,
+            "pr_auc": 0.9578976330129254,
+            "mcc": 0.9399184626613669,
+            "tn": 2615,
+            "fp": 32,
+            "fn": 114,
+            "tp": 2107
+          },
+          "score_source": "predict_proba",
+          "runtime": {
+            "inference_total_seconds": 0.0029729999987466726,
+            "inference_milliseconds_per_sample": 0.0006107230893070404
+          },
+          "confusion_counts": {
+            "tn": 2615,
+            "fp": 32,
+            "fn": 114,
+            "tp": 2107
+          }
+        },
+        "test": {
+          "metrics": {
+            "accuracy": 0.9712348469282925,
+            "precision_malicious": 0.9864359214218896,
+            "recall_malicious": 0.95,
+            "f1_malicious": 0.9678751720972923,
+            "precision_macro": 0.9728808408868335,
+            "recall_macro": 0.9695221004911221,
+            "f1_macro": 0.9709167527153129,
+            "roc_auc": 0.9695221004911221,
+            "pr_auc": 0.9599207824290774,
+            "mcc": 0.9423969560544941,
+            "tn": 2618,
+            "fp": 29,
+            "fn": 111,
+            "tp": 2109
+          },
+          "score_source": "predict_proba",
+          "runtime": {
+            "inference_total_seconds": 0.002701199999137316,
+            "inference_milliseconds_per_sample": 0.0005550030818034346
+          },
+          "confusion_counts": {
+            "tn": 2618,
+            "fp": 29,
+            "fn": 111,
+            "tp": 2109
+          }
+        }
+      },
+      "training": {
+        "training_seconds": 0.07454190000134986
+      },
+      "model_artifact": "C:\\Project\\MalPDFDeepDetection\\artifacts\\multiseed\\official-seeds42-46\\models\\g_seed43_decision_tree.joblib",
+      "error": null
+    },
+    {
+      "protocol": "G",
+      "split_seed": 43,
+      "model_random_state": 42,
+      "model_name": "gaussian_naive_bayes",
+      "feature_variant": "G-drop3constant",
+      "feature_count": 38,
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T10:58:42.467776Z",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "split_manifest": "C:\\Project\\MalPDFDeepDetection\\data\\processed\\multiseed\\official-seeds42-46\\protocol_g_seed43_manifest.csv",
+      "split_manifest_sha256": "40a0efd9bdd183e1766ad26bed23bc2d7150b8a3d1ba32ac9b2a72d1478d3c41",
+      "split_result": {
+        "seed": 43,
+        "target_column": "Label",
+        "split_proportions": {
+          "train": 0.6,
+          "validation": 0.2,
+          "test": 0.2
+        },
+        "group_statistics": {
+          "total_groups": 15371,
+          "singleton_groups": 14820,
+          "duplicate_groups": 551,
+          "group_size": {
+            "minimum": 1,
+            "median": 1.0,
+            "mean": 1.5833062260100188,
+            "maximum": 1760
+          },
+          "top_20_largest_duplicate_groups": [
+            {
+              "duplicate_group_id": "group_8921066f0ac13af5d9a6e82ca13f5d66a780a827fdfcdebc56f051753687410c",
+              "group_size": 1760,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_670973cb3521fe94080732d952e97ae692550da70c206b4aefb6256c513d7241",
+              "group_size": 842,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_0c2f3c219a7ef02788593f87781accde2d5aebad8cc068193be183a57ec8fb3f",
+              "group_size": 497,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_4eb0ab4eab8fec854c619f2b2faeeb97c4fc74928af476cfe96b80ee48aa9dd1",
+              "group_size": 434,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_4c305631818e7901f2427a3e32f6581bd436aac3ba9049ddb003744144deedb0",
+              "group_size": 421,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_b9c39820b0e632cbbc02a98fe5df1cd72399e2249c4e65f1258ff93932732718",
+              "group_size": 417,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_7032220414105c19277809fc53b184176a0d6d521ad69178c1b3d16bbc41b686",
+              "group_size": 310,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_f51743760b3b0045f0b82194476c7fbc809cc78927e8630a0778b0a2bc2b9274",
+              "group_size": 237,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_ffd980e3fab9c9aa16cf69ee7ab47ddcfc3c3f6323fe3a740742150d39982d5a",
+              "group_size": 218,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_e58efca04622b3ff8eeb4f045923a7a8c8e17961e81f740cd0f016d913184af2",
+              "group_size": 213,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_43c43c0dfc9aa9a8de24ad60a19be211c78f9f00750cf7d739cc7f95b20fd526",
+              "group_size": 157,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_fd9a869be1e1b5d18d0d315a406ac2d68e92749e4de9fbed4265f1af24e9bf20",
+              "group_size": 121,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_1ccf85f677db27dc4270cd82a94baf056b72bcaeda678607a01cf0f41bece82b",
+              "group_size": 109,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_6cab63c8430a221e71429c21cd9fc7daed5bb9d08fefcaa677b8874984c78970",
+              "group_size": 95,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_f47f6f8c06727e28ceda1244645f3a6de61d36c5e51e8b0f32569c7dd04cfaa0",
+              "group_size": 93,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_ea00057b80837649dbb721308122afc93cc3ee1508232094973552d17d35a0f1",
+              "group_size": 81,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_75cf1a27e3090062210c3f036c363a5c131097a229b540631aa026393b23f1b1",
+              "group_size": 75,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_0d6d335974ed841ef3f0273c1aafdfebc8945c211017f78812d3bbdddced7bc9",
+              "group_size": 68,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_59c010b31ec69909952f9706f15d3e41f495c108725889c41619f70d899b8b87",
+              "group_size": 60,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_63116248bc021168e5135a20553d9f9a526f6d548f853917507afda89d986b6d",
+              "group_size": 60,
+              "raw_label": 1
+            }
+          ],
+          "label_distribution_by_group": [
+            {
+              "raw_label": 0,
+              "group_count": 13149,
+              "group_percentage": 85.544207,
+              "row_count": 13235,
+              "row_percentage": 54.382216
+            },
+            {
+              "raw_label": 1,
+              "group_count": 2222,
+              "group_percentage": 14.455793,
+              "row_count": 11102,
+              "row_percentage": 45.617784
+            }
+          ],
+          "target_label_purity": {
+            "all_groups_have_one_target_label": true,
+            "conflicting_group_count": 0,
+            "conflicting_group_ids": []
+          }
+        },
+        "split_statistics": {
+          "train": {
+            "row_count": 14602,
+            "percentage_of_total_rows": 59.999178,
+            "unique_group_count": 8600,
+            "benign": {
+              "raw_label": 0,
+              "count": 7941,
+              "percentage_of_split": 54.382961
+            },
+            "malicious": {
+              "raw_label": 1,
+              "count": 6661,
+              "percentage_of_split": 45.617039
+            },
+            "raw_label_distribution": [
+              {
+                "raw_label": 0,
+                "count": 7941,
+                "percentage": 54.382961
+              },
+              {
+                "raw_label": 1,
+                "count": 6661,
+                "percentage": 45.617039
+              }
+            ]
+          },
+          "validation": {
+            "row_count": 4868,
+            "percentage_of_total_rows": 20.002465,
+            "unique_group_count": 3386,
+            "benign": {
+              "raw_label": 0,
+              "count": 2647,
+              "percentage_of_split": 54.375514
+            },
+            "malicious": {
+              "raw_label": 1,
+              "count": 2221,
+              "percentage_of_split": 45.624486
+            },
+            "raw_label_distribution": [
+              {
+                "raw_label": 0,
+                "count": 2647,
+                "percentage": 54.375514
+              },
+              {
+                "raw_label": 1,
+                "count": 2221,
+                "percentage": 45.624486
+              }
+            ]
+          },
+          "test": {
+            "row_count": 4867,
+            "percentage_of_total_rows": 19.998356,
+            "unique_group_count": 3385,
+            "benign": {
+              "raw_label": 0,
+              "count": 2647,
+              "percentage_of_split": 54.386686
+            },
+            "malicious": {
+              "raw_label": 1,
+              "count": 2220,
+              "percentage_of_split": 45.613314
+            },
+            "raw_label_distribution": [
+              {
+                "raw_label": 0,
+                "count": 2647,
+                "percentage": 54.386686
+              },
+              {
+                "raw_label": 1,
+                "count": 2220,
+                "percentage": 45.613314
+              }
+            ]
+          }
+        },
+        "hard_validation": {
+          "zero_group_overlap": {
+            "train_validation": 0,
+            "train_test": 0,
+            "validation_test": 0,
+            "is_valid": true
+          },
+          "zero_feature_vector_duplicate_leakage": {
+            "train_validation": 0,
+            "train_test": 0,
+            "validation_test": 0,
+            "is_valid": true,
+            "basis": "Duplicate-group IDs are SHA-256 hashes of all feature values excluding Label."
+          },
+          "all_rows_assigned_exactly_once": {
+            "manifest_row_count": 24337,
+            "source_row_count": 24337,
+            "unique_sample_identifier_count": 24337,
+            "is_valid": true
+          },
+          "target_labels_preserved": {
+            "is_valid": true,
+            "source_distribution": [
+              {
+                "raw_label": 0,
+                "count": 13235,
+                "percentage": 54.382216
+              },
+              {
+                "raw_label": 1,
+                "count": 11102,
+                "percentage": 45.617784
+              }
+            ],
+            "manifest_distribution": [
+              {
+                "raw_label": 0,
+                "count": 13235,
+                "percentage": 54.382216
+              },
+              {
+                "raw_label": 1,
+                "count": 11102,
+                "percentage": 45.617784
+              }
+            ]
+          },
+          "one_split_per_duplicate_group": {
+            "is_valid": true
+          }
+        }
+      },
+      "model_configuration": {
+        "paper_model_name": "Gaussian Naive-Bayes (GNB)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is added; the paper gives no documented reason for it."
+        },
+        "parameters": {
+          "priors": null,
+          "var_smoothing": 1e-09
+        }
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is added; the paper gives no documented reason for it."
+      },
+      "benchmark_code_commit": "2147d0a1e12162ac7092fe797260f0c12a5fe3d6",
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "2147d0a1e12162ac7092fe797260f0c12a5fe3d6",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        }
+      },
+      "reused_seed42_baseline": false,
+      "evaluations": {
+        "validation": {
+          "metrics": {
+            "accuracy": 0.7043960558751027,
+            "precision_malicious": 0.6134648868253048,
+            "recall_malicious": 0.9518235029266097,
+            "f1_malicious": 0.7460737603670372,
+            "precision_macro": 0.7691093773085735,
+            "recall_macro": 0.724306160227944,
+            "f1_macro": 0.6962121075121006,
+            "roc_auc": 0.7780069933816829,
+            "pr_auc": 0.6664338610305005,
+            "mcc": 0.4913772119478849,
+            "tn": 1315,
+            "fp": 1332,
+            "fn": 107,
+            "tp": 2114
+          },
+          "score_source": "predict_proba",
+          "runtime": {
+            "inference_total_seconds": 0.007469899999705376,
+            "inference_milliseconds_per_sample": 0.0015344905504735776
+          },
+          "confusion_counts": {
+            "tn": 1315,
+            "fp": 1332,
+            "fn": 107,
+            "tp": 2114
+          }
+        },
+        "test": {
+          "metrics": {
+            "accuracy": 0.718306965276351,
+            "precision_malicious": 0.6240865244080678,
+            "recall_malicious": 0.9617117117117117,
+            "f1_malicious": 0.7569579861726644,
+            "precision_macro": 0.7826518375843935,
+            "recall_macro": 0.7379393466000945,
+            "f1_macro": 0.710997927853007,
+            "roc_auc": 0.7995540591592725,
+            "pr_auc": 0.687036342296372,
+            "mcc": 0.5186674986931287,
+            "tn": 1361,
+            "fp": 1286,
+            "fn": 85,
+            "tp": 2135
+          },
+          "score_source": "predict_proba",
+          "runtime": {
+            "inference_total_seconds": 0.0074984000020776875,
+            "inference_milliseconds_per_sample": 0.0015406615989475422
+          },
+          "confusion_counts": {
+            "tn": 1361,
+            "fp": 1286,
+            "fn": 85,
+            "tp": 2135
+          }
+        }
+      },
+      "training": {
+        "training_seconds": 0.008011300000362098
+      },
+      "model_artifact": "C:\\Project\\MalPDFDeepDetection\\artifacts\\multiseed\\official-seeds42-46\\models\\g_seed43_gaussian_naive_bayes.joblib",
+      "error": null
+    },
+    {
+      "protocol": "G",
+      "split_seed": 43,
+      "model_random_state": 42,
+      "model_name": "xgboost",
+      "feature_variant": "G-drop3constant",
+      "feature_count": 38,
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T10:58:43.534862Z",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "split_manifest": "C:\\Project\\MalPDFDeepDetection\\data\\processed\\multiseed\\official-seeds42-46\\protocol_g_seed43_manifest.csv",
+      "split_manifest_sha256": "40a0efd9bdd183e1766ad26bed23bc2d7150b8a3d1ba32ac9b2a72d1478d3c41",
+      "split_result": {
+        "seed": 43,
+        "target_column": "Label",
+        "split_proportions": {
+          "train": 0.6,
+          "validation": 0.2,
+          "test": 0.2
+        },
+        "group_statistics": {
+          "total_groups": 15371,
+          "singleton_groups": 14820,
+          "duplicate_groups": 551,
+          "group_size": {
+            "minimum": 1,
+            "median": 1.0,
+            "mean": 1.5833062260100188,
+            "maximum": 1760
+          },
+          "top_20_largest_duplicate_groups": [
+            {
+              "duplicate_group_id": "group_8921066f0ac13af5d9a6e82ca13f5d66a780a827fdfcdebc56f051753687410c",
+              "group_size": 1760,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_670973cb3521fe94080732d952e97ae692550da70c206b4aefb6256c513d7241",
+              "group_size": 842,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_0c2f3c219a7ef02788593f87781accde2d5aebad8cc068193be183a57ec8fb3f",
+              "group_size": 497,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_4eb0ab4eab8fec854c619f2b2faeeb97c4fc74928af476cfe96b80ee48aa9dd1",
+              "group_size": 434,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_4c305631818e7901f2427a3e32f6581bd436aac3ba9049ddb003744144deedb0",
+              "group_size": 421,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_b9c39820b0e632cbbc02a98fe5df1cd72399e2249c4e65f1258ff93932732718",
+              "group_size": 417,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_7032220414105c19277809fc53b184176a0d6d521ad69178c1b3d16bbc41b686",
+              "group_size": 310,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_f51743760b3b0045f0b82194476c7fbc809cc78927e8630a0778b0a2bc2b9274",
+              "group_size": 237,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_ffd980e3fab9c9aa16cf69ee7ab47ddcfc3c3f6323fe3a740742150d39982d5a",
+              "group_size": 218,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_e58efca04622b3ff8eeb4f045923a7a8c8e17961e81f740cd0f016d913184af2",
+              "group_size": 213,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_43c43c0dfc9aa9a8de24ad60a19be211c78f9f00750cf7d739cc7f95b20fd526",
+              "group_size": 157,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_fd9a869be1e1b5d18d0d315a406ac2d68e92749e4de9fbed4265f1af24e9bf20",
+              "group_size": 121,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_1ccf85f677db27dc4270cd82a94baf056b72bcaeda678607a01cf0f41bece82b",
+              "group_size": 109,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_6cab63c8430a221e71429c21cd9fc7daed5bb9d08fefcaa677b8874984c78970",
+              "group_size": 95,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_f47f6f8c06727e28ceda1244645f3a6de61d36c5e51e8b0f32569c7dd04cfaa0",
+              "group_size": 93,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_ea00057b80837649dbb721308122afc93cc3ee1508232094973552d17d35a0f1",
+              "group_size": 81,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_75cf1a27e3090062210c3f036c363a5c131097a229b540631aa026393b23f1b1",
+              "group_size": 75,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_0d6d335974ed841ef3f0273c1aafdfebc8945c211017f78812d3bbdddced7bc9",
+              "group_size": 68,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_59c010b31ec69909952f9706f15d3e41f495c108725889c41619f70d899b8b87",
+              "group_size": 60,
+              "raw_label": 1
+            },
+            {
+              "duplicate_group_id": "group_63116248bc021168e5135a20553d9f9a526f6d548f853917507afda89d986b6d",
+              "group_size": 60,
+              "raw_label": 1
+            }
+          ],
+          "label_distribution_by_group": [
+            {
+              "raw_label": 0,
+              "group_count": 13149,
+              "group_percentage": 85.544207,
+              "row_count": 13235,
+              "row_percentage": 54.382216
+            },
+            {
+              "raw_label": 1,
+              "group_count": 2222,
+              "group_percentage": 14.455793,
+              "row_count": 11102,
+              "row_percentage": 45.617784
+            }
+          ],
+          "target_label_purity": {
+            "all_groups_have_one_target_label": true,
+            "conflicting_group_count": 0,
+            "conflicting_group_ids": []
+          }
+        },
+        "split_statistics": {
+          "train": {
+            "row_count": 14602,
+            "percentage_of_total_rows": 59.999178,
+            "unique_group_count": 8600,
+            "benign": {
+              "raw_label": 0,
+              "count": 7941,
+              "percentage_of_split": 54.382961
+            },
+            "malicious": {
+              "raw_label": 1,
+              "count": 6661,
+              "percentage_of_split": 45.617039
+            },
+            "raw_label_distribution": [
+              {
+                "raw_label": 0,
+                "count": 7941,
+                "percentage": 54.382961
+              },
+              {
+                "raw_label": 1,
+                "count": 6661,
+                "percentage": 45.617039
+              }
+            ]
+          },
+          "validation": {
+            "row_count": 4868,
+            "percentage_of_total_rows": 20.002465,
+            "unique_group_count": 3386,
+            "benign": {
+              "raw_label": 0,
+              "count": 2647,
+              "percentage_of_split": 54.375514
+            },
+            "malicious": {
+              "raw_label": 1,
+              "count": 2221,
+              "percentage_of_split": 45.624486
+            },
+            "raw_label_distribution": [
+              {
+                "raw_label": 0,
+                "count": 2647,
+                "percentage": 54.375514
+              },
+              {
+                "raw_label": 1,
+                "count": 2221,
+                "percentage": 45.624486
+              }
+            ]
+          },
+          "test": {
+            "row_count": 4867,
+            "percentage_of_total_rows": 19.998356,
+            "unique_group_count": 3385,
+            "benign": {
+              "raw_label": 0,
+              "count": 2647,
+              "percentage_of_split": 54.386686
+            },
+            "malicious": {
+              "raw_label": 1,
+              "count": 2220,
+              "percentage_of_split": 45.613314
+            },
+            "raw_label_distribution": [
+              {
+                "raw_label": 0,
+                "count": 2647,
+                "percentage": 54.386686
+              },
+              {
+                "raw_label": 1,
+                "count": 2220,
+                "percentage": 45.613314
+              }
+            ]
+          }
+        },
+        "hard_validation": {
+          "zero_group_overlap": {
+            "train_validation": 0,
+            "train_test": 0,
+            "validation_test": 0,
+            "is_valid": true
+          },
+          "zero_feature_vector_duplicate_leakage": {
+            "train_validation": 0,
+            "train_test": 0,
+            "validation_test": 0,
+            "is_valid": true,
+            "basis": "Duplicate-group IDs are SHA-256 hashes of all feature values excluding Label."
+          },
+          "all_rows_assigned_exactly_once": {
+            "manifest_row_count": 24337,
+            "source_row_count": 24337,
+            "unique_sample_identifier_count": 24337,
+            "is_valid": true
+          },
+          "target_labels_preserved": {
+            "is_valid": true,
+            "source_distribution": [
+              {
+                "raw_label": 0,
+                "count": 13235,
+                "percentage": 54.382216
+              },
+              {
+                "raw_label": 1,
+                "count": 11102,
+                "percentage": 45.617784
+              }
+            ],
+            "manifest_distribution": [
+              {
+                "raw_label": 0,
+                "count": 13235,
+                "percentage": 54.382216
+              },
+              {
+                "raw_label": 1,
+                "count": 11102,
+                "percentage": 45.617784
+              }
+            ]
+          },
+          "one_split_per_duplicate_group": {
+            "is_valid": true
+          }
+        }
+      },
+      "model_configuration": {
+        "paper_model_name": "eXtreme Gradient Boost (XGB)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "base_score": 0.5,
+          "booster": "gbtree",
+          "colsample_bylevel": 1.0,
+          "colsample_bynode": 1.0,
+          "colsample_bytree": 1.0,
+          "eval_metric": "logloss",
+          "gamma": 0.0,
+          "learning_rate": 0.1,
+          "max_delta_step": 0.0,
+          "max_depth": 6,
+          "min_child_weight": 1.0,
+          "missing": "NaN",
+          "n_estimators": 200,
+          "n_jobs": 1,
+          "objective": "binary:logistic",
+          "random_state": 42,
+          "reg_alpha": 0.0,
+          "reg_lambda": 1.0,
+          "scale_pos_weight": 1.0,
+          "subsample": 1.0,
+          "tree_method": "hist",
+          "verbosity": 0
+        },
+        "missing_value_assumption": "The JSON-safe string 'NaN' is converted to the explicit IEEE NaN missing-value sentinel required by XGBoost 3.2 at runtime. This fixes a library compatibility error; it does not alter feature values or tune the model."
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "benchmark_code_commit": "2147d0a1e12162ac7092fe797260f0c12a5fe3d6",
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "2147d0a1e12162ac7092fe797260f0c12a5fe3d6",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        }
+      },
+      "reused_seed42_baseline": false,
+      "evaluations": {
+        "validation": {
+          "metrics": {
+            "accuracy": 0.9753492193919474,
+            "precision_malicious": 0.9981033665244191,
+            "recall_malicious": 0.9477712742008104,
+            "f1_malicious": 0.9722863741339491,
+            "precision_macro": 0.9780295738022603,
+            "recall_macro": 0.973130064754353,
+            "f1_macro": 0.9750444079326793,
+            "roc_auc": 0.9961620939117574,
+            "pr_auc": 0.9967295684877097,
+            "mcc": 0.9511470195665005,
+            "tn": 2643,
+            "fp": 4,
+            "fn": 116,
+            "tp": 2105
+          },
+          "score_source": "predict_proba",
+          "runtime": {
+            "inference_total_seconds": 0.02475820000108797,
+            "inference_milliseconds_per_sample": 0.005085907970642557
+          },
+          "confusion_counts": {
+            "tn": 2643,
+            "fp": 4,
+            "fn": 116,
+            "tp": 2105
+          }
+        },
+        "test": {
+          "metrics": {
+            "accuracy": 0.9710293815492089,
+            "precision_malicious": 0.9976065102920058,
+            "recall_malicious": 0.9387387387387387,
+            "f1_malicious": 0.9672777906706893,
+            "precision_macro": 0.9743252133893434,
+            "recall_macro": 0.9684249039368042,
+            "f1_macro": 0.9706435036302755,
+            "roc_auc": 0.9936189873288476,
+            "pr_auc": 0.994399097769612,
+            "mcc": 0.9427316532645064,
+            "tn": 2642,
+            "fp": 5,
+            "fn": 136,
+            "tp": 2084
+          },
+          "score_source": "predict_proba",
+          "runtime": {
+            "inference_total_seconds": 0.02391219999844907,
+            "inference_milliseconds_per_sample": 0.004913129237404781
+          },
+          "confusion_counts": {
+            "tn": 2642,
+            "fp": 5,
+            "fn": 136,
+            "tp": 2084
+          }
+        }
+      },
+      "training": {
+        "training_seconds": 0.3346029999993334
+      },
+      "model_artifact": "C:\\Project\\MalPDFDeepDetection\\artifacts\\multiseed\\official-seeds42-46\\models\\g_seed43_xgboost.joblib",
+      "error": null
+    }
+  ]
+}

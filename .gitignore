@@ -56,6 +56,8 @@ reports/tables/**
 !reports/tables/.gitkeep
 !reports/figures/protocol_p_vs_g/
 !reports/figures/protocol_p_vs_g/**
+!reports/figures/multiseed/
+!reports/figures/multiseed/**
 !reports/tables/protocol_p_vs_g/
 !reports/tables/protocol_p_vs_g/**
 !reports/tables/metric_semantics/

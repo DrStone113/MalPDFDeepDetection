@@ -1,0 +1,1870 @@
+{
+  "experiment_run_id": "official-seeds42-46",
+  "split_seed": 42,
+  "runs": [
+    {
+      "protocol": "P",
+      "split_seed": 42,
+      "model_random_state": 42,
+      "model_name": "logistic_regression",
+      "feature_variant": "P-drop3constant",
+      "feature_count": 38,
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T10:58:21.127307Z",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "split_manifest": "C:\\Project\\MalPDFDeepDetection\\data\\processed\\protocol_p\\p-seed42-19fcc091\\protocol_p_split_manifest.csv",
+      "split_manifest_sha256": "2fccc71bf7fff0dd94190181cf9d5a638286e264c29c47cf1909260987812443",
+      "split_result": {
+        "all_rows_assigned_exactly_once": {
+          "is_valid": true,
+          "source_row_count": 24337,
+          "manifest_row_count": 24337
+        },
+        "train_test_disjoint": {
+          "is_valid": true,
+          "overlap_count": 0
+        },
+        "target_labels_preserved": {
+          "is_valid": true,
+          "source_distribution": [
+            {
+              "raw_label": 0,
+              "count": 13235,
+              "percentage": 54.382216
+            },
+            {
+              "raw_label": 1,
+              "count": 11102,
+              "percentage": 45.617784
+            }
+          ],
+          "manifest_distribution": [
+            {
+              "raw_label": 0,
+              "count": 13235,
+              "percentage": 54.382216
+            },
+            {
+              "raw_label": 1,
+              "count": 11102,
+              "percentage": 45.617784
+            }
+          ]
+        },
+        "stratification": {
+          "is_valid": true,
+          "tolerance_percentage_points": 0.1,
+          "split_statistics": {
+            "train": {
+              "row_count": 18252,
+              "percentage_of_rows": 74.996918,
+              "label_distribution": [
+                {
+                  "raw_label": 0,
+                  "count": 9926,
+                  "percentage": 54.383081
+                },
+                {
+                  "raw_label": 1,
+                  "count": 8326,
+                  "percentage": 45.616919
+                }
+              ],
+              "benign_label_0_count": 9926,
+              "malicious_label_1_count": 8326
+            },
+            "test": {
+              "row_count": 6085,
+              "percentage_of_rows": 25.003082,
+              "label_distribution": [
+                {
+                  "raw_label": 0,
+                  "count": 3309,
+                  "percentage": 54.379622
+                },
+                {
+                  "raw_label": 1,
+                  "count": 2776,
+                  "percentage": 45.620378
+                }
+              ],
+              "benign_label_0_count": 3309,
+              "malicious_label_1_count": 2776
+            }
+          }
+        }
+      },
+      "model_configuration": {
+        "paper_model_name": "Logistic Regression (LR)",
+        "preprocessing": {
+          "name": "StandardScaler",
+          "fit_scope": "training partition only",
+          "paper_status": "Scaling is a project assumption; the paper does not specify it."
+        },
+        "parameters": {
+          "C": 1.0,
+          "class_weight": null,
+          "fit_intercept": true,
+          "l1_ratio": 0.0,
+          "max_iter": 1000,
+          "random_state": 42,
+          "solver": "liblinear",
+          "tol": 0.0001
+        },
+        "regularization_assumption": "L2 regularization, represented by l1_ratio=0.0 for scikit-learn 1.8+ compatibility. This is a project assumption; the paper does not specify it."
+      },
+      "preprocessing_configuration": {
+        "name": "StandardScaler",
+        "fit_scope": "training partition only",
+        "paper_status": "Scaling is a project assumption; the paper does not specify it."
+      },
+      "benchmark_code_commit": "3e970ef2df0460fb4a51b10418c9af7564339419",
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "3e970ef2df0460fb4a51b10418c9af7564339419",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        },
+        "benchmark_timestamp_utc": "2026-08-28T06:48:09.274383Z"
+      },
+      "reused_seed42_baseline": true,
+      "evaluations": {
+        "test": {
+          "metrics": {
+            "accuracy": 0.9319638455217748,
+            "precision_malicious": 0.9338721528288023,
+            "recall_malicious": 0.9157060518731989,
+            "f1_malicious": 0.924699890869407,
+            "precision_macro": 0.9321457106695306,
+            "recall_macro": 0.9306544765259013,
+            "f1_macro": 0.9313247655785883,
+            "roc_auc": 0.9820619557350794,
+            "pr_auc": 0.9797374638494494,
+            "mcc": 0.8627988984955888,
+            "tn": 3129,
+            "fp": 180,
+            "fn": 234,
+            "tp": 2542
+          },
+          "score_source": "predict_proba",
+          "runtime": {
+            "training_seconds": 1.1028566000004503,
+            "test_inference_total_seconds": 0.015540899999905378,
+            "test_inference_milliseconds_per_sample": 0.002553968775662346
+          },
+          "confusion_counts": {
+            "tn": 3129,
+            "fp": 180,
+            "fn": 234,
+            "tp": 2542
+          }
+        }
+      },
+      "training": {
+        "training_seconds": 1.1028566000004503,
+        "test_inference_total_seconds": 0.015540899999905378,
+        "test_inference_milliseconds_per_sample": 0.002553968775662346
+      },
+      "model_artifact": null,
+      "error": null
+    },
+    {
+      "protocol": "P",
+      "split_seed": 42,
+      "model_random_state": 42,
+      "model_name": "random_forest",
+      "feature_variant": "P-drop3constant",
+      "feature_count": 38,
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T10:58:21.130826Z",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "split_manifest": "C:\\Project\\MalPDFDeepDetection\\data\\processed\\protocol_p\\p-seed42-19fcc091\\protocol_p_split_manifest.csv",
+      "split_manifest_sha256": "2fccc71bf7fff0dd94190181cf9d5a638286e264c29c47cf1909260987812443",
+      "split_result": {
+        "all_rows_assigned_exactly_once": {
+          "is_valid": true,
+          "source_row_count": 24337,
+          "manifest_row_count": 24337
+        },
+        "train_test_disjoint": {
+          "is_valid": true,
+          "overlap_count": 0
+        },
+        "target_labels_preserved": {
+          "is_valid": true,
+          "source_distribution": [
+            {
+              "raw_label": 0,
+              "count": 13235,
+              "percentage": 54.382216
+            },
+            {
+              "raw_label": 1,
+              "count": 11102,
+              "percentage": 45.617784
+            }
+          ],
+          "manifest_distribution": [
+            {
+              "raw_label": 0,
+              "count": 13235,
+              "percentage": 54.382216
+            },
+            {
+              "raw_label": 1,
+              "count": 11102,
+              "percentage": 45.617784
+            }
+          ]
+        },
+        "stratification": {
+          "is_valid": true,
+          "tolerance_percentage_points": 0.1,
+          "split_statistics": {
+            "train": {
+              "row_count": 18252,
+              "percentage_of_rows": 74.996918,
+              "label_distribution": [
+                {
+                  "raw_label": 0,
+                  "count": 9926,
+                  "percentage": 54.383081
+                },
+                {
+                  "raw_label": 1,
+                  "count": 8326,
+                  "percentage": 45.616919
+                }
+              ],
+              "benign_label_0_count": 9926,
+              "malicious_label_1_count": 8326
+            },
+            "test": {
+              "row_count": 6085,
+              "percentage_of_rows": 25.003082,
+              "label_distribution": [
+                {
+                  "raw_label": 0,
+                  "count": 3309,
+                  "percentage": 54.379622
+                },
+                {
+                  "raw_label": 1,
+                  "count": 2776,
+                  "percentage": 45.620378
+                }
+              ],
+              "benign_label_0_count": 3309,
+              "malicious_label_1_count": 2776
+            }
+          }
+        }
+      },
+      "model_configuration": {
+        "paper_model_name": "Random Forest (RF)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "bootstrap": true,
+          "class_weight": null,
+          "criterion": "gini",
+          "max_depth": null,
+          "max_features": "sqrt",
+          "min_samples_leaf": 1,
+          "min_samples_split": 2,
+          "n_estimators": 200,
+          "n_jobs": 1,
+          "random_state": 42
+        }
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "benchmark_code_commit": "3e970ef2df0460fb4a51b10418c9af7564339419",
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "3e970ef2df0460fb4a51b10418c9af7564339419",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        },
+        "benchmark_timestamp_utc": "2026-08-28T06:48:09.274383Z"
+      },
+      "reused_seed42_baseline": true,
+      "evaluations": {
+        "test": {
+          "metrics": {
+            "accuracy": 0.9909613804437141,
+            "precision_malicious": 0.9978046103183315,
+            "recall_malicious": 0.9823487031700289,
+            "f1_malicious": 0.9900163369032493,
+            "precision_macro": 0.9915932359467552,
+            "recall_macro": 0.9902677332713246,
+            "f1_macro": 0.9908796592187767,
+            "roc_auc": 0.9992005037349017,
+            "pr_auc": 0.9991570418229396,
+            "mcc": 0.9818600745098685,
+            "tn": 3303,
+            "fp": 6,
+            "fn": 49,
+            "tp": 2727
+          },
+          "score_source": "predict_proba",
+          "runtime": {
+            "training_seconds": 3.4456749000000855,
+            "test_inference_total_seconds": 0.18694909999976517,
+            "test_inference_milliseconds_per_sample": 0.030722941659780637
+          },
+          "confusion_counts": {
+            "tn": 3303,
+            "fp": 6,
+            "fn": 49,
+            "tp": 2727
+          }
+        }
+      },
+      "training": {
+        "training_seconds": 3.4456749000000855,
+        "test_inference_total_seconds": 0.18694909999976517,
+        "test_inference_milliseconds_per_sample": 0.030722941659780637
+      },
+      "model_artifact": null,
+      "error": null
+    },
+    {
+      "protocol": "P",
+      "split_seed": 42,
+      "model_random_state": 42,
+      "model_name": "decision_tree",
+      "feature_variant": "P-drop3constant",
+      "feature_count": 38,
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T10:58:21.132825Z",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "split_manifest": "C:\\Project\\MalPDFDeepDetection\\data\\processed\\protocol_p\\p-seed42-19fcc091\\protocol_p_split_manifest.csv",
+      "split_manifest_sha256": "2fccc71bf7fff0dd94190181cf9d5a638286e264c29c47cf1909260987812443",
+      "split_result": {
+        "all_rows_assigned_exactly_once": {
+          "is_valid": true,
+          "source_row_count": 24337,
+          "manifest_row_count": 24337
+        },
+        "train_test_disjoint": {
+          "is_valid": true,
+          "overlap_count": 0
+        },
+        "target_labels_preserved": {
+          "is_valid": true,
+          "source_distribution": [
+            {
+              "raw_label": 0,
+              "count": 13235,
+              "percentage": 54.382216
+            },
+            {
+              "raw_label": 1,
+              "count": 11102,
+              "percentage": 45.617784
+            }
+          ],
+          "manifest_distribution": [
+            {
+              "raw_label": 0,
+              "count": 13235,
+              "percentage": 54.382216
+            },
+            {
+              "raw_label": 1,
+              "count": 11102,
+              "percentage": 45.617784
+            }
+          ]
+        },
+        "stratification": {
+          "is_valid": true,
+          "tolerance_percentage_points": 0.1,
+          "split_statistics": {
+            "train": {
+              "row_count": 18252,
+              "percentage_of_rows": 74.996918,
+              "label_distribution": [
+                {
+                  "raw_label": 0,
+                  "count": 9926,
+                  "percentage": 54.383081
+                },
+                {
+                  "raw_label": 1,
+                  "count": 8326,
+                  "percentage": 45.616919
+                }
+              ],
+              "benign_label_0_count": 9926,
+              "malicious_label_1_count": 8326
+            },
+            "test": {
+              "row_count": 6085,
+              "percentage_of_rows": 25.003082,
+              "label_distribution": [
+                {
+                  "raw_label": 0,
+                  "count": 3309,
+                  "percentage": 54.379622
+                },
+                {
+                  "raw_label": 1,
+                  "count": 2776,
+                  "percentage": 45.620378
+                }
+              ],
+              "benign_label_0_count": 3309,
+              "malicious_label_1_count": 2776
+            }
+          }
+        }
+      },
+      "model_configuration": {
+        "paper_model_name": "Decision Tree (DT)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "class_weight": null,
+          "criterion": "gini",
+          "max_depth": null,
+          "max_features": null,
+          "min_samples_leaf": 1,
+          "min_samples_split": 2,
+          "random_state": 42,
+          "splitter": "best"
+        }
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "benchmark_code_commit": "3e970ef2df0460fb4a51b10418c9af7564339419",
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "3e970ef2df0460fb4a51b10418c9af7564339419",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        },
+        "benchmark_timestamp_utc": "2026-08-28T06:48:09.274383Z"
+      },
+      "reused_seed42_baseline": true,
+      "evaluations": {
+        "test": {
+          "metrics": {
+            "accuracy": 0.9850451930977814,
+            "precision_malicious": 0.9799785484447623,
+            "recall_malicious": 0.9873919308357348,
+            "f1_malicious": 0.9836712722052755,
+            "precision_macro": 0.9846668897941573,
+            "recall_macro": 0.9852341944900946,
+            "f1_macro": 0.9849385616748675,
+            "roc_auc": 0.9852341944900948,
+            "pr_auc": 0.9733747599350202,
+            "mcc": 0.969900918373186,
+            "tn": 3253,
+            "fp": 56,
+            "fn": 35,
+            "tp": 2741
+          },
+          "score_source": "predict_proba",
+          "runtime": {
+            "training_seconds": 0.12357100000008359,
+            "test_inference_total_seconds": 0.006295799999861629,
+            "test_inference_milliseconds_per_sample": 0.0010346425636584436
+          },
+          "confusion_counts": {
+            "tn": 3253,
+            "fp": 56,
+            "fn": 35,
+            "tp": 2741
+          }
+        }
+      },
+      "training": {
+        "training_seconds": 0.12357100000008359,
+        "test_inference_total_seconds": 0.006295799999861629,
+        "test_inference_milliseconds_per_sample": 0.0010346425636584436
+      },
+      "model_artifact": null,
+      "error": null
+    },
+    {
+      "protocol": "P",
+      "split_seed": 42,
+      "model_random_state": 42,
+      "model_name": "gaussian_naive_bayes",
+      "feature_variant": "P-drop3constant",
+      "feature_count": 38,
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T10:58:21.137332Z",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "split_manifest": "C:\\Project\\MalPDFDeepDetection\\data\\processed\\protocol_p\\p-seed42-19fcc091\\protocol_p_split_manifest.csv",
+      "split_manifest_sha256": "2fccc71bf7fff0dd94190181cf9d5a638286e264c29c47cf1909260987812443",
+      "split_result": {
+        "all_rows_assigned_exactly_once": {
+          "is_valid": true,
+          "source_row_count": 24337,
+          "manifest_row_count": 24337
+        },
+        "train_test_disjoint": {
+          "is_valid": true,
+          "overlap_count": 0
+        },
+        "target_labels_preserved": {
+          "is_valid": true,
+          "source_distribution": [
+            {
+              "raw_label": 0,
+              "count": 13235,
+              "percentage": 54.382216
+            },
+            {
+              "raw_label": 1,
+              "count": 11102,
+              "percentage": 45.617784
+            }
+          ],
+          "manifest_distribution": [
+            {
+              "raw_label": 0,
+              "count": 13235,
+              "percentage": 54.382216
+            },
+            {
+              "raw_label": 1,
+              "count": 11102,
+              "percentage": 45.617784
+            }
+          ]
+        },
+        "stratification": {
+          "is_valid": true,
+          "tolerance_percentage_points": 0.1,
+          "split_statistics": {
+            "train": {
+              "row_count": 18252,
+              "percentage_of_rows": 74.996918,
+              "label_distribution": [
+                {
+                  "raw_label": 0,
+                  "count": 9926,
+                  "percentage": 54.383081
+                },
+                {
+                  "raw_label": 1,
+                  "count": 8326,
+                  "percentage": 45.616919
+                }
+              ],
+              "benign_label_0_count": 9926,
+              "malicious_label_1_count": 8326
+            },
+            "test": {
+              "row_count": 6085,
+              "percentage_of_rows": 25.003082,
+              "label_distribution": [
+                {
+                  "raw_label": 0,
+                  "count": 3309,
+                  "percentage": 54.379622
+                },
+                {
+                  "raw_label": 1,
+                  "count": 2776,
+                  "percentage": 45.620378
+                }
+              ],
+              "benign_label_0_count": 3309,
+              "malicious_label_1_count": 2776
+            }
+          }
+        }
+      },
+      "model_configuration": {
+        "paper_model_name": "Gaussian Naive-Bayes (GNB)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is added; the paper gives no documented reason for it."
+        },
+        "parameters": {
+          "priors": null,
+          "var_smoothing": 1e-09
+        }
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is added; the paper gives no documented reason for it."
+      },
+      "benchmark_code_commit": "3e970ef2df0460fb4a51b10418c9af7564339419",
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "3e970ef2df0460fb4a51b10418c9af7564339419",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        },
+        "benchmark_timestamp_utc": "2026-08-28T06:48:09.274383Z"
+      },
+      "reused_seed42_baseline": true,
+      "evaluations": {
+        "test": {
+          "metrics": {
+            "accuracy": 0.589975349219392,
+            "precision_malicious": 0.5269311865056546,
+            "recall_malicious": 0.9902737752161384,
+            "f1_malicious": 0.6878518703865883,
+            "precision_macro": 0.7479125978611223,
+            "recall_macro": 0.622214554576942,
+            "f1_macro": 0.5452666103189825,
+            "roc_auc": 0.916235402443602,
+            "pr_auc": 0.8788224711032161,
+            "mcc": 0.34812944558947945,
+            "tn": 841,
+            "fp": 2468,
+            "fn": 27,
+            "tp": 2749
+          },
+          "score_source": "predict_proba",
+          "runtime": {
+            "training_seconds": 0.01822819999870262,
+            "test_inference_total_seconds": 0.018595300000015413,
+            "test_inference_milliseconds_per_sample": 0.003055924404275335
+          },
+          "confusion_counts": {
+            "tn": 841,
+            "fp": 2468,
+            "fn": 27,
+            "tp": 2749
+          }
+        }
+      },
+      "training": {
+        "training_seconds": 0.01822819999870262,
+        "test_inference_total_seconds": 0.018595300000015413,
+        "test_inference_milliseconds_per_sample": 0.003055924404275335
+      },
+      "model_artifact": null,
+      "error": null
+    },
+    {
+      "protocol": "P",
+      "split_seed": 42,
+      "model_random_state": 42,
+      "model_name": "xgboost",
+      "feature_variant": "P-drop3constant",
+      "feature_count": 38,
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T10:58:21.140333Z",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "split_manifest": "C:\\Project\\MalPDFDeepDetection\\data\\processed\\protocol_p\\p-seed42-19fcc091\\protocol_p_split_manifest.csv",
+      "split_manifest_sha256": "2fccc71bf7fff0dd94190181cf9d5a638286e264c29c47cf1909260987812443",
+      "split_result": {
+        "all_rows_assigned_exactly_once": {
+          "is_valid": true,
+          "source_row_count": 24337,
+          "manifest_row_count": 24337
+        },
+        "train_test_disjoint": {
+          "is_valid": true,
+          "overlap_count": 0
+        },
+        "target_labels_preserved": {
+          "is_valid": true,
+          "source_distribution": [
+            {
+              "raw_label": 0,
+              "count": 13235,
+              "percentage": 54.382216
+            },
+            {
+              "raw_label": 1,
+              "count": 11102,
+              "percentage": 45.617784
+            }
+          ],
+          "manifest_distribution": [
+            {
+              "raw_label": 0,
+              "count": 13235,
+              "percentage": 54.382216
+            },
+            {
+              "raw_label": 1,
+              "count": 11102,
+              "percentage": 45.617784
+            }
+          ]
+        },
+        "stratification": {
+          "is_valid": true,
+          "tolerance_percentage_points": 0.1,
+          "split_statistics": {
+            "train": {
+              "row_count": 18252,
+              "percentage_of_rows": 74.996918,
+              "label_distribution": [
+                {
+                  "raw_label": 0,
+                  "count": 9926,
+                  "percentage": 54.383081
+                },
+                {
+                  "raw_label": 1,
+                  "count": 8326,
+                  "percentage": 45.616919
+                }
+              ],
+              "benign_label_0_count": 9926,
+              "malicious_label_1_count": 8326
+            },
+            "test": {
+              "row_count": 6085,
+              "percentage_of_rows": 25.003082,
+              "label_distribution": [
+                {
+                  "raw_label": 0,
+                  "count": 3309,
+                  "percentage": 54.379622
+                },
+                {
+                  "raw_label": 1,
+                  "count": 2776,
+                  "percentage": 45.620378
+                }
+              ],
+              "benign_label_0_count": 3309,
+              "malicious_label_1_count": 2776
+            }
+          }
+        }
+      },
+      "model_configuration": {
+        "paper_model_name": "eXtreme Gradient Boost (XGB)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "base_score": 0.5,
+          "booster": "gbtree",
+          "colsample_bylevel": 1.0,
+          "colsample_bynode": 1.0,
+          "colsample_bytree": 1.0,
+          "eval_metric": "logloss",
+          "gamma": 0.0,
+          "learning_rate": 0.1,
+          "max_delta_step": 0.0,
+          "max_depth": 6,
+          "min_child_weight": 1.0,
+          "missing": "NaN",
+          "n_estimators": 200,
+          "n_jobs": 1,
+          "objective": "binary:logistic",
+          "random_state": 42,
+          "reg_alpha": 0.0,
+          "reg_lambda": 1.0,
+          "scale_pos_weight": 1.0,
+          "subsample": 1.0,
+          "tree_method": "hist",
+          "verbosity": 0
+        },
+        "missing_value_assumption": "The JSON-safe string 'NaN' is converted to the explicit IEEE NaN missing-value sentinel required by XGBoost 3.2 at runtime. This fixes a library compatibility error; it does not alter feature values or tune the model."
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "benchmark_code_commit": "3e970ef2df0460fb4a51b10418c9af7564339419",
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "3e970ef2df0460fb4a51b10418c9af7564339419",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        },
+        "benchmark_timestamp_utc": "2026-08-28T06:48:09.274383Z"
+      },
+      "reused_seed42_baseline": true,
+      "evaluations": {
+        "test": {
+          "metrics": {
+            "accuracy": 0.9926047658175843,
+            "precision_malicious": 0.9970877320713506,
+            "recall_malicious": 0.986671469740634,
+            "f1_malicious": 0.9918522542096687,
+            "precision_macro": 0.9930016251728833,
+            "recall_macro": 0.9921269104520638,
+            "f1_macro": 0.9925411413969962,
+            "roc_auc": 0.9989569208246133,
+            "pr_auc": 0.9990223716920171,
+            "mcc": 0.9851281472867932,
+            "tn": 3301,
+            "fp": 8,
+            "fn": 37,
+            "tp": 2739
+          },
+          "score_source": "predict_proba",
+          "runtime": {
+            "training_seconds": 0.6836803999995027,
+            "test_inference_total_seconds": 0.05328699999881792,
+            "test_inference_milliseconds_per_sample": 0.008757107641547726
+          },
+          "confusion_counts": {
+            "tn": 3301,
+            "fp": 8,
+            "fn": 37,
+            "tp": 2739
+          }
+        }
+      },
+      "training": {
+        "training_seconds": 0.6836803999995027,
+        "test_inference_total_seconds": 0.05328699999881792,
+        "test_inference_milliseconds_per_sample": 0.008757107641547726
+      },
+      "model_artifact": null,
+      "error": null
+    },
+    {
+      "protocol": "G",
+      "split_seed": 42,
+      "model_random_state": 42,
+      "model_name": "logistic_regression",
+      "feature_variant": "G-drop3constant",
+      "feature_count": 38,
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T10:58:21.144332Z",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "split_manifest": "C:\\Project\\MalPDFDeepDetection\\data\\processed\\rit-pdfmal-2026_split_manifest.csv",
+      "split_manifest_sha256": "802c3962bc537ed78f63c5b1a5308e09df357a096f703846d0e5fe57598b4e21",
+      "split_result": {
+        "seed": 42,
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "split_manifest_sha256": "802c3962bc537ed78f63c5b1a5308e09df357a096f703846d0e5fe57598b4e21",
+        "split_manifest": "C:\\Project\\MalPDFDeepDetection\\data\\processed\\rit-pdfmal-2026_split_manifest.csv",
+        "split_report": "C:\\Project\\MalPDFDeepDetection\\reports\\rit-pdfmal-2026_split_report.json",
+        "partition_statistics": {
+          "train": {
+            "rows": 14602,
+            "groups": 8600,
+            "label_0": 7941,
+            "label_1": 6661
+          },
+          "validation": {
+            "rows": 4868,
+            "groups": 3386,
+            "label_0": 2647,
+            "label_1": 2221
+          },
+          "test": {
+            "rows": 4867,
+            "groups": 3385,
+            "label_0": 2647,
+            "label_1": 2220
+          }
+        },
+        "total_rows": 24337,
+        "total_feature_equivalent_groups": 15371,
+        "hard_validation": {
+          "zero_group_overlap": {
+            "train_validation": 0,
+            "train_test": 0,
+            "validation_test": 0,
+            "is_valid": true
+          },
+          "zero_exact_feature_vector_overlap": {
+            "is_valid": true,
+            "basis": "Feature-equivalent groups are canonical hashes of all 41 static feature values, excluding Label."
+          },
+          "all_rows_assigned_exactly_once": {
+            "manifest_row_count": 24337,
+            "source_row_count": 24337,
+            "unique_sample_identifier_count": 24337,
+            "is_valid": true,
+            "raw_sample_identifier_count": 24337
+          },
+          "labels_and_group_ids_match_raw_dataset": {
+            "is_valid": true
+          },
+          "feature_equivalent_group_label_purity": {
+            "is_valid": true,
+            "conflicting_group_count": 0
+          }
+        },
+        "terminology": "Groups represent identical static feature vectors, not proven duplicate PDF files."
+      },
+      "model_configuration": {
+        "paper_model_name": "Logistic Regression (LR)",
+        "preprocessing": {
+          "name": "StandardScaler",
+          "fit_scope": "training partition only",
+          "paper_status": "Scaling is a project assumption; the paper does not specify it."
+        },
+        "parameters": {
+          "C": 1.0,
+          "class_weight": null,
+          "fit_intercept": true,
+          "l1_ratio": 0.0,
+          "max_iter": 1000,
+          "random_state": 42,
+          "solver": "liblinear",
+          "tol": 0.0001
+        },
+        "regularization_assumption": "L2 regularization, represented by l1_ratio=0.0 for scikit-learn 1.8+ compatibility. This is a project assumption; the paper does not specify it."
+      },
+      "preprocessing_configuration": {
+        "name": "StandardScaler",
+        "fit_scope": "training partition only",
+        "paper_status": "Scaling is a project assumption; the paper does not specify it."
+      },
+      "benchmark_code_commit": "c2aefaaca8cd2257ed610efeba88f24a7cbbb460",
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "c2aefaaca8cd2257ed610efeba88f24a7cbbb460",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        },
+        "benchmark_timestamp_utc": "2026-08-28T07:13:37.332474Z"
+      },
+      "reused_seed42_baseline": true,
+      "evaluations": {
+        "validation": {
+          "metrics": {
+            "accuracy": 0.9120788824979458,
+            "precision_malicious": 0.9599794766546947,
+            "recall_malicious": 0.8424133273300315,
+            "f1_malicious": 0.8973621103117506,
+            "precision_macro": 0.9200376999580429,
+            "recall_macro": 0.9064730029169992,
+            "f1_macro": 0.9102333368662598,
+            "roc_auc": 0.9709307062594287,
+            "pr_auc": 0.9703186911240992,
+            "mcc": 0.8263993834467572,
+            "tn": 2569,
+            "fp": 78,
+            "fn": 350,
+            "tp": 1871
+          },
+          "score_source": "predict_proba",
+          "runtime": {
+            "inference_total_seconds": 0.01102780000110215,
+            "inference_milliseconds_per_sample": 0.0022653656534720934
+          },
+          "confusion_counts": {
+            "tn": 2569,
+            "fp": 78,
+            "fn": 350,
+            "tp": 1871
+          }
+        },
+        "test": {
+          "metrics": {
+            "accuracy": 0.9032258064516129,
+            "precision_malicious": 0.9496143958868895,
+            "recall_malicious": 0.831981981981982,
+            "f1_malicious": 0.8869147659063626,
+            "precision_macro": 0.9109810514684276,
+            "recall_macro": 0.8974794685127137,
+            "f1_macro": 0.9011697190997068,
+            "roc_auc": 0.965876038486541,
+            "pr_auc": 0.9630259658999213,
+            "mcc": 0.8083477714609395,
+            "tn": 2549,
+            "fp": 98,
+            "fn": 373,
+            "tp": 1847
+          },
+          "score_source": "predict_proba",
+          "runtime": {
+            "inference_total_seconds": 0.010134799998922972,
+            "inference_milliseconds_per_sample": 0.0020823505237154245
+          },
+          "confusion_counts": {
+            "tn": 2549,
+            "fp": 98,
+            "fn": 373,
+            "tp": 1847
+          }
+        }
+      },
+      "training": {
+        "training_seconds": 0.49240849999841885
+      },
+      "model_artifact": null,
+      "error": null
+    },
+    {
+      "protocol": "G",
+      "split_seed": 42,
+      "model_random_state": 42,
+      "model_name": "random_forest",
+      "feature_variant": "G-drop3constant",
+      "feature_count": 38,
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T10:58:21.147361Z",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "split_manifest": "C:\\Project\\MalPDFDeepDetection\\data\\processed\\rit-pdfmal-2026_split_manifest.csv",
+      "split_manifest_sha256": "802c3962bc537ed78f63c5b1a5308e09df357a096f703846d0e5fe57598b4e21",
+      "split_result": {
+        "seed": 42,
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "split_manifest_sha256": "802c3962bc537ed78f63c5b1a5308e09df357a096f703846d0e5fe57598b4e21",
+        "split_manifest": "C:\\Project\\MalPDFDeepDetection\\data\\processed\\rit-pdfmal-2026_split_manifest.csv",
+        "split_report": "C:\\Project\\MalPDFDeepDetection\\reports\\rit-pdfmal-2026_split_report.json",
+        "partition_statistics": {
+          "train": {
+            "rows": 14602,
+            "groups": 8600,
+            "label_0": 7941,
+            "label_1": 6661
+          },
+          "validation": {
+            "rows": 4868,
+            "groups": 3386,
+            "label_0": 2647,
+            "label_1": 2221
+          },
+          "test": {
+            "rows": 4867,
+            "groups": 3385,
+            "label_0": 2647,
+            "label_1": 2220
+          }
+        },
+        "total_rows": 24337,
+        "total_feature_equivalent_groups": 15371,
+        "hard_validation": {
+          "zero_group_overlap": {
+            "train_validation": 0,
+            "train_test": 0,
+            "validation_test": 0,
+            "is_valid": true
+          },
+          "zero_exact_feature_vector_overlap": {
+            "is_valid": true,
+            "basis": "Feature-equivalent groups are canonical hashes of all 41 static feature values, excluding Label."
+          },
+          "all_rows_assigned_exactly_once": {
+            "manifest_row_count": 24337,
+            "source_row_count": 24337,
+            "unique_sample_identifier_count": 24337,
+            "is_valid": true,
+            "raw_sample_identifier_count": 24337
+          },
+          "labels_and_group_ids_match_raw_dataset": {
+            "is_valid": true
+          },
+          "feature_equivalent_group_label_purity": {
+            "is_valid": true,
+            "conflicting_group_count": 0
+          }
+        },
+        "terminology": "Groups represent identical static feature vectors, not proven duplicate PDF files."
+      },
+      "model_configuration": {
+        "paper_model_name": "Random Forest (RF)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "bootstrap": true,
+          "class_weight": null,
+          "criterion": "gini",
+          "max_depth": null,
+          "max_features": "sqrt",
+          "min_samples_leaf": 1,
+          "min_samples_split": 2,
+          "n_estimators": 200,
+          "n_jobs": 1,
+          "random_state": 42
+        }
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "benchmark_code_commit": "c2aefaaca8cd2257ed610efeba88f24a7cbbb460",
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "c2aefaaca8cd2257ed610efeba88f24a7cbbb460",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        },
+        "benchmark_timestamp_utc": "2026-08-28T07:13:37.332474Z"
+      },
+      "reused_seed42_baseline": true,
+      "evaluations": {
+        "validation": {
+          "metrics": {
+            "accuracy": 0.9767871815940838,
+            "precision_malicious": 0.998109640831758,
+            "recall_malicious": 0.9509230076542098,
+            "f1_malicious": 0.9739451233571592,
+            "precision_macro": 0.9792510413461115,
+            "recall_macro": 0.9747059314810528,
+            "f1_macro": 0.9765076607710041,
+            "roc_auc": 0.9974748200667903,
+            "pr_auc": 0.9976488645254443,
+            "mcc": 0.9539461452209352,
+            "tn": 2643,
+            "fp": 4,
+            "fn": 109,
+            "tp": 2112
+          },
+          "score_source": "predict_proba",
+          "runtime": {
+            "inference_total_seconds": 0.15978609999910987,
+            "inference_milliseconds_per_sample": 0.032823767460786746
+          },
+          "confusion_counts": {
+            "tn": 2643,
+            "fp": 4,
+            "fn": 109,
+            "tp": 2112
+          }
+        },
+        "test": {
+          "metrics": {
+            "accuracy": 0.9747277583727142,
+            "precision_malicious": 0.9971550497866287,
+            "recall_malicious": 0.9472972972972973,
+            "f1_malicious": 0.9715869715869715,
+            "precision_macro": 0.9773665024132563,
+            "recall_macro": 0.9725152901295704,
+            "f1_macro": 0.9744151324169825,
+            "roc_auc": 0.997856063468077,
+            "pr_auc": 0.997762065979853,
+            "mcc": 0.9498694044676629,
+            "tn": 2641,
+            "fp": 6,
+            "fn": 117,
+            "tp": 2103
+          },
+          "score_source": "predict_proba",
+          "runtime": {
+            "inference_total_seconds": 0.15403880000121717,
+            "inference_milliseconds_per_sample": 0.03164964043583669
+          },
+          "confusion_counts": {
+            "tn": 2641,
+            "fp": 6,
+            "fn": 117,
+            "tp": 2103
+          }
+        }
+      },
+      "training": {
+        "training_seconds": 2.587710199999492
+      },
+      "model_artifact": null,
+      "error": null
+    },
+    {
+      "protocol": "G",
+      "split_seed": 42,
+      "model_random_state": 42,
+      "model_name": "decision_tree",
+      "feature_variant": "G-drop3constant",
+      "feature_count": 38,
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T10:58:21.151360Z",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "split_manifest": "C:\\Project\\MalPDFDeepDetection\\data\\processed\\rit-pdfmal-2026_split_manifest.csv",
+      "split_manifest_sha256": "802c3962bc537ed78f63c5b1a5308e09df357a096f703846d0e5fe57598b4e21",
+      "split_result": {
+        "seed": 42,
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "split_manifest_sha256": "802c3962bc537ed78f63c5b1a5308e09df357a096f703846d0e5fe57598b4e21",
+        "split_manifest": "C:\\Project\\MalPDFDeepDetection\\data\\processed\\rit-pdfmal-2026_split_manifest.csv",
+        "split_report": "C:\\Project\\MalPDFDeepDetection\\reports\\rit-pdfmal-2026_split_report.json",
+        "partition_statistics": {
+          "train": {
+            "rows": 14602,
+            "groups": 8600,
+            "label_0": 7941,
+            "label_1": 6661
+          },
+          "validation": {
+            "rows": 4868,
+            "groups": 3386,
+            "label_0": 2647,
+            "label_1": 2221
+          },
+          "test": {
+            "rows": 4867,
+            "groups": 3385,
+            "label_0": 2647,
+            "label_1": 2220
+          }
+        },
+        "total_rows": 24337,
+        "total_feature_equivalent_groups": 15371,
+        "hard_validation": {
+          "zero_group_overlap": {
+            "train_validation": 0,
+            "train_test": 0,
+            "validation_test": 0,
+            "is_valid": true
+          },
+          "zero_exact_feature_vector_overlap": {
+            "is_valid": true,
+            "basis": "Feature-equivalent groups are canonical hashes of all 41 static feature values, excluding Label."
+          },
+          "all_rows_assigned_exactly_once": {
+            "manifest_row_count": 24337,
+            "source_row_count": 24337,
+            "unique_sample_identifier_count": 24337,
+            "is_valid": true,
+            "raw_sample_identifier_count": 24337
+          },
+          "labels_and_group_ids_match_raw_dataset": {
+            "is_valid": true
+          },
+          "feature_equivalent_group_label_purity": {
+            "is_valid": true,
+            "conflicting_group_count": 0
+          }
+        },
+        "terminology": "Groups represent identical static feature vectors, not proven duplicate PDF files."
+      },
+      "model_configuration": {
+        "paper_model_name": "Decision Tree (DT)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "class_weight": null,
+          "criterion": "gini",
+          "max_depth": null,
+          "max_features": null,
+          "min_samples_leaf": 1,
+          "min_samples_split": 2,
+          "random_state": 42,
+          "splitter": "best"
+        }
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "benchmark_code_commit": "c2aefaaca8cd2257ed610efeba88f24a7cbbb460",
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "c2aefaaca8cd2257ed610efeba88f24a7cbbb460",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        },
+        "benchmark_timestamp_utc": "2026-08-28T07:13:37.332474Z"
+      },
+      "reused_seed42_baseline": true,
+      "evaluations": {
+        "validation": {
+          "metrics": {
+            "accuracy": 0.9459737058340181,
+            "precision_malicious": 0.9865805168986084,
+            "recall_malicious": 0.8937415578568213,
+            "f1_malicious": 0.9378691235530356,
+            "precision_macro": 0.9519737318386599,
+            "recall_macro": 0.9417706655925587,
+            "f1_macro": 0.9450385050801704,
+            "roc_auc": 0.9417706655925587,
+            "pr_auc": 0.9302278766533203,
+            "mcc": 0.8936861559736,
+            "tn": 2620,
+            "fp": 27,
+            "fn": 236,
+            "tp": 1985
+          },
+          "score_source": "predict_proba",
+          "runtime": {
+            "inference_total_seconds": 0.006534399999509333,
+            "inference_milliseconds_per_sample": 0.0013423171732763624
+          },
+          "confusion_counts": {
+            "tn": 2620,
+            "fp": 27,
+            "fn": 236,
+            "tp": 1985
+          }
+        },
+        "test": {
+          "metrics": {
+            "accuracy": 0.9658927470721184,
+            "precision_malicious": 0.9830667920978363,
+            "recall_malicious": 0.9414414414414415,
+            "f1_malicious": 0.9618039576622182,
+            "precision_macro": 0.9678194230463644,
+            "recall_macro": 0.9639205696062516,
+            "f1_macro": 0.9654973760100253,
+            "roc_auc": 0.9639205696062515,
+            "pr_auc": 0.952210317066672,
+            "mcc": 0.9317318352670737,
+            "tn": 2611,
+            "fp": 36,
+            "fn": 130,
+            "tp": 2090
+          },
+          "score_source": "predict_proba",
+          "runtime": {
+            "inference_total_seconds": 0.005778999999165535,
+            "inference_milliseconds_per_sample": 0.0011873844255528118
+          },
+          "confusion_counts": {
+            "tn": 2611,
+            "fp": 36,
+            "fn": 130,
+            "tp": 2090
+          }
+        }
+      },
+      "training": {
+        "training_seconds": 0.12156990000039514
+      },
+      "model_artifact": null,
+      "error": null
+    },
+    {
+      "protocol": "G",
+      "split_seed": 42,
+      "model_random_state": 42,
+      "model_name": "gaussian_naive_bayes",
+      "feature_variant": "G-drop3constant",
+      "feature_count": 38,
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T10:58:21.154867Z",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "split_manifest": "C:\\Project\\MalPDFDeepDetection\\data\\processed\\rit-pdfmal-2026_split_manifest.csv",
+      "split_manifest_sha256": "802c3962bc537ed78f63c5b1a5308e09df357a096f703846d0e5fe57598b4e21",
+      "split_result": {
+        "seed": 42,
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "split_manifest_sha256": "802c3962bc537ed78f63c5b1a5308e09df357a096f703846d0e5fe57598b4e21",
+        "split_manifest": "C:\\Project\\MalPDFDeepDetection\\data\\processed\\rit-pdfmal-2026_split_manifest.csv",
+        "split_report": "C:\\Project\\MalPDFDeepDetection\\reports\\rit-pdfmal-2026_split_report.json",
+        "partition_statistics": {
+          "train": {
+            "rows": 14602,
+            "groups": 8600,
+            "label_0": 7941,
+            "label_1": 6661
+          },
+          "validation": {
+            "rows": 4868,
+            "groups": 3386,
+            "label_0": 2647,
+            "label_1": 2221
+          },
+          "test": {
+            "rows": 4867,
+            "groups": 3385,
+            "label_0": 2647,
+            "label_1": 2220
+          }
+        },
+        "total_rows": 24337,
+        "total_feature_equivalent_groups": 15371,
+        "hard_validation": {
+          "zero_group_overlap": {
+            "train_validation": 0,
+            "train_test": 0,
+            "validation_test": 0,
+            "is_valid": true
+          },
+          "zero_exact_feature_vector_overlap": {
+            "is_valid": true,
+            "basis": "Feature-equivalent groups are canonical hashes of all 41 static feature values, excluding Label."
+          },
+          "all_rows_assigned_exactly_once": {
+            "manifest_row_count": 24337,
+            "source_row_count": 24337,
+            "unique_sample_identifier_count": 24337,
+            "is_valid": true,
+            "raw_sample_identifier_count": 24337
+          },
+          "labels_and_group_ids_match_raw_dataset": {
+            "is_valid": true
+          },
+          "feature_equivalent_group_label_purity": {
+            "is_valid": true,
+            "conflicting_group_count": 0
+          }
+        },
+        "terminology": "Groups represent identical static feature vectors, not proven duplicate PDF files."
+      },
+      "model_configuration": {
+        "paper_model_name": "Gaussian Naive-Bayes (GNB)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is added; the paper gives no documented reason for it."
+        },
+        "parameters": {
+          "priors": null,
+          "var_smoothing": 1e-09
+        }
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is added; the paper gives no documented reason for it."
+      },
+      "benchmark_code_commit": "c2aefaaca8cd2257ed610efeba88f24a7cbbb460",
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "c2aefaaca8cd2257ed610efeba88f24a7cbbb460",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        },
+        "benchmark_timestamp_utc": "2026-08-28T07:13:37.332474Z"
+      },
+      "reused_seed42_baseline": true,
+      "evaluations": {
+        "validation": {
+          "metrics": {
+            "accuracy": 0.7195973705834018,
+            "precision_malicious": 0.6267021906453523,
+            "recall_malicious": 0.9531742458352094,
+            "f1_malicious": 0.7562064654402573,
+            "precision_macro": 0.7784517664636157,
+            "recall_macro": 0.7383929408246692,
+            "f1_macro": 0.7131286134307886,
+            "roc_auc": 0.7858825848738906,
+            "pr_auc": 0.6719017167105308,
+            "mcc": 0.515289959091327,
+            "tn": 1386,
+            "fp": 1261,
+            "fn": 104,
+            "tp": 2117
+          },
+          "score_source": "predict_proba",
+          "runtime": {
+            "inference_total_seconds": 0.020129499998802203,
+            "inference_milliseconds_per_sample": 0.004135065735168899
+          },
+          "confusion_counts": {
+            "tn": 1386,
+            "fp": 1261,
+            "fn": 104,
+            "tp": 2117
+          }
+        },
+        "test": {
+          "metrics": {
+            "accuracy": 0.7074173001849189,
+            "precision_malicious": 0.6163062536528346,
+            "recall_malicious": 0.95,
+            "f1_malicious": 0.7476072314781993,
+            "precision_macro": 0.7697448223281474,
+            "recall_macro": 0.7269833774083868,
+            "f1_macro": 0.6998055707733127,
+            "roc_auc": 0.7735180401406317,
+            "pr_auc": 0.6594422121004181,
+            "mcc": 0.4948841917477993,
+            "tn": 1334,
+            "fp": 1313,
+            "fn": 111,
+            "tp": 2109
+          },
+          "score_source": "predict_proba",
+          "runtime": {
+            "inference_total_seconds": 0.017184500000439584,
+            "inference_milliseconds_per_sample": 0.003530819806952863
+          },
+          "confusion_counts": {
+            "tn": 1334,
+            "fp": 1313,
+            "fn": 111,
+            "tp": 2109
+          }
+        }
+      },
+      "training": {
+        "training_seconds": 0.020384899999044137
+      },
+      "model_artifact": null,
+      "error": null
+    },
+    {
+      "protocol": "G",
+      "split_seed": 42,
+      "model_random_state": 42,
+      "model_name": "xgboost",
+      "feature_variant": "G-drop3constant",
+      "feature_count": 38,
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T10:58:21.158381Z",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "split_manifest": "C:\\Project\\MalPDFDeepDetection\\data\\processed\\rit-pdfmal-2026_split_manifest.csv",
+      "split_manifest_sha256": "802c3962bc537ed78f63c5b1a5308e09df357a096f703846d0e5fe57598b4e21",
+      "split_result": {
+        "seed": 42,
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "split_manifest_sha256": "802c3962bc537ed78f63c5b1a5308e09df357a096f703846d0e5fe57598b4e21",
+        "split_manifest": "C:\\Project\\MalPDFDeepDetection\\data\\processed\\rit-pdfmal-2026_split_manifest.csv",
+        "split_report": "C:\\Project\\MalPDFDeepDetection\\reports\\rit-pdfmal-2026_split_report.json",
+        "partition_statistics": {
+          "train": {
+            "rows": 14602,
+            "groups": 8600,
+            "label_0": 7941,
+            "label_1": 6661
+          },
+          "validation": {
+            "rows": 4868,
+            "groups": 3386,
+            "label_0": 2647,
+            "label_1": 2221
+          },
+          "test": {
+            "rows": 4867,
+            "groups": 3385,
+            "label_0": 2647,
+            "label_1": 2220
+          }
+        },
+        "total_rows": 24337,
+        "total_feature_equivalent_groups": 15371,
+        "hard_validation": {
+          "zero_group_overlap": {
+            "train_validation": 0,
+            "train_test": 0,
+            "validation_test": 0,
+            "is_valid": true
+          },
+          "zero_exact_feature_vector_overlap": {
+            "is_valid": true,
+            "basis": "Feature-equivalent groups are canonical hashes of all 41 static feature values, excluding Label."
+          },
+          "all_rows_assigned_exactly_once": {
+            "manifest_row_count": 24337,
+            "source_row_count": 24337,
+            "unique_sample_identifier_count": 24337,
+            "is_valid": true,
+            "raw_sample_identifier_count": 24337
+          },
+          "labels_and_group_ids_match_raw_dataset": {
+            "is_valid": true
+          },
+          "feature_equivalent_group_label_purity": {
+            "is_valid": true,
+            "conflicting_group_count": 0
+          }
+        },
+        "terminology": "Groups represent identical static feature vectors, not proven duplicate PDF files."
+      },
+      "model_configuration": {
+        "paper_model_name": "eXtreme Gradient Boost (XGB)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "base_score": 0.5,
+          "booster": "gbtree",
+          "colsample_bylevel": 1.0,
+          "colsample_bynode": 1.0,
+          "colsample_bytree": 1.0,
+          "eval_metric": "logloss",
+          "gamma": 0.0,
+          "learning_rate": 0.1,
+          "max_delta_step": 0.0,
+          "max_depth": 6,
+          "min_child_weight": 1.0,
+          "missing": "NaN",
+          "n_estimators": 200,
+          "n_jobs": 1,
+          "objective": "binary:logistic",
+          "random_state": 42,
+          "reg_alpha": 0.0,
+          "reg_lambda": 1.0,
+          "scale_pos_weight": 1.0,
+          "subsample": 1.0,
+          "tree_method": "hist",
+          "verbosity": 0
+        },
+        "missing_value_assumption": "The JSON-safe string 'NaN' is converted to the explicit IEEE NaN missing-value sentinel required by XGBoost 3.2 at runtime. This fixes a library compatibility error; it does not alter feature values or tune the model."
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "benchmark_code_commit": "c2aefaaca8cd2257ed610efeba88f24a7cbbb460",
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "c2aefaaca8cd2257ed610efeba88f24a7cbbb460",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        },
+        "benchmark_timestamp_utc": "2026-08-28T07:13:37.332474Z"
+      },
+      "reused_seed42_baseline": true,
+      "evaluations": {
+        "validation": {
+          "metrics": {
+            "accuracy": 0.9802793755135579,
+            "precision_malicious": 0.9944160074453234,
+            "recall_malicious": 0.9621791985592075,
+            "f1_malicious": 0.9780320366132724,
+            "precision_macro": 0.981761148261095,
+            "recall_macro": 0.9788228822414473,
+            "f1_macro": 0.9800708077214704,
+            "roc_auc": 0.9965187880156904,
+            "pr_auc": 0.9971570008834526,
+            "mcc": 0.9605795366596703,
+            "tn": 2635,
+            "fp": 12,
+            "fn": 84,
+            "tp": 2137
+          },
+          "score_source": "predict_proba",
+          "runtime": {
+            "inference_total_seconds": 0.04958670000087295,
+            "inference_milliseconds_per_sample": 0.010186257189990335
+          },
+          "confusion_counts": {
+            "tn": 2635,
+            "fp": 12,
+            "fn": 84,
+            "tp": 2137
+          }
+        },
+        "test": {
+          "metrics": {
+            "accuracy": 0.976987877542634,
+            "precision_malicious": 0.9953007518796992,
+            "recall_malicious": 0.9540540540540541,
+            "f1_malicious": 0.9742410303587856,
+            "precision_macro": 0.9790304416572647,
+            "recall_macro": 0.9751380961618967,
+            "f1_macro": 0.9767231887776104,
+            "roc_auc": 0.997079304465024,
+            "pr_auc": 0.9973539597295343,
+            "mcc": 0.9541605987518564,
+            "tn": 2637,
+            "fp": 10,
+            "fn": 102,
+            "tp": 2118
+          },
+          "score_source": "predict_proba",
+          "runtime": {
+            "inference_total_seconds": 0.04827889999978652,
+            "inference_milliseconds_per_sample": 0.009919642490196532
+          },
+          "confusion_counts": {
+            "tn": 2637,
+            "fp": 10,
+            "fn": 102,
+            "tp": 2118
+          }
+        }
+      },
+      "training": {
+        "training_seconds": 0.5855172999999922
+      },
+      "model_artifact": null,
+      "error": null
+    }
+  ]
+}
