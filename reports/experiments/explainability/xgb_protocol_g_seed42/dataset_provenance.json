@@ -1,0 +1,64 @@
+{
+  "dataset_filename": "rit-pdfmal-2026.csv",
+  "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+  "split_manifest_sha256": "802c3962bc537ed78f63c5b1a5308e09df357a096f703846d0e5fe57598b4e21",
+  "split": {
+    "seed": 42,
+    "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+    "split_manifest_sha256": "802c3962bc537ed78f63c5b1a5308e09df357a096f703846d0e5fe57598b4e21",
+    "split_manifest": "C:\\Project\\MalPDFDeepDetection\\data\\processed\\rit-pdfmal-2026_split_manifest.csv",
+    "split_report": "C:\\Project\\MalPDFDeepDetection\\reports\\rit-pdfmal-2026_split_report.json",
+    "partition_statistics": {
+      "train": {
+        "rows": 14602,
+        "groups": 8600,
+        "label_0": 7941,
+        "label_1": 6661
+      },
+      "validation": {
+        "rows": 4868,
+        "groups": 3386,
+        "label_0": 2647,
+        "label_1": 2221
+      },
+      "test": {
+        "rows": 4867,
+        "groups": 3385,
+        "label_0": 2647,
+        "label_1": 2220
+      }
+    },
+    "total_rows": 24337,
+    "total_feature_equivalent_groups": 15371,
+    "hard_validation": {
+      "zero_group_overlap": {
+        "train_validation": 0,
+        "train_test": 0,
+        "validation_test": 0,
+        "is_valid": true
+      },
+      "zero_exact_feature_vector_overlap": {
+        "is_valid": true,
+        "basis": "Feature-equivalent groups are canonical hashes of all 41 static feature values, excluding Label."
+      },
+      "all_rows_assigned_exactly_once": {
+        "manifest_row_count": 24337,
+        "source_row_count": 24337,
+        "unique_sample_identifier_count": 24337,
+        "is_valid": true,
+        "raw_sample_identifier_count": 24337
+      },
+      "labels_and_group_ids_match_raw_dataset": {
+        "is_valid": true
+      },
+      "feature_equivalent_group_label_purity": {
+        "is_valid": true,
+        "conflicting_group_count": 0
+      }
+    },
+    "terminology": "Groups represent identical static feature vectors, not proven duplicate PDF files."
+  },
+  "explained_partition": "test",
+  "explained_test_rows": 4867,
+  "safe_identifier_policy": "No raw source identifiers exist in the RIT CSV or are serialized by this analysis."
+}

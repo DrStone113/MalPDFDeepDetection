@@ -189,3 +189,15 @@
 - Evidence: replacement execution from clean code SHA `5904475a265933e1d2ae6244f3aa9d6e9973a5b1` passed model reproduction and TreeSHAP mathematical verification but stopped before output creation when report-generation code accessed pandas column `rank` as a method.
 - Correction: use explicit column indexing for `rank` and add a synthetic regression test. This is a verified report-generation defect; it neither inspected nor reacted to any SHAP ranking.
 - Result status: no official output directory, analysis report, figure, or model artifact was created by this stopped attempt. One replacement execution will use the subsequent clean code revision.
+
+## 2026-08-28 - Protocol G XGBoost Explainability / TreeSHAP Results
+
+- Objective and protocol: explain the established Protocol G seed-42 XGBoost `G-drop3constant` detector with native TreeSHAP. The model used the fixed 38-feature schema and random state 42, fit only the 14,602-row train partition, and explained only the 4,867-row feature-vector-disjoint test partition.
+- Generating code and command: clean code SHA `4e168126e33dbda64bb38c9097aa140eedcca89e`; `.\.venv\Scripts\python.exe scripts\run_xgb_explainability.py --execute --run-id protocol-g-seed42`. Dataset SHA-256 `2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623`; split-manifest SHA-256 `802c3962bc537ed78f63c5b1a5308e09df357a096f703846d0e5fe57598b4e21`.
+- Reproduction: exact historical test agreement for Accuracy `0.976988`, malicious F1 `0.974241`, macro F1 `0.976723`, MCC `0.954161`, and TN/FP/FN/TP `2637/10/102/2118`.
+- TreeSHAP verification: native contribution matrix `4867 × 38` plus a bias value per row; max margin reconstruction error `1.0214e-05` within documented native-float tolerance `2e-05`; max sigmoid-margin versus malicious-probability error `8.2832e-08`.
+- Main global mean-|SHAP| features: JavaScript, pdfsize, URI, contains_text, metadata size, images, obj, pages, xref length, and pdf_ver. These are model contributions, not causal malware indicators.
+- Error summaries: 102 false negatives had mean predicted malicious probability `0.161679`; their strongest aggregate contributions were JavaScript (mean SHAP `-1.787074`), URI, contains_text, pdfsize, and Registry. Ten false positives had mean probability `0.813367`; JavaScript (mean SHAP `+3.220879`), XFA, URI, obj, and contains_text were most influential by aggregate magnitude.
+- Paper reference: all local top-ten concepts appear in the paper's reference importance list, but ranking is descriptive only because Protocol G, the project configuration, split, and software differ from the paper method.
+- Limitations: one benchmark model and one saved split; SHAP is associative rather than causal; no feature was removed or tuned from explanation findings; Protocol G does not prove real-world, temporal, or PDF-file-disjoint generalization.
+- Outputs: analysis report, nine lightweight CSV/JSON provenance tables, and four thesis figures were written under `reports/analysis/`, `reports/experiments/explainability/`, and `reports/figures/explainability/`; no model binary or raw identifier was committed.

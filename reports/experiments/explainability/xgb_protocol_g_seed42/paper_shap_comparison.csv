@@ -1,0 +1,39 @@
+feature,local_rank,local_mean_abs_shap,paper_shap_importance,paper_rank_if_available,comparison_note
+JavaScript,1,3.532576720034143,3.474789,1,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+pdfsize,2,0.9537639082467326,1.126533,3,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+URI,3,0.8265275521551567,0.377808,9,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+contains_text,4,0.7403297425449226,1.221534,2,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+metadata size,5,0.5215614458947122,0.503341,7,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+images,6,0.4684975533961457,0.246687,19,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+obj,7,0.387311517001468,0.250006,18,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+pages,8,0.3870374758610931,0.375392,10,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+xref length,9,0.38463367147505645,0.364602,11,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+pdf_ver,10,0.3116430314416565,0.276523,17,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+JS,11,0.28582639256976383,1.126279,4,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+Registry,12,0.25110956890472796,0.636202,5,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+OpenAction,13,0.24295932397099904,0.318886,14,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+Encoding,14,0.23553275435203594,0.285145,16,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+XFA,15,0.22996501278615178,0.550923,6,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+stream,16,0.229380024581561,0.441044,8,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+Resources,17,0.2289088818282596,0.290378,15,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+title length,18,0.2161508473566953,0.189564,22,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+www,19,0.2084470883586049,0.356451,13,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+ProcSet,20,0.16536305354507125,0.192889,21,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+page_command,21,0.1468843185228131,0.216136,20,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+Root,22,0.14393742652183222,0.075597,27,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+endobj,23,0.12773517680401586,0.363546,12,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+EmbeddedFile,24,0.12186292331426178,0.131712,25,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+xref,25,0.09243341720156782,0.033615,31,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+BitsPerComponent,26,0.09212154943642567,0.148386,24,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+endstream,27,0.06980682616065617,0.183275,23,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+ObjStm,28,0.0654371093090058,0.083332,26,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+embedded files,29,0.06437150250817224,0.051439,29,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+trailer,30,0.051279787768683784,0.052374,28,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+startxref,31,0.025395178607940935,0.044565,30,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+server,32,0.00739272526627625,0.018971,34,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+AA,33,0.005563850222948473,0.025128,33,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+isEncrypted,34,0.0008429848247994336,0.0,35,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+Encrypt,35,0.0,0.0,37,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+JBIG2Decode,36,0.0,0.0,41,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+Launch,37,0.0,0.030032,32,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
+RichMedia,38,0.0,0.0,40,Descriptive reference only; Protocol G and the local fixed configuration are not expected to reproduce the paper ranking exactly.
