@@ -110,7 +110,7 @@ The project can inspect one local PDF as untrusted bytes without opening a viewe
 
 Inspection is bounded by a 50 MiB file limit, 1,000 pages, and 10,000 structural objects by default; each can be configured on the CLI. The JSON result reports a fixed 41-feature RIT-schema-oriented static vector, raw lexical counts separately from parser-confirmed structural indicators, warnings, and a strict Protocol G 38-feature compatibility gate. Canonical RIT metadata features use the released PDFMalExtract v0.1 methodology with its pinned PyMuPDF 1.26.7 dependency; pypdf remains a separate read-only structural-diagnostics parser.
 
-The Protocol G schema-level compatibility gate is satisfied (38 required feature definitions), but no malware probability, benign/malicious verdict, or risk score is produced. Each actual PDF must still pass the per-file gate with all finite extracted values; no missing value is imputed. The local RIT CSV has no matching raw PDFs, so record-level feature equality remains unverified. Generate the historical v1 coverage documentation only from a clean committed extractor revision:
+The Protocol G schema-level compatibility gate is satisfied (38 required feature definitions), but each actual PDF must still pass the per-file gate with all finite extracted values; no missing value is imputed. The local RIT CSV has no matching raw PDFs, so record-level feature equality remains unverified. Generate the historical v1 coverage documentation only from a clean committed extractor revision:
 
 ```powershell
 .venv\Scripts\python.exe scripts\generate_static_feature_coverage.py
@@ -121,3 +121,22 @@ Generate the separate, immutable v2 compatibility-resolution report (it preserve
 ```powershell
 .venv\Scripts\python.exe scripts\generate_static_compatibility_resolution.py
 ```
+
+## Static deployment/demo detector
+
+The separately versioned deployment detector is a full-RIT, static-only XGBoost artifact. It reuses the fixed evaluated model family/configuration and `G-drop3constant` 38-feature order, but is **not** a Protocol G model and does not create a new performance result. Build its local, ignored model artifact exactly once from a clean committed checkout:
+
+```powershell
+.venv\Scripts\python.exe scripts\build_deployment_model.py
+.venv\Scripts\python.exe scripts\build_deployment_model.py --execute
+```
+
+The default command is a no-write preflight. The `--execute` command validates the approved RIT checksum and full-data row/class invariants, then saves the JSON model under ignored `artifacts/models/` and an immutable tracked manifest under `reports/deployment/`. It refuses overwrite. The model artifact must be built locally before scanning.
+
+```powershell
+.venv\Scripts\python.exe -m malpdf inspect path\to\untrusted.pdf
+.venv\Scripts\python.exe -m malpdf scan path\to\untrusted.pdf
+.venv\Scripts\python.exe -m malpdf scan path\to\untrusted.pdf --json
+```
+
+`inspect` remains extractor-only and never loads a model. `scan` requires the strict 38-feature per-file gate before inference, returns the frozen model's malicious probability and binary model verdict at threshold `0.5`, and attempts a mathematically checked local native XGBoost TreeSHAP explanation. Neither command executes PDF content, follows links, opens viewers, or extracts attachments. A score is an ML prediction, not proof that a PDF is malicious; malformed/encrypted PDFs and dataset shift can prevent reliable static analysis.
