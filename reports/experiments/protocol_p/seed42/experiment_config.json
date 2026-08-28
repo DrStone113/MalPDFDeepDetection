@@ -1,0 +1,313 @@
+{
+  "experiment_run_id": "seed42",
+  "protocol": "P",
+  "purpose": "Single-seed paper-aligned reproduction attempt; not an exact paper reproduction.",
+  "dataset": {
+    "filename": "rit-pdfmal-2026.csv",
+    "sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623"
+  },
+  "split": {
+    "protocol": "P",
+    "split_manifest": "C:\\Project\\MalPDFDeepDetection\\data\\processed\\protocol_p\\p-seed42-19fcc091\\protocol_p_split_manifest.csv",
+    "split_seed": 42,
+    "split_sizes": {
+      "train": {
+        "row_count": 18252,
+        "percentage_of_rows": 74.996918,
+        "label_distribution": [
+          {
+            "raw_label": 0,
+            "count": 9926,
+            "percentage": 54.383081
+          },
+          {
+            "raw_label": 1,
+            "count": 8326,
+            "percentage": 45.616919
+          }
+        ],
+        "benign_label_0_count": 9926,
+        "malicious_label_1_count": 8326
+      },
+      "test": {
+        "row_count": 6085,
+        "percentage_of_rows": 25.003082,
+        "label_distribution": [
+          {
+            "raw_label": 0,
+            "count": 3309,
+            "percentage": 54.379622
+          },
+          {
+            "raw_label": 1,
+            "count": 2776,
+            "percentage": 45.620378
+          }
+        ],
+        "benign_label_0_count": 3309,
+        "malicious_label_1_count": 2776
+      }
+    },
+    "validation": {
+      "all_rows_assigned_exactly_once": {
+        "is_valid": true,
+        "source_row_count": 24337,
+        "manifest_row_count": 24337
+      },
+      "train_test_disjoint": {
+        "is_valid": true,
+        "overlap_count": 0
+      },
+      "target_labels_preserved": {
+        "is_valid": true,
+        "source_distribution": [
+          {
+            "raw_label": 0,
+            "count": 13235,
+            "percentage": 54.382216
+          },
+          {
+            "raw_label": 1,
+            "count": 11102,
+            "percentage": 45.617784
+          }
+        ],
+        "manifest_distribution": [
+          {
+            "raw_label": 0,
+            "count": 13235,
+            "percentage": 54.382216
+          },
+          {
+            "raw_label": 1,
+            "count": 11102,
+            "percentage": 45.617784
+          }
+        ]
+      },
+      "stratification": {
+        "is_valid": true,
+        "tolerance_percentage_points": 0.1,
+        "split_statistics": {
+          "train": {
+            "row_count": 18252,
+            "percentage_of_rows": 74.996918,
+            "label_distribution": [
+              {
+                "raw_label": 0,
+                "count": 9926,
+                "percentage": 54.383081
+              },
+              {
+                "raw_label": 1,
+                "count": 8326,
+                "percentage": 45.616919
+              }
+            ],
+            "benign_label_0_count": 9926,
+            "malicious_label_1_count": 8326
+          },
+          "test": {
+            "row_count": 6085,
+            "percentage_of_rows": 25.003082,
+            "label_distribution": [
+              {
+                "raw_label": 0,
+                "count": 3309,
+                "percentage": 54.379622
+              },
+              {
+                "raw_label": 1,
+                "count": 2776,
+                "percentage": 45.620378
+              }
+            ],
+            "benign_label_0_count": 3309,
+            "malicious_label_1_count": 2776
+          }
+        }
+      }
+    },
+    "manifest_row_count": 24337
+  },
+  "benchmark_matrix": [
+    {
+      "model_name": "logistic_regression",
+      "feature_variant": "P-all41"
+    },
+    {
+      "model_name": "logistic_regression",
+      "feature_variant": "P-drop3constant"
+    },
+    {
+      "model_name": "random_forest",
+      "feature_variant": "P-all41"
+    },
+    {
+      "model_name": "random_forest",
+      "feature_variant": "P-drop3constant"
+    },
+    {
+      "model_name": "decision_tree",
+      "feature_variant": "P-all41"
+    },
+    {
+      "model_name": "decision_tree",
+      "feature_variant": "P-drop3constant"
+    },
+    {
+      "model_name": "gaussian_naive_bayes",
+      "feature_variant": "P-all41"
+    },
+    {
+      "model_name": "gaussian_naive_bayes",
+      "feature_variant": "P-drop3constant"
+    },
+    {
+      "model_name": "xgboost",
+      "feature_variant": "P-all41"
+    },
+    {
+      "model_name": "xgboost",
+      "feature_variant": "P-drop3constant"
+    }
+  ],
+  "primary_matrix_run_count": 10,
+  "model_configurations": {
+    "logistic_regression": {
+      "paper_model_name": "Logistic Regression (LR)",
+      "preprocessing": {
+        "name": "StandardScaler",
+        "fit_scope": "training partition only",
+        "paper_status": "Scaling is a project assumption; the paper does not specify it."
+      },
+      "parameters": {
+        "C": 1.0,
+        "class_weight": null,
+        "fit_intercept": true,
+        "l1_ratio": 0.0,
+        "max_iter": 1000,
+        "random_state": 42,
+        "solver": "liblinear",
+        "tol": 0.0001
+      },
+      "regularization_assumption": "L2 regularization, represented by l1_ratio=0.0 for scikit-learn 1.8+ compatibility. This is a project assumption; the paper does not specify it."
+    },
+    "random_forest": {
+      "paper_model_name": "Random Forest (RF)",
+      "preprocessing": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "parameters": {
+        "bootstrap": true,
+        "class_weight": null,
+        "criterion": "gini",
+        "max_depth": null,
+        "max_features": "sqrt",
+        "min_samples_leaf": 1,
+        "min_samples_split": 2,
+        "n_estimators": 200,
+        "n_jobs": 1,
+        "random_state": 42
+      }
+    },
+    "decision_tree": {
+      "paper_model_name": "Decision Tree (DT)",
+      "preprocessing": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "parameters": {
+        "class_weight": null,
+        "criterion": "gini",
+        "max_depth": null,
+        "max_features": null,
+        "min_samples_leaf": 1,
+        "min_samples_split": 2,
+        "random_state": 42,
+        "splitter": "best"
+      }
+    },
+    "gaussian_naive_bayes": {
+      "paper_model_name": "Gaussian Naive-Bayes (GNB)",
+      "preprocessing": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is added; the paper gives no documented reason for it."
+      },
+      "parameters": {
+        "priors": null,
+        "var_smoothing": 1e-09
+      }
+    },
+    "xgboost": {
+      "paper_model_name": "eXtreme Gradient Boost (XGB)",
+      "preprocessing": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "parameters": {
+        "base_score": 0.5,
+        "booster": "gbtree",
+        "colsample_bylevel": 1.0,
+        "colsample_bynode": 1.0,
+        "colsample_bytree": 1.0,
+        "eval_metric": "logloss",
+        "gamma": 0.0,
+        "learning_rate": 0.1,
+        "max_delta_step": 0.0,
+        "max_depth": 6,
+        "min_child_weight": 1.0,
+        "missing": "NaN",
+        "n_estimators": 200,
+        "n_jobs": 1,
+        "objective": "binary:logistic",
+        "random_state": 42,
+        "reg_alpha": 0.0,
+        "reg_lambda": 1.0,
+        "scale_pos_weight": 1.0,
+        "subsample": 1.0,
+        "tree_method": "hist",
+        "verbosity": 0
+      },
+      "missing_value_assumption": "The JSON-safe string 'NaN' is converted to the explicit IEEE NaN missing-value sentinel required by XGBoost 3.2 at runtime. This fixes a library compatibility error; it does not alter feature values or tune the model."
+    }
+  },
+  "paper_comparison_note": "Both feature variants are shown; neither is claimed to be the exact paper configuration because the paper leaves zero-variance handling ambiguous.",
+  "methodological_constraints": [
+    "The paper does not publish its random seed; this project uses configurable seed 42 by default.",
+    "No hyperparameter tuning, test-set selection, threshold tuning, multi-seed evaluation, or cross-validation is performed.",
+    "Label=1 is the malicious positive class.",
+    "Special semantic values are preserved without imputation, clipping, normalization, or reinterpretation."
+  ],
+  "environment": {
+    "python_version": "3.11.0",
+    "implementation": "CPython",
+    "os_platform": "Windows-10-10.0.26100-SP0",
+    "cpu_model": "Intel(R) Core(TM) i5-14400F",
+    "gpu": [
+      {
+        "model": "NVIDIA GeForce RTX 5060 Ti",
+        "vram_mib": 8151
+      }
+    ],
+    "system_ram_bytes": 16948178944,
+    "library_versions": {
+      "numpy": "2.4.6",
+      "pandas": "2.3.3",
+      "scikit_learn": "1.9.0",
+      "xgboost": "3.2.0"
+    },
+    "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+    "git_commit_sha": "3e970ef2df0460fb4a51b10418c9af7564339419",
+    "git_working_tree": {
+      "status": "clean",
+      "porcelain_entries": []
+    },
+    "benchmark_timestamp_utc": "2026-08-28T06:48:09.274383Z"
+  }
+}

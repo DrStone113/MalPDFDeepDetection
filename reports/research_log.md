@@ -30,3 +30,16 @@
 - Change: preserve the explicit XGBoost missing-value policy as IEEE `NaN`, serialized as `"NaN"` in configuration and converted only at estimator construction. No feature values, split, seed, preprocessing, or hyperparameters are changed.
 - Validation: an XGBoost factory test now verifies the serialized and runtime missing-value representations.
 - Status: the failed output is retained as execution evidence; a completed official baseline will use a new clean code commit and one fresh run after this correction.
+
+## 2026-08-28 - Protocol P Seed-42 Baseline Results
+
+- Purpose: execute the fixed, single-seed Protocol P paper-aligned reproduction attempt across the 5-model x 2-feature-variant matrix.
+- Code and data provenance: code SHA `3e970ef2df0460fb4a51b10418c9af7564339419`; dataset `rit-pdfmal-2026.csv` SHA-256 `2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623`; seed 42; saved stratified row-level split (18,252 train, 6,085 test).
+- Models and variants: Logistic Regression, Random Forest, Decision Tree, Gaussian Naive Bayes, and XGBoost; P-all41 and P-drop3constant. All 10 primary runs completed exactly once.
+- Environment: Python 3.11.0; NumPy 2.4.6; pandas 2.3.3; scikit-learn 1.9.0; XGBoost 3.2.0; Intel Core i5-14400F; NVIDIA GeForce RTX 5060 Ti (8151 MiB); 16 GB RAM.
+- Main metrics: XGBoost achieved F1 `0.991852` and MCC `0.985128` for both variants; RF P-all41 F1 `0.990379`; DT P-all41 F1 `0.983842`; LR F1 `0.924700`; GNB F1 `0.687852`.
+- Variant comparison: dropping Acroform, Colors, and BaseEncoding left LR, GNB, and XGBoost classification metrics unchanged; RF/DT changes were below 0.0007 absolute F1/MCC.
+- Paper comparison: XGB F1 differed by `0.003011` and RF F1 by `0.003654` for P-all41; GNB showed the largest divergence (precision `0.226798`, recall `0.339239`, F1 `0.097197`). Neither variant is claimed to be an exact paper configuration because zero-variance handling and other paper settings are incomplete.
+- Limitations: this is one project-selected split seed, not a multi-seed study or cross-validation; runtime is hardware/software specific; Protocol G has not been benchmarked.
+- Outputs: tracked reports under `reports/experiments/protocol_p/seed42/`; fitted binaries remain ignored under `artifacts/`. The pre-fix XGBoost failure record is retained separately for provenance.
+- Next: inspect Protocol P results, then run the pre-existing Protocol G benchmark under its separate duplicate-feature-disjoint protocol.
