@@ -169,3 +169,11 @@
 - Readiness result: mirror comparison over 10,023 safe-matched records found metadata_size/xref_length/title_length/embedded_files/trailer stable; `objstm` is `MIRROR_UNSTABLE` (541 values, 5.397586%, `0` in CSV versus `-1` in Parquet). The selected CSV also has unresolved lexical `nan` values in STRICT6 `trailer` and `objstm` among target-valid rows. Therefore the official runner is intentionally blocked; no official model training or result report was created.
 - Limitations: source provenance is not byte-verified against the CIC publisher; only six features are strict matches; original PDF overlap cannot be verified; the study is neither temporal validation, file-disjointness proof, nor dynamic analysis.
 - Next: obtain an explicitly reviewed source/methodology decision for the failed STRICT6 readiness checks before authorizing any official cross-dataset fit.
+
+## 2026-08-28 - Protocol G XGBoost Explainability / TreeSHAP Infrastructure
+
+- Purpose: prepare a native XGBoost TreeSHAP explanation of the established feature-vector-disjoint XGBoost detector, without changing its model, split, feature schema, or historical results.
+- Design: reuse Protocol G seed 42 and `G-drop3constant` (38 features; only Acroform, Colors, and BaseEncoding absent); retrain on the saved train partition only and explain test rows only after exact historical-result verification.
+- Provenance requirements: RIT dataset SHA-256 `2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623`; Protocol G manifest SHA-256 `802c3962bc537ed78f63c5b1a5308e09df357a096f703846d0e5fe57598b4e21`; model random state 42; native `pred_contribs=True` with margin/probability consistency checks.
+- Scope: global, class-conditional, confusion-group, probability-band, paper-reference, and scanner-prioritization reports are descriptive only. No SHAP-based feature selection, tuning, threshold change, or deployment artifact is permitted.
+- Status: infrastructure only; official run and results commit are pending a clean committed code revision.
