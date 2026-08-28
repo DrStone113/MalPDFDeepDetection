@@ -20,6 +20,48 @@ from sklearn.metrics import (
 POSITIVE_LABEL = 1
 
 
+def classification_metrics_from_confusion_counts(
+    *, tn: int, fp: int, fn: int, tp: int
+) -> dict[str, float]:
+    """Derive binary class and macro metrics from ``[[TN, FP], [FN, TP]]``.
+
+    ``*_malicious`` treats Label=1 as the operational positive class. Macro
+    values average the benign (Label=0) and malicious (Label=1) class metrics.
+    Zero denominators follow the project's ``zero_division=0`` convention.
+    """
+    if min(tn, fp, fn, tp) < 0:
+        raise ValueError("Confusion-matrix counts must be non-negative")
+
+    def divide(numerator: int, denominator: int) -> float:
+        return 0.0 if denominator == 0 else numerator / denominator
+
+    total = tn + fp + fn + tp
+    if total == 0:
+        raise ValueError("Confusion-matrix counts must contain at least one sample")
+    precision_malicious = divide(tp, tp + fp)
+    recall_malicious = divide(tp, tp + fn)
+    precision_benign = divide(tn, tn + fn)
+    recall_benign = divide(tn, tn + fp)
+
+    def f1(precision: float, recall: float) -> float:
+        return 0.0 if precision + recall == 0 else 2 * precision * recall / (precision + recall)
+
+    f1_malicious = f1(precision_malicious, recall_malicious)
+    f1_benign = f1(precision_benign, recall_benign)
+    return {
+        "accuracy": (tn + tp) / total,
+        "precision_benign": precision_benign,
+        "recall_benign": recall_benign,
+        "f1_benign": f1_benign,
+        "precision_malicious": precision_malicious,
+        "recall_malicious": recall_malicious,
+        "f1_malicious": f1_malicious,
+        "precision_macro": (precision_benign + precision_malicious) / 2,
+        "recall_macro": (recall_benign + recall_malicious) / 2,
+        "f1_macro": (f1_benign + f1_malicious) / 2,
+    }
+
+
 def continuous_positive_scores(estimator: Any, features: Any) -> tuple[np.ndarray | None, str | None]:
     """Return probability/continuous scores for Label=1, never hard predictions.
 
@@ -47,15 +89,40 @@ def continuous_positive_scores(estimator: Any, features: Any) -> tuple[np.ndarra
 def evaluate_binary_predictions(
     y_true: Any, y_predicted: Any, positive_scores: Any | None = None
 ) -> dict[str, Any]:
-    """Compute paper metrics plus ROC-AUC, PR-AUC, MCC, and a fixed-label matrix."""
+    """Compute malicious-positive and macro metrics plus score-based metrics.
+
+    Historical ``precision``, ``recall``, and ``f1`` fields remain aliases for
+    Label=1 malicious-positive metrics. New code should use the explicit named
+    fields instead. ROC-AUC and PR-AUC retain Label=1 score semantics.
+    """
     truth = np.asarray(y_true)
     predicted = np.asarray(y_predicted)
+    malicious_precision = float(
+        precision_score(truth, predicted, pos_label=POSITIVE_LABEL, zero_division=0)
+    )
+    malicious_recall = float(
+        recall_score(truth, predicted, pos_label=POSITIVE_LABEL, zero_division=0)
+    )
+    malicious_f1 = float(f1_score(truth, predicted, pos_label=POSITIVE_LABEL, zero_division=0))
     result: dict[str, Any] = {
         "positive_label": POSITIVE_LABEL,
         "accuracy": float(accuracy_score(truth, predicted)),
-        "precision": float(precision_score(truth, predicted, pos_label=POSITIVE_LABEL, zero_division=0)),
-        "recall": float(recall_score(truth, predicted, pos_label=POSITIVE_LABEL, zero_division=0)),
-        "f1": float(f1_score(truth, predicted, pos_label=POSITIVE_LABEL, zero_division=0)),
+        "precision_malicious": malicious_precision,
+        "recall_malicious": malicious_recall,
+        "f1_malicious": malicious_f1,
+        "precision_macro": float(
+            precision_score(truth, predicted, labels=[0, POSITIVE_LABEL], average="macro", zero_division=0)
+        ),
+        "recall_macro": float(
+            recall_score(truth, predicted, labels=[0, POSITIVE_LABEL], average="macro", zero_division=0)
+        ),
+        "f1_macro": float(
+            f1_score(truth, predicted, labels=[0, POSITIVE_LABEL], average="macro", zero_division=0)
+        ),
+        # Backward-compatible aliases used by completed historical reports.
+        "precision": malicious_precision,
+        "recall": malicious_recall,
+        "f1": malicious_f1,
         "mcc": float(matthews_corrcoef(truth, predicted)),
         "confusion_matrix": confusion_matrix(truth, predicted, labels=[0, POSITIVE_LABEL]).tolist(),
         "confusion_matrix_labels": [0, POSITIVE_LABEL],

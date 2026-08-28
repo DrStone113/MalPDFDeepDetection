@@ -78,3 +78,13 @@
 - Limitations: Protocol P/G have different split ratios and training-set sizes; Protocol G concerns identical static feature vectors rather than PDF-file identity, temporal shift, or external generalization; only seed 42 is available; paper-unspecified model settings are project assumptions; no statistical uncertainty has been quantified.
 - Outputs: `reports/analysis/protocol_p_vs_g_analysis.md`, five CSV tables under `reports/tables/protocol_p_vs_g/`, and six thesis figures under `reports/figures/protocol_p_vs_g/`.
 - Next: review the fixed-protocol findings before authorizing a separately designed multi-seed, cross-validation, score-distribution, calibration, or external-dataset investigation.
+
+## 2026-08-28 - Paper Metric Semantics Correction
+
+- Discovery: local completed experiments correctly use Label=1 (malicious) as the operational positive class, but numerical reconstruction of the paper's GNB evidence shows that Table 5 Precision, Recall, and F1 are macro-averaged across benign and malicious classes.
+- Numerical evidence: paper test counts 3,309 benign / 2,776 malicious and reconstructed GNB counts TN=1,052, FP=2,257, FN=44, TP=2,732 yield macro Precision `0.753729`, Recall `0.651035`, and F1 `0.590655` within `1e-6` of Table 5. The corresponding malicious-positive values (`0.547605`, `0.984150`, `0.703670`) do not match Table 5.
+- Correction: paper Accuracy remains compared with local Accuracy; paper Table 5 Precision/Recall/F1 are now compared with local macro metrics. Historical local `precision`/`recall`/`f1` are retained as backward-compatible malicious-positive aliases, with explicit `*_malicious` and `*_macro` fields available for future result schemas.
+- GNB impact: Protocol P all41 local macro Precision/Recall/F1 are `0.747913` / `0.622215` / `0.545267`, yielding paper-aligned local-minus-paper deltas `-0.005816` / `-0.028820` / `-0.045388`; the former malicious-positive comparison conflated metric semantics with residual experimental differences.
+- Scope: no model was refit, no prediction or split was changed, and the committed Protocol P/G baseline result files were verified unchanged. The local P-versus-G comparison remains valid because both sides use the same malicious-positive definition.
+- Outputs: supplemental correction report under `reports/analysis/paper_metric_semantics_correction.md` and five tables under `reports/tables/metric_semantics/`.
+- Next: use the corrected mapping for future paper-aligned reporting, then separately investigate residual differences with preregistered multi-seed or external-evaluation designs only when authorized.

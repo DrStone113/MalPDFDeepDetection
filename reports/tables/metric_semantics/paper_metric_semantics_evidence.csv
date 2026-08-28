@@ -1,0 +1,7 @@
+evidence_type,metric,paper_table5_value,reconstructed_malicious_positive_value,reconstructed_macro_value,macro_minus_paper,macro_matches_within_tolerance,malicious_matches_within_tolerance
+Table 5 reconstruction,accuracy,0.621857,,0.621857025472,2.54724733528e-08,True,
+Table 5 reconstruction,precision,0.753729,0.547604730407,0.753729372503,3.72502717672e-07,True,False
+Table 5 reconstruction,recall,0.651035,0.984149855908,0.651035338954,3.38954192713e-07,True,False
+Table 5 reconstruction,f1,0.590655,0.703670315518,0.590654681028,-3.18971811741e-07,True,False
+Paper class-rate reconstruction,malicious_true_positive_rate,0.9841,0.984149855908,,4.98559077811e-05,,True
+Paper class-rate reconstruction,benign_true_negative_rate,0.3179,0.317920822001,,2.08220006044e-05,,True

@@ -58,6 +58,8 @@ reports/tables/**
 !reports/figures/protocol_p_vs_g/**
 !reports/tables/protocol_p_vs_g/
 !reports/tables/protocol_p_vs_g/**
+!reports/tables/metric_semantics/
+!reports/tables/metric_semantics/**
 reports/*.md
 reports/*.json
 !reports/research_log.md

@@ -1,0 +1,6 @@
+paper_table5_metric,local_historical_field,local_corrected_comparison_field,local_operational_field,semantics
+accuracy,accuracy,accuracy,accuracy,Overall correct classifications.
+precision,precision,precision_macro,precision_malicious,Paper Table 5 is compared to macro precision; historical precision remains Label=1 malicious-positive.
+recall,recall,recall_macro,recall_malicious,Paper Table 5 is compared to macro recall; historical recall remains Label=1 malicious-positive.
+f1,f1,f1_macro,f1_malicious,Paper Table 5 is compared to macro F1; historical F1 remains Label=1 malicious-positive.
+not reported in Table 5,roc_auc / pr_auc / mcc,unchanged,roc_auc / pr_auc / mcc,ROC-AUC and PR-AUC retain Label=1 score semantics; MCC remains binary and unchanged.

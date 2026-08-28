@@ -134,6 +134,12 @@ def test_metrics_use_label_one_as_positive_and_scores_not_hard_predictions():
     assert math.isclose(metrics["precision"], 2 / 3)
     assert math.isclose(metrics["recall"], 1.0)
     assert math.isclose(metrics["f1"], 0.8)
+    assert math.isclose(metrics["precision_malicious"], metrics["precision"])
+    assert math.isclose(metrics["recall_malicious"], metrics["recall"])
+    assert math.isclose(metrics["f1_malicious"], metrics["f1"])
+    assert math.isclose(metrics["precision_macro"], 5 / 6)
+    assert math.isclose(metrics["recall_macro"], 0.75)
+    assert math.isclose(metrics["f1_macro"], 11 / 15)
     assert metrics["confusion_matrix"] == [[1, 1], [0, 2]]
     assert metrics["roc_auc"] is not None
     assert metrics["pr_auc"] is not None

@@ -226,7 +226,15 @@ def test_paper_comparison_uses_verified_values_and_absolute_differences():
     record = {
         "model_name": "logistic_regression",
         "feature_variant": P_ALL41.name,
-        "metrics": {"accuracy": 0.9, "precision": 0.8, "recall": 0.7, "f1": 0.6},
+        "metrics": {
+            "accuracy": 0.9,
+            "precision": 0.8,
+            "recall": 0.7,
+            "f1": 0.6,
+            "precision_macro": 0.81,
+            "recall_macro": 0.71,
+            "f1_macro": 0.61,
+        },
         "runtime": {"test_inference_milliseconds_per_sample": 0.5},
     }
 
@@ -237,3 +245,7 @@ def test_paper_comparison_uses_verified_values_and_absolute_differences():
     assert accuracy["local_value"] == 0.9
     assert accuracy["paper_value"] == pytest.approx(0.907313)
     assert accuracy["absolute_difference"] == pytest.approx(0.007313)
+
+    precision = next(row for row in comparison if row["metric"] == "precision_macro")
+    assert precision["local_value"] == pytest.approx(0.81)
+    assert precision["paper_value"] == pytest.approx(0.906484)

@@ -48,3 +48,11 @@ Create the formal, report-only Protocol P versus Protocol G comparison from the 
 ```
 
 The analysis validates source commits, dataset provenance, seeds, model/feature-variant pairings, and baseline report immutability before writing thesis tables under `reports/tables/protocol_p_vs_g/`, figures under `reports/figures/protocol_p_vs_g/`, and a Markdown report under `reports/analysis/`. It never reads raw PDFs, refits a model, regenerates a split, tunes, or changes Protocol P/G result files.
+
+Audit paper Table 5 metric semantics from the committed P/G confusion matrices:
+
+```powershell
+.venv\Scripts\python.exe scripts\audit_metric_semantics.py
+```
+
+This report-only audit retains Label=1 malicious-positive metrics for operations, derives macro metrics from saved confusion matrices, and writes corrected paper-comparison tables under `reports/tables/metric_semantics/`. It does not alter historical Protocol P/G result files or refit models.

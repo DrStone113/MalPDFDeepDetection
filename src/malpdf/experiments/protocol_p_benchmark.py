@@ -45,9 +45,9 @@ PAPER_MODEL_NAMES = {
 }
 PAPER_COMPARISON_METRICS = (
     ("accuracy", "accuracy"),
-    ("precision", "precision"),
-    ("recall", "recall"),
-    ("f1", "f1"),
+    ("precision_macro", "precision"),
+    ("recall_macro", "recall"),
+    ("f1_macro", "f1"),
     ("test_inference_milliseconds_per_sample", "inference_time_ms"),
 )
 
@@ -286,7 +286,10 @@ def build_paper_comparison(
                         None if local_value is None else abs(float(local_value) - float(paper_value))
                     ),
                     "comparison_note": (
-                        "Both feature variants are shown because the paper does not specify "
+                        "Paper Table 5 Precision, Recall, and F1 are compared with local macro metrics; "
+                        "Label=1 malicious-positive metrics are retained separately for operations."
+                        if local_name in {"precision_macro", "recall_macro", "f1_macro"}
+                        else "Both feature variants are shown because the paper does not specify "
                         "whether zero-variance features were removed in every reported fit."
                         if local_name != "test_inference_milliseconds_per_sample"
                         else "Runtime is recorded for reference only and is not directly comparable across hardware/software."
