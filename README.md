@@ -108,10 +108,16 @@ The project can inspect one local PDF as untrusted bytes without opening a viewe
 .venv\Scripts\python.exe -m malpdf inspect path\to\untrusted.pdf --json
 ```
 
-Inspection is bounded by a 50 MiB file limit, 1,000 pages, and 10,000 structural objects by default; each can be configured on the CLI. The JSON result reports a fixed 41-feature RIT-schema-oriented static vector, raw lexical counts separately from parser-confirmed structural indicators, warnings, and a strict Protocol G 38-feature compatibility gate.
+Inspection is bounded by a 50 MiB file limit, 1,000 pages, and 10,000 structural objects by default; each can be configured on the CLI. The JSON result reports a fixed 41-feature RIT-schema-oriented static vector, raw lexical counts separately from parser-confirmed structural indicators, warnings, and a strict Protocol G 38-feature compatibility gate. Canonical RIT metadata features use the released PDFMalExtract v0.1 methodology with its pinned PyMuPDF 1.26.7 dependency; pypdf remains a separate read-only structural-diagnostics parser.
 
-No malware probability, benign/malicious verdict, or risk score is produced. The local RIT CSV has no matching raw PDFs, so feature-generation equivalence has not been established; the gate intentionally refuses model inference unless every required feature has an exact, finite, verified semantic mapping. Generate the thesis coverage documentation only from a clean committed extractor revision:
+The Protocol G schema-level compatibility gate is satisfied (38 required feature definitions), but no malware probability, benign/malicious verdict, or risk score is produced. Each actual PDF must still pass the per-file gate with all finite extracted values; no missing value is imputed. The local RIT CSV has no matching raw PDFs, so record-level feature equality remains unverified. Generate the historical v1 coverage documentation only from a clean committed extractor revision:
 
 ```powershell
 .venv\Scripts\python.exe scripts\generate_static_feature_coverage.py
+```
+
+Generate the separate, immutable v2 compatibility-resolution report (it preserves the v1 report):
+
+```powershell
+.venv\Scripts\python.exe scripts\generate_static_compatibility_resolution.py
 ```

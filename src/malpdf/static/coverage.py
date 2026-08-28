@@ -25,28 +25,30 @@ def _shap_ranks(project_root: Path) -> dict[str, int]:
 
 def _method_for(feature: str) -> tuple[str, str, str]:
     if feature == "pdfsize":
-        return ("exact byte size plus unassigned KiB candidate", "bytes (candidate KiB diagnostic)", "Historical KB conversion is undocumented; canonical value is null.")
+        return ("PDFMalExtract int(file_size_bytes / 1000)", "decimal kilobytes, truncated integer", "Released source contract; original file bytes are also retained as diagnostics.")
     if feature == "metadata size":
-        return ("metadata presence/entry-count diagnostic only", "unavailable", "Historical extracted-metadata byte representation is undocumented.")
+        return ("UTF-8 byte length of str(PyMuPDF Document.metadata)", "bytes", "Released source contract; metadata content is not serialized.")
     if feature == "xref length":
-        return ("raw xref token diagnostic only", "unavailable", "Paper does not define the header-derived xref-length algorithm.")
+        return ("PyMuPDF Document.xref_length()", "count", "Released source contract; distinct from raw xref token count.")
     if feature == "pages":
-        return ("pypdf page-tree count", "count", "Parser differences and malformed-file behavior cannot be compared with original extractor.")
+        return ("PyMuPDF Document.page_count", "count", "A source-returned 0 remains distinct from extractor failure.")
     if feature == "title length":
-        return ("pypdf /Title character length", "characters", "Metadata decoding/normalization may differ from the original extractor.")
+        return ("len(PyMuPDF metadata['title']) or 0", "Python string characters", "Released source contract; metadata text is not retained.")
     if feature == "isEncrypted":
         return ("pypdf encryption flag without decryption", "0/1", "Passwords are never requested or attempted.")
     if feature == "embedded files":
-        return ("bounded parser traversal of /EF file-specification dictionaries", "count", "May differ from the paper's header-extraction method.")
+        return ("PyMuPDF Document.embfile_count()", "count", "Counts logical attachments; payload bytes are never read.")
     if feature == "images":
-        return ("unique parser-derived /Image XObjects", "count", "No rendering/export; parser handling may differ from PDFMalExtract.")
+        return ("sum(len(page.get_images()) for every page)", "per-page image-reference count", "No rendering/export; repeated references on separate pages count separately.")
     if feature == "contains_text":
-        return ("pypdf text length threshold of 50 characters", "-1/0/1 concept", "Failures remain null, never mapped to RIT -1 without equivalence evidence.")
+        return ("PyMuPDF aggregate get_text(), threshold strictly >50", "-1/0/1", "Source-defined -1 is used only for the released outer-loop exception path.")
     if feature == "pdf_ver":
-        return ("literal %PDF- header numeric parse", "numeric version", "Unusual headers are retained; value 0 semantics remain unverified.")
+        return ("float(PyMuPDF metadata['format'][4:7])", "float", "Unusual source values are retained; malformed values remain unavailable.")
     if feature == "ObjStm":
-        return ("token-aware raw /ObjStm count", "count", "Paper spells the token /ObJStm; standard PDF spelling is /ObjStm.")
-    return ("token-aware raw lexical count", "count", "A raw string occurrence is not asserted to be a parser-confirmed active action.")
+        return ("raw bytes.count(b'/ObjStm')", "count", "Released code establishes standard /ObjStm spelling.")
+    if feature == "BaseEncoding":
+        return ("raw bytes.count(b'j/BaseEncoding')", "count", "Released source has a leading-j quirk; retained for dataset fidelity.")
+    return ("PDFMalExtract raw bytes.count with documented overlap subtractions where applicable", "count", "Raw byte occurrences remain distinct from parser-confirmed active actions.")
 
 
 def build_feature_compatibility_rows(project_root: str | Path) -> list[dict[str, str | int]]:

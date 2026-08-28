@@ -12,6 +12,7 @@ from pathlib import Path
 
 from malpdf.static.pdf_parser import inspect_pdf_structure, parse_pdf_header, parser_library_metadata
 from malpdf.static.raw_scan import scan_raw_pdf_tokens
+from malpdf.static.rit_reference import inspect_rit_reference_features, reference_parser_metadata
 from malpdf.static.result import StaticInspectionResult, StructuredExtractionIssue
 from malpdf.static.safety import StaticInspectionLimits
 from malpdf.static.schema import RIT_FEATURES, implementation_statuses
@@ -46,7 +47,12 @@ class StaticPDFAnalyzer:
             "size_bytes": None,
             "sha256": None,
         }
-        parser = {**parser_library_metadata(), "success": False, "encrypted": None}
+        parser = {
+            **parser_library_metadata(),
+            "success": False,
+            "encrypted": None,
+            "rit_reference_extractor": reference_parser_metadata(),
+        }
         diagnostics: dict[str, object] = {"raw_token_counts": {}, "parsed_structural_indicators": {}}
         errors: list[StructuredExtractionIssue] = []
         result = StaticInspectionResult(
@@ -93,17 +99,14 @@ class StaticPDFAnalyzer:
         raw_counts = scan_raw_pdf_tokens(data)
         diagnostics["raw_token_counts"] = raw_counts
         features.update(raw_counts)
-        diagnostics["pdfsize"] = {
-            "size_bytes": int(size),
-            "candidate_kibibytes": float(size / 1024),
-            "status": "not assigned to canonical pdfsize because the paper says kilobytes without documenting the historical conversion rule",
-        }
+        diagnostics["pdfsize"] = {"size_bytes": int(size), "canonical_conversion": "int(size_bytes / 1000)"}
 
         if not header["pdf_header_present"]:
             errors.append(StructuredExtractionIssue("not_pdf", "A valid %PDF- header was not found in the first 32 bytes.", fatal=True))
             return result
 
         parsed = inspect_pdf_structure(data, self.limits)
+        reference = inspect_rit_reference_features(data, int(size), self.limits)
         parser.update(
             {
                 "success": parsed.success,
@@ -114,25 +117,18 @@ class StaticPDFAnalyzer:
             }
         )
         diagnostics["parsed_structural_indicators"] = parsed.structural_indicator_counts
-        diagnostics["metadata"] = {"entry_count": parsed.metadata_entry_count, "content_redacted": True}
-        diagnostics["text"] = {
-            "threshold_characters": 50,
-            "value_meaning": "1 means parser-derived text length met threshold; 0 means it did not; null means unavailable, not the RIT -1 sentinel.",
-        }
-        diagnostics["images"] = {"measurement": "unique parser-derived /Image XObjects; image bytes were not exported"}
+        diagnostics["pypdf_metadata_diagnostics"] = {"entry_count": parsed.metadata_entry_count, "content_redacted": True}
+        diagnostics["pypdf_images_diagnostics"] = {"measurement": "unique parser-derived /Image XObjects; image bytes were not exported"}
+        diagnostics["rit_reference_diagnostics"] = reference.diagnostics
         errors.extend(parsed.errors)
         result.warnings.extend(parsed.warnings)
+        errors.extend(reference.errors)
+        result.warnings.extend(reference.warnings)
 
-        features["isEncrypted"] = None if parsed.encrypted is None else int(parsed.encrypted)
-        features["pages"] = parsed.page_count
-        features["title length"] = parsed.title_length
-        features["embedded files"] = parsed.embedded_file_count
-        features["images"] = parsed.image_count
-        features["contains_text"] = parsed.contains_text
-        features["pdf_ver"] = header["header_version_numeric"]
-        # pdfsize, metadata size, and xref length intentionally remain null:
-        # their original RIT construction is insufficiently specified.  No
-        # sentinel, zero, normalization, or imputation is introduced.
+        features.update(reference.features)
+        # pypdf values remain separate diagnostics. Canonical values above use
+        # the published PDFMalExtract/PyMuPDF methods and their explicit
+        # sentinels; absent values are never imputed.
         return result
 
 

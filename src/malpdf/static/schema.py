@@ -30,7 +30,7 @@ if len(PROTOCOL_G_REQUIRED_FEATURES) != 38:
 # nevertheless kept distinct from parser-confirmed active-content structure.
 _VERIFIED_RAW_FEATURES = frozenset(
     {
-        "obj", "endobj", "stream", "endstream", "trailer", "xref", "startxref",
+        "obj", "endobj", "stream", "endstream", "trailer", "xref", "startxref", "ObjStm",
         "page_command", "Encrypt", "JS", "JavaScript", "AA", "OpenAction",
         "Acroform", "JBIG2Decode", "RichMedia", "Launch", "EmbeddedFile", "XFA",
         "Colors", "URI", "BaseEncoding", "Encoding", "ProcSet", "Registry",
@@ -38,22 +38,17 @@ _VERIFIED_RAW_FEATURES = frozenset(
     }
 )
 
-_PROVISIONAL_FEATURES = frozenset(
-    {"pages", "title length", "embedded files", "images", "contains_text", "pdf_ver", "ObjStm"}
+_REFERENCE_METADATA_FEATURES = frozenset(
+    {"pdfsize", "metadata size", "pages", "xref length", "title length", "isEncrypted", "embedded files", "images", "contains_text", "pdf_ver"}
 )
-_AMBIGUOUS_FEATURES = frozenset({"pdfsize", "metadata size", "xref length"})
 
 
 def implementation_statuses() -> Mapping[str, FeatureStatus]:
     """Return static implementation status for all 41 ordered RIT features."""
     statuses: dict[str, FeatureStatus] = {}
     for feature in RIT_FEATURES:
-        if feature in _VERIFIED_RAW_FEATURES or feature == "isEncrypted":
+        if feature in _VERIFIED_RAW_FEATURES or feature in _REFERENCE_METADATA_FEATURES:
             statuses[feature] = FeatureStatus.IMPLEMENTED_VERIFIED_SEMANTICS
-        elif feature in _PROVISIONAL_FEATURES:
-            statuses[feature] = FeatureStatus.IMPLEMENTED_PROVISIONAL
-        elif feature in _AMBIGUOUS_FEATURES:
-            statuses[feature] = FeatureStatus.AMBIGUOUS
         else:  # Defensive guard if the source-of-truth dictionary changes.
             statuses[feature] = FeatureStatus.UNSUPPORTED
     return statuses
