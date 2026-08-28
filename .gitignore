@@ -54,6 +54,10 @@ reports/figures/**
 reports/tables/**
 !reports/figures/.gitkeep
 !reports/tables/.gitkeep
+!reports/figures/protocol_p_vs_g/
+!reports/figures/protocol_p_vs_g/**
+!reports/tables/protocol_p_vs_g/
+!reports/tables/protocol_p_vs_g/**
 reports/*.md
 reports/*.json
 !reports/research_log.md

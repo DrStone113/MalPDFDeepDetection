@@ -40,3 +40,11 @@ Run the feature-vector-disjoint Protocol G baseline only from a clean, committed
 ```
 
 Protocol G keeps identical static feature vectors within one partition. This is not evidence that PDF files themselves are duplicates, because the local CSV has no per-PDF hash field. The runner fits only train rows, evaluates validation and test once each, reuses Protocol P model configurations, and writes tracked reports to `reports/experiments/protocol_g/<run-id>/`; binary models remain ignored under `artifacts/`.
+
+Create the formal, report-only Protocol P versus Protocol G comparison from the committed seed-42 result reports:
+
+```powershell
+.venv\Scripts\python.exe scripts\analyze_protocol_p_vs_g.py
+```
+
+The analysis validates source commits, dataset provenance, seeds, model/feature-variant pairings, and baseline report immutability before writing thesis tables under `reports/tables/protocol_p_vs_g/`, figures under `reports/figures/protocol_p_vs_g/`, and a Markdown report under `reports/analysis/`. It never reads raw PDFs, refits a model, regenerates a split, tunes, or changes Protocol P/G result files.
