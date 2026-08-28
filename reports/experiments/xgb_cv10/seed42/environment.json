@@ -1,0 +1,25 @@
+{
+  "python_version": "3.11.0",
+  "implementation": "CPython",
+  "os_platform": "Windows-10-10.0.26100-SP0",
+  "cpu_model": "Intel(R) Core(TM) i5-14400F",
+  "gpu": [
+    {
+      "model": "NVIDIA GeForce RTX 5060 Ti",
+      "vram_mib": 8151
+    }
+  ],
+  "system_ram_bytes": 16948178944,
+  "library_versions": {
+    "numpy": "2.4.6",
+    "pandas": "2.3.3",
+    "scikit_learn": "1.9.0",
+    "xgboost": "3.2.0"
+  },
+  "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+  "git_commit_sha": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+  "git_working_tree": {
+    "status": "clean",
+    "porcelain_entries": []
+  }
+}

@@ -1,0 +1,2908 @@
+{
+  "experiment": "xgb_cv10",
+  "fold_validation": {
+    "full_dataset_row_count": 24337,
+    "n_splits": 10,
+    "splitter": "sklearn.model_selection.KFold",
+    "shuffle": true,
+    "cv_split_seed": 42,
+    "all_rows_used_as_test_exactly_once": true,
+    "union_of_test_folds_equals_full_dataset": true,
+    "target_labels_preserved": true,
+    "expected_future_fit_count": 20,
+    "fold_statistics": [
+      {
+        "fold": 1,
+        "train_row_count": 21903,
+        "test_row_count": 2434,
+        "train_test_disjoint": true,
+        "benign_test_count": 1317,
+        "malicious_test_count": 1117,
+        "benign_train_count": 11918,
+        "malicious_train_count": 9985
+      },
+      {
+        "fold": 2,
+        "train_row_count": 21903,
+        "test_row_count": 2434,
+        "train_test_disjoint": true,
+        "benign_test_count": 1355,
+        "malicious_test_count": 1079,
+        "benign_train_count": 11880,
+        "malicious_train_count": 10023
+      },
+      {
+        "fold": 3,
+        "train_row_count": 21903,
+        "test_row_count": 2434,
+        "train_test_disjoint": true,
+        "benign_test_count": 1322,
+        "malicious_test_count": 1112,
+        "benign_train_count": 11913,
+        "malicious_train_count": 9990
+      },
+      {
+        "fold": 4,
+        "train_row_count": 21903,
+        "test_row_count": 2434,
+        "train_test_disjoint": true,
+        "benign_test_count": 1348,
+        "malicious_test_count": 1086,
+        "benign_train_count": 11887,
+        "malicious_train_count": 10016
+      },
+      {
+        "fold": 5,
+        "train_row_count": 21903,
+        "test_row_count": 2434,
+        "train_test_disjoint": true,
+        "benign_test_count": 1319,
+        "malicious_test_count": 1115,
+        "benign_train_count": 11916,
+        "malicious_train_count": 9987
+      },
+      {
+        "fold": 6,
+        "train_row_count": 21903,
+        "test_row_count": 2434,
+        "train_test_disjoint": true,
+        "benign_test_count": 1305,
+        "malicious_test_count": 1129,
+        "benign_train_count": 11930,
+        "malicious_train_count": 9973
+      },
+      {
+        "fold": 7,
+        "train_row_count": 21903,
+        "test_row_count": 2434,
+        "train_test_disjoint": true,
+        "benign_test_count": 1346,
+        "malicious_test_count": 1088,
+        "benign_train_count": 11889,
+        "malicious_train_count": 10014
+      },
+      {
+        "fold": 8,
+        "train_row_count": 21904,
+        "test_row_count": 2433,
+        "train_test_disjoint": true,
+        "benign_test_count": 1319,
+        "malicious_test_count": 1114,
+        "benign_train_count": 11916,
+        "malicious_train_count": 9988
+      },
+      {
+        "fold": 9,
+        "train_row_count": 21904,
+        "test_row_count": 2433,
+        "train_test_disjoint": true,
+        "benign_test_count": 1287,
+        "malicious_test_count": 1146,
+        "benign_train_count": 11948,
+        "malicious_train_count": 9956
+      },
+      {
+        "fold": 10,
+        "train_row_count": 21904,
+        "test_row_count": 2433,
+        "train_test_disjoint": true,
+        "benign_test_count": 1317,
+        "malicious_test_count": 1116,
+        "benign_train_count": 11918,
+        "malicious_train_count": 9986
+      }
+    ],
+    "historical_experiment_outputs_protected": {
+      "is_valid": true,
+      "reports_directory": "C:\\Project\\MalPDFDeepDetection\\reports\\experiments\\xgb_cv10\\seed42",
+      "artifact_directory": "C:\\Project\\MalPDFDeepDetection\\artifacts\\xgb_cv10\\seed42",
+      "protected_historical_experiments": [
+        "multiseed",
+        "protocol_g",
+        "protocol_p"
+      ]
+    }
+  },
+  "records": [
+    {
+      "experiment": "xgb_cv10",
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T11:28:08.073887Z",
+      "feature_variant": "CV-all41",
+      "feature_count": 41,
+      "fold": 1,
+      "dataset_filename": "rit-pdfmal-2026.csv",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "cv_split_seed": 42,
+      "model_random_state": 42,
+      "fold_statistics": {
+        "fold": 1,
+        "train_row_count": 21903,
+        "test_row_count": 2434,
+        "train_test_disjoint": true,
+        "benign_test_count": 1317,
+        "malicious_test_count": 1117,
+        "benign_train_count": 11918,
+        "malicious_train_count": 9985
+      },
+      "model_configuration": {
+        "paper_model_name": "eXtreme Gradient Boost (XGB)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "base_score": 0.5,
+          "booster": "gbtree",
+          "colsample_bylevel": 1.0,
+          "colsample_bynode": 1.0,
+          "colsample_bytree": 1.0,
+          "eval_metric": "logloss",
+          "gamma": 0.0,
+          "learning_rate": 0.1,
+          "max_delta_step": 0.0,
+          "max_depth": 6,
+          "min_child_weight": 1.0,
+          "missing": "NaN",
+          "n_estimators": 200,
+          "n_jobs": 1,
+          "objective": "binary:logistic",
+          "random_state": 42,
+          "reg_alpha": 0.0,
+          "reg_lambda": 1.0,
+          "scale_pos_weight": 1.0,
+          "subsample": 1.0,
+          "tree_method": "hist",
+          "verbosity": 0
+        },
+        "missing_value_assumption": "The JSON-safe string 'NaN' is converted to the explicit IEEE NaN missing-value sentinel required by XGBoost 3.2 at runtime. This fixes a library compatibility error; it does not alter feature values or tune the model."
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "metric_semantics": {
+        "positive_label": 1,
+        "paper_table6_mapping": {
+          "accuracy": "accuracy",
+          "precision_macro": "precision",
+          "recall_macro": "recall",
+          "f1_macro": "f1"
+        },
+        "note": "Paper Table 6 averaging is mapped from established project metric-semantics evidence; Table 6 does not independently state it."
+      },
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        }
+      },
+      "benchmark_generating_code_commit": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+      "metrics": {
+        "positive_label": 1,
+        "accuracy": 0.9909613804437141,
+        "precision_malicious": 0.9981801637852593,
+        "recall_malicious": 0.982094897045658,
+        "f1_malicious": 0.990072202166065,
+        "precision_macro": 0.9915994451885097,
+        "recall_macro": 0.9902881470801563,
+        "f1_macro": 0.99088828811169,
+        "precision": 0.9981801637852593,
+        "recall": 0.982094897045658,
+        "f1": 0.990072202166065,
+        "mcc": 0.9818867166574916,
+        "confusion_matrix": [
+          [
+            1315,
+            2
+          ],
+          [
+            20,
+            1097
+          ]
+        ],
+        "confusion_matrix_labels": [
+          0,
+          1
+        ],
+        "roc_auc": 0.9987077600335533,
+        "pr_auc": 0.9989688183020532,
+        "score_source": "predict_proba"
+      },
+      "confusion_counts": {
+        "tn": 1315,
+        "fp": 2,
+        "fn": 20,
+        "tp": 1097
+      },
+      "runtime": {
+        "training_seconds": 1.1961746999986644,
+        "test_inference_total_seconds": 0.03203420000136248,
+        "test_inference_milliseconds_per_sample": 0.01316113393646774
+      },
+      "error": null
+    },
+    {
+      "experiment": "xgb_cv10",
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T11:28:11.588731Z",
+      "feature_variant": "CV-all41",
+      "feature_count": 41,
+      "fold": 2,
+      "dataset_filename": "rit-pdfmal-2026.csv",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "cv_split_seed": 42,
+      "model_random_state": 42,
+      "fold_statistics": {
+        "fold": 2,
+        "train_row_count": 21903,
+        "test_row_count": 2434,
+        "train_test_disjoint": true,
+        "benign_test_count": 1355,
+        "malicious_test_count": 1079,
+        "benign_train_count": 11880,
+        "malicious_train_count": 10023
+      },
+      "model_configuration": {
+        "paper_model_name": "eXtreme Gradient Boost (XGB)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "base_score": 0.5,
+          "booster": "gbtree",
+          "colsample_bylevel": 1.0,
+          "colsample_bynode": 1.0,
+          "colsample_bytree": 1.0,
+          "eval_metric": "logloss",
+          "gamma": 0.0,
+          "learning_rate": 0.1,
+          "max_delta_step": 0.0,
+          "max_depth": 6,
+          "min_child_weight": 1.0,
+          "missing": "NaN",
+          "n_estimators": 200,
+          "n_jobs": 1,
+          "objective": "binary:logistic",
+          "random_state": 42,
+          "reg_alpha": 0.0,
+          "reg_lambda": 1.0,
+          "scale_pos_weight": 1.0,
+          "subsample": 1.0,
+          "tree_method": "hist",
+          "verbosity": 0
+        },
+        "missing_value_assumption": "The JSON-safe string 'NaN' is converted to the explicit IEEE NaN missing-value sentinel required by XGBoost 3.2 at runtime. This fixes a library compatibility error; it does not alter feature values or tune the model."
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "metric_semantics": {
+        "positive_label": 1,
+        "paper_table6_mapping": {
+          "accuracy": "accuracy",
+          "precision_macro": "precision",
+          "recall_macro": "recall",
+          "f1_macro": "f1"
+        },
+        "note": "Paper Table 6 averaging is mapped from established project metric-semantics evidence; Table 6 does not independently state it."
+      },
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        }
+      },
+      "benchmark_generating_code_commit": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+      "metrics": {
+        "positive_label": 1,
+        "accuracy": 0.9913722267871816,
+        "precision_malicious": 0.988909426987061,
+        "recall_malicious": 0.9916589434661723,
+        "f1_malicious": 0.990282276723739,
+        "precision_macro": 0.9911263111266666,
+        "recall_macro": 0.9914014274526434,
+        "f1_macro": 0.9912623057057927,
+        "precision": 0.988909426987061,
+        "recall": 0.9916589434661723,
+        "f1": 0.990282276723739,
+        "mcc": 0.9825277000618253,
+        "confusion_matrix": [
+          [
+            1343,
+            12
+          ],
+          [
+            9,
+            1070
+          ]
+        ],
+        "confusion_matrix_labels": [
+          0,
+          1
+        ],
+        "roc_auc": 0.9993919475802728,
+        "pr_auc": 0.9993793544973042,
+        "score_source": "predict_proba"
+      },
+      "confusion_counts": {
+        "tn": 1343,
+        "fp": 12,
+        "fn": 9,
+        "tp": 1070
+      },
+      "runtime": {
+        "training_seconds": 0.8366266000011819,
+        "test_inference_total_seconds": 0.029881400001613656,
+        "test_inference_milliseconds_per_sample": 0.012276663928354008
+      },
+      "error": null
+    },
+    {
+      "experiment": "xgb_cv10",
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T11:28:14.570004Z",
+      "feature_variant": "CV-all41",
+      "feature_count": 41,
+      "fold": 3,
+      "dataset_filename": "rit-pdfmal-2026.csv",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "cv_split_seed": 42,
+      "model_random_state": 42,
+      "fold_statistics": {
+        "fold": 3,
+        "train_row_count": 21903,
+        "test_row_count": 2434,
+        "train_test_disjoint": true,
+        "benign_test_count": 1322,
+        "malicious_test_count": 1112,
+        "benign_train_count": 11913,
+        "malicious_train_count": 9990
+      },
+      "model_configuration": {
+        "paper_model_name": "eXtreme Gradient Boost (XGB)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "base_score": 0.5,
+          "booster": "gbtree",
+          "colsample_bylevel": 1.0,
+          "colsample_bynode": 1.0,
+          "colsample_bytree": 1.0,
+          "eval_metric": "logloss",
+          "gamma": 0.0,
+          "learning_rate": 0.1,
+          "max_delta_step": 0.0,
+          "max_depth": 6,
+          "min_child_weight": 1.0,
+          "missing": "NaN",
+          "n_estimators": 200,
+          "n_jobs": 1,
+          "objective": "binary:logistic",
+          "random_state": 42,
+          "reg_alpha": 0.0,
+          "reg_lambda": 1.0,
+          "scale_pos_weight": 1.0,
+          "subsample": 1.0,
+          "tree_method": "hist",
+          "verbosity": 0
+        },
+        "missing_value_assumption": "The JSON-safe string 'NaN' is converted to the explicit IEEE NaN missing-value sentinel required by XGBoost 3.2 at runtime. This fixes a library compatibility error; it does not alter feature values or tune the model."
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "metric_semantics": {
+        "positive_label": 1,
+        "paper_table6_mapping": {
+          "accuracy": "accuracy",
+          "precision_macro": "precision",
+          "recall_macro": "recall",
+          "f1_macro": "f1"
+        },
+        "note": "Paper Table 6 averaging is mapped from established project metric-semantics evidence; Table 6 does not independently state it."
+      },
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        }
+      },
+      "benchmark_generating_code_commit": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+      "metrics": {
+        "positive_label": 1,
+        "accuracy": 0.9934264585045193,
+        "precision_malicious": 0.9981818181818182,
+        "recall_malicious": 0.987410071942446,
+        "f1_malicious": 0.9927667269439421,
+        "precision_macro": 0.993843532779065,
+        "recall_macro": 0.9929486063191806,
+        "f1_macro": 0.9933713152792,
+        "precision": 0.9981818181818182,
+        "recall": 0.987410071942446,
+        "f1": 0.9927667269439421,
+        "mcc": 0.9867917332916418,
+        "confusion_matrix": [
+          [
+            1320,
+            2
+          ],
+          [
+            14,
+            1098
+          ]
+        ],
+        "confusion_matrix_labels": [
+          0,
+          1
+        ],
+        "roc_auc": 0.9991218069417386,
+        "pr_auc": 0.9993016573933139,
+        "score_source": "predict_proba"
+      },
+      "confusion_counts": {
+        "tn": 1320,
+        "fp": 2,
+        "fn": 14,
+        "tp": 1098
+      },
+      "runtime": {
+        "training_seconds": 0.8072279000007256,
+        "test_inference_total_seconds": 0.034263100002135616,
+        "test_inference_milliseconds_per_sample": 0.014076869351740188
+      },
+      "error": null
+    },
+    {
+      "experiment": "xgb_cv10",
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T11:28:17.507353Z",
+      "feature_variant": "CV-all41",
+      "feature_count": 41,
+      "fold": 4,
+      "dataset_filename": "rit-pdfmal-2026.csv",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "cv_split_seed": 42,
+      "model_random_state": 42,
+      "fold_statistics": {
+        "fold": 4,
+        "train_row_count": 21903,
+        "test_row_count": 2434,
+        "train_test_disjoint": true,
+        "benign_test_count": 1348,
+        "malicious_test_count": 1086,
+        "benign_train_count": 11887,
+        "malicious_train_count": 10016
+      },
+      "model_configuration": {
+        "paper_model_name": "eXtreme Gradient Boost (XGB)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "base_score": 0.5,
+          "booster": "gbtree",
+          "colsample_bylevel": 1.0,
+          "colsample_bynode": 1.0,
+          "colsample_bytree": 1.0,
+          "eval_metric": "logloss",
+          "gamma": 0.0,
+          "learning_rate": 0.1,
+          "max_delta_step": 0.0,
+          "max_depth": 6,
+          "min_child_weight": 1.0,
+          "missing": "NaN",
+          "n_estimators": 200,
+          "n_jobs": 1,
+          "objective": "binary:logistic",
+          "random_state": 42,
+          "reg_alpha": 0.0,
+          "reg_lambda": 1.0,
+          "scale_pos_weight": 1.0,
+          "subsample": 1.0,
+          "tree_method": "hist",
+          "verbosity": 0
+        },
+        "missing_value_assumption": "The JSON-safe string 'NaN' is converted to the explicit IEEE NaN missing-value sentinel required by XGBoost 3.2 at runtime. This fixes a library compatibility error; it does not alter feature values or tune the model."
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "metric_semantics": {
+        "positive_label": 1,
+        "paper_table6_mapping": {
+          "accuracy": "accuracy",
+          "precision_macro": "precision",
+          "recall_macro": "recall",
+          "f1_macro": "f1"
+        },
+        "note": "Paper Table 6 averaging is mapped from established project metric-semantics evidence; Table 6 does not independently state it."
+      },
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        }
+      },
+      "benchmark_generating_code_commit": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+      "metrics": {
+        "positive_label": 1,
+        "accuracy": 0.9909613804437141,
+        "precision_malicious": 0.9935064935064936,
+        "recall_malicious": 0.9861878453038674,
+        "f1_malicious": 0.9898336414048059,
+        "precision_macro": 0.9912222733019194,
+        "recall_macro": 0.9904974834827942,
+        "f1_macro": 0.9908487733651248,
+        "precision": 0.9935064935064936,
+        "recall": 0.9861878453038674,
+        "f1": 0.9898336414048059,
+        "mcc": 0.981719489233638,
+        "confusion_matrix": [
+          [
+            1341,
+            7
+          ],
+          [
+            15,
+            1071
+          ]
+        ],
+        "confusion_matrix_labels": [
+          0,
+          1
+        ],
+        "roc_auc": 0.9989985846298451,
+        "pr_auc": 0.9989729101229018,
+        "score_source": "predict_proba"
+      },
+      "confusion_counts": {
+        "tn": 1341,
+        "fp": 7,
+        "fn": 15,
+        "tp": 1071
+      },
+      "runtime": {
+        "training_seconds": 0.9893142999972042,
+        "test_inference_total_seconds": 0.03206320000026608,
+        "test_inference_milliseconds_per_sample": 0.013173048479977847
+      },
+      "error": null
+    },
+    {
+      "experiment": "xgb_cv10",
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T11:28:20.710410Z",
+      "feature_variant": "CV-all41",
+      "feature_count": 41,
+      "fold": 5,
+      "dataset_filename": "rit-pdfmal-2026.csv",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "cv_split_seed": 42,
+      "model_random_state": 42,
+      "fold_statistics": {
+        "fold": 5,
+        "train_row_count": 21903,
+        "test_row_count": 2434,
+        "train_test_disjoint": true,
+        "benign_test_count": 1319,
+        "malicious_test_count": 1115,
+        "benign_train_count": 11916,
+        "malicious_train_count": 9987
+      },
+      "model_configuration": {
+        "paper_model_name": "eXtreme Gradient Boost (XGB)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "base_score": 0.5,
+          "booster": "gbtree",
+          "colsample_bylevel": 1.0,
+          "colsample_bynode": 1.0,
+          "colsample_bytree": 1.0,
+          "eval_metric": "logloss",
+          "gamma": 0.0,
+          "learning_rate": 0.1,
+          "max_delta_step": 0.0,
+          "max_depth": 6,
+          "min_child_weight": 1.0,
+          "missing": "NaN",
+          "n_estimators": 200,
+          "n_jobs": 1,
+          "objective": "binary:logistic",
+          "random_state": 42,
+          "reg_alpha": 0.0,
+          "reg_lambda": 1.0,
+          "scale_pos_weight": 1.0,
+          "subsample": 1.0,
+          "tree_method": "hist",
+          "verbosity": 0
+        },
+        "missing_value_assumption": "The JSON-safe string 'NaN' is converted to the explicit IEEE NaN missing-value sentinel required by XGBoost 3.2 at runtime. This fixes a library compatibility error; it does not alter feature values or tune the model."
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "metric_semantics": {
+        "positive_label": 1,
+        "paper_table6_mapping": {
+          "accuracy": "accuracy",
+          "precision_macro": "precision",
+          "recall_macro": "recall",
+          "f1_macro": "f1"
+        },
+        "note": "Paper Table 6 averaging is mapped from established project metric-semantics evidence; Table 6 does not independently state it."
+      },
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        }
+      },
+      "benchmark_generating_code_commit": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+      "metrics": {
+        "positive_label": 1,
+        "accuracy": 0.9942481511914544,
+        "precision_malicious": 0.99909338168631,
+        "recall_malicious": 0.9883408071748879,
+        "f1_malicious": 0.9936880072137061,
+        "precision_macro": 0.9946631446372948,
+        "recall_macro": 0.9937913285305827,
+        "f1_macro": 0.9942024941728909,
+        "precision": 0.99909338168631,
+        "recall": 0.9883408071748879,
+        "f1": 0.9936880072137061,
+        "mcc": 0.9884540886972253,
+        "confusion_matrix": [
+          [
+            1318,
+            1
+          ],
+          [
+            13,
+            1102
+          ]
+        ],
+        "confusion_matrix_labels": [
+          0,
+          1
+        ],
+        "roc_auc": 0.9981729602192174,
+        "pr_auc": 0.9987202083468548,
+        "score_source": "predict_proba"
+      },
+      "confusion_counts": {
+        "tn": 1318,
+        "fp": 1,
+        "fn": 13,
+        "tp": 1102
+      },
+      "runtime": {
+        "training_seconds": 0.8672035000017786,
+        "test_inference_total_seconds": 0.053372300000773976,
+        "test_inference_milliseconds_per_sample": 0.02192781429777074
+      },
+      "error": null
+    },
+    {
+      "experiment": "xgb_cv10",
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T11:28:23.890033Z",
+      "feature_variant": "CV-all41",
+      "feature_count": 41,
+      "fold": 6,
+      "dataset_filename": "rit-pdfmal-2026.csv",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "cv_split_seed": 42,
+      "model_random_state": 42,
+      "fold_statistics": {
+        "fold": 6,
+        "train_row_count": 21903,
+        "test_row_count": 2434,
+        "train_test_disjoint": true,
+        "benign_test_count": 1305,
+        "malicious_test_count": 1129,
+        "benign_train_count": 11930,
+        "malicious_train_count": 9973
+      },
+      "model_configuration": {
+        "paper_model_name": "eXtreme Gradient Boost (XGB)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "base_score": 0.5,
+          "booster": "gbtree",
+          "colsample_bylevel": 1.0,
+          "colsample_bynode": 1.0,
+          "colsample_bytree": 1.0,
+          "eval_metric": "logloss",
+          "gamma": 0.0,
+          "learning_rate": 0.1,
+          "max_delta_step": 0.0,
+          "max_depth": 6,
+          "min_child_weight": 1.0,
+          "missing": "NaN",
+          "n_estimators": 200,
+          "n_jobs": 1,
+          "objective": "binary:logistic",
+          "random_state": 42,
+          "reg_alpha": 0.0,
+          "reg_lambda": 1.0,
+          "scale_pos_weight": 1.0,
+          "subsample": 1.0,
+          "tree_method": "hist",
+          "verbosity": 0
+        },
+        "missing_value_assumption": "The JSON-safe string 'NaN' is converted to the explicit IEEE NaN missing-value sentinel required by XGBoost 3.2 at runtime. This fixes a library compatibility error; it does not alter feature values or tune the model."
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "metric_semantics": {
+        "positive_label": 1,
+        "paper_table6_mapping": {
+          "accuracy": "accuracy",
+          "precision_macro": "precision",
+          "recall_macro": "recall",
+          "f1_macro": "f1"
+        },
+        "note": "Paper Table 6 averaging is mapped from established project metric-semantics evidence; Table 6 does not independently state it."
+      },
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        }
+      },
+      "benchmark_generating_code_commit": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+      "metrics": {
+        "positive_label": 1,
+        "accuracy": 0.9897288414133114,
+        "precision_malicious": 0.9919786096256684,
+        "recall_malicious": 0.9858281665190434,
+        "f1_malicious": 0.9888938249666814,
+        "precision_macro": 0.9898917438372244,
+        "recall_macro": 0.9894658073974527,
+        "f1_macro": 0.989670450886092,
+        "precision": 0.9919786096256684,
+        "recall": 0.9858281665190434,
+        "f1": 0.9888938249666814,
+        "mcc": 0.9793574586117842,
+        "confusion_matrix": [
+          [
+            1296,
+            9
+          ],
+          [
+            16,
+            1113
+          ]
+        ],
+        "confusion_matrix_labels": [
+          0,
+          1
+        ],
+        "roc_auc": 0.9991543053392111,
+        "pr_auc": 0.9991217500485264,
+        "score_source": "predict_proba"
+      },
+      "confusion_counts": {
+        "tn": 1296,
+        "fp": 9,
+        "fn": 16,
+        "tp": 1113
+      },
+      "runtime": {
+        "training_seconds": 0.7832611000012548,
+        "test_inference_total_seconds": 0.02965789999871049,
+        "test_inference_milliseconds_per_sample": 0.012184839769396258
+      },
+      "error": null
+    },
+    {
+      "experiment": "xgb_cv10",
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T11:28:26.808357Z",
+      "feature_variant": "CV-all41",
+      "feature_count": 41,
+      "fold": 7,
+      "dataset_filename": "rit-pdfmal-2026.csv",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "cv_split_seed": 42,
+      "model_random_state": 42,
+      "fold_statistics": {
+        "fold": 7,
+        "train_row_count": 21903,
+        "test_row_count": 2434,
+        "train_test_disjoint": true,
+        "benign_test_count": 1346,
+        "malicious_test_count": 1088,
+        "benign_train_count": 11889,
+        "malicious_train_count": 10014
+      },
+      "model_configuration": {
+        "paper_model_name": "eXtreme Gradient Boost (XGB)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "base_score": 0.5,
+          "booster": "gbtree",
+          "colsample_bylevel": 1.0,
+          "colsample_bynode": 1.0,
+          "colsample_bytree": 1.0,
+          "eval_metric": "logloss",
+          "gamma": 0.0,
+          "learning_rate": 0.1,
+          "max_delta_step": 0.0,
+          "max_depth": 6,
+          "min_child_weight": 1.0,
+          "missing": "NaN",
+          "n_estimators": 200,
+          "n_jobs": 1,
+          "objective": "binary:logistic",
+          "random_state": 42,
+          "reg_alpha": 0.0,
+          "reg_lambda": 1.0,
+          "scale_pos_weight": 1.0,
+          "subsample": 1.0,
+          "tree_method": "hist",
+          "verbosity": 0
+        },
+        "missing_value_assumption": "The JSON-safe string 'NaN' is converted to the explicit IEEE NaN missing-value sentinel required by XGBoost 3.2 at runtime. This fixes a library compatibility error; it does not alter feature values or tune the model."
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "metric_semantics": {
+        "positive_label": 1,
+        "paper_table6_mapping": {
+          "accuracy": "accuracy",
+          "precision_macro": "precision",
+          "recall_macro": "recall",
+          "f1_macro": "f1"
+        },
+        "note": "Paper Table 6 averaging is mapped from established project metric-semantics evidence; Table 6 does not independently state it."
+      },
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        }
+      },
+      "benchmark_generating_code_commit": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+      "metrics": {
+        "positive_label": 1,
+        "accuracy": 0.995480690221857,
+        "precision_malicious": 0.9990732159406858,
+        "recall_malicious": 0.9908088235294118,
+        "f1_malicious": 0.9949238578680203,
+        "precision_macro": 0.9958465710699739,
+        "recall_macro": 0.9950329407394458,
+        "f1_macro": 0.9954256460758095,
+        "precision": 0.9990732159406858,
+        "recall": 0.9908088235294118,
+        "f1": 0.9949238578680203,
+        "mcc": 0.9908791777655636,
+        "confusion_matrix": [
+          [
+            1345,
+            1
+          ],
+          [
+            10,
+            1078
+          ]
+        ],
+        "confusion_matrix_labels": [
+          0,
+          1
+        ],
+        "roc_auc": 0.9997569049908224,
+        "pr_auc": 0.9997337209909963,
+        "score_source": "predict_proba"
+      },
+      "confusion_counts": {
+        "tn": 1345,
+        "fp": 1,
+        "fn": 10,
+        "tp": 1078
+      },
+      "runtime": {
+        "training_seconds": 0.7871883000007074,
+        "test_inference_total_seconds": 0.03286169999773847,
+        "test_inference_milliseconds_per_sample": 0.013501109284198221
+      },
+      "error": null
+    },
+    {
+      "experiment": "xgb_cv10",
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T11:28:29.651726Z",
+      "feature_variant": "CV-all41",
+      "feature_count": 41,
+      "fold": 8,
+      "dataset_filename": "rit-pdfmal-2026.csv",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "cv_split_seed": 42,
+      "model_random_state": 42,
+      "fold_statistics": {
+        "fold": 8,
+        "train_row_count": 21904,
+        "test_row_count": 2433,
+        "train_test_disjoint": true,
+        "benign_test_count": 1319,
+        "malicious_test_count": 1114,
+        "benign_train_count": 11916,
+        "malicious_train_count": 9988
+      },
+      "model_configuration": {
+        "paper_model_name": "eXtreme Gradient Boost (XGB)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "base_score": 0.5,
+          "booster": "gbtree",
+          "colsample_bylevel": 1.0,
+          "colsample_bynode": 1.0,
+          "colsample_bytree": 1.0,
+          "eval_metric": "logloss",
+          "gamma": 0.0,
+          "learning_rate": 0.1,
+          "max_delta_step": 0.0,
+          "max_depth": 6,
+          "min_child_weight": 1.0,
+          "missing": "NaN",
+          "n_estimators": 200,
+          "n_jobs": 1,
+          "objective": "binary:logistic",
+          "random_state": 42,
+          "reg_alpha": 0.0,
+          "reg_lambda": 1.0,
+          "scale_pos_weight": 1.0,
+          "subsample": 1.0,
+          "tree_method": "hist",
+          "verbosity": 0
+        },
+        "missing_value_assumption": "The JSON-safe string 'NaN' is converted to the explicit IEEE NaN missing-value sentinel required by XGBoost 3.2 at runtime. This fixes a library compatibility error; it does not alter feature values or tune the model."
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "metric_semantics": {
+        "positive_label": 1,
+        "paper_table6_mapping": {
+          "accuracy": "accuracy",
+          "precision_macro": "precision",
+          "recall_macro": "recall",
+          "f1_macro": "f1"
+        },
+        "note": "Paper Table 6 averaging is mapped from established project metric-semantics evidence; Table 6 does not independently state it."
+      },
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        }
+      },
+      "benchmark_generating_code_commit": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+      "metrics": {
+        "positive_label": 1,
+        "accuracy": 0.9958898479243732,
+        "precision_malicious": 0.9972972972972973,
+        "recall_malicious": 0.9937163375224417,
+        "f1_malicious": 0.9955035971223022,
+        "precision_macro": 0.996003146003146,
+        "recall_macro": 0.9957209435906371,
+        "f1_macro": 0.9958592928836341,
+        "precision": 0.9972972972972973,
+        "recall": 0.9937163375224417,
+        "f1": 0.9955035971223022,
+        "mcc": 0.9917240494423922,
+        "confusion_matrix": [
+          [
+            1316,
+            3
+          ],
+          [
+            7,
+            1107
+          ]
+        ],
+        "confusion_matrix_labels": [
+          0,
+          1
+        ],
+        "roc_auc": 0.9993500598217191,
+        "pr_auc": 0.9994286530640849,
+        "score_source": "predict_proba"
+      },
+      "confusion_counts": {
+        "tn": 1316,
+        "fp": 3,
+        "fn": 7,
+        "tp": 1107
+      },
+      "runtime": {
+        "training_seconds": 0.836576799996692,
+        "test_inference_total_seconds": 0.030941900000470923,
+        "test_inference_milliseconds_per_sample": 0.01271759145107724
+      },
+      "error": null
+    },
+    {
+      "experiment": "xgb_cv10",
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T11:28:32.697749Z",
+      "feature_variant": "CV-all41",
+      "feature_count": 41,
+      "fold": 9,
+      "dataset_filename": "rit-pdfmal-2026.csv",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "cv_split_seed": 42,
+      "model_random_state": 42,
+      "fold_statistics": {
+        "fold": 9,
+        "train_row_count": 21904,
+        "test_row_count": 2433,
+        "train_test_disjoint": true,
+        "benign_test_count": 1287,
+        "malicious_test_count": 1146,
+        "benign_train_count": 11948,
+        "malicious_train_count": 9956
+      },
+      "model_configuration": {
+        "paper_model_name": "eXtreme Gradient Boost (XGB)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "base_score": 0.5,
+          "booster": "gbtree",
+          "colsample_bylevel": 1.0,
+          "colsample_bynode": 1.0,
+          "colsample_bytree": 1.0,
+          "eval_metric": "logloss",
+          "gamma": 0.0,
+          "learning_rate": 0.1,
+          "max_delta_step": 0.0,
+          "max_depth": 6,
+          "min_child_weight": 1.0,
+          "missing": "NaN",
+          "n_estimators": 200,
+          "n_jobs": 1,
+          "objective": "binary:logistic",
+          "random_state": 42,
+          "reg_alpha": 0.0,
+          "reg_lambda": 1.0,
+          "scale_pos_weight": 1.0,
+          "subsample": 1.0,
+          "tree_method": "hist",
+          "verbosity": 0
+        },
+        "missing_value_assumption": "The JSON-safe string 'NaN' is converted to the explicit IEEE NaN missing-value sentinel required by XGBoost 3.2 at runtime. This fixes a library compatibility error; it does not alter feature values or tune the model."
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "metric_semantics": {
+        "positive_label": 1,
+        "paper_table6_mapping": {
+          "accuracy": "accuracy",
+          "precision_macro": "precision",
+          "recall_macro": "recall",
+          "f1_macro": "f1"
+        },
+        "note": "Paper Table 6 averaging is mapped from established project metric-semantics evidence; Table 6 does not independently state it."
+      },
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        }
+      },
+      "benchmark_generating_code_commit": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+      "metrics": {
+        "positive_label": 1,
+        "accuracy": 0.9954788327168105,
+        "precision_malicious": 0.9991204925241864,
+        "recall_malicious": 0.9912739965095986,
+        "f1_malicious": 0.9951817783618047,
+        "precision_macro": 0.9957022215707352,
+        "recall_macro": 0.9952484978662989,
+        "f1_macro": 0.9954615821735465,
+        "precision": 0.9991204925241864,
+        "recall": 0.9912739965095986,
+        "f1": 0.9951817783618047,
+        "mcc": 0.9909506155644567,
+        "confusion_matrix": [
+          [
+            1286,
+            1
+          ],
+          [
+            10,
+            1136
+          ]
+        ],
+        "confusion_matrix_labels": [
+          0,
+          1
+        ],
+        "roc_auc": 0.9997525259305364,
+        "pr_auc": 0.999738323014233,
+        "score_source": "predict_proba"
+      },
+      "confusion_counts": {
+        "tn": 1286,
+        "fp": 1,
+        "fn": 10,
+        "tp": 1136
+      },
+      "runtime": {
+        "training_seconds": 0.7870247999999265,
+        "test_inference_total_seconds": 0.029766399999061832,
+        "test_inference_milliseconds_per_sample": 0.012234443074008151
+      },
+      "error": null
+    },
+    {
+      "experiment": "xgb_cv10",
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T11:28:35.609315Z",
+      "feature_variant": "CV-all41",
+      "feature_count": 41,
+      "fold": 10,
+      "dataset_filename": "rit-pdfmal-2026.csv",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "cv_split_seed": 42,
+      "model_random_state": 42,
+      "fold_statistics": {
+        "fold": 10,
+        "train_row_count": 21904,
+        "test_row_count": 2433,
+        "train_test_disjoint": true,
+        "benign_test_count": 1317,
+        "malicious_test_count": 1116,
+        "benign_train_count": 11918,
+        "malicious_train_count": 9986
+      },
+      "model_configuration": {
+        "paper_model_name": "eXtreme Gradient Boost (XGB)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "base_score": 0.5,
+          "booster": "gbtree",
+          "colsample_bylevel": 1.0,
+          "colsample_bynode": 1.0,
+          "colsample_bytree": 1.0,
+          "eval_metric": "logloss",
+          "gamma": 0.0,
+          "learning_rate": 0.1,
+          "max_delta_step": 0.0,
+          "max_depth": 6,
+          "min_child_weight": 1.0,
+          "missing": "NaN",
+          "n_estimators": 200,
+          "n_jobs": 1,
+          "objective": "binary:logistic",
+          "random_state": 42,
+          "reg_alpha": 0.0,
+          "reg_lambda": 1.0,
+          "scale_pos_weight": 1.0,
+          "subsample": 1.0,
+          "tree_method": "hist",
+          "verbosity": 0
+        },
+        "missing_value_assumption": "The JSON-safe string 'NaN' is converted to the explicit IEEE NaN missing-value sentinel required by XGBoost 3.2 at runtime. This fixes a library compatibility error; it does not alter feature values or tune the model."
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "metric_semantics": {
+        "positive_label": 1,
+        "paper_table6_mapping": {
+          "accuracy": "accuracy",
+          "precision_macro": "precision",
+          "recall_macro": "recall",
+          "f1_macro": "f1"
+        },
+        "note": "Paper Table 6 averaging is mapped from established project metric-semantics evidence; Table 6 does not independently state it."
+      },
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        }
+      },
+      "benchmark_generating_code_commit": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+      "metrics": {
+        "positive_label": 1,
+        "accuracy": 0.9930127414714345,
+        "precision_malicious": 0.996386630532972,
+        "recall_malicious": 0.9883512544802867,
+        "f1_malicious": 0.9923526765632029,
+        "precision_macro": 0.9932913544821723,
+        "recall_macro": 0.9926570243547979,
+        "f1_macro": 0.9929602959055137,
+        "precision": 0.996386630532972,
+        "recall": 0.9883512544802867,
+        "f1": 0.9923526765632029,
+        "mcc": 0.985948174782295,
+        "confusion_matrix": [
+          [
+            1313,
+            4
+          ],
+          [
+            13,
+            1103
+          ]
+        ],
+        "confusion_matrix_labels": [
+          0,
+          1
+        ],
+        "roc_auc": 0.9992515845995161,
+        "pr_auc": 0.9992814900191079,
+        "score_source": "predict_proba"
+      },
+      "confusion_counts": {
+        "tn": 1313,
+        "fp": 4,
+        "fn": 13,
+        "tp": 1103
+      },
+      "runtime": {
+        "training_seconds": 0.7573668000004545,
+        "test_inference_total_seconds": 0.027735399999073707,
+        "test_inference_milliseconds_per_sample": 0.011399671187453228
+      },
+      "error": null
+    },
+    {
+      "experiment": "xgb_cv10",
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T11:28:38.431471Z",
+      "feature_variant": "CV-drop3constant",
+      "feature_count": 38,
+      "fold": 1,
+      "dataset_filename": "rit-pdfmal-2026.csv",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "cv_split_seed": 42,
+      "model_random_state": 42,
+      "fold_statistics": {
+        "fold": 1,
+        "train_row_count": 21903,
+        "test_row_count": 2434,
+        "train_test_disjoint": true,
+        "benign_test_count": 1317,
+        "malicious_test_count": 1117,
+        "benign_train_count": 11918,
+        "malicious_train_count": 9985
+      },
+      "model_configuration": {
+        "paper_model_name": "eXtreme Gradient Boost (XGB)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "base_score": 0.5,
+          "booster": "gbtree",
+          "colsample_bylevel": 1.0,
+          "colsample_bynode": 1.0,
+          "colsample_bytree": 1.0,
+          "eval_metric": "logloss",
+          "gamma": 0.0,
+          "learning_rate": 0.1,
+          "max_delta_step": 0.0,
+          "max_depth": 6,
+          "min_child_weight": 1.0,
+          "missing": "NaN",
+          "n_estimators": 200,
+          "n_jobs": 1,
+          "objective": "binary:logistic",
+          "random_state": 42,
+          "reg_alpha": 0.0,
+          "reg_lambda": 1.0,
+          "scale_pos_weight": 1.0,
+          "subsample": 1.0,
+          "tree_method": "hist",
+          "verbosity": 0
+        },
+        "missing_value_assumption": "The JSON-safe string 'NaN' is converted to the explicit IEEE NaN missing-value sentinel required by XGBoost 3.2 at runtime. This fixes a library compatibility error; it does not alter feature values or tune the model."
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "metric_semantics": {
+        "positive_label": 1,
+        "paper_table6_mapping": {
+          "accuracy": "accuracy",
+          "precision_macro": "precision",
+          "recall_macro": "recall",
+          "f1_macro": "f1"
+        },
+        "note": "Paper Table 6 averaging is mapped from established project metric-semantics evidence; Table 6 does not independently state it."
+      },
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        }
+      },
+      "benchmark_generating_code_commit": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+      "metrics": {
+        "positive_label": 1,
+        "accuracy": 0.9909613804437141,
+        "precision_malicious": 0.9981801637852593,
+        "recall_malicious": 0.982094897045658,
+        "f1_malicious": 0.990072202166065,
+        "precision_macro": 0.9915994451885097,
+        "recall_macro": 0.9902881470801563,
+        "f1_macro": 0.99088828811169,
+        "precision": 0.9981801637852593,
+        "recall": 0.982094897045658,
+        "f1": 0.990072202166065,
+        "mcc": 0.9818867166574916,
+        "confusion_matrix": [
+          [
+            1315,
+            2
+          ],
+          [
+            20,
+            1097
+          ]
+        ],
+        "confusion_matrix_labels": [
+          0,
+          1
+        ],
+        "roc_auc": 0.9987077600335533,
+        "pr_auc": 0.9989688183020532,
+        "score_source": "predict_proba"
+      },
+      "confusion_counts": {
+        "tn": 1315,
+        "fp": 2,
+        "fn": 20,
+        "tp": 1097
+      },
+      "runtime": {
+        "training_seconds": 0.7523413999988406,
+        "test_inference_total_seconds": 0.024671900002431357,
+        "test_inference_milliseconds_per_sample": 0.010136359902395791
+      },
+      "error": null
+    },
+    {
+      "experiment": "xgb_cv10",
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T11:28:41.210939Z",
+      "feature_variant": "CV-drop3constant",
+      "feature_count": 38,
+      "fold": 2,
+      "dataset_filename": "rit-pdfmal-2026.csv",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "cv_split_seed": 42,
+      "model_random_state": 42,
+      "fold_statistics": {
+        "fold": 2,
+        "train_row_count": 21903,
+        "test_row_count": 2434,
+        "train_test_disjoint": true,
+        "benign_test_count": 1355,
+        "malicious_test_count": 1079,
+        "benign_train_count": 11880,
+        "malicious_train_count": 10023
+      },
+      "model_configuration": {
+        "paper_model_name": "eXtreme Gradient Boost (XGB)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "base_score": 0.5,
+          "booster": "gbtree",
+          "colsample_bylevel": 1.0,
+          "colsample_bynode": 1.0,
+          "colsample_bytree": 1.0,
+          "eval_metric": "logloss",
+          "gamma": 0.0,
+          "learning_rate": 0.1,
+          "max_delta_step": 0.0,
+          "max_depth": 6,
+          "min_child_weight": 1.0,
+          "missing": "NaN",
+          "n_estimators": 200,
+          "n_jobs": 1,
+          "objective": "binary:logistic",
+          "random_state": 42,
+          "reg_alpha": 0.0,
+          "reg_lambda": 1.0,
+          "scale_pos_weight": 1.0,
+          "subsample": 1.0,
+          "tree_method": "hist",
+          "verbosity": 0
+        },
+        "missing_value_assumption": "The JSON-safe string 'NaN' is converted to the explicit IEEE NaN missing-value sentinel required by XGBoost 3.2 at runtime. This fixes a library compatibility error; it does not alter feature values or tune the model."
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "metric_semantics": {
+        "positive_label": 1,
+        "paper_table6_mapping": {
+          "accuracy": "accuracy",
+          "precision_macro": "precision",
+          "recall_macro": "recall",
+          "f1_macro": "f1"
+        },
+        "note": "Paper Table 6 averaging is mapped from established project metric-semantics evidence; Table 6 does not independently state it."
+      },
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        }
+      },
+      "benchmark_generating_code_commit": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+      "metrics": {
+        "positive_label": 1,
+        "accuracy": 0.9913722267871816,
+        "precision_malicious": 0.988909426987061,
+        "recall_malicious": 0.9916589434661723,
+        "f1_malicious": 0.990282276723739,
+        "precision_macro": 0.9911263111266666,
+        "recall_macro": 0.9914014274526434,
+        "f1_macro": 0.9912623057057927,
+        "precision": 0.988909426987061,
+        "recall": 0.9916589434661723,
+        "f1": 0.990282276723739,
+        "mcc": 0.9825277000618253,
+        "confusion_matrix": [
+          [
+            1343,
+            12
+          ],
+          [
+            9,
+            1070
+          ]
+        ],
+        "confusion_matrix_labels": [
+          0,
+          1
+        ],
+        "roc_auc": 0.9993919475802728,
+        "pr_auc": 0.9993793544973042,
+        "score_source": "predict_proba"
+      },
+      "confusion_counts": {
+        "tn": 1343,
+        "fp": 12,
+        "fn": 9,
+        "tp": 1070
+      },
+      "runtime": {
+        "training_seconds": 0.7150838000015938,
+        "test_inference_total_seconds": 0.027526900001248578,
+        "test_inference_milliseconds_per_sample": 0.011309326212509687
+      },
+      "error": null
+    },
+    {
+      "experiment": "xgb_cv10",
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T11:28:44.015242Z",
+      "feature_variant": "CV-drop3constant",
+      "feature_count": 38,
+      "fold": 3,
+      "dataset_filename": "rit-pdfmal-2026.csv",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "cv_split_seed": 42,
+      "model_random_state": 42,
+      "fold_statistics": {
+        "fold": 3,
+        "train_row_count": 21903,
+        "test_row_count": 2434,
+        "train_test_disjoint": true,
+        "benign_test_count": 1322,
+        "malicious_test_count": 1112,
+        "benign_train_count": 11913,
+        "malicious_train_count": 9990
+      },
+      "model_configuration": {
+        "paper_model_name": "eXtreme Gradient Boost (XGB)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "base_score": 0.5,
+          "booster": "gbtree",
+          "colsample_bylevel": 1.0,
+          "colsample_bynode": 1.0,
+          "colsample_bytree": 1.0,
+          "eval_metric": "logloss",
+          "gamma": 0.0,
+          "learning_rate": 0.1,
+          "max_delta_step": 0.0,
+          "max_depth": 6,
+          "min_child_weight": 1.0,
+          "missing": "NaN",
+          "n_estimators": 200,
+          "n_jobs": 1,
+          "objective": "binary:logistic",
+          "random_state": 42,
+          "reg_alpha": 0.0,
+          "reg_lambda": 1.0,
+          "scale_pos_weight": 1.0,
+          "subsample": 1.0,
+          "tree_method": "hist",
+          "verbosity": 0
+        },
+        "missing_value_assumption": "The JSON-safe string 'NaN' is converted to the explicit IEEE NaN missing-value sentinel required by XGBoost 3.2 at runtime. This fixes a library compatibility error; it does not alter feature values or tune the model."
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "metric_semantics": {
+        "positive_label": 1,
+        "paper_table6_mapping": {
+          "accuracy": "accuracy",
+          "precision_macro": "precision",
+          "recall_macro": "recall",
+          "f1_macro": "f1"
+        },
+        "note": "Paper Table 6 averaging is mapped from established project metric-semantics evidence; Table 6 does not independently state it."
+      },
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        }
+      },
+      "benchmark_generating_code_commit": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+      "metrics": {
+        "positive_label": 1,
+        "accuracy": 0.9934264585045193,
+        "precision_malicious": 0.9981818181818182,
+        "recall_malicious": 0.987410071942446,
+        "f1_malicious": 0.9927667269439421,
+        "precision_macro": 0.993843532779065,
+        "recall_macro": 0.9929486063191806,
+        "f1_macro": 0.9933713152792,
+        "precision": 0.9981818181818182,
+        "recall": 0.987410071942446,
+        "f1": 0.9927667269439421,
+        "mcc": 0.9867917332916418,
+        "confusion_matrix": [
+          [
+            1320,
+            2
+          ],
+          [
+            14,
+            1098
+          ]
+        ],
+        "confusion_matrix_labels": [
+          0,
+          1
+        ],
+        "roc_auc": 0.9991218069417386,
+        "pr_auc": 0.9993016573933139,
+        "score_source": "predict_proba"
+      },
+      "confusion_counts": {
+        "tn": 1320,
+        "fp": 2,
+        "fn": 14,
+        "tp": 1098
+      },
+      "runtime": {
+        "training_seconds": 0.7184955999982776,
+        "test_inference_total_seconds": 0.027642000000923872,
+        "test_inference_milliseconds_per_sample": 0.011356614626509397
+      },
+      "error": null
+    },
+    {
+      "experiment": "xgb_cv10",
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T11:28:46.830276Z",
+      "feature_variant": "CV-drop3constant",
+      "feature_count": 38,
+      "fold": 4,
+      "dataset_filename": "rit-pdfmal-2026.csv",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "cv_split_seed": 42,
+      "model_random_state": 42,
+      "fold_statistics": {
+        "fold": 4,
+        "train_row_count": 21903,
+        "test_row_count": 2434,
+        "train_test_disjoint": true,
+        "benign_test_count": 1348,
+        "malicious_test_count": 1086,
+        "benign_train_count": 11887,
+        "malicious_train_count": 10016
+      },
+      "model_configuration": {
+        "paper_model_name": "eXtreme Gradient Boost (XGB)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "base_score": 0.5,
+          "booster": "gbtree",
+          "colsample_bylevel": 1.0,
+          "colsample_bynode": 1.0,
+          "colsample_bytree": 1.0,
+          "eval_metric": "logloss",
+          "gamma": 0.0,
+          "learning_rate": 0.1,
+          "max_delta_step": 0.0,
+          "max_depth": 6,
+          "min_child_weight": 1.0,
+          "missing": "NaN",
+          "n_estimators": 200,
+          "n_jobs": 1,
+          "objective": "binary:logistic",
+          "random_state": 42,
+          "reg_alpha": 0.0,
+          "reg_lambda": 1.0,
+          "scale_pos_weight": 1.0,
+          "subsample": 1.0,
+          "tree_method": "hist",
+          "verbosity": 0
+        },
+        "missing_value_assumption": "The JSON-safe string 'NaN' is converted to the explicit IEEE NaN missing-value sentinel required by XGBoost 3.2 at runtime. This fixes a library compatibility error; it does not alter feature values or tune the model."
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "metric_semantics": {
+        "positive_label": 1,
+        "paper_table6_mapping": {
+          "accuracy": "accuracy",
+          "precision_macro": "precision",
+          "recall_macro": "recall",
+          "f1_macro": "f1"
+        },
+        "note": "Paper Table 6 averaging is mapped from established project metric-semantics evidence; Table 6 does not independently state it."
+      },
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        }
+      },
+      "benchmark_generating_code_commit": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+      "metrics": {
+        "positive_label": 1,
+        "accuracy": 0.9909613804437141,
+        "precision_malicious": 0.9935064935064936,
+        "recall_malicious": 0.9861878453038674,
+        "f1_malicious": 0.9898336414048059,
+        "precision_macro": 0.9912222733019194,
+        "recall_macro": 0.9904974834827942,
+        "f1_macro": 0.9908487733651248,
+        "precision": 0.9935064935064936,
+        "recall": 0.9861878453038674,
+        "f1": 0.9898336414048059,
+        "mcc": 0.981719489233638,
+        "confusion_matrix": [
+          [
+            1341,
+            7
+          ],
+          [
+            15,
+            1071
+          ]
+        ],
+        "confusion_matrix_labels": [
+          0,
+          1
+        ],
+        "roc_auc": 0.9989985846298451,
+        "pr_auc": 0.9989729101229018,
+        "score_source": "predict_proba"
+      },
+      "confusion_counts": {
+        "tn": 1341,
+        "fp": 7,
+        "fn": 15,
+        "tp": 1071
+      },
+      "runtime": {
+        "training_seconds": 0.7443298000034702,
+        "test_inference_total_seconds": 0.028257999998459127,
+        "test_inference_milliseconds_per_sample": 0.011609695973072771
+      },
+      "error": null
+    },
+    {
+      "experiment": "xgb_cv10",
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T11:28:49.608085Z",
+      "feature_variant": "CV-drop3constant",
+      "feature_count": 38,
+      "fold": 5,
+      "dataset_filename": "rit-pdfmal-2026.csv",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "cv_split_seed": 42,
+      "model_random_state": 42,
+      "fold_statistics": {
+        "fold": 5,
+        "train_row_count": 21903,
+        "test_row_count": 2434,
+        "train_test_disjoint": true,
+        "benign_test_count": 1319,
+        "malicious_test_count": 1115,
+        "benign_train_count": 11916,
+        "malicious_train_count": 9987
+      },
+      "model_configuration": {
+        "paper_model_name": "eXtreme Gradient Boost (XGB)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "base_score": 0.5,
+          "booster": "gbtree",
+          "colsample_bylevel": 1.0,
+          "colsample_bynode": 1.0,
+          "colsample_bytree": 1.0,
+          "eval_metric": "logloss",
+          "gamma": 0.0,
+          "learning_rate": 0.1,
+          "max_delta_step": 0.0,
+          "max_depth": 6,
+          "min_child_weight": 1.0,
+          "missing": "NaN",
+          "n_estimators": 200,
+          "n_jobs": 1,
+          "objective": "binary:logistic",
+          "random_state": 42,
+          "reg_alpha": 0.0,
+          "reg_lambda": 1.0,
+          "scale_pos_weight": 1.0,
+          "subsample": 1.0,
+          "tree_method": "hist",
+          "verbosity": 0
+        },
+        "missing_value_assumption": "The JSON-safe string 'NaN' is converted to the explicit IEEE NaN missing-value sentinel required by XGBoost 3.2 at runtime. This fixes a library compatibility error; it does not alter feature values or tune the model."
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "metric_semantics": {
+        "positive_label": 1,
+        "paper_table6_mapping": {
+          "accuracy": "accuracy",
+          "precision_macro": "precision",
+          "recall_macro": "recall",
+          "f1_macro": "f1"
+        },
+        "note": "Paper Table 6 averaging is mapped from established project metric-semantics evidence; Table 6 does not independently state it."
+      },
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        }
+      },
+      "benchmark_generating_code_commit": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+      "metrics": {
+        "positive_label": 1,
+        "accuracy": 0.9942481511914544,
+        "precision_malicious": 0.99909338168631,
+        "recall_malicious": 0.9883408071748879,
+        "f1_malicious": 0.9936880072137061,
+        "precision_macro": 0.9946631446372948,
+        "recall_macro": 0.9937913285305827,
+        "f1_macro": 0.9942024941728909,
+        "precision": 0.99909338168631,
+        "recall": 0.9883408071748879,
+        "f1": 0.9936880072137061,
+        "mcc": 0.9884540886972253,
+        "confusion_matrix": [
+          [
+            1318,
+            1
+          ],
+          [
+            13,
+            1102
+          ]
+        ],
+        "confusion_matrix_labels": [
+          0,
+          1
+        ],
+        "roc_auc": 0.9981729602192174,
+        "pr_auc": 0.9987202083468548,
+        "score_source": "predict_proba"
+      },
+      "confusion_counts": {
+        "tn": 1318,
+        "fp": 1,
+        "fn": 13,
+        "tp": 1102
+      },
+      "runtime": {
+        "training_seconds": 0.7226593999985198,
+        "test_inference_total_seconds": 0.030302599996502977,
+        "test_inference_milliseconds_per_sample": 0.012449712406122833
+      },
+      "error": null
+    },
+    {
+      "experiment": "xgb_cv10",
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T11:28:52.376695Z",
+      "feature_variant": "CV-drop3constant",
+      "feature_count": 38,
+      "fold": 6,
+      "dataset_filename": "rit-pdfmal-2026.csv",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "cv_split_seed": 42,
+      "model_random_state": 42,
+      "fold_statistics": {
+        "fold": 6,
+        "train_row_count": 21903,
+        "test_row_count": 2434,
+        "train_test_disjoint": true,
+        "benign_test_count": 1305,
+        "malicious_test_count": 1129,
+        "benign_train_count": 11930,
+        "malicious_train_count": 9973
+      },
+      "model_configuration": {
+        "paper_model_name": "eXtreme Gradient Boost (XGB)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "base_score": 0.5,
+          "booster": "gbtree",
+          "colsample_bylevel": 1.0,
+          "colsample_bynode": 1.0,
+          "colsample_bytree": 1.0,
+          "eval_metric": "logloss",
+          "gamma": 0.0,
+          "learning_rate": 0.1,
+          "max_delta_step": 0.0,
+          "max_depth": 6,
+          "min_child_weight": 1.0,
+          "missing": "NaN",
+          "n_estimators": 200,
+          "n_jobs": 1,
+          "objective": "binary:logistic",
+          "random_state": 42,
+          "reg_alpha": 0.0,
+          "reg_lambda": 1.0,
+          "scale_pos_weight": 1.0,
+          "subsample": 1.0,
+          "tree_method": "hist",
+          "verbosity": 0
+        },
+        "missing_value_assumption": "The JSON-safe string 'NaN' is converted to the explicit IEEE NaN missing-value sentinel required by XGBoost 3.2 at runtime. This fixes a library compatibility error; it does not alter feature values or tune the model."
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "metric_semantics": {
+        "positive_label": 1,
+        "paper_table6_mapping": {
+          "accuracy": "accuracy",
+          "precision_macro": "precision",
+          "recall_macro": "recall",
+          "f1_macro": "f1"
+        },
+        "note": "Paper Table 6 averaging is mapped from established project metric-semantics evidence; Table 6 does not independently state it."
+      },
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        }
+      },
+      "benchmark_generating_code_commit": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+      "metrics": {
+        "positive_label": 1,
+        "accuracy": 0.9897288414133114,
+        "precision_malicious": 0.9919786096256684,
+        "recall_malicious": 0.9858281665190434,
+        "f1_malicious": 0.9888938249666814,
+        "precision_macro": 0.9898917438372244,
+        "recall_macro": 0.9894658073974527,
+        "f1_macro": 0.989670450886092,
+        "precision": 0.9919786096256684,
+        "recall": 0.9858281665190434,
+        "f1": 0.9888938249666814,
+        "mcc": 0.9793574586117842,
+        "confusion_matrix": [
+          [
+            1296,
+            9
+          ],
+          [
+            16,
+            1113
+          ]
+        ],
+        "confusion_matrix_labels": [
+          0,
+          1
+        ],
+        "roc_auc": 0.9991543053392111,
+        "pr_auc": 0.9991217500485264,
+        "score_source": "predict_proba"
+      },
+      "confusion_counts": {
+        "tn": 1296,
+        "fp": 9,
+        "fn": 16,
+        "tp": 1113
+      },
+      "runtime": {
+        "training_seconds": 0.7402326000010362,
+        "test_inference_total_seconds": 0.028115600001910934,
+        "test_inference_milliseconds_per_sample": 0.011551191455181156
+      },
+      "error": null
+    },
+    {
+      "experiment": "xgb_cv10",
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T11:28:55.198625Z",
+      "feature_variant": "CV-drop3constant",
+      "feature_count": 38,
+      "fold": 7,
+      "dataset_filename": "rit-pdfmal-2026.csv",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "cv_split_seed": 42,
+      "model_random_state": 42,
+      "fold_statistics": {
+        "fold": 7,
+        "train_row_count": 21903,
+        "test_row_count": 2434,
+        "train_test_disjoint": true,
+        "benign_test_count": 1346,
+        "malicious_test_count": 1088,
+        "benign_train_count": 11889,
+        "malicious_train_count": 10014
+      },
+      "model_configuration": {
+        "paper_model_name": "eXtreme Gradient Boost (XGB)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "base_score": 0.5,
+          "booster": "gbtree",
+          "colsample_bylevel": 1.0,
+          "colsample_bynode": 1.0,
+          "colsample_bytree": 1.0,
+          "eval_metric": "logloss",
+          "gamma": 0.0,
+          "learning_rate": 0.1,
+          "max_delta_step": 0.0,
+          "max_depth": 6,
+          "min_child_weight": 1.0,
+          "missing": "NaN",
+          "n_estimators": 200,
+          "n_jobs": 1,
+          "objective": "binary:logistic",
+          "random_state": 42,
+          "reg_alpha": 0.0,
+          "reg_lambda": 1.0,
+          "scale_pos_weight": 1.0,
+          "subsample": 1.0,
+          "tree_method": "hist",
+          "verbosity": 0
+        },
+        "missing_value_assumption": "The JSON-safe string 'NaN' is converted to the explicit IEEE NaN missing-value sentinel required by XGBoost 3.2 at runtime. This fixes a library compatibility error; it does not alter feature values or tune the model."
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "metric_semantics": {
+        "positive_label": 1,
+        "paper_table6_mapping": {
+          "accuracy": "accuracy",
+          "precision_macro": "precision",
+          "recall_macro": "recall",
+          "f1_macro": "f1"
+        },
+        "note": "Paper Table 6 averaging is mapped from established project metric-semantics evidence; Table 6 does not independently state it."
+      },
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        }
+      },
+      "benchmark_generating_code_commit": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+      "metrics": {
+        "positive_label": 1,
+        "accuracy": 0.995480690221857,
+        "precision_malicious": 0.9990732159406858,
+        "recall_malicious": 0.9908088235294118,
+        "f1_malicious": 0.9949238578680203,
+        "precision_macro": 0.9958465710699739,
+        "recall_macro": 0.9950329407394458,
+        "f1_macro": 0.9954256460758095,
+        "precision": 0.9990732159406858,
+        "recall": 0.9908088235294118,
+        "f1": 0.9949238578680203,
+        "mcc": 0.9908791777655636,
+        "confusion_matrix": [
+          [
+            1345,
+            1
+          ],
+          [
+            10,
+            1078
+          ]
+        ],
+        "confusion_matrix_labels": [
+          0,
+          1
+        ],
+        "roc_auc": 0.9997569049908224,
+        "pr_auc": 0.9997337209909963,
+        "score_source": "predict_proba"
+      },
+      "confusion_counts": {
+        "tn": 1345,
+        "fp": 1,
+        "fn": 10,
+        "tp": 1078
+      },
+      "runtime": {
+        "training_seconds": 0.7337294999997539,
+        "test_inference_total_seconds": 0.030361400000401773,
+        "test_inference_milliseconds_per_sample": 0.01247387017272053
+      },
+      "error": null
+    },
+    {
+      "experiment": "xgb_cv10",
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T11:28:58.011034Z",
+      "feature_variant": "CV-drop3constant",
+      "feature_count": 38,
+      "fold": 8,
+      "dataset_filename": "rit-pdfmal-2026.csv",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "cv_split_seed": 42,
+      "model_random_state": 42,
+      "fold_statistics": {
+        "fold": 8,
+        "train_row_count": 21904,
+        "test_row_count": 2433,
+        "train_test_disjoint": true,
+        "benign_test_count": 1319,
+        "malicious_test_count": 1114,
+        "benign_train_count": 11916,
+        "malicious_train_count": 9988
+      },
+      "model_configuration": {
+        "paper_model_name": "eXtreme Gradient Boost (XGB)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "base_score": 0.5,
+          "booster": "gbtree",
+          "colsample_bylevel": 1.0,
+          "colsample_bynode": 1.0,
+          "colsample_bytree": 1.0,
+          "eval_metric": "logloss",
+          "gamma": 0.0,
+          "learning_rate": 0.1,
+          "max_delta_step": 0.0,
+          "max_depth": 6,
+          "min_child_weight": 1.0,
+          "missing": "NaN",
+          "n_estimators": 200,
+          "n_jobs": 1,
+          "objective": "binary:logistic",
+          "random_state": 42,
+          "reg_alpha": 0.0,
+          "reg_lambda": 1.0,
+          "scale_pos_weight": 1.0,
+          "subsample": 1.0,
+          "tree_method": "hist",
+          "verbosity": 0
+        },
+        "missing_value_assumption": "The JSON-safe string 'NaN' is converted to the explicit IEEE NaN missing-value sentinel required by XGBoost 3.2 at runtime. This fixes a library compatibility error; it does not alter feature values or tune the model."
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "metric_semantics": {
+        "positive_label": 1,
+        "paper_table6_mapping": {
+          "accuracy": "accuracy",
+          "precision_macro": "precision",
+          "recall_macro": "recall",
+          "f1_macro": "f1"
+        },
+        "note": "Paper Table 6 averaging is mapped from established project metric-semantics evidence; Table 6 does not independently state it."
+      },
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        }
+      },
+      "benchmark_generating_code_commit": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+      "metrics": {
+        "positive_label": 1,
+        "accuracy": 0.9958898479243732,
+        "precision_malicious": 0.9972972972972973,
+        "recall_malicious": 0.9937163375224417,
+        "f1_malicious": 0.9955035971223022,
+        "precision_macro": 0.996003146003146,
+        "recall_macro": 0.9957209435906371,
+        "f1_macro": 0.9958592928836341,
+        "precision": 0.9972972972972973,
+        "recall": 0.9937163375224417,
+        "f1": 0.9955035971223022,
+        "mcc": 0.9917240494423922,
+        "confusion_matrix": [
+          [
+            1316,
+            3
+          ],
+          [
+            7,
+            1107
+          ]
+        ],
+        "confusion_matrix_labels": [
+          0,
+          1
+        ],
+        "roc_auc": 0.9993500598217191,
+        "pr_auc": 0.9994286530640849,
+        "score_source": "predict_proba"
+      },
+      "confusion_counts": {
+        "tn": 1316,
+        "fp": 3,
+        "fn": 7,
+        "tp": 1107
+      },
+      "runtime": {
+        "training_seconds": 0.7552004999997735,
+        "test_inference_total_seconds": 0.028576099997735582,
+        "test_inference_milliseconds_per_sample": 0.011745211671901184
+      },
+      "error": null
+    },
+    {
+      "experiment": "xgb_cv10",
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T11:29:00.883111Z",
+      "feature_variant": "CV-drop3constant",
+      "feature_count": 38,
+      "fold": 9,
+      "dataset_filename": "rit-pdfmal-2026.csv",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "cv_split_seed": 42,
+      "model_random_state": 42,
+      "fold_statistics": {
+        "fold": 9,
+        "train_row_count": 21904,
+        "test_row_count": 2433,
+        "train_test_disjoint": true,
+        "benign_test_count": 1287,
+        "malicious_test_count": 1146,
+        "benign_train_count": 11948,
+        "malicious_train_count": 9956
+      },
+      "model_configuration": {
+        "paper_model_name": "eXtreme Gradient Boost (XGB)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "base_score": 0.5,
+          "booster": "gbtree",
+          "colsample_bylevel": 1.0,
+          "colsample_bynode": 1.0,
+          "colsample_bytree": 1.0,
+          "eval_metric": "logloss",
+          "gamma": 0.0,
+          "learning_rate": 0.1,
+          "max_delta_step": 0.0,
+          "max_depth": 6,
+          "min_child_weight": 1.0,
+          "missing": "NaN",
+          "n_estimators": 200,
+          "n_jobs": 1,
+          "objective": "binary:logistic",
+          "random_state": 42,
+          "reg_alpha": 0.0,
+          "reg_lambda": 1.0,
+          "scale_pos_weight": 1.0,
+          "subsample": 1.0,
+          "tree_method": "hist",
+          "verbosity": 0
+        },
+        "missing_value_assumption": "The JSON-safe string 'NaN' is converted to the explicit IEEE NaN missing-value sentinel required by XGBoost 3.2 at runtime. This fixes a library compatibility error; it does not alter feature values or tune the model."
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "metric_semantics": {
+        "positive_label": 1,
+        "paper_table6_mapping": {
+          "accuracy": "accuracy",
+          "precision_macro": "precision",
+          "recall_macro": "recall",
+          "f1_macro": "f1"
+        },
+        "note": "Paper Table 6 averaging is mapped from established project metric-semantics evidence; Table 6 does not independently state it."
+      },
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        }
+      },
+      "benchmark_generating_code_commit": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+      "metrics": {
+        "positive_label": 1,
+        "accuracy": 0.9954788327168105,
+        "precision_malicious": 0.9991204925241864,
+        "recall_malicious": 0.9912739965095986,
+        "f1_malicious": 0.9951817783618047,
+        "precision_macro": 0.9957022215707352,
+        "recall_macro": 0.9952484978662989,
+        "f1_macro": 0.9954615821735465,
+        "precision": 0.9991204925241864,
+        "recall": 0.9912739965095986,
+        "f1": 0.9951817783618047,
+        "mcc": 0.9909506155644567,
+        "confusion_matrix": [
+          [
+            1286,
+            1
+          ],
+          [
+            10,
+            1136
+          ]
+        ],
+        "confusion_matrix_labels": [
+          0,
+          1
+        ],
+        "roc_auc": 0.9997525259305364,
+        "pr_auc": 0.999738323014233,
+        "score_source": "predict_proba"
+      },
+      "confusion_counts": {
+        "tn": 1286,
+        "fp": 1,
+        "fn": 10,
+        "tp": 1136
+      },
+      "runtime": {
+        "training_seconds": 0.7914074000000255,
+        "test_inference_total_seconds": 0.0293848999972397,
+        "test_inference_milliseconds_per_sample": 0.012077640771574064
+      },
+      "error": null
+    },
+    {
+      "experiment": "xgb_cv10",
+      "status": "completed",
+      "timestamp_utc": "2026-08-28T11:29:03.764504Z",
+      "feature_variant": "CV-drop3constant",
+      "feature_count": 38,
+      "fold": 10,
+      "dataset_filename": "rit-pdfmal-2026.csv",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "cv_split_seed": 42,
+      "model_random_state": 42,
+      "fold_statistics": {
+        "fold": 10,
+        "train_row_count": 21904,
+        "test_row_count": 2433,
+        "train_test_disjoint": true,
+        "benign_test_count": 1317,
+        "malicious_test_count": 1116,
+        "benign_train_count": 11918,
+        "malicious_train_count": 9986
+      },
+      "model_configuration": {
+        "paper_model_name": "eXtreme Gradient Boost (XGB)",
+        "preprocessing": {
+          "name": null,
+          "fit_scope": null,
+          "paper_status": "No scaling is used for this tree model."
+        },
+        "parameters": {
+          "base_score": 0.5,
+          "booster": "gbtree",
+          "colsample_bylevel": 1.0,
+          "colsample_bynode": 1.0,
+          "colsample_bytree": 1.0,
+          "eval_metric": "logloss",
+          "gamma": 0.0,
+          "learning_rate": 0.1,
+          "max_delta_step": 0.0,
+          "max_depth": 6,
+          "min_child_weight": 1.0,
+          "missing": "NaN",
+          "n_estimators": 200,
+          "n_jobs": 1,
+          "objective": "binary:logistic",
+          "random_state": 42,
+          "reg_alpha": 0.0,
+          "reg_lambda": 1.0,
+          "scale_pos_weight": 1.0,
+          "subsample": 1.0,
+          "tree_method": "hist",
+          "verbosity": 0
+        },
+        "missing_value_assumption": "The JSON-safe string 'NaN' is converted to the explicit IEEE NaN missing-value sentinel required by XGBoost 3.2 at runtime. This fixes a library compatibility error; it does not alter feature values or tune the model."
+      },
+      "preprocessing_configuration": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "metric_semantics": {
+        "positive_label": 1,
+        "paper_table6_mapping": {
+          "accuracy": "accuracy",
+          "precision_macro": "precision",
+          "recall_macro": "recall",
+          "f1_macro": "f1"
+        },
+        "note": "Paper Table 6 averaging is mapped from established project metric-semantics evidence; Table 6 does not independently state it."
+      },
+      "environment": {
+        "python_version": "3.11.0",
+        "implementation": "CPython",
+        "os_platform": "Windows-10-10.0.26100-SP0",
+        "cpu_model": "Intel(R) Core(TM) i5-14400F",
+        "gpu": [
+          {
+            "model": "NVIDIA GeForce RTX 5060 Ti",
+            "vram_mib": 8151
+          }
+        ],
+        "system_ram_bytes": 16948178944,
+        "library_versions": {
+          "numpy": "2.4.6",
+          "pandas": "2.3.3",
+          "scikit_learn": "1.9.0",
+          "xgboost": "3.2.0"
+        },
+        "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+        "git_commit_sha": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+        "git_working_tree": {
+          "status": "clean",
+          "porcelain_entries": []
+        }
+      },
+      "benchmark_generating_code_commit": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+      "metrics": {
+        "positive_label": 1,
+        "accuracy": 0.9930127414714345,
+        "precision_malicious": 0.996386630532972,
+        "recall_malicious": 0.9883512544802867,
+        "f1_malicious": 0.9923526765632029,
+        "precision_macro": 0.9932913544821723,
+        "recall_macro": 0.9926570243547979,
+        "f1_macro": 0.9929602959055137,
+        "precision": 0.996386630532972,
+        "recall": 0.9883512544802867,
+        "f1": 0.9923526765632029,
+        "mcc": 0.985948174782295,
+        "confusion_matrix": [
+          [
+            1313,
+            4
+          ],
+          [
+            13,
+            1103
+          ]
+        ],
+        "confusion_matrix_labels": [
+          0,
+          1
+        ],
+        "roc_auc": 0.9992515845995161,
+        "pr_auc": 0.9992814900191079,
+        "score_source": "predict_proba"
+      },
+      "confusion_counts": {
+        "tn": 1313,
+        "fp": 4,
+        "fn": 13,
+        "tp": 1103
+      },
+      "runtime": {
+        "training_seconds": 0.7515233000012813,
+        "test_inference_total_seconds": 0.1173826000012923,
+        "test_inference_milliseconds_per_sample": 0.048246033703778175
+      },
+      "error": null
+    }
+  ]
+}

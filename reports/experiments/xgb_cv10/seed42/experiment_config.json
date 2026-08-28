@@ -1,0 +1,82 @@
+{
+  "experiment": "xgb_cv10",
+  "dataset": {
+    "filename": "rit-pdfmal-2026.csv",
+    "sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+    "row_count": 24337
+  },
+  "cross_validation": {
+    "splitter": "sklearn.model_selection.KFold",
+    "n_splits": 10,
+    "shuffle": true,
+    "cv_split_seed": 42
+  },
+  "expected_future_fit_count": 20,
+  "model": {
+    "name": "xgboost",
+    "model_random_state": 42,
+    "configuration": {
+      "paper_model_name": "eXtreme Gradient Boost (XGB)",
+      "preprocessing": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "parameters": {
+        "base_score": 0.5,
+        "booster": "gbtree",
+        "colsample_bylevel": 1.0,
+        "colsample_bynode": 1.0,
+        "colsample_bytree": 1.0,
+        "eval_metric": "logloss",
+        "gamma": 0.0,
+        "learning_rate": 0.1,
+        "max_delta_step": 0.0,
+        "max_depth": 6,
+        "min_child_weight": 1.0,
+        "missing": "NaN",
+        "n_estimators": 200,
+        "n_jobs": 1,
+        "objective": "binary:logistic",
+        "random_state": 42,
+        "reg_alpha": 0.0,
+        "reg_lambda": 1.0,
+        "scale_pos_weight": 1.0,
+        "subsample": 1.0,
+        "tree_method": "hist",
+        "verbosity": 0
+      },
+      "missing_value_assumption": "The JSON-safe string 'NaN' is converted to the explicit IEEE NaN missing-value sentinel required by XGBoost 3.2 at runtime. This fixes a library compatibility error; it does not alter feature values or tune the model."
+    }
+  },
+  "feature_variants": [
+    "CV-all41",
+    "CV-drop3constant"
+  ],
+  "paper_table6_reference": {
+    "mean": {
+      "accuracy": 0.993878,
+      "precision": 0.995663,
+      "recall": 0.990901,
+      "f1": 0.993274
+    },
+    "standard_deviation": {
+      "accuracy": 0.000789,
+      "precision": 0.001382,
+      "recall": 0.002012,
+      "f1": 0.000841
+    }
+  },
+  "paper_comparison_mapping": {
+    "accuracy": "accuracy",
+    "precision_macro": "precision",
+    "recall_macro": "recall",
+    "f1_macro": "f1"
+  },
+  "benchmark_generating_code_commit": "e5cb9bce8eef7bc26ea189d80fdd597fbecc3b43",
+  "git_working_tree_at_start": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "scope": "Paper-aligned reproduction attempt, not exact reproduction; no tuning or model-selection steps are included."
+}
