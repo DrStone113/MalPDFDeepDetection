@@ -88,3 +88,15 @@
 - Scope: no model was refit, no prediction or split was changed, and the committed Protocol P/G baseline result files were verified unchanged. The local P-versus-G comparison remains valid because both sides use the same malicious-positive definition.
 - Outputs: supplemental correction report under `reports/analysis/paper_metric_semantics_correction.md` and five tables under `reports/tables/metric_semantics/`.
 - Next: use the corrected mapping for future paper-aligned reporting, then separately investigate residual differences with preregistered multi-seed or external-evaluation designs only when authorized.
+
+## 2026-08-28 - Multi-seed Robustness Infrastructure
+
+- Purpose: prepare a fixed, reproducible split-sensitivity study for the completed Protocol P versus Protocol G baselines without executing a new official benchmark.
+- Added: committed five-seed configuration, preflight-only-by-default CLI, immutable output paths, Protocol P/G seed-manifest generation for future seeds, seed-42 baseline reuse, explicit malicious and macro metric schema, aggregation, paired G-minus-P deltas, and synthetic tests.
+- Methodology: official split seeds are `42, 43, 44, 45, 46`; only split assignment varies. `model_random_state` remains fixed at `42` for stochastic models. The canonical matrix is five classical models with P-drop3constant and G-drop3constant; P evaluates test and G evaluates validation/test after train-only fitting.
+- Dataset: future execution requires `rit-pdfmal-2026.csv` SHA-256 `2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623` and revalidates immutable seed-42 P/G manifests and reports.
+- Protocol affected: planned Protocol P/G robustness comparison only; existing completed Protocol P/G baseline reports and manifests remain unchanged.
+- Assumptions: the five deterministic seeds and fixed model random state are project choices, not paper settings. Protocol G concerns identical static feature vectors, not proven duplicate PDF files.
+- Validation: infrastructure tests use synthetic numerical fixtures; no official multi-seed models, metrics, or result reports have been generated.
+- Unresolved: multi-seed findings are intentionally unavailable until a separately authorized clean-worktree `--execute` run completes.
+- Next: review and commit the fixed infrastructure; later, if authorized, execute the exact committed matrix once and retain failed-run evidence without rerunning for favorable results.

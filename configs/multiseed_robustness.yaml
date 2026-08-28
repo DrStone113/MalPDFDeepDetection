@@ -1,0 +1,33 @@
+# Fixed design for the future RIT-PDFMal-2026 Protocol P vs G robustness run.
+# This file records the experimental plan only; it does not contain results.
+experiment: rit-pdfmal-2026-protocol-p-vs-g-multiseed-robustness
+dataset:
+  expected_sha256: 2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623
+split_seeds: [42, 43, 44, 45, 46]
+# Model stochasticity is deliberately held fixed while only split assignment varies.
+model_random_state: 42
+models:
+  - logistic_regression
+  - random_forest
+  - decision_tree
+  - gaussian_naive_bayes
+  - xgboost
+protocols:
+  P:
+    feature_variant: P-drop3constant
+    split: row_level_stratified_75_25
+    evaluation_partition: test
+  G:
+    feature_variant: G-drop3constant
+    split: duplicate_feature_group_aware_approximately_stratified_60_20_20
+    evaluation_partitions: [validation, test]
+seed42_baseline_reuse:
+  protocol_p_metrics: reports/experiments/protocol_p/seed42/metrics.json
+  protocol_g_metrics: reports/experiments/protocol_g/seed42/metrics.json
+  protocol_p_manifest_root: data/processed/protocol_p
+  protocol_g_manifest: data/processed/rit-pdfmal-2026_split_manifest.csv
+constraints:
+  - No hyperparameter tuning, threshold tuning, feature selection, or preprocessing changes.
+  - New split seeds may vary split assignment only; model_random_state remains 42.
+  - Seed 42 reuses completed baseline results and must not be regenerated or overwritten.
+  - Protocol G groups are identical static feature vectors, not proven duplicate PDF files.
