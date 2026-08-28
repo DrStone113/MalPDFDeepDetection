@@ -1,0 +1,64 @@
+# Python caches and build output
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+build/
+dist/
+
+# Virtual environments and local tooling
+.venv/
+venv/
+env/
+.env
+.env.*
+!.env.example
+.idea/
+.vscode/
+
+# Secrets and credentials
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+credentials.*
+
+# Datasets and PDFs (directory placeholders are allowed)
+data/raw/**
+data/processed/**
+data/external/**
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/external/.gitkeep
+*.pdf
+
+# Models, checkpoints, experiment tracking, and generated artifacts
+artifacts/**
+!artifacts/.gitkeep
+checkpoints/
+runs/
+mlruns/
+wandb/
+*.ckpt
+*.pt
+*.pth
+*.onnx
+*.joblib
+*.pkl
+
+# Generated reports and notebook state
+reports/figures/**
+reports/tables/**
+!reports/figures/.gitkeep
+!reports/tables/.gitkeep
+reports/*.md
+reports/*.json
+!reports/research_log.md
+.ipynb_checkpoints/
+
+# OS files
+.DS_Store
+Thumbs.db
