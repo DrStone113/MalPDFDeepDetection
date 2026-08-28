@@ -201,3 +201,4 @@
 - Paper reference: all local top-ten concepts appear in the paper's reference importance list, but ranking is descriptive only because Protocol G, the project configuration, split, and software differ from the paper method.
 - Limitations: one benchmark model and one saved split; SHAP is associative rather than causal; no feature was removed or tuned from explanation findings; Protocol G does not prove real-world, temporal, or PDF-file-disjoint generalization.
 - Outputs: analysis report, nine lightweight CSV/JSON provenance tables, and four thesis figures were written under `reports/analysis/`, `reports/experiments/explainability/`, and `reports/figures/explainability/`; no model binary or raw identifier was committed.
+- Result commit: `fdc701437f5fec2c4a15b039c26480295676b301` (`results(explainability): add Protocol G XGBoost SHAP analysis`).
