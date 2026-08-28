@@ -9,7 +9,7 @@ from xgboost import XGBClassifier
 from malpdf.experiments.xgb_explainability import (
     ExplainabilityError, _assert_output_available, class_conditional_importance,
     confusion_group_importance, explainability_paths, global_importance,
-    native_treeshap_contributions, probability_band_importance,
+    native_treeshap_contributions, probability_band_importance, _paper_comparison,
     verify_historical_result, verify_treeshap_identity,
 )
 
@@ -74,3 +74,9 @@ def test_explainability_paths_are_isolated_and_immutable(tmp_path):
     paths.reports_directory.mkdir(parents=True)
     with pytest.raises(FileExistsError, match="refusing to overwrite"):
         _assert_output_available(paths)
+
+
+def test_paper_comparison_reads_rank_column_not_pandas_rank_method():
+    features, labels = _features()
+    comparison = _paper_comparison(global_importance(features, np.ones((8, 3)), labels))
+    assert comparison["local_rank"].tolist() == [1, 2, 3]

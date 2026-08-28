@@ -183,3 +183,9 @@
 - Evidence: the first authorized execution from clean code SHA `2782f0fb17f0ffabb5bcdc09e60d6e3d1e59eb98` stopped before report creation because native float `pred_contribs` reconstructed the raw margin with maximum absolute difference `1.0214e-05`, exceeding the initially over-strict `1e-06`; sigmoid(margin) matched malicious probability within `8.2832e-08`.
 - Correction: the mathematical check uses documented absolute tolerance `2e-05`, appropriate for native float contribution summation, while retaining a strict explicit margin/probability verification. This is a runtime/precision correction, not tuning and not a response to SHAP ranking or model metrics.
 - Result status: no official SHAP report, figure, model artifact, or result commit was created by the stopped attempt. A single replacement execution will use the new clean committed code revision and record it in the final provenance.
+
+## 2026-08-28 - TreeSHAP report-generation correction
+
+- Evidence: replacement execution from clean code SHA `5904475a265933e1d2ae6244f3aa9d6e9973a5b1` passed model reproduction and TreeSHAP mathematical verification but stopped before output creation when report-generation code accessed pandas column `rank` as a method.
+- Correction: use explicit column indexing for `rank` and add a synthetic regression test. This is a verified report-generation defect; it neither inspected nor reacted to any SHAP ranking.
+- Result status: no official output directory, analysis report, figure, or model artifact was created by this stopped attempt. One replacement execution will use the subsequent clean code revision.
