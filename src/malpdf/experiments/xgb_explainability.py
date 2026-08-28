@@ -108,7 +108,7 @@ def _historical_xgb_record(repository_root: Path) -> dict[str, Any]:
     path = repository_root / "reports" / "experiments" / "protocol_g" / "seed42" / "metrics.json"
     if not path.is_file():
         raise FileNotFoundError(f"Committed Protocol G metrics are unavailable: {path}")
-    records = json.loads(path.read_text(encoding="utf-8")).get("records", [])
+    records = json.loads(path.read_text(encoding="utf-8")).get("runs", [])
     matching = [record for record in records if record.get("model_name") == MODEL_NAME and record.get("feature_variant") == G_DROP3CONSTANT and record.get("status") == "completed"]
     if len(matching) != 1:
         raise ExplainabilityError("Expected exactly one completed historical Protocol G XGBoost G-drop3constant record")
