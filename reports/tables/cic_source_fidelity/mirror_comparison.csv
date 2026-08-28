@@ -1,0 +1,34 @@
+left_filename,right_filename,normalized_column,left_column,right_column,present_in_both,left_dtype,right_dtype,dtype_equal,left_unique_values,right_unique_values,left_missing_count,right_missing_count,identifier_values_redacted,value_distribution_equal
+PDFMalware2022.csv,PDFMalware2022.parquet,aa,AA,AA,True,object,category,False,40,40,0,0,False,False
+PDFMalware2022.csv,PDFMalware2022.parquet,acroform,Acroform,Acroform,True,object,category,False,10,10,0,0,False,False
+PDFMalware2022.csv,PDFMalware2022.parquet,class,Class,Class,True,object,category,False,3,2,0,0,False,False
+PDFMalware2022.csv,PDFMalware2022.parquet,colors,Colors,Colors,True,object,float32,False,63,62,0,0,False,False
+PDFMalware2022.csv,PDFMalware2022.parquet,embeddedfile,EmbeddedFile,EmbeddedFile,True,object,category,False,18,19,0,0,False,False
+PDFMalware2022.csv,PDFMalware2022.parquet,embeddedfiles,embedded files,EmbeddedFiles,True,object,float32,False,8,7,0,0,False,False
+PDFMalware2022.csv,PDFMalware2022.parquet,encrypt,encrypt,Encrypt,True,object,float32,False,5,4,0,0,False,False
+PDFMalware2022.csv,PDFMalware2022.parquet,endobj,endobj,Endobj,True,object,category,False,479,478,0,0,False,False
+PDFMalware2022.csv,PDFMalware2022.parquet,endstream,endstream,Endstream,True,object,category,False,241,241,0,0,False,False
+PDFMalware2022.csv,PDFMalware2022.parquet,filename,File name,FileName,True,object,category,False,10026,10023,0,0,True,False
+PDFMalware2022.csv,PDFMalware2022.parquet,header,header,Header,True,object,category,False,51,50,0,0,False,False
+PDFMalware2022.csv,PDFMalware2022.parquet,images,images,Images,True,object,category,False,89,89,0,0,False,False
+PDFMalware2022.csv,PDFMalware2022.parquet,isencrypted,isEncrypted,isEncrypted,True,object,float32,False,7,6,0,0,False,False
+PDFMalware2022.csv,PDFMalware2022.parquet,javascript,Javascript,Javascript,True,object,category,False,30,35,0,0,False,False
+PDFMalware2022.csv,PDFMalware2022.parquet,jbig2decode,JBIG2Decode,JBIG2Decode,True,object,category,False,16,16,0,0,False,False
+PDFMalware2022.csv,PDFMalware2022.parquet,js,JS,JS,True,object,category,False,31,32,0,0,False,False
+PDFMalware2022.csv,PDFMalware2022.parquet,launch,launch,Launch,True,object,category,False,5,5,0,0,False,False
+PDFMalware2022.csv,PDFMalware2022.parquet,metadatasize,metadata size,MetadataSize,True,object,float32,False,403,402,0,0,False,False
+PDFMalware2022.csv,PDFMalware2022.parquet,obj,obj,Obj,True,object,category,False,478,479,0,0,False,False
+PDFMalware2022.csv,PDFMalware2022.parquet,objstm,ObjStm,ObjStm,True,object,float32,False,55,55,0,0,False,False
+PDFMalware2022.csv,PDFMalware2022.parquet,openaction,OpenAction,OpenAction,True,object,category,False,8,8,0,0,False,False
+PDFMalware2022.csv,PDFMalware2022.parquet,pageno,pageno,PageNo,True,object,category,False,92,96,0,0,False,False
+PDFMalware2022.csv,PDFMalware2022.parquet,pages,pages,Pages,True,object,float32,False,89,88,0,0,False,False
+PDFMalware2022.csv,PDFMalware2022.parquet,pdfsize,pdfsize,PdfSize,True,object,float32,False,502,501,0,0,False,False
+PDFMalware2022.csv,PDFMalware2022.parquet,richmedia,RichMedia,RichMedia,True,object,category,False,6,7,0,0,False,False
+PDFMalware2022.csv,PDFMalware2022.parquet,startxref,startxref,StartXref,True,object,category,False,21,20,0,0,False,False
+PDFMalware2022.csv,PDFMalware2022.parquet,stream,stream,Stream,True,object,float32,False,239,238,0,0,False,False
+PDFMalware2022.csv,PDFMalware2022.parquet,text,text,Text,True,object,category,False,6,5,0,0,False,False
+PDFMalware2022.csv,PDFMalware2022.parquet,titlecharacters,title characters,TitleCharacters,True,object,float32,False,150,149,0,0,False,False
+PDFMalware2022.csv,PDFMalware2022.parquet,trailer,trailer,Trailer,True,object,float32,False,21,20,0,0,False,False
+PDFMalware2022.csv,PDFMalware2022.parquet,xfa,XFA,XFA,True,object,category,False,7,7,0,0,False,False
+PDFMalware2022.csv,PDFMalware2022.parquet,xref,xref,Xref,True,object,category,False,22,21,0,0,False,False
+PDFMalware2022.csv,PDFMalware2022.parquet,xreflength,xref Length,XrefLength,True,object,float32,False,906,905,0,0,False,False

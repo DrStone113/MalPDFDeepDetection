@@ -102,17 +102,23 @@ def _csv_header(path: Path) -> list[str]:
     return header
 
 
-def discover_cic_dataset(directory: str | Path) -> CICDatasetDiscovery:
-    """Select the expected local feature table or fail on an ambiguous directory."""
+def discover_cic_sources(directory: str | Path) -> tuple[Path, ...]:
+    """Discover every local CSV/Parquet CIC table in deterministic path order."""
     root = Path(directory)
     if not root.is_dir():
         raise FileNotFoundError(f"CIC dataset directory not found: {root}")
     candidates = tuple(sorted(
-        (path for path in root.iterdir() if path.is_file() and path.suffix.casefold() in {".csv", ".parquet"}),
-        key=lambda path: path.name.casefold(),
+        (path for path in root.rglob("*") if path.is_file() and path.suffix.casefold() in {".csv", ".parquet"}),
+        key=lambda path: (str(path.relative_to(root)).casefold(), str(path)),
     ))
     if not candidates:
         raise FileNotFoundError(f"No CSV or Parquet CIC candidate found in: {root}")
+    return candidates
+
+
+def discover_cic_dataset(directory: str | Path) -> CICDatasetDiscovery:
+    """Select the expected local feature table or fail on an ambiguous directory."""
+    candidates = discover_cic_sources(directory)
     expected = [path for path in candidates if path.name.casefold() == EXPECTED_FILENAME.casefold()]
     if len(expected) == 1:
         return CICDatasetDiscovery(expected[0], candidates, "matched expected PDFMalware2022.parquet filename")

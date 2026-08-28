@@ -1,0 +1,3 @@
+filename,sha256,population_fidelity_classification,fidelity_classification,rationale
+PDFMalware2022.csv,61686c9b323cb41bf8c048e5e4fe1e43eaf7d8d634667dc256a1349d6242b489,TRANSFORMED,TRANSFORMED,"Physical counts, raw labels, and published CIC invariants were checked without changing the source."
+PDFMalware2022.parquet,25db2059d59207d2040c5a999838514579ed4667b2b7fa39f2398dee484caf65,SUBSET_OR_TRUNCATED,TRANSFORMED,"Population counts show a subset/truncation, and shared identifier rows also have semantic feature-value differences relative to a larger local mirror. It is therefore not a strict record-wise subset."

@@ -276,3 +276,189 @@ def write_schema_alignment_outputs(report: dict[str, Any], reports_root: str | P
     pd.DataFrame(report["distribution_comparison"]).to_csv(paths["distribution_comparison"], index=False)
     pd.DataFrame(report["reverse_cic_alignment"]).to_csv(paths["reverse_alignment"], index=False)
     return paths
+
+
+# Version 2 keeps the original audit immutable and records only defensible
+# reclassifications supported by both documented semantics and local raw values.
+_V2_RECLASSIFICATIONS: dict[str, tuple[AlignmentStatus, str]] = {
+    "pdf_ver": (
+        AlignmentStatus.NO_MATCH,
+        "CIC documents Header as presence of a valid PDF header, while RIT pdf_ver is a numeric extracted version. Header validity/version-like strings are not a version measurement and no deterministic conversion is documented.",
+    ),
+    "obj": (
+        AlignmentStatus.NO_MATCH,
+        "CIC documents Obj as number of indirect objects, whereas RIT counts occurrences of the raw string obj. These are distinct parser-level quantities; similar names do not establish equality.",
+    ),
+    "page_command": (
+        AlignmentStatus.NO_MATCH,
+        "RIT counts the /Page string. CIC PageNo is not described by CIC as a /Page-keyword count, so the local column is not a documented equivalent.",
+    ),
+    "Encrypt": (
+        AlignmentStatus.NO_MATCH,
+        "CIC documentation defines document encryption generally through isEncrypted, not the separate local Encrypt field as a /Encrypt occurrence count. Its distinct local semantics remain undocumented.",
+    ),
+    "EmbeddedFile": (
+        AlignmentStatus.NO_MATCH,
+        "CIC documentation defines EmbeddedFiles as number of embedded files, but does not define the separate local EmbeddedFile field as a /EmbeddedFile occurrence count.",
+    ),
+}
+
+
+def _cic_dictionary_by_column(cic_report: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    return {entry["column"]: entry for entry in cic_report.get("feature_dictionary", [])}
+
+
+def _mapping_value_evidence(cic_report: dict[str, Any], cic_column: str | None) -> dict[str, Any]:
+    """Attach safe source-value evidence; no identifiers occur in mapping records."""
+    if cic_column is None or cic_column not in cic_report["column_profiles"]:
+        return {"cic_column_available": False}
+    profile = cic_report["column_profiles"][cic_column]
+    string = profile["string_value_audit"]
+    return {
+        "cic_column_available": True,
+        "cic_dtype": profile["dtype"],
+        "cic_numeric_summary_basis": profile["numeric_summary_basis"],
+        "cic_numeric_summary": profile["numeric_summary"],
+        "cic_negative_value_count": profile["negative_value_count"],
+        "cic_representative_values": profile["representative_values"],
+        "cic_malformed_token_examples": [] if string is None else string["non_numeric_or_malformed_examples"],
+        "cic_likely_semantic_type": None if string is None else string["likely_semantic_type"],
+    }
+
+
+def resolve_feature_mappings(cic_report: dict[str, Any]) -> list[dict[str, Any]]:
+    """Revisit every original ambiguous mapping without making a feature usable by force."""
+    cic_dictionary = _cic_dictionary_by_column(cic_report)
+    resolved: list[dict[str, Any]] = []
+    for original in build_feature_alignment(cic_report):
+        record = dict(original)
+        old_status = record["status"]
+        new_status = AlignmentStatus(old_status)
+        rationale = record["rationale"]
+        if record["rit_column"] in _V2_RECLASSIFICATIONS:
+            new_status, rationale = _V2_RECLASSIFICATIONS[record["rit_column"]]
+        cic_definition = cic_dictionary.get(record["cic_column"], {})
+        evidence = _mapping_value_evidence(cic_report, record["cic_column"])
+        if old_status == AlignmentStatus.AMBIGUOUS.value and new_status == AlignmentStatus.AMBIGUOUS:
+            rationale = (
+                rationale
+                + " The v2 review retains AMBIGUOUS because documentation/value evidence does not define a total deterministic conversion for every observed raw value."
+            )
+        record.update({
+            "old_status": old_status,
+            "status": new_status.value,
+            "rationale": rationale,
+            "rit_raw_semantics": _rit_dictionary()[record["rit_column"]]["paper_meaning"],
+            "cic_documented_semantics": cic_definition.get("documented_meaning", "No verified CIC definition for this local column."),
+            "cic_documentation_status": cic_definition.get("verification_status", "unverified"),
+            "resolution_evidence": f"RIT: {PAPER_SOURCE_URL}; CIC: {OFFICIAL_CIC_URL}; local CIC dtype/value audit.",
+            "mapping_changed": old_status != new_status.value,
+            **evidence,
+        })
+        resolved.append(record)
+    return resolved
+
+
+def _transform_specification(records: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Extract only total, deterministic, target-independent transformations."""
+    result: list[dict[str, Any]] = []
+    for record in records:
+        if record["status"] != AlignmentStatus.COMPATIBLE_AFTER_DOCUMENTED_TRANSFORM.value:
+            continue
+        result.append({
+            "rit_source_column": record["rit_column"], "cic_source_column": record["cic_column"],
+            "canonical_name": record["canonical_name"], "rit_raw_semantics": record["rit_raw_semantics"],
+            "cic_raw_semantics": record["cic_documented_semantics"], "transform_applied_to": record["transform_id"],
+            "exact_formula": record["transform_specification"], "evidence": record["resolution_evidence"],
+            "information_loss": "Must be explicitly documented for every transform.", "expected_canonical_dtype": "Must be explicitly documented for every transform.",
+        })
+    return result
+
+
+def build_mapping_resolution_report(cic_report: dict[str, Any]) -> dict[str, Any]:
+    """Build v2 alignment evidence and future-only training-readiness tracks."""
+    original = build_feature_alignment(cic_report)
+    records = resolve_feature_mappings(cic_report)
+    strict, transformable = derive_common_feature_sets(records)
+    status_counts = {status.value: sum(record["status"] == status.value for record in records) for status in AlignmentStatus}
+    old_status_counts = {status.value: sum(record["status"] == status.value for record in original) for status in AlignmentStatus}
+    transform_specification = _transform_specification(records)
+    strict_names = [record["canonical_name"] for record in strict]
+    transformable_names = [record["canonical_name"] for record in transformable]
+    readiness = [
+        {
+            "track": "S — STRICT", "training_ready": "future design only", "feature_count": len(strict_names),
+            "feature_list": strict_names,
+            "limitations": "A six-feature conservative baseline can be scientifically valid, but it is a limited representation of a full static PDF detector and requires separate source/protocol authorization.",
+        },
+        {
+            "track": "T — TRANSFORMABLE", "training_ready": "future design only", "feature_count": len(transformable_names),
+            "feature_list": transformable_names,
+            "limitations": "No additional documented total deterministic transform survived this review, so Track T currently equals Track S.",
+        },
+        {
+            "track": "A — AMBIGUOUS", "training_ready": "not training-ready", "feature_count": status_counts[AlignmentStatus.AMBIGUOUS.value],
+            "feature_list": [record["rit_column"] for record in records if record["status"] == AlignmentStatus.AMBIGUOUS.value],
+            "limitations": "Ambiguous semantic mappings, units, sentinels, malformed raw tokens, or parser differences remain unresolved. They must not enter a common feature space.",
+        },
+    ]
+    return {
+        "resolution_version": "2.0", "cic_source": {"filename": cic_report["dataset"]["filename"], "sha256": cic_report["dataset"]["sha256"], "source_type": cic_report["mirror_provenance"]["source_type"], "source_platform": cic_report["mirror_provenance"]["source_platform"]},
+        "old_status_counts": old_status_counts, "new_status_counts": status_counts,
+        "feature_alignment_v2": records,
+        "mapping_changes": [record for record in records if record["mapping_changed"]],
+        "common_strict_v2": strict, "common_transformable_v2": transformable,
+        "transform_specification_v2": transform_specification, "training_readiness": readiness,
+        "limitations": [
+            "This is a semantic/source audit, not a cross-dataset experiment; no model was fit or evaluated.",
+            "Distribution similarity is not treated as evidence of semantic equivalence.",
+            "Malformed or mixed CIC raw tokens are not cleaned, parsed heuristically, or encoded in this audit.",
+            "No transform may use labels, fit data-dependent parameters, or discard unsupported raw values.",
+        ],
+    }
+
+
+def mapping_resolution_markdown(report: dict[str, Any]) -> str:
+    """Render a conservative mapping-resolution report suitable for thesis review."""
+    lines = [
+        "# RIT-to-CIC ambiguous feature mapping resolution", "",
+        "## Scope", "",
+        "This v2 review revisits every mapping that was AMBIGUOUS in the prior alignment using the RIT paper dictionary, CIC documentation, and observed local raw representations. It performs no data cleaning, target transformation, training, or cross-dataset evaluation.", "",
+        "## Source under review", "",
+        f"- CIC file: `{report['cic_source']['filename']}`; SHA-256: `{report['cic_source']['sha256']}`; {report['cic_source']['source_type']} / {report['cic_source']['source_platform']}.",
+        "- This is not an automatic source switch. The separate source-fidelity audit records mirror limitations.", "",
+        "## Status counts", "",
+    ]
+    lines.extend(_table(["Status", "Prior", "v2"], [[status, report["old_status_counts"][status], report["new_status_counts"][status]] for status in report["new_status_counts"]]))
+    lines.extend(["", "## Reclassified mappings", ""])
+    if report["mapping_changes"]:
+        lines.extend(_table(["RIT feature", "CIC feature", "Prior", "v2", "Reason"], [[record["rit_column"], record["cic_column"], record["old_status"], record["status"], record["rationale"]] for record in report["mapping_changes"]]))
+    else:
+        lines.append("No status changes are defensible from the available evidence.")
+    lines.extend(["", "## Common feature spaces", "", f"- COMMON_STRICT v2 ({len(report['common_strict_v2'])}): {', '.join(record['canonical_name'] for record in report['common_strict_v2']) or 'none'}.", f"- COMMON_TRANSFORMABLE v2 ({len(report['common_transformable_v2'])}): {', '.join(record['canonical_name'] for record in report['common_transformable_v2']) or 'none'}.", "- No transform is listed unless it is deterministic, total over observed values, documented, target-independent, and explicit about information loss. None met that bar here.", "", "## Training-readiness assessment", ""])
+    lines.extend(_table(["Track", "Readiness", "Feature count", "Features", "Limitation"], [[item["track"], item["training_ready"], item["feature_count"], ", ".join(item["feature_list"]), item["limitations"]] for item in report["training_readiness"]]))
+    lines.extend(["", "## Six-feature baseline caution", "", "A future six-feature strict baseline can be scientifically valid because every included feature has a conservative documented alignment. It must be presented as a limited feature-space baseline, not as the full detector capability or an external-generalization conclusion.", "", "## Remaining limitations", "", *[f"- {item}" for item in report["limitations"]], ""])
+    return "\n".join(lines)
+
+
+def write_mapping_resolution_outputs(report: dict[str, Any], reports_root: str | Path) -> dict[str, Path]:
+    """Write v2 audit tables without modifying legacy v1 reports or raw data."""
+    root = Path(reports_root)
+    analysis, tables = root / "analysis", root / "tables" / "rit_cic_alignment_v2"
+    analysis.mkdir(parents=True, exist_ok=True)
+    tables.mkdir(parents=True, exist_ok=True)
+    paths = {
+        "markdown": analysis / "rit_cic_mapping_resolution.md", "feature_alignment": tables / "feature_alignment_v2.csv",
+        "mapping_changes": tables / "mapping_changes.csv", "common_strict": tables / "common_strict_v2.csv",
+        "common_transformable": tables / "common_transformable_v2.csv", "transform_specification": tables / "transform_specification_v2.csv",
+        "training_readiness": tables / "training_readiness.csv",
+    }
+    paths["markdown"].write_text(mapping_resolution_markdown(report), encoding="utf-8")
+    pd.DataFrame(report["feature_alignment_v2"]).to_csv(paths["feature_alignment"], index=False)
+    pd.DataFrame(report["mapping_changes"]).to_csv(paths["mapping_changes"], index=False)
+    pd.DataFrame(report["common_strict_v2"]).to_csv(paths["common_strict"], index=False)
+    pd.DataFrame(report["common_transformable_v2"]).to_csv(paths["common_transformable"], index=False)
+    transform_columns = ["rit_source_column", "cic_source_column", "canonical_name", "rit_raw_semantics", "cic_raw_semantics", "transform_applied_to", "exact_formula", "evidence", "information_loss", "expected_canonical_dtype"]
+    pd.DataFrame(report["transform_specification_v2"], columns=transform_columns).to_csv(paths["transform_specification"], index=False)
+    pd.DataFrame(report["training_readiness"]).to_csv(paths["training_readiness"], index=False)
+    return paths

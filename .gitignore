@@ -66,6 +66,10 @@ reports/tables/**
 !reports/tables/cic_audit/**
 !reports/tables/rit_cic_alignment/
 !reports/tables/rit_cic_alignment/**
+!reports/tables/cic_source_fidelity/
+!reports/tables/cic_source_fidelity/**
+!reports/tables/rit_cic_alignment_v2/
+!reports/tables/rit_cic_alignment_v2/**
 reports/*.md
 reports/*.json
 !reports/research_log.md
