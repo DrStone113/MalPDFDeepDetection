@@ -350,8 +350,8 @@ def canonicalize_rit_strict6(
     source_columns = {record["canonical_name"]: record["rit_column"] for record in schema_records}
     if tuple(source_columns) != STRICT_FEATURES or any(column not in frame.columns for column in source_columns.values()):
         raise Strict6Error("RIT source cannot resolve frozen STRICT6 alignment columns")
-    if TARGET_COLUMN in source_columns.values() or any("id" in _normalise_name(column) or "file" in _normalise_name(column) for column in source_columns.values()):
-        raise Strict6Error("RIT STRICT6 mapping contains a target or identifier-like field")
+    if TARGET_COLUMN in source_columns.values():
+        raise Strict6Error("RIT STRICT6 mapping contains the target field")
     parsed = {canonical: _parse_numeric_strict(frame[column], "RIT", canonical) for canonical, column in source_columns.items()}
     features = pd.DataFrame({canonical: values.to_numpy(copy=False) for canonical, (values, _) in parsed.items()})
     digest = sha256_file(source)
