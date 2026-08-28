@@ -1,0 +1,145 @@
+{
+  "model_id": "xgb-rit-full-drop3constant-v1",
+  "model_family": "XGBoost XGBClassifier",
+  "artifact_filename": "xgb_rit_full_drop3constant.json",
+  "artifact_relative_path": "artifacts/models/xgb_rit_full_drop3constant.json",
+  "artifact_sha256": "8aeba9dd2a095ce26314b432fe48e227fa742be76085548140a32c88448fabf9",
+  "training_dataset": {
+    "filename": "rit-pdfmal-2026.csv",
+    "sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+    "training_rows": 24337,
+    "class_counts": {
+      "0": 13235,
+      "1": 11102
+    },
+    "target_column": "Label",
+    "target_semantics": {
+      "0": "benign",
+      "1": "malicious"
+    }
+  },
+  "feature_schema": "rit-pdfmal-2026/G-drop3constant/38/v1",
+  "feature_variant": "drop3constant",
+  "feature_order": [
+    "pdfsize",
+    "metadata size",
+    "pages",
+    "xref length",
+    "title length",
+    "isEncrypted",
+    "embedded files",
+    "images",
+    "contains_text",
+    "pdf_ver",
+    "obj",
+    "endobj",
+    "stream",
+    "endstream",
+    "trailer",
+    "xref",
+    "startxref",
+    "page_command",
+    "Encrypt",
+    "ObjStm",
+    "JS",
+    "JavaScript",
+    "AA",
+    "OpenAction",
+    "JBIG2Decode",
+    "RichMedia",
+    "Launch",
+    "EmbeddedFile",
+    "XFA",
+    "URI",
+    "Encoding",
+    "ProcSet",
+    "Registry",
+    "Resources",
+    "www",
+    "server",
+    "Root",
+    "BitsPerComponent"
+  ],
+  "excluded_constant_features": [
+    "Acroform",
+    "Colors",
+    "BaseEncoding"
+  ],
+  "model_random_state": 42,
+  "threshold": 0.5,
+  "model_configuration": {
+    "paper_model_name": "eXtreme Gradient Boost (XGB)",
+    "preprocessing": {
+      "name": null,
+      "fit_scope": null,
+      "paper_status": "No scaling is used for this tree model."
+    },
+    "parameters": {
+      "base_score": 0.5,
+      "booster": "gbtree",
+      "colsample_bylevel": 1.0,
+      "colsample_bynode": 1.0,
+      "colsample_bytree": 1.0,
+      "eval_metric": "logloss",
+      "gamma": 0.0,
+      "learning_rate": 0.1,
+      "max_delta_step": 0.0,
+      "max_depth": 6,
+      "min_child_weight": 1.0,
+      "missing": "NaN",
+      "n_estimators": 200,
+      "n_jobs": 1,
+      "objective": "binary:logistic",
+      "random_state": 42,
+      "reg_alpha": 0.0,
+      "reg_lambda": 1.0,
+      "scale_pos_weight": 1.0,
+      "subsample": 1.0,
+      "tree_method": "hist",
+      "verbosity": 0
+    },
+    "missing_value_assumption": "The JSON-safe string 'NaN' is converted to the explicit IEEE NaN missing-value sentinel required by XGBoost 3.2 at runtime. This fixes a library compatibility error; it does not alter feature values or tune the model."
+  },
+  "model_configuration_source": "malpdf.models.classical.model_configurations(42)['xgboost']; the fixed established Protocol G configuration, reused without tuning.",
+  "preprocessing": {
+    "name": null,
+    "note": "No scaling, imputation, normalization, encoding, clipping, or feature selection is applied."
+  },
+  "environment": {
+    "python_version": "3.11.0",
+    "implementation": "CPython",
+    "os_platform": "Windows-10-10.0.26100-SP0",
+    "cpu_model": "Intel(R) Core(TM) i5-14400F",
+    "gpu": [
+      {
+        "model": "NVIDIA GeForce RTX 5060 Ti",
+        "vram_mib": 8151
+      }
+    ],
+    "system_ram_bytes": 16948178944,
+    "library_versions": {
+      "numpy": "2.4.6",
+      "pandas": "2.3.3",
+      "scikit_learn": "1.9.0",
+      "xgboost": "3.2.0"
+    },
+    "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+    "git_commit_sha": "439f6f4bbf9415b10807372f4b238dfc2845c8fe",
+    "git_working_tree": {
+      "status": "clean",
+      "porcelain_entries": []
+    }
+  },
+  "python_version": "3.11.0",
+  "xgboost_version": "3.2.0",
+  "deployment_code_commit_sha": "439f6f4bbf9415b10807372f4b238dfc2845c8fe",
+  "build_command": ".\\.venv\\Scripts\\python.exe scripts\\build_deployment_model.py --execute",
+  "built_at_utc": "2026-08-28T17:56:53.272659Z",
+  "training_seconds": 0.5848183999987668,
+  "purpose": "Full-data deployment model after separate model-family evaluation; this artifact is not a performance benchmark.",
+  "safety": {
+    "pdf_content_executed": false,
+    "external_resources_followed": false,
+    "embedded_payloads_executed": false
+  }
+}
