@@ -1,0 +1,29 @@
+experiment: cross_dataset_strict6
+strict_schema_version: strict6-v1-alignment-v2
+rit_sha256: 2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623
+cic_source:
+  filename: PDFMalware2022.csv
+  sha256: 61686c9b323cb41bf8c048e5e4fe1e43eaf7d8d634667dc256a1349d6242b489
+  source_type: third-party mirror
+  fidelity_status: TRANSFORMED
+  selection_note: Matches published class totals but is not claimed byte-identical to a publisher-original feature table.
+cic_csv_strict6_source_columns:
+  metadata_size: metadata size
+  xref_length: xref Length
+  title_length: title characters
+  embedded_files: embedded files
+  trailer: trailer
+  objstm: ObjStm
+strict_feature_order:
+  - metadata_size
+  - xref_length
+  - title_length
+  - embedded_files
+  - trailer
+  - objstm
+split_seed: 42
+model_random_state: 42
+tracks: [within_rit, within_cic, rit_to_cic, cic_to_rit]
+models: [logistic_regression, random_forest, decision_tree, gaussian_naive_bayes, xgboost]
+expected_result_count: 20
+preprocessing: Direct transfer only; pipelines are fitted on each track's training source/partition, never jointly or on the target domain.
