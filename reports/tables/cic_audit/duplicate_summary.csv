@@ -1,0 +1,2 @@
+exact_duplicate_rows_excluding_first,exact_duplicate_rows_including_first,duplicate_predictive_feature_rows_excluding_first,duplicate_predictive_feature_rows_including_first,duplicate_predictive_feature_groups,conflicting_labels_for_identical_predictive_feature_vectors,terminology_note
+0,0,0,0,0,0,Identical feature vectors are not called duplicate PDF files; no original-file identity is proven here.

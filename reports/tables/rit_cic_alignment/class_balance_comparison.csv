@@ -1,0 +1,5 @@
+dataset,raw_label,canonical_label,count,percentage
+RIT-PDFMal-2026,0,0,13235,54.382216378353945
+RIT-PDFMal-2026,1,1,11102,45.617783621646055
+CIC-Evasive-PDFMal2022 mirror,Benign,0,4468,44.577472
+CIC-Evasive-PDFMal2022 mirror,Malicious,1,5555,55.422528

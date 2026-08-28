@@ -1,0 +1,32 @@
+cic_column,rit_column,status,note
+PdfSize,pdfsize,AMBIGUOUS,"Same broad size concept, but the official CIC page does not state its unit and the mirror must not be assumed byte-identical or identically scaled."
+MetadataSize,metadata size,EXACT,"Both dictionaries describe metadata-section size; compatible numeric quantity, with CIC's observed -1 raw sentinel retained and separately audited."
+Pages,pages,AMBIGUOUS,"Same page-count concept, but RIT documents corrupted files as pages=0 while CIC has observed -1 values with no verified CIC sentinel semantics."
+XrefLength,xref length,EXACT,"Both dictionaries describe the Xref length/entry quantity; local maxima and numeric representation are compatible evidence, while CIC -1 remains an unverified raw sentinel."
+TitleCharacters,title length,EXACT,"Both dictionaries describe the number of title characters; compatible numeric character count, with CIC's raw -1 sentinel retained."
+isEncrypted,isEncrypted,AMBIGUOUS,"Related encryption indicator, but CIC observed values extend beyond binary 0/1 and its special-value representation is unverified."
+EmbeddedFiles,embedded files,EXACT,Both dictionaries describe a count of embedded files and use a numeric local representation; no unit conversion is required.
+Images,images,AMBIGUOUS,"Same image-count concept, but CIC stores category strings and includes malformed lexical values such as 1(1); no coercion is defensible yet."
+Text,contains_text,AMBIGUOUS,RIT is a documented >=50-character ternary signal; CIC documents text presence with Yes/No/unclear/-1/0 values. These are not established as equivalent.
+Header,pdf_ver,AMBIGUOUS,"CIC documents valid-header presence, whereas RIT stores a numeric extracted PDF version. Header strings must not be treated as a version transform without verification."
+Obj,obj,AMBIGUOUS,RIT counts obj string occurrences; CIC documents indirect objects and also has malformed category values. Parser/count equivalence is not established.
+Endobj,endobj,AMBIGUOUS,"Related name, but the CIC official page does not separately define Endobj and raw values include non-numeric text."
+Stream,stream,AMBIGUOUS,RIT counts stream string occurrences; CIC documents streams as binary-data sequences. Equal parser/count semantics are not established.
+Endstream,endstream,AMBIGUOUS,"Related name, but CIC Endstream is not separately defined in the official feature descriptions and raw values are malformed in places."
+Xref,xref,AMBIGUOUS,RIT counts xref occurrences while CIC documents Xref tables; count semantics are related but not proven equal.
+Trailer,trailer,EXACT,Both dictionaries describe a count of PDF trailers and use numeric local representations.
+StartXref,startxref,AMBIGUOUS,"Related startxref keyword count, but CIC includes malformed raw strings and exact parser behavior is not documented."
+PageNo,page_command,AMBIGUOUS,"Both appear page-related, but CIC PageNo is not separately defined and is not proven to count the /Page keyword."
+Encrypt,Encrypt,AMBIGUOUS,"Related names, but CIC's Encrypt column is distinct from isEncrypted and is not separately defined on the official page."
+ObjStm,ObjStm,EXACT,Both dictionaries describe stream objects (ObjStm) as a numeric count.
+JS,JS,AMBIGUOUS,"Both refer to JS-related keywords/objects, but CIC's category values contain unverified malformed encodings such as 1(1)."
+Javascript,JavaScript,AMBIGUOUS,"Both refer to JavaScript-related keywords/objects, but CIC category encodings include malformed values and exact parser semantics are not established."
+AA,AA,AMBIGUOUS,"Related keyword-count concept, but CIC categorical malformed values prevent a defensible raw representation equivalence."
+OpenAction,OpenAction,AMBIGUOUS,"Related keyword-count concept, but CIC categorical malformed values prevent a defensible raw representation equivalence."
+Acroform,Acroform,AMBIGUOUS,"Related tag-count concept, but CIC categorical malformed values and RIT's documented zero variance require review before sharing it."
+JBIG2Decode,JBIG2Decode,AMBIGUOUS,RIT counts occurrences while CIC documentation describes presence; a count is not automatically equivalent to an indicator.
+RichMedia,RichMedia,AMBIGUOUS,"Related keyword-count concept, but CIC categorical malformed values prevent a defensible raw representation equivalence."
+Launch,Launch,AMBIGUOUS,"Related keyword-count concept, but CIC categorical malformed values prevent a defensible raw representation equivalence."
+EmbeddedFile,EmbeddedFile,AMBIGUOUS,"Related name, but CIC's EmbeddedFile column is not separately defined and contains malformed category values."
+XFA,XFA,AMBIGUOUS,"Related XFA concept, but CIC's exact count/indicator semantics and malformed categorical representation require review."
+Colors,,NO_MATCH,No defensible RIT equivalent is established.

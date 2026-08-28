@@ -72,3 +72,12 @@ Preflight the separate paper-aligned XGBoost ten-fold cross-validation design:
 ```
 
 This command requires a clean committed worktree, uses the full verified 24,337-row numerical CSV, and checks a shuffled row-level `KFold(n_splits=10, random_state=42)` assignment. It is intentionally not Protocol P's 75/25 split or Protocol G's feature-vector-disjoint split, and seed 42 is a project choice rather than a paper-reported seed. The default is preflight-only and creates no results or fitted models. A future, explicitly authorized `--execute` run performs exactly 20 fixed XGBoost fits (ten folds for each of CV-all41 and CV-drop3constant), then writes immutable lightweight reports below `reports/experiments/xgb_cv10/<run-id>/`. It preserves documented semantic feature values, applies no scaling or tuning, and never writes model binaries.
+
+Audit a local CIC-Evasive-PDFMal2022 feature table before any cross-dataset work. Place an approved `.parquet` or `.csv` table under `data/external/cic_evasive_pdfmal2022/`; the expected local mirror filename is `PDFMalware2022.parquet`.
+
+```powershell
+.venv\Scripts\python.exe scripts\inspect_cic_pdfmal.py
+.venv\Scripts\python.exe scripts\analyze_rit_cic_alignment.py
+```
+
+The audit supports Parquet through the declared `pyarrow` dependency and never converts, alters, or opens source samples. It records mirror provenance, schema, raw labels, malformed/raw categorical values, quality and duplicate checks, and an evidence-qualified RIT-to-CIC feature alignment. The local CIC file is treated as a third-party Kaggle mirror, not as an official or byte-identical CIC file. These commands do not encode data, train a model, or calculate cross-dataset performance.

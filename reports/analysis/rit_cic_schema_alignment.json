@@ -1,0 +1,1341 @@
+{
+  "alignment_version": "1.0",
+  "sources": {
+    "rit_paper_alignment": "https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection",
+    "cic_official_documentation": "https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+  },
+  "dataset_provenance": {
+    "rit_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+    "cic_sha256": "25db2059d59207d2040c5a999838514579ed4667b2b7fa39f2398dee484caf65",
+    "cic_source_type": "third-party mirror",
+    "cic_source_platform": "Kaggle"
+  },
+  "rit_feature_count": 41,
+  "cic_candidate_predictive_feature_count": 31,
+  "alignment": [
+    {
+      "rit_column": "pdfsize",
+      "rit_meaning": "Size of the PDF file in kilobytes.",
+      "cic_column": "PdfSize",
+      "canonical_name": "pdf_size",
+      "status": "AMBIGUOUS",
+      "rationale": "Same broad size concept, but the official CIC page does not state its unit and the mirror must not be assumed byte-identical or identically scaled.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "metadata size",
+      "rit_meaning": "Size of metadata extracted from the PDF file, in bytes.",
+      "cic_column": "MetadataSize",
+      "canonical_name": "metadata_size",
+      "status": "EXACT",
+      "rationale": "Both dictionaries describe metadata-section size; compatible numeric quantity, with CIC's observed -1 raw sentinel retained and separately audited.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "pages",
+      "rit_meaning": "Number of pages in the PDF file.",
+      "cic_column": "Pages",
+      "canonical_name": "pages",
+      "status": "AMBIGUOUS",
+      "rationale": "Same page-count concept, but RIT documents corrupted files as pages=0 while CIC has observed -1 values with no verified CIC sentinel semantics.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "xref length",
+      "rit_meaning": "xref length as extracted from the file header.",
+      "cic_column": "XrefLength",
+      "canonical_name": "xref_length",
+      "status": "EXACT",
+      "rationale": "Both dictionaries describe the Xref length/entry quantity; local maxima and numeric representation are compatible evidence, while CIC -1 remains an unverified raw sentinel.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "title length",
+      "rit_meaning": "Number of characters in the file title.",
+      "cic_column": "TitleCharacters",
+      "canonical_name": "title_length",
+      "status": "EXACT",
+      "rationale": "Both dictionaries describe the number of title characters; compatible numeric character count, with CIC's raw -1 sentinel retained.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "isEncrypted",
+      "rit_meaning": "1 if the file is encrypted; 0 otherwise.",
+      "cic_column": "isEncrypted",
+      "canonical_name": "is_encrypted",
+      "status": "AMBIGUOUS",
+      "rationale": "Related encryption indicator, but CIC observed values extend beyond binary 0/1 and its special-value representation is unverified.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "embedded files",
+      "rit_meaning": "Number of embedded files inside the PDF, as extracted from the header.",
+      "cic_column": "EmbeddedFiles",
+      "canonical_name": "embedded_files",
+      "status": "EXACT",
+      "rationale": "Both dictionaries describe a count of embedded files and use a numeric local representation; no unit conversion is required.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "images",
+      "rit_meaning": "Number of images in the PDF file.",
+      "cic_column": "Images",
+      "canonical_name": "images",
+      "status": "AMBIGUOUS",
+      "rationale": "Same image-count concept, but CIC stores category strings and includes malformed lexical values such as 1(1); no coercion is defensible yet.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "contains_text",
+      "rit_meaning": "Whether the file contains at least the default threshold of 50 text characters.",
+      "cic_column": "Text",
+      "canonical_name": "contains_text",
+      "status": "AMBIGUOUS",
+      "rationale": "RIT is a documented >=50-character ternary signal; CIC documents text presence with Yes/No/unclear/-1/0 values. These are not established as equivalent.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "pdf_ver",
+      "rit_meaning": "PDF version extracted from the file header.",
+      "cic_column": "Header",
+      "canonical_name": "pdf_version_or_header",
+      "status": "AMBIGUOUS",
+      "rationale": "CIC documents valid-header presence, whereas RIT stores a numeric extracted PDF version. Header strings must not be treated as a version transform without verification.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "obj",
+      "rit_meaning": "Number of occurrences of the string \"obj\" in the PDF file.",
+      "cic_column": "Obj",
+      "canonical_name": "obj",
+      "status": "AMBIGUOUS",
+      "rationale": "RIT counts obj string occurrences; CIC documents indirect objects and also has malformed category values. Parser/count equivalence is not established.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "endobj",
+      "rit_meaning": "Number of occurrences of the string \"endobj\" in the PDF file.",
+      "cic_column": "Endobj",
+      "canonical_name": "endobj",
+      "status": "AMBIGUOUS",
+      "rationale": "Related name, but the CIC official page does not separately define Endobj and raw values include non-numeric text.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "stream",
+      "rit_meaning": "Number of occurrences of the string \"stream\" in the PDF file.",
+      "cic_column": "Stream",
+      "canonical_name": "stream",
+      "status": "AMBIGUOUS",
+      "rationale": "RIT counts stream string occurrences; CIC documents streams as binary-data sequences. Equal parser/count semantics are not established.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "endstream",
+      "rit_meaning": "Number of occurrences of the string \"endstream\" in the PDF file.",
+      "cic_column": "Endstream",
+      "canonical_name": "endstream",
+      "status": "AMBIGUOUS",
+      "rationale": "Related name, but CIC Endstream is not separately defined in the official feature descriptions and raw values are malformed in places.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "trailer",
+      "rit_meaning": "Number of occurrences of the string \"trailer\" in the PDF file.",
+      "cic_column": "Trailer",
+      "canonical_name": "trailer",
+      "status": "EXACT",
+      "rationale": "Both dictionaries describe a count of PDF trailers and use numeric local representations.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "xref",
+      "rit_meaning": "Number of occurrences of the string \"xref\" in the PDF file.",
+      "cic_column": "Xref",
+      "canonical_name": "xref",
+      "status": "AMBIGUOUS",
+      "rationale": "RIT counts xref occurrences while CIC documents Xref tables; count semantics are related but not proven equal.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "startxref",
+      "rit_meaning": "Number of occurrences of the string \"startxref\" in the PDF file.",
+      "cic_column": "StartXref",
+      "canonical_name": "startxref",
+      "status": "AMBIGUOUS",
+      "rationale": "Related startxref keyword count, but CIC includes malformed raw strings and exact parser behavior is not documented.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "page_command",
+      "rit_meaning": "Number of occurrences of the string \"/Page\" in the PDF file.",
+      "cic_column": "PageNo",
+      "canonical_name": "page_command_or_page_no",
+      "status": "AMBIGUOUS",
+      "rationale": "Both appear page-related, but CIC PageNo is not separately defined and is not proven to count the /Page keyword.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "Encrypt",
+      "rit_meaning": "Number of occurrences of the string \"/Encrypt\" in the PDF file.",
+      "cic_column": "Encrypt",
+      "canonical_name": "encrypt",
+      "status": "AMBIGUOUS",
+      "rationale": "Related names, but CIC's Encrypt column is distinct from isEncrypted and is not separately defined on the official page.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "ObjStm",
+      "rit_meaning": "Number of occurrences of the string \"/ObJStm\" in the PDF file.",
+      "cic_column": "ObjStm",
+      "canonical_name": "objstm",
+      "status": "EXACT",
+      "rationale": "Both dictionaries describe stream objects (ObjStm) as a numeric count.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "JS",
+      "rit_meaning": "Number of occurrences of the string \"/JS\" in the PDF file.",
+      "cic_column": "JS",
+      "canonical_name": "js",
+      "status": "AMBIGUOUS",
+      "rationale": "Both refer to JS-related keywords/objects, but CIC's category values contain unverified malformed encodings such as 1(1).",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "JavaScript",
+      "rit_meaning": "Number of occurrences of the string \"/JavaScript\" in the PDF file.",
+      "cic_column": "Javascript",
+      "canonical_name": "javascript",
+      "status": "AMBIGUOUS",
+      "rationale": "Both refer to JavaScript-related keywords/objects, but CIC category encodings include malformed values and exact parser semantics are not established.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "AA",
+      "rit_meaning": "Number of occurrences of the string \"/AA\" in the PDF file.",
+      "cic_column": "AA",
+      "canonical_name": "aa",
+      "status": "AMBIGUOUS",
+      "rationale": "Related keyword-count concept, but CIC categorical malformed values prevent a defensible raw representation equivalence.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "OpenAction",
+      "rit_meaning": "Number of occurrences of the string \"/OpenAction\" in the PDF file.",
+      "cic_column": "OpenAction",
+      "canonical_name": "open_action",
+      "status": "AMBIGUOUS",
+      "rationale": "Related keyword-count concept, but CIC categorical malformed values prevent a defensible raw representation equivalence.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "Acroform",
+      "rit_meaning": "Number of occurrences of the string \"/Acroform\" in the PDF file.",
+      "cic_column": "Acroform",
+      "canonical_name": "acroform",
+      "status": "AMBIGUOUS",
+      "rationale": "Related tag-count concept, but CIC categorical malformed values and RIT's documented zero variance require review before sharing it.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "JBIG2Decode",
+      "rit_meaning": "Number of occurrences of the string \"/JBIG2Decode\" in the PDF file.",
+      "cic_column": "JBIG2Decode",
+      "canonical_name": "jbig2decode",
+      "status": "AMBIGUOUS",
+      "rationale": "RIT counts occurrences while CIC documentation describes presence; a count is not automatically equivalent to an indicator.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "RichMedia",
+      "rit_meaning": "Number of occurrences of the string \"/RichMedia\" in the PDF file.",
+      "cic_column": "RichMedia",
+      "canonical_name": "rich_media",
+      "status": "AMBIGUOUS",
+      "rationale": "Related keyword-count concept, but CIC categorical malformed values prevent a defensible raw representation equivalence.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "Launch",
+      "rit_meaning": "Number of occurrences of the string \"/Launch\" in the PDF file.",
+      "cic_column": "Launch",
+      "canonical_name": "launch",
+      "status": "AMBIGUOUS",
+      "rationale": "Related keyword-count concept, but CIC categorical malformed values prevent a defensible raw representation equivalence.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "EmbeddedFile",
+      "rit_meaning": "Number of occurrences of the string \"/EmbeddedFile\" in the PDF file.",
+      "cic_column": "EmbeddedFile",
+      "canonical_name": "embedded_file",
+      "status": "AMBIGUOUS",
+      "rationale": "Related name, but CIC's EmbeddedFile column is not separately defined and contains malformed category values.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "XFA",
+      "rit_meaning": "Number of occurrences of the string \"/XFA\" in the PDF file.",
+      "cic_column": "XFA",
+      "canonical_name": "xfa",
+      "status": "AMBIGUOUS",
+      "rationale": "Related XFA concept, but CIC's exact count/indicator semantics and malformed categorical representation require review.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "Colors",
+      "rit_meaning": "Number of occurrences of the string \"/Colors > 2^24\" in the PDF file.",
+      "cic_column": "Colors",
+      "canonical_name": "colors",
+      "status": "NO_MATCH",
+      "rationale": "The RIT feature counts /Colors > 2^24 occurrences, whereas CIC documents different colors used. Same name is not a defensible semantic equivalence.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "URI",
+      "rit_meaning": "Number of occurrences of the string \"/URI\" in the PDF file.",
+      "cic_column": null,
+      "canonical_name": "uri",
+      "status": "NO_MATCH",
+      "rationale": "No CIC URI column is present in the actual local schema.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "BaseEncoding",
+      "rit_meaning": "Number of occurrences of the string \"/BaseEncoding\" in the PDF file.",
+      "cic_column": null,
+      "canonical_name": "base_encoding",
+      "status": "NO_MATCH",
+      "rationale": "No CIC BaseEncoding column is present in the actual local schema.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "Encoding",
+      "rit_meaning": "Number of occurrences of the string \"/Encoding\" in the PDF file.",
+      "cic_column": null,
+      "canonical_name": "encoding",
+      "status": "NO_MATCH",
+      "rationale": "No CIC Encoding column is present in the actual local schema.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "ProcSet",
+      "rit_meaning": "Number of occurrences of the string \"/ProcSet\" in the PDF file.",
+      "cic_column": null,
+      "canonical_name": "proc_set",
+      "status": "NO_MATCH",
+      "rationale": "No CIC ProcSet column is present in the actual local schema.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "Registry",
+      "rit_meaning": "Number of occurrences of the string \"/Registry\" in the PDF file.",
+      "cic_column": null,
+      "canonical_name": "registry",
+      "status": "NO_MATCH",
+      "rationale": "No CIC Registry column is present in the actual local schema.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "Resources",
+      "rit_meaning": "Number of occurrences of the string \"/Resources\" in the PDF file.",
+      "cic_column": null,
+      "canonical_name": "resources",
+      "status": "NO_MATCH",
+      "rationale": "No CIC Resources column is present in the actual local schema.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "www",
+      "rit_meaning": "Number of occurrences of the string \"/www\" in the PDF file.",
+      "cic_column": null,
+      "canonical_name": "www",
+      "status": "NO_MATCH",
+      "rationale": "No CIC www column is present in the actual local schema.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "server",
+      "rit_meaning": "Number of occurrences of the string \"/server\" in the PDF file.",
+      "cic_column": null,
+      "canonical_name": "server",
+      "status": "NO_MATCH",
+      "rationale": "No CIC server column is present in the actual local schema.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "Root",
+      "rit_meaning": "Number of occurrences of the string \"/Root\" in the PDF file.",
+      "cic_column": null,
+      "canonical_name": "root",
+      "status": "NO_MATCH",
+      "rationale": "No CIC Root column is present in the actual local schema.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "BitsPerComponent",
+      "rit_meaning": "Number of occurrences of the string \"/BitsPerComponent\" in the PDF file.",
+      "cic_column": null,
+      "canonical_name": "bits_per_component",
+      "status": "NO_MATCH",
+      "rationale": "No CIC BitsPerComponent column is present in the actual local schema.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    }
+  ],
+  "reverse_cic_alignment": [
+    {
+      "cic_column": "PdfSize",
+      "rit_column": "pdfsize",
+      "status": "AMBIGUOUS",
+      "note": "Same broad size concept, but the official CIC page does not state its unit and the mirror must not be assumed byte-identical or identically scaled."
+    },
+    {
+      "cic_column": "MetadataSize",
+      "rit_column": "metadata size",
+      "status": "EXACT",
+      "note": "Both dictionaries describe metadata-section size; compatible numeric quantity, with CIC's observed -1 raw sentinel retained and separately audited."
+    },
+    {
+      "cic_column": "Pages",
+      "rit_column": "pages",
+      "status": "AMBIGUOUS",
+      "note": "Same page-count concept, but RIT documents corrupted files as pages=0 while CIC has observed -1 values with no verified CIC sentinel semantics."
+    },
+    {
+      "cic_column": "XrefLength",
+      "rit_column": "xref length",
+      "status": "EXACT",
+      "note": "Both dictionaries describe the Xref length/entry quantity; local maxima and numeric representation are compatible evidence, while CIC -1 remains an unverified raw sentinel."
+    },
+    {
+      "cic_column": "TitleCharacters",
+      "rit_column": "title length",
+      "status": "EXACT",
+      "note": "Both dictionaries describe the number of title characters; compatible numeric character count, with CIC's raw -1 sentinel retained."
+    },
+    {
+      "cic_column": "isEncrypted",
+      "rit_column": "isEncrypted",
+      "status": "AMBIGUOUS",
+      "note": "Related encryption indicator, but CIC observed values extend beyond binary 0/1 and its special-value representation is unverified."
+    },
+    {
+      "cic_column": "EmbeddedFiles",
+      "rit_column": "embedded files",
+      "status": "EXACT",
+      "note": "Both dictionaries describe a count of embedded files and use a numeric local representation; no unit conversion is required."
+    },
+    {
+      "cic_column": "Images",
+      "rit_column": "images",
+      "status": "AMBIGUOUS",
+      "note": "Same image-count concept, but CIC stores category strings and includes malformed lexical values such as 1(1); no coercion is defensible yet."
+    },
+    {
+      "cic_column": "Text",
+      "rit_column": "contains_text",
+      "status": "AMBIGUOUS",
+      "note": "RIT is a documented >=50-character ternary signal; CIC documents text presence with Yes/No/unclear/-1/0 values. These are not established as equivalent."
+    },
+    {
+      "cic_column": "Header",
+      "rit_column": "pdf_ver",
+      "status": "AMBIGUOUS",
+      "note": "CIC documents valid-header presence, whereas RIT stores a numeric extracted PDF version. Header strings must not be treated as a version transform without verification."
+    },
+    {
+      "cic_column": "Obj",
+      "rit_column": "obj",
+      "status": "AMBIGUOUS",
+      "note": "RIT counts obj string occurrences; CIC documents indirect objects and also has malformed category values. Parser/count equivalence is not established."
+    },
+    {
+      "cic_column": "Endobj",
+      "rit_column": "endobj",
+      "status": "AMBIGUOUS",
+      "note": "Related name, but the CIC official page does not separately define Endobj and raw values include non-numeric text."
+    },
+    {
+      "cic_column": "Stream",
+      "rit_column": "stream",
+      "status": "AMBIGUOUS",
+      "note": "RIT counts stream string occurrences; CIC documents streams as binary-data sequences. Equal parser/count semantics are not established."
+    },
+    {
+      "cic_column": "Endstream",
+      "rit_column": "endstream",
+      "status": "AMBIGUOUS",
+      "note": "Related name, but CIC Endstream is not separately defined in the official feature descriptions and raw values are malformed in places."
+    },
+    {
+      "cic_column": "Xref",
+      "rit_column": "xref",
+      "status": "AMBIGUOUS",
+      "note": "RIT counts xref occurrences while CIC documents Xref tables; count semantics are related but not proven equal."
+    },
+    {
+      "cic_column": "Trailer",
+      "rit_column": "trailer",
+      "status": "EXACT",
+      "note": "Both dictionaries describe a count of PDF trailers and use numeric local representations."
+    },
+    {
+      "cic_column": "StartXref",
+      "rit_column": "startxref",
+      "status": "AMBIGUOUS",
+      "note": "Related startxref keyword count, but CIC includes malformed raw strings and exact parser behavior is not documented."
+    },
+    {
+      "cic_column": "PageNo",
+      "rit_column": "page_command",
+      "status": "AMBIGUOUS",
+      "note": "Both appear page-related, but CIC PageNo is not separately defined and is not proven to count the /Page keyword."
+    },
+    {
+      "cic_column": "Encrypt",
+      "rit_column": "Encrypt",
+      "status": "AMBIGUOUS",
+      "note": "Related names, but CIC's Encrypt column is distinct from isEncrypted and is not separately defined on the official page."
+    },
+    {
+      "cic_column": "ObjStm",
+      "rit_column": "ObjStm",
+      "status": "EXACT",
+      "note": "Both dictionaries describe stream objects (ObjStm) as a numeric count."
+    },
+    {
+      "cic_column": "JS",
+      "rit_column": "JS",
+      "status": "AMBIGUOUS",
+      "note": "Both refer to JS-related keywords/objects, but CIC's category values contain unverified malformed encodings such as 1(1)."
+    },
+    {
+      "cic_column": "Javascript",
+      "rit_column": "JavaScript",
+      "status": "AMBIGUOUS",
+      "note": "Both refer to JavaScript-related keywords/objects, but CIC category encodings include malformed values and exact parser semantics are not established."
+    },
+    {
+      "cic_column": "AA",
+      "rit_column": "AA",
+      "status": "AMBIGUOUS",
+      "note": "Related keyword-count concept, but CIC categorical malformed values prevent a defensible raw representation equivalence."
+    },
+    {
+      "cic_column": "OpenAction",
+      "rit_column": "OpenAction",
+      "status": "AMBIGUOUS",
+      "note": "Related keyword-count concept, but CIC categorical malformed values prevent a defensible raw representation equivalence."
+    },
+    {
+      "cic_column": "Acroform",
+      "rit_column": "Acroform",
+      "status": "AMBIGUOUS",
+      "note": "Related tag-count concept, but CIC categorical malformed values and RIT's documented zero variance require review before sharing it."
+    },
+    {
+      "cic_column": "JBIG2Decode",
+      "rit_column": "JBIG2Decode",
+      "status": "AMBIGUOUS",
+      "note": "RIT counts occurrences while CIC documentation describes presence; a count is not automatically equivalent to an indicator."
+    },
+    {
+      "cic_column": "RichMedia",
+      "rit_column": "RichMedia",
+      "status": "AMBIGUOUS",
+      "note": "Related keyword-count concept, but CIC categorical malformed values prevent a defensible raw representation equivalence."
+    },
+    {
+      "cic_column": "Launch",
+      "rit_column": "Launch",
+      "status": "AMBIGUOUS",
+      "note": "Related keyword-count concept, but CIC categorical malformed values prevent a defensible raw representation equivalence."
+    },
+    {
+      "cic_column": "EmbeddedFile",
+      "rit_column": "EmbeddedFile",
+      "status": "AMBIGUOUS",
+      "note": "Related name, but CIC's EmbeddedFile column is not separately defined and contains malformed category values."
+    },
+    {
+      "cic_column": "XFA",
+      "rit_column": "XFA",
+      "status": "AMBIGUOUS",
+      "note": "Related XFA concept, but CIC's exact count/indicator semantics and malformed categorical representation require review."
+    },
+    {
+      "cic_column": "Colors",
+      "rit_column": null,
+      "status": "NO_MATCH",
+      "note": "No defensible RIT equivalent is established."
+    }
+  ],
+  "status_counts": {
+    "EXACT": 6,
+    "COMPATIBLE_AFTER_DOCUMENTED_TRANSFORM": 0,
+    "AMBIGUOUS": 24,
+    "NO_MATCH": 11
+  },
+  "common_strict": [
+    {
+      "rit_column": "metadata size",
+      "rit_meaning": "Size of metadata extracted from the PDF file, in bytes.",
+      "cic_column": "MetadataSize",
+      "canonical_name": "metadata_size",
+      "status": "EXACT",
+      "rationale": "Both dictionaries describe metadata-section size; compatible numeric quantity, with CIC's observed -1 raw sentinel retained and separately audited.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "xref length",
+      "rit_meaning": "xref length as extracted from the file header.",
+      "cic_column": "XrefLength",
+      "canonical_name": "xref_length",
+      "status": "EXACT",
+      "rationale": "Both dictionaries describe the Xref length/entry quantity; local maxima and numeric representation are compatible evidence, while CIC -1 remains an unverified raw sentinel.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "title length",
+      "rit_meaning": "Number of characters in the file title.",
+      "cic_column": "TitleCharacters",
+      "canonical_name": "title_length",
+      "status": "EXACT",
+      "rationale": "Both dictionaries describe the number of title characters; compatible numeric character count, with CIC's raw -1 sentinel retained.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "embedded files",
+      "rit_meaning": "Number of embedded files inside the PDF, as extracted from the header.",
+      "cic_column": "EmbeddedFiles",
+      "canonical_name": "embedded_files",
+      "status": "EXACT",
+      "rationale": "Both dictionaries describe a count of embedded files and use a numeric local representation; no unit conversion is required.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "trailer",
+      "rit_meaning": "Number of occurrences of the string \"trailer\" in the PDF file.",
+      "cic_column": "Trailer",
+      "canonical_name": "trailer",
+      "status": "EXACT",
+      "rationale": "Both dictionaries describe a count of PDF trailers and use numeric local representations.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "ObjStm",
+      "rit_meaning": "Number of occurrences of the string \"/ObJStm\" in the PDF file.",
+      "cic_column": "ObjStm",
+      "canonical_name": "objstm",
+      "status": "EXACT",
+      "rationale": "Both dictionaries describe stream objects (ObjStm) as a numeric count.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    }
+  ],
+  "common_transformable": [
+    {
+      "rit_column": "metadata size",
+      "rit_meaning": "Size of metadata extracted from the PDF file, in bytes.",
+      "cic_column": "MetadataSize",
+      "canonical_name": "metadata_size",
+      "status": "EXACT",
+      "rationale": "Both dictionaries describe metadata-section size; compatible numeric quantity, with CIC's observed -1 raw sentinel retained and separately audited.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "xref length",
+      "rit_meaning": "xref length as extracted from the file header.",
+      "cic_column": "XrefLength",
+      "canonical_name": "xref_length",
+      "status": "EXACT",
+      "rationale": "Both dictionaries describe the Xref length/entry quantity; local maxima and numeric representation are compatible evidence, while CIC -1 remains an unverified raw sentinel.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "title length",
+      "rit_meaning": "Number of characters in the file title.",
+      "cic_column": "TitleCharacters",
+      "canonical_name": "title_length",
+      "status": "EXACT",
+      "rationale": "Both dictionaries describe the number of title characters; compatible numeric character count, with CIC's raw -1 sentinel retained.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "embedded files",
+      "rit_meaning": "Number of embedded files inside the PDF, as extracted from the header.",
+      "cic_column": "EmbeddedFiles",
+      "canonical_name": "embedded_files",
+      "status": "EXACT",
+      "rationale": "Both dictionaries describe a count of embedded files and use a numeric local representation; no unit conversion is required.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "trailer",
+      "rit_meaning": "Number of occurrences of the string \"trailer\" in the PDF file.",
+      "cic_column": "Trailer",
+      "canonical_name": "trailer",
+      "status": "EXACT",
+      "rationale": "Both dictionaries describe a count of PDF trailers and use numeric local representations.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    },
+    {
+      "rit_column": "ObjStm",
+      "rit_meaning": "Number of occurrences of the string \"/ObJStm\" in the PDF file.",
+      "cic_column": "ObjStm",
+      "canonical_name": "objstm",
+      "status": "EXACT",
+      "rationale": "Both dictionaries describe stream objects (ObjStm) as a numeric count.",
+      "transform_id": null,
+      "transform_specification": null,
+      "source_evidence": "RIT: https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection; CIC: https://www.unb.ca/cic/datasets/pdfmal-2022.html"
+    }
+  ],
+  "transform_specification": [],
+  "class_balance_comparison": [
+    {
+      "dataset": "RIT-PDFMal-2026",
+      "raw_label": 0,
+      "canonical_label": 0,
+      "count": 13235,
+      "percentage": 54.382216378353945
+    },
+    {
+      "dataset": "RIT-PDFMal-2026",
+      "raw_label": 1,
+      "canonical_label": 1,
+      "count": 11102,
+      "percentage": 45.617783621646055
+    },
+    {
+      "dataset": "CIC-Evasive-PDFMal2022 mirror",
+      "raw_label": "Benign",
+      "canonical_label": 0,
+      "count": 4468,
+      "percentage": 44.577472
+    },
+    {
+      "dataset": "CIC-Evasive-PDFMal2022 mirror",
+      "raw_label": "Malicious",
+      "canonical_label": 1,
+      "count": 5555,
+      "percentage": 55.422528
+    }
+  ],
+  "distribution_comparison": [
+    {
+      "canonical_name": "metadata_size",
+      "dataset": "RIT-PDFMal-2026",
+      "source_column": "metadata size",
+      "subset": "all",
+      "row_count": 24337,
+      "usable_numeric_count": 24337,
+      "minimum": 176.0,
+      "maximum": 77185.0,
+      "median": 267.0,
+      "q25": 180.0,
+      "q75": 306.0,
+      "zero_fraction": 0.0
+    },
+    {
+      "canonical_name": "metadata_size",
+      "dataset": "RIT-PDFMal-2026",
+      "source_column": "metadata size",
+      "subset": "benign",
+      "row_count": 13235,
+      "usable_numeric_count": 13235,
+      "minimum": 176.0,
+      "maximum": 4488.0,
+      "median": 292.0,
+      "q25": 273.0,
+      "q75": 326.0,
+      "zero_fraction": 0.0
+    },
+    {
+      "canonical_name": "metadata_size",
+      "dataset": "RIT-PDFMal-2026",
+      "source_column": "metadata size",
+      "subset": "malicious",
+      "row_count": 11102,
+      "usable_numeric_count": 11102,
+      "minimum": 180.0,
+      "maximum": 77185.0,
+      "median": 180.0,
+      "q25": 180.0,
+      "q75": 224.0,
+      "zero_fraction": 0.0
+    },
+    {
+      "canonical_name": "metadata_size",
+      "dataset": "CIC-Evasive-PDFMal2022 mirror",
+      "source_column": "MetadataSize",
+      "subset": "all",
+      "row_count": 10023,
+      "usable_numeric_count": 10023,
+      "minimum": -1.0,
+      "maximum": 77185.0,
+      "median": 265.0,
+      "q25": 180.0,
+      "q75": 319.0,
+      "zero_fraction": 0.0
+    },
+    {
+      "canonical_name": "metadata_size",
+      "dataset": "CIC-Evasive-PDFMal2022 mirror",
+      "source_column": "MetadataSize",
+      "subset": "benign",
+      "row_count": 4468,
+      "usable_numeric_count": 4468,
+      "minimum": -1.0,
+      "maximum": 2609.0,
+      "median": 298.0,
+      "q25": 276.0,
+      "q75": 358.0,
+      "zero_fraction": 0.0
+    },
+    {
+      "canonical_name": "metadata_size",
+      "dataset": "CIC-Evasive-PDFMal2022 mirror",
+      "source_column": "MetadataSize",
+      "subset": "malicious",
+      "row_count": 5555,
+      "usable_numeric_count": 5555,
+      "minimum": -1.0,
+      "maximum": 77185.0,
+      "median": 180.0,
+      "q25": 180.0,
+      "q75": 258.0,
+      "zero_fraction": 0.0
+    },
+    {
+      "canonical_name": "xref_length",
+      "dataset": "RIT-PDFMal-2026",
+      "source_column": "xref length",
+      "subset": "all",
+      "row_count": 24337,
+      "usable_numeric_count": 24337,
+      "minimum": 0.0,
+      "maximum": 263987.0,
+      "median": 36.0,
+      "q25": 11.0,
+      "q75": 151.0,
+      "zero_fraction": 0.0016024982536878005
+    },
+    {
+      "canonical_name": "xref_length",
+      "dataset": "RIT-PDFMal-2026",
+      "source_column": "xref length",
+      "subset": "benign",
+      "row_count": 13235,
+      "usable_numeric_count": 13235,
+      "minimum": 0.0,
+      "maximum": 200002.0,
+      "median": 104.0,
+      "q25": 40.0,
+      "q75": 329.0,
+      "zero_fraction": 0.0029467321496033246
+    },
+    {
+      "canonical_name": "xref_length",
+      "dataset": "RIT-PDFMal-2026",
+      "source_column": "xref length",
+      "subset": "malicious",
+      "row_count": 11102,
+      "usable_numeric_count": 11102,
+      "minimum": 3.0,
+      "maximum": 263987.0,
+      "median": 10.0,
+      "q25": 9.0,
+      "q75": 20.0,
+      "zero_fraction": 0.0
+    },
+    {
+      "canonical_name": "xref_length",
+      "dataset": "CIC-Evasive-PDFMal2022 mirror",
+      "source_column": "XrefLength",
+      "subset": "all",
+      "row_count": 10023,
+      "usable_numeric_count": 10023,
+      "minimum": -1.0,
+      "maximum": 263987.0,
+      "median": 21.0,
+      "q25": 12.0,
+      "q75": 77.0,
+      "zero_fraction": 9.977052778609199e-05
+    },
+    {
+      "canonical_name": "xref_length",
+      "dataset": "CIC-Evasive-PDFMal2022 mirror",
+      "source_column": "XrefLength",
+      "subset": "benign",
+      "row_count": 4468,
+      "usable_numeric_count": 4468,
+      "minimum": -1.0,
+      "maximum": 28325.0,
+      "median": 55.0,
+      "q25": 24.0,
+      "q75": 253.0,
+      "zero_fraction": 0.0
+    },
+    {
+      "canonical_name": "xref_length",
+      "dataset": "CIC-Evasive-PDFMal2022 mirror",
+      "source_column": "XrefLength",
+      "subset": "malicious",
+      "row_count": 5555,
+      "usable_numeric_count": 5555,
+      "minimum": -1.0,
+      "maximum": 263987.0,
+      "median": 15.0,
+      "q25": 10.0,
+      "q75": 23.0,
+      "zero_fraction": 0.00018001800180018
+    },
+    {
+      "canonical_name": "title_length",
+      "dataset": "RIT-PDFMal-2026",
+      "source_column": "title length",
+      "subset": "all",
+      "row_count": 24337,
+      "usable_numeric_count": 24337,
+      "minimum": 0.0,
+      "maximum": 76993.0,
+      "median": 0.0,
+      "q25": 0.0,
+      "q75": 16.0,
+      "zero_fraction": 0.6314664913506184
+    },
+    {
+      "canonical_name": "title_length",
+      "dataset": "RIT-PDFMal-2026",
+      "source_column": "title length",
+      "subset": "benign",
+      "row_count": 13235,
+      "usable_numeric_count": 13235,
+      "minimum": 0.0,
+      "maximum": 799.0,
+      "median": 0.0,
+      "q25": 0.0,
+      "q75": 30.0,
+      "zero_fraction": 0.511522478277295
+    },
+    {
+      "canonical_name": "title_length",
+      "dataset": "RIT-PDFMal-2026",
+      "source_column": "title length",
+      "subset": "malicious",
+      "row_count": 11102,
+      "usable_numeric_count": 11102,
+      "minimum": 0.0,
+      "maximum": 76993.0,
+      "median": 0.0,
+      "q25": 0.0,
+      "q75": 0.0,
+      "zero_fraction": 0.7744550531435778
+    },
+    {
+      "canonical_name": "title_length",
+      "dataset": "CIC-Evasive-PDFMal2022 mirror",
+      "source_column": "TitleCharacters",
+      "subset": "all",
+      "row_count": 10023,
+      "usable_numeric_count": 10023,
+      "minimum": -1.0,
+      "maximum": 76993.0,
+      "median": 0.0,
+      "q25": 0.0,
+      "q75": 13.0,
+      "zero_fraction": 0.5876484086600818
+    },
+    {
+      "canonical_name": "title_length",
+      "dataset": "CIC-Evasive-PDFMal2022 mirror",
+      "source_column": "TitleCharacters",
+      "subset": "benign",
+      "row_count": 4468,
+      "usable_numeric_count": 4468,
+      "minimum": -1.0,
+      "maximum": 254.0,
+      "median": 0.0,
+      "q25": 0.0,
+      "q75": 24.0,
+      "zero_fraction": 0.5192479856759177
+    },
+    {
+      "canonical_name": "title_length",
+      "dataset": "CIC-Evasive-PDFMal2022 mirror",
+      "source_column": "TitleCharacters",
+      "subset": "malicious",
+      "row_count": 5555,
+      "usable_numeric_count": 5555,
+      "minimum": -1.0,
+      "maximum": 76993.0,
+      "median": 0.0,
+      "q25": 0.0,
+      "q75": 7.0,
+      "zero_fraction": 0.6426642664266426
+    },
+    {
+      "canonical_name": "embedded_files",
+      "dataset": "RIT-PDFMal-2026",
+      "source_column": "embedded files",
+      "subset": "all",
+      "row_count": 24337,
+      "usable_numeric_count": 24337,
+      "minimum": 0.0,
+      "maximum": 8.0,
+      "median": 0.0,
+      "q25": 0.0,
+      "q75": 0.0,
+      "zero_fraction": 0.9797838681842462
+    },
+    {
+      "canonical_name": "embedded_files",
+      "dataset": "RIT-PDFMal-2026",
+      "source_column": "embedded files",
+      "subset": "benign",
+      "row_count": 13235,
+      "usable_numeric_count": 13235,
+      "minimum": 0.0,
+      "maximum": 7.0,
+      "median": 0.0,
+      "q25": 0.0,
+      "q75": 0.0,
+      "zero_fraction": 0.998564412542501
+    },
+    {
+      "canonical_name": "embedded_files",
+      "dataset": "RIT-PDFMal-2026",
+      "source_column": "embedded files",
+      "subset": "malicious",
+      "row_count": 11102,
+      "usable_numeric_count": 11102,
+      "minimum": 0.0,
+      "maximum": 8.0,
+      "median": 0.0,
+      "q25": 0.0,
+      "q75": 0.0,
+      "zero_fraction": 0.957395063952441
+    },
+    {
+      "canonical_name": "embedded_files",
+      "dataset": "CIC-Evasive-PDFMal2022 mirror",
+      "source_column": "EmbeddedFiles",
+      "subset": "all",
+      "row_count": 10023,
+      "usable_numeric_count": 10023,
+      "minimum": -1.0,
+      "maximum": 5.0,
+      "median": 0.0,
+      "q25": 0.0,
+      "q75": 0.0,
+      "zero_fraction": 0.9493165718846652
+    },
+    {
+      "canonical_name": "embedded_files",
+      "dataset": "CIC-Evasive-PDFMal2022 mirror",
+      "source_column": "EmbeddedFiles",
+      "subset": "benign",
+      "row_count": 4468,
+      "usable_numeric_count": 4468,
+      "minimum": -1.0,
+      "maximum": 1.0,
+      "median": 0.0,
+      "q25": 0.0,
+      "q75": 0.0,
+      "zero_fraction": 0.9986571172784243
+    },
+    {
+      "canonical_name": "embedded_files",
+      "dataset": "CIC-Evasive-PDFMal2022 mirror",
+      "source_column": "EmbeddedFiles",
+      "subset": "malicious",
+      "row_count": 5555,
+      "usable_numeric_count": 5555,
+      "minimum": -1.0,
+      "maximum": 5.0,
+      "median": 0.0,
+      "q25": 0.0,
+      "q75": 0.0,
+      "zero_fraction": 0.9096309630963096
+    },
+    {
+      "canonical_name": "trailer",
+      "dataset": "RIT-PDFMal-2026",
+      "source_column": "trailer",
+      "subset": "all",
+      "row_count": 24337,
+      "usable_numeric_count": 24337,
+      "minimum": 0.0,
+      "maximum": 91.0,
+      "median": 1.0,
+      "q25": 1.0,
+      "q75": 1.0,
+      "zero_fraction": 0.13029543493446194
+    },
+    {
+      "canonical_name": "trailer",
+      "dataset": "RIT-PDFMal-2026",
+      "source_column": "trailer",
+      "subset": "benign",
+      "row_count": 13235,
+      "usable_numeric_count": 13235,
+      "minimum": 0.0,
+      "maximum": 91.0,
+      "median": 1.0,
+      "q25": 1.0,
+      "q75": 2.0,
+      "zero_fraction": 0.21548923309406876
+    },
+    {
+      "canonical_name": "trailer",
+      "dataset": "RIT-PDFMal-2026",
+      "source_column": "trailer",
+      "subset": "malicious",
+      "row_count": 11102,
+      "usable_numeric_count": 11102,
+      "minimum": 0.0,
+      "maximum": 46.0,
+      "median": 1.0,
+      "q25": 1.0,
+      "q75": 1.0,
+      "zero_fraction": 0.028733561520446767
+    },
+    {
+      "canonical_name": "trailer",
+      "dataset": "CIC-Evasive-PDFMal2022 mirror",
+      "source_column": "Trailer",
+      "subset": "all",
+      "row_count": 10023,
+      "usable_numeric_count": 10023,
+      "minimum": -1.0,
+      "maximum": 46.0,
+      "median": 1.0,
+      "q25": 1.0,
+      "q75": 2.0,
+      "zero_fraction": 0.11782899331537464
+    },
+    {
+      "canonical_name": "trailer",
+      "dataset": "CIC-Evasive-PDFMal2022 mirror",
+      "source_column": "Trailer",
+      "subset": "benign",
+      "row_count": 4468,
+      "usable_numeric_count": 4468,
+      "minimum": -1.0,
+      "maximum": 15.0,
+      "median": 2.0,
+      "q25": 1.0,
+      "q75": 2.0,
+      "zero_fraction": 0.20232766338406447
+    },
+    {
+      "canonical_name": "trailer",
+      "dataset": "CIC-Evasive-PDFMal2022 mirror",
+      "source_column": "Trailer",
+      "subset": "malicious",
+      "row_count": 5555,
+      "usable_numeric_count": 5555,
+      "minimum": -1.0,
+      "maximum": 46.0,
+      "median": 1.0,
+      "q25": 1.0,
+      "q75": 1.0,
+      "zero_fraction": 0.049864986498649864
+    },
+    {
+      "canonical_name": "objstm",
+      "dataset": "RIT-PDFMal-2026",
+      "source_column": "ObjStm",
+      "subset": "all",
+      "row_count": 24337,
+      "usable_numeric_count": 24337,
+      "minimum": 0.0,
+      "maximum": 1294.0,
+      "median": 0.0,
+      "q25": 0.0,
+      "q75": 0.0,
+      "zero_fraction": 0.7623782717672679
+    },
+    {
+      "canonical_name": "objstm",
+      "dataset": "RIT-PDFMal-2026",
+      "source_column": "ObjStm",
+      "subset": "benign",
+      "row_count": 13235,
+      "usable_numeric_count": 13235,
+      "minimum": 0.0,
+      "maximum": 1294.0,
+      "median": 0.0,
+      "q25": 0.0,
+      "q75": 2.0,
+      "zero_fraction": 0.5894219871552702
+    },
+    {
+      "canonical_name": "objstm",
+      "dataset": "RIT-PDFMal-2026",
+      "source_column": "ObjStm",
+      "subset": "malicious",
+      "row_count": 11102,
+      "usable_numeric_count": 11102,
+      "minimum": 0.0,
+      "maximum": 600.0,
+      "median": 0.0,
+      "q25": 0.0,
+      "q75": 0.0,
+      "zero_fraction": 0.9685642226625834
+    },
+    {
+      "canonical_name": "objstm",
+      "dataset": "CIC-Evasive-PDFMal2022 mirror",
+      "source_column": "ObjStm",
+      "subset": "all",
+      "row_count": 10023,
+      "usable_numeric_count": 10023,
+      "minimum": -1.0,
+      "maximum": 600.0,
+      "median": 0.0,
+      "q25": 0.0,
+      "q75": 0.0,
+      "zero_fraction": 0.7665369649805448
+    },
+    {
+      "canonical_name": "objstm",
+      "dataset": "CIC-Evasive-PDFMal2022 mirror",
+      "source_column": "ObjStm",
+      "subset": "benign",
+      "row_count": 4468,
+      "usable_numeric_count": 4468,
+      "minimum": -1.0,
+      "maximum": 68.0,
+      "median": 0.0,
+      "q25": 0.0,
+      "q75": 4.0,
+      "zero_fraction": 0.6414503133393017
+    },
+    {
+      "canonical_name": "objstm",
+      "dataset": "CIC-Evasive-PDFMal2022 mirror",
+      "source_column": "ObjStm",
+      "subset": "malicious",
+      "row_count": 5555,
+      "usable_numeric_count": 5555,
+      "minimum": -1.0,
+      "maximum": 600.0,
+      "median": 0.0,
+      "q25": 0.0,
+      "q75": 0.0,
+      "zero_fraction": 0.8671467146714672
+    }
+  ],
+  "limitations": [
+    "RIT local CSV does not include original per-PDF SHA-256 values, so cross-dataset file identity or overlap cannot be proven.",
+    "CIC is a Kaggle third-party mirror and differs from official row/malicious counts; it is not claimed byte-identical to the CIC original.",
+    "No model, cross-dataset evaluation, target-based feature selection, learned transform, imputation, normalization, or ambiguous-category encoding is included.",
+    "A strict mapping establishes only documented feature comparability, not distributional equivalence or generalization."
+  ]
+}

@@ -1,0 +1,37 @@
+canonical_name,dataset,source_column,subset,row_count,usable_numeric_count,minimum,maximum,median,q25,q75,zero_fraction
+metadata_size,RIT-PDFMal-2026,metadata size,all,24337,24337,176.0,77185.0,267.0,180.0,306.0,0.0
+metadata_size,RIT-PDFMal-2026,metadata size,benign,13235,13235,176.0,4488.0,292.0,273.0,326.0,0.0
+metadata_size,RIT-PDFMal-2026,metadata size,malicious,11102,11102,180.0,77185.0,180.0,180.0,224.0,0.0
+metadata_size,CIC-Evasive-PDFMal2022 mirror,MetadataSize,all,10023,10023,-1.0,77185.0,265.0,180.0,319.0,0.0
+metadata_size,CIC-Evasive-PDFMal2022 mirror,MetadataSize,benign,4468,4468,-1.0,2609.0,298.0,276.0,358.0,0.0
+metadata_size,CIC-Evasive-PDFMal2022 mirror,MetadataSize,malicious,5555,5555,-1.0,77185.0,180.0,180.0,258.0,0.0
+xref_length,RIT-PDFMal-2026,xref length,all,24337,24337,0.0,263987.0,36.0,11.0,151.0,0.0016024982536878005
+xref_length,RIT-PDFMal-2026,xref length,benign,13235,13235,0.0,200002.0,104.0,40.0,329.0,0.0029467321496033246
+xref_length,RIT-PDFMal-2026,xref length,malicious,11102,11102,3.0,263987.0,10.0,9.0,20.0,0.0
+xref_length,CIC-Evasive-PDFMal2022 mirror,XrefLength,all,10023,10023,-1.0,263987.0,21.0,12.0,77.0,9.977052778609199e-05
+xref_length,CIC-Evasive-PDFMal2022 mirror,XrefLength,benign,4468,4468,-1.0,28325.0,55.0,24.0,253.0,0.0
+xref_length,CIC-Evasive-PDFMal2022 mirror,XrefLength,malicious,5555,5555,-1.0,263987.0,15.0,10.0,23.0,0.00018001800180018
+title_length,RIT-PDFMal-2026,title length,all,24337,24337,0.0,76993.0,0.0,0.0,16.0,0.6314664913506184
+title_length,RIT-PDFMal-2026,title length,benign,13235,13235,0.0,799.0,0.0,0.0,30.0,0.511522478277295
+title_length,RIT-PDFMal-2026,title length,malicious,11102,11102,0.0,76993.0,0.0,0.0,0.0,0.7744550531435778
+title_length,CIC-Evasive-PDFMal2022 mirror,TitleCharacters,all,10023,10023,-1.0,76993.0,0.0,0.0,13.0,0.5876484086600818
+title_length,CIC-Evasive-PDFMal2022 mirror,TitleCharacters,benign,4468,4468,-1.0,254.0,0.0,0.0,24.0,0.5192479856759177
+title_length,CIC-Evasive-PDFMal2022 mirror,TitleCharacters,malicious,5555,5555,-1.0,76993.0,0.0,0.0,7.0,0.6426642664266426
+embedded_files,RIT-PDFMal-2026,embedded files,all,24337,24337,0.0,8.0,0.0,0.0,0.0,0.9797838681842462
+embedded_files,RIT-PDFMal-2026,embedded files,benign,13235,13235,0.0,7.0,0.0,0.0,0.0,0.998564412542501
+embedded_files,RIT-PDFMal-2026,embedded files,malicious,11102,11102,0.0,8.0,0.0,0.0,0.0,0.957395063952441
+embedded_files,CIC-Evasive-PDFMal2022 mirror,EmbeddedFiles,all,10023,10023,-1.0,5.0,0.0,0.0,0.0,0.9493165718846652
+embedded_files,CIC-Evasive-PDFMal2022 mirror,EmbeddedFiles,benign,4468,4468,-1.0,1.0,0.0,0.0,0.0,0.9986571172784243
+embedded_files,CIC-Evasive-PDFMal2022 mirror,EmbeddedFiles,malicious,5555,5555,-1.0,5.0,0.0,0.0,0.0,0.9096309630963096
+trailer,RIT-PDFMal-2026,trailer,all,24337,24337,0.0,91.0,1.0,1.0,1.0,0.13029543493446194
+trailer,RIT-PDFMal-2026,trailer,benign,13235,13235,0.0,91.0,1.0,1.0,2.0,0.21548923309406876
+trailer,RIT-PDFMal-2026,trailer,malicious,11102,11102,0.0,46.0,1.0,1.0,1.0,0.028733561520446767
+trailer,CIC-Evasive-PDFMal2022 mirror,Trailer,all,10023,10023,-1.0,46.0,1.0,1.0,2.0,0.11782899331537464
+trailer,CIC-Evasive-PDFMal2022 mirror,Trailer,benign,4468,4468,-1.0,15.0,2.0,1.0,2.0,0.20232766338406447
+trailer,CIC-Evasive-PDFMal2022 mirror,Trailer,malicious,5555,5555,-1.0,46.0,1.0,1.0,1.0,0.049864986498649864
+objstm,RIT-PDFMal-2026,ObjStm,all,24337,24337,0.0,1294.0,0.0,0.0,0.0,0.7623782717672679
+objstm,RIT-PDFMal-2026,ObjStm,benign,13235,13235,0.0,1294.0,0.0,0.0,2.0,0.5894219871552702
+objstm,RIT-PDFMal-2026,ObjStm,malicious,11102,11102,0.0,600.0,0.0,0.0,0.0,0.9685642226625834
+objstm,CIC-Evasive-PDFMal2022 mirror,ObjStm,all,10023,10023,-1.0,600.0,0.0,0.0,0.0,0.7665369649805448
+objstm,CIC-Evasive-PDFMal2022 mirror,ObjStm,benign,4468,4468,-1.0,68.0,0.0,0.0,4.0,0.6414503133393017
+objstm,CIC-Evasive-PDFMal2022 mirror,ObjStm,malicious,5555,5555,-1.0,600.0,0.0,0.0,0.0,0.8671467146714672

@@ -62,6 +62,10 @@ reports/tables/**
 !reports/tables/protocol_p_vs_g/**
 !reports/tables/metric_semantics/
 !reports/tables/metric_semantics/**
+!reports/tables/cic_audit/
+!reports/tables/cic_audit/**
+!reports/tables/rit_cic_alignment/
+!reports/tables/rit_cic_alignment/**
 reports/*.md
 reports/*.json
 !reports/research_log.md
