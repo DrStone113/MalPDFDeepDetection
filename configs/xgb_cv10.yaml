@@ -1,0 +1,30 @@
+# Fixed, paper-aligned XGBoost ten-fold CV design. This file contains no results.
+experiment: xgb_cv10
+dataset:
+  expected_sha256: 2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623
+  expected_row_count: 24337
+target_column: Label
+cross_validation:
+  splitter: sklearn.model_selection.KFold
+  n_splits: 10
+  shuffle: true
+  cv_split_seed: 42
+model:
+  name: xgboost
+  model_random_state: 42
+feature_variants:
+  - CV-all41
+  - CV-drop3constant
+expected_future_fit_count: 20
+paper_reference:
+  source: malpdf.data.rit_pdfmal_paper_alignment.PAPER_XGB_10_FOLD_CV_TABLE6
+  comparison_mapping:
+    accuracy: accuracy
+    precision_macro: precision
+    recall_macro: recall
+    f1_macro: f1
+constraints:
+  - Full row-level verified dataset only; no Protocol P subset and no Protocol G grouping.
+  - KFold is shuffled but not stratified because the paper specifies random ten-fold CV without stratification details.
+  - cv_split_seed and model_random_state are separate project choices; neither is a paper-reported seed.
+  - No tuning, threshold selection, imputation, normalization, clipping, or additional feature removal.

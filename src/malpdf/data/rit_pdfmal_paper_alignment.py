@@ -170,6 +170,14 @@ PAPER_BASELINE_RESULTS = [
     {"model": "XGB", "accuracy": 0.994906, "precision": 0.995156, "recall": 0.994590, "f1": 0.994863, "inference_time_ms": 0.564525},
 ]
 
+# Paper Table 6. Precision, recall, and F1 are mapped to project macro metrics
+# by the separately documented metric-semantics correction; the paper table does
+# not independently state that averaging convention.
+PAPER_XGB_10_FOLD_CV_TABLE6 = {
+    "mean": {"accuracy": 0.993878, "precision": 0.995663, "recall": 0.990901, "f1": 0.993274},
+    "standard_deviation": {"accuracy": 0.000789, "precision": 0.001382, "recall": 0.002012, "f1": 0.000841},
+}
+
 PAPER_SHAP_IMPORTANCE = [
     ("JavaScript", 3.474789), ("contains_text", 1.221534), ("pdfsize", 1.126533), ("JS", 1.126279),
     ("Registry", 0.636202), ("XFA", 0.550923), ("metadata size", 0.503341), ("stream", 0.441044),
@@ -364,7 +372,7 @@ def build_paper_alignment_report(dataset_path: str | Path) -> dict[str, Any]:
             "hyperparameters": "Not specified in the paper.",
         },
         "published_baseline_results": PAPER_BASELINE_RESULTS,
-        "published_xgb_10_fold_cross_validation": {"mean": {"accuracy": 0.993878, "precision": 0.995663, "recall": 0.990901, "f1": 0.993274}, "standard_deviation": {"accuracy": 0.000789, "precision": 0.001382, "recall": 0.002012, "f1": 0.000841}},
+        "published_xgb_10_fold_cross_validation": PAPER_XGB_10_FOLD_CV_TABLE6,
         "paper_shap_reference": {"instruction": "Reference only for future sanity checks. Do not select features using these test-set-derived importances.", "importance": [{"feature": feature, "importance": importance} for feature, importance in PAPER_SHAP_IMPORTANCE]},
         "protocols": {
             "P_paper_reproduction": "Reproduce the paper as closely as documentation permits: 75/25 random stratified train/test split, five published classical models, the reported metrics, and random 10-fold XGB cross-validation. Undocumented seed, hyperparameters, scaling, and exact zero-variance removal status remain not specified.",
