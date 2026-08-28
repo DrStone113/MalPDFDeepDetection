@@ -98,3 +98,20 @@ Preflight the fixed Protocol G XGBoost TreeSHAP analysis:
 ```
 
 The explicit `--execute --run-id protocol-g-seed42` command retrains only the established G-drop3constant XGBoost configuration on the immutable Protocol G training partition, verifies the committed test metrics before explaining the 4,867 test rows with native XGBoost `pred_contribs=True`, and writes a new immutable explainability report. SHAP is descriptive only: it never changes the split, model, feature schema, or historical benchmark results.
+
+## Safe static PDF inspection
+
+The project can inspect one local PDF as untrusted bytes without opening a viewer, executing JavaScript or attachments, following links, extracting payloads, invoking external programs, or loading an ML model:
+
+```powershell
+.venv\Scripts\python.exe -m malpdf inspect path\to\untrusted.pdf
+.venv\Scripts\python.exe -m malpdf inspect path\to\untrusted.pdf --json
+```
+
+Inspection is bounded by a 50 MiB file limit, 1,000 pages, and 10,000 structural objects by default; each can be configured on the CLI. The JSON result reports a fixed 41-feature RIT-schema-oriented static vector, raw lexical counts separately from parser-confirmed structural indicators, warnings, and a strict Protocol G 38-feature compatibility gate.
+
+No malware probability, benign/malicious verdict, or risk score is produced. The local RIT CSV has no matching raw PDFs, so feature-generation equivalence has not been established; the gate intentionally refuses model inference unless every required feature has an exact, finite, verified semantic mapping. Generate the thesis coverage documentation only from a clean committed extractor revision:
+
+```powershell
+.venv\Scripts\python.exe scripts\generate_static_feature_coverage.py
+```

@@ -72,6 +72,8 @@ reports/tables/**
 !reports/tables/cic_source_fidelity/**
 !reports/tables/rit_cic_alignment_v2/
 !reports/tables/rit_cic_alignment_v2/**
+!reports/tables/static_extractor/
+!reports/tables/static_extractor/**
 reports/*.md
 reports/*.json
 !reports/research_log.md
