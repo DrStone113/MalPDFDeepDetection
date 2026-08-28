@@ -81,6 +81,33 @@ def evaluate_estimator(estimator: Any, features: Any, labels: Any) -> dict[str, 
     return result
 
 
+def fit_predict_and_measure(
+    estimator: Any, train_features: Any, train_labels: Any, test_features: Any
+) -> tuple[np.ndarray, np.ndarray | None, str | None, dict[str, float]]:
+    """Fit on training data and time one complete held-out inference pass.
+
+    The inference interval includes class prediction and, when available,
+    probability or decision-score generation needed for ROC-AUC and PR-AUC.
+    """
+    train_start = perf_counter()
+    estimator.fit(train_features, train_labels)
+    training_seconds = perf_counter() - train_start
+
+    inference_start = perf_counter()
+    predictions = np.asarray(estimator.predict(test_features))
+    positive_scores, score_source = continuous_positive_scores(estimator, test_features)
+    inference_seconds = perf_counter() - inference_start
+    test_count = len(test_features)
+    runtime = {
+        "training_seconds": training_seconds,
+        "test_inference_total_seconds": inference_seconds,
+        "test_inference_milliseconds_per_sample": (
+            0.0 if test_count == 0 else inference_seconds * 1000 / test_count
+        ),
+    }
+    return predictions, positive_scores, score_source, runtime
+
+
 def fit_and_measure_runtime(
     estimator: Any, train_features: Any, train_labels: Any, test_features: Any
 ) -> dict[str, float]:
@@ -89,15 +116,7 @@ def fit_and_measure_runtime(
     This utility is intentionally not invoked by infrastructure setup. Any future
     benchmark should use it only after selecting a frozen configuration.
     """
-    train_start = perf_counter()
-    estimator.fit(train_features, train_labels)
-    training_seconds = perf_counter() - train_start
-    inference_start = perf_counter()
-    estimator.predict(test_features)
-    inference_seconds = perf_counter() - inference_start
-    test_count = len(test_features)
-    return {
-        "training_seconds": training_seconds,
-        "test_inference_total_seconds": inference_seconds,
-        "test_inference_milliseconds_per_sample": 0.0 if test_count == 0 else inference_seconds * 1000 / test_count,
-    }
+    _, _, _, runtime = fit_predict_and_measure(
+        estimator, train_features, train_labels, test_features
+    )
+    return runtime

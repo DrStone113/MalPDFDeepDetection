@@ -39,6 +39,31 @@ def _command_output(command: list[str]) -> str | None:
     return output if result.returncode == 0 and output else None
 
 
+def repository_git_state(repository_root: str | Path) -> dict[str, Any]:
+    """Describe the current Git worktree without changing it.
+
+    A benchmark can only claim a clean code revision when Git itself reports an
+    empty porcelain status. Failures to inspect Git are reported as unavailable.
+    """
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(Path(repository_root)), "status", "--porcelain"],
+            capture_output=True,
+            check=False,
+            text=True,
+            timeout=3,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return {"status": "unavailable", "porcelain_entries": []}
+    if result.returncode != 0:
+        return {"status": "unavailable", "porcelain_entries": []}
+    entries = [line for line in result.stdout.splitlines() if line]
+    return {
+        "status": "clean" if not entries else "dirty",
+        "porcelain_entries": entries,
+    }
+
+
 def _windows_cpu_model() -> str | None:
     return _command_output(
         ["powershell", "-NoProfile", "-Command", "(Get-CimInstance Win32_Processor | Select-Object -First 1 -ExpandProperty Name).Trim()"]
@@ -128,6 +153,7 @@ def collect_environment_metadata(dataset_path: str | Path, repository_root: str 
         },
         "dataset_sha256": sha256_file(dataset_path),
         "git_commit_sha": git_sha or "unavailable",
+        "git_working_tree": repository_git_state(root),
     }
 
 
