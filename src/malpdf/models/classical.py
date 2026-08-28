@@ -53,7 +53,8 @@ def model_configurations(seed: int = 42) -> dict[str, dict[str, Any]]:
         "xgboost": {
             "paper_model_name": "eXtreme Gradient Boost (XGB)",
             "preprocessing": {"name": None, "fit_scope": None, "paper_status": "No scaling is used for this tree model."},
-            "parameters": {"base_score": 0.5, "booster": "gbtree", "colsample_bylevel": 1.0, "colsample_bynode": 1.0, "colsample_bytree": 1.0, "eval_metric": "logloss", "gamma": 0.0, "learning_rate": 0.1, "max_delta_step": 0.0, "max_depth": 6, "min_child_weight": 1.0, "missing": None, "n_estimators": 200, "n_jobs": 1, "objective": "binary:logistic", "random_state": seed, "reg_alpha": 0.0, "reg_lambda": 1.0, "scale_pos_weight": 1.0, "subsample": 1.0, "tree_method": "hist", "verbosity": 0},
+            "parameters": {"base_score": 0.5, "booster": "gbtree", "colsample_bylevel": 1.0, "colsample_bynode": 1.0, "colsample_bytree": 1.0, "eval_metric": "logloss", "gamma": 0.0, "learning_rate": 0.1, "max_delta_step": 0.0, "max_depth": 6, "min_child_weight": 1.0, "missing": "NaN", "n_estimators": 200, "n_jobs": 1, "objective": "binary:logistic", "random_state": seed, "reg_alpha": 0.0, "reg_lambda": 1.0, "scale_pos_weight": 1.0, "subsample": 1.0, "tree_method": "hist", "verbosity": 0},
+            "missing_value_assumption": "The JSON-safe string 'NaN' is converted to the explicit IEEE NaN missing-value sentinel required by XGBoost 3.2 at runtime. This fixes a library compatibility error; it does not alter feature values or tune the model.",
         },
     }
 
@@ -82,5 +83,7 @@ def create_model(model_name: str, seed: int = 42) -> Any:
             from xgboost import XGBClassifier
         except ImportError as error:  # pragma: no cover - dependency declared in pyproject
             raise ImportError("XGBoost is required; install the project dependencies.") from error
+        if parameters.get("missing") == "NaN":
+            parameters["missing"] = float("nan")
         return XGBClassifier(**parameters)
     raise AssertionError("All known model names were handled")

@@ -16,7 +16,7 @@ from malpdf.data.protocol_p import (
     write_protocol_p_manifest,
 )
 from malpdf.evaluation.binary import continuous_positive_scores, evaluate_binary_predictions
-from malpdf.models.classical import MODEL_NAMES, create_model
+from malpdf.models.classical import MODEL_NAMES, create_model, model_configurations
 
 
 def _protocol_p_frame() -> pd.DataFrame:
@@ -99,6 +99,8 @@ def test_model_factories_create_all_paper_families_and_scaler_fits_train_only():
     assert models["decision_tree"].criterion == "gini"
     assert models["gaussian_naive_bayes"].var_smoothing == 1e-9
     assert models["xgboost"].get_params()["objective"] == "binary:logistic"
+    assert model_configurations(42)["xgboost"]["parameters"]["missing"] == "NaN"
+    assert math.isnan(models["xgboost"].get_params()["missing"])
 
     train_features = np.array([[0.0, 2.0], [2.0, 4.0], [4.0, 6.0], [6.0, 8.0]])
     train_labels = np.array([0, 0, 1, 1])
@@ -107,6 +109,10 @@ def test_model_factories_create_all_paper_families_and_scaler_fits_train_only():
     logistic.fit(train_features, train_labels)
     assert np.allclose(logistic.named_steps["scaler"].mean_, train_features.mean(axis=0))
     assert not np.allclose(logistic.named_steps["scaler"].mean_, np.vstack([train_features, held_out_features]).mean(axis=0))
+
+    xgboost = models["xgboost"]
+    xgboost.fit(train_features, train_labels)
+    assert len(xgboost.predict(held_out_features)) == len(held_out_features)
 
 
 class _ProbabilityEstimator:

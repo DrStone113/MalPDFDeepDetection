@@ -22,3 +22,11 @@
 - Validation: `.\.venv\Scripts\python.exe -m pytest -q` - 25 passed; `.\.venv\Scripts\python.exe -m pip check` - no broken requirements; `git diff --check` passed.
 - Results: no official 10-run benchmark has been executed; generated result reports will be produced only from the committed runner.
 - Next: commit this runner, then execute one clean-worktree seed-42 benchmark when authorized.
+
+## 2026-08-28 - XGBoost execution compatibility correction
+
+- Purpose: correct a blocking XGBoost 3.2.0 runtime incompatibility discovered during the initial official seed-42 execution attempt.
+- Evidence: code SHA `925e3a1acf3bf26a17d05fbf3cf1ff3193788f2c` passed all split and checksum checks; eight non-XGB runs completed, while both XGB runs failed because the library rejects `missing=None` as JSON `Null` during prediction.
+- Change: preserve the explicit XGBoost missing-value policy as IEEE `NaN`, serialized as `"NaN"` in configuration and converted only at estimator construction. No feature values, split, seed, preprocessing, or hyperparameters are changed.
+- Validation: an XGBoost factory test now verifies the serialized and runtime missing-value representations.
+- Status: the failed output is retained as execution evidence; a completed official baseline will use a new clean code commit and one fresh run after this correction.
