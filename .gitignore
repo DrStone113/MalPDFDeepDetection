@@ -60,6 +60,8 @@ reports/tables/**
 !reports/figures/multiseed/**
 !reports/figures/explainability/
 !reports/figures/explainability/**
+!reports/figures/deep_learning/
+!reports/figures/deep_learning/**
 !reports/tables/protocol_p_vs_g/
 !reports/tables/protocol_p_vs_g/**
 !reports/tables/metric_semantics/

@@ -1,0 +1,45 @@
+experiment: protocol_g_deep_learning_seed42
+protocol: G
+split_seed: 42
+model_seed: 42
+dataset_sha256: 2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623
+split_manifest_sha256: 802c3962bc537ed78f63c5b1a5308e09df357a096f703846d0e5fe57598b4e21
+feature_variant: G-drop3constant
+expected_feature_count: 38
+excluded_constant_features: [Acroform, Colors, BaseEncoding]
+preprocessing:
+  name: StandardScaler
+  fit_scope: train_only
+  semantic_values: preserved_without_imputation_or_clipping
+training:
+  loss: BCEWithLogitsLoss
+  class_weighting: none
+  optimizer: AdamW
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  batch_size: 256
+  max_epochs: 150
+  early_stopping_metric: validation_loss
+  early_stopping_patience: 20
+  early_stopping_min_delta: 0.0
+  threshold: 0.5
+  dataloader_num_workers: 0
+models:
+  mlp:
+    input_features: 38
+    hidden_features: [128, 64, 32]
+    activation: ReLU
+    normalization: LayerNorm_after_first_hidden_layer
+    dropout: [0.2, 0.1, 0.0]
+    output: single_binary_logit
+  ft_transformer:
+    input_features: 38
+    d_token: 32
+    n_blocks: 2
+    n_heads: 4
+    d_ffn: 128
+    attention_dropout: 0.1
+    ffn_dropout: 0.1
+    activation: GELU
+    pooling: learned_cls_token
+    output: single_binary_logit

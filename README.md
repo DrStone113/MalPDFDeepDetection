@@ -140,3 +140,14 @@ The default command is a no-write preflight. The `--execute` command validates t
 ```
 
 `inspect` remains extractor-only and never loads a model. `scan` requires the strict 38-feature per-file gate before inference, returns the frozen model's malicious probability and binary model verdict at threshold `0.5`, and attempts a mathematically checked local native XGBoost TreeSHAP explanation. Neither command executes PDF content, follows links, opens viewers, or extracts attachments. A score is an ML prediction, not proof that a PDF is malicious; malformed/encrypted PDFs and dataset shift can prevent reliable static analysis.
+
+## Protocol G tabular deep-learning comparison
+
+The focused thesis comparison uses the existing immutable Protocol G seed-42 feature-vector-disjoint split, exact 38-feature `G-drop3constant` order, train-only `StandardScaler`, fixed MLP and FT-Transformer architectures, unweighted `BCEWithLogitsLoss`, AdamW, and validation-loss early stopping. It does not regenerate the split, tune on test results, retrain XGBoost, use the deployment model, or process raw PDFs.
+
+```powershell
+.venv\Scripts\python.exe scripts\run_deep_learning_protocol_g.py
+.venv\Scripts\python.exe scripts\run_deep_learning_protocol_g.py --execute --run-id seed42
+```
+
+The first command is a clean-worktree, no-write preflight. The official execute command trains each fixed neural model once, saves only ignored checkpoints under `artifacts/deep_learning/`, then records lightweight histories, metrics, provenance, figures, and a comparison against the committed historical Protocol G XGBoost result. CUDA is selected automatically when PyTorch can use it; CPU remains supported.
