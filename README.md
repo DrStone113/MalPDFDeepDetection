@@ -151,3 +151,14 @@ The focused thesis comparison uses the existing immutable Protocol G seed-42 fea
 ```
 
 The first command is a clean-worktree, no-write preflight. The official execute command trains each fixed neural model once, saves only ignored checkpoints under `artifacts/deep_learning/`, then records lightweight histories, metrics, provenance, figures, and a comparison against the committed historical Protocol G XGBoost result. CUDA is selected automatically when PyTorch can use it; CPU remains supported.
+
+## Dynamic behavioural-report preparation
+
+Dynamic analysis is currently **offline sandbox-report parsing only**. The project cannot submit PDFs to a sandbox, execute malware, call CAPE APIs, or retrieve live reports. An already-produced, harmless/sanitized CAPEv2-like JSON report can be normalized into `dynamic-schema-v1` behavioural counts and indicators:
+
+```powershell
+.venv\Scripts\python.exe -m malpdf dynamic parse path\to\sandbox_report.json
+.venv\Scripts\python.exe -m malpdf dynamic parse path\to\sandbox_report.json --json
+```
+
+The output is descriptive only and preserves `null` for unavailable data rather than replacing it with zero. Static-to-dynamic routing policies are configurable library infrastructure; no final uncertainty threshold, sandbox client, dynamic classifier, fusion score, or hybrid verdict exists yet.

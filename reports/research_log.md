@@ -250,3 +250,13 @@
 - Validation: full `pytest -q`, `pip check`, and `git diff --check` are rerun before the results commit. No checkpoint, raw data, PDF, or deployment binary is staged.
 - Result commit: this entry is included in the immutable results commit; its final SHA is recorded in Git history and the handoff because a commit cannot safely self-contain its own SHA without a prohibited amend.
 - Next: stop after this seed-42 comparison; consider multi-seed neural robustness only with separate explicit authorization.
+
+## 2026-08-29 - Dynamic Behavioral Schema and Selective Routing Infrastructure
+
+- Purpose: define a safe, reproducible second-stage behavioural data contract and static-to-dynamic routing recommendation layer, without executing malware or contacting a sandbox.
+- Modules: `malpdf.dynamic` adds `dynamic-schema-v1`, offline CAPEv2-like report normalization, compact behavioural feature extraction, deterministic JSON serialization, descriptive summaries, routing policies, and intentionally non-operational `SandboxClient` placeholders. Supporting design records are under `reports/analysis/`.
+- Method: 21 compact count/indicator features preserve observed zero separately from unavailable `null`; normalized output retains only provider/status metadata, counts, booleans, and source paths. No raw report blobs, commands, payload bytes, host identifiers, or dynamic rows are stored.
+- Routing: `STATIC_ONLY`, `ALWAYS_SANDBOX`, `UNCERTAINTY_BAND`, and `STATIC_SUSPICIOUS`; uncertainty bounds are explicit configuration rather than fixed or optimized. Static prediction unavailability can recommend, but never initiate, isolated dynamic analysis.
+- Validation: synthetic JSON tests cover normal, empty, malformed, incomplete, and failed reports; parser safety, routing, hybrid-unavailable state, and deterministic serialization are checked. No RIT dataset, PDF, malware sample, network/API service, subprocess, or sandbox was used.
+- Limitations: local RIT raw PDFs and behavioural ground truth are unavailable; static model verdicts are not dynamic labels; no dynamic model, fusion method, threshold study, or live CAPE integration exists.
+- Next: obtain separate authorization before designing an isolated CAPE environment and a lawful, controlled dynamic-sample collection protocol.

@@ -8,6 +8,8 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from malpdf import __version__
+from malpdf.dynamic.adapters.cape import parse_cape_report_file
+from malpdf.dynamic.features import extract_behavioral_features, summarize_behavior
 from malpdf.inference import scan_pdf
 from malpdf.reproducibility import DEFAULT_RANDOM_SEED, set_random_seed
 from malpdf.static import StaticInspectionLimits, inspect_pdf
@@ -51,6 +53,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     scan_parser.add_argument("--max-pages", type=int, default=1_000, help="maximum pages inspected (default: 1000)")
     scan_parser.add_argument("--max-objects", type=int, default=10_000, help="maximum structural objects traversed (default: 10000)")
+    dynamic_parser = subparsers.add_parser(
+        "dynamic",
+        help="parse an already-produced sandbox JSON report; no sandbox submission or execution",
+    )
+    dynamic_subparsers = dynamic_parser.add_subparsers(dest="dynamic_command", required=True)
+    dynamic_parse = dynamic_subparsers.add_parser("parse", help="normalize an offline CAPEv2-like report JSON")
+    dynamic_parse.add_argument("path", help="local sandbox report JSON; treated as inert data")
+    dynamic_parse.add_argument("--json", action="store_true", help="emit deterministic normalized JSON")
     return parser
 
 
@@ -58,8 +68,26 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Initialize deterministic state for a future experiment command."""
     args = build_parser().parse_args(argv)
     set_random_seed(args.seed)
-    if args.command not in {"inspect", "scan"}:
+    if args.command not in {"inspect", "scan", "dynamic"}:
         print(f"malpdf ready (seed={args.seed})")
+        return 0
+
+    if args.command == "dynamic":
+        try:
+            dynamic_report = parse_cape_report_file(args.path)
+            features = extract_behavioral_features(dynamic_report)
+        except (OSError, ValueError, TypeError, json.JSONDecodeError) as error:
+            print(f"Dynamic report parsing failed: {error}")
+            return 2
+        if args.json:
+            print(json.dumps({"report": dynamic_report.to_dict(), "behavioral_features": features.to_dict()}, ensure_ascii=False, indent=2, allow_nan=False))
+        else:
+            print(f"Sandbox provider: {dynamic_report.provider}")
+            print(f"Analysis status: {dynamic_report.status}")
+            print(summarize_behavior(features))
+            unavailable = [name for name, value in features.values.items() if value is None]
+            print("Unavailable fields: " + (", ".join(unavailable) if unavailable else "none"))
+            print("Safety: offline report parsing only; no sandbox submission or malware execution occurred.")
         return 0
 
     try:
