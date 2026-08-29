@@ -1,0 +1,40 @@
+experiment: selective_static_ensemble_protocol_g_seed42
+dataset_sha256: 2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623
+split_manifest_sha256: 802c3962bc537ed78f63c5b1a5308e09df357a096f703846d0e5fe57598b4e21
+protocol: G
+split_seed: 42
+model_seed: 42
+feature_variant: G-drop3constant
+expected_feature_count: 38
+base_models:
+  xgboost:
+    configuration_source: malpdf.models.classical.model_configurations(seed=42).xgboost
+    preprocessing: none
+  ft_transformer:
+    configuration_source: configs/deep_learning_protocol_g.yaml.models.ft_transformer
+    training_source: configs/deep_learning_protocol_g.yaml.training
+    preprocessing: StandardScaler fit on Protocol G train only
+validation_lock:
+  calibration_fit_fraction: 0.5
+  calibration_split_seed: 42
+  stratified: true
+  calibration_methods: [none, platt, isotonic]
+  fusion_families: [xgboost_only, ft_transformer_only, equal_probability_average, weighted_probability_average]
+  xgb_weight_grid: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+  selection_metric: mcc
+  secondary_metric: f1_malicious
+  threshold: 0.5
+  tie_breaker: declared calibration then fusion-candidate order; no test metrics
+calibration_metrics:
+  ece_bins: 10
+routing:
+  uncertainty_definition: entropy_of_selected_ensemble_probability
+  diagnostics: [ensemble_confidence, entropy, continuous_base_disagreement, binary_prediction_disagreement]
+  referral_budgets: [0.0, 0.05, 0.10, 0.20, 0.30]
+  policies: [uncertainty_only, disagreement_always_then_uncertainty, unavailable_always_referral_capable]
+  static_prediction_unavailable: always_dynamic_recommended
+test_policy:
+  evaluation_count: 1
+  prohibited_test_uses: [fusion_weight_selection, calibration_method_selection, routing_threshold_selection, uncertainty_definition_selection, base_model_configuration_changes]
+  xgboost_reproduction_tolerance: 0.000001
+dynamic_scope: hypothetical referral only; no dynamic value, sandbox, CAPE, or hybrid model is created

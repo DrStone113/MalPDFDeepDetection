@@ -57,6 +57,26 @@ class RoutingResult:
         }
 
 
+@dataclass(frozen=True)
+class EnsembleRoutingContext:
+    """Safe metadata for a future sandbox handoff, never sample content.
+
+    The fields are scalar model/routing facts only.  This object deliberately
+    excludes PDF bytes, JavaScript, attachments, URLs, and dynamic values.
+    """
+
+    static_model_version: str
+    xgb_probability: float | None
+    ft_probability: float | None
+    ensemble_probability: float | None
+    model_disagreement: bool | None
+    uncertainty_score: float | None
+    routing_reason: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
 def route_static_result(
     *,
     prediction_available: bool,
@@ -69,7 +89,10 @@ def route_static_result(
     config.validate()
     params = config.to_dict()
     if not prediction_available or malicious_probability is None:
-        required = config.dynamic_on_prediction_unavailable and config.policy != RoutingPolicy.STATIC_ONLY
+        # Extraction/schema failure is outside probabilistic policy selection:
+        # no static verdict is emitted, so a future dynamic stage is recommended
+        # whenever the explicit safety flag remains enabled.
+        required = config.dynamic_on_prediction_unavailable
         return RoutingResult(config.policy, None, static_verdict, required, "STATIC_EXTRACTION_INCOMPLETE", params)
     if not isinstance(malicious_probability, (int, float)) or isinstance(malicious_probability, bool) or not math.isfinite(float(malicious_probability)) or not 0.0 <= float(malicious_probability) <= 1.0:
         return RoutingResult(config.policy, None, static_verdict, False, "STATIC_EXTRACTION_INCOMPLETE", params)

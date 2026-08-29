@@ -173,7 +173,7 @@ def test_static_unavailable_always_and_suspicious_routing() -> None:
         prediction_available=False, malicious_probability=None, static_verdict=None,
         config=RoutingPolicyConfig(policy=RoutingPolicy.STATIC_ONLY),
     )
-    assert not static_only.dynamic_required
+    assert static_only.dynamic_required and static_only.reason == "STATIC_EXTRACTION_INCOMPLETE"
     suspicious = route_static_result(
         prediction_available=True, malicious_probability=0.1, static_verdict="MALICIOUS",
         config=RoutingPolicyConfig(policy=RoutingPolicy.STATIC_SUSPICIOUS),
