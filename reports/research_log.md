@@ -260,3 +260,13 @@
 - Validation: synthetic JSON tests cover normal, empty, malformed, incomplete, and failed reports; parser safety, routing, hybrid-unavailable state, and deterministic serialization are checked. No RIT dataset, PDF, malware sample, network/API service, subprocess, or sandbox was used.
 - Limitations: local RIT raw PDFs and behavioural ground truth are unavailable; static model verdicts are not dynamic labels; no dynamic model, fusion method, threshold study, or live CAPE integration exists.
 - Next: obtain separate authorization before designing an isolated CAPE environment and a lawful, controlled dynamic-sample collection protocol.
+
+## 2026-08-29 - Isolated CAPEv2 Laboratory Design
+
+- Purpose: document a small, defensible future laboratory for selective PDF behavioural evidence collection; this is design-only and does not install CAPE/KVM, create a guest, configure networking/API access, acquire samples, or execute malware.
+- Official source basis: CAPEv2 repository/documentation revision `50e5dcd2de91cd36c2685037809fa102ccb0590a` (commit date 2026-08-23; retrieved 2026-08-29). The design records a future exact-revision selection and configuration-hash policy rather than choosing “latest CAPE.”
+- Proposed topology: separate trusted development Host A; dedicated Ubuntu 24.04 LTS Host B using KVM/QEMU/libvirt; one Windows 11 23H2 x64 analysis guest. Zones distinguish trusted research, sandbox host, untrusted guest, and blocked/separately controlled external network.
+- Containment and flow: offline is default; no bridged trusted-LAN access, shared folders, clipboard, drive mappings, or live normal-LAN API. Future ingress is authorized quarantine staging with research-safe IDs; egress is JSON report/metadata only into the offline adapter, while raw samples and forensic artifacts stay isolated.
+- Reproducibility: one sample per clean snapshot, mandatory revert, configuration/snapshot/installer/report checksums, dynamic-schema-v1, adapter code SHA, and label provenance are specified. Static model verdict is not ground truth.
+- Validation: YAML safety invariants and documentation are tested; no CAPE service, VM, PDF, malware, network route, or sandbox API was contacted.
+- Next: stop pending explicit review/approval of the selected CAPE revision, dedicated-host isolation, network boundaries, snapshot process, artifact handling, and containment checklist before any implementation milestone.

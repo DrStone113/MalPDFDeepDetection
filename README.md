@@ -162,3 +162,5 @@ Dynamic analysis is currently **offline sandbox-report parsing only**. The proje
 ```
 
 The output is descriptive only and preserves `null` for unavailable data rather than replacing it with zero. Static-to-dynamic routing policies are configurable library infrastructure; no final uncertainty threshold, sandbox client, dynamic classifier, fusion score, or hybrid verdict exists yet.
+
+An isolated CAPEv2 laboratory has been designed for future review, but live sandbox execution remains disabled. The design requires a dedicated Ubuntu/KVM host, an isolated Windows guest, offline default networking, controlled JSON-only report egress, and a formal containment approval gate. It does not provide a malware-submission command or install CAPE in this repository.

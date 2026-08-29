@@ -1,0 +1,105 @@
+# Design-only specification: it must not be interpreted as a runtime CAPE configuration.
+lab_schema_version: cape-lab-design-v1
+design_only: true
+live_execution_enabled: false
+
+official_sources:
+  repository_url: https://github.com/kevoreilly/CAPEv2
+  documentation_revision_sha: 50e5dcd2de91cd36c2685037809fa102ccb0590a
+  documentation_revision_date: "2026-08-23"
+  retrieved_date: "2026-08-29"
+  documents:
+    - README.md
+    - docs/book/src/installation/host/installation.rst
+    - docs/book/src/installation/host/configuration.rst
+    - docs/book/src/installation/host/routing.rst
+    - docs/book/src/installation/guest/agent.rst
+
+cape_revision_policy:
+  selected_revision: null
+  selection_procedure:
+    - Review an official upstream commit before any installation.
+    - Record full commit SHA, commit date, repository URL, and signed/tag evidence if available.
+    - Hash reviewed installer scripts and the complete sanitized configuration snapshot.
+    - Select for compatibility and reviewed safety, never benchmark performance.
+    - Keep the selected revision immutable for an official experimental campaign.
+
+host:
+  role: dedicated_sandbox_host_only
+  operating_system: Ubuntu 24.04 LTS
+  hypervisor: KVM/QEMU with libvirt
+  minimum_recommended_resources:
+    cpu_physical_cores: 8
+    ram_gib: 32
+    storage_gib: 1000
+  management_policy: separate_admin_identity_no_personal_credentials
+
+guest:
+  operating_system: Windows 11 23H2
+  architecture: x64
+  resources:
+    vcpu: 2
+    ram_gib: 4
+    disk_gib: 80
+  identity_policy: local_analysis_only_account_no_personal_or_cloud_accounts
+  pdf_application_policy: dedicated_fixed_version_recorded_in_provenance
+  agent_policy: required_before_snapshot_with_version_recorded
+
+trust_zones:
+  trusted_development:
+    contains: [research_code, git_repository, thesis_reports, normalized_reports]
+  sandbox_host:
+    contains: [CAPE_services, hypervisor, controlled_artifact_storage]
+  untrusted_guest:
+    contains: [submitted_sample, spawned_processes, dropped_files, guest_runtime]
+  external_network:
+    contains: [blocked_or_separately_controlled_services]
+
+network_policy:
+  default_mode: offline
+  supported_modes: [offline, controlled_network_observation]
+  bridged_to_trusted_lan: false
+  unrestricted_internet_allowed: false
+  guest_access_to_trusted_development: denied
+  guest_access_to_home_lan_and_private_services: denied
+  management_and_analysis_networks_separate: true
+  controlled_network_observation_requires_explicit_approval: true
+  simulated_services_may_be_considered_after_review: true
+
+sharing_policy:
+  writable_host_guest_shares: prohibited
+  shared_clipboard: prohibited
+  drag_and_drop: prohibited
+  guest_drive_mappings: prohibited
+
+sample_ingress_policy:
+  enabled: false
+  future_channel: authorized_quarantine_staging_only
+  required_metadata: [sample_id, sample_sha256, source, authorization_status, acquisition_date, ground_truth_label, label_source]
+  original_filename_as_identifier: prohibited
+
+report_egress_policy:
+  enabled: false
+  primary_egress: JSON_report_and_required_metadata_only
+  raw_report_checksum_required: true
+  normalized_schema_version: dynamic-schema-v1
+  prohibited_to_development_repository: [dropped_binaries, memory_dumps, packet_captures, payloads, raw_process_dumps]
+
+snapshot_policy:
+  one_sample_per_clean_state: true
+  mandatory_revert_after_each_sample: true
+  snapshot_identifier_and_guest_configuration_version_required: true
+  contaminated_state_reuse: prohibited
+
+api_policy:
+  live_api_enabled: false
+  normal_lan_exposure: prohibited
+  future_access_requirements: [explicit_approval, authentication, host_firewall_restriction, no_internet_exposure]
+
+provenance_policy:
+  required_fields: [CAPE_commit_sha, CAPE_commit_date, configuration_snapshot_sha256, installer_hashes, guest_snapshot, guest_os, pdf_application_version, raw_report_sha256, analysis_id, sample_id, adapter_code_sha, dynamic_schema_version]
+
+artifact_policy:
+  normal_repository_content: [sanitized_metadata, normalized_features, lightweight_experiment_reports]
+  isolated_storage_only: [raw_samples, raw_reports_when_sensitive, payload_binaries, memory_dumps, packet_captures, screenshots_if_sensitive]
+  git_commit_of_raw_artifacts: prohibited
