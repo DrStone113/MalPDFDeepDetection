@@ -1,0 +1,51 @@
+{
+  "model_name": "mlp",
+  "parameter_count": 15617,
+  "best_epoch": 45,
+  "best_validation_loss": 0.08906936106725842,
+  "training_seconds": 34.98622499999988,
+  "test_evaluation": {
+    "partition": "test",
+    "evaluation_count": 1,
+    "threshold": 0.5,
+    "metrics": {
+      "positive_label": 1,
+      "accuracy": 0.9710293815492089,
+      "precision_malicious": 0.9952358265840877,
+      "recall_malicious": 0.940990990990991,
+      "f1_malicious": 0.9673535540634406,
+      "precision_macro": 0.9739546184943559,
+      "recall_macro": 0.9686065646303652,
+      "f1_macro": 0.9706573864500028,
+      "precision": 0.9952358265840877,
+      "recall": 0.940990990990991,
+      "f1": 0.9673535540634406,
+      "mcc": 0.9425460106824186,
+      "confusion_matrix": [
+        [
+          2637,
+          10
+        ],
+        [
+          131,
+          2089
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 0.9950526177859008,
+      "pr_auc": 0.9949649866170864,
+      "score_source": null
+    },
+    "confusion_counts": {
+      "tn": 2637,
+      "fp": 10,
+      "fn": 131,
+      "tp": 2089
+    },
+    "inference_total_seconds": 0.08907009999984439,
+    "inference_milliseconds_per_sample": 0.01830082186148436
+  }
+}
