@@ -1,0 +1,5 @@
+category,count,percentage
+both_correct,4706,0.9669200739675364
+xgb_only_correct,49,0.010067803575097596
+ft_only_correct,61,0.012533388124101088
+both_incorrect,51,0.010478734333264845

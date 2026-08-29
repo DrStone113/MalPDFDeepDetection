@@ -1,0 +1,35 @@
+{
+  "locked_at_utc": "2026-08-29T07:14:55.732360Z",
+  "selection": {
+    "calibration_method": "platt",
+    "fusion_family": "weighted_probability_average",
+    "xgb_weight": 0.6,
+    "candidate_order": 9,
+    "selection_partition": "validation_selection_only",
+    "selection_rows": 2434,
+    "calibration_fit_rows": 2434,
+    "selection_metric": "mcc",
+    "selection_mcc": 0.966984099343725,
+    "selection_f1_malicious": 0.9818016378525932,
+    "selection_f1_macro": 0.9834101822221768,
+    "selection_brier": 0.014327667153422171,
+    "selection_log_loss": 0.06418609813342009,
+    "selection_ece": 0.017087271714569904,
+    "selection_policy": "maximize validation-selection MCC; malicious F1 secondary; exact ties keep declared candidate order",
+    "test_used_for_selection": false
+  },
+  "calibration_fit_rows": 2434,
+  "selection_rows": 2434,
+  "test_evaluation_completed": false,
+  "test_policy": {
+    "evaluation_count": 1,
+    "prohibited_test_uses": [
+      "fusion_weight_selection",
+      "calibration_method_selection",
+      "routing_threshold_selection",
+      "uncertainty_definition_selection",
+      "base_model_configuration_changes"
+    ],
+    "xgboost_reproduction_tolerance": 1e-06
+  }
+}

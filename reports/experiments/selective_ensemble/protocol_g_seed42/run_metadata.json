@@ -1,0 +1,190 @@
+{
+  "experiment": "selective_static_ensemble_protocol_g_seed42",
+  "run_id": "protocol_g_seed42",
+  "code_commit_sha": "538d4f05ea4555a412165ad7a46c15713beb8354",
+  "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+  "protocol_g_manifest_sha256": "802c3962bc537ed78f63c5b1a5308e09df357a096f703846d0e5fe57598b4e21",
+  "split": {
+    "seed": 42,
+    "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+    "split_manifest_sha256": "802c3962bc537ed78f63c5b1a5308e09df357a096f703846d0e5fe57598b4e21",
+    "split_manifest": "C:\\Project\\MalPDFDeepDetection\\data\\processed\\rit-pdfmal-2026_split_manifest.csv",
+    "split_report": "C:\\Project\\MalPDFDeepDetection\\reports\\rit-pdfmal-2026_split_report.json",
+    "partition_statistics": {
+      "train": {
+        "rows": 14602,
+        "groups": 8600,
+        "label_0": 7941,
+        "label_1": 6661
+      },
+      "validation": {
+        "rows": 4868,
+        "groups": 3386,
+        "label_0": 2647,
+        "label_1": 2221
+      },
+      "test": {
+        "rows": 4867,
+        "groups": 3385,
+        "label_0": 2647,
+        "label_1": 2220
+      }
+    },
+    "total_rows": 24337,
+    "total_feature_equivalent_groups": 15371,
+    "hard_validation": {
+      "zero_group_overlap": {
+        "train_validation": 0,
+        "train_test": 0,
+        "validation_test": 0,
+        "is_valid": true
+      },
+      "zero_exact_feature_vector_overlap": {
+        "is_valid": true,
+        "basis": "Feature-equivalent groups are canonical hashes of all 41 static feature values, excluding Label."
+      },
+      "all_rows_assigned_exactly_once": {
+        "manifest_row_count": 24337,
+        "source_row_count": 24337,
+        "unique_sample_identifier_count": 24337,
+        "is_valid": true,
+        "raw_sample_identifier_count": 24337
+      },
+      "labels_and_group_ids_match_raw_dataset": {
+        "is_valid": true
+      },
+      "feature_equivalent_group_label_purity": {
+        "is_valid": true,
+        "conflicting_group_count": 0
+      }
+    },
+    "terminology": "Groups represent identical static feature vectors, not proven duplicate PDF files."
+  },
+  "base_models": {
+    "xgboost_configuration": {
+      "paper_model_name": "eXtreme Gradient Boost (XGB)",
+      "preprocessing": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "parameters": {
+        "base_score": 0.5,
+        "booster": "gbtree",
+        "colsample_bylevel": 1.0,
+        "colsample_bynode": 1.0,
+        "colsample_bytree": 1.0,
+        "eval_metric": "logloss",
+        "gamma": 0.0,
+        "learning_rate": 0.1,
+        "max_delta_step": 0.0,
+        "max_depth": 6,
+        "min_child_weight": 1.0,
+        "missing": "NaN",
+        "n_estimators": 200,
+        "n_jobs": 1,
+        "objective": "binary:logistic",
+        "random_state": 42,
+        "reg_alpha": 0.0,
+        "reg_lambda": 1.0,
+        "scale_pos_weight": 1.0,
+        "subsample": 1.0,
+        "tree_method": "hist",
+        "verbosity": 0
+      },
+      "missing_value_assumption": "The JSON-safe string 'NaN' is converted to the explicit IEEE NaN missing-value sentinel required by XGBoost 3.2 at runtime. This fixes a library compatibility error; it does not alter feature values or tune the model."
+    },
+    "ft_transformer_configuration": {
+      "input_features": 38,
+      "d_token": 32,
+      "n_blocks": 2,
+      "n_heads": 4,
+      "d_ffn": 128,
+      "attention_dropout": 0.1,
+      "ffn_dropout": 0.1,
+      "activation": "GELU",
+      "pooling": "learned_cls_token",
+      "output": "single_binary_logit"
+    },
+    "ft_training_configuration": {
+      "loss": "BCEWithLogitsLoss",
+      "class_weighting": "none",
+      "optimizer": "AdamW",
+      "learning_rate": 0.001,
+      "weight_decay": 0.0001,
+      "batch_size": 256,
+      "max_epochs": 150,
+      "early_stopping_metric": "validation_loss",
+      "early_stopping_patience": 20,
+      "early_stopping_min_delta": 0.0,
+      "threshold": 0.5,
+      "dataloader_num_workers": 0
+    }
+  },
+  "ft_training": {
+    "parameter_count": 27969,
+    "best_epoch": 96,
+    "best_validation_loss": 0.06765067195095086,
+    "determinism": {
+      "seed": 42,
+      "torch_deterministic_algorithms_requested": true,
+      "torch_deterministic_warn_only": true,
+      "cudnn_benchmark": false,
+      "cudnn_deterministic": true,
+      "cuda_seeded": true,
+      "limitation": "GPU kernels and drivers can still prevent bit-identical results across environments."
+    }
+  },
+  "test_evaluation": {
+    "count": 1,
+    "xgb_reproduction_verified": true,
+    "test_not_used_for_selection": true
+  },
+  "runtime": {
+    "xgb_inference_seconds": 0.012342300000454998,
+    "ft_inference_seconds": 0.05711380000047939,
+    "ensemble_combination_seconds": 0.0011754999995901017,
+    "test_rows": 4867,
+    "xgb_samples_per_second": 394334.9294556589,
+    "ft_samples_per_second": 85215.83224998422,
+    "ensemble_samples_per_second": 4140365.8032302246
+  },
+  "environment": {
+    "python_version": "3.11.0",
+    "implementation": "CPython",
+    "os_platform": "Windows-10-10.0.26100-SP0",
+    "cpu_model": "Intel(R) Core(TM) i5-14400F",
+    "gpu": [
+      {
+        "model": "NVIDIA GeForce RTX 5060 Ti",
+        "vram_mib": 8151
+      }
+    ],
+    "system_ram_bytes": 16948178944,
+    "library_versions": {
+      "numpy": "2.4.6",
+      "pandas": "2.3.3",
+      "scikit_learn": "1.9.0",
+      "xgboost": "3.2.0"
+    },
+    "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+    "git_commit_sha": "538d4f05ea4555a412165ad7a46c15713beb8354",
+    "git_working_tree": {
+      "status": "clean",
+      "porcelain_entries": []
+    },
+    "deep_learning": {
+      "torch_version": "2.7.1+cu128",
+      "cuda_available": true,
+      "cuda_runtime": "12.8",
+      "cuda_gpu_name": "NVIDIA GeForce RTX 5060 Ti",
+      "device_used": "cuda"
+    }
+  },
+  "dynamic_scope": "hypothetical routing only; no dynamic values, sandbox execution, CAPE execution, or hybrid model",
+  "report_finalization": {
+    "timestamp_utc": "2026-08-29T07:17:38.217608Z",
+    "operation": "analysis markdown rendered from existing reports only; no model fit or test inference",
+    "code_commit_sha": "1eff909bd9b42507b9ee37dff23e5e33e3a9e8fd"
+  }
+}

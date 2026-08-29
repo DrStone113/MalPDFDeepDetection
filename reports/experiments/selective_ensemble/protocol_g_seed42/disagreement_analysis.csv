@@ -1,0 +1,2 @@
+subset,count,benign_count,malicious_count,xgb_correct,ft_correct,both_wrong,mean_xgb_probability,mean_ft_probability,xgb_false_positive,xgb_false_negative,ft_false_positive,ft_false_negative
+model_disagreement,110,20,90,49,61,0,0.3668070778054905,0.4998787850480188,5,56,15,34

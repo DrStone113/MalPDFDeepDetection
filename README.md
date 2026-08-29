@@ -164,6 +164,17 @@ The focused thesis comparison uses the existing immutable Protocol G seed-42 fea
 
 The first command is a clean-worktree, no-write preflight. The official execute command trains each fixed neural model once, saves only ignored checkpoints under `artifacts/deep_learning/`, then records lightweight histories, metrics, provenance, figures, and a comparison against the committed historical Protocol G XGBoost result. CUDA is selected automatically when PyTorch can use it; CPU remains supported.
 
+## Selective static ensemble and hypothetical dynamic routing
+
+The fixed Protocol G seed-42 study combines the established XGBoost and FT-Transformer probabilities only after a validation-only lock: calibration fitting and candidate selection use disjoint deterministic halves of validation, while test is evaluated once after the lock. It retains the 38-feature `G-drop3constant` schema and does not replace the static deployment model.
+
+```powershell
+.venv\Scripts\python.exe scripts\run_selective_static_ensemble.py
+.venv\Scripts\python.exe scripts\run_selective_static_ensemble.py --execute
+```
+
+The default command is clean-worktree preflight only. The official execute command writes safe hashed sample IDs, prediction tables, calibration/ensemble/routing tables, and figures under `reports/experiments/selective_ensemble/protocol_g_seed42/`. Referral is hypothetical: referred rows are abstained rather than corrected. No PDF is opened, no CAPE or sandbox is contacted, no dynamic value is fabricated, and no hybrid model is trained. A report-only recovery command, `--finalize-reports`, can render a missing analysis from already-created lightweight outputs without fitting or predicting.
+
 ## Dynamic behavioural-report preparation
 
 Dynamic analysis is currently **offline sandbox-report parsing only**. The project cannot submit PDFs to a sandbox, execute malware, call CAPE APIs, or retrieve live reports. An already-produced, harmless/sanitized CAPEv2-like JSON report can be normalized into `dynamic-schema-v1` behavioural counts and indicators:
