@@ -270,3 +270,13 @@
 - Reproducibility: one sample per clean snapshot, mandatory revert, configuration/snapshot/installer/report checksums, dynamic-schema-v1, adapter code SHA, and label provenance are specified. Static model verdict is not ground truth.
 - Validation: YAML safety invariants and documentation are tested; no CAPE service, VM, PDF, malware, network route, or sandbox API was contacted.
 - Next: stop pending explicit review/approval of the selected CAPE revision, dedicated-host isolation, network boundaries, snapshot process, artifact handling, and containment checklist before any implementation milestone.
+
+## 2026-08-29 - Final Thesis Evidence Package
+
+- Purpose: consolidate the completed static research record into a traceable, thesis-ready package without training, rerunning benchmarks, rebuilding splits, opening PDFs, or performing dynamic analysis.
+- Added: deterministic `malpdf.thesis` evidence builder and CLI; compact source-checksummed CSV tables; evidence index, research questions, methodology/architecture summary, results/contributions/limitations, reproducibility appendix, safe demo plan, figure inventory, and terminology/claim audit.
+- Methodology: the builder consumes only committed lightweight report artifacts, checks selected dataset/split/metric/explanation invariants, and writes the package under `reports/thesis/`. Primary tables retain separate malicious-positive (`precision_malicious`, `recall_malicious`, `f1_malicious`) and macro metrics; paper Table 6 comparisons use macro values as established by the metric-semantics audit.
+- Dataset/protocol: RIT SHA-256 `2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623`; Protocol P, Protocol G, CV10, static deployment, explainability, and one-split deep-learning evidence are indexed without modification. Feature-equivalent groups remain identical static vectors, not proven duplicate PDF files.
+- Important boundaries: deployment is not a new benchmark; CIC remains exploratory/readiness-blocked; dynamic schema/routing is offline only; CAPE is design-only; no real-world, file-identity, temporal, external, hybrid, or significance claim is added.
+- Validation: the complete test suite, dependency check, and whitespace diff check are run before committing this documentation milestone. Tests include deterministic build and explicit-metric-schema assertions.
+- Next: use the package as the evidence basis for thesis writing and a benign-only demonstration; authorize any new experiment only as a separately versioned research task.

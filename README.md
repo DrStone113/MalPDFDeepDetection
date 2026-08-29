@@ -2,6 +2,18 @@
 
 A minimal Python 3.11 research project for reproducible malicious PDF detection experiments.
 
+## Current research status
+
+Completed, versioned evidence covers the local RIT-PDFMal-2026 audit; paper-aligned Protocol P; feature-vector-disjoint Protocol G; a five-seed descriptive P/G comparison; paper-aligned XGBoost CV10; TreeSHAP; a fixed deep-learning comparison; safe static extraction and a static deployment artifact. Dynamic work is offline report-schema/routing infrastructure only; the isolated CAPEv2 laboratory is a design, not a live sandbox evaluation. The consolidated thesis package is under `reports/thesis/`.
+
+Rebuild its lightweight tables from committed reports only (no data loading, PDF access, model fitting, or benchmark rerun):
+
+```powershell
+.venv\Scripts\python.exe scripts\build_thesis_evidence.py
+```
+
+See `reports/thesis/thesis_evidence_index.md` for source provenance and `reports/thesis/limitations.md` before interpreting any result.
+
 ## Setup
 
 ```powershell

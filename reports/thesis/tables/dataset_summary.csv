@@ -1,0 +1,14 @@
+item,value,source
+dataset_filename,rit-pdfmal-2026.csv,reports/rit-pdfmal-2026_inspection.json
+dataset_sha256,2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623,reports/rit-pdfmal-2026_inspection.json
+rows,24337,reports/rit-pdfmal-2026_inspection.json
+total_columns,42,reports/rit-pdfmal-2026_inspection.json
+predictive_features,41,reports/rit-pdfmal-2026_inspection.json
+target_column,Label,reports/rit-pdfmal-2026_inspection.json
+benign_label_0_rows,13235,reports/rit-pdfmal-2026_inspection.json
+malicious_label_1_rows,11102,reports/rit-pdfmal-2026_inspection.json
+constant_features,Acroform; Colors; BaseEncoding,reports/rit-pdfmal-2026_inspection.json
+near_constant_features,RichMedia,reports/rit-pdfmal-2026_inspection.json
+feature_equivalent_groups,15371,reports/rit-pdfmal-2026_split_report.json
+duplicate_feature_groups,551,reports/rit-pdfmal-2026_split_report.json
+maximum_feature_equivalent_group_size,1760,reports/rit-pdfmal-2026_split_report.json

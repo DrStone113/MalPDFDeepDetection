@@ -1,0 +1,1948 @@
+{
+  "report_version": "1.0",
+  "paper": {
+    "title": "RIT-PDFMal-2026: A Comprehensive Benchmark Dataset for PDF Malware Detection",
+    "doi": "10.1109/ACCESS.2026.3707213",
+    "source_url": "https://www.researchgate.net/publication/408100426_RIT-PDFMal-2026_A_Comprehensive_Benchmark_Dataset_for_PDF_Malware_Detection",
+    "reference_scope": "Author manuscript/table transcription; DOI identifies the IEEE Access paper."
+  },
+  "local_dataset_identity": {
+    "filename": "rit-pdfmal-2026.csv",
+    "sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+    "row_count": 24337,
+    "total_column_count": 42,
+    "predictive_feature_count": 41,
+    "target_column": "Label",
+    "class_distribution": [
+      {
+        "raw_label": 0,
+        "count": 13235,
+        "percentage": 54.382216
+      },
+      {
+        "raw_label": 1,
+        "count": 11102,
+        "percentage": 45.617784
+      }
+    ]
+  },
+  "identity_comparison": {
+    "rows": {
+      "paper": 24337,
+      "local": 24337,
+      "status": "exact match"
+    },
+    "class_counts": {
+      "paper": {
+        "benign_label_0": 13235,
+        "malicious_label_1": 11102
+      },
+      "local": {
+        "benign_label_0": 13235,
+        "malicious_label_1": 11102
+      },
+      "status": "exact match"
+    },
+    "schema": {
+      "paper": "Paper describes 42 features including a per-PDF SHA-256 hash, which it says to remove before ML; Label is binary 0/1.",
+      "local": "41 predictive columns plus Label; no hash column.",
+      "feature_name_match_after_excluding_paper_hash": true,
+      "paper_features_missing_locally": [],
+      "unexpected_local_features": [],
+      "status": "aligned after excluding paper hash"
+    },
+    "filename": {
+      "paper": "Not specified in the paper.",
+      "local": "rit-pdfmal-2026.csv",
+      "status": "unavailable in paper"
+    },
+    "csv_sha256": {
+      "paper": "Not reported.",
+      "local": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "status": "unavailable in paper"
+    }
+  },
+  "pdf_hash_and_feature_vector_distinction": {
+    "paper_pdf_hash": "The paper's hash field is the SHA-256 of a PDF file, retained to identify repetitions of the same file under different names and removed before ML.",
+    "local_csv": "No paper-style per-PDF hash column is present, so raw PDF identity or duplicate-PDF status cannot be verified locally.",
+    "local_feature_vector_findings": {
+      "unique_static_feature_vectors": 15371,
+      "groups_with_identical_static_feature_vectors": 551,
+      "rows_in_multirow_feature_groups": 9517,
+      "additional_rows_beyond_first_per_feature_vector": 8966,
+      "groups_with_multiple_target_labels": 0,
+      "terminology": "These are identical 41-dimensional static feature vectors in this CSV. They are not asserted to be duplicate PDF files because this local CSV has no per-PDF SHA-256 hash column."
+    }
+  },
+  "feature_dictionary": [
+    {
+      "column": "pdfsize",
+      "paper_meaning": "Size of the PDF file in kilobytes.",
+      "expected_value_type": "Non-negative numeric size (kilobytes).",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Paper SHAP discussion: lower size pushed toward malicious; larger size toward benign.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "metadata size",
+      "paper_meaning": "Size of metadata extracted from the PDF file, in bytes.",
+      "expected_value_type": "Non-negative integer-like size (bytes).",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "pages",
+      "paper_meaning": "Number of pages in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "0 is documented as occurring in deliberately corrupted malicious PDFs.",
+      "higher_lower_semantic_meaning": "Paper SHAP discussion says a similar lower-versus-higher pattern to pdfsize applies.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "xref length",
+      "paper_meaning": "xref length as extracted from the file header.",
+      "expected_value_type": "Non-negative integer-like length.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "title length",
+      "paper_meaning": "Number of characters in the file title.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "isEncrypted",
+      "paper_meaning": "1 if the file is encrypted; 0 otherwise.",
+      "expected_value_type": "Binary integer (0 or 1).",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "embedded files",
+      "paper_meaning": "Number of embedded files inside the PDF, as extracted from the header.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "images",
+      "paper_meaning": "Number of images in the PDF file.",
+      "expected_value_type": "Integer count; normally non-negative.",
+      "special_values": "-1 means the file is corrupted and the number of images cannot be shown.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "contains_text",
+      "paper_meaning": "Whether the file contains at least the default threshold of 50 text characters.",
+      "expected_value_type": "Ternary integer signal (-1, 0, 1).",
+      "special_values": "1: threshold met; 0: threshold not met; -1: corrupted file and text could not be read.",
+      "higher_lower_semantic_meaning": "Paper SHAP discussion: 0 pushed toward malicious; >=50 characters (1) pushed toward benign.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "pdf_ver",
+      "paper_meaning": "PDF version extracted from the file header.",
+      "expected_value_type": "Numeric version value.",
+      "special_values": "The paper documents max 5 although the highest valid PDF version is 2.0; it attributes such invalid values to many malicious samples. Meaning of 0 is not explained.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "float64"
+    },
+    {
+      "column": "obj",
+      "paper_meaning": "Number of occurrences of the string \"obj\" in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "endobj",
+      "paper_meaning": "Number of occurrences of the string \"endobj\" in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "stream",
+      "paper_meaning": "Number of occurrences of the string \"stream\" in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "endstream",
+      "paper_meaning": "Number of occurrences of the string \"endstream\" in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "trailer",
+      "paper_meaning": "Number of occurrences of the string \"trailer\" in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "xref",
+      "paper_meaning": "Number of occurrences of the string \"xref\" in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "startxref",
+      "paper_meaning": "Number of occurrences of the string \"startxref\" in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "page_command",
+      "paper_meaning": "Number of occurrences of the string \"/Page\" in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "Encrypt",
+      "paper_meaning": "Number of occurrences of the string \"/Encrypt\" in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "ObjStm",
+      "paper_meaning": "Number of occurrences of the string \"/ObJStm\" in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "JS",
+      "paper_meaning": "Number of occurrences of the string \"/JS\" in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Paper SHAP discussion: higher occurrences pushed toward malicious; lower occurrences toward benign.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "JavaScript",
+      "paper_meaning": "Number of occurrences of the string \"/JavaScript\" in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Paper SHAP discussion: higher occurrences pushed toward malicious; lower occurrences toward benign.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "AA",
+      "paper_meaning": "Number of occurrences of the string \"/AA\" in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "OpenAction",
+      "paper_meaning": "Number of occurrences of the string \"/OpenAction\" in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "Acroform",
+      "paper_meaning": "Number of occurrences of the string \"/Acroform\" in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "JBIG2Decode",
+      "paper_meaning": "Number of occurrences of the string \"/JBIG2Decode\" in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "RichMedia",
+      "paper_meaning": "Number of occurrences of the string \"/RichMedia\" in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "Launch",
+      "paper_meaning": "Number of occurrences of the string \"/Launch\" in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "EmbeddedFile",
+      "paper_meaning": "Number of occurrences of the string \"/EmbeddedFile\" in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "XFA",
+      "paper_meaning": "Number of occurrences of the string \"/XFA\" in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Paper SHAP discussion relates this feature to JavaScript/JS; /XFA can embed scripts in XML Forms Architecture.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "Colors",
+      "paper_meaning": "Number of occurrences of the string \"/Colors > 2^24\" in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "URI",
+      "paper_meaning": "Number of occurrences of the string \"/URI\" in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Paper SHAP discussion says the number of URI occurrences is considered an indication of maliciousness by the classifier.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "BaseEncoding",
+      "paper_meaning": "Number of occurrences of the string \"/BaseEncoding\" in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "Encoding",
+      "paper_meaning": "Number of occurrences of the string \"/Encoding\" in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "ProcSet",
+      "paper_meaning": "Number of occurrences of the string \"/ProcSet\" in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "Registry",
+      "paper_meaning": "Number of occurrences of the string \"/Registry\" in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "Resources",
+      "paper_meaning": "Number of occurrences of the string \"/Resources\" in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "www",
+      "paper_meaning": "Number of occurrences of the string \"/www\" in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "server",
+      "paper_meaning": "Number of occurrences of the string \"/server\" in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "Root",
+      "paper_meaning": "Number of occurrences of the string \"/Root\" in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    },
+    {
+      "column": "BitsPerComponent",
+      "paper_meaning": "Number of occurrences of the string \"/BitsPerComponent\" in the PDF file.",
+      "expected_value_type": "Non-negative integer count.",
+      "special_values": "Not specified in the paper.",
+      "higher_lower_semantic_meaning": "Not stated in the paper.",
+      "local_dtype": "int64"
+    }
+  ],
+  "target_dictionary": {
+    "column": "Label",
+    "paper_meaning": "Binary class label for the entry.",
+    "expected_value_type": "Binary integer: 0 benign; 1 malicious.",
+    "special_values": "0 denotes benign and 1 denotes malicious.",
+    "higher_lower_semantic_meaning": "This is the target, not a predictive feature."
+  },
+  "special_value_semantics": {
+    "contains_text": {
+      "local_counts": {
+        "-1": 39,
+        "0": 10820,
+        "1": 13478
+      },
+      "label_distribution_for_negative_one": {
+        "0": 39
+      },
+      "paper_interpretation": "-1 is an intentional PDFMalExtract signal: corrupted file and text could not be read; 0/1 represent failure/success of the default 50-character threshold.",
+      "alignment": "Local -1 values are retained as documented signals; they are not treated as missing data."
+    },
+    "images": {
+      "local_negative_one_count": 0,
+      "paper_interpretation": "-1 is an intentional PDFMalExtract signal: corrupted file and the image count could not be shown.",
+      "alignment": "No local images=-1 observations were found; no values are changed."
+    },
+    "pages": {
+      "local_zero_count": 986,
+      "label_distribution_for_zero": {
+        "0": 13,
+        "1": 973
+      },
+      "paper_interpretation": "0 pages is documented in deliberately corrupted malicious PDFs.",
+      "alignment": "Local zero-page observations are retained as documented signals; they are not treated as missing data."
+    },
+    "pdf_ver": {
+      "local_minimum": 0.0,
+      "local_maximum": 5.0,
+      "local_greater_than_2_count": 75,
+      "label_distribution_for_greater_than_2": {
+        "0": 39,
+        "1": 36
+      },
+      "local_zero_count": 516,
+      "paper_interpretation": "The paper states that values up to 5 occur, 2.0 is the highest valid PDF version, and many malicious samples use invalid version values. It does not explain the meaning of value 0.",
+      "alignment": "Values above 2 are retained as documented potentially malicious invalid-version signals. Value 0 remains unverified rather than cleaned or imputed."
+    }
+  },
+  "descriptive_statistics_comparison": {
+    "paper_note": "Table 3 publishes mean, variance, minimum, and maximum. Standard deviation is derived here as sqrt(published variance); its status is judged against the published variance rounded to two decimals.",
+    "feature_comparisons": {
+      "pdfsize": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 468246,
+          "mean": 800.93,
+          "variance": 22774872.63,
+          "standard_deviation_derived_from_variance": 4772.302654903605
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 468246.0,
+          "mean": 800.9342153922012,
+          "variance": 22774872.6278632,
+          "standard_deviation": 4772.30265467973
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": 0.004215392201217583,
+          "standard_deviation": -2.238748493255116e-07
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "metadata size": {
+        "paper": {
+          "minimum": 176,
+          "maximum": 77185,
+          "mean": 319.7,
+          "variance": 1542151.37,
+          "standard_deviation_derived_from_variance": 1241.8338737528463
+        },
+        "local": {
+          "minimum": 176.0,
+          "maximum": 77185.0,
+          "mean": 319.7010313514402,
+          "variance": 1542151.3731387297,
+          "standard_deviation": 1241.833875016594
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": 0.0010313514401900647,
+          "standard_deviation": 1.263747662960668e-06
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "pages": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 2096,
+          "mean": 8.26,
+          "variance": 1343.5,
+          "standard_deviation_derived_from_variance": 36.65378561622251
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 2096.0,
+          "mean": 8.264864198545425,
+          "variance": 1343.5038907534588,
+          "standard_deviation": 36.65383869055817
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": 0.004864198545424969,
+          "standard_deviation": 5.3074335660596716e-05
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "xref length": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 263987,
+          "mean": 2454.95,
+          "variance": 248276623.09,
+          "standard_deviation_derived_from_variance": 15756.796092162898
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 263987.0,
+          "mean": 2454.947774992809,
+          "variance": 248276623.0905088,
+          "standard_deviation": 15756.796092179044
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": -0.002225007190645556,
+          "standard_deviation": 1.6145349945873022e-08
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "title length": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 76993,
+          "mean": 45.23,
+          "variance": 1150837.32,
+          "standard_deviation_derived_from_variance": 1072.770860901805
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 76993.0,
+          "mean": 45.22706167563792,
+          "variance": 1150837.316455341,
+          "standard_deviation": 1072.7708592497006
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": -0.0029383243620770827,
+          "standard_deviation": -1.6521044017281383e-06
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "isEncrypted": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 1,
+          "mean": 0.01,
+          "variance": 0.01,
+          "standard_deviation_derived_from_variance": 0.1
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "mean": 0.013107613921189958,
+          "variance": 0.01293633592863003,
+          "standard_deviation": 0.11373801443945657
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": 0.003107613921189958,
+          "standard_deviation": 0.013738014439456561
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "embedded files": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 8,
+          "mean": 0.02,
+          "variance": 0.03,
+          "standard_deviation_derived_from_variance": 0.17320508075688773
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 8.0,
+          "mean": 0.021736450671816576,
+          "variance": 0.029236580275912596,
+          "standard_deviation": 0.17098707634178847
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": 0.001736450671816575,
+          "standard_deviation": -0.002218004415099256
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "images": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 98560,
+          "mean": 31.03,
+          "variance": 664712.5,
+          "standard_deviation_derived_from_variance": 815.2990248982271
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 98560.0,
+          "mean": 31.02999548013313,
+          "variance": 664712.497374396,
+          "standard_deviation": 815.2990232880179
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": -4.519866870111855e-06,
+          "standard_deviation": -1.6102092104119947e-06
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "contains_text": {
+        "paper": {
+          "minimum": -1,
+          "maximum": 1,
+          "mean": 0.55,
+          "variance": 0.25,
+          "standard_deviation_derived_from_variance": 0.5
+        },
+        "local": {
+          "minimum": -1.0,
+          "maximum": 1.0,
+          "mean": 0.5522044623412911,
+          "variance": 0.2504899831769966,
+          "standard_deviation": 0.5004897433284689
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": 0.0022044623412910136,
+          "standard_deviation": 0.0004897433284688502
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "pdf_ver": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 5,
+          "mean": 1.42,
+          "variance": 0.09,
+          "standard_deviation_derived_from_variance": 0.3
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 5.0,
+          "mean": 1.416156469573078,
+          "variance": 0.0908903384353988,
+          "standard_deviation": 0.30148024551436003
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": -0.0038435304269219817,
+          "standard_deviation": 0.0014802455143600457
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "obj": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 72292,
+          "mean": 137.79,
+          "variance": 880410.44,
+          "standard_deviation_derived_from_variance": 938.3018917171594
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 72292.0,
+          "mean": 137.7920450343099,
+          "variance": 880410.4411793195,
+          "standard_deviation": 938.3018923455924
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": 0.002045034309901439,
+          "standard_deviation": 6.284329856498516e-07
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "endobj": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 72291,
+          "mean": 138.44,
+          "variance": 895850.32,
+          "standard_deviation_derived_from_variance": 946.4936978131444
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 72291.0,
+          "mean": 138.4448370793442,
+          "variance": 895850.3245477392,
+          "standard_deviation": 946.4937002155583
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": 0.00483707934421318,
+          "standard_deviation": 2.402413883828558e-06
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "stream": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 15182,
+          "mean": 54.27,
+          "variance": 94097.44,
+          "standard_deviation_derived_from_variance": 306.75306029443294
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 15182.0,
+          "mean": 54.2720138061388,
+          "variance": 94097.4429351004,
+          "standard_deviation": 306.7530650785749
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": 0.002013806138798202,
+          "standard_deviation": 4.784141935942898e-06
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "endstream": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 15182,
+          "mean": 54.53,
+          "variance": 95892.22,
+          "standard_deviation_derived_from_variance": 309.66468962411585
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 15182.0,
+          "mean": 54.525865965402474,
+          "variance": 95892.21613935627,
+          "standard_deviation": 309.6646833905285
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": -0.0041340345975271475,
+          "standard_deviation": -6.233587328097201e-06
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "trailer": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 91,
+          "mean": 1.16,
+          "variance": 1.41,
+          "standard_deviation_derived_from_variance": 1.1874342087037917
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 91.0,
+          "mean": 1.1644409746476558,
+          "variance": 1.413046812107991,
+          "standard_deviation": 1.1887164557235637
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": 0.004440974647655915,
+          "standard_deviation": 0.001282247019771976
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "xref": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 91,
+          "mean": 1.13,
+          "variance": 1.46,
+          "standard_deviation_derived_from_variance": 1.2083045973594573
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 91.0,
+          "mean": 1.1252414019805235,
+          "variance": 1.4575223622108548,
+          "standard_deviation": 1.2072789082108801
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": -0.004758598019476423,
+          "standard_deviation": -0.0010256891485771469
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "startxref": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 156,
+          "mean": 1.36,
+          "variance": 2.41,
+          "standard_deviation_derived_from_variance": 1.5524174696260025
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 156.0,
+          "mean": 1.3553437153305665,
+          "variance": 2.414406128773063,
+          "standard_deviation": 1.5538359401085633
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": -0.004656284669433575,
+          "standard_deviation": 0.0014184704825608296
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "page_command": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 2789,
+          "mean": 9.68,
+          "variance": 2137.51,
+          "standard_deviation_derived_from_variance": 46.233213169754926
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 2789.0,
+          "mean": 9.683486050047254,
+          "variance": 2137.5075153288753,
+          "standard_deviation": 46.23318629868458
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": 0.003486050047253997,
+          "standard_deviation": -2.68710703466013e-05
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "Encrypt": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 11,
+          "mean": 0.02,
+          "variance": 0.04,
+          "standard_deviation_derived_from_variance": 0.2
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 11.0,
+          "mean": 0.02021613181575379,
+          "variance": 0.038956840201621025,
+          "standard_deviation": 0.19737487226498976
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": 0.00021613181575378879,
+          "standard_deviation": -0.002625127735010252
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "ObjStm": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 1294,
+          "mean": 2.36,
+          "variance": 306.8,
+          "standard_deviation_derived_from_variance": 17.515707236649053
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 1294.0,
+          "mean": 2.3606853761761926,
+          "variance": 306.80144246252155,
+          "standard_deviation": 17.515748412857544
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": 0.0006853761761926869,
+          "standard_deviation": 4.117620849086734e-05
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "JS": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 2469,
+          "mean": 0.64,
+          "variance": 268.05,
+          "standard_deviation_derived_from_variance": 16.372232590578477
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 2469.0,
+          "mean": 0.6377943049677446,
+          "variance": 268.04512478625463,
+          "standard_deviation": 16.37208370325093
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": -0.002205695032255428,
+          "standard_deviation": -0.00014888732754769762
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "JavaScript": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 2469,
+          "mean": 0.69,
+          "variance": 267.41,
+          "standard_deviation_derived_from_variance": 16.352675622050356
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 2469.0,
+          "mean": 0.6936352056539425,
+          "variance": 267.4124648296083,
+          "standard_deviation": 16.35275098659575
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": 0.003635205653942597,
+          "standard_deviation": 7.536454539547321e-05
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "AA": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 3197,
+          "mean": 0.72,
+          "variance": 445.41,
+          "standard_deviation_derived_from_variance": 21.10473880435387
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 3197.0,
+          "mean": 0.7203024201832601,
+          "variance": 445.4097262727723,
+          "standard_deviation": 21.104732319382123
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": 0.00030242018326009923,
+          "standard_deviation": -6.484971748932367e-06
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "OpenAction": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 4,
+          "mean": 0.39,
+          "variance": 0.25,
+          "standard_deviation_derived_from_variance": 0.5
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 4.0,
+          "mean": 0.3871471422114476,
+          "variance": 0.24524571113098872,
+          "standard_deviation": 0.49522289035442285
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": -0.002852857788552432,
+          "standard_deviation": -0.004777109645577149
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "Acroform": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 0,
+          "mean": 0.0,
+          "variance": 0.0,
+          "standard_deviation_derived_from_variance": 0.0
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": 0.0,
+          "variance": 0.0,
+          "standard_deviation": 0.0
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": 0.0,
+          "standard_deviation": 0.0
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "exact match",
+          "standard_deviation": "exact match"
+        },
+        "overall_status": "exact match"
+      },
+      "JBIG2Decode": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 1310,
+          "mean": 0.29,
+          "variance": 134.74,
+          "standard_deviation_derived_from_variance": 11.60775602776006
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 1310.0,
+          "mean": 0.29259974524386734,
+          "variance": 134.74257878098777,
+          "standard_deviation": 11.60786710731079
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": 0.0025997452438673574,
+          "standard_deviation": 0.00011107955073086373
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "RichMedia": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 32,
+          "mean": 0.01,
+          "variance": 0.13,
+          "standard_deviation_derived_from_variance": 0.36055512754639896
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 32.0,
+          "mean": 0.007724863376751449,
+          "variance": 0.13258332206135648,
+          "standard_deviation": 0.3641199281299452
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": -0.0022751366232485514,
+          "standard_deviation": 0.003564800583546246
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "Launch": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 443,
+          "mean": 0.04,
+          "variance": 9.74,
+          "standard_deviation_derived_from_variance": 3.120897306865447
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 443.0,
+          "mean": 0.03973373875169495,
+          "variance": 9.740079613520182,
+          "standard_deviation": 3.1209100617480443
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": -0.0002662612483050539,
+          "standard_deviation": 1.275488259722124e-05
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "EmbeddedFile": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 19,
+          "mean": 0.34,
+          "variance": 2.35,
+          "standard_deviation_derived_from_variance": 1.5329709716755893
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 19.0,
+          "mean": 0.3449891112298147,
+          "variance": 2.3528711136634812,
+          "standard_deviation": 1.5339071398437003
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": 0.004989111229814658,
+          "standard_deviation": 0.0009361681681110401
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "XFA": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 2,
+          "mean": 0.06,
+          "variance": 0.06,
+          "standard_deviation_derived_from_variance": 0.2449489742783178
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 2.0,
+          "mean": 0.055758721288572954,
+          "variance": 0.06177413770592565,
+          "standard_deviation": 0.24854403574804537
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": -0.004241278711427043,
+          "standard_deviation": 0.003595061469727573
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "Colors": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 0,
+          "mean": 0.0,
+          "variance": 0.0,
+          "standard_deviation_derived_from_variance": 0.0
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": 0.0,
+          "variance": 0.0,
+          "standard_deviation": 0.0
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": 0.0,
+          "standard_deviation": 0.0
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "exact match",
+          "standard_deviation": "exact match"
+        },
+        "overall_status": "exact match"
+      },
+      "URI": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 39112,
+          "mean": 7.69,
+          "variance": 77614.06,
+          "standard_deviation_derived_from_variance": 278.59300062995123
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 39112.0,
+          "mean": 7.691293092821629,
+          "variance": 77614.06244596507,
+          "standard_deviation": 278.59300501980493
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": 0.0012930928216290383,
+          "standard_deviation": 4.3898537001041404e-06
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "BaseEncoding": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 0,
+          "mean": 0.0,
+          "variance": 0.0,
+          "standard_deviation_derived_from_variance": 0.0
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": 0.0,
+          "variance": 0.0,
+          "standard_deviation": 0.0
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": 0.0,
+          "standard_deviation": 0.0
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "exact match",
+          "standard_deviation": "exact match"
+        },
+        "overall_status": "exact match"
+      },
+      "Encoding": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 2769,
+          "mean": 4.93,
+          "variance": 1346.36,
+          "standard_deviation_derived_from_variance": 36.692778581077775
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 2769.0,
+          "mean": 4.934379750996425,
+          "variance": 1346.361283878301,
+          "standard_deviation": 36.69279607604606
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": 0.00437975099642518,
+          "standard_deviation": 1.74949682829606e-05
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "ProcSet": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 7491,
+          "mean": 8.69,
+          "variance": 4515.16,
+          "standard_deviation_derived_from_variance": 67.19494028570901
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 7491.0,
+          "mean": 8.688950979989317,
+          "variance": 4515.159572605133,
+          "standard_deviation": 67.19493710544815
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": -0.0010490200106829661,
+          "standard_deviation": -3.180260861768147e-06
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "Registry": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 307,
+          "mean": 1.15,
+          "variance": 21.17,
+          "standard_deviation_derived_from_variance": 4.601086828130937
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 307.0,
+          "mean": 1.1515388092205283,
+          "variance": 21.165069233711154,
+          "standard_deviation": 4.600550970667661
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": 0.0015388092205284032,
+          "standard_deviation": -0.0005358574632756685
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "Resources": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 11142,
+          "mean": 15.2,
+          "variance": 19737.78,
+          "standard_deviation_derived_from_variance": 140.49120968943217
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 11142.0,
+          "mean": 15.201627152072975,
+          "variance": 19737.78269294727,
+          "standard_deviation": 140.4912192734737
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": 0.0016271520729755906,
+          "standard_deviation": 9.58404152129333e-06
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "www": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 19775,
+          "mean": 4.87,
+          "variance": 18245.69,
+          "standard_deviation_derived_from_variance": 135.0766078934469
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 19775.0,
+          "mean": 4.871841229403788,
+          "variance": 18245.68940141331,
+          "standard_deviation": 135.0766056777165
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": 0.0018412294037881693,
+          "standard_deviation": -2.2157304044867487e-06
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "server": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 10,
+          "mean": 0.03,
+          "variance": 0.17,
+          "standard_deviation_derived_from_variance": 0.41231056256176607
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 10.0,
+          "mean": 0.029461314048568023,
+          "variance": 0.1728252891940819,
+          "standard_deviation": 0.41572261087663
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": -0.0005386859514319754,
+          "standard_deviation": 0.0034120483148639136
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "Root": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 157,
+          "mean": 1.43,
+          "variance": 3.65,
+          "standard_deviation_derived_from_variance": 1.91049731745428
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 157.0,
+          "mean": 1.432017093314706,
+          "variance": 3.647837454014184,
+          "standard_deviation": 1.9099312694477213
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": 0.00201709331470612,
+          "standard_deviation": -0.0005660480065587947
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      },
+      "BitsPerComponent": {
+        "paper": {
+          "minimum": 0,
+          "maximum": 10186,
+          "mean": 18.28,
+          "variance": 31438.67,
+          "standard_deviation_derived_from_variance": 177.30953161068356
+        },
+        "local": {
+          "minimum": 0.0,
+          "maximum": 10186.0,
+          "mean": 18.27645149361055,
+          "variance": 31438.674886355646,
+          "standard_deviation": 177.30954538985105
+        },
+        "difference_local_minus_paper": {
+          "minimum": 0.0,
+          "maximum": 0.0,
+          "mean": -0.0035485063894498126,
+          "standard_deviation": 1.3779167488792154e-05
+        },
+        "comparison": {
+          "minimum": "exact match",
+          "maximum": "exact match",
+          "mean": "rounding-level difference",
+          "standard_deviation": "rounding-level difference"
+        },
+        "overall_status": "rounding-level difference"
+      }
+    },
+    "summary": {
+      "exact_match": 3,
+      "rounding_level_difference": 38,
+      "material_mismatch": 0,
+      "unavailable_in_paper": 0
+    }
+  },
+  "zero_variance_features": {
+    "Acroform": {
+      "local_unique_value_count": 1,
+      "local_values": [
+        0
+      ],
+      "paper_statement": "The paper says this feature is consistently 0 across both classes and can be safely removed before training.",
+      "alignment": "exact match",
+      "author_treatment": "Safe to remove prior to training; the paper does not explicitly state whether Table 5 retained or removed it in every fitted pipeline."
+    },
+    "Colors": {
+      "local_unique_value_count": 1,
+      "local_values": [
+        0
+      ],
+      "paper_statement": "The paper says this feature is consistently 0 across both classes and can be safely removed before training.",
+      "alignment": "exact match",
+      "author_treatment": "Safe to remove prior to training; the paper does not explicitly state whether Table 5 retained or removed it in every fitted pipeline."
+    },
+    "BaseEncoding": {
+      "local_unique_value_count": 1,
+      "local_values": [
+        0
+      ],
+      "paper_statement": "The paper says this feature is consistently 0 across both classes and can be safely removed before training.",
+      "alignment": "exact match",
+      "author_treatment": "Safe to remove prior to training; the paper does not explicitly state whether Table 5 retained or removed it in every fitted pipeline."
+    }
+  },
+  "paper_experimental_protocol": {
+    "train_test_split": "Random 75% train / 25% test split with stratification.",
+    "randomization_details": "Random split is stated; random seed is not specified.",
+    "cross_validation": "Best classifier (XGB) underwent random 10-fold cross-validation; stratification for cross-validation is not specified.",
+    "models_evaluated": [
+      "Random Forest",
+      "Logistic Regression",
+      "Decision Tree",
+      "Gaussian Naive-Bayes",
+      "eXtreme Gradient Boost"
+    ],
+    "metrics": [
+      "Accuracy",
+      "Precision",
+      "Recall",
+      "F1 score",
+      "single-sample inference time"
+    ],
+    "additional_analysis": "ROC-AUC is shown graphically; SHAP is calculated for the best-performing model.",
+    "feature_preprocessing": "Features were extracted in numeric format to minimize preprocessing. The per-PDF hash should be removed before ML. Scaling, imputation, encoding, and normalization details are not specified.",
+    "feature_removal": "Acroform, Colors, and BaseEncoding are stated to be safe to remove before training because they have zero variance. Whether they were removed from every reported fit is not explicitly specified.",
+    "hyperparameters": "Not specified in the paper."
+  },
+  "published_baseline_results": [
+    {
+      "model": "RF",
+      "accuracy": 0.994084,
+      "precision": 0.994512,
+      "recall": 0.993603,
+      "f1": 0.994033,
+      "inference_time_ms": 3.923857
+    },
+    {
+      "model": "LR",
+      "accuracy": 0.907313,
+      "precision": 0.906484,
+      "recall": 0.909382,
+      "f1": 0.907021,
+      "inference_time_ms": 0.064845
+    },
+    {
+      "model": "DT",
+      "accuracy": 0.988661,
+      "precision": 0.988427,
+      "recall": 0.988733,
+      "f1": 0.988577,
+      "inference_time_ms": 0.070683
+    },
+    {
+      "model": "GNB",
+      "accuracy": 0.621857,
+      "precision": 0.753729,
+      "recall": 0.651035,
+      "f1": 0.590655,
+      "inference_time_ms": 0.185132
+    },
+    {
+      "model": "XGB",
+      "accuracy": 0.994906,
+      "precision": 0.995156,
+      "recall": 0.99459,
+      "f1": 0.994863,
+      "inference_time_ms": 0.564525
+    }
+  ],
+  "published_xgb_10_fold_cross_validation": {
+    "mean": {
+      "accuracy": 0.993878,
+      "precision": 0.995663,
+      "recall": 0.990901,
+      "f1": 0.993274
+    },
+    "standard_deviation": {
+      "accuracy": 0.000789,
+      "precision": 0.001382,
+      "recall": 0.002012,
+      "f1": 0.000841
+    }
+  },
+  "paper_shap_reference": {
+    "instruction": "Reference only for future sanity checks. Do not select features using these test-set-derived importances.",
+    "importance": [
+      {
+        "feature": "JavaScript",
+        "importance": 3.474789
+      },
+      {
+        "feature": "contains_text",
+        "importance": 1.221534
+      },
+      {
+        "feature": "pdfsize",
+        "importance": 1.126533
+      },
+      {
+        "feature": "JS",
+        "importance": 1.126279
+      },
+      {
+        "feature": "Registry",
+        "importance": 0.636202
+      },
+      {
+        "feature": "XFA",
+        "importance": 0.550923
+      },
+      {
+        "feature": "metadata size",
+        "importance": 0.503341
+      },
+      {
+        "feature": "stream",
+        "importance": 0.441044
+      },
+      {
+        "feature": "URI",
+        "importance": 0.377808
+      },
+      {
+        "feature": "pages",
+        "importance": 0.375392
+      },
+      {
+        "feature": "xref length",
+        "importance": 0.364602
+      },
+      {
+        "feature": "endobj",
+        "importance": 0.363546
+      },
+      {
+        "feature": "www",
+        "importance": 0.356451
+      },
+      {
+        "feature": "OpenAction",
+        "importance": 0.318886
+      },
+      {
+        "feature": "Resources",
+        "importance": 0.290378
+      },
+      {
+        "feature": "Encoding",
+        "importance": 0.285145
+      },
+      {
+        "feature": "pdf_ver",
+        "importance": 0.276523
+      },
+      {
+        "feature": "obj",
+        "importance": 0.250006
+      },
+      {
+        "feature": "images",
+        "importance": 0.246687
+      },
+      {
+        "feature": "page_command",
+        "importance": 0.216136
+      },
+      {
+        "feature": "ProcSet",
+        "importance": 0.192889
+      },
+      {
+        "feature": "title length",
+        "importance": 0.189564
+      },
+      {
+        "feature": "endstream",
+        "importance": 0.183275
+      },
+      {
+        "feature": "BitsPerComponent",
+        "importance": 0.148386
+      },
+      {
+        "feature": "EmbeddedFile",
+        "importance": 0.131712
+      },
+      {
+        "feature": "ObjStm",
+        "importance": 0.083332
+      },
+      {
+        "feature": "Root",
+        "importance": 0.075597
+      },
+      {
+        "feature": "trailer",
+        "importance": 0.052374
+      },
+      {
+        "feature": "embedded files",
+        "importance": 0.051439
+      },
+      {
+        "feature": "startxref",
+        "importance": 0.044565
+      },
+      {
+        "feature": "xref",
+        "importance": 0.033615
+      },
+      {
+        "feature": "Launch",
+        "importance": 0.030032
+      },
+      {
+        "feature": "AA",
+        "importance": 0.025128
+      },
+      {
+        "feature": "server",
+        "importance": 0.018971
+      },
+      {
+        "feature": "isEncrypted",
+        "importance": 0.0
+      },
+      {
+        "feature": "Acroform",
+        "importance": 0.0
+      },
+      {
+        "feature": "Encrypt",
+        "importance": 0.0
+      },
+      {
+        "feature": "BaseEncoding",
+        "importance": 0.0
+      },
+      {
+        "feature": "Colors",
+        "importance": 0.0
+      },
+      {
+        "feature": "RichMedia",
+        "importance": 0.0
+      },
+      {
+        "feature": "JBIG2Decode",
+        "importance": 0.0
+      }
+    ]
+  },
+  "protocols": {
+    "P_paper_reproduction": "Reproduce the paper as closely as documentation permits: 75/25 random stratified train/test split, five published classical models, the reported metrics, and random 10-fold XGB cross-validation. Undocumented seed, hyperparameters, scaling, and exact zero-variance removal status remain not specified.",
+    "G_feature_disjoint_generalization": "Use the existing deterministic seed-42 duplicate-feature-group-aware 60/20/20 train/validation/test manifest. Identical 41-dimensional feature representations cannot cross partitions.",
+    "comparison": "Protocol G is stricter and has a validation partition; it is not directly equivalent to the paper's reported random 75/25 evaluation and must not be compared numerically as a direct reproduction."
+  },
+  "terminology_corrections": [
+    "Call the local CSV checksum a dataset-file SHA-256, not a PDF-file hash.",
+    "Call equal rows after excluding Label identical static feature vectors or duplicate feature groups, not duplicate PDF files.",
+    "The project's duplicate_group_id is a hash of static feature values, not the paper's SHA-256 hash of PDF bytes."
+  ],
+  "risks_before_training": [
+    "The local CSV lacks per-PDF hashes, so raw-file identity and duplicate-PDF claims cannot be checked.",
+    "Protocol P cannot be exactly replicated until the paper's random seed, hyperparameters, and preprocessing details are available.",
+    "Protocol G contains a very large static-feature duplicate group; group-aware splitting is necessary and results are not directly comparable to the paper protocol.",
+    "Special corruption signals (-1 and zero-page cases) are documented values, not missing values; changing them would break paper alignment."
+  ],
+  "scope": "Read-only paper-alignment audit. No raw data modification, model training, feature selection, normalization, encoding, imputation, or split change was performed."
+}

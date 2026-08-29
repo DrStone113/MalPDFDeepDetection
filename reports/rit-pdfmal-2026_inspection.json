@@ -1,0 +1,1628 @@
+{
+  "audit_version": "1.0",
+  "generated_at_utc": "2026-08-28T05:21:41.848540+00:00",
+  "dataset": {
+    "filename": "rit-pdfmal-2026.csv",
+    "sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+    "byte_size": 2319735
+  },
+  "dimensions": {
+    "rows": 24337,
+    "columns": 42
+  },
+  "columns_in_original_order": [
+    "pdfsize",
+    "metadata size",
+    "pages",
+    "xref length",
+    "title length",
+    "isEncrypted",
+    "embedded files",
+    "images",
+    "contains_text",
+    "pdf_ver",
+    "obj",
+    "endobj",
+    "stream",
+    "endstream",
+    "trailer",
+    "xref",
+    "startxref",
+    "page_command",
+    "Encrypt",
+    "ObjStm",
+    "JS",
+    "JavaScript",
+    "AA",
+    "OpenAction",
+    "Acroform",
+    "JBIG2Decode",
+    "RichMedia",
+    "Launch",
+    "EmbeddedFile",
+    "XFA",
+    "Colors",
+    "URI",
+    "BaseEncoding",
+    "Encoding",
+    "ProcSet",
+    "Registry",
+    "Resources",
+    "www",
+    "server",
+    "Root",
+    "BitsPerComponent",
+    "Label"
+  ],
+  "data_types": {
+    "pdfsize": "int64",
+    "metadata size": "int64",
+    "pages": "int64",
+    "xref length": "int64",
+    "title length": "int64",
+    "isEncrypted": "int64",
+    "embedded files": "int64",
+    "images": "int64",
+    "contains_text": "int64",
+    "pdf_ver": "float64",
+    "obj": "int64",
+    "endobj": "int64",
+    "stream": "int64",
+    "endstream": "int64",
+    "trailer": "int64",
+    "xref": "int64",
+    "startxref": "int64",
+    "page_command": "int64",
+    "Encrypt": "int64",
+    "ObjStm": "int64",
+    "JS": "int64",
+    "JavaScript": "int64",
+    "AA": "int64",
+    "OpenAction": "int64",
+    "Acroform": "int64",
+    "JBIG2Decode": "int64",
+    "RichMedia": "int64",
+    "Launch": "int64",
+    "EmbeddedFile": "int64",
+    "XFA": "int64",
+    "Colors": "int64",
+    "URI": "int64",
+    "BaseEncoding": "int64",
+    "Encoding": "int64",
+    "ProcSet": "int64",
+    "Registry": "int64",
+    "Resources": "int64",
+    "www": "int64",
+    "server": "int64",
+    "Root": "int64",
+    "BitsPerComponent": "int64",
+    "Label": "int64"
+  },
+  "target": {
+    "candidate_column": "Label",
+    "identification": {
+      "selection_policy": "All columns are scored using actual header semantics, observed cardinality, and final-column position. Automatic selection requires an exact target-oriented header plus at least two observed values.",
+      "selected_column": "Label",
+      "ranked_candidates": [
+        {
+          "column": "Label",
+          "position": 41,
+          "non_missing_unique_values": 2,
+          "dtype": "int64",
+          "name_evidence": "exact target-oriented header: label",
+          "name_score": 100,
+          "cardinality_score": 10,
+          "final_column_score": 1,
+          "total_score": 111
+        },
+        {
+          "column": "isEncrypted",
+          "position": 5,
+          "non_missing_unique_values": 2,
+          "dtype": "int64",
+          "name_evidence": "no target-oriented name signal",
+          "name_score": 0,
+          "cardinality_score": 10,
+          "final_column_score": 0,
+          "total_score": 10
+        },
+        {
+          "column": "embedded files",
+          "position": 6,
+          "non_missing_unique_values": 6,
+          "dtype": "int64",
+          "name_evidence": "no target-oriented name signal",
+          "name_score": 0,
+          "cardinality_score": 5,
+          "final_column_score": 0,
+          "total_score": 5
+        },
+        {
+          "column": "contains_text",
+          "position": 8,
+          "non_missing_unique_values": 3,
+          "dtype": "int64",
+          "name_evidence": "no target-oriented name signal",
+          "name_score": 0,
+          "cardinality_score": 5,
+          "final_column_score": 0,
+          "total_score": 5
+        },
+        {
+          "column": "pdf_ver",
+          "position": 9,
+          "non_missing_unique_values": 14,
+          "dtype": "float64",
+          "name_evidence": "no target-oriented name signal",
+          "name_score": 0,
+          "cardinality_score": 5,
+          "final_column_score": 0,
+          "total_score": 5
+        },
+        {
+          "column": "Encrypt",
+          "position": 18,
+          "non_missing_unique_values": 6,
+          "dtype": "int64",
+          "name_evidence": "no target-oriented name signal",
+          "name_score": 0,
+          "cardinality_score": 5,
+          "final_column_score": 0,
+          "total_score": 5
+        },
+        {
+          "column": "OpenAction",
+          "position": 23,
+          "non_missing_unique_values": 5,
+          "dtype": "int64",
+          "name_evidence": "no target-oriented name signal",
+          "name_score": 0,
+          "cardinality_score": 5,
+          "final_column_score": 0,
+          "total_score": 5
+        },
+        {
+          "column": "RichMedia",
+          "position": 26,
+          "non_missing_unique_values": 6,
+          "dtype": "int64",
+          "name_evidence": "no target-oriented name signal",
+          "name_score": 0,
+          "cardinality_score": 5,
+          "final_column_score": 0,
+          "total_score": 5
+        },
+        {
+          "column": "Launch",
+          "position": 27,
+          "non_missing_unique_values": 11,
+          "dtype": "int64",
+          "name_evidence": "no target-oriented name signal",
+          "name_score": 0,
+          "cardinality_score": 5,
+          "final_column_score": 0,
+          "total_score": 5
+        },
+        {
+          "column": "EmbeddedFile",
+          "position": 28,
+          "non_missing_unique_values": 13,
+          "dtype": "int64",
+          "name_evidence": "no target-oriented name signal",
+          "name_score": 0,
+          "cardinality_score": 5,
+          "final_column_score": 0,
+          "total_score": 5
+        },
+        {
+          "column": "XFA",
+          "position": 29,
+          "non_missing_unique_values": 3,
+          "dtype": "int64",
+          "name_evidence": "no target-oriented name signal",
+          "name_score": 0,
+          "cardinality_score": 5,
+          "final_column_score": 0,
+          "total_score": 5
+        },
+        {
+          "column": "server",
+          "position": 38,
+          "non_missing_unique_values": 11,
+          "dtype": "int64",
+          "name_evidence": "no target-oriented name signal",
+          "name_score": 0,
+          "cardinality_score": 5,
+          "final_column_score": 0,
+          "total_score": 5
+        }
+      ]
+    },
+    "distribution": [
+      {
+        "raw_value": 0,
+        "count": 13235,
+        "percentage": 54.382216
+      },
+      {
+        "raw_value": 1,
+        "count": 11102,
+        "percentage": 45.617784
+      }
+    ]
+  },
+  "missing_value_policy": {
+    "actual_nan_definition": "Pandas NaN/NA values present in the loaded dataframe.",
+    "textual_placeholder_definition": [
+      "?",
+      "missing",
+      "n/a",
+      "na",
+      "nan",
+      "none",
+      "null"
+    ],
+    "loader_behavior": "Automatic text-to-NA parsing is disabled, so textual tokens remain visible and are reported separately from actual NaN values."
+  },
+  "missing_values": {
+    "pdfsize": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "metadata size": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "pages": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "xref length": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "title length": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "isEncrypted": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "embedded files": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "images": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "contains_text": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "pdf_ver": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "obj": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "endobj": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "stream": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "endstream": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "trailer": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "xref": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "startxref": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "page_command": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "Encrypt": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "ObjStm": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "JS": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "JavaScript": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "AA": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "OpenAction": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "Acroform": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "JBIG2Decode": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "RichMedia": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "Launch": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "EmbeddedFile": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "XFA": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "Colors": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "URI": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "BaseEncoding": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "Encoding": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "ProcSet": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "Registry": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "Resources": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "www": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "server": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "Root": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "BitsPerComponent": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    },
+    "Label": {
+      "actual_nan_count": 0,
+      "actual_nan_percentage": 0.0,
+      "blank_string_count": 0,
+      "blank_string_percentage": 0.0,
+      "textual_placeholder_count": 0,
+      "textual_placeholder_percentage": 0.0,
+      "observed_missing_count": 0,
+      "observed_missing_percentage": 0.0
+    }
+  },
+  "duplicates": {
+    "exact_duplicate_rows_excluding_first": 8966,
+    "exact_duplicate_rows_including_first": 9517,
+    "exact_duplicate_groups": 551,
+    "feature_duplicate_analysis": {
+      "target_column_ignored_for_comparison": "Label",
+      "duplicate_feature_rows_excluding_first": 8966,
+      "duplicate_feature_rows_including_first": 9517,
+      "duplicate_feature_groups": 551,
+      "feature_duplicate_groups_with_conflicting_target_values": 0
+    }
+  },
+  "column_quality": {
+    "near_constant_dominance_threshold": 0.995,
+    "per_column": {
+      "pdfsize": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 3285,
+        "dominant_value": 9,
+        "dominant_value_count": 2031,
+        "dominant_value_percentage": 8.345318
+      },
+      "metadata size": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 627,
+        "dominant_value": 180,
+        "dominant_value_count": 7515,
+        "dominant_value_percentage": 30.878909
+      },
+      "pages": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 278,
+        "dominant_value": 1,
+        "dominant_value_count": 12729,
+        "dominant_value_percentage": 52.303078
+      },
+      "xref length": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 2007,
+        "dominant_value": 10,
+        "dominant_value_count": 2809,
+        "dominant_value_percentage": 11.542096
+      },
+      "title length": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 231,
+        "dominant_value": 0,
+        "dominant_value_count": 15368,
+        "dominant_value_percentage": 63.146649
+      },
+      "isEncrypted": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 2,
+        "dominant_value": 0,
+        "dominant_value_count": 24018,
+        "dominant_value_percentage": 98.689239
+      },
+      "embedded files": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 6,
+        "dominant_value": 0,
+        "dominant_value_count": 23845,
+        "dominant_value_percentage": 97.978387
+      },
+      "images": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 504,
+        "dominant_value": 0,
+        "dominant_value_count": 14034,
+        "dominant_value_percentage": 57.665283
+      },
+      "contains_text": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 3,
+        "dominant_value": 1,
+        "dominant_value_count": 13478,
+        "dominant_value_percentage": 55.380696
+      },
+      "pdf_ver": {
+        "dtype": "float64",
+        "unique_value_count_including_nan": 14,
+        "dominant_value": 1.3,
+        "dominant_value_count": 6956,
+        "dominant_value_percentage": 28.581994
+      },
+      "obj": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 1245,
+        "dominant_value": 9,
+        "dominant_value_count": 3602,
+        "dominant_value_percentage": 14.80051
+      },
+      "endobj": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 1245,
+        "dominant_value": 9,
+        "dominant_value_count": 3307,
+        "dominant_value_percentage": 13.588363
+      },
+      "stream": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 790,
+        "dominant_value": 2,
+        "dominant_value_count": 4552,
+        "dominant_value_percentage": 18.704031
+      },
+      "endstream": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 790,
+        "dominant_value": 2,
+        "dominant_value_count": 4534,
+        "dominant_value_percentage": 18.630069
+      },
+      "trailer": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 28,
+        "dominant_value": 1,
+        "dominant_value_count": 15480,
+        "dominant_value_percentage": 63.606854
+      },
+      "xref": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 28,
+        "dominant_value": 1,
+        "dominant_value_count": 14518,
+        "dominant_value_percentage": 59.654025
+      },
+      "startxref": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 30,
+        "dominant_value": 1,
+        "dominant_value_count": 15683,
+        "dominant_value_percentage": 64.440975
+      },
+      "page_command": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 302,
+        "dominant_value": 1,
+        "dominant_value_count": 8293,
+        "dominant_value_percentage": 34.075687
+      },
+      "Encrypt": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 6,
+        "dominant_value": 0,
+        "dominant_value_count": 24013,
+        "dominant_value_percentage": 98.668694
+      },
+      "ObjStm": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 166,
+        "dominant_value": 0,
+        "dominant_value_count": 18554,
+        "dominant_value_percentage": 76.237827
+      },
+      "JS": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 34,
+        "dominant_value": 0,
+        "dominant_value_count": 15138,
+        "dominant_value_percentage": 62.201586
+      },
+      "JavaScript": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 22,
+        "dominant_value": 0,
+        "dominant_value_count": 15460,
+        "dominant_value_percentage": 63.524674
+      },
+      "AA": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 76,
+        "dominant_value": 0,
+        "dominant_value_count": 22003,
+        "dominant_value_percentage": 90.409664
+      },
+      "OpenAction": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 5,
+        "dominant_value": 0,
+        "dominant_value_count": 15001,
+        "dominant_value_percentage": 61.638657
+      },
+      "Acroform": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 1,
+        "dominant_value": 0,
+        "dominant_value_count": 24337,
+        "dominant_value_percentage": 100.0
+      },
+      "JBIG2Decode": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 61,
+        "dominant_value": 0,
+        "dominant_value_count": 24147,
+        "dominant_value_percentage": 99.219296
+      },
+      "RichMedia": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 6,
+        "dominant_value": 0,
+        "dominant_value_count": 24319,
+        "dominant_value_percentage": 99.926039
+      },
+      "Launch": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 11,
+        "dominant_value": 0,
+        "dominant_value_count": 24122,
+        "dominant_value_percentage": 99.116571
+      },
+      "EmbeddedFile": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 13,
+        "dominant_value": 0,
+        "dominant_value_count": 22656,
+        "dominant_value_percentage": 93.092822
+      },
+      "XFA": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 3,
+        "dominant_value": 0,
+        "dominant_value_count": 23091,
+        "dominant_value_percentage": 94.880224
+      },
+      "Colors": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 1,
+        "dominant_value": 0,
+        "dominant_value_count": 24337,
+        "dominant_value_percentage": 100.0
+      },
+      "URI": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 163,
+        "dominant_value": 0,
+        "dominant_value_count": 20116,
+        "dominant_value_percentage": 82.656038
+      },
+      "BaseEncoding": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 1,
+        "dominant_value": 0,
+        "dominant_value_count": 24337,
+        "dominant_value_percentage": 100.0
+      },
+      "Encoding": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 172,
+        "dominant_value": 0,
+        "dominant_value_count": 12196,
+        "dominant_value_percentage": 50.112997
+      },
+      "ProcSet": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 306,
+        "dominant_value": 0,
+        "dominant_value_count": 8804,
+        "dominant_value_percentage": 36.175371
+      },
+      "Registry": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 57,
+        "dominant_value": 0,
+        "dominant_value_count": 17515,
+        "dominant_value_percentage": 71.968607
+      },
+      "Resources": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 398,
+        "dominant_value": 0,
+        "dominant_value_count": 6882,
+        "dominant_value_percentage": 28.277931
+      },
+      "www": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 198,
+        "dominant_value": 0,
+        "dominant_value_count": 13607,
+        "dominant_value_percentage": 55.910753
+      },
+      "server": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 11,
+        "dominant_value": 0,
+        "dominant_value_count": 24186,
+        "dominant_value_percentage": 99.379546
+      },
+      "Root": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 35,
+        "dominant_value": 1,
+        "dominant_value_count": 18102,
+        "dominant_value_percentage": 74.380573
+      },
+      "BitsPerComponent": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 476,
+        "dominant_value": 0,
+        "dominant_value_count": 13775,
+        "dominant_value_percentage": 56.60106
+      },
+      "Label": {
+        "dtype": "int64",
+        "unique_value_count_including_nan": 2,
+        "dominant_value": 0,
+        "dominant_value_count": 13235,
+        "dominant_value_percentage": 54.382216
+      }
+    },
+    "constant_columns": [
+      "Acroform",
+      "Colors",
+      "BaseEncoding"
+    ],
+    "near_constant_columns": [
+      {
+        "column": "RichMedia",
+        "dominant_value": 0,
+        "dominant_value_count": 24319,
+        "dominant_value_percentage": 99.926039
+      }
+    ],
+    "numeric_columns": [
+      "pdfsize",
+      "metadata size",
+      "pages",
+      "xref length",
+      "title length",
+      "isEncrypted",
+      "embedded files",
+      "images",
+      "contains_text",
+      "pdf_ver",
+      "obj",
+      "endobj",
+      "stream",
+      "endstream",
+      "trailer",
+      "xref",
+      "startxref",
+      "page_command",
+      "Encrypt",
+      "ObjStm",
+      "JS",
+      "JavaScript",
+      "AA",
+      "OpenAction",
+      "Acroform",
+      "JBIG2Decode",
+      "RichMedia",
+      "Launch",
+      "EmbeddedFile",
+      "XFA",
+      "Colors",
+      "URI",
+      "BaseEncoding",
+      "Encoding",
+      "ProcSet",
+      "Registry",
+      "Resources",
+      "www",
+      "server",
+      "Root",
+      "BitsPerComponent",
+      "Label"
+    ],
+    "string_or_object_columns": [],
+    "categorical_dtype_columns": [],
+    "boolean_columns": []
+  },
+  "numeric_sanity": {
+    "pdfsize": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 468246.0,
+      "mean": 800.9342153922012,
+      "median": 79.0,
+      "standard_deviation": 4772.30265467973,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "metadata size": {
+      "finite_value_count": 24337,
+      "min": 176.0,
+      "max": 77185.0,
+      "mean": 319.7010313514402,
+      "median": 267.0,
+      "standard_deviation": 1241.833875016594,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "pages": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 2096.0,
+      "mean": 8.264864198545425,
+      "median": 1.0,
+      "standard_deviation": 36.65383869055817,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "xref length": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 263987.0,
+      "mean": 2454.947774992809,
+      "median": 36.0,
+      "standard_deviation": 15756.796092179044,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "title length": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 76993.0,
+      "mean": 45.22706167563792,
+      "median": 0.0,
+      "standard_deviation": 1072.7708592497006,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "isEncrypted": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 1.0,
+      "mean": 0.013107613921189958,
+      "median": 0.0,
+      "standard_deviation": 0.11373801443945657,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "embedded files": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 8.0,
+      "mean": 0.021736450671816576,
+      "median": 0.0,
+      "standard_deviation": 0.17098707634178847,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "images": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 98560.0,
+      "mean": 31.02999548013313,
+      "median": 0.0,
+      "standard_deviation": 815.2990232880179,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "contains_text": {
+      "finite_value_count": 24337,
+      "min": -1.0,
+      "max": 1.0,
+      "mean": 0.5522044623412911,
+      "median": 1.0,
+      "standard_deviation": 0.5004897433284689,
+      "negative_value_count": 39,
+      "negative_values_unexpected_by_name_heuristic": 39,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "pdf_ver": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 5.0,
+      "mean": 1.416156469573078,
+      "median": 1.4,
+      "standard_deviation": 0.30148024551436003,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "obj": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 72292.0,
+      "mean": 137.7920450343099,
+      "median": 25.0,
+      "standard_deviation": 938.3018923455924,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "endobj": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 72291.0,
+      "mean": 138.4448370793442,
+      "median": 25.0,
+      "standard_deviation": 946.4937002155583,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "stream": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 15182.0,
+      "mean": 54.2720138061388,
+      "median": 9.0,
+      "standard_deviation": 306.7530650785749,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "endstream": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 15182.0,
+      "mean": 54.525865965402474,
+      "median": 9.0,
+      "standard_deviation": 309.6646833905285,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "trailer": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 91.0,
+      "mean": 1.1644409746476558,
+      "median": 1.0,
+      "standard_deviation": 1.1887164557235637,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "xref": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 91.0,
+      "mean": 1.1252414019805235,
+      "median": 1.0,
+      "standard_deviation": 1.2072789082108801,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "startxref": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 156.0,
+      "mean": 1.3553437153305665,
+      "median": 1.0,
+      "standard_deviation": 1.5538359401085633,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "page_command": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 2789.0,
+      "mean": 9.683486050047254,
+      "median": 2.0,
+      "standard_deviation": 46.23318629868458,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "Encrypt": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 11.0,
+      "mean": 0.02021613181575379,
+      "median": 0.0,
+      "standard_deviation": 0.19737487226498976,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "ObjStm": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 1294.0,
+      "mean": 2.3606853761761926,
+      "median": 0.0,
+      "standard_deviation": 17.515748412857544,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "JS": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 2469.0,
+      "mean": 0.6377943049677446,
+      "median": 0.0,
+      "standard_deviation": 16.37208370325093,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "JavaScript": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 2469.0,
+      "mean": 0.6936352056539425,
+      "median": 0.0,
+      "standard_deviation": 16.35275098659575,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "AA": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 3197.0,
+      "mean": 0.7203024201832601,
+      "median": 0.0,
+      "standard_deviation": 21.104732319382123,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "OpenAction": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 4.0,
+      "mean": 0.3871471422114476,
+      "median": 0.0,
+      "standard_deviation": 0.49522289035442285,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "Acroform": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 0.0,
+      "mean": 0.0,
+      "median": 0.0,
+      "standard_deviation": 0.0,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "JBIG2Decode": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 1310.0,
+      "mean": 0.29259974524386734,
+      "median": 0.0,
+      "standard_deviation": 11.60786710731079,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "RichMedia": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 32.0,
+      "mean": 0.007724863376751449,
+      "median": 0.0,
+      "standard_deviation": 0.3641199281299452,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "Launch": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 443.0,
+      "mean": 0.03973373875169495,
+      "median": 0.0,
+      "standard_deviation": 3.1209100617480443,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "EmbeddedFile": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 19.0,
+      "mean": 0.3449891112298147,
+      "median": 0.0,
+      "standard_deviation": 1.5339071398437003,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "XFA": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 2.0,
+      "mean": 0.055758721288572954,
+      "median": 0.0,
+      "standard_deviation": 0.24854403574804537,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "Colors": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 0.0,
+      "mean": 0.0,
+      "median": 0.0,
+      "standard_deviation": 0.0,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "URI": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 39112.0,
+      "mean": 7.691293092821629,
+      "median": 0.0,
+      "standard_deviation": 278.59300501980493,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "BaseEncoding": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 0.0,
+      "mean": 0.0,
+      "median": 0.0,
+      "standard_deviation": 0.0,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "Encoding": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 2769.0,
+      "mean": 4.934379750996425,
+      "median": 0.0,
+      "standard_deviation": 36.69279607604606,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "ProcSet": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 7491.0,
+      "mean": 8.688950979989317,
+      "median": 1.0,
+      "standard_deviation": 67.19493710544815,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "Registry": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 307.0,
+      "mean": 1.1515388092205283,
+      "median": 0.0,
+      "standard_deviation": 4.600550970667661,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "Resources": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 11142.0,
+      "mean": 15.201627152072975,
+      "median": 1.0,
+      "standard_deviation": 140.4912192734737,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "www": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 19775.0,
+      "mean": 4.871841229403788,
+      "median": 0.0,
+      "standard_deviation": 135.0766056777165,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "server": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 10.0,
+      "mean": 0.029461314048568023,
+      "median": 0.0,
+      "standard_deviation": 0.41572261087663,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "Root": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 157.0,
+      "mean": 1.432017093314706,
+      "median": 1.0,
+      "standard_deviation": 1.9099312694477213,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "BitsPerComponent": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 10186.0,
+      "mean": 18.27645149361055,
+      "median": 0.0,
+      "standard_deviation": 177.30954538985105,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    },
+    "Label": {
+      "finite_value_count": 24337,
+      "min": 0.0,
+      "max": 1.0,
+      "mean": 0.4561778362164605,
+      "median": 0.0,
+      "standard_deviation": 0.49808614907160176,
+      "negative_value_count": 0,
+      "negative_values_unexpected_by_name_heuristic": 0,
+      "infinity_count": 0,
+      "extremely_large_absolute_threshold": 1000000000000,
+      "extremely_large_value_count": 0
+    }
+  },
+  "potential_leakage": {
+    "target_related_name_columns": [],
+    "identifier_and_metadata": {
+      "identifier_like_columns": [],
+      "filename_or_path_columns": [],
+      "source_or_collection_metadata_columns": []
+    },
+    "strong_univariate_associations": [],
+    "exact_target_match_columns": [],
+    "association_method": "Numeric features use absolute Pearson correlation only when the selected target is numeric with exactly two values. String/object/categorical features use Cramer's V. Values at or above 0.95 are reported as suspicious.",
+    "strong_association_threshold": 0.95
+  },
+  "assumptions": [
+    "This is a read-only audit; the source CSV is never modified.",
+    "No columns are dropped, imputed, encoded, normalized, or renamed.",
+    "Near-constant means one value occupies at least 99.5% of rows.",
+    "Extremely large means an absolute numeric value greater than 1e12.",
+    "Negative values are flagged as unexpected by a conservative column-name heuristic; review them with dataset documentation.",
+    "Leakage indicators are descriptive flags, not proof that a feature is invalid or should be removed."
+  ]
+}

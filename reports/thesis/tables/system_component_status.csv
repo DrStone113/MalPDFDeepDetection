@@ -1,0 +1,11 @@
+component,status,evidence_type,performance_claim
+RIT dataset audit,completed,audited dataset facts,not applicable
+Protocol P classical models,completed,paper-aligned row-level baseline,measured
+Protocol G classical models,completed,feature-vector-disjoint evaluation,measured
+XGBoost CV10,completed,paper-aligned row-level KFold,measured
+TreeSHAP,completed,Protocol G XGBoost explanation,descriptive only
+Static deployment detector,implemented,full-data static model after evaluation,not a new benchmark
+MLP / FT-Transformer,completed,one fixed Protocol G split,measured on one split
+Dynamic schema and routing,implemented,offline synthetic-report integration,NOT EVALUATED
+Isolated CAPE laboratory,designed,"design, threat model, checklist",NOT EVALUATED
+Hybrid detector,not implemented,future work,NOT EVALUATED
