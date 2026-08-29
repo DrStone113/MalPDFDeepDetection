@@ -138,7 +138,19 @@ def _timestamp() -> str:
 
 
 def _write_json(path: Path, payload: Any) -> None:
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, allow_nan=False) + "\n", encoding="utf-8")
+    def json_default(value: Any) -> Any:
+        """Convert numerical-library scalars at the provenance boundary only."""
+        if isinstance(value, np.integer):
+            return int(value)
+        if isinstance(value, np.floating):
+            return float(value)
+        if isinstance(value, np.ndarray):
+            return value.tolist()
+        if isinstance(value, Path):
+            return str(value)
+        raise TypeError(f"Unsupported JSON provenance value: {type(value).__name__}")
+
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, allow_nan=False, default=json_default) + "\n", encoding="utf-8")
 
 
 def _safe_id(source_id: str) -> str:

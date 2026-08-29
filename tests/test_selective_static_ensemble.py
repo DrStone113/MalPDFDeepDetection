@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import inspect
+import json
 from pathlib import Path
 
 import numpy as np
@@ -28,6 +29,7 @@ from malpdf.experiments.selective_static_ensemble import (
     EXPECTED_SPLIT_MANIFEST_SHA256,
     RUN_ID,
     _prediction_table,
+    _write_json,
     ensemble_paths,
     preflight_selective_ensemble,
     routing_analysis,
@@ -98,6 +100,12 @@ def test_routing_table_and_safe_prediction_ids_do_not_fabricate_dynamic_values(t
     assert ensemble_paths(tmp_path, RUN_ID).reports_directory.name == RUN_ID
 
 
+def test_provenance_json_serializes_numpy_selection_scalars(tmp_path: Path) -> None:
+    target = tmp_path / "lock.json"
+    _write_json(target, {"candidate_order": np.int64(3), "mcc": np.float64(0.9), "positions": np.array([1, 2])})
+    assert json.loads(target.read_text(encoding="utf-8")) == {"candidate_order": 3, "mcc": 0.9, "positions": [1, 2]}
+
+
 def test_frozen_base_configurations_and_protocol_g_manifest_reuse_are_checked(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     root = Path(__file__).resolve().parents[1]
     ensemble_config = yaml.safe_load((root / "configs" / "selective_static_ensemble.yaml").read_text(encoding="utf-8"))
@@ -126,6 +134,7 @@ def test_frozen_base_configurations_and_protocol_g_manifest_reuse_are_checked(mo
     monkeypatch.setattr(module, "protocol_g_feature_columns", lambda *_args: list(PROTOCOL_G_REQUIRED_FEATURES))
     monkeypatch.setattr(module, "collect_environment_metadata", lambda *_args: {"git_commit_sha": "a" * 40})
     monkeypatch.setattr(module, "_torch_environment", lambda: (module.torch.device("cpu"), {"device_used": "cpu"}))
+    monkeypatch.setattr(module, "_assert_outputs_available", lambda _paths: None)
     preflight = preflight_selective_ensemble(root, tmp_path / "synthetic.csv")
     assert preflight.split_summary["split_manifest_sha256"] == EXPECTED_SPLIT_MANIFEST_SHA256
     assert tuple(preflight.feature_order) == PROTOCOL_G_REQUIRED_FEATURES
