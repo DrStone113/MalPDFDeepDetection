@@ -9,6 +9,7 @@ from pathlib import Path
 from malpdf.experiments.selective_static_ensemble import (
     SelectiveEnsembleError,
     execute_selective_ensemble,
+    finalize_selective_ensemble_reports,
     preflight_selective_ensemble,
 )
 
@@ -19,9 +20,15 @@ ROOT = Path(__file__).resolve().parents[1]
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Validation-locked Protocol G XGBoost/FT ensemble; no dynamic execution.")
     parser.add_argument("--dataset", type=Path, default=ROOT / "data" / "raw" / "rit-pdfmal-2026.csv")
-    parser.add_argument("--execute", action="store_true", help="Train frozen bases, lock validation selection, then evaluate test once.")
+    action = parser.add_mutually_exclusive_group()
+    action.add_argument("--execute", action="store_true", help="Train frozen bases, lock validation selection, then evaluate test once.")
+    action.add_argument("--finalize-reports", action="store_true", help="Render a missing analysis from completed lightweight results only; never fits or predicts.")
     args = parser.parse_args(argv)
     try:
+        if args.finalize_reports:
+            path = finalize_selective_ensemble_reports(ROOT)
+            print(f"Finalized analysis without model execution: {path}")
+            return 0
         preflight = preflight_selective_ensemble(ROOT, args.dataset, require_clean_git=True)
         if not args.execute:
             print(f"Preflight passed: {len(preflight.partitions['train'])}/{len(preflight.partitions['validation'])}/{len(preflight.partitions['test'])} Protocol G rows; no models fit.")

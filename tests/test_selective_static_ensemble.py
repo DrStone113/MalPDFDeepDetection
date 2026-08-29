@@ -28,6 +28,7 @@ from malpdf.experiments.selective_static_ensemble import (
     EXPECTED_PARTITION_ROWS,
     EXPECTED_SPLIT_MANIFEST_SHA256,
     RUN_ID,
+    _markdown_frame,
     _prediction_table,
     _write_json,
     ensemble_paths,
@@ -104,6 +105,11 @@ def test_provenance_json_serializes_numpy_selection_scalars(tmp_path: Path) -> N
     target = tmp_path / "lock.json"
     _write_json(target, {"candidate_order": np.int64(3), "mcc": np.float64(0.9), "positions": np.array([1, 2])})
     assert json.loads(target.read_text(encoding="utf-8")) == {"candidate_order": 3, "mcc": 0.9, "positions": [1, 2]}
+
+
+def test_analysis_table_rendering_has_no_optional_tabulate_dependency() -> None:
+    table = _markdown_frame(pd.DataFrame({"model": ["xgb"], "f1_malicious": [0.9]}))
+    assert "| model | f1_malicious |" in table and "0.900000" in table
 
 
 def test_frozen_base_configurations_and_protocol_g_manifest_reuse_are_checked(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:

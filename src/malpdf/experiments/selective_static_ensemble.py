@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import subprocess
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -151,6 +152,12 @@ def _write_json(path: Path, payload: Any) -> None:
         raise TypeError(f"Unsupported JSON provenance value: {type(value).__name__}")
 
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, allow_nan=False, default=json_default) + "\n", encoding="utf-8")
+
+
+def _current_commit_sha(root: Path) -> str:
+    result = subprocess.run(["git", "-C", str(root), "rev-parse", "HEAD"], capture_output=True, text=True, check=False, timeout=3)
+    value = result.stdout.strip()
+    return value if result.returncode == 0 and len(value) == 40 else "unavailable"
 
 
 def _safe_id(source_id: str) -> str:
@@ -487,13 +494,27 @@ def _save_figures(paths: EnsemblePaths, comparison: pd.DataFrame, routing: pd.Da
 
 
 def _analysis_markdown(preflight: EnsemblePreflight, selected: dict[str, Any], comparison: pd.DataFrame, disagreement: pd.DataFrame, routing: pd.DataFrame) -> str:
+    return _analysis_markdown_from_tables(preflight, selected, comparison, disagreement, routing)
+
+
+def _markdown_frame(frame: pd.DataFrame) -> str:
+    """Render a compact table without requiring pandas' optional tabulate extra."""
+    columns = list(frame.columns)
+    lines = ["| " + " | ".join(columns) + " |", "| " + " | ".join("---" for _ in columns) + " |"]
+    for row in frame.itertuples(index=False, name=None):
+        values = [f"{value:.6f}" if isinstance(value, (float, np.floating)) else str(value) for value in row]
+        lines.append("| " + " | ".join(values) + " |")
+    return "\n".join(lines)
+
+
+def _analysis_markdown_from_tables(preflight: EnsemblePreflight, selected: dict[str, Any], comparison: pd.DataFrame, disagreement: pd.DataFrame, routing: pd.DataFrame) -> str:
     primary = routing.loc[(routing["policy"] == "uncertainty_only") & (routing["requested_referral_rate"] == 0.10)].iloc[0]
     lines = [
         "# Selective Static Ensemble and Dynamic Routing Analysis", "", "## 1. Objective", "", "Assess fixed XGBoost/FT-Transformer probability fusion and whether validation-locked uncertainty concentrates errors for hypothetical dynamic referral. No PDF, CAPE, dynamic feature, dynamic classifier, or hybrid model is used.",
         "", "## 2. Base models", "", "The established Protocol G `G-drop3constant` 38-feature XGBoost configuration and fixed FT-Transformer training procedure are reused. XGBoost is reproduced against the historical test record after the validation lock; FT configuration is checked unchanged and trained once with its existing validation-loss stopping procedure.",
         "", "## 3. Calibration and validation lock", "", f"Validation was deterministically stratified into calibration-fit and selection halves. Candidates were none/Platt/isotonic calibration crossed with the declared base/equal/grid-weight fusion family. The locked candidate is `{selected['calibration_method']}` + `{selected['fusion_family']}` with XGBoost weight `{selected['xgb_weight']:.1f}`, selected by validation MCC (`{selected['selection_mcc']:.6f}`), then malicious F1. TEST was not provided to the selector.",
-        "", "## 4. Test performance", "", comparison.to_markdown(index=False, floatfmt=".6f"),
-        "", "## 5. Error complementarity and disagreement", "", disagreement.to_markdown(index=False, floatfmt=".6f"),
+        "", "## 4. Test performance", "", _markdown_frame(comparison),
+        "", "## 5. Error complementarity and disagreement", "", _markdown_frame(disagreement),
         "", "## 6. Selective classification", "", f"At the predeclared 10% uncertainty-only referral budget, actual referral is `{primary['referral_rate']:.4f}`, retained coverage `{primary['coverage']:.4f}`, error capture `{primary['error_capture_rate']:.4f}`, and false-negative capture `{primary['fn_capture_rate']:.4f}`. Referred rows are abstained/referred, not counted as corrected.",
         "", "## 7. Dynamic-routing efficiency", "", "Routing is a hypothetical recommendation only. Static prediction unavailability remains independently referral-capable in the production contract; there are no unavailable rows in this numerical table evaluation.",
         "", "## 8. Recommended conceptual modes", "", "- FAST: XGBoost-only static prediction; dynamic recommendation only for extraction failure/extreme reviewed policy.", "- BALANCED: selected ensemble plus uncertainty/disagreement routing.", "- MAX ACCURACY: selected ensemble plus a larger predeclared referral budget. None of these are production guarantees.",
@@ -501,6 +522,35 @@ def _analysis_markdown(preflight: EnsemblePreflight, selected: dict[str, Any], c
         "", "## 10. Future hybrid preparation", "", "A future hybrid vector may contain static ensemble/XGBoost/FT probabilities, disagreement, uncertainty, and only genuinely observed dynamic-schema-v1 fields. This study fabricates none and trains no hybrid model.", "",
     ]
     return "\n".join(lines)
+
+
+def finalize_selective_ensemble_reports(repository_root: str | Path) -> Path:
+    """Write the missing formal analysis from completed lightweight results only.
+
+    This recovery path exists for report-rendering failures after an official
+    test pass. It refuses to fit a model, load a checkpoint, regenerate a
+    prediction, or overwrite an existing analysis report.
+    """
+    root = Path(repository_root).resolve()
+    paths = ensemble_paths(root)
+    if paths.analysis_markdown.exists():
+        raise FileExistsError("Refusing to overwrite existing selective-ensemble analysis")
+    required = [paths.lock_json, paths.model_comparison_csv, paths.disagreement_csv, paths.routing_csv, paths.run_metadata_json]
+    missing = [str(path) for path in required if not path.is_file()]
+    if missing:
+        raise FileNotFoundError("Cannot finalize incomplete selective-ensemble reports: " + ", ".join(missing))
+    lock = json.loads(paths.lock_json.read_text(encoding="utf-8"))
+    metadata = json.loads(paths.run_metadata_json.read_text(encoding="utf-8"))
+    if metadata.get("test_evaluation", {}).get("count") != 1 or not metadata["test_evaluation"].get("test_not_used_for_selection"):
+        raise SelectiveEnsembleError("Results do not prove exactly one validation-locked test evaluation")
+    comparison = pd.read_csv(paths.model_comparison_csv)
+    disagreement = pd.read_csv(paths.disagreement_csv)
+    routing = pd.read_csv(paths.routing_csv)
+    preflight_like = EnsemblePreflight(root, Path("unavailable"), pd.DataFrame(), {}, {}, tuple(), {}, {}, {}, str(metadata.get("code_commit_sha")), torch.device("cpu"), paths)
+    paths.analysis_markdown.write_text(_analysis_markdown_from_tables(preflight_like, lock["selection"], comparison, disagreement, routing), encoding="utf-8")
+    metadata["report_finalization"] = {"timestamp_utc": _timestamp(), "operation": "analysis markdown rendered from existing reports only; no model fit or test inference", "code_commit_sha": _current_commit_sha(root)}
+    _write_json(paths.run_metadata_json, metadata)
+    return paths.analysis_markdown
 
 
 def execute_selective_ensemble(preflight: EnsemblePreflight) -> dict[str, Any]:
