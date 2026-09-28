@@ -33,3 +33,9 @@ Keep reusable logic inside `src/malpdf`. Keep notebooks exploratory and thin. Do
 5. Keep samples outside Git under the ignored `data/` tree; never commit PDFs, datasets, secrets, checkpoints, or generated artifacts.
 6. Unit tests must use synthetic byte strings or clearly benign fixtures, never live malware.
 7. If dynamic analysis is later required, stop and obtain explicit approval for an isolated, disposable sandbox with no shared folders, credentials, clipboard, or unrestricted network access.
+
+## GitHub Codespaces boundary
+
+1. Codespaces is supported only as a reproducible code-and-test environment. Its devcontainer must install dependencies solely from `pyproject.toml` and run the test suite without datasets.
+2. A Codespace is not an approved malware-execution sandbox. Do not upload, download, decrypt, open, render, execute, or dynamically analyse untrusted PDF samples there without separate explicit authorization.
+3. Never treat containerisation as proof of containment or rely on a GPU machine type being available. Keep credentials, tokens, raw samples, sample hashes, and extracted sample metadata out of the Codespace and Git history unless separately authorized.

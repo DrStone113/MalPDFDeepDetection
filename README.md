@@ -27,6 +27,17 @@ malpdf --seed 42
 
 Datasets are intentionally not downloaded by this project. Place approved samples under `data/` and follow the safety rules in `AGENTS.md`. Never execute or manually open suspicious PDFs.
 
+## GitHub Codespaces
+
+The repository includes a Python 3.11 devcontainer for reproducible source development and synthetic-test execution. Create a Codespace from a committed revision, allow its post-create command to install the project from `pyproject.toml`, then run:
+
+```bash
+python -m pytest -q
+python -m pip check
+```
+
+The devcontainer installs the declared PyTorch and torchvision versions, but it does not promise GPU availability. Codespaces is not an approved malware-execution sandbox and does not authorize uploading or downloading raw PDFs, sample hashes, or extracted sample metadata. No configuration in this repository fetches, decrypts, opens, renders, or executes samples; follow `AGENTS.md` before any separately authorized sample handling.
+
 ## Research workflows
 
 Create the paper-aligned Protocol P infrastructure without training models:

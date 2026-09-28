@@ -1,5 +1,17 @@
 # Research log
 
+## 2026-09-28 - GitHub Codespaces reproducible development environment
+
+- Purpose: provide a Python 3.11 Codespaces/devcontainer configuration for reproducible source development and synthetic-test execution.
+- Added: `.devcontainer/Dockerfile`, `.devcontainer/devcontainer.json`, declared `torchvision` dependency, and explicit Codespaces safety guidance in `AGENTS.md` and `README.md`.
+- Methodology: the post-create command installs only the editable project with its declared development dependencies, then runs `pip check`; it does not fetch a dataset or run an experiment.
+- Protocol affected: none; Protocol P, Protocol G, saved manifests, benchmark results, and deployment artifacts are unchanged.
+- Important assumptions: CPU is supported; GPU availability is not a Codespaces requirement or guarantee. A container is not an approved malware-execution sandbox.
+- Safety boundary: no raw PDF, sample hash, extracted sample metadata, credential, download, decryption, rendering, execution, or dynamic-analysis workflow is added.
+- Validation: Python 3.11.0; `torchvision 0.22.1` imports with the existing Torch installation; `.\\.venv\\Scripts\\python.exe -m pytest -q` - 168 passed; `.\\.venv\\Scripts\\python.exe -m pip check` - no broken requirements; `git diff --check` passed.
+- Unresolved: any cloud handling of untrusted samples remains prohibited without separate explicit authorization and an approved containment design.
+- Next: open a Codespace from the committed revision for code/test work only, or separately review a sample-handling authorization request.
+
 ## 2026-08-28 - Protocol P paper-aligned reproduction infrastructure
 
 - Purpose: prepare reproducible, paper-aligned training infrastructure without model training.
