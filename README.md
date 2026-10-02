@@ -27,6 +27,188 @@ malpdf --seed 42
 
 Datasets are intentionally not downloaded by this project. Place approved samples under `data/` and follow the safety rules in `AGENTS.md`. Never execute or manually open suspicious PDFs.
 
+## Prepare acquired local datasets
+
+Prepare the explicitly acquired RIT ZIP, Kaggle CIC ZIP/Parquet, and CVE-T4PDF
+files without changing their sources:
+
+```bash
+python scripts/prepare_source_datasets.py
+```
+
+The script verifies each source against its single completed acquisition manifest
+under `artifacts/dataset_acquisition/`, safely extracts only the reviewed table
+members, and copies CVE PDFs as opaque bytes. Resource caps are declared in
+`configs/source_preparation.yaml`. Each invocation creates new ignored directories
+under `data/processed/source_preparation/` and `artifacts/source_preparation/`, saves
+schema/count/label/checksum/provenance reports, and appends `reports/research_log.md`.
+CIC retains its independent cohort and source values. CVE PDFs have no tabular
+feature schema; their separate `cve_t4pdf/source_pdf_manifest.csv` records sample
+IDs, labels, repository-relative PDF paths, SHA-256 checksums, and label provenance.
+Labels are unavailable by default. To assign Malicious (`Label=1`) to the CVE PDF
+inventory according to an explicit user instruction, run:
+
+```bash
+python scripts/prepare_source_datasets.py --label-cve-malicious
+```
+
+The manifest, methodology, and research log record `user_requested_malicious` as
+the label source. CVE samples remain separate from the locked RIT split, and the
+new run preserves earlier unlabeled runs.
+
+The saved RIT Protocol G manifest is checked against the historical dataset and
+manifest SHA-256 locks, sample identities, labels, groups, partition counts, and
+zero overlap. An absent manifest gives exit code 2 while preserving preparation
+reports. To explicitly recreate an absent seed-42 manifest, use:
+
+```bash
+python scripts/prepare_source_datasets.py --create-missing-manifest
+```
+
+This option reuses the existing group-aware 60/20/20 splitting logic, preserves
+the historical CRLF CSV bytes, and publishes the canonical manifest only after
+its checksum and invariants match. Existing manifests and reports are never
+overwritten. Processing failures give exit code 1 and preserve failure evidence.
+
+## Build the byte Markov cache
+
+Build the single-channel byte-transition probabilities from the explicitly
+locked manifest in `configs/markov_cache.yaml`:
+
+```bash
+python scripts/02_build_markov_cache.py
+```
+
+The current configuration pins the prepared, user-labeled CVE-T4PDF manifest
+(five PDFs). Its preparation report supplies the manifest checksum and acquired
+raw-file inventory. The script maps each PDF to `data/raw/` by its unique locked
+SHA-256, verifies every source before creating caches, and only reads binary
+bytes with a 10 MiB per-file cap. It never invokes a PDF parser, renderer, viewer,
+or embedded action. RIT/CIC feature tables do not supply corresponding raw PDFs;
+this cache does not create a RIT Protocol G vision dataset or change its split.
+
+Each `data/processed/markov_cache/<pdf_sha256>.npy` contains an uncompressed
+float32 matrix of shape `(256, 256)`, representing one channel. A tensor loader
+can add the axis to obtain `(1, 256, 256)`. Each observed row sums to one, and
+unobserved rows stay zero. JSON sidecars record the algorithm and cache checksum.
+Existing caches are reused only after bounded header, checksum and probability
+checks with `allow_pickle=False`; corrupted or incomplete caches are refused.
+
+Every invocation creates a new `reports/experiments/markov_cache/run_.../`
+directory and appends the research log. Detailed per-PDF identities and hashes
+remain under ignored `artifacts/markov_cache/` and `data/`; reported model metrics
+are explicitly unavailable because this step performs no model evaluation.
+To use another authorized preparation, pass both `--manifest` and
+`--preparation-report` explicitly. The script preserves existing caches, splits
+and run directories.
+
+## Single-channel vision ResNet-18
+
+`src/malpdf/models/vision_resnet.py` defines a scratch-initialized ResNet-18 with
+a one-channel stem, `(B,1,256,256)` inputs and one binary logit per sample.
+`predict_proba` applies sigmoid for malicious `Label=1`. No pretrained weights
+are downloaded. Run the cache smoke check with:
+
+```bash
+python scripts/03_train_vision_model.py --dry-run
+```
+
+`configs/vision_resnet18.yaml` locks the source manifest, RIT table and saved
+Protocol G split by SHA-256. The loader reuses the existing Protocol G validator,
+joins the source PDF index by exact sample ID and label, and prevents duplicate
+PDF hashes or known related groups from crossing partitions. It reads only cache
+matrices and table metadata; NPY headers, checksums and row probabilities are
+checked on every access. There is no fitted scaling or image augmentation.
+
+The current five CVE caches are all user-labeled malicious and have no ID mapping
+to the 24,337 RIT rows. Dry-run checks their untrained forward pass and finite BCE
+diagnostic loss; it performs zero optimizer steps and saves no checkpoint.
+Accuracy/F1/MCC and calibration metrics remain unavailable for this smoke run.
+
+To exercise backward passes, AdamW updates and checkpoint save/reload on the
+existing caches, use the bounded technical training check:
+
+```bash
+python scripts/03_train_vision_model.py --smoke-train --smoke-epochs 2 --smoke-batch-size 2
+```
+
+This mode allows 1–2 epochs, batches of 1, 2 or 4, and at most eight samples in
+saved manifest order. It saves the final epoch as `smoke_model.pt` under ignored
+`artifacts/`, checks finite gradients and changed parameters, and verifies a fresh
+model reload with `weights_only=True`. Accuracy/F1/MCC/Loss, Brier and ECE describe
+the same samples used for fitting; they are technical diagnostics, not held-out
+Protocol G results. The five current samples contain only Label=1, so MCC=0 is
+the scikit-learn zero-denominator convention and cannot show discrimination.
+Smoke training performs no validation/test evaluation, early stopping, tuning,
+calibration or split regeneration. Its reports record the dirty worktree and
+scope separately from official training.
+
+Once an authorized, complete RIT PDF/cache index exists, point the configuration
+to its locked manifest and use `--execute` from a clean committed worktree.
+Training reuses AdamW, BCEWithLogitsLoss and validation-loss early stopping.
+The best checkpoint stays under ignored `artifacts/vision_resnet/run_.../` and
+is reloaded with `weights_only=True`. Its validation decision is persisted before
+a single test evaluation. Reports include Accuracy, malicious F1, MCC, BCE loss,
+Brier score and 10-bin ECE. Every invocation creates a new immutable report run
+and appends the research log, preserving existing splits, caches and reports.
+
+## Validation-locked late fusion v2
+
+`src/malpdf/models/late_fusion.py` combines raw malicious-class probabilities
+from the historical train-only XGBoost/FT models. The thin evaluation entry point
+defaults to preflight without fitting or decoding test predictions:
+
+```bash
+python scripts/04_evaluate_late_fusion.py --dry-run
+```
+
+`configs/late_fusion_stacking.yaml` pins the dataset, saved Protocol G manifest,
+historical probability tables and generating provenance by SHA-256. Legacy safe
+IDs are mapped back to the manifest and joined by exact ID/label; row positions,
+v1 calibrated columns and v1 validation roles are never reused for fitting.
+Validation groups are deterministically stratified into approximately 25%
+meta-fit, 25% Platt calibration-fit and 50% selection. Feature-equivalent groups
+remain together, as do known PDF/family components when Vision is enabled.
+Logistic Regression stacking learns coefficients only on meta-fit. Its candidate
+C values and convex-average candidates are predeclared; Platt fits fused raw
+malicious probabilities only on calibration-fit. Selection maximizes MCC, then
+malicious F1; exact ties retain declared order. Selected models/calibrators are
+retained without refitting on selection or the full validation set.
+
+After code is committed and the worktree is clean, official evaluation uses:
+
+```bash
+python scripts/04_evaluate_late_fusion.py --execute
+```
+
+The script persists methodology and learned coefficients/weights in
+`validation_lock.json` before decoding or evaluating test predictions once.
+Reports include malicious F1, MCC, Brier, log loss and ECE (10 equal-width bins
+of malicious probability, with p=1 in the last bin). Selective routing refers
+`round(0.1*n)` samples with greatest binary entropy in bits, breaking ties by
+sample ID. The 10% budget is fixed before test access; no test labels select the
+policy. Coverage, false-negative catch rate, retained metrics and referral counts
+are reported. FN catch rate is N/A when there are no false negatives. Referrals
+are abstentions and are never counted as corrected or dynamically executed.
+Each invocation creates a new `reports/experiments/late_fusion_v2/run_.../`,
+appends `reports/research_log.md`, and preserves historical v1 reports. Detailed
+roles and derived prediction tables stay under ignored `artifacts/`.
+
+Vision is explicitly optional and currently unavailable for Protocol G: the
+five CVE smoke samples/checkpoint cannot supply RIT predictions. With `vision:
+null`, nonzero Vision-weight candidates are recorded as unavailable; no scores
+are fabricated. To enable it, configure checksum-locked `validation`, `test` and
+`provenance` inputs. Vision CSV/Parquet tables need canonical Protocol G
+`sample_id`, `true_label`, `vision_probability` columns. Its JSON provenance must
+contain `protocol: G`, `seed: 42`, `model: vision_resnet18`, `official_model: true`,
+`base_fit_partition: train`, `checkpoint_selection_partition: validation`,
+`worktree: clean`, matching `dataset_sha256` and `split_manifest_sha256`,
+`source_manifest: {path, sha256}`, and `predictions: {validation: {path, sha256},
+test: {path, sha256}}` matching configuration. The source manifest must completely
+match Protocol G IDs/labels and pass duplicate-file/family leakage checks.
+Experimental convex weights use `[(1-v)*w, (1-v)*(1-w), v]` for XGB/FT/Vision;
+three-branch stacking learns its separate coefficients on meta-fit only.
+
 ## GitHub Codespaces
 
 The repository includes a Python 3.11 devcontainer for reproducible source development and synthetic-test execution. Create a Codespace from a committed revision, allow its post-create command to install the project from `pyproject.toml`, then run:

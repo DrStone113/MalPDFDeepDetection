@@ -1,0 +1,27 @@
+seed: 42
+inputs:
+  dataset:
+    path: data/processed/source_preparation/run_20261001T132125227224Z_3efd81e782c1/rit/rit-pdfmal-2026.csv
+    sha256: 2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623
+  split_manifest:
+    path: data/processed/rit-pdfmal-2026_split_manifest.csv
+    sha256: 802c3962bc537ed78f63c5b1a5308e09df357a096f703846d0e5fe57598b4e21
+  validation:
+    path: reports/experiments/selective_ensemble/protocol_g_seed42/validation_predictions.parquet
+    sha256: d3065ac848e00ac83a5dc53014cfdd8c334847b7c3e6d41503db42a21354f4e5
+  test:
+    path: reports/experiments/selective_ensemble/protocol_g_seed42/test_predictions.parquet
+    sha256: 1e6039df96e2324ca442502e2b8c67fdc7df1314d02d3952fcd466bc2ccbbf93
+  base_provenance:
+    path: reports/experiments/selective_ensemble/protocol_g_seed42/run_metadata.json
+    sha256: f3e2d3596440ccfd3bf8ed2cdb156a5693941d471922933a0d8f1018c303ed77
+  base_configuration:
+    path: reports/experiments/selective_ensemble/protocol_g_seed42/config.json
+    sha256: 1ab4eec40cd6283112e4cf4dac6cd0cb5d7e7bd1fad8beb120568c3f82db3b14
+# Set only when genuine official Protocol G Vision predictions are available.
+# Never supply the five-sample CVE smoke checkpoint/probabilities here.
+vision: null
+candidates:
+  regularization_cs: [0.1, 1.0, 10.0]
+  xgb_weights: [0.0, 0.25, 0.5, 0.75, 1.0]
+  vision_weights: [0.0, 0.1, 0.25]

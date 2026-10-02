@@ -34,6 +34,7 @@ data/external/**
 !data/processed/.gitkeep
 !data/external/.gitkeep
 *.pdf
+*.npy
 
 # Models, checkpoints, experiment tracking, and generated artifacts
 artifacts/**

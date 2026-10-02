@@ -1,0 +1,8 @@
+seed: 42
+limits:
+  max_file_bytes: 16777216
+  max_archive_members: 16
+  max_compression_ratio: 200
+  max_total_output_bytes: 33554432
+  max_rows: 100000
+  max_columns: 128
