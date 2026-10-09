@@ -1,0 +1,26 @@
+{
+  "python": "3.11.13",
+  "baseline_python": "Python 3.11.13",
+  "fresh_environment": "Python 3.11 CPU wheels from declared pyproject.toml",
+  "installation_log": "checks/install.log",
+  "torch": "2.11.0+cpu",
+  "torchvision": "0.26.0+cpu",
+  "cuda": null,
+  "existing_environment": {
+    "python": "3.11.13",
+    "packages": {
+      "torch": "2.11.0+cpu",
+      "torchvision": "0.26.0+cpu",
+      "scikit-learn": "1.9.1",
+      "numpy": "2.4.6",
+      "pandas": "2.3.3",
+      "xgboost": "3.2.0",
+      "lightgbm": "4.7.0",
+      "catboost": "1.2.10",
+      "pytest": "8.4.2"
+    },
+    "tests": "587 passed; numeric-cloud import subprocess timeout, reproduced twice"
+  },
+  "fresh_environment_tests": "588 passed, 2 synthetic single-label sklearn warnings",
+  "fresh_dependency_check": "No broken requirements found"
+}

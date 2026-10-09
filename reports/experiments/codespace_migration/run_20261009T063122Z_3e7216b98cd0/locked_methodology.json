@@ -1,0 +1,31 @@
+{
+  "kind": "maintenance/migration",
+  "generating_commit": "3e7216b98cd00652a086e0c38f1e1913018ab81d",
+  "initial_worktree": "clean",
+  "maintenance_worktree": "dirty",
+  "seed": 42,
+  "protocol": "existing saved G/P/CV designs retained",
+  "operations": [
+    "binary archive packaging",
+    "source checksums",
+    "fresh Python 3.11 CPU environment",
+    "synthetic unit tests",
+    "commit/push"
+  ],
+  "data_roots": [
+    "data",
+    "artifacts",
+    "checkpoints"
+  ],
+  "exclusions": [
+    "migration output",
+    "Git control files",
+    "Python caches",
+    "virtual environments",
+    "credential filenames"
+  ],
+  "test_evaluation": false,
+  "model_fitting": false,
+  "dataset_acquisition": false,
+  "transfer_policy": "User requested minimal necessary data; PDFs selected from saved raw/v4 source manifests; omit regeneratable NPY caches, ZIPs, code copies and environments"
+}

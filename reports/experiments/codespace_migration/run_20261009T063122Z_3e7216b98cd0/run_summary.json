@@ -1,0 +1,79 @@
+{
+  "run_id": "run_20261009T063122Z_3e7216b98cd0",
+  "status": "completed_with_existing_environment_timeout",
+  "timestamp_utc": "2026-10-09T06:58:41.455678+00:00",
+  "generating_commit": "3e7216b98cd00652a086e0c38f1e1913018ab81d",
+  "worktree_state": "dirty: maintenance documentation/evidence only",
+  "transfer_directory": "artifacts/migration/MalPDFDeepDetection-transfer-20261009T065230Z",
+  "final_archive_path": "artifacts/migration/MalPDFDeepDetection-transfer-20261009T065230Z.tar",
+  "archive_verification": {
+    "status": "verified",
+    "file_count": 35686,
+    "data_archive_bytes": 1220422539,
+    "data_archive_sha256": "9ead7408142a323b6a12cbe383492c8dcc8f78c0aa9f41311b63869f4d7cb4c1"
+  },
+  "inventory": {
+    "file_count": 35686,
+    "source_bytes": 1808564889,
+    "archive_bytes": 1220422539
+  },
+  "selection": {
+    "required_pdf_count": 21414,
+    "selected_files": 35686,
+    "policy": "Saved raw cohort and v4 source manifests; prepared tables/locks; fitted models/checkpoints and private provenance. No matrix caches, redundant ZIPs, code snapshots or virtual environments."
+  },
+  "dataset_split_provenance": [
+    {
+      "path": "data/processed/raw_pdf_cohort/run_20261002T140335782413Z_3b68d36a5705/source_pdf_manifest.csv",
+      "sha256": "564711952dfe18493911640ee1dcb6df72d3df3d7ce04a58ba997f74f21d0eaa"
+    },
+    {
+      "path": "data/processed/raw_pdf_cohort/run_20261002T140335782413Z_3b68d36a5705/protocol_g_seed42_split_manifest.csv",
+      "sha256": "e8a229f67244ba1084303ca356b3e565b4805b532c06d379f05cd02cc783343f"
+    },
+    {
+      "path": "data/processed/raw_pdf_cohort/run_20261002T142323844991Z_3b68d36a5705/source_pdf_manifest.csv",
+      "sha256": "db4e73ef7bac6a2c2c1b845df999d96156efca7b954b1ea2a7f5ca6931f0ee68"
+    },
+    {
+      "path": "data/processed/raw_pdf_cohort/run_20261002T142323844991Z_3b68d36a5705/protocol_g_seed42_split_manifest.csv",
+      "sha256": "7d1cb8cce4630adf4637d4f84b28a17330d77b9284fa3bdd273fdd18ea749e63"
+    },
+    {
+      "path": "data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/source_manifest.csv",
+      "sha256": "d74729236017dc27a71c999bc4d69f84a16fa4148573c3bbc7f4eb03709b150b"
+    },
+    {
+      "path": "data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/split_manifest.csv",
+      "sha256": "e939a676c51c7a98b9dc4bb843e846f546e1ada2bfb576b41416c406415c0643"
+    },
+    {
+      "path": "data/processed/cic_normalization/run_20261003T104918756555Z_3b68d36a5705/normalization_manifest.csv",
+      "sha256": "c4dc77f00849518ee56dc34d0f0cc7daf0c92b3ce9fd1e93fd63d053caf8570f"
+    },
+    {
+      "path": "data/processed/cic_normalization/run_20261003T104918756555Z_3b68d36a5705/final_eligibility_manifest.csv",
+      "sha256": "74b5deb060b0f480eaae72f321686318f7b71e83386c13e75d68a0769194d2ec"
+    },
+    {
+      "path": "data/processed/cic_normalization/run_20261003T104918756555Z_3b68d36a5705/static_extraction/cache_manifest.csv",
+      "sha256": "ca4fe3284a5c3d386f33e3cf1a6016a60a8a4c9a0a0047c19f9e42481b0a1850"
+    }
+  ],
+  "seeds": [
+    42
+  ],
+  "model_evaluation": "N/A: maintenance, no fitting or Test evaluation",
+  "checks": {
+    "fresh_pytest": "588 passed, 2 warnings",
+    "baseline_pytest_first": "587 passed, 1 import-timeout failure, 2 warnings",
+    "baseline_pytest_repeat": "587 passed, 1 import-timeout failure, 2 warnings",
+    "pip_check_baseline": "passed",
+    "pip_check_fresh": "passed",
+    "git_diff_check": "passed",
+    "unsafe_artifact_ignore_coverage": "verified for PDFs, NPY, artifacts, checkpoints"
+  },
+  "source_data": "retained; transfer omits caches and redundant input archives",
+  "previous_attempt": "Earlier started 20261009T055509676558Z attempt has no run_summary or deliverable archive; recorded unavailable without changing previous reports",
+  "full_transfer_attempt": "Superseded by user minimal-transfer instruction; partial archive removed, attempt summary retained"
+}

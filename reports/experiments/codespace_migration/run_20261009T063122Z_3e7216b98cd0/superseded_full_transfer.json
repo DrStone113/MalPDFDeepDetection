@@ -1,0 +1,6 @@
+{
+  "status": "interrupted_superseded_by_user",
+  "reason": "Only necessary data; omit recreatable caches and redundant original archives",
+  "partial_files": 43133,
+  "discarded_partial_bytes": 2038244711
+}

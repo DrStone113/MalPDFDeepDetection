@@ -1,0 +1,9 @@
+{
+  "fresh_pytest": "588 passed, 2 warnings",
+  "baseline_pytest_first": "587 passed, 1 import-timeout failure, 2 warnings",
+  "baseline_pytest_repeat": "587 passed, 1 import-timeout failure, 2 warnings",
+  "pip_check_baseline": "passed",
+  "pip_check_fresh": "passed",
+  "git_diff_check": "passed",
+  "unsafe_artifact_ignore_coverage": "verified for PDFs, NPY, artifacts, checkpoints"
+}

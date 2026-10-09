@@ -1,0 +1,52 @@
+{
+  "actions": [
+    {
+      "path": "src/malpdf/__pycache__",
+      "bytes": 1461,
+      "kind": "recreatable_python_cache"
+    },
+    {
+      "path": "src/malpdf/deep_learning/__pycache__",
+      "bytes": 28522,
+      "kind": "recreatable_python_cache"
+    },
+    {
+      "path": "src/malpdf/data/__pycache__",
+      "bytes": 193113,
+      "kind": "recreatable_python_cache"
+    },
+    {
+      "path": "src/malpdf/static/__pycache__",
+      "bytes": 27386,
+      "kind": "recreatable_python_cache"
+    },
+    {
+      "path": "src/malpdf/experiments/__pycache__",
+      "bytes": 220874,
+      "kind": "recreatable_python_cache"
+    },
+    {
+      "path": "src/malpdf/models/__pycache__",
+      "bytes": 91282,
+      "kind": "recreatable_python_cache"
+    },
+    {
+      "path": "src/malpdf/evaluation/__pycache__",
+      "bytes": 30311,
+      "kind": "recreatable_python_cache"
+    },
+    {
+      "path": ".pytest_cache",
+      "bytes": 60731,
+      "kind": "recreatable_python_cache"
+    }
+  ],
+  "removed_bytes": 653680,
+  "data_artifacts_checkpoints": "retained",
+  "pip_download_cache": {
+    "command": "python -m pip cache purge",
+    "reported_removed_mb": 976.4,
+    "files_removed": 311,
+    "directories_removed": 606
+  }
+}

@@ -1,15 +1,18 @@
 # Restore the private Lubuntu VMware transfer
 
 The 2026-10-09 maintenance task packages existing local data as opaque bytes.
+The earlier named transfer was unavailable; use the replacement named below.
 No dataset is downloaded, PDF parsed or rendered, model fitted, split regenerated,
 or research Test evaluated. PDF samples remain untrusted: never open them in a
 viewer or run embedded content. VMware does not itself authorize dynamic analysis.
 
 The transfer is a private local file under ignored `artifacts/migration/`.
-It includes a compressed data archive, all local Git branch history in
+It includes a minimal compressed data archive, all local Git branch history in
 `repository.bundle`, a private file-checksum manifest, effective Python/package
-versions, and a copy of these instructions. Credentials and virtual environments
-are excluded. Code, configurations, aggregate reports, and the research log are
+versions, and a copy of these instructions. Credentials, virtual environments, NPY matrix caches, original ZIP archives,
+PDFs outside the saved raw/v4 model cohort manifests, and copied code worktrees
+are excluded. Prepared feature tables, saved partitions/validation roles,
+private identity mappings, fitted models, checkpoints and Test locks are retained. Code, configurations, aggregate reports, and the research log are
 committed separately; raw data, matrices and checkpoints stay outside Git.
 
 Keep the Codespace until you have downloaded and verified the transfer on your
@@ -18,11 +21,11 @@ use the final file under `artifacts/migration/` supplied at handoff.
 
 ## Download and verify
 
-Download the final `MalPDFDeepDetection-transfer-20261009T055256Z.tar` through
+Download the final `MalPDFDeepDetection-transfer-20261009T065230Z.tar` through
 the VS Code file explorer, then copy this archive into the VM. Copying the
 opaque archive does not require opening any individual PDF.
 
-The outer archive contains `MalPDFDeepDetection-transfer-20261009T055256Z/`.
+The outer archive contains `MalPDFDeepDetection-transfer-20261009T065230Z/`.
 Its exact size, SHA-256 and measured storage needs are recorded in the adjacent
 handoff receipt. Reserve space for both the archive and extracted data, plus the
 new environment; allow additional room for future artifacts. Do not infer RAM
@@ -30,15 +33,21 @@ or GPU availability from the Codespace or Kaggle environment.
 
 ```bash
 mkdir -p "$HOME/malpdf-transfer"
-tar -xf "$HOME/Downloads/MalPDFDeepDetection-transfer-20261009T055256Z.tar" \
+tar -xf "$HOME/Downloads/MalPDFDeepDetection-transfer-20261009T065230Z.tar" \
   -C "$HOME/malpdf-transfer" --no-same-owner
-MALPDF_TRANSFER_DIR="$HOME/malpdf-transfer/MalPDFDeepDetection-transfer-20261009T055256Z"
+MALPDF_TRANSFER_DIR="$HOME/malpdf-transfer/MalPDFDeepDetection-transfer-20261009T065230Z"
 cd "$MALPDF_TRANSFER_DIR"
 sha256sum -c SHA256SUMS
 ```
 
 Stop on any checksum failure. `data-file-checksums.jsonl` is private: it contains per-file
 identities and must not be committed or uploaded.
+The archive includes a `verify_restored_data.py` helper. After restoring the data,
+run it against the repository to check every restored file against the private manifest:
+
+```bash
+python3 "$MALPDF_TRANSFER_DIR/verify_restored_data.py" /workspaces/MalPDFDeepDetection
+```
 
 ## Restore code and existing evidence
 
@@ -58,16 +67,14 @@ git clone -b main "$MALPDF_TRANSFER_DIR/repository.bundle" /workspaces/MalPDFDee
 cd /workspaces/MalPDFDeepDetection
 git bundle verify "$MALPDF_TRANSFER_DIR/repository.bundle"
 git remote set-url origin https://github.com/DrStone113/MalPDFDeepDetection
-tar -xzf "$MALPDF_TRANSFER_DIR/malpdf-data-20261009T055256Z.tar.gz" \
+tar -xzf "$MALPDF_TRANSFER_DIR/malpdf-data-20261009T065230Z.tar.gz" \
   --strip-components=1 --no-same-owner -C /workspaces/MalPDFDeepDetection
 git status --short --branch
 ```
 
 Keep manifests, validation locks, completed runs, checkpoints and exclusive Test
-markers together. Historical provenance remains unchanged. Snapshots under
-`artifacts/code_checkouts/` contain source files; their machine-specific `.git`
-control files are excluded. Recreate a Git worktree from its recorded branch or
-commit if one is needed; do not treat those snapshots as active Git worktrees.
+markers together. Historical provenance remains unchanged. Code snapshots under `artifacts/code_checkouts/` are omitted. Recreate a Git
+worktree from the branch or commit retained in `repository.bundle` if needed.
 Experiments must still start from clean committed generating code.
 
 The bundle retains the remote-tracking refs present at packaging time. After
@@ -100,3 +107,26 @@ research models or reevaluate locked research Test sets. Continue new work only
 after the dependency check and tests pass. Use explicit `--data-root` arguments
 where an entry point requires them; never edit immutable historical evidence
 to replace old paths or generate a replacement Protocol G split.
+
+## Recreate omitted outputs only when needed
+
+The source manifests and original PDF bytes for the saved raw and v4 model
+cohorts are retained. Source archive ZIPs and PDFs outside those cohorts are
+not included; historical full-source archive audits cannot be repeated from this
+minimal transfer alone. Existing saved audit evidence remains unchanged.
+
+Markov matrices are omitted. Rebuild the source-cohort cache explicitly on
+Lubuntu, using its saved manifest and bounded static byte extraction:
+
+```bash
+OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 \
+  .venv/bin/python scripts/02_build_markov_cache.py --config configs/raw_markov_cache.yaml
+```
+
+This reads PDFs only as untrusted bytes; it does not render them or evaluate
+research Test metrics. The command is an authorized local preparation after
+restoration, not a dataset download. CIC/v4 matrix preparation requires the
+existing cohort-specific workflow and locked manifests; do not use the source
+cache command to invent a new CIC split. GPU input ZIPs and generated submission
+bundles can be exported again from the retained tables/locks and rebuilt matrices.
+Recreating these outputs is not permission to repeat a locked Test evaluation.
