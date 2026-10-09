@@ -1,0 +1,62 @@
+[
+  {
+    "command": [
+      ".venv/bin/pytest",
+      "tests/"
+    ],
+    "exit_code": 1,
+    "summary": "624 passed, 2 warnings in 165.81s (0:02:45) =============",
+    "evidence": "artifacts/static_p0_p1/run_20261009T104756085526Z_0c7b41847f18/check_0.log"
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "-m",
+      "pip",
+      "check"
+    ],
+    "exit_code": 0,
+    "summary": null,
+    "evidence": "artifacts/static_p0_p1/run_20261009T104756085526Z_0c7b41847f18/check_1.log"
+  },
+  {
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exit_code": 0,
+    "summary": null,
+    "evidence": "artifacts/static_p0_p1/run_20261009T104756085526Z_0c7b41847f18/check_2.log"
+  },
+  {
+    "command": [
+      "git",
+      "status",
+      "--short"
+    ],
+    "exit_code": 0,
+    "summary": null,
+    "evidence": "artifacts/static_p0_p1/run_20261009T104756085526Z_0c7b41847f18/check_3.log"
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "scripts/14_benchmark_static.py",
+      "--help"
+    ],
+    "exit_code": 0,
+    "summary": null,
+    "evidence": "artifacts/static_p0_p1/run_20261009T104756085526Z_0c7b41847f18/check_4.log"
+  },
+  {
+    "command": [
+      ".venv/bin/malpdf",
+      "code-inspect",
+      "--help"
+    ],
+    "exit_code": 0,
+    "summary": null,
+    "evidence": "artifacts/static_p0_p1/run_20261009T104756085526Z_0c7b41847f18/check_5.log"
+  }
+]

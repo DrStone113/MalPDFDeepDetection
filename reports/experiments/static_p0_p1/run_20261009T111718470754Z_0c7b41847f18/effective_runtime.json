@@ -1,0 +1,26 @@
+{
+  "python": "3.11.17",
+  "executable": "/home/drstone/MalPDFDeepDetection/.venv/bin/python",
+  "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+  "torch": "2.11.0+cpu",
+  "torchvision": "0.26.0+cpu",
+  "torch_cuda_version": null,
+  "cuda_available": false,
+  "packages": {
+    "pypdf": "5.9.0",
+    "PyMuPDF": "1.26.7",
+    "esprima": "4.0.1",
+    "numpy": "2.4.6",
+    "pandas": "2.3.3",
+    "scipy": "1.17.1",
+    "scikit-learn": "1.9.1",
+    "pytest": "8.4.2",
+    "xgboost": "3.2.0"
+  },
+  "threads": {
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "environment_scope": "Fresh local Python 3.11 CPU environment; not identical to previous Codespace/Kaggle environments"
+}

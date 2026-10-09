@@ -206,6 +206,9 @@ def test_saved_g_split_validates_labels_groups_assignments_and_no_feature_vector
 
 
 def test_g_runner_uses_train_only_and_protects_protocol_p_outputs(tmp_path, monkeypatch):
+    # Fixture provenance must not inherit an ancestor repository's Git state.
+    monkeypatch.setattr("malpdf.experiments.protocol_g_benchmark.repository_git_state",
+                        lambda root: {"status": "unavailable", "reason": "synthetic fixture"})
     root, dataset_path, frame, manifest, manifest_path, report_path = _synthetic_g_fixture(
         tmp_path, monkeypatch
     )

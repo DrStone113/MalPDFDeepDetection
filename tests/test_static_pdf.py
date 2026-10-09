@@ -253,6 +253,44 @@ def test_output_is_deterministic_and_json_serializable(tmp_path: Path):
     assert json.loads(json.dumps(first, allow_nan=False))["input"]["sha256"] == first["input"]["sha256"]
 
 
+def test_structural_totals_distinguish_absence_from_failed_or_limited_traversal(tmp_path):
+    from malpdf.static.pdf_parser import inspect_pdf_structure
+    path = tmp_path / "empty.pdf"
+    _synthetic_pdf(path, active_indicators=False, include_images=False)
+    complete = inspect_pdf_structure(path.read_bytes(), StaticInspectionLimits())
+    assert complete.structural_complete
+    assert complete.structural_indicator_counts["JS"] == 0
+    for data, limits in [(b"%PDF-1.7\ntruncated", StaticInspectionLimits()),
+                         (path.read_bytes(), StaticInspectionLimits(max_objects=1))]:
+        result = inspect_pdf_structure(data, limits)
+        assert not result.structural_complete
+        assert all(value is None for value in result.structural_indicator_counts.values())
+        assert result.embedded_file_count is None
+    _synthetic_pdf(path, encrypted=True)
+    encrypted = inspect_pdf_structure(path.read_bytes(), StaticInspectionLimits())
+    assert not encrypted.structural_complete
+    assert all(value is None for value in encrypted.structural_indicator_counts.values())
+
+
+def test_unresolved_structural_reference_keeps_observed_evidence_and_marks_totals_unknown(monkeypatch):
+    from pypdf.generic import IndirectObject
+    from malpdf.static.pdf_parser import inspect_pdf_structure
+    class Reader:
+        is_encrypted = False
+        metadata = None
+        pages = []
+        trailer = DictionaryObject({_name("/JS"): TextStringObject("var n=1;"),
+                                    _name("/Missing"): IndirectObject(99, 0, None),
+                                    _name("/AcroForm"): DictionaryObject()})
+    monkeypatch.setattr("malpdf.static.pdf_parser.PdfReader", lambda *args, **kwargs: Reader())
+    result = inspect_pdf_structure(b"inert fixture bytes", StaticInspectionLimits())
+    assert not result.structural_complete
+    assert result.structural_indicator_counts["JS"] is None
+    assert result.observed_structural_indicator_counts["JS"] == 1
+    assert result.observed_structural_indicator_counts["Acroform"] == 1
+    assert any(issue.code == "structural_reference_unavailable" for issue in result.warnings)
+
+
 def test_reference_metadata_features_match_published_pymupdf_contract(tmp_path: Path):
     path = tmp_path / "reference.pdf"
     _reference_fixture(path, pages=2, title="Short title", text="x" * 51, attachments=1, xmp=True)

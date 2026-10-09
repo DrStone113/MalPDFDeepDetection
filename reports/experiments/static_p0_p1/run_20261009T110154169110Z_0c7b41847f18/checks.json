@@ -1,0 +1,42 @@
+[
+  {
+    "command": [
+      ".venv/bin/pytest",
+      "tests/"
+    ],
+    "exit_code": 1,
+    "summary": "22 failed, 551 passed, 52 errors in 146.11s (0:02:26)",
+    "evidence": "artifacts/static_p0_p1/run_20261009T110154169110Z_0c7b41847f18/check_0.log"
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "-m",
+      "pip",
+      "check"
+    ],
+    "exit_code": 0,
+    "summary": "No broken requirements found.",
+    "evidence": "artifacts/static_p0_p1/run_20261009T110154169110Z_0c7b41847f18/check_1.log"
+  },
+  {
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exit_code": 0,
+    "summary": null,
+    "evidence": "artifacts/static_p0_p1/run_20261009T110154169110Z_0c7b41847f18/check_2.log"
+  },
+  {
+    "command": [
+      "git",
+      "status",
+      "--short"
+    ],
+    "exit_code": 0,
+    "summary": null,
+    "evidence": "artifacts/static_p0_p1/run_20261009T110154169110Z_0c7b41847f18/check_3.log"
+  }
+]

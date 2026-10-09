@@ -1,0 +1,8 @@
+{
+  "R0": "Historical RIT Protocol G RF/XGBoost evidence available; CSV/split validated",
+  "C0": "Dedicated CIC-only baseline with matching new extractor not run",
+  "C1": "Same locked CIC split advanced-feature ablation not run",
+  "X1": "41-feature RIT-to-reextracted-CIC experiment not run; record equivalence and file-overlap limitations retained",
+  "X2": "Deferred; no target Test threshold tuning",
+  "existing_cic_results": "Retrospective raw-source-to-CIC/v4 studies, not new C0/C1 or historical-RIT transfer"
+}

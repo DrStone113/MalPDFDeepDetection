@@ -8,6 +8,8 @@ from enum import StrEnum
 from numbers import Real
 from typing import Any
 
+STATIC_DIAGNOSTIC_SCHEMA_VERSION = "static-diagnostics-v2"
+
 
 class FeatureStatus(StrEnum):
     """Evidence level for the mapping from an extracted value to a RIT feature."""
@@ -103,6 +105,7 @@ class StaticInspectionResult:
     def to_dict(self) -> dict[str, Any]:
         """Return deterministic JSON-ready content without PDF payloads or URLs."""
         return {
+            "diagnostic_schema_version": STATIC_DIAGNOSTIC_SCHEMA_VERSION,
             "input": self.input,
             "parser": self.parser,
             "features": self.features,

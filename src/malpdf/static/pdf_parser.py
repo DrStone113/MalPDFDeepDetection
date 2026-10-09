@@ -25,9 +25,14 @@ from malpdf.static.safety import StaticInspectionLimits
 _STRUCTURAL_NAMES = frozenset(
     {
         "/JavaScript", "/JS", "/URI", "/AA", "/OpenAction", "/Launch",
-        "/EmbeddedFile", "/Acroform", "/XFA", "/JBIG2Decode", "/RichMedia",
+        "/EmbeddedFile", "/Acroform", "/AcroForm", "/XFA", "/JBIG2Decode", "/RichMedia",
     }
 )
+
+
+def _indicator_name(name: str) -> str:
+    # Keep the old diagnostic key while recognizing the standard PDF spelling.
+    return "Acroform" if name == "/AcroForm" else name.removeprefix("/")
 
 
 @dataclass
@@ -42,7 +47,9 @@ class ParserInspection:
     image_count: int | None = None
     contains_text: int | None = None
     embedded_file_count: int | None = None
-    structural_indicator_counts: dict[str, int] = field(default_factory=dict)
+    structural_indicator_counts: dict[str, int | None] = field(default_factory=dict)
+    observed_structural_indicator_counts: dict[str, int] = field(default_factory=dict)
+    structural_complete: bool = False
     warnings: list[StructuredExtractionIssue] = field(default_factory=list)
     errors: list[StructuredExtractionIssue] = field(default_factory=list)
     resource_limit_reached: bool = False
@@ -61,7 +68,8 @@ class _StructureWalker:
         self.visited_indirect: set[tuple[int, int]] = set()
         self.object_count = 0
         self.limit_reached = False
-        self.indicators = {name.removeprefix("/"): 0 for name in _STRUCTURAL_NAMES}
+        self.failed_references = 0
+        self.indicators = {_indicator_name(name): 0 for name in _STRUCTURAL_NAMES}
         self.embedded_file_count = 0
 
     def walk(self, value: Any, depth: int = 0) -> None:
@@ -70,14 +78,26 @@ class _StructureWalker:
         if depth > self.limits.max_recursion_depth:
             self.limit_reached = True
             return
-        if isinstance(value, IndirectObject):
+        resolving: set[tuple[int, int]] = set()
+        while isinstance(value, IndirectObject):
             identifier = (int(value.idnum), int(value.generation))
+            if identifier in resolving:
+                self.failed_references += 1
+                return
             if identifier in self.visited_indirect:
                 return
+            if len(resolving) >= self.limits.max_recursion_depth:
+                self.limit_reached = True
+                return
+            resolving.add(identifier)
             self.visited_indirect.add(identifier)
             try:
                 value = value.get_object()
+                if value is None:
+                    self.failed_references += 1
+                    return
             except Exception:
+                self.failed_references += 1
                 return
         if isinstance(value, DictionaryObject):
             self.object_count += 1
@@ -86,12 +106,12 @@ class _StructureWalker:
                 return
             keys = {str(key) for key in value.keys()}
             for key in keys.intersection(_STRUCTURAL_NAMES):
-                self.indicators[key.removeprefix("/")] += 1
+                self.indicators[_indicator_name(key)] += 1
             # Action and type names are values in ordinary PDF dictionaries
             # (for example << /S /Launch >>), not only dictionary keys.
             for key, child in value.items():
                 if str(key) in {"/S", "/Type"} and str(child) in _STRUCTURAL_NAMES:
-                    self.indicators[str(child).removeprefix("/")] += 1
+                    self.indicators[_indicator_name(str(child))] += 1
             if "/EF" in keys:
                 self.embedded_file_count += 1
             for child in value.values():
@@ -134,7 +154,7 @@ def _count_page_images(pages: list[Any]) -> int:
 def inspect_pdf_structure(data: bytes, limits: StaticInspectionLimits) -> ParserInspection:
     """Inspect an in-memory PDF with pypdf, returning partial structured data."""
     result = ParserInspection(
-        structural_indicator_counts={name.removeprefix("/"): 0 for name in _STRUCTURAL_NAMES}
+        structural_indicator_counts={_indicator_name(name): None for name in _STRUCTURAL_NAMES}
     )
     try:
         with warnings.catch_warnings(record=True) as caught:
@@ -165,11 +185,16 @@ def inspect_pdf_structure(data: bytes, limits: StaticInspectionLimits) -> Parser
         )
         return result
 
+    walker = _StructureWalker(limits)
     try:
-        walker = _StructureWalker(limits)
         walker.walk(reader.trailer)
-        result.structural_indicator_counts = walker.indicators
-        result.embedded_file_count = walker.embedded_file_count
+        result.structural_complete = not (walker.limit_reached or walker.failed_references)
+        if result.structural_complete:
+            result.structural_indicator_counts = dict(walker.indicators)
+            result.embedded_file_count = walker.embedded_file_count
+        if walker.failed_references:
+            result.warnings.append(StructuredExtractionIssue(
+                "structural_reference_unavailable", "One or more PDF references could not be resolved; structural totals are unavailable."))
         if walker.limit_reached:
             result.resource_limit_reached = True
             result.warnings.append(
@@ -177,6 +202,7 @@ def inspect_pdf_structure(data: bytes, limits: StaticInspectionLimits) -> Parser
             )
     except Exception as error:
         result.warnings.append(StructuredExtractionIssue("structural_traversal_failure", _bounded_message(error, limits)))
+    result.observed_structural_indicator_counts = dict(walker.indicators)
 
     try:
         metadata = reader.metadata

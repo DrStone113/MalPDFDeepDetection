@@ -1,0 +1,58 @@
+{
+  "run_id": "run_20261009T110154169110Z_0c7b41847f18",
+  "study": "static_p0_p1",
+  "status": "checks_failed",
+  "started_at_utc": "2026-10-09T11:02:45.501813+00:00",
+  "code_commit": "0c7b41847f18e1a4c4ce4c68c4da71e457e5ad9f",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/static_acceleration_design.md",
+      " M reports/research_log.md",
+      " M src/malpdf/inference/predictor.py",
+      " M src/malpdf/static/analyzer.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M src/malpdf/static/coverage.py",
+      " M src/malpdf/static/pdf_parser.py",
+      " M src/malpdf/static/result.py",
+      " M tests/test_static_acceleration.py",
+      " M tests/test_static_pdf.py",
+      "?? reports/analysis/static_p0_p1.md",
+      "?? reports/experiments/static_p0_p1/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/static_acceleration_design.md",
+      " M reports/research_log.md",
+      " M src/malpdf/inference/predictor.py",
+      " M src/malpdf/static/analyzer.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M src/malpdf/static/coverage.py",
+      " M src/malpdf/static/pdf_parser.py",
+      " M src/malpdf/static/result.py",
+      " M tests/test_static_acceleration.py",
+      " M tests/test_static_pdf.py",
+      "?? reports/analysis/static_p0_p1.md",
+      "?? reports/experiments/static_p0_p1/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "P0/P1 maintenance; existing Protocol G/P/CV designs unchanged",
+  "report_path": "reports/experiments/static_p0_p1/run_20261009T110154169110Z_0c7b41847f18/run_summary.json",
+  "artifact_path": "artifacts/static_p0_p1/run_20261009T110154169110Z_0c7b41847f18",
+  "metrics": {},
+  "evidence_sources": "evidence_sources.json",
+  "input_audit": "input_audit.json",
+  "feature_definitions": "feature_definitions.csv",
+  "historical_baselines": "historical_baselines.json",
+  "checks": "checks.json",
+  "real_pdfs_read": 0,
+  "models_refitted": 0,
+  "test_evaluation_count": 0,
+  "notes": "Final P0/P1 verification: 22 failed, 551 passed, 52 errors in 146.11s (0:02:26); pip check/diff/status recorded. Two earlier failed full-suite checks are preserved. Resource-probe setup and asynchronous signal synchronization corrected; OS caps unchanged. Metadata and historical results reused only from saved evidence. No model or evaluated partition; metrics N/A. Original local restoration log row preserved; Label=1 malicious, 10-bin equal-width ECE convention inapplicable.",
+  "finished_at_utc": "2026-10-09T11:05:24.484150+00:00"
+}

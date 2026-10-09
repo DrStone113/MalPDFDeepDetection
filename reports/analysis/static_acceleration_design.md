@@ -40,7 +40,9 @@ to 2,000 visited values/depth 64, at most 64 scripts, 256 KiB per decoded script
 decompression is explicitly capped per filter layer. The OS caps also cover
 implicit pypdf xref/object-stream parsing. Parallel inspection uses bounded
 processes with CPU quota/affinity and available RAM checks; worker BLAS threads
-are one. Timeouts kill the child and preserve an unavailable/referral result.
+are one. The default is one worker. Each child starts a separate process group;
+timeouts and iterator cleanup kill that group and preserve unavailable results.
+The returned OS limits describe address space, not peak resident memory (RSS).
 
 Unsupported filters/DecodeParms, encrypted PDFs, malformed JavaScript, failed
 decoding and budget exhaustion are explicit incomplete results requiring referral.
@@ -48,6 +50,14 @@ Observed partial counts are not evidence of absence. Positive named calls are
 syntax indicators, not proof of malicious behavior: identifiers may be shadowed,
 and aliases can evade name matching. AST summaries are supplementary evidence;
 they do not alter frozen model features, labels, thresholds or predictions.
+The v2 evidence schema emits `ast=null` when any script cannot be parsed, and
+unknown structural/script totals remain null after incomplete traversal.
+`observed` holds lower bounds and AST measurements from successfully parsed
+scripts. `script_sources` records bounded object IDs, redacted PDF paths and
+separate extraction/AST states. These are occurrence paths, not a complete
+trigger/action graph. A failed JS parse cannot become an all-zero AST vector.
+The RIT deployment additionally refuses failed/incomplete structural parsing,
+independent of numeric schema compatibility; it does not load the model there.
 With `scan --code-inspection`, incomplete/suspicious syntax evidence produces
 `static_decision.verdict=REFERRAL_REQUIRED` and exit code 2, even if the separate
 model probability predicts benign. This is a recommendation, not execution.

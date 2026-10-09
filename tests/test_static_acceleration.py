@@ -173,6 +173,25 @@ def test_session_all_gate_failures_never_load_model():
     assert all(not result.prediction["available"] for result in results)
 
 
+@pytest.mark.parametrize("failure", ["parser", "fatal", "structural", "resource"])
+def test_session_refuses_failed_parsing_even_with_finite_compatible_features(failure):
+    from malpdf.static.result import StructuredExtractionIssue
+    static = _inspection()
+    if failure == "fatal":
+        static.errors.append(StructuredExtractionIssue("synthetic_limit", "Synthetic failure", fatal=True))
+    elif failure == "parser":
+        static.parser["success"] = False
+    elif failure == "structural":
+        static.parser["structural_complete"] = False
+    else:
+        static.parser["resource_limit_reached"] = True
+    assert static.protocol_g_drop3constant_gate().passed
+    result = StaticScanSession(repository_root="synthetic", inspector=lambda *args, **kwargs: static,
+        model_loader=lambda root: pytest.fail("Failed parsing must not load a model")).scan_many(["fixture"])[0]
+    assert not result.prediction["available"]
+    assert result.prediction["verdict"] is None
+
+
 @pytest.mark.parametrize("raw", [np.array([[0.5, np.nan]]), np.array([[0.7, 0.6]]), np.ones((1, 3))])
 def test_session_rejects_invalid_model_probabilities(raw):
     model = _Model()
@@ -248,6 +267,8 @@ def test_unsupported_filter_and_decode_bomb_are_partial_not_clean():
     assert unsupported["errors"] == ["unsupported_script_filter"]
     assert oversized["errors"] == ["script_byte_limit"]
     assert all(r["referral_recommended"] and not r["complete"] for r in (unsupported, oversized))
+    assert all(r["ast"] is None and r["observed"]["ast"] is None for r in (unsupported, oversized))
+    assert all(r["javascript_state"] == "present_unavailable" for r in (unsupported, oversized))
 
 
 def test_bad_syntax_and_object_budget_force_referral():
@@ -255,6 +276,10 @@ def test_bad_syntax_and_object_budget_force_referral():
     limited = _inspect_code_bytes(_pdf("var a=1;"), replace(CodeInspectionLimits(), max_objects=1))
     assert bad["errors"] == ["javascript_parse_error"] and bad["scripts_parsed"] == 0
     assert "pdf_structure_limit" in limited["errors"] and not limited["complete"]
+    assert bad["ast"] is None and bad["scripts_found"] == 1
+    assert bad["javascript_state"] == "extracted_ast_failed" and bad["script_extraction_complete"]
+    assert not bad["ast_complete"]
+    assert limited["scripts_found"] is None and limited["structural_indicators"] is None
 
 
 def test_actual_spawn_inspection_handles_benign_flate_and_non_pdf(tmp_path):
@@ -263,12 +288,77 @@ def test_actual_spawn_inspection_handles_benign_flate_and_non_pdf(tmp_path):
     other.write_bytes(b"inert text")
     results = dict(inspect_pdf_codes([pdf, other], boundary=tmp_path, workers=2))
     assert results[0]["complete"] and results[0]["scripts_parsed"] == 1
+    assert results[0]["resource_limits"]["address_space_bytes"] == [1024**3, 1024**3]
+    assert results[0]["resource_limits"]["cpu_seconds"] == [4, 4]
+    assert results[0]["resource_limits"]["disposable_process_group"]
     assert results[1]["status"] == "unavailable" and results[1]["referral_recommended"]
     assert "inert text" not in json.dumps(results)
 
 
 def _slow_child(connection, path, boundary, limits, expected_sha256):
     time.sleep(30)  # synthetic worker timeout; no sample code is executed
+
+
+def test_os_address_space_limit_rejects_oversized_mapping():
+    import subprocess
+    import sys
+    # A minimal interpreter avoids loading the test module's numeric libraries
+    # before the small address-space cap. No physical memory is touched by mmap.
+    probe = """
+import json, mmap
+from malpdf.static.code_inspector import CodeInspectionLimits, _apply_code_limits
+limits = CodeInspectionLimits(memory_bytes=512 * 1024**2)
+applied = _apply_code_limits(limits)
+try:
+    allocation = mmap.mmap(-1, limits.memory_bytes + 1)
+except (OSError, MemoryError):
+    rejected = True
+else:
+    allocation.close()
+    rejected = False
+print(json.dumps([applied, rejected]))
+"""
+    result = subprocess.run([sys.executable, "-c", probe], capture_output=True, text=True, timeout=10, check=True)
+    applied, rejected = json.loads(result.stdout)
+    assert applied["address_space_bytes"] == [512 * 1024**2, 512 * 1024**2]
+    assert rejected
+
+
+def _descendant_child(connection, path, boundary, limits, expected_sha256):
+    import os
+    from pathlib import Path
+    os.setsid()
+    pid = os.fork()
+    if pid == 0:
+        time.sleep(30)
+        os._exit(0)
+    Path(path).write_text(str(pid), encoding="ascii")
+    time.sleep(30)
+
+
+def test_timeout_kills_worker_descendants(tmp_path, monkeypatch):
+    from pathlib import Path
+    # This control-process probe needs no fresh parser imports. Use fork so the
+    # timeout measures the synthetic stalled worker, not test-module startup.
+    context = multiprocessing.get_context("fork")
+    monkeypatch.setattr("malpdf.static.code_inspector.multiprocessing.get_context", lambda name: context)
+    monkeypatch.setattr("malpdf.static.code_inspector._code_child", _descendant_child)
+    marker = tmp_path / "synthetic_descendant_pid.txt"
+    result = inspect_pdf_code(marker, limits=replace(CodeInspectionLimits(), wall_seconds=1, cpu_seconds=1))
+    assert result["errors"] == ["parser_exit_or_timeout"]
+    state = Path("/proc") / marker.read_text() / "stat"
+    # Signal delivery/exit are asynchronous. Allow a bounded interval for the
+    # killed orphan to disappear or become a zombie awaiting the OS reaper.
+    deadline = time.monotonic() + 2
+    while state.exists():
+        try:
+            stopped = state.read_text().split()[2] in {"Z", "X"}
+        except FileNotFoundError:
+            break
+        if stopped:
+            break
+        assert time.monotonic() < deadline, "Synthetic descendant remained alive after group kill"
+        time.sleep(0.01)
 
 
 def test_parent_timeout_terminates_worker_and_preserves_unavailable_result(tmp_path, monkeypatch):
@@ -299,6 +389,7 @@ def test_cli_code_inspection_does_not_load_model(monkeypatch, capsys):
 def test_no_script_and_encrypted_pdf_are_distinguished():
     clean = _inspect_code_bytes(_pdf(), CodeInspectionLimits())
     assert clean["complete"] and clean["scripts_found"] == 0
+    assert clean["javascript_state"] == "absent" and clean["ast"]["node_count"] == 0
     assert not clean["referral_recommended"]
     writer = PdfWriter()
     writer.add_blank_page(72, 72)
@@ -308,6 +399,128 @@ def test_no_script_and_encrypted_pdf_are_distinguished():
     encrypted = _inspect_code_bytes(output.getvalue(), CodeInspectionLimits())
     assert encrypted["errors"] == ["encrypted_pdf"]
     assert encrypted["scripts_found"] is None and encrypted["referral_recommended"]
+
+
+def test_code_parser_failure_is_unavailable_not_zero_evidence():
+    result = _inspect_code_bytes(b"%PDF-1.7\ntruncated", CodeInspectionLimits())
+    assert result["errors"] == ["pdf_parser_failure"]
+    assert result["ast"] is None and result["scripts_found"] is None
+
+
+def test_javascript_action_without_payload_is_present_but_unavailable():
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    writer._root_object[NameObject("/OpenAction")] = DictionaryObject({NameObject("/S"): NameObject("/JavaScript")})
+    output = io.BytesIO()
+    writer.write(output)
+    result = _inspect_code_bytes(output.getvalue(), CodeInspectionLimits())
+    assert result["javascript_state"] == "present_unavailable"
+    assert result["errors"] == ["javascript_payload_missing"]
+    assert result["ast"] is None and not result["script_extraction_complete"]
+
+
+def test_code_unresolved_reference_preserves_other_scripts_without_claiming_full_coverage(monkeypatch):
+    from pypdf.generic import IndirectObject
+    class Reader:
+        is_encrypted = False
+        trailer = DictionaryObject({NameObject("/Root"): DictionaryObject({
+            NameObject("/Missing"): IndirectObject(99, 0, None),
+            NameObject("/OpenAction"): DictionaryObject({NameObject("/JS"): TextStringObject("var n=1;")})})})
+    monkeypatch.setattr("pypdf.PdfReader", lambda *args, **kwargs: Reader())
+    result = _inspect_code_bytes(b"%PDF-1.7\n", CodeInspectionLimits())
+    assert result["errors"] == ["pdf_reference_unavailable"]
+    assert result["scripts_found"] is None and result["scripts_parsed"] == 1
+    assert result["ast"] is None and result["observed"]["ast"]["node_count"] > 0
+    assert result["observed"]["scripts_found"] == 1
+    assert result["script_sources"][0]["path"] == "/Root/OpenAction/JS"
+
+
+@pytest.mark.parametrize("location", ["document", "page", "annotation", "form", "name_tree", "next_cycle"])
+@pytest.mark.parametrize("representation", ["literal", "hex", "indirect", "stream"])
+def test_js_representations_and_reachable_action_locations(location, representation):
+    from pypdf.generic import ArrayObject, ByteStringObject, DecodedStreamObject
+    writer = PdfWriter()
+    page = writer.add_blank_page(72, 72)
+    script = "var inertCount=1;"
+    value = TextStringObject(script)
+    if representation == "hex":
+        value = ByteStringObject(script.encode())
+    elif representation == "indirect":
+        value = writer._add_object(value)
+    elif representation == "stream":
+        value = DecodedStreamObject()
+        value.set_data(script.encode())
+        value = writer._add_object(value)
+    action = writer._add_object(DictionaryObject({NameObject("/S"): NameObject("/JavaScript"), NameObject("/JS"): value}))
+    if location == "document":
+        writer._root_object[NameObject("/OpenAction")] = action
+    elif location == "page":
+        page[NameObject("/AA")] = DictionaryObject({NameObject("/O"): action})
+    elif location == "annotation":
+        page[NameObject("/Annots")] = ArrayObject([writer._add_object(DictionaryObject({NameObject("/A"): action}))])
+    elif location == "form":
+        writer._root_object[NameObject("/AcroForm")] = DictionaryObject({NameObject("/Fields"): ArrayObject([
+            writer._add_object(DictionaryObject({NameObject("/AA"): DictionaryObject({NameObject("/K"): action})}))])})
+    elif location == "name_tree":
+        writer._root_object[NameObject("/Names")] = DictionaryObject({NameObject("/JavaScript"): DictionaryObject({
+            NameObject("/Names"): ArrayObject([TextStringObject("private script name"), action])})})
+    else:
+        action.get_object()[NameObject("/Next")] = action
+        writer._root_object[NameObject("/OpenAction")] = action
+    output = io.BytesIO()
+    writer.write(output)
+    result = _inspect_code_bytes(output.getvalue(), CodeInspectionLimits())
+    assert result["complete"] and result["scripts_found"] == result["scripts_parsed"] == 1
+    assert result["schema_version"] == "pdf-code-inspection-v2"
+    assert result["script_sources"][0]["container_object"] == [action.idnum, 0]
+    assert result["script_sources"][0]["status"] == "parsed"
+    assert "private script name" not in json.dumps(result) and script not in json.dumps(result)
+
+
+def test_partial_ast_retains_parsed_script_evidence_without_zero_filling_failed_script():
+    from pypdf.generic import ArrayObject
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    writer._root_object[NameObject("/PrivateKey")] = ArrayObject([
+        DictionaryObject({NameObject("/JS"): TextStringObject("var n=1;")}),
+        DictionaryObject({NameObject("/JS"): TextStringObject("var =;")})])
+    output = io.BytesIO()
+    writer.write(output)
+    result = _inspect_code_bytes(output.getvalue(), CodeInspectionLimits())
+    assert result["scripts_found"] == 2 and result["scripts_parsed"] == 1
+    assert result["ast"] is None and result["observed"]["ast"]["node_count"] > 0
+    assert [source["status"] for source in result["script_sources"]] == ["parsed", "unavailable"]
+    assert "PrivateKey" not in json.dumps(result)
+
+
+def test_javascript_action_in_object_stream_is_resolved_through_xref_stream():
+    # A benign PDF 1.5 fixture: object 5 is compressed in /ObjStm 4, and its
+    # hex /JS payload is indirect object 6. Neither /JS nor /JavaScript appears
+    # as a raw token in the compressed action, so lexical scanning cannot find it.
+    data = bytearray(b"%PDF-1.5\n")
+    offsets = {}
+    def add(number, body):
+        offsets[number] = len(data)
+        data.extend(f"{number} 0 obj\n".encode() + body + b"\nendobj\n")
+    add(1, b"<< /Type /Catalog /Pages 2 0 R /OpenAction 5 0 R >>")
+    add(2, b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>")
+    add(3, b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 72 72] >>")
+    compressed = zlib.compress(b"5 0 << /S /JavaScript /JS 6 0 R >>")
+    add(4, f"<< /Type /ObjStm /N 1 /First 4 /Filter /FlateDecode /Length {len(compressed)} >>\nstream\n".encode()
+        + compressed + b"\nendstream")
+    add(6, b"<" + b"var inertCount=1;".hex().encode() + b">")
+    offsets[7] = len(data)
+    entries = [(0, 0, 65535)] + [(2, 4, 0) if n == 5 else (1, offsets[n], 0) for n in range(1, 8)]
+    xref = b"".join(bytes([kind]) + first.to_bytes(4, "big") + second.to_bytes(2, "big")
+                    for kind, first, second in entries)
+    add(7, f"<< /Type /XRef /Size 8 /Root 1 0 R /W [1 4 2] /Length {len(xref)} >>\nstream\n".encode()
+        + xref + b"\nendstream")
+    data.extend(f"startxref\n{offsets[7]}\n%%EOF\n".encode())
+    result = _inspect_code_bytes(bytes(data), CodeInspectionLimits())
+    assert result["complete"] and result["scripts_found"] == result["scripts_parsed"] == 1
+    assert result["script_sources"][0]["container_object"] == [5, 0]
+    assert result["script_sources"][0]["script_object"] == [6, 0]
+    assert result["script_sources"][0]["path"] == "/Root/OpenAction/JS"
 
 
 def test_multiple_scripts_share_decoding_and_ast_budgets():

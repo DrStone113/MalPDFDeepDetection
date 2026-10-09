@@ -1,0 +1,11 @@
+{
+  "removed_own_benign_test_scratch": [
+    "/tmp/pytest-of-drstone/pytest-2",
+    "/tmp/pytest-of-drstone/pytest-3",
+    "/tmp/pytest-of-drstone/pytest-4",
+    "/tmp/pytest-of-drstone/pytest-5"
+  ],
+  "preserved": "All actual datasets, reports/experiments and saved check logs",
+  "reason": "tmpfs UID quota and RAM pressure from repeated test fixtures",
+  "next_basetemp": "fresh ignored artifacts directory on disk"
+}

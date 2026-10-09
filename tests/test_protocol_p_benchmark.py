@@ -109,7 +109,10 @@ def test_primary_matrix_has_exactly_ten_unique_model_variant_runs():
     }
 
 
-def test_runner_reuses_saved_manifest_and_serializes_metrics_provenance_and_variants(tmp_path):
+def test_runner_reuses_saved_manifest_and_serializes_metrics_provenance_and_variants(tmp_path, monkeypatch):
+    # Fixture provenance must not inherit an ancestor repository's Git state.
+    monkeypatch.setattr("malpdf.experiments.protocol_p_benchmark.repository_git_state",
+                        lambda root: {"status": "unavailable", "reason": "synthetic fixture"})
     root, dataset_path, frame, manifest, manifest_path = _saved_split_fixture(tmp_path)
     created_estimators = []
 

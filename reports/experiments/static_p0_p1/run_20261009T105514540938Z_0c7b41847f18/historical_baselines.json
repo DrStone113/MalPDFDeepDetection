@@ -1,0 +1,156 @@
+{
+  "reports/experiments/protocol_g/seed42/summary_test.csv": {
+    "sha256": "16c822ca3cf72c927ee7f855b861fd0ecd780d4891464e70b388ed09d6eec30f",
+    "saved_aggregate_rows": [
+      {
+        "experiment_run_id": "seed42",
+        "status": "completed",
+        "model_name": "random_forest",
+        "feature_variant": "G-drop3constant",
+        "feature_count": "38",
+        "accuracy": "0.9747277583727142",
+        "precision": "0.9971550497866287",
+        "recall": "0.9472972972972973",
+        "f1": "0.9715869715869716",
+        "roc_auc": "0.997856063468077",
+        "pr_auc": "0.997762065979853",
+        "mcc": "0.9498694044676629",
+        "tn": "2641",
+        "fp": "6",
+        "fn": "117",
+        "tp": "2103",
+        "training_seconds": "2.587710199999492",
+        "inference_total_seconds": "0.15403880000121717",
+        "inference_milliseconds_per_sample": "0.03164964043583669",
+        "score_source": "predict_proba",
+        "error_type": "",
+        "error_message": ""
+      },
+      {
+        "experiment_run_id": "seed42",
+        "status": "completed",
+        "model_name": "xgboost",
+        "feature_variant": "G-drop3constant",
+        "feature_count": "38",
+        "accuracy": "0.976987877542634",
+        "precision": "0.9953007518796992",
+        "recall": "0.9540540540540541",
+        "f1": "0.9742410303587856",
+        "roc_auc": "0.997079304465024",
+        "pr_auc": "0.9973539597295343",
+        "mcc": "0.9541605987518564",
+        "tn": "2637",
+        "fp": "10",
+        "fn": "102",
+        "tp": "2118",
+        "training_seconds": "0.5855172999999922",
+        "inference_total_seconds": "0.04827889999978652",
+        "inference_milliseconds_per_sample": "0.009919642490196532",
+        "score_source": "predict_proba",
+        "error_type": "",
+        "error_message": ""
+      }
+    ],
+    "scope": "Historical saved evidence copied only; no rerun"
+  },
+  "reports/experiments/multi_cohort_v4_evaluation/run_20261003T140953193222Z_b6e45a7dafff/model_comparison.csv": {
+    "sha256": "a8c8c343634c8269a8f9c03ea73a2c412622e8f70c849c3fe540eb814fd4e242",
+    "saved_aggregate_rows": [
+      {
+        "model": "stacking_v4",
+        "partition": "test_A_source_raw_4050",
+        "accuracy": "0.9992592592592593",
+        "f1_malicious": "0.9993346640053227",
+        "mcc": "0.9985003673991468",
+        "brier": "0.0011044813402902194",
+        "log_loss": "0.03342118895205265",
+        "ece": "0.032855957781435505",
+        "status": "completed"
+      },
+      {
+        "model": "stacking_v4",
+        "partition": "test_A_source_raw_4050_retained",
+        "accuracy": "1.0",
+        "f1_malicious": "1.0",
+        "mcc": "1.0",
+        "brier": "0.0010688331136043665",
+        "log_loss": "0.032874001329445526",
+        "ece": "0.03232723783159491",
+        "status": "completed"
+      },
+      {
+        "model": "stacking_v4",
+        "partition": "test_B_cic_291",
+        "accuracy": "0.5463917525773195",
+        "f1_malicious": "0.7053571428571429",
+        "mcc": "-0.02396887559848127",
+        "brier": "0.3606477562320352",
+        "log_loss": "0.975835454254975",
+        "ece": "0.34294927442859346",
+        "status": "completed"
+      },
+      {
+        "model": "stacking_v4",
+        "partition": "test_B_cic_291_retained",
+        "accuracy": "0.549618320610687",
+        "f1_malicious": "0.7079207920792079",
+        "mcc": "-0.024513344308353995",
+        "brier": "0.36897433981335837",
+        "log_loss": "0.9989083968931965",
+        "ece": "0.34780318094330476",
+        "status": "completed"
+      }
+    ],
+    "scope": "Historical saved evidence copied only; no rerun"
+  },
+  "reports/experiments/static_markov_development_summary/run_20261004T174737533805Z_7b3fc6194800/model_comparison.csv": {
+    "sha256": "a6d36f19de8bdf576f1138d72793552f5914a9d78a30791fc24c353f1f7cbde4",
+    "saved_aggregate_rows": [
+      {
+        "model": "structural:static_stack",
+        "partition": "validation_threshold_selection_source_raw",
+        "accuracy": "0.9986301369863013",
+        "f1_malicious": "0.9980952380952381",
+        "mcc": "0.9970301354659576",
+        "brier": "0.013029599533091431",
+        "log_loss": "0.1181298464482754",
+        "ece": "0.11095195246281675",
+        "status": "completed"
+      },
+      {
+        "model": "structural:static_stack",
+        "partition": "validation_threshold_selection_cic",
+        "accuracy": "0.5625",
+        "f1_malicious": "0.676923076923077",
+        "mcc": "0.13055067315364394",
+        "brier": "0.2857471183716384",
+        "log_loss": "0.7792589311683645",
+        "ece": "0.21188244304325204",
+        "status": "completed"
+      },
+      {
+        "model": "structural_markov:static_stack",
+        "partition": "validation_threshold_selection_source_raw",
+        "accuracy": "1.0",
+        "f1_malicious": "1.0",
+        "mcc": "1.0",
+        "brier": "0.013852456532911936",
+        "log_loss": "0.11241848961120948",
+        "ece": "0.09807847256506036",
+        "status": "completed"
+      },
+      {
+        "model": "structural_markov:static_stack",
+        "partition": "validation_threshold_selection_cic",
+        "accuracy": "0.5208333333333334",
+        "f1_malicious": "0.676056338028169",
+        "mcc": "0.008695652173913044",
+        "brier": "0.30926508821129023",
+        "log_loss": "0.8313837352274978",
+        "ece": "0.2375945897768837",
+        "status": "completed"
+      }
+    ],
+    "scope": "Historical saved evidence copied only; no rerun"
+  }
+}

@@ -103,6 +103,7 @@ class StaticPDFAnalyzer:
         parser.update(
             {
                 "success": parsed.success,
+                "structural_complete": parsed.structural_complete,
                 "encrypted": parsed.encrypted,
                 "resource_limit_reached": parsed.resource_limit_reached,
                 "header_version_string": header["header_version_string"],
@@ -110,6 +111,11 @@ class StaticPDFAnalyzer:
             }
         )
         diagnostics["parsed_structural_indicators"] = parsed.structural_indicator_counts
+        diagnostics["structural_coverage"] = {
+            "complete": parsed.structural_complete,
+            "observed_indicators": parsed.observed_structural_indicator_counts,
+            "scope": "pypdf trailer-reachable objects; observed counts are lower bounds when incomplete",
+        }
         diagnostics["pypdf_metadata_diagnostics"] = {"entry_count": parsed.metadata_entry_count, "content_redacted": True}
         diagnostics["pypdf_images_diagnostics"] = {"measurement": "unique parser-derived /Image XObjects; image bytes were not exported"}
         diagnostics["rit_reference_diagnostics"] = reference.diagnostics

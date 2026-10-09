@@ -1,0 +1,62 @@
+{
+  "run_id": "run_20261009T111718470754Z_0c7b41847f18",
+  "study": "static_p0_p1",
+  "status": "completed",
+  "started_at_utc": "2026-10-09T11:18:11.873455+00:00",
+  "code_commit": "0c7b41847f18e1a4c4ce4c68c4da71e457e5ad9f",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/static_acceleration_design.md",
+      " M reports/research_log.md",
+      " M src/malpdf/inference/predictor.py",
+      " M src/malpdf/static/analyzer.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M src/malpdf/static/coverage.py",
+      " M src/malpdf/static/pdf_parser.py",
+      " M src/malpdf/static/result.py",
+      " M tests/test_protocol_g_benchmark.py",
+      " M tests/test_protocol_p_benchmark.py",
+      " M tests/test_static_acceleration.py",
+      " M tests/test_static_pdf.py",
+      "?? reports/analysis/static_p0_p1.md",
+      "?? reports/experiments/static_p0_p1/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/static_acceleration_design.md",
+      " M reports/research_log.md",
+      " M src/malpdf/inference/predictor.py",
+      " M src/malpdf/static/analyzer.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M src/malpdf/static/coverage.py",
+      " M src/malpdf/static/pdf_parser.py",
+      " M src/malpdf/static/result.py",
+      " M tests/test_protocol_g_benchmark.py",
+      " M tests/test_protocol_p_benchmark.py",
+      " M tests/test_static_acceleration.py",
+      " M tests/test_static_pdf.py",
+      "?? reports/analysis/static_p0_p1.md",
+      "?? reports/experiments/static_p0_p1/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "P0/P1 maintenance; existing Protocol G/P/CV designs unchanged",
+  "report_path": "reports/experiments/static_p0_p1/run_20261009T111718470754Z_0c7b41847f18/run_summary.json",
+  "artifact_path": "artifacts/static_p0_p1/run_20261009T111718470754Z_0c7b41847f18",
+  "metrics": {},
+  "evidence_sources": "evidence_sources.json",
+  "input_audit": "input_audit.json",
+  "feature_definitions": "feature_definitions.csv",
+  "historical_baselines": "historical_baselines.json",
+  "checks": "checks.json",
+  "real_pdfs_read": 0,
+  "models_refitted": 0,
+  "test_evaluation_count": 0,
+  "notes": "Final P0/P1 verification: 625 passed, 2 warnings in 147.60s (0:02:27); pip check/diff/status recorded. Prior failed checks preserved; resource probes synchronized, tmpfs quota avoided via fresh ignored disk basetemp, and two synthetic fixture Git states isolated. Production OS caps and clean-worktree gates unchanged. Metadata/historical results reused from saved evidence. No new research model/partition metrics; N/A. Original restoration log row preserved.",
+  "finished_at_utc": "2026-10-09T11:20:51.182593+00:00"
+}

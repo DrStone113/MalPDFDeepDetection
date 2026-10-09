@@ -13,6 +13,7 @@ import json
 import multiprocessing
 import os
 import re
+import signal
 from pathlib import Path
 import time
 import zlib
@@ -22,6 +23,11 @@ from malpdf.static.safety import read_bounded_bytes
 
 SECURITY_NAMES = frozenset({"/JS", "/JavaScript", "/OpenAction", "/AA", "/Launch",
     "/EmbeddedFile", "/EmbeddedFiles", "/XFA", "/AcroForm", "/JBIG2Decode", "/RichMedia", "/URI"})
+CODE_INSPECTION_SCHEMA_VERSION = "pdf-code-inspection-v2"
+# Only fixed PDF vocabulary is exported in paths; untrusted keys remain redacted.
+_PATH_NAMES = SECURITY_NAMES | frozenset({"/Root", "/Pages", "/Kids", "/Annots", "/A",
+    "/Next", "/Names", "/Fields", "/O", "/C", "/E", "/X", "/D", "/U", "/Fo",
+    "/Bl", "/PO", "/PC", "/PV", "/PI", "/K", "/F", "/V"})
 
 
 @dataclass(frozen=True)
@@ -51,9 +57,13 @@ class CodeInspectionLimits:
 
 
 def _unavailable(code):
-    return {"status": "unavailable", "complete": False, "referral_recommended": True,
+    return {"schema_version": CODE_INSPECTION_SCHEMA_VERSION,
+            "status": "unavailable", "complete": False, "referral_recommended": True,
             "scripts_found": None, "scripts_parsed": None, "ast": None,
             "structural_indicators": None, "errors": [code],
+            "traversal_complete": False, "javascript_state": "unavailable",
+            "script_extraction_complete": False, "ast_complete": False,
+            "observed": None, "script_sources": [],
             "scope": "catalog-reachable syntax evidence only",
             "content_redacted": True, "active_content_executed": False}
 
@@ -103,7 +113,10 @@ def _inspect_code_bytes(data, limits):
 
     if len(data) > limits.max_file_bytes or not data.startswith(b"%PDF-"):
         return _unavailable("not_pdf_or_byte_limit")
-    reader = PdfReader(io.BytesIO(data), strict=True)
+    try:
+        reader = PdfReader(io.BytesIO(data), strict=True)
+    except Exception:
+        return _unavailable("pdf_parser_failure")
     if reader.is_encrypted:
         return _unavailable("encrypted_pdf")
     errors, seen, scripts_seen = set(), set(), set()
@@ -112,27 +125,60 @@ def _inspect_code_bytes(data, limits):
     found = parsed = decoded = total_nodes = depth_max = loops = computed = visited = 0
 
     def resolve(value):
-        return value.get_object() if isinstance(value, IndirectObject) else value
+        references = set()
+        while isinstance(value, IndirectObject):
+            key = (value.idnum, value.generation)
+            if key in references or len(references) >= limits.max_pdf_depth:
+                raise CodeInspectionError("pdf_reference_limit")
+            references.add(key)
+            value = value.get_object()
+            if value is None:
+                raise CodeInspectionError("pdf_reference_unavailable")
+        return value
+
+    sources = []
+    traversal_complete = True
+    try:
+        root = reader.trailer.raw_get("/Root")
+    except Exception:
+        return _unavailable("pdf_root_unavailable")
+
+    def dictionary_children(items, parent_path, parent_owner):
+        for name, child in items:
+            yield child, parent_path + (str(name) if str(name) in _PATH_NAMES else "{key}",), parent_owner
+
+    def array_children(items, parent_path, parent_owner):
+        for index, child in enumerate(items):
+            yield child, parent_path + (f"[{index}]",), parent_owner
 
     # Iterator frames bound breadth without constructing an untrusted big stack.
-    frames = [(iter([reader.trailer.raw_get("/Root")]), 0)]
+    frames = [(iter([(root, ("/Root",), None)]), 0)]
     while frames:
         iterator, depth = frames[-1]
         try:
-            value = next(iterator)
+            value, path, owner = next(iterator)
         except StopIteration:
             frames.pop()
             continue
         visited += 1
         if visited > limits.max_objects or depth > limits.max_pdf_depth:
             errors.add("pdf_structure_limit")
+            traversal_complete = False
             break
         if isinstance(value, IndirectObject):
             key = (value.idnum, value.generation)
             if key in seen:
                 continue
             seen.add(key)
-        value = resolve(value)
+            owner = key
+        try:
+            value = resolve(value)
+        except Exception:
+            errors.add("pdf_reference_unavailable")
+            traversal_complete = False
+            continue
+        if depth == 0 and not isinstance(value, DictionaryObject):
+            return _unavailable("invalid_pdf_root")
         if isinstance(value, DictionaryObject):
             indicators.update(str(k)[1:] for k in value if str(k) in SECURITY_NAMES)
             for name in ("/S", "/Type", "/Subtype", "/Filter"):
@@ -140,23 +186,37 @@ def _inspect_code_bytes(data, limits):
                 items = item if isinstance(item, ArrayObject) else (item,)
                 if len(items) > limits.max_objects:
                     errors.add("pdf_structure_limit")
+                    traversal_complete = False
                     break
                 indicators.update(str(v)[1:] for v in items if str(v) in SECURITY_NAMES)
-            if "/JS" in value:
-                script = value.raw_get("/JS")
+            if "/JS" in value or str(value.get("/S")) == "/JavaScript":
+                missing_script = "/JS" not in value
+                script = None if missing_script else value.raw_get("/JS")
                 key = ((script.idnum, script.generation) if isinstance(script, IndirectObject)
-                       else ("direct", id(script)))
+                       else ("missing", id(value)) if missing_script else ("direct", id(script)))
                 if key not in scripts_seen:
                     scripts_seen.add(key)
                     found += 1
                     if found > limits.max_scripts:
                         errors.add("script_count_limit")
+                        traversal_complete = False
                         break
+                    source_path = "/" + "/".join(part.lstrip("/") for part in path + ("/JS",))
+                    source = {"container_object": list(owner) if owner else None,
+                              "script_object": [script.idnum, script.generation] if isinstance(script, IndirectObject) else None,
+                              "path": source_path[:256],
+                              "path_truncated": len(source_path) > 256,
+                              "extraction_status": "unavailable", "ast_status": "unavailable",
+                              "status": "unavailable"}
+                    sources.append(source)
                     try:
+                        if missing_script:
+                            raise CodeInspectionError("javascript_payload_missing")
                         text = _script_text(resolve(script), limits)
                         decoded += len(text.encode("utf-8"))
                         if decoded > limits.max_decoded_bytes:
                             raise CodeInspectionError("decoded_byte_limit")
+                        source["extraction_status"] = "complete"
                         ast = inspect_js_syntax(text, max_bytes=limits.max_script_bytes,
                             max_nodes=limits.max_ast_nodes - total_nodes, max_depth=limits.max_ast_depth)
                         parsed += 1
@@ -166,33 +226,63 @@ def _inspect_code_bytes(data, limits):
                         computed += ast["computed_members"]
                         nodes.update(ast["node_types"])
                         calls.update(ast["named_calls"])
+                        source["status"] = "parsed"
+                        source["ast_status"] = "complete"
                     except CodeInspectionError as error:
                         errors.add(str(error))
+                        source["error"] = str(error)
                         if str(error) in {"decoded_byte_limit", "ast_node_limit"}:
+                            traversal_complete = False
                             break
                     except (UnicodeError, zlib.error):
                         errors.add("script_decode_error")
-            frames.append((iter(value.values()), depth + 1))
+                        source["error"] = "script_decode_error"
+                    except Exception:
+                        errors.add("script_read_error")
+                        source["error"] = "script_read_error"
+            # Iterators capture each frame's path/owner without copying children.
+            frames.append((dictionary_children(value.items(), path, owner), depth + 1))
         elif isinstance(value, ArrayObject):
-            frames.append((iter(value), depth + 1))
-    return {"status": "partial" if errors else "complete", "complete": not errors,
+            frames.append((array_children(value, path, owner), depth + 1))
+    ast_summary = {"node_count": total_nodes, "max_depth": depth_max, "node_types": dict(sorted(nodes.items())),
+                   "named_calls": dict(calls), "loops": loops, "computed_members": computed}
+    complete_ast = traversal_complete and parsed == found
+    extraction_complete = traversal_complete and all(source["extraction_status"] == "complete" for source in sources)
+    return {"schema_version": CODE_INSPECTION_SCHEMA_VERSION,
+            "status": "partial" if errors else "complete", "complete": not errors,
             "referral_recommended": bool(errors or sum(calls.values()) or indicators["Launch"] or indicators["EmbeddedFile"]),
-            "scripts_found": found, "scripts_parsed": parsed,
-            "ast": {"node_count": total_nodes, "max_depth": depth_max, "node_types": dict(sorted(nodes.items())),
-                    "named_calls": dict(calls), "loops": loops, "computed_members": computed},
-            "structural_indicators": dict(indicators), "errors": sorted(errors),
+            "traversal_complete": traversal_complete,
+            "script_extraction_complete": extraction_complete, "ast_complete": complete_ast,
+            "javascript_state": ("partial" if not traversal_complete else "absent" if found == 0 else
+                                 "extracted" if complete_ast else "extracted_ast_failed" if extraction_complete else "present_unavailable"),
+            "scripts_found": found if traversal_complete else None, "scripts_parsed": parsed,
+            "ast": ast_summary if complete_ast else None,
+            "structural_indicators": dict(indicators) if traversal_complete else None,
+            "observed": {"scripts_found": found, "ast": ast_summary if parsed or complete_ast else None,
+                         "structural_indicators": dict(indicators)},
+            "script_sources": sources, "errors": sorted(errors),
             "scope": "catalog-reachable syntax evidence only", "content_redacted": True,
             "active_content_executed": False}
 
 
-def _code_child(connection, path, boundary, limits, expected_sha256):
-    try:
-        import resource
+def _apply_code_limits(limits):
+    """Apply OS caps before reading input or importing a PDF/JS parser."""
+    import resource
 
-        resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
-        resource.setrlimit(resource.RLIMIT_FSIZE, (0, 0))
-        resource.setrlimit(resource.RLIMIT_AS, (limits.memory_bytes, limits.memory_bytes))
-        resource.setrlimit(resource.RLIMIT_CPU, (limits.cpu_seconds, limits.cpu_seconds))
+    os.setsid()
+    resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
+    resource.setrlimit(resource.RLIMIT_FSIZE, (0, 0))
+    resource.setrlimit(resource.RLIMIT_AS, (limits.memory_bytes, limits.memory_bytes))
+    resource.setrlimit(resource.RLIMIT_CPU, (limits.cpu_seconds, limits.cpu_seconds))
+    return {"address_space_bytes": list(resource.getrlimit(resource.RLIMIT_AS)),
+            "cpu_seconds": list(resource.getrlimit(resource.RLIMIT_CPU)),
+            "wall_seconds": limits.wall_seconds, "disposable_process_group": os.getpgrp() == os.getpid()}
+
+
+def _code_child(connection, path, boundary, limits, expected_sha256):
+    applied = None
+    try:
+        applied = _apply_code_limits(limits)
         with open(os.devnull, "wb") as null:
             os.dup2(null.fileno(), 1)
             os.dup2(null.fileno(), 2)
@@ -203,6 +293,7 @@ def _code_child(connection, path, boundary, limits, expected_sha256):
             result = _inspect_code_bytes(data, limits)
     except BaseException as error:
         result = _unavailable("inspection_failed_" + type(error).__name__)
+    result["resource_limits"] = applied
     try:
         connection.send_bytes(json.dumps(result, allow_nan=False).encode())
     finally:
@@ -225,7 +316,21 @@ def _worker_count(requested, limits):
     return count
 
 
-def inspect_pdf_codes(paths, *, boundary, limits=None, workers=2, expected_hashes=None):
+def _stop_code_process(process):
+    """Kill the disposable session, including descendants, then reap its worker."""
+    try:
+        # setsid() makes the worker PID its group ID. Never signal our own group.
+        os.killpg(process.pid, signal.SIGKILL)
+    except ProcessLookupError:
+        if process.is_alive():
+            process.kill()
+    process.join(timeout=1)
+    if process.is_alive():
+        process.kill()
+        process.join(timeout=1)
+
+
+def inspect_pdf_codes(paths, *, boundary, limits=None, workers=1, expected_hashes=None):
     """Yield (input position, redacted evidence), with bounded Linux spawn jobs.
 
     Results may complete out of order. Close the iterator on early termination.
@@ -281,12 +386,7 @@ def inspect_pdf_codes(paths, *, boundary, limits=None, workers=2, expected_hashe
                     result = _unavailable("parser_exit_or_timeout")
                 if result is None:
                     continue
-                if process.is_alive():
-                    process.terminate()
-                process.join(timeout=1)
-                if process.is_alive():
-                    process.kill()
-                    process.join(timeout=1)
+                _stop_code_process(process)
                 receiver.close()
                 del active[position]
                 yield position, result
@@ -294,9 +394,7 @@ def inspect_pdf_codes(paths, *, boundary, limits=None, workers=2, expected_hashe
                 time.sleep(0.005)
     finally:
         for process, receiver, _ in active.values():
-            if process.is_alive():
-                process.kill()
-            process.join(timeout=1)
+            _stop_code_process(process)
             receiver.close()
 
 

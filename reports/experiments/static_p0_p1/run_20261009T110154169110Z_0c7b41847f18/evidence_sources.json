@@ -1,0 +1,22 @@
+{
+  "input_audit.json": {
+    "source": "reports/experiments/static_p0_p1/run_20261009T105514540938Z_0c7b41847f18/input_audit.json",
+    "sha256": "bad6ae456450b2367768f53e7e086d660f3f2b2ace5ccc1cfc50a46a89704d48"
+  },
+  "feature_definitions.csv": {
+    "source": "reports/experiments/static_p0_p1/run_20261009T105514540938Z_0c7b41847f18/feature_definitions.csv",
+    "sha256": "4886ccb77f55af3eb3077abae301eb726417d4f06f798a5ac4cc23a471dd63bf"
+  },
+  "historical_baselines.json": {
+    "source": "reports/experiments/static_p0_p1/run_20261009T105514540938Z_0c7b41847f18/historical_baselines.json",
+    "sha256": "3fc9866fac8d2d821c4cc60254018f433a839d239884f96777edf7ecc31d9786"
+  },
+  "study_readiness.json": {
+    "source": "reports/experiments/static_p0_p1/run_20261009T105514540938Z_0c7b41847f18/study_readiness.json",
+    "sha256": "749764f62d14a90932ef618bdac3901f4b84899a1dfce3eafbc936013408f748"
+  },
+  "effective_runtime.json": {
+    "source": "reports/experiments/static_p0_p1/run_20261009T105514540938Z_0c7b41847f18/effective_runtime.json",
+    "sha256": "df1448cbd3d9c992f9445ec4a9ccdf3010dae7e27c23124ce74ad8f0d30d8d26"
+  }
+}

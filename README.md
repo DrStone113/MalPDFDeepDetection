@@ -4,6 +4,15 @@ A Python research project for reproducible malicious PDF detection experiments. 
 
 ## Static evidence and inference speed
 
+The October 2026 P0/P1 maintenance separates unknown structural/AST totals from
+observed partial evidence. JSON diagnostics use `static-diagnostics-v2` and code
+inspection uses `pdf-code-inspection-v2`. Failed/incomplete PDF parsing refuses
+deployment inference even when all numeric model inputs happen to be present.
+Canonical 41-feature RIT measurements, source-defined sentinels, model artifacts
+and locked partitions keep their established definitions.
+See [the metadata audit, feature groups and offline commands](reports/analysis/static_p0_p1.md).
+This maintenance uses benign synthetic fixtures and reads dataset metadata only.
+
 Static inspection now reads one size-capped, stable byte snapshot.
 `malpdf.inference.StaticScanSession` reuses a verified frozen XGBoost deployment
 model and predicts compatible rows in bounded batches, with optional TreeSHAP.
@@ -52,6 +61,11 @@ All stages append the research log and preserve failed/interrupted evidence.
 ## Current research status
 
 Completed, versioned evidence covers the local RIT-PDFMal-2026 audit; paper-aligned Protocol P; feature-vector-disjoint Protocol G; a five-seed descriptive P/G comparison; paper-aligned XGBoost CV10; TreeSHAP; a fixed deep-learning comparison; safe static extraction and a static deployment artifact. Dynamic work is offline report-schema/routing infrastructure only; the isolated CAPEv2 laboratory is a design, not a live sandbox evaluation. The consolidated thesis package is under `reports/thesis/`.
+
+RIT is available locally as CSV only. The authors report malicious samples from
+VirusTotal during 2017–2025 and benign samples collected by their crawler
+([dataset source](https://github.com/Mo-Alani/RIT-PDFMal-2026)). CIC PDFs support
+future extractor development; RIT CSV cannot supply new JS/AST or byte features.
 
 Rebuild its lightweight tables from committed reports only (no data loading, PDF access, model fitting, or benchmark rerun):
 

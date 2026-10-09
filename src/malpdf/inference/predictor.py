@@ -27,7 +27,10 @@ def _base_result(static_result: Any, gate: Any) -> dict[str, Any]:
             "size_bytes": static_result.input.get("size_bytes"),
         },
         "extraction": {
-            "success": bool(static_result.parser.get("success")) and not any(issue.fatal for issue in static_result.errors),
+            "success": (bool(static_result.parser.get("success"))
+                        and static_result.parser.get("structural_complete", True)
+                        and not static_result.parser.get("resource_limit_reached", False)
+                        and not any(issue.fatal for issue in static_result.errors)),
             "warnings": [issue.message for issue in static_result.warnings],
             "errors": [issue.message for issue in static_result.errors],
         },
@@ -176,6 +179,9 @@ class StaticScanSession:
             gate = static.protocol_g_drop3constant_gate()
             payload = _base_result(static, gate)
             payloads.append(payload)
+            if not payload["extraction"]["success"]:
+                payload["prediction"]["error"] = "Inference refused because PDF parsing was incomplete or a fatal extraction error occurred."
+                continue
             if not gate.passed:
                 payload["prediction"]["error"] = "Inference refused because the 38-feature compatibility gate did not pass."
                 continue

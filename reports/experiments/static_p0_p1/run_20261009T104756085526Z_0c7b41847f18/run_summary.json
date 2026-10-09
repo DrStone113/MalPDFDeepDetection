@@ -1,0 +1,55 @@
+{
+  "run_id": "run_20261009T104756085526Z_0c7b41847f18",
+  "study": "static_p0_p1",
+  "status": "checks_failed",
+  "started_at_utc": "2026-10-09T10:49:43.008979+00:00",
+  "code_commit": "0c7b41847f18e1a4c4ce4c68c4da71e457e5ad9f",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/static_acceleration_design.md",
+      " M reports/research_log.md",
+      " M src/malpdf/inference/predictor.py",
+      " M src/malpdf/static/analyzer.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M src/malpdf/static/coverage.py",
+      " M src/malpdf/static/pdf_parser.py",
+      " M src/malpdf/static/result.py",
+      " M tests/test_static_acceleration.py",
+      " M tests/test_static_pdf.py",
+      "?? reports/analysis/static_p0_p1.md"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/static_acceleration_design.md",
+      " M reports/research_log.md",
+      " M src/malpdf/inference/predictor.py",
+      " M src/malpdf/static/analyzer.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M src/malpdf/static/coverage.py",
+      " M src/malpdf/static/pdf_parser.py",
+      " M src/malpdf/static/result.py",
+      " M tests/test_static_acceleration.py",
+      " M tests/test_static_pdf.py",
+      "?? reports/analysis/static_p0_p1.md"
+    ]
+  },
+  "seed": 42,
+  "protocol": "P0/P1 maintenance; existing Protocol G/P/CV designs unchanged",
+  "report_path": "reports/experiments/static_p0_p1/run_20261009T104756085526Z_0c7b41847f18/run_summary.json",
+  "artifact_path": "artifacts/static_p0_p1/run_20261009T104756085526Z_0c7b41847f18",
+  "metrics": {},
+  "input_audit": "input_audit.json",
+  "feature_definitions": "feature_definitions.csv",
+  "historical_baselines": "historical_baselines.json",
+  "checks": "checks.json",
+  "test_evaluation_count": 0,
+  "models_refitted": 0,
+  "real_pdfs_read": 0,
+  "notes": "P0 metadata/split checks and P1 benign fixtures; 624 passed, 2 warnings in 165.81s (0:02:45) =============; pip/diff/status/CLI help checked. Initial collection preceded completed editable installation; one timeout probe was corrected to exclude test-module spawn startup. Source-defined RIT sentinels and previous local log row preserved. No new model metrics; CIC Test already historically exposed.",
+  "finished_at_utc": "2026-10-09T10:53:14.722917+00:00"
+}

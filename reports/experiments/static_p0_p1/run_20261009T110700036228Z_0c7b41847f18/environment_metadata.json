@@ -1,0 +1,51 @@
+{
+  "python": "3.11.17",
+  "packages": {
+    "numpy": "2.4.6",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.9.1",
+    "PyMuPDF": "1.26.7",
+    "torch": "2.11.0+cpu",
+    "torchvision": "0.26.0+cpu",
+    "xgboost": "3.2.0",
+    "lightgbm": "4.7.0",
+    "catboost": "1.2.10"
+  },
+  "generating_commit": "0c7b41847f18e1a4c4ce4c68c4da71e457e5ad9f",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/static_acceleration_design.md",
+      " M reports/research_log.md",
+      " M src/malpdf/inference/predictor.py",
+      " M src/malpdf/static/analyzer.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M src/malpdf/static/coverage.py",
+      " M src/malpdf/static/pdf_parser.py",
+      " M src/malpdf/static/result.py",
+      " M tests/test_static_acceleration.py",
+      " M tests/test_static_pdf.py",
+      "?? reports/analysis/static_p0_p1.md",
+      "?? reports/experiments/static_p0_p1/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/static_acceleration_design.md",
+      " M reports/research_log.md",
+      " M src/malpdf/inference/predictor.py",
+      " M src/malpdf/static/analyzer.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M src/malpdf/static/coverage.py",
+      " M src/malpdf/static/pdf_parser.py",
+      " M src/malpdf/static/result.py",
+      " M tests/test_static_acceleration.py",
+      " M tests/test_static_pdf.py",
+      "?? reports/analysis/static_p0_p1.md",
+      "?? reports/experiments/static_p0_p1/"
+    ]
+  }
+}

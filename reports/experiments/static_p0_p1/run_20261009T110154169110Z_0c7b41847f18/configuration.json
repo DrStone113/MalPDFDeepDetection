@@ -1,0 +1,16 @@
+{
+  "workers": 1,
+  "local_python": "3.11",
+  "code_schema": "pdf-code-inspection-v2",
+  "diagnostic_schema": "static-diagnostics-v2",
+  "file_sha256": {
+    "pyproject.toml": "acf797ad35e526af538c561eeb71837e667afaa11be231e7e1fd5fe761fcc8e8",
+    "configs/static_development.yaml": "a739e95e5e3f619c994115df66c39c72c9d98a8e2114694606c1768c62286da0",
+    "configs/static_markov_development.yaml": "611973d2d753ba2fc7a3d30579a2c4a55ace302a9af947db46bd4c70c7ac7558",
+    "configs/multi_cohort_v4.yaml": "ae1ae248e63d42099a812bd3f5fb26a548a5d2955763f591ed5beb11e5879e86",
+    "configs/cic_cross_dataset_v3.yaml": "27a79e8296b0a59709d0ba1c4f7d6d050198c5e884d0e4c8e8fa84bee75ee451",
+    "configs/vision_resnet18.yaml": "01c9c0ac4d583acb01092e38fbc14a49e044e053efc41c39cb2f9f1d7d2e7980"
+  },
+  "source_test_doc_diff_sha256": "72bb3de8ba0f97d0acc8f4e4966e7f4ff10a15dcaacd5e8b580da460c5bd3cf1",
+  "new_document_sha256": "f52b2b98cb267ac61d0664c789ebb0ca482f41c92c7de454bbbfaa9b344317cf"
+}

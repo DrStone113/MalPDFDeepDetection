@@ -1,0 +1,44 @@
+[
+  {
+    "command": [
+      ".venv/bin/pytest",
+      "tests/",
+      "--basetemp",
+      "/home/drstone/MalPDFDeepDetection/artifacts/static_p0_p1/run_20261009T111718470754Z_0c7b41847f18/pytest_tmp"
+    ],
+    "exit_code": 0,
+    "summary": "625 passed, 2 warnings in 147.60s (0:02:27)",
+    "evidence": "artifacts/static_p0_p1/run_20261009T111718470754Z_0c7b41847f18/check_0.log"
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "-m",
+      "pip",
+      "check"
+    ],
+    "exit_code": 0,
+    "summary": "No broken requirements found.",
+    "evidence": "artifacts/static_p0_p1/run_20261009T111718470754Z_0c7b41847f18/check_1.log"
+  },
+  {
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exit_code": 0,
+    "summary": null,
+    "evidence": "artifacts/static_p0_p1/run_20261009T111718470754Z_0c7b41847f18/check_2.log"
+  },
+  {
+    "command": [
+      "git",
+      "status",
+      "--short"
+    ],
+    "exit_code": 0,
+    "summary": null,
+    "evidence": "artifacts/static_p0_p1/run_20261009T111718470754Z_0c7b41847f18/check_3.log"
+  }
+]

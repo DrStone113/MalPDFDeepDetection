@@ -35,7 +35,7 @@ def _method_for(feature: str) -> tuple[str, str, str]:
     if feature == "title length":
         return ("len(PyMuPDF metadata['title']) or 0", "Python string characters", "Released source contract; metadata text is not retained.")
     if feature == "isEncrypted":
-        return ("pypdf encryption flag without decryption", "0/1", "Passwords are never requested or attempted.")
+        return ("int(bool(PyMuPDF metadata['encryption']))", "0/1", "Released source contract; the separate pypdf encryption flag is diagnostic only. Passwords are never attempted.")
     if feature == "embedded files":
         return ("PyMuPDF Document.embfile_count()", "count", "Counts logical attachments; payload bytes are never read.")
     if feature == "images":

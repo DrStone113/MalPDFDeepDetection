@@ -1,0 +1,52 @@
+{
+  "protocol": "P0/P1 maintenance; existing Protocol G/P/CV designs unchanged",
+  "scope": "Metadata-only RIT/CIC audit and benign synthetic tests; no real PDF bytes, fitting, Test inference or evaluation",
+  "configuration": {
+    "workers": 1,
+    "local_python": "3.11",
+    "code_schema": "pdf-code-inspection-v2",
+    "diagnostic_schema": "static-diagnostics-v2"
+  },
+  "initial_worktree_changes": [
+    "reports/research_log.md (preexisting restoration row preserved)"
+  ],
+  "reference_commit": "1aaba0896ae395ddadbf1010ab9e887eedc38ea1",
+  "datasets_acquired": 0,
+  "real_pdfs_read": 0,
+  "models_refitted": 0,
+  "seeds": {
+    "saved_protocol_g": 42,
+    "new_stochastic_experiments": null
+  },
+  "feature_groups": {
+    "rit_candidate": "41 source-defined predictors; record-level equality to original publisher extraction unverified",
+    "cic_advanced": "supplementary structure/JS/AST/coverage; unavailable RIT features never zero-filled"
+  },
+  "historical_test_exposure": "CIC v3/v4 outcomes already exposed; future same-cohort studies retrospective",
+  "metric_policy": "No new model/partition evaluation; all maintenance metrics N/A",
+  "seed": 42,
+  "code_commit": "0c7b41847f18e1a4c4ce4c68c4da71e457e5ad9f",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/static_acceleration_design.md",
+      " M reports/research_log.md",
+      " M src/malpdf/inference/predictor.py",
+      " M src/malpdf/static/analyzer.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M src/malpdf/static/coverage.py",
+      " M src/malpdf/static/pdf_parser.py",
+      " M src/malpdf/static/result.py",
+      " M tests/test_static_acceleration.py",
+      " M tests/test_static_pdf.py",
+      "?? reports/analysis/static_p0_p1.md",
+      "?? reports/experiments/static_p0_p1/"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin",
+  "verification_source": "reports/experiments/static_p0_p1/run_20261009T105514540938Z_0c7b41847f18",
+  "verification_reason": "Synthetic resource probes isolate interpreter startup and wait for asynchronous OS group exit; production caps unchanged",
+  "metadata_policy": "Reuse saved metadata-only audit; no repeated PDF byte checks or Test evaluation"
+}
