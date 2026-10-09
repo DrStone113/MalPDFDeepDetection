@@ -24,6 +24,13 @@ dictionaries, including decoded PDF names, and parses literal or Flate-compresse
 JavaScript using Esprima 4.0.1. `malpdf scan /explicit/local/sample.pdf --json
 --no-explanation --code-inspection` attaches the same evidence to a model result.
 These explicit paths are manual local inspection requests, not acquisition jobs.
+The current v3 code evidence schema additionally supports ASCIIHex/ASCII85
+streams and their bounded chains with Flate. Invalid encodings and output caps
+remain explicit failures. Its null/partial contract is inherited from v2;
+canonical RIT features and deployment models are unchanged. The CIC offline
+profiler fingerprints this version, backend versions, code and limits before
+reusing complete-profile caches. See `cic_static_offline.md` for the fixed
+Train/dev job; actual CIC coverage improvements have not yet been measured.
 
 Results contain AST node/loop counts and syntactically named calls (`eval`,
 `unescape`, `atob`, `Function`, `String.fromCharCode`, `util.printf`,

@@ -16,6 +16,7 @@ from malpdf.static.rit_reference import inspect_rit_reference_features, referenc
 from malpdf.static.result import StaticInspectionResult, StructuredExtractionIssue
 from malpdf.static.safety import StaticInspectionLimits, read_bounded_bytes
 from malpdf.static.schema import RIT_FEATURES, implementation_statuses
+from malpdf.static.profiling import stage
 
 
 class StaticPDFAnalysisError(ValueError):
@@ -28,7 +29,8 @@ class StaticPDFAnalyzer:
     def __init__(self, limits: StaticInspectionLimits | None = None) -> None:
         self.limits = StaticInspectionLimits() if limits is None else limits
 
-    def inspect(self, path: str | Path) -> StaticInspectionResult:
+    def inspect(self, path: str | Path, *, snapshot: bytes | None = None,
+                snapshot_sha256: str | None = None, timings=None) -> StaticInspectionResult:
         """Return partial structured data even for malformed or non-PDF files."""
         input_path = Path(path)
         statuses = dict(implementation_statuses())
@@ -77,19 +79,27 @@ class StaticPDFAnalyzer:
             return result
 
         try:
-            data = read_bounded_bytes(input_path, boundary=input_path.absolute().parent,
-                                      max_bytes=self.limits.max_file_size_bytes)
+            with stage(timings, "read_hash"):
+                data = (read_bounded_bytes(input_path, boundary=input_path.absolute().parent,
+                                          max_bytes=self.limits.max_file_size_bytes)
+                        if snapshot is None else snapshot)
+                if not isinstance(data, bytes) or len(data) > self.limits.max_file_size_bytes:
+                    raise ValueError("Invalid bounded snapshot")
+                digest = hashlib.sha256(data).hexdigest()
+                if snapshot_sha256 is not None and digest != snapshot_sha256:
+                    raise ValueError("Snapshot checksum mismatch")
         except (OSError, ValueError) as error:
             errors.append(StructuredExtractionIssue("file_read_error", str(error)[: self.limits.max_warning_length], fatal=True))
             return result
 
         size = len(data)
         input_info["size_bytes"] = size
-        input_info["sha256"] = hashlib.sha256(data).hexdigest()
+        input_info["sha256"] = digest
 
         header = parse_pdf_header(data)
         diagnostics["file_header"] = header
-        raw_counts = scan_raw_pdf_tokens(data)
+        with stage(timings, "raw_scan"):
+            raw_counts = scan_raw_pdf_tokens(data)
         diagnostics["raw_token_counts"] = raw_counts
         features.update(raw_counts)
         diagnostics["pdfsize"] = {"size_bytes": int(size), "canonical_conversion": "int(size_bytes / 1000)"}
@@ -98,8 +108,9 @@ class StaticPDFAnalyzer:
             errors.append(StructuredExtractionIssue("not_pdf", "A valid %PDF- header was not found in the first 32 bytes.", fatal=True))
             return result
 
-        parsed = inspect_pdf_structure(data, self.limits)
-        reference = inspect_rit_reference_features(data, int(size), self.limits)
+        with stage(timings, "parse_pdf"):
+            parsed = inspect_pdf_structure(data, self.limits)
+            reference = inspect_rit_reference_features(data, int(size), self.limits)
         parser.update(
             {
                 "success": parsed.success,

@@ -1,0 +1,26 @@
+seed: 42
+prepared_cohort: run_20261003T124714720715Z_c96868a21732
+split_manifest:
+  path: data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/split_manifest.csv
+  sha256: e939a676c51c7a98b9dc4bb843e846f546e1ada2bfb576b41416c406415c0643
+source_manifest:
+  path: data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/source_manifest.csv
+  sha256: d74729236017dc27a71c999bc4d69f84a16fa4148573c3bbc7f4eb03709b150b
+normalization_manifest:
+  path: data/processed/cic_normalization/run_20261003T104918756555Z_3b68d36a5705/normalization_manifest.csv
+  sha256: c4dc77f00849518ee56dc34d0f0cc7daf0c92b3ce9fd1e93fd63d053caf8570f
+samples_per_partition: 32
+warm_repeats: 1
+workers: 1
+limits:
+  wall_seconds: 20
+  cpu_seconds: 12
+  memory_bytes: 1073741824
+  max_file_bytes: 10485760
+compare_models: true
+rf:
+  n_estimators: 200
+  max_depth: 12
+  min_samples_leaf: 2
+  class_weight: balanced
+threshold: 0.5

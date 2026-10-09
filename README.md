@@ -6,7 +6,7 @@ A Python research project for reproducible malicious PDF detection experiments. 
 
 The October 2026 P0/P1 maintenance separates unknown structural/AST totals from
 observed partial evidence. JSON diagnostics use `static-diagnostics-v2` and code
-inspection uses `pdf-code-inspection-v2`. Failed/incomplete PDF parsing refuses
+inspection now uses `pdf-code-inspection-v3` (bounded ASCIIHex/ASCII85 stream filters). Failed/incomplete PDF parsing refuses
 deployment inference even when all numeric model inputs happen to be present.
 Canonical 41-feature RIT measurements, source-defined sentinels, model artifacts
 and locked partitions keep their established definitions.
@@ -17,13 +17,17 @@ Static inspection now reads one size-capped, stable byte snapshot.
 `malpdf.inference.StaticScanSession` reuses a verified frozen XGBoost deployment
 model and predicts compatible rows in bounded batches, with optional TreeSHAP.
 `malpdf code-inspect /explicit/local/sample.pdf` adds redacted JavaScript AST
-evidence from literal/Flate streams in a disposable resource-limited process;
+evidence from literal/Flate/ASCIIHex/ASCII85 streams in a disposable resource-limited process;
 unsupported/failed analysis recommends referral. It never executes JavaScript.
 Use `malpdf scan /explicit/local/sample.pdf --json --no-explanation
 --code-inspection` for combined output. This does not change v3/v4 models or labels.
 See [design and limitations](reports/analysis/static_acceleration_design.md).
 `scripts/14_benchmark_static.py` measures synthetic ingestion/inference timings
 from clean committed code without touching external datasets or Test partitions.
+`scripts/16_benchmark_cic_static.py prepare` locks a small CIC Train/dev subset
+from saved manifests without reading PDFs. Its `run` action requires the offline
+console LAB, records every parser/AST failure and times the actual pipeline.
+See [offline job and measurement limits](reports/analysis/cic_static_offline.md).
 
 ## Retrospective multi-cohort stacking v4
 

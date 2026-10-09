@@ -1,0 +1,17 @@
+{
+  "selected_rows": 64,
+  "counts": {
+    "train/0": 16,
+    "train/1": 16,
+    "validation/0": 16,
+    "validation/1": 16
+  },
+  "splits_selected": [
+    "train",
+    "validation"
+  ],
+  "pdf_bytes_read": false,
+  "pdf_hash_recomputed": false,
+  "publisher_label_provenance_join": "all selected rows match saved normalized manifest",
+  "new_independent_test_claim": false
+}

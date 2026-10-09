@@ -1,0 +1,18 @@
+{
+  "attempt1": {
+    "passed": 119,
+    "failed": 1,
+    "reason": "new static_result DTO omitted required diagnostics; corrected"
+  },
+  "attempt2": {
+    "passed": 26,
+    "failed": 1,
+    "reason": "new synthetic whole-job fixture omitted fingerprint backends; corrected"
+  },
+  "attempt3": {
+    "passed": 27,
+    "failed": 0
+  },
+  "metadata_probe": "selected identities verified; unselected normalization aliases no longer treated as global identity ambiguity",
+  "scope": "benign fixtures and CSV metadata only; no real PDFs"
+}

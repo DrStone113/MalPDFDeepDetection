@@ -1,0 +1,63 @@
+{
+  "pytest": {
+    "command": [
+      "/home/drstone/MalPDFDeepDetection/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/",
+      "--basetemp",
+      "/home/drstone/MalPDFDeepDetection/artifacts/cic_offline_preparation/run_20261009T125338500985Z_9f988bb7ff28/pytest_full_suite",
+      "-q"
+    ],
+    "started_at_utc": "2026-10-09T13:28:54.023846+00:00",
+    "finished_at_utc": "2026-10-09T13:30:54.206571+00:00",
+    "elapsed_seconds": 120.18272624800011,
+    "exit_code": 0,
+    "log": "artifacts/cic_offline_preparation/run_20261009T125338500985Z_9f988bb7ff28/pytest_full_suite.log",
+    "scope": "benign synthetic tests only; no real CIC PDF access",
+    "passed": 658,
+    "warnings": 2,
+    "warning_scope": "existing single-class sklearn confusion-matrix fixture warnings"
+  },
+  "pip_check": {
+    "command": ".venv/bin/python -m pip check",
+    "exit_code": 0,
+    "stdout": "No broken requirements found."
+  },
+  "git_diff_check": {
+    "exit_code": 0
+  },
+  "unsafe_artifact_ignore_guards": "passed",
+  "final_code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/static_acceleration_design.md",
+      " M reports/research_log.md",
+      " M src/malpdf/static/analyzer.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M tests/test_static_acceleration.py",
+      "?? configs/cic_static_benchmark.yaml",
+      "?? reports/analysis/cic_static_offline.md",
+      "?? reports/experiments/cic_offline_preparation/",
+      "?? scripts/16_benchmark_cic_static.py",
+      "?? src/malpdf/experiments/cic_static_benchmark.py",
+      "?? src/malpdf/static/lab_guard.py",
+      "?? src/malpdf/static/profile_worker.py",
+      "?? src/malpdf/static/profiling.py",
+      "?? tests/test_cic_static_benchmark.py"
+    ]
+  },
+  "tested_source_hashes_path": "artifacts/cic_offline_preparation/run_20261009T125338500985Z_9f988bb7ff28/tested_code_sha256.json",
+  "tested_sources_digest": "58aad05d9d269f4b47ca39c89ec0f16e276068fa7e1e5cd2dc3be31d9578bbc1",
+  "tracked_diff_sha256": "356680bccfe0b0b6a8611c6efb33622ed02877e90a5535836a5a151c4b1cb33a",
+  "static_package_versions": {
+    "pypdf": "5.9.0",
+    "PyMuPDF": "1.26.7",
+    "esprima": "4.0.1"
+  },
+  "real_pdf_access": false,
+  "test_partition_access": false,
+  "metrics": null,
+  "metrics_reason": "offline job preparation and benign fixtures only; no real CIC profiling or accuracy comparison yet"
+}
