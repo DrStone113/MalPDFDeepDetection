@@ -1,0 +1,64 @@
+{
+  "run_id": "run_20261009T122810577203Z_be0f206fc72a",
+  "study": "static_performance",
+  "status": "completed",
+  "started_at_utc": "2026-10-09T12:28:10.622730+00:00",
+  "code_commit": "be0f206fc72ae4e75c104b7684c9a33be7366eeb",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "data_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "seed": 42,
+  "protocol": "synthetic performance benchmark",
+  "report_path": "reports/experiments/static_performance/run_20261009T122810577203Z_be0f206fc72a/run_summary.json",
+  "artifact_path": "artifacts/static_performance/run_20261009T122810577203Z_be0f206fc72a",
+  "metrics": {},
+  "notes": "Synthetic benchmark only; no external PDFs/Test cohorts, no fitting on Validation/Test. Exact probability/label parity. Classification F1/MCC/ECE/Brier N/A. AST calls are syntax evidence, not exploit proof. See performance_comparison.csv.",
+  "performance": [
+    {
+      "stage": "read_hash",
+      "mode": "previous_read_hash",
+      "samples": 1,
+      "repeats": 3,
+      "median_seconds": 0.003099956000369275,
+      "p95_seconds": 0.0039153001995146045,
+      "samples_per_second": 322.58522375184594,
+      "model_loads_per_repeat": "N/A"
+    },
+    {
+      "stage": "read_hash",
+      "mode": "bounded_single_snapshot",
+      "samples": 1,
+      "repeats": 3,
+      "median_seconds": 0.0041168610005115625,
+      "p95_seconds": 0.006477497101877816,
+      "samples_per_second": 242.90351310761758,
+      "model_loads_per_repeat": "N/A"
+    },
+    {
+      "stage": "model_inference",
+      "mode": "reload_per_row",
+      "samples": 64,
+      "repeats": 3,
+      "median_seconds": 0.7746283939995919,
+      "p95_seconds": 0.9920464259001164,
+      "samples_per_second": 82.62026088348333,
+      "model_loads_per_repeat": 64
+    },
+    {
+      "stage": "model_inference",
+      "mode": "resident_batch",
+      "samples": 64,
+      "repeats": 3,
+      "median_seconds": 0.08002581099935924,
+      "p95_seconds": 0.08885564260162937,
+      "samples_per_second": 799.7419732555094,
+      "model_loads_per_repeat": 1
+    }
+  ],
+  "finished_at_utc": "2026-10-09T12:28:15.839520+00:00"
+}
