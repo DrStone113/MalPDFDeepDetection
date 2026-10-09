@@ -1,0 +1,40 @@
+{
+  "run_id": "run_20261009T171528931174Z_c35a3f5ce5eb",
+  "study": "cic_supplied_model_checks",
+  "status": "completed",
+  "started_at_utc": "2026-10-09T17:15:29.001437+00:00",
+  "code_commit": "c35a3f5ce5ebd070c114558a2f842d66675b9fc8",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/research_log.md",
+      " M scripts/16_benchmark_cic_static.py",
+      " M src/malpdf/experiments/cic_static_benchmark.py",
+      " M tests/test_cic_static_benchmark.py",
+      "?? reports/experiments/cic_model_restore/",
+      "?? reports/experiments/cic_supplied_model/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/research_log.md",
+      " M scripts/16_benchmark_cic_static.py",
+      " M src/malpdf/experiments/cic_static_benchmark.py",
+      " M tests/test_cic_static_benchmark.py",
+      "?? reports/experiments/cic_model_restore/",
+      "?? reports/experiments/cic_supplied_model/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "supplied Windows G-drop3constant model lock regression verification",
+  "report_path": "reports/experiments/cic_supplied_model_checks/run_20261009T171528931174Z_c35a3f5ce5eb/run_summary.json",
+  "artifact_path": "artifacts/cic_supplied_model_checks/run_20261009T171528931174Z_c35a3f5ce5eb",
+  "metrics": {},
+  "notes": "Final synthetic regression suite: 677 passed, 2 warnings in 175.00s (0:02:55); pip/diff/ignore guards checked; supplied saved model snapshotted without fitting; exact38 order/fixedconfiguration/Label=1 and probe probability parity required; model SHA locked separately from preserved deployment manifest. No real CIC PDF/Test access or new accuracy result.",
+  "finished_at_utc": "2026-10-09T17:18:33.649939+00:00"
+}

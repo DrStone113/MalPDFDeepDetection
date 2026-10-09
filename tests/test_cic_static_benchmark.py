@@ -211,8 +211,8 @@ def test_profile_timeout_preserves_finished_stage_and_reaps_worker(tmp_path, mon
     assert {p.pid for p in multiprocessing.active_children()} == before
 
 
-@pytest.mark.parametrize("model_missing", [False, True])
-def test_benign_whole_job_keeps_failed_rows_cache_misses_and_both_passes(tmp_path, monkeypatch, model_missing):
+@pytest.mark.parametrize("model_choice", ["deployment", "missing", "supplied"])
+def test_benign_whole_job_keeps_failed_rows_cache_misses_and_both_passes(tmp_path, monkeypatch, model_choice):
     from malpdf.inference import deployment
     import numpy as np
     raw = tmp_path / "data/raw/cic_pdf"; raw.mkdir(parents=True)
@@ -230,14 +230,19 @@ def test_benign_whole_job_keeps_failed_rows_cache_misses_and_both_passes(tmp_pat
     manifest = {"model_id": "fixture", "artifact_sha256": "0" * 64,
         "training_dataset": {"sha256": "1" * 64}, "feature_schema": "fixture", "threshold": 0.5}
     def load(root):
-        if model_missing:
+        if model_choice == "supplied":
+            pytest.fail("Loaded deployment instead of the locked supplied model")
+        if model_choice == "missing":
             raise deployment.DeploymentError("fixture missing artifact", code="deployment_artifact_missing")
         return Model(), manifest
     monkeypatch.setattr(deployment, "load_verified_deployment_model", load)
     monkeypatch.setattr(study, "require_offline_lab", lambda *args: {"fixture_lab": True})
     monkeypatch.setattr(study, "clean_code", lambda *args: None)
     cfg = {"warm_repeats": 1, "compare_models": False}
-    monkeypatch.setattr(study, "load_job", lambda *args: (rows, {"configuration": cfg, "subset_sha256": "fixture", "fingerprint": {"backends": {"fixture": "1"}}}, CodeInspectionLimits(wall_seconds=20, cpu_seconds=12)))
+    spec = {**manifest, "model_id": "fixture_supplied"} if model_choice == "supplied" else None
+    monkeypatch.setattr(study, "load_profile_model", lambda root, selected: (Model(), selected))
+    monkeypatch.setattr(study, "load_job", lambda *args: (rows, {"configuration": cfg, "subset_sha256": "fixture",
+        "inference_model": spec, "fingerprint": {"backends": {"fixture": "1"}}}, CodeInspectionLimits(wall_seconds=20, cpu_seconds=12)))
     class Run:
         def __init__(self, root, *args, **kwargs):
             self.report, self.artifacts = root / "report", root / "artifacts"
@@ -253,8 +258,10 @@ def test_benign_whole_job_keeps_failed_rows_cache_misses_and_both_passes(tmp_pat
     assert evidence["cold"]["status_counts"] == {"complete": 1, "partial": 1, "input_error": 1}
     assert evidence["warm"]["cache_hits"] == 1
     assert evidence["cold"]["ast_error_files"] == evidence["warm"]["ast_error_files"] == 1
-    assert evidence["cold"]["inference_executed"] == (0 if model_missing else 2)
-    if model_missing:
+    assert evidence["cold"]["inference_executed"] == (0 if model_choice == "missing" else 2)
+    if model_choice == "supplied":
+        assert evidence["model_setup"]["model_id"] == "fixture_supplied"
+    if model_choice == "missing":
         assert evidence["model_setup"]["error_code"] == "deployment_artifact_missing"
         assert evidence["cold"]["stages_seconds"]["inference"]["measured"] == 0
         assert evidence["cold"]["stages_seconds"]["inference"]["sum"] is None
@@ -394,3 +401,85 @@ def test_saved_baseline_pairing_refuses_changed_label_or_partition(tmp_path, mon
         saved = json.loads((run.report / "baseline_comparison.json").read_text())
         assert saved["paired_cold_samples"] == 2 and saved["status_transitions"] == {"partial -> complete": 2}
         assert saved["inference_time_comparable"] is False
+
+
+@pytest.fixture
+def saved_g_estimator(tmp_path):
+    import joblib
+    import numpy as np
+    import pandas as pd
+    from malpdf.inference.schema import DEPLOYMENT_FEATURE_ORDER
+    from malpdf.models.classical import create_model
+    features = pd.DataFrame(np.random.default_rng(42).normal(size=(24, 38)), columns=DEPLOYMENT_FEATURE_ORDER)
+    model = create_model("xgboost", 42)
+    model.fit(features, np.arange(24) % 2)
+    source = tmp_path / "artifacts/models/xgboost__G-drop3constant.joblib"
+    source.parent.mkdir(parents=True)
+    joblib.dump(model, source)
+    return source, model, features
+
+
+def test_supplied_estimator_snapshot_preserves_weights_without_fitting(tmp_path, monkeypatch, saved_g_estimator):
+    import numpy as np
+    from xgboost import XGBClassifier
+    source, model, features = saved_g_estimator
+    original = source.read_bytes()
+    monkeypatch.setattr(XGBClassifier, "fit", lambda *args, **kwargs: pytest.fail("Snapshot trained a model"))
+    destination = tmp_path / "artifacts/cic_static_prepare/run_fixture/frozen_protocol_g.json"
+    spec = study.snapshot_protocol_g_model(tmp_path, source, destination)
+    frozen, manifest = study.load_profile_model(tmp_path, spec)
+    assert np.array_equal(model.predict_proba(features), frozen.predict_proba(features))
+    assert source.read_bytes() == original
+    assert manifest["model_id"] == study.SUPPLIED_G_MODEL_ID
+    assert manifest["source"]["sha256"] == hashlib.sha256(original).hexdigest()
+    assert manifest["source"]["historical_model_checksum_available"] is False
+    assert not (tmp_path / "reports/deployment").exists()
+    with pytest.raises(ValueError, match="overwrite"):
+        study.snapshot_protocol_g_model(tmp_path, source, destination)
+
+
+@pytest.mark.parametrize("change", ["checksum", "feature_order", "threshold"])
+def test_frozen_model_rejects_changed_identity_before_loading(tmp_path, monkeypatch, saved_g_estimator, change):
+    from xgboost import XGBClassifier
+    source, _, _ = saved_g_estimator
+    destination = tmp_path / "artifacts/cic_static_prepare/run_fixture/frozen_protocol_g.json"
+    spec = study.snapshot_protocol_g_model(tmp_path, source, destination)
+    if change == "checksum":
+        destination.write_bytes(destination.read_bytes() + b" ")
+    elif change == "feature_order":
+        spec["feature_order"] = list(reversed(spec["feature_order"]))
+    else:
+        spec["threshold"] = 0.1
+    monkeypatch.setattr(XGBClassifier, "load_model", lambda *args, **kwargs: pytest.fail("Loaded changed snapshot"))
+    with pytest.raises(ValueError, match="changed"):
+        study.load_profile_model(tmp_path, spec)
+
+
+@pytest.mark.parametrize("change", ["feature_order", "random_state", "model_type"])
+def test_supplied_estimator_rejects_wrong_contract_before_snapshot(tmp_path, saved_g_estimator, change):
+    import joblib
+    source, model, _ = saved_g_estimator
+    if change == "feature_order":
+        model.get_booster().feature_names = list(reversed(model.get_booster().feature_names))
+    elif change == "random_state":
+        model.set_params(random_state=43)
+    else:
+        model = {"synthetic": "wrong estimator type"}
+    joblib.dump(model, source)
+    destination = tmp_path / "artifacts/cic_static_prepare/run_fixture/frozen_protocol_g.json"
+    with pytest.raises(ValueError):
+        study.snapshot_protocol_g_model(tmp_path, source, destination)
+    assert not destination.exists()
+
+
+def test_run_cannot_override_model_locked_during_preparation(tmp_path, monkeypatch):
+    monkeypatch.setattr(study, "require_offline_lab", lambda *args: {})
+    monkeypatch.setattr(study, "clean_code", lambda *args: None)
+    monkeypatch.setattr(study, "load_job", lambda *args: ([], {"inference_model": {"fixture": True}}, None))
+    class Refused:
+        def __init__(self, *args, **kwargs): self.state = {}
+        def __enter__(self): return self
+        def __exit__(self, *args): return False
+    monkeypatch.setattr(study, "ResearchRun", Refused)
+    with pytest.raises(ValueError, match="cannot override"):
+        study.run_cic_profile(tmp_path, "run_fixture", lab_attested=True, model_file=tmp_path / "override.json")

@@ -1,0 +1,42 @@
+{
+  "pytest": {
+    "command": [
+      "/home/drstone/MalPDFDeepDetection/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/",
+      "-q",
+      "--basetemp",
+      "/home/drstone/MalPDFDeepDetection/artifacts/cic_supplied_model_checks/run_20261009T171528931174Z_c35a3f5ce5eb/pytest_full_suite"
+    ],
+    "started_at_utc": "2026-10-09T17:15:29.165823+00:00",
+    "finished_at_utc": "2026-10-09T17:18:33.649584+00:00",
+    "exit_code": 0,
+    "summary": "677 passed, 2 warnings in 175.00s (0:02:55)"
+  },
+  "checks": {
+    "pip_check": {
+      "exit_code": 0,
+      "output": "No broken requirements found.\n"
+    },
+    "diff_check": {
+      "exit_code": 0,
+      "output": ""
+    },
+    "git_status": {
+      "exit_code": 0,
+      "output": " M README.md\n M reports/analysis/cic_static_offline.md\n M reports/research_log.md\n M scripts/16_benchmark_cic_static.py\n M src/malpdf/experiments/cic_static_benchmark.py\n M tests/test_cic_static_benchmark.py\n?? reports/experiments/cic_model_restore/\n?? reports/experiments/cic_supplied_model/\n?? reports/experiments/cic_supplied_model_checks/\n"
+    },
+    "ignore_guards": {
+      "artifacts/models/xgboost__G-drop3constant.joblib": true,
+      "artifacts/models/xgb_rit_full_drop3constant.json": true,
+      "data/raw/guard.pdf": true,
+      "artifacts/guard.npy": true
+    },
+    "tested_sources_unchanged": true
+  },
+  "tested_sources_path": "artifacts/cic_supplied_model_checks/run_20261009T171528931174Z_c35a3f5ce5eb/tested_code_sha256.json",
+  "real_pdf_access": false,
+  "research_model_fitting": false,
+  "test_partition_evaluation": false
+}

@@ -1,0 +1,48 @@
+{
+  "restoration_status": "failed; required original full-RIT deployment JSON absent",
+  "supplied_source_inspection": {
+    "source": "artifacts/models/xgboost__G-drop3constant.joblib",
+    "source_sha256": "c602d38aa30340ffeb7229e685c6b330740fc2bc64c814dd22fc0f9cd7b59c2f",
+    "source_bytes": 408874,
+    "model_type": "xgboost.sklearn.XGBClassifier",
+    "feature_count": 38,
+    "feature_order_matches": true,
+    "classes": [
+      0,
+      1
+    ],
+    "trees": 200,
+    "configuration_mismatches": [],
+    "fitting": false,
+    "pdf_access": false,
+    "test_access": false,
+    "training_provenance": "User-provided original Windows model; filename/configuration match historical G-drop3constant; no historical artifact SHA available to independently prove training lineage."
+  },
+  "previous_job_metadata": {
+    "status": "verified",
+    "prepared_run": "run_20261009T162713985018Z_94bea5374f7c",
+    "rows": 64,
+    "counts": {
+      "train/0": 16,
+      "train/1": 16,
+      "validation/0": 16,
+      "validation/1": 16
+    },
+    "subset_sha256": "bc0b8e0f65383d96b4f68065b8898563898d18cd2775f789da7141fb691ed209",
+    "baseline_run": "run_20261009T143328562606Z_57544eaea873",
+    "profile_version": "cic-static-profile-v2",
+    "code_schema": "pdf-code-inspection-v4",
+    "pdf_bytes_read": false,
+    "test_partition_access": false,
+    "ssh_session": true
+  },
+  "pre_change_synthetic_suite": {
+    "exit_code": 0,
+    "summary": "668 passed, 2 warnings in 181.86s (0:03:01)",
+    "scope": "before adding supplied-model snapshot support; final verification recorded in cic_supplied_model_checks"
+  },
+  "raw_pdf_access": false,
+  "research_fitting": false,
+  "test_partition_evaluation": false,
+  "next_step": "Prepare new same64 job with the explicitly supplied saved Protocol G estimator, keeping deployment manifest and old reports intact."
+}

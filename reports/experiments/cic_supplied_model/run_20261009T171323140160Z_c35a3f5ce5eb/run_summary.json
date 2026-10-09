@@ -1,0 +1,38 @@
+{
+  "run_id": "run_20261009T171323140160Z_c35a3f5ce5eb",
+  "study": "cic_supplied_model",
+  "status": "completed",
+  "started_at_utc": "2026-10-09T17:13:23.201661+00:00",
+  "code_commit": "c35a3f5ce5ebd070c114558a2f842d66675b9fc8",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/research_log.md",
+      " M scripts/16_benchmark_cic_static.py",
+      " M src/malpdf/experiments/cic_static_benchmark.py",
+      " M tests/test_cic_static_benchmark.py",
+      "?? reports/experiments/cic_model_restore/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/research_log.md",
+      " M scripts/16_benchmark_cic_static.py",
+      " M src/malpdf/experiments/cic_static_benchmark.py",
+      " M tests/test_cic_static_benchmark.py",
+      "?? reports/experiments/cic_model_restore/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "supplied Windows RIT G-drop3constant frozen-model preparation maintenance",
+  "report_path": "reports/experiments/cic_supplied_model/run_20261009T171323140160Z_c35a3f5ce5eb/run_summary.json",
+  "artifact_path": "artifacts/cic_supplied_model/run_20261009T171323140160Z_c35a3f5ce5eb",
+  "metrics": {},
+  "notes": "New frozen model snapshot/lock targeted regression checks; supplied model structure verified38 ordered columns,200trees,fixedseed42; no fitting/PDF/Test access. Full-suite results recorded separately.",
+  "finished_at_utc": "2026-10-09T17:14:05.487445+00:00"
+}

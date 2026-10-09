@@ -1,0 +1,22 @@
+{
+  "run_id": "run_20261009T170106157884Z_c35a3f5ce5eb",
+  "study": "cic_model_restore",
+  "status": "failed",
+  "started_at_utc": "2026-10-09T17:01:06.197116+00:00",
+  "code_commit": "c35a3f5ce5ebd070c114558a2f842d66675b9fc8",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "data_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "seed": 42,
+  "protocol": "restore checksum-pinned existing deployment JSON",
+  "report_path": "reports/experiments/cic_model_restore/run_20261009T170106157884Z_c35a3f5ce5eb/run_summary.json",
+  "artifact_path": "artifacts/cic_model_restore/run_20261009T170106157884Z_c35a3f5ce5eb",
+  "metrics": {},
+  "error_type": "FileNotFoundError",
+  "finished_at_utc": "2026-10-09T17:01:06.290546+00:00"
+}

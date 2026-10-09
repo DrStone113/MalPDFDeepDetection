@@ -1,0 +1,24 @@
+{
+  "protocol": "supplied Windows G-drop3constant model lock regression verification",
+  "fitting": "synthetic fixtures only; no research training",
+  "pdf_access": "synthetic inert fixtures only; no real PDF bytes",
+  "test_access": false,
+  "partition": "N/A; no research partition evaluated",
+  "seed": 42,
+  "code_commit": "c35a3f5ce5ebd070c114558a2f842d66675b9fc8",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/research_log.md",
+      " M scripts/16_benchmark_cic_static.py",
+      " M src/malpdf/experiments/cic_static_benchmark.py",
+      " M tests/test_cic_static_benchmark.py",
+      "?? reports/experiments/cic_model_restore/",
+      "?? reports/experiments/cic_supplied_model/"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

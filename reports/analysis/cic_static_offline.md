@@ -25,6 +25,35 @@ its exact subset checksum and configuration:
   --baseline-run run_20261009T143328562606Z_57544eaea873
 ```
 
+The user supplied the original Windows estimator as
+`artifacts/models/xgboost__G-drop3constant.joblib`. To use that existing model
+for inference, prepare with its explicit controlled path:
+
+```bash
+.venv/bin/python scripts/16_benchmark_cic_static.py prepare \
+  --baseline-run run_20261009T143328562606Z_57544eaea873 \
+  --model-file artifacts/models/xgboost__G-drop3constant.joblib
+```
+
+This optional preparation reads only the user-trusted local model and CSV
+metadata. It verifies XGBClassifier type, Label=1 malicious, exact 38-feature
+order, 200-tree structure and every fixed configuration parameter. It writes
+a native XGBoost JSON snapshot under the new ignored prepared-run directory
+and requires exact probability parity on two synthetic numeric probe rows.
+No fitting, PDF processing or Test evaluation occurs. The job lock pins the
+source/snapshot SHA-256, threshold0.5 and model contract; run mode reads native
+JSON and cannot override the selected model. Changed weights or model contracts
+fail preflight before PDF access. Preparing after a code change creates a new
+fingerprint while retaining the exact same64 subset and baseline configuration.
+
+The supplied model ID is `xgb-rit-supplied-g-drop3constant-v1`. Filename, structure
+and configuration match the historical Protocol G variant. Its original Train
+lineage is user-reported: the historical report has no artifact checksum with
+which to independently verify it. The source checksum pins the supplied bytes
+from this preparation onward. This model remains distinct from the full-RIT
+deployment JSON; that manifest and its missing artifact are preserved. Neither
+conversion nor synthetic parity produces a new accuracy/generalization result.
+
 Profile v2, static diagnostics v3 and code evidence v4 invalidate older
 extraction caches. New parser provenance adds no model predictor and changes
 no canonical RIT values, sentinels, split or threshold. The structural parser

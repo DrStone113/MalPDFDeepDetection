@@ -1,0 +1,23 @@
+{
+  "protocol": "supplied Windows RIT G-drop3constant frozen-model preparation maintenance",
+  "fitting": false,
+  "pdf_access": false,
+  "test_access": false,
+  "scope": "synthetic regression suite; fixed subset metadata and trusted saved-model structure audit; no new research training or Test evaluation",
+  "seed": 42,
+  "code_commit": "c35a3f5ce5ebd070c114558a2f842d66675b9fc8",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/research_log.md",
+      " M scripts/16_benchmark_cic_static.py",
+      " M src/malpdf/experiments/cic_static_benchmark.py",
+      " M tests/test_cic_static_benchmark.py",
+      "?? reports/experiments/cic_model_restore/"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

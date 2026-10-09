@@ -30,6 +30,12 @@ console LAB, records every parser/AST failure and times the actual pipeline.
 Profile v2 separates inference gate/refusal time from actual `predict_proba`,
 which is null when no model call occurs. `prepare --baseline-run <profile_id>`
 locks the same64 inputs/configuration and writes a paired status comparison.
+For the original Windows estimator at
+`artifacts/models/xgboost__G-drop3constant.joblib`, add that path as
+`prepare --model-file ...`. Preparation checks its binary 38-feature contract,
+fixed configuration and native-JSON probability parity, then pins a private
+snapshot and source checksum without fitting. This supplied Protocol G model
+has its own identity; it does not replace the full-RIT deployment manifest.
 See [offline job and measurement limits](reports/analysis/cic_static_offline.md).
 
 ## Retrospective multi-cohort stacking v4

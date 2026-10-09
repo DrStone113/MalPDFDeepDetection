@@ -44,6 +44,92 @@ def restore_profile_model(root, source):
     return run.state
 
 
+SUPPLIED_G_MODEL_ID = "xgb-rit-supplied-g-drop3constant-v1"
+
+
+def snapshot_protocol_g_model(root, source, destination):
+    """Freeze the user's trusted Windows estimator as native JSON, without fitting."""
+    import joblib
+    import pandas as pd
+    from xgboost import XGBClassifier
+    from malpdf.inference.deployment import _assert_saved_xgboost_structure, deployment_model_configuration
+    from malpdf.inference.schema import DEPLOYMENT_FEATURE_ORDER, DEPLOYMENT_FEATURE_SCHEMA, EXPECTED_DATASET_SHA256
+    root, source, destination = Path(root).absolute(), Path(source).absolute(), Path(destination).absolute()
+    if source != root / "artifacts/models/xgboost__G-drop3constant.joblib":
+        raise ValueError("Select the trusted Windows G-drop3constant artifact at its controlled local path")
+    if (destination.exists() or not destination.is_relative_to(root / "artifacts/cic_static_prepare")
+            or any(part.is_symlink() for part in (destination, *destination.parents))):
+        raise ValueError("Refusing to overwrite or escape the new prepared-run model snapshot")
+    content = read_bounded_bytes(source, boundary=root / "artifacts/models", max_bytes=64 * 1024**2)
+    model = joblib.load(io.BytesIO(content))
+    if type(model) is not XGBClassifier or not np.array_equal(model.classes_, [0, 1]):
+        raise ValueError("Saved estimator must be a binary XGBClassifier with Label=1 malicious")
+    if tuple(model.get_booster().feature_names or ()) != DEPLOYMENT_FEATURE_ORDER:
+        raise ValueError("Saved estimator differs from the required 38-feature order")
+    configuration = deployment_model_configuration()
+    parameters = model.get_params()
+    for name, expected in configuration["parameters"].items():
+        observed = parameters.get(name)
+        if name == "missing" and expected == "NaN":
+            matches = isinstance(observed, (float, np.floating)) and np.isnan(observed)
+        else:
+            matches = observed == expected
+        if not matches:
+            raise ValueError(f"Saved estimator differs from the fixed configuration: {name}")
+    _assert_saved_xgboost_structure(model)
+    probe = pd.DataFrame([np.zeros(38), np.ones(38)], columns=DEPLOYMENT_FEATURE_ORDER)
+    original = model.predict_proba(probe)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    model.save_model(str(destination))
+    spec = {"model_id": SUPPLIED_G_MODEL_ID, "artifact_relative_path": str(destination.relative_to(root)),
+        "artifact_sha256": hashlib.sha256(destination.read_bytes()).hexdigest(), "feature_schema": DEPLOYMENT_FEATURE_SCHEMA,
+        "feature_order": list(DEPLOYMENT_FEATURE_ORDER), "threshold": 0.5, "model_configuration": configuration,
+        "training_dataset": {"sha256": EXPECTED_DATASET_SHA256,
+            "fit_scope": "user-reported original Protocol G Train; training lineage not independently verified"},
+        "source": {"relative_path": str(source.relative_to(root)), "sha256": hashlib.sha256(content).hexdigest(),
+            "bytes": len(content), "trust": "user supplied original locally trained Windows artifact",
+            "historical_model_checksum_available": False},
+        "conversion": "native XGBoost JSON; no fitting; exact probability parity on two synthetic numeric probe rows"}
+    try:
+        frozen, _ = load_profile_model(root, spec)
+        if not np.array_equal(original, frozen.predict_proba(probe)):
+            raise ValueError("Native snapshot changed the saved estimator's probe probabilities")
+    except Exception:
+        destination.unlink()
+        raise
+    return spec
+
+
+def profile_model_bytes(root, spec):
+    """Check the locked identity and bounded native snapshot before model loading."""
+    from malpdf.inference.deployment import deployment_model_configuration
+    from malpdf.inference.schema import DEPLOYMENT_FEATURE_ORDER, DEPLOYMENT_FEATURE_SCHEMA, EXPECTED_DATASET_SHA256
+    expected = {"model_id": SUPPLIED_G_MODEL_ID, "feature_schema": DEPLOYMENT_FEATURE_SCHEMA,
+        "feature_order": list(DEPLOYMENT_FEATURE_ORDER), "threshold": 0.5, "model_configuration": deployment_model_configuration()}
+    if any(spec.get(key) != value for key, value in expected.items()) or spec.get("training_dataset", {}).get("sha256") != EXPECTED_DATASET_SHA256:
+        raise ValueError("Prepared inference model contract changed")
+    path = Path(spec["artifact_relative_path"])
+    if path.is_absolute() or ".." in path.parts or not path.is_relative_to("artifacts/cic_static_prepare"):
+        raise ValueError("Prepared model snapshot outside its private boundary")
+    content = read_bounded_bytes(root / path, boundary=root / "artifacts/cic_static_prepare", max_bytes=64 * 1024**2)
+    if hashlib.sha256(content).hexdigest() != spec["artifact_sha256"]:
+        raise ValueError("Prepared inference model checksum changed")
+    return content
+
+
+def load_profile_model(root, spec):
+    from xgboost import XGBClassifier
+    from malpdf.inference.deployment import _assert_saved_xgboost_structure
+    from malpdf.inference.schema import DEPLOYMENT_FEATURE_ORDER
+    content = profile_model_bytes(root, spec)
+    model = XGBClassifier()
+    model.load_model(bytearray(content))
+    if tuple(model.get_booster().feature_names or ()) != DEPLOYMENT_FEATURE_ORDER or not np.array_equal(model.classes_, [0, 1]):
+        raise ValueError("Native snapshot changed the binary 38-feature model contract")
+    _assert_saved_xgboost_structure(model)
+    return model, spec
+
+
 def checked_table(root, spec):
     content = read_bounded_bytes(root / spec["path"], boundary=root / "data/processed", max_bytes=32 * 1024**2)
     if hashlib.sha256(content).hexdigest() != spec["sha256"]:
@@ -121,7 +207,7 @@ def baseline_method(root, identifier):
     return json.loads(read_bounded_bytes(directory / "locked_methodology.json", boundary=root / "reports/experiments", max_bytes=1024**2))
 
 
-def prepare_cic_profile(root, config, *, baseline_run=None):
+def prepare_cic_profile(root, config, *, baseline_run=None, model_file=None):
     root = Path(root).absolute()
     clean_code(root)
     cfg = yaml.safe_load(Path(config).read_text())
@@ -130,6 +216,7 @@ def prepare_cic_profile(root, config, *, baseline_run=None):
     limits = CodeInspectionLimits(**cfg["limits"])
     method = {"protocol": "fixed CIC Train/dev diagnostic subset preparation", "configuration": cfg,
               "baseline_run": baseline_run,
+              "model_request": "existing user-supplied Windows G-drop3constant estimator, no fitting" if model_file else "existing deployment JSON if available",
               "selection": "seed42 SHA-256 rank of saved identity within class/partition; no PDF reads or parser-driven selection",
               "split": "saved partitions/groups unchanged; no Test identities selected", "test_access": False,
               "interpretation": "balanced diagnostic pilot; Validation previously exposed, not an independent Test"}
@@ -147,7 +234,11 @@ def prepare_cic_profile(root, config, *, baseline_run=None):
             if cfg != baseline["configuration"] or subset_digest != baseline["subset_sha256"]:
                 raise ValueError("Baseline configuration/subset changed: preserve the same64 rows, labels and partitions")
         fingerprint = source_fingerprint(root, limits)
+        inference_model = snapshot_protocol_g_model(root, model_file, run.artifacts / "frozen_protocol_g.json") if model_file else None
+        if inference_model is not None:
+            write_json(run.report / "inference_model.json", inference_model)
         lock = {"configuration": cfg, "subset_path": str(subset.relative_to(root)), "baseline_run": baseline_run,
+                "inference_model": inference_model,
                 "subset_sha256": subset_digest, "rows": len(rows),
                 "fingerprint": fingerprint, "created_at_utc": datetime.now(timezone.utc).isoformat()}
         write_json(run.artifacts / "job_lock.json", lock)
@@ -188,6 +279,8 @@ def load_job(root, identifier):
     limits = CodeInspectionLimits(**cfg["limits"])
     if source_fingerprint(root, limits) != lock["fingerprint"]:
         raise ValueError("Extractor/config changed: prepare a new job; never reuse the old cache")
+    if lock.get("inference_model") is not None:
+        profile_model_bytes(root, lock["inference_model"])
     return rows, lock, limits
 
 
@@ -369,6 +462,8 @@ def run_cic_profile(root, prepared_run, *, lab_attested=False, model_file=None):
         lab = require_offline_lab(lab_attested)
         clean_code(root)
         rows, lock, limits = load_job(root, prepared_run)
+        if lock.get("inference_model") is not None and model_file is not None:
+            raise ValueError("Prepared inference model is locked; a run cannot override it")
     except Exception:
         with ResearchRun(root, "cic_static_refused", {"protocol": "CIC offline job preflight",
             "prepared_run": prepared_run, "test_access": False, "pdf_access": False}) as refused:
@@ -381,6 +476,7 @@ def run_cic_profile(root, prepared_run, *, lab_attested=False, model_file=None):
     from malpdf.inference.deployment import load_verified_deployment_model, restore_verified_deployment_model, DeploymentError
     method = {"protocol": "fixed CIC Train/dev static diagnosis and feature pilot", "configuration": cfg,
         "baseline_run": lock.get("baseline_run"),
+        "inference_model": lock.get("inference_model"),
         "prepared_run": prepared_run, "subset_sha256": lock["subset_sha256"], "fingerprint": lock["fingerprint"], "lab_checks": lab,
         "cache": "cold=fresh application feature cache; warm=complete-profile reuse after fresh PDF checksum verification; OS page cache uncontrolled",
         "timing_scope": "exclusive stage timings; inference=predict_proba only, null if not called; inference_gate=compatibility/feature/model checks and response validation; implicit xref/object/content decoding and reference text extraction remain in parse_pdf; stream_decode covers explicit JS streams; residual overhead includes startup/cache/IPC and any unfinished stage",
@@ -400,7 +496,7 @@ def run_cic_profile(root, prepared_run, *, lab_attested=False, model_file=None):
         try:
             if model_file is not None:
                 restoration = restore_verified_deployment_model(root, model_file)
-            loaded = load_verified_deployment_model(root)
+            loaded = load_profile_model(root, lock["inference_model"]) if lock.get("inference_model") is not None else load_verified_deployment_model(root)
             loaded[0].set_params(n_jobs=1)
             model_status = "verified_loaded"
         except Exception as error:
@@ -477,8 +573,11 @@ def run_cic_profile(root, prepared_run, *, lab_attested=False, model_file=None):
             summary["model_setup"] = {"seconds": model_setup_seconds, "status": model_status,
                 "error_code": model_error_code,
                 "restoration": restoration,
+                "model_id": loaded[1]["model_id"] if loaded else None,
+                "artifact_sha256": loaded[1]["artifact_sha256"] if loaded else None,
+                "training_provenance": loaded[1]["training_dataset"] if loaded else None,
                 "requested_n_jobs": 1,
-                "scope": "verified frozen RIT deployment; inference timing only, no CIC accuracy claim; setup excluded from per-file inference"}
+                "scope": "checksum-verified frozen RIT model recorded by identity; inference timing only, no CIC accuracy claim; setup excluded from per-file inference"}
             summary["peak_parent_rss_bytes"] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024
             summary["memory_scope"] = "worker current-process VmHWM when returned, rusage fallback explicitly tagged; killed worker polling lower bound; concurrent parent+worker RSS sum sampled and may double count shared pages"
             summary["failure_inventory"] = "private artifacts/per_file.jsonl and failures.jsonl; no samples silently discarded"

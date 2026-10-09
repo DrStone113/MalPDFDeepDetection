@@ -1,0 +1,14 @@
+{
+  "protocol": "restore checksum-pinned existing deployment JSON",
+  "test_access": false,
+  "fitting": false,
+  "pdf_access": false,
+  "seed": 42,
+  "code_commit": "c35a3f5ce5ebd070c114558a2f842d66675b9fc8",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}
