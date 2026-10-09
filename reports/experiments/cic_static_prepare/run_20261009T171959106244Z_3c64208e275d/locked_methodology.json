@@ -1,0 +1,50 @@
+{
+  "protocol": "fixed CIC Train/dev diagnostic subset preparation",
+  "configuration": {
+    "seed": 42,
+    "prepared_cohort": "run_20261003T124714720715Z_c96868a21732",
+    "split_manifest": {
+      "path": "data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/split_manifest.csv",
+      "sha256": "e939a676c51c7a98b9dc4bb843e846f546e1ada2bfb576b41416c406415c0643"
+    },
+    "source_manifest": {
+      "path": "data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/source_manifest.csv",
+      "sha256": "d74729236017dc27a71c999bc4d69f84a16fa4148573c3bbc7f4eb03709b150b"
+    },
+    "normalization_manifest": {
+      "path": "data/processed/cic_normalization/run_20261003T104918756555Z_3b68d36a5705/normalization_manifest.csv",
+      "sha256": "c4dc77f00849518ee56dc34d0f0cc7daf0c92b3ce9fd1e93fd63d053caf8570f"
+    },
+    "samples_per_partition": 32,
+    "warm_repeats": 1,
+    "workers": 1,
+    "limits": {
+      "wall_seconds": 20,
+      "cpu_seconds": 12,
+      "memory_bytes": 1073741824,
+      "max_file_bytes": 10485760
+    },
+    "compare_models": true,
+    "rf": {
+      "n_estimators": 200,
+      "max_depth": 12,
+      "min_samples_leaf": 2,
+      "class_weight": "balanced"
+    },
+    "threshold": 0.5
+  },
+  "baseline_run": "run_20261009T143328562606Z_57544eaea873",
+  "model_request": "existing user-supplied Windows G-drop3constant estimator, no fitting",
+  "selection": "seed42 SHA-256 rank of saved identity within class/partition; no PDF reads or parser-driven selection",
+  "split": "saved partitions/groups unchanged; no Test identities selected",
+  "test_access": false,
+  "interpretation": "balanced diagnostic pilot; Validation previously exposed, not an independent Test",
+  "seed": 42,
+  "code_commit": "3c64208e275d052fef78b07b8523595161a835e8",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

@@ -1,0 +1,27 @@
+{
+  "utc": "2026-10-09T17:21:18.106069+00:00",
+  "prepared_run": "run_20261009T171959106244Z_3c64208e275d",
+  "native_model_loaded": true,
+  "model_id": "xgb-rit-supplied-g-drop3constant-v1",
+  "source_model_sha256": "c602d38aa30340ffeb7229e685c6b330740fc2bc64c814dd22fc0f9cd7b59c2f",
+  "native_model_sha256": "4046925dda2e65cbbdf91f1c1e8b93308b2f062ff206cd15a225419d7f14387a",
+  "source_bytes_unchanged": true,
+  "feature_count": 38,
+  "probability_parity_verified_during_preparation": true,
+  "research_model_fitting": false,
+  "actual_pdf_bytes_read": false,
+  "test_partition_evaluated": false,
+  "samples": 64,
+  "partition_class_counts": {
+    "train/0": 16,
+    "train/1": 16,
+    "validation/0": 16,
+    "validation/1": 16
+  },
+  "same_subset_and_configuration_as_baseline": true,
+  "subset_sha256": "bc0b8e0f65383d96b4f68065b8898563898d18cd2775f789da7141fb691ed209",
+  "tested_sources_match677_passed_suite": true,
+  "model_artifacts_ignored": true,
+  "offline_command": ".venv/bin/python scripts/16_benchmark_cic_static.py run --prepared-run run_20261009T171959106244Z_3c64208e275d --lab-isolated",
+  "scope": "preparation/model integrity only; new real PDF coverage/inference benchmark awaits disconnected console LAB"
+}
