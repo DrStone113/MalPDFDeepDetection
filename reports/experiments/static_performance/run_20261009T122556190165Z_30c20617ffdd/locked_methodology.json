@@ -1,0 +1,35 @@
+{
+  "protocol": "synthetic performance benchmark",
+  "samples": 64,
+  "repeats": 3,
+  "batch_size": 32,
+  "seed": 42,
+  "scope": "existing 38-feature deployment API, not v3/v4 ensemble latency or accuracy",
+  "data": "generated benign PDF and synthetic numeric rows only",
+  "prediction_parity": "exact probabilities and labels; reject mismatch",
+  "io_scope": "warm-cache read/hash stage only, excluding feature parsing",
+  "io_baseline": "previous three opens: streaming hash, header read, read_bytes",
+  "inference_baseline": "one artifact checksum/load/predict per row, no TreeSHAP",
+  "uncertainty": "descriptive medians/p95; no significance or general runtime guarantee",
+  "parser_limits": {
+    "max_file_bytes": 10485760,
+    "max_objects": 2000,
+    "max_pdf_depth": 64,
+    "max_scripts": 64,
+    "max_script_bytes": 262144,
+    "max_decoded_bytes": 4194304,
+    "max_ast_nodes": 20000,
+    "max_ast_depth": 100,
+    "wall_seconds": 8,
+    "cpu_seconds": 4,
+    "memory_bytes": 1073741824
+  },
+  "test_access": false,
+  "code_commit": "30c20617ffdd1ac96235de268438c7480f840175",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

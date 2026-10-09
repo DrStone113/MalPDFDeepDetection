@@ -1,0 +1,28 @@
+{
+  "read_hash": {
+    "previous_read_hash": [
+      0.002125060000253143,
+      0.002106289000948891,
+      0.005928626000240911
+    ],
+    "bounded_single_snapshot": [
+      0.014696384998387657,
+      0.00158689000090817,
+      0.002131957000528928
+    ]
+  },
+  "inference": {
+    "reload_per_row": [
+      0.5049935390015889,
+      0.4934148210013518,
+      0.5096407760029251
+    ],
+    "resident_batch": [
+      0.3240691049977613,
+      0.13631337200058624,
+      0.05627273899881402
+    ]
+  },
+  "probability_parity": "exact",
+  "classification_metrics": "N/A: synthetic latency study"
+}
