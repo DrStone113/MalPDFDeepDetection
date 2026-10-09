@@ -1,0 +1,14 @@
+{
+  "same64_pdf_identities_labels_partitions_and_configuration_as_baseline": true,
+  "subset_sha256": "bc0b8e0f65383d96b4f68065b8898563898d18cd2775f789da7141fb691ed209",
+  "baseline_run": "run_20261009T143328562606Z_57544eaea873",
+  "profile_version": "cic-static-profile-v2",
+  "code_schema": "pdf-code-inspection-v4",
+  "source_hashes_match668_passed_suite": true,
+  "actual_pdf_bytes_read": false,
+  "model_restored": false,
+  "reason": "existing JSON unavailable locally; Codespace SSH server startup failed, remote presence unverified",
+  "offline_command": ".venv/bin/python scripts/16_benchmark_cic_static.py run --prepared-run run_20261009T162713985018Z_94bea5374f7c --lab-isolated",
+  "model_copy_option": "--model-file /trusted/local/xgb_rit_full_drop3constant.json; checksum must match existing manifest; no fitting",
+  "no_new_performance_or_accuracy_metrics": true
+}
