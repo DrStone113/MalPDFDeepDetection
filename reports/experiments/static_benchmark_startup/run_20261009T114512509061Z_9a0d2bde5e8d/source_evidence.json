@@ -1,0 +1,13 @@
+{
+  "checked_paths_sha256": {
+    "reports/experiments/static_performance/run_20261009T114334835591Z_9a0d2bde5e8d/run_summary.json": "db02f2caf6067d611ca5bb183f1181375659e32f8b1397272768b7ddc60fe4d1",
+    "scripts/14_benchmark_static.py": "a765dfe8f3af4a5cc74ac3eb0155af7fbf5f3c3e9e9530ed7852c887853d50d4",
+    "src/malpdf/experiments/static_benchmark.py": "f5bbdda199d8e55809080b03908bb107da8e3aec34dc302d7626c099f91eac7c",
+    "tests/test_static_benchmark.py": "52df534e25f26cf107fda34ed0d6f4a0073d857d67551b7c888a12b7d8f94e4b"
+  },
+  "before_fix_snapshot": "artifacts/static_benchmark_startup/run_20261009T114512509061Z_9a0d2bde5e8d/generating_code",
+  "tested_fix_snapshot": "artifacts/static_benchmark_startup/run_20261009T114512509061Z_9a0d2bde5e8d/fixed_code",
+  "old_failed_evidence_preserved": true,
+  "official_new_benchmark": false,
+  "classification_metrics": "N/A; no dataset or held-out evaluation"
+}

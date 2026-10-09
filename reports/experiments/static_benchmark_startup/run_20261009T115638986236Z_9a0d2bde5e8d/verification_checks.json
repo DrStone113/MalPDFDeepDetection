@@ -1,0 +1,64 @@
+{
+  "final_tests": {
+    "status": "passed",
+    "passed": 629,
+    "warnings": 2,
+    "command": [
+      "/home/drstone/MalPDFDeepDetection/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/",
+      "--basetemp",
+      "artifacts/static_benchmark_startup/run_20261009T115638986236Z_9a0d2bde5e8d/pytest_full"
+    ],
+    "log": "artifacts/static_benchmark_startup/run_20261009T115638986236Z_9a0d2bde5e8d/full_pytest.txt"
+  },
+  "targeted_tests": {
+    "passed": 72,
+    "log": "artifacts/static_benchmark_startup/run_20261009T115638986236Z_9a0d2bde5e8d/targeted_pytest.txt"
+  },
+  "checks": [
+    {
+      "check": 0,
+      "chunk_id": "ab6cb3",
+      "wall_time_seconds": 1.806547208,
+      "exit_code": 0,
+      "original_token_count": 8,
+      "output": "No broken requirements found.\n"
+    },
+    {
+      "check": 1,
+      "chunk_id": "aa7433",
+      "wall_time_seconds": 3.5258e-05,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    },
+    {
+      "check": 2,
+      "chunk_id": "0f74a6",
+      "wall_time_seconds": 4.8235e-05,
+      "exit_code": 0,
+      "original_token_count": 100,
+      "output": " M reports/analysis/static_acceleration_design.md\n M reports/research_log.md\n M scripts/14_benchmark_static.py\n M src/malpdf/experiments/static_benchmark.py\n M src/malpdf/static/code_inspector.py\n M tests/test_static_acceleration.py\n?? reports/experiments/static_benchmark_startup/\n?? reports/experiments/static_performance/run_20261009T114334835591Z_9a0d2bde5e8d/\n?? tests/test_static_benchmark.py\n"
+    },
+    {
+      "check": 3,
+      "chunk_id": "d796e7",
+      "wall_time_seconds": 1.9725e-05,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    },
+    {
+      "check": 4,
+      "chunk_id": "70ed6f",
+      "wall_time_seconds": 3.4925e-05,
+      "exit_code": 0,
+      "original_token_count": 37,
+      "output": "artifacts/static_benchmark_startup/run_20261009T115638986236Z_9a0d2bde5e8d/guard.json\ndata/raw/guard.txt\nartifacts/guard.pdf\nartifacts/guard.npy\n"
+    }
+  ],
+  "previous_failed_checks_preserved": true,
+  "new_official_benchmark": "not invoked on dirty code; no new performance/accuracy claim"
+}

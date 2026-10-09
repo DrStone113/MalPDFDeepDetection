@@ -1,0 +1,28 @@
+{
+  "protocol": "maintenance; benchmark startup and worker IPC checks",
+  "scope": "benign synthetic fixtures only; no datasets or held-out evaluation",
+  "previous_maintenance": "run_20261009T114512509061Z_9a0d2bde5e8d",
+  "confirmed_startup_cause": "benchmark stack uses more than the absolute 4 CPU-second budget before parsing",
+  "additional_gap": "worker may send and exit between receiver.poll() and process.is_alive(); prove with a deterministic fixture",
+  "resource_budget": "default CPU/AS/wall unchanged",
+  "schema": "pdf-code-inspection-v2 unchanged; no AST caching/model feature changes",
+  "seeds": [
+    42
+  ],
+  "seed": 42,
+  "code_commit": "9a0d2bde5e8db979c32b87b51cd0f46d671b2dcc",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/analysis/static_acceleration_design.md",
+      " M reports/research_log.md",
+      " M scripts/14_benchmark_static.py",
+      " M src/malpdf/experiments/static_benchmark.py",
+      "?? reports/experiments/static_benchmark_startup/",
+      "?? reports/experiments/static_performance/run_20261009T114334835591Z_9a0d2bde5e8d/",
+      "?? tests/test_static_benchmark.py"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

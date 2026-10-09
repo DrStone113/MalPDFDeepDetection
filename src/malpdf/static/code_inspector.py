@@ -373,7 +373,13 @@ def inspect_pdf_codes(paths, *, boundary, limits=None, workers=1, expected_hashe
                 active[position] = process, receiver, time.monotonic()
             for position, (process, receiver, started) in list(active.items()):
                 result = None
-                if receiver.poll():
+                ready = receiver.poll()
+                exited = not process.is_alive() if not ready else False
+                if exited:
+                    # The worker can send and exit between poll() and the
+                    # liveness check. Drain its final reply before declaring loss.
+                    ready = receiver.poll()
+                if ready:
                     try:
                         result = json.loads(receiver.recv_bytes(maxlength=64 * 1024))
                         if (not isinstance(result, dict) or type(result.get("complete")) is not bool
@@ -382,7 +388,7 @@ def inspect_pdf_codes(paths, *, boundary, limits=None, workers=1, expected_hashe
                             raise ValueError("Invalid worker evidence")
                     except (EOFError, OSError, ValueError):
                         result = _unavailable("invalid_worker_response")
-                elif time.monotonic() - started >= limits.wall_seconds or not process.is_alive():
+                elif time.monotonic() - started >= limits.wall_seconds or exited:
                     result = _unavailable("parser_exit_or_timeout")
                 if result is None:
                     continue

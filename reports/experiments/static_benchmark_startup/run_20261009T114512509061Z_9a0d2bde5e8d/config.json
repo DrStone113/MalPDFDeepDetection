@@ -1,0 +1,7 @@
+{
+  "samples": 64,
+  "repeats": 3,
+  "batch_size": 32,
+  "classification_metrics": "N/A; maintenance only",
+  "external_pdf_access": false
+}

@@ -1,0 +1,27 @@
+{
+  "failed_benchmark_run": "run_20261009T114334835591Z_9a0d2bde5e8d",
+  "minimal_startup": {
+    "vm_kib": 37676,
+    "complete": true,
+    "scripts_parsed": 1,
+    "util.printf": 1
+  },
+  "benchmark_stack_startup": {
+    "vm_kib": 784880,
+    "complete": false,
+    "errors": [
+      "invalid_worker_response"
+    ]
+  },
+  "instrumented_worker_start": {
+    "cpu_seconds": 4.3471400000000004,
+    "vm_kib": 784828,
+    "exit_code_before_cleanup": -9
+  },
+  "cause": "spawn reimports the top-level benchmark stack; worker has already exceeded its absolute 4 CPU-second hard limit before parsing begins",
+  "fix": "defer benchmark import until main; preserve default CPU/AS/wall caps",
+  "output_change": "persist redacted synthetic AST evidence before smoke validation and include fixed error codes in failure",
+  "schema_change": false,
+  "scope": "generated benign fixture only; no dataset or held-out access",
+  "official_new_performance_metrics": "N/A; worktree remains dirty"
+}

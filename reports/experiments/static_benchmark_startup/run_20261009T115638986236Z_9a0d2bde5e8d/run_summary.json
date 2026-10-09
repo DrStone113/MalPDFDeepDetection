@@ -1,0 +1,38 @@
+{
+  "run_id": "run_20261009T115638986236Z_9a0d2bde5e8d",
+  "study": "static_benchmark_startup",
+  "status": "completed",
+  "started_at_utc": "2026-10-09T11:56:39.022439+00:00",
+  "code_commit": "9a0d2bde5e8db979c32b87b51cd0f46d671b2dcc",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/analysis/static_acceleration_design.md",
+      " M reports/research_log.md",
+      " M scripts/14_benchmark_static.py",
+      " M src/malpdf/experiments/static_benchmark.py",
+      "?? reports/experiments/static_benchmark_startup/",
+      "?? reports/experiments/static_performance/run_20261009T114334835591Z_9a0d2bde5e8d/",
+      "?? tests/test_static_benchmark.py"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/analysis/static_acceleration_design.md",
+      " M reports/research_log.md",
+      " M scripts/14_benchmark_static.py",
+      " M src/malpdf/experiments/static_benchmark.py",
+      "?? reports/experiments/static_benchmark_startup/",
+      "?? reports/experiments/static_performance/run_20261009T114334835591Z_9a0d2bde5e8d/",
+      "?? tests/test_static_benchmark.py"
+    ]
+  },
+  "seed": 42,
+  "protocol": "maintenance; benchmark startup and worker IPC checks",
+  "report_path": "reports/experiments/static_benchmark_startup/run_20261009T115638986236Z_9a0d2bde5e8d/run_summary.json",
+  "artifact_path": "artifacts/static_benchmark_startup/run_20261009T115638986236Z_9a0d2bde5e8d",
+  "metrics": {},
+  "notes": "Fixed CLI spawn startup by importing benchmark only inside main; confirmed startup previously consumed 4.347 CPU seconds before the unchanged 4-second hard limit. Also fixed lost final worker reply between pipe/liveness checks, demonstrated by deterministic failing-before/passing-after fixture. Failed AST smoke now saves redacted evidence before validation and includes fixed error codes. Final verification: 629 passed, 2 existing warnings; 72 targeted passed; pip check, diff check and ignore guards passed; no staging/commit. Prior failed benchmark and failed maintenance retained. Evidence schema remains v2; AST inspection is uncached; canonical features, frozen models/thresholds, datasets and splits unchanged. No new official benchmark, research training or Test evaluation; metrics N/A.",
+  "finished_at_utc": "2026-10-09T12:01:26.050418+00:00"
+}

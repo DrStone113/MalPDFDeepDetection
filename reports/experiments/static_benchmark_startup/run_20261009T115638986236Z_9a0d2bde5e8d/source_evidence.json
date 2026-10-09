@@ -1,0 +1,17 @@
+{
+  "tested_sources_sha256": {
+    "scripts/14_benchmark_static.py": "a765dfe8f3af4a5cc74ac3eb0155af7fbf5f3c3e9e9530ed7852c887853d50d4",
+    "src/malpdf/experiments/static_benchmark.py": "f5bbdda199d8e55809080b03908bb107da8e3aec34dc302d7626c099f91eac7c",
+    "src/malpdf/static/code_inspector.py": "096ec949a5cfdb26df0a88cfd32783c3e3b69b4f5e682eb0425431bfa93b0dbd",
+    "tests/test_static_benchmark.py": "49b0894a44c1aec96f3bdae229b4eff6cb029d17b03d86564943e63f16848892",
+    "tests/test_static_acceleration.py": "51cca5a034c5ed462aa59fd172e54d12f6830ee61bcfad03ce5fae53849b6f3c"
+  },
+  "before_fix": "artifacts/static_benchmark_startup/run_20261009T115638986236Z_9a0d2bde5e8d/generating_code",
+  "tested_fix": "artifacts/static_benchmark_startup/run_20261009T115638986236Z_9a0d2bde5e8d/fixed_code",
+  "previous_failed_checks": "reports/experiments/static_benchmark_startup/run_20261009T114512509061Z_9a0d2bde5e8d/run_summary.json",
+  "deterministic_IPC_regression_before_fix": "artifacts/static_benchmark_startup/run_20261009T115638986236Z_9a0d2bde5e8d/expected_failure_before_pipe_fix.txt",
+  "earlier_intermittent_test_failure_cause": "unconfirmed because its original worker reply was not captured; saved fixture and full-collection replay both succeeded",
+  "output_schema": "pdf-code-inspection-v2",
+  "compatibility": "same evidence fields and feature definitions; final worker reply no longer lost; code inspection has no AST cache; frozen models/thresholds unchanged",
+  "classification_metrics": "N/A; maintenance and benign fixtures only"
+}

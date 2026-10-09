@@ -1,0 +1,24 @@
+{
+  "unchanged_defaults": {
+    "max_file_bytes": 10485760,
+    "max_objects": 2000,
+    "max_pdf_depth": 64,
+    "max_scripts": 64,
+    "max_script_bytes": 262144,
+    "max_decoded_bytes": 4194304,
+    "max_ast_nodes": 20000,
+    "max_ast_depth": 100,
+    "wall_seconds": 8,
+    "cpu_seconds": 4,
+    "memory_bytes": 1073741824
+  },
+  "threads_per_worker": {
+    "OPENBLAS_NUM_THREADS": 1,
+    "OMP_NUM_THREADS": 1,
+    "MKL_NUM_THREADS": 1
+  },
+  "worker_count": 1,
+  "memory_limit_type": "RLIMIT_AS address space, not RSS",
+  "cpu_limit_type": "RLIMIT_CPU includes interpreter startup CPU",
+  "evidence_schema": "pdf-code-inspection-v2 unchanged"
+}

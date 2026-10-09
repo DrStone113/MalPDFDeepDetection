@@ -1,0 +1,27 @@
+{
+  "protocol": "maintenance; synthetic benchmark startup diagnosis",
+  "scope": "benign generated fixtures only; no datasets, model training or held-out evaluation",
+  "user_failed_run": "run_20261009T114334835591Z_9a0d2bde5e8d",
+  "checks": [
+    "CLI startup replay",
+    "bounded worker and AST regression",
+    "full pytest",
+    "pip check",
+    "git diff --check"
+  ],
+  "parser_limits": "default CodeInspectionLimits unchanged",
+  "seeds": [
+    42
+  ],
+  "seed": 42,
+  "code_commit": "9a0d2bde5e8db979c32b87b51cd0f46d671b2dcc",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      "?? reports/experiments/static_performance/run_20261009T114334835591Z_9a0d2bde5e8d/"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

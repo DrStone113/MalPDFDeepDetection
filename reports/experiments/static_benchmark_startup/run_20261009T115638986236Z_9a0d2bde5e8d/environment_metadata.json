@@ -1,0 +1,39 @@
+{
+  "python": "3.11.17",
+  "packages": {
+    "numpy": "2.4.6",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.9.1",
+    "PyMuPDF": "1.26.7",
+    "torch": "2.11.0+cpu",
+    "torchvision": "0.26.0+cpu",
+    "xgboost": "3.2.0",
+    "lightgbm": "4.7.0",
+    "catboost": "1.2.10"
+  },
+  "generating_commit": "9a0d2bde5e8db979c32b87b51cd0f46d671b2dcc",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/analysis/static_acceleration_design.md",
+      " M reports/research_log.md",
+      " M scripts/14_benchmark_static.py",
+      " M src/malpdf/experiments/static_benchmark.py",
+      "?? reports/experiments/static_benchmark_startup/",
+      "?? reports/experiments/static_performance/run_20261009T114334835591Z_9a0d2bde5e8d/",
+      "?? tests/test_static_benchmark.py"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/analysis/static_acceleration_design.md",
+      " M reports/research_log.md",
+      " M scripts/14_benchmark_static.py",
+      " M src/malpdf/experiments/static_benchmark.py",
+      "?? reports/experiments/static_benchmark_startup/",
+      "?? reports/experiments/static_performance/run_20261009T114334835591Z_9a0d2bde5e8d/",
+      "?? tests/test_static_benchmark.py"
+    ]
+  }
+}

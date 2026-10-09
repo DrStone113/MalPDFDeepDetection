@@ -135,9 +135,10 @@ def benchmark_static(root, code_root, *, samples=256, repeats=5, batch_size=128)
         start = perf_counter()
         syntax = dict(inspect_pdf_codes([scripted], boundary=run.artifacts, workers=1))[0]
         syntax_seconds = perf_counter() - start
-        if not syntax["complete"] or syntax["ast"]["named_calls"]["util.printf"] != 1:
-            raise ValueError("Isolated synthetic AST smoke failed")
         write_json(run.report / "synthetic_ast_evidence.json", {"elapsed_seconds": syntax_seconds, "evidence": syntax})
+        if not syntax["complete"] or syntax["ast"]["named_calls"]["util.printf"] != 1:
+            reason = ", ".join(syntax["errors"]) or "unexpected_syntax_evidence"
+            raise ValueError("Isolated synthetic AST smoke failed: " + reason)
         rows = []
         for stage, modes, count in (("read_hash", io_times, 1), ("model_inference", infer_times, samples)):
             for mode, timings in modes.items():

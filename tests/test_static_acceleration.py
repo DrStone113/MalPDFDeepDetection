@@ -369,6 +369,43 @@ def test_parent_timeout_terminates_worker_and_preserves_unavailable_result(tmp_p
     assert {p.pid for p in multiprocessing.active_children()} == before
 
 
+def test_finished_worker_result_is_not_lost_between_pipe_and_exit_checks(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    import malpdf.static.code_inspector as module
+
+    expected = _inspect_code_bytes(_pdf('var n=1;'), CodeInspectionLimits())
+    closed, stopped = [], []
+
+    class Receiver:
+        polls = 0
+
+        def poll(self):
+            self.polls += 1
+            # The worker sends its result and exits after the first pipe check.
+            return self.polls > 1
+
+        def recv_bytes(self, maxlength):
+            content = json.dumps(expected).encode()
+            assert len(content) <= maxlength
+            return content
+
+        def close(self):
+            closed.append("receiver")
+
+    receiver = Receiver()
+    process = SimpleNamespace(start=lambda: None, is_alive=lambda: False)
+    sender = SimpleNamespace(close=lambda: closed.append("sender"))
+    context = SimpleNamespace(Pipe=lambda **kwargs: (receiver, sender),
+                              Process=lambda **kwargs: process)
+    monkeypatch.setattr(module, "_worker_count", lambda *args: 1)
+    monkeypatch.setattr(module.multiprocessing, "get_context", lambda *args: context)
+    monkeypatch.setattr(module, "_stop_code_process", lambda child: stopped.append(child))
+    results = dict(inspect_pdf_codes([tmp_path / "synthetic.pdf"], boundary=tmp_path))
+    assert results[0] == expected
+    assert receiver.polls == 2
+    assert closed == ["sender", "receiver"] and stopped == [process]
+
+
 def test_process_inspection_rejects_symlink_and_oversized_file(tmp_path):
     path, link = tmp_path / "source.pdf", tmp_path / "alias.pdf"
     path.write_bytes(_pdf())

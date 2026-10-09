@@ -1,0 +1,22 @@
+{
+  "run_id": "run_20261009T114334835591Z_9a0d2bde5e8d",
+  "study": "static_performance",
+  "status": "failed",
+  "started_at_utc": "2026-10-09T11:43:34.895414+00:00",
+  "code_commit": "9a0d2bde5e8db979c32b87b51cd0f46d671b2dcc",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "data_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "seed": 42,
+  "protocol": "synthetic performance benchmark",
+  "report_path": "reports/experiments/static_performance/run_20261009T114334835591Z_9a0d2bde5e8d/run_summary.json",
+  "artifact_path": "artifacts/static_performance/run_20261009T114334835591Z_9a0d2bde5e8d",
+  "metrics": {},
+  "error_type": "ValueError",
+  "finished_at_utc": "2026-10-09T11:43:43.469865+00:00"
+}

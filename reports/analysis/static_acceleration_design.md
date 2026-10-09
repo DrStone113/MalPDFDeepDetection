@@ -43,6 +43,15 @@ processes with CPU quota/affinity and available RAM checks; worker BLAS threads
 are one. The default is one worker. Each child starts a separate process group;
 timeouts and iterator cleanup kill that group and preserve unavailable results.
 The returned OS limits describe address space, not peak resident memory (RSS).
+The benchmark CLI imports its model/experiment stack only inside `main()`.
+Python spawn replays the entry point before the worker applies its limits;
+`RLIMIT_CPU` counts CPU time already used during that startup. Keeping that
+replay lightweight preserves the existing 4-second cap for the parser. This
+does not change resource limits or guarantee that arbitrary caller entry points
+have the same startup costs.
+When a worker exits after an initial empty-pipe check, the parent checks once
+more for its final reply before reporting an unavailable result. Timeout and
+process-group cleanup still apply; malformed or missing replies remain failures.
 
 Unsupported filters/DecodeParms, encrypted PDFs, malformed JavaScript, failed
 decoding and budget exhaustion are explicit incomplete results requiring referral.
@@ -81,3 +90,5 @@ six-branch v4 inference and external PDF datasets are outside these timing scope
 It also smoke-tests actual process-isolated AST extraction. Run directories,
 methodology, package versions, timing samples and the research log are preserved;
 F1/MCC/ECE/Brier are explicitly N/A for this synthetic latency study.
+`synthetic_ast_evidence.json` is written before checking the AST smoke result,
+so failed smoke checks retain the redacted worker evidence and error codes.

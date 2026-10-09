@@ -1,0 +1,28 @@
+{
+  "run_id": "run_20261009T114512509061Z_9a0d2bde5e8d",
+  "study": "static_benchmark_startup",
+  "status": "checks_failed",
+  "started_at_utc": "2026-10-09T11:45:12.558610+00:00",
+  "code_commit": "9a0d2bde5e8db979c32b87b51cd0f46d671b2dcc",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      "?? reports/experiments/static_performance/run_20261009T114334835591Z_9a0d2bde5e8d/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      "?? reports/experiments/static_performance/run_20261009T114334835591Z_9a0d2bde5e8d/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "maintenance; synthetic benchmark startup diagnosis",
+  "report_path": "reports/experiments/static_benchmark_startup/run_20261009T114512509061Z_9a0d2bde5e8d/run_summary.json",
+  "artifact_path": "artifacts/static_benchmark_startup/run_20261009T114512509061Z_9a0d2bde5e8d",
+  "metrics": {},
+  "notes": "CPU startup issue reproduced (4.347 CPU seconds before the unchanged 4-second hard cap). Benchmark import deferred to main and failed AST evidence preserved. Targeted checks: 71 passed. Full suite: 627 passed, 1 new spawn replay test failed, 2 existing warnings; logs retained. Same saved benign fixture succeeds when replayed separately; selected check with full test collection also passed. Unavailable worker evidence in original test assertion was not preserved, so that intermittent failure cause remains unconfirmed. No external PDFs, dataset fitting or held-out access; no new official performance/classification metrics.",
+  "finished_at_utc": "2026-10-09T11:55:59.916339+00:00"
+}
