@@ -1,0 +1,24 @@
+{
+  "run_id": "run_20261009T133249514086Z_0391f0a4595e",
+  "study": "cic_static_prepare",
+  "status": "completed",
+  "started_at_utc": "2026-10-09T13:32:49.546510+00:00",
+  "code_commit": "0391f0a4595ef56475897af9b5fbadb40e7a6d0a",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "data_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "seed": 42,
+  "protocol": "fixed CIC Train/dev diagnostic subset preparation",
+  "report_path": "reports/experiments/cic_static_prepare/run_20261009T133249514086Z_0391f0a4595e/run_summary.json",
+  "artifact_path": "artifacts/cic_static_prepare/run_20261009T133249514086Z_0391f0a4595e",
+  "metrics": {},
+  "job_lock_sha256": "dfdcc82d802104f971673dbf06731f9fd06a7ce4434186bf24b8b37d39f9713a",
+  "rows": 64,
+  "notes": "Metadata-only fixed CIC Train/dev selection; labels/paths copied from saved manifests. No PDF bytes, fitting, or Test evaluation. Job must run from console in disconnected LAB.",
+  "finished_at_utc": "2026-10-09T13:32:50.712793+00:00"
+}

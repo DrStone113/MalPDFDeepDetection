@@ -54,6 +54,9 @@ pypdf/PyMuPDF are included in parse; they are not falsely reported as separately
 measured stream time. Unreached stages are null. Startup, cache and IPC overhead
 are reported alongside total per-file p50/p95, sum and measured/unavailable
 counts. Frozen verified deployment-model load is recorded separately.
+For a killed worker, `overhead_seconds` also includes work in its unfinished,
+unmeasured stage. This residual is not a pure worker-startup/IPC measurement;
+use total time, last stage and null-stage counts when diagnosing timeouts.
 
 Cold means a fresh application feature cache. Warm verifies the PDF bytes/hash
 again before reusing a complete profile. Partial/timeout results are not cached;

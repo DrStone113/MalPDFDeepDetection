@@ -1,0 +1,19 @@
+{
+  "status": "verified",
+  "rows": 64,
+  "class_partition_counts": {
+    "train/0": 16,
+    "train/1": 16,
+    "validation/0": 16,
+    "validation/1": 16
+  },
+  "saved_job_lock_subset_manifest_labels_and_current_fingerprint": "passed",
+  "source_hashes_match_658_passed_suite": true,
+  "private_subset_and_job_lock_ignored": true,
+  "real_pdf_bytes_read": false,
+  "actual_pdf_checksums": "deferred to disconnected LAB workers",
+  "test_partition_selected": false,
+  "offline_command": ".venv/bin/python scripts/16_benchmark_cic_static.py run --prepared-run run_20261009T133249514086Z_0391f0a4595e --lab-isolated",
+  "metrics": null,
+  "reason": "metadata-only preparation; real CIC timings/coverage/model comparison not measured yet"
+}
