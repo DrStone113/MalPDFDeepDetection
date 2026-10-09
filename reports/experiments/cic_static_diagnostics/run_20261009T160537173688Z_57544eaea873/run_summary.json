@@ -1,0 +1,55 @@
+{
+  "run_id": "run_20261009T160537173688Z_57544eaea873",
+  "study": "cic_static_diagnostics",
+  "status": "completed",
+  "started_at_utc": "2026-10-09T16:05:37.302352+00:00",
+  "code_commit": "57544eaea873a5e51f4ab5073456d637ffaf1082",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      "?? reports/experiments/cic_static_profile/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      "?? reports/experiments/cic_static_profile/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "maintenance; CIC parser evidence and truthful inference timing",
+  "report_path": "reports/experiments/cic_static_diagnostics/run_20261009T160537173688Z_57544eaea873/run_summary.json",
+  "artifact_path": "artifacts/cic_static_diagnostics/run_20261009T160537173688Z_57544eaea873",
+  "metrics": {},
+  "verification_path": "reports/experiments/cic_static_diagnostics/run_20261009T160537173688Z_57544eaea873/verification.json",
+  "tested_sources_digest": "465d6f5349cca376e95926d0badd8f2af58cb3dfc39384c8cfc9d0a4b8c5ece6",
+  "tested_code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/research_log.md",
+      " M scripts/16_benchmark_cic_static.py",
+      " M src/malpdf/experiments/cic_static_benchmark.py",
+      " M src/malpdf/inference/deployment.py",
+      " M src/malpdf/inference/predictor.py",
+      " M src/malpdf/static/analyzer.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M src/malpdf/static/pdf_parser.py",
+      " M src/malpdf/static/profile_worker.py",
+      " M src/malpdf/static/profiling.py",
+      " M src/malpdf/static/result.py",
+      " M src/malpdf/static/rit_reference.py",
+      " M tests/test_cic_static_benchmark.py",
+      " M tests/test_inference.py",
+      " M tests/test_static_acceleration.py",
+      "?? reports/experiments/cic_static_diagnostics/",
+      "?? reports/experiments/cic_static_profile/",
+      "?? src/malpdf/static/parser_diagnostics.py"
+    ]
+  },
+  "notes": "Added fixed parser stage/exception/reason categories and pypdf recovery notices/PyMuPDF repair flags while retaining strict policies and validation. Partial reasons now include structural warnings; inference_gate separated from actual predict_proba, inference null on no call, unavailable predictions stay unknown. Profilev2/static-diagnostics-v3/code-inspection-v4 invalidate old caches; canonical RIT41/model schema/sentinels/splits/thresholds unchanged. Added checksum-first atomic restoration of existing38-feature deployment JSON without fitting/overwrite, with rollback. Local artifact unavailable; Codespace exists but SSH server startup failed, remote artifact unverified and no model restored. Added baseline-locked same64 preparation and saved before/after pairing without old PDF reads; current-process VmHWM preferred and fallback tagged. Final668 tests passed/2 existing warnings; targeted140 passed; initial filename-only collection refusal retained; pip/diff/ignore checks passed. Saved dirty tested-code snapshot separately from original generating revision; preserved prior user-run reports/log. No real PDF rerun, training or Test evaluation; metrics N/A.",
+  "finished_at_utc": "2026-10-09T16:26:08.041477+00:00"
+}

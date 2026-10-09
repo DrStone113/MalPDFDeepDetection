@@ -290,3 +290,41 @@ def test_inference_source_does_not_introduce_dangerous_pdf_operations() -> None:
     source = "\n".join(path.read_text(encoding="utf-8") for path in source_root.glob("*.py"))
     forbidden = ("subprocess", "os.startfile", "webbrowser", "requests", "urllib", "socket", "eval(", "exec(")
     assert not [term for term in forbidden if term in source]
+
+
+def test_restore_exact_saved_json_without_fitting_or_overwriting(tmp_path, monkeypatch):
+    _write_verified_artifact(tmp_path)
+    target = deployment_artifact_path(tmp_path)
+    source = tmp_path / "saved_model.json"
+    target.rename(source)
+    monkeypatch.setattr(deployment, "create_model", lambda *args, **kwargs: pytest.fail("Restoration fitted a model"))
+    first = deployment.restore_verified_deployment_model(tmp_path, source)
+    assert first["status"] == "restored" and first["fitting"] is False
+    assert target.read_bytes() == source.read_bytes()
+    again = deployment.restore_verified_deployment_model(tmp_path, source)
+    assert again["status"] == "already_verified"
+
+
+def test_restore_checks_checksum_before_loading_and_preserves_existing_file(tmp_path, monkeypatch):
+    _write_verified_artifact(tmp_path)
+    target = deployment_artifact_path(tmp_path)
+    original = target.read_bytes()
+    source = tmp_path / "wrong_model.json"; source.write_text('{"fixture":"wrong checksum"}')
+    monkeypatch.setattr(deployment, "load_verified_deployment_model", lambda *args: pytest.fail("Loaded before checksum guard"))
+    with pytest.raises(DeploymentError) as caught:
+        deployment.restore_verified_deployment_model(tmp_path, source)
+    assert caught.value.code == "deployment_artifact_checksum_mismatch"
+    assert target.read_bytes() == original
+
+
+def test_restore_rolls_back_new_artifact_when_manifest_schema_invalid(tmp_path):
+    _write_verified_artifact(tmp_path)
+    target = deployment_artifact_path(tmp_path)
+    source = tmp_path / "saved_model.json"; target.rename(source)
+    manifest_path = deployment_manifest_path(tmp_path)
+    manifest = json.loads(manifest_path.read_text()); manifest["feature_order"] = ["invalid"]
+    manifest_path.write_text(json.dumps(manifest))
+    with pytest.raises(DeploymentError, match="feature_order"):
+        deployment.restore_verified_deployment_model(tmp_path, source)
+    assert not target.exists() and source.exists()
+    assert not list(target.parent.glob(".deployment-*"))

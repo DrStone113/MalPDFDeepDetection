@@ -1,0 +1,184 @@
+{
+  "cold": {
+    "planned": 64,
+    "recorded": 64,
+    "not_started": 0,
+    "unique_pdf_samples": 64,
+    "status_counts": {
+      "parser_error": 18,
+      "partial": 23,
+      "complete": 23
+    },
+    "error_counts_overlapping": {
+      "parser_failure": 18,
+      "pdf_parser_failure": 30,
+      "pdf_structure_limit": 4,
+      "unsupported_script_filter": 1,
+      "encrypted_pdf": 2,
+      "script_byte_limit": 1,
+      "reference_feature_partial": 1,
+      "reference_object_limit": 2
+    },
+    "ast_error_files": 0,
+    "cache_hits": 0,
+    "inference_available": 0,
+    "total_seconds": {
+      "measured": 64,
+      "unavailable": 0,
+      "p50": 0.7509305395000183,
+      "p95": 2.416532250399992,
+      "sum": 64.52212062100057
+    },
+    "stages_seconds": {
+      "read_hash": {
+        "measured": 64,
+        "unavailable": 0,
+        "p50": 0.0019451959999514656,
+        "p95": 0.007119645150044095,
+        "sum": 0.17922143400141977
+      },
+      "raw_scan": {
+        "measured": 64,
+        "unavailable": 0,
+        "p50": 0.000707483000155662,
+        "p95": 0.01703775730002232,
+        "sum": 0.32013039800199294
+      },
+      "parse_pdf": {
+        "measured": 64,
+        "unavailable": 0,
+        "p50": 0.015713392499947076,
+        "p95": 0.4629295129498808,
+        "sum": 8.326769340999817
+      },
+      "stream_decode": {
+        "measured": 19,
+        "unavailable": 45,
+        "p50": 0.0,
+        "p95": 0.0004479934997334509,
+        "sum": 0.0032462949998262047
+      },
+      "js_ast": {
+        "measured": 26,
+        "unavailable": 38,
+        "p50": 0.0,
+        "p95": 1.2764674862499987,
+        "sum": 8.616985223000029
+      },
+      "inference": {
+        "measured": 64,
+        "unavailable": 0,
+        "p50": 0.00021563050006534468,
+        "p95": 0.001498660799973095,
+        "sum": 0.041149315000438946
+      }
+    },
+    "overhead_seconds": {
+      "measured": 64,
+      "unavailable": 0,
+      "p50": 0.6832988934997957,
+      "p95": 1.043912479099674,
+      "sum": 47.03461861499704
+    },
+    "peak_worker_rss_bytes": 299679744,
+    "peak_family_rss_sampled_bytes": 537534464,
+    "rss_lower_bound_records": 0
+  },
+  "warm": {
+    "planned": 64,
+    "recorded": 64,
+    "not_started": 0,
+    "unique_pdf_samples": 64,
+    "status_counts": {
+      "parser_error": 18,
+      "partial": 23,
+      "complete": 23
+    },
+    "error_counts_overlapping": {
+      "parser_failure": 18,
+      "pdf_parser_failure": 30,
+      "pdf_structure_limit": 4,
+      "unsupported_script_filter": 1,
+      "encrypted_pdf": 2,
+      "script_byte_limit": 1,
+      "reference_feature_partial": 1,
+      "reference_object_limit": 2
+    },
+    "ast_error_files": 0,
+    "cache_hits": 23,
+    "inference_available": 0,
+    "total_seconds": {
+      "measured": 64,
+      "unavailable": 0,
+      "p50": 0.7799204629999394,
+      "p95": 1.7305197134500516,
+      "sum": 58.846314273999724
+    },
+    "stages_seconds": {
+      "read_hash": {
+        "measured": 64,
+        "unavailable": 0,
+        "p50": 0.00044242649994430394,
+        "p95": 0.002796725749942648,
+        "sum": 0.06332229000008738
+      },
+      "raw_scan": {
+        "measured": 41,
+        "unavailable": 23,
+        "p50": 0.00024291399995490792,
+        "p95": 0.019432456000004095,
+        "sum": 0.24448861700057023
+      },
+      "parse_pdf": {
+        "measured": 41,
+        "unavailable": 23,
+        "p50": 0.010643433999803165,
+        "p95": 1.5531324670000686,
+        "sum": 7.972178309000583
+      },
+      "stream_decode": {
+        "measured": 1,
+        "unavailable": 63,
+        "p50": 7.032200005596678e-05,
+        "p95": 7.032200005596678e-05,
+        "sum": 7.032200005596678e-05
+      },
+      "js_ast": {
+        "measured": 3,
+        "unavailable": 61,
+        "p50": 0.7899192490001496,
+        "p95": 0.8734724769998138,
+        "sum": 2.234242555000037
+      },
+      "inference": {
+        "measured": 64,
+        "unavailable": 0,
+        "p50": 0.0001439735000303699,
+        "p95": 0.001986928599876591,
+        "sum": 0.06429215799903432
+      }
+    },
+    "overhead_seconds": {
+      "measured": 64,
+      "unavailable": 0,
+      "p50": 0.7386411799998314,
+      "p95": 0.9930984941500581,
+      "sum": 48.267720022999356
+    },
+    "peak_worker_rss_bytes": 299679744,
+    "peak_family_rss_sampled_bytes": 536698880,
+    "rss_lower_bound_records": 0
+  },
+  "run_wall_seconds": 124.45171070099991,
+  "model_setup": {
+    "seconds": 0.0011424350000197592,
+    "status": "unavailable_DeploymentError",
+    "requested_n_jobs": 1,
+    "scope": "verified frozen RIT deployment; inference timing only, no CIC accuracy claim; setup excluded from per-file inference"
+  },
+  "peak_parent_rss_bytes": 299679744,
+  "memory_scope": "worker kernel HWM when returned; killed worker polling lower bound; concurrent parent+worker RSS sum sampled, may double count shared pages",
+  "failure_inventory": "private artifacts/per_file.jsonl and failures.jsonl; no samples silently discarded",
+  "os_cache": "uncontrolled; cold/warm refer to application cache",
+  "stage_scope": "exclusive stage timings; implicit xref/object/content decoding and reference text extraction remain inside parse_pdf; stream_decode covers explicit JS streams only; worker startup/cache/IPC overhead reported separately"
+}

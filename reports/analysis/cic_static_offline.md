@@ -17,6 +17,24 @@ file is an explicit error, never a substituted sample.
 .venv/bin/python scripts/16_benchmark_cic_static.py prepare
 ```
 
+For the follow-up to the saved first real-PDF run, preparation must retain
+its exact subset checksum and configuration:
+
+```bash
+.venv/bin/python scripts/16_benchmark_cic_static.py prepare \
+  --baseline-run run_20261009T143328562606Z_57544eaea873
+```
+
+Profile v2, static diagnostics v3 and code evidence v4 invalidate older
+extraction caches. New parser provenance adds no model predictor and changes
+no canonical RIT values, sentinels, split or threshold. The structural parser
+still uses `strict=False`; the JS parser still uses `strict=True`. Exceptions
+are recorded as bounded fixed type/reason/stage codes, without raw messages.
+Pypdf open-time recovery notices are recorded separately: a notice does not
+prove a complete repair history or validity. PyMuPDF's native `is_repaired`
+flag is recorded when available. No strict failure is silently retried with
+looser validation or reported as successful JS inspection.
+
 Run `run` only from VMware console after disconnecting both NAT and host-only
 adapters and disabling shared folders, clipboard and drag/drop. The process
 must be non-root. `--lab-isolated` attests the hypervisor settings, which cannot
@@ -29,6 +47,20 @@ and appended log before this official run; raw/private artifacts stay ignored.
 .venv/bin/python scripts/16_benchmark_cic_static.py run \
   --prepared-run <completed_prepare_run_id> --lab-isolated
 ```
+
+If the saved deployment JSON is available as a trusted local copy, add
+`--model-file /local/path/xgb_rit_full_drop3constant.json` to that same `run`
+command. The worker LAB guard runs first; installation checks the existing
+manifest SHA before model loading, then validates all38 feature names/order
+and the saved configuration. It neither fits a new model nor overwrites an
+existing artifact, and rolls back a newly installed file if validation fails.
+The model remains ignored at `artifacts/models/xgb_rit_full_drop3constant.json`.
+Missing/wrong models preserve diagnostics and explicit unavailable inference.
+
+For metadata/model-only restoration before an offline run, `restore-model
+--model-file /trusted/local/copy.json` records a separate immutable restoration
+run. Commit its aggregate report/log before the later official invocation;
+using `run --model-file` instead keeps restoration in the profiling run.
 
 Every file uses a fresh Linux spawn process, default one worker, 10 MiB input,
 1 GiB address space, 12 CPU seconds and 20 wall seconds. Model/experiment
@@ -45,15 +77,28 @@ from planned counts. Aggregate `pipeline_summary.json` distinguishes complete,
 partial, parser error, wall timeout, resource/signal, input and worker failures;
 AST parse errors and error-code counts overlap those exclusive statuses.
 Interrupted attempts retain recorded rows and report not-started counts.
+The v2 inventory also includes `reasons`, covering warnings that caused
+structural incompleteness even when `errors` is empty. Aggregate summaries
+report parser failure categories, parser disagreement, repair flags and
+prediction-unavailable reasons. `baseline_comparison.json` pairs the fixed
+cohort's before/after statuses; private `baseline_file_pairs.csv` retains
+individual identities and reasons without rereading old PDFs.
 
 Stage times are exclusive: read/hash, raw token scan, parse, explicit JS stream
-decode, AST and inference. The analyzer and JS inspector reuse one byte
+decode, AST, inference gate and inference. The analyzer and JS inspector reuse one byte
 snapshot; checksum verification and analyzer verification are both measured.
 Implicit xref/object/content decoding and reference text extraction inside
 pypdf/PyMuPDF are included in parse; they are not falsely reported as separately
 measured stream time. Unreached stages are null. Startup, cache and IPC overhead
 are reported alongside total per-file p50/p95, sum and measured/unavailable
 counts. Frozen verified deployment-model load is recorded separately.
+`inference` measures only `predict_proba`. Gate checks, feature/model checks
+and probability/response validation are in `inference_gate`; model absence
+or parser refusal leaves inference null and `inference_executed=false`.
+A called model that fails remains a measured inference attempt but has no
+available prediction. Model setup records fixed error codes such as
+`deployment_artifact_missing`. Earlier v1 inference timings included refusals
+and are not comparable to v2 model-call latency.
 For a killed worker, `overhead_seconds` also includes work in its unfinished,
 unmeasured stage. This residual is not a pure worker-startup/IPC measurement;
 use total time, last stage and null-stage counts when diagnosing timeouts.
@@ -63,7 +108,9 @@ again before reusing a complete profile. Partial/timeout results are not cached;
 warm misses are reported explicitly. The OS page cache is uncontrolled: this
 does not claim cold-disk latency. Cache keys include PDF SHA, schema/engine
 source hashes, backend versions and limits. New config/source versions require
-a newly prepared job. Worker peak RSS uses kernel HWM; killed-worker RSS and
+a newly prepared job. Worker peak RSS prefers current-process `/proc/self/status`
+VmHWM; the rusage fallback is explicitly tagged. Earlier constant rusage peaks
+and new peaks are not an extraction-only memory comparison. Killed-worker RSS and
 concurrent parent+worker RSS use polling and are labeled lower bounds. RSS sums
 may double count shared pages; RLIMIT_AS is not an RSS cap.
 
@@ -71,7 +118,10 @@ The confirmed fixture-level extractor gap was ASCIIHex/ASCII85 JS streams and
 their bounded chains with Flate. The v3 code evidence schema adds support for
 these filters with output limits, retaining explicit failures for invalid data
 and unsupported parameters/filters. Canonical RIT41 semantics and models are
-unchanged. Impact on real CIC coverage awaits the disconnected LAB run.
+unchanged. The first64-PDF run completed23, partially analyzed23 and failed
+the structural parser on18. The diagnosed timing/report issues and parser
+provenance changes await the next disconnected LAB run; no coverage improvement
+is claimed from fixture results.
 
 The same job optionally fits two fixed CPU RF models on its selected CIC Train
 rows: C0 RIT41 baseline; C1 baseline plus resolved structural counts and JS/AST.

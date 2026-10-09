@@ -1,0 +1,18 @@
+{
+  "protocol": "maintenance; CIC parser evidence and truthful inference timing",
+  "scope": "saved report/metadata review and benign synthetic fixtures only; prepare same fixed 64-PDF offline job",
+  "seed": 42,
+  "test_access": false,
+  "no_training": true,
+  "prior_profile_run": "run_20261009T143328562606Z_57544eaea873",
+  "code_commit": "57544eaea873a5e51f4ab5073456d637ffaf1082",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      "?? reports/experiments/cic_static_profile/"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

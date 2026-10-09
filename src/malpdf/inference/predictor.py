@@ -15,6 +15,7 @@ from malpdf.inference.deployment import DeploymentError, load_verified_deploymen
 from malpdf.inference.result import InferenceResult, LocalContribution
 from malpdf.inference.schema import DEPLOYMENT_FEATURE_ORDER, DEPLOYMENT_MODEL_ID, DEPLOYMENT_THRESHOLD
 from malpdf.static import StaticInspectionLimits, inspect_pdf
+from malpdf.static.profiling import stage
 
 MARGIN_TOLERANCE = 2e-5
 PROBABILITY_TOLERANCE = 2e-6
@@ -152,11 +153,12 @@ class StaticScanSession:
     """
 
     def __init__(self, *, repository_root, limits=None, inspector=inspect_pdf,
-                 model_loader=load_verified_deployment_model, batch_size=128):
+                 model_loader=load_verified_deployment_model, batch_size=128, timings=None):
         if type(batch_size) is not int or not 1 <= batch_size <= 1024:
             raise ValueError("batch_size must be an integer between 1 and 1024")
         self.repository_root, self.limits = repository_root, limits
         self.inspector, self.model_loader, self.batch_size = inspector, model_loader, batch_size
+        self.timings = timings
         self._loaded = None
         self._load_error = None
 
@@ -173,6 +175,10 @@ class StaticScanSession:
         return self._loaded
 
     def _batch(self, paths, explain):
+        with stage(self.timings, "inference_gate"):
+            return self._batch_inner(paths, explain)
+
+    def _batch_inner(self, paths, explain):
         payloads, frames, positions = [], [], []
         for path in paths:
             static = self.inspector(path, limits=self.limits)
@@ -194,7 +200,9 @@ class StaticScanSession:
             try:
                 model, manifest = self._model()
                 features = pd.concat(frames, ignore_index=True)
-                raw = np.asarray(model.predict_proba(features), dtype=float)
+                with stage(self.timings, "inference"):
+                    raw = model.predict_proba(features)
+                raw = np.asarray(raw, dtype=float)
                 if (raw.shape != (len(frames), 2) or not np.isfinite(raw).all()
                         or np.any((raw < 0) | (raw > 1))
                         or not np.allclose(raw.sum(axis=1), 1, rtol=0, atol=1e-5)):

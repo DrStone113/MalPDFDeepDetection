@@ -1,0 +1,27 @@
+{
+  "profile_run": "run_20261009T143328562606Z_57544eaea873",
+  "cold_status_counts": {
+    "parser_error": 18,
+    "partial": 23,
+    "complete": 23
+  },
+  "warm_status_counts": {
+    "parser_error": 18,
+    "partial": 23,
+    "complete": 23
+  },
+  "model_setup": {
+    "seconds": 0.0011424350000197592,
+    "status": "unavailable_DeploymentError",
+    "requested_n_jobs": 1,
+    "scope": "verified frozen RIT deployment; inference timing only, no CIC accuracy claim; setup excluded from per-file inference"
+  },
+  "full_pdf_rerun": false,
+  "saved_per_file_evidence_verified": "128 rows = same64 identities twice; 82 incomplete attempts; subset/labels/splits match saved preparation",
+  "confirmed_gaps": [
+    "12 static-success/strict-JS-parser-failure files",
+    "3 partial files only structural_reference_unavailable warning, errors empty",
+    "missing deployment artifact; refusal overhead recorded as inference",
+    "worker reported peak RSS constant across files; sampling limitations retained"
+  ]
+}

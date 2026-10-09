@@ -105,6 +105,8 @@ def inspect_rit_reference_features(data: bytes, size_bytes: int, limits: StaticI
         return result
 
     try:
+        repair_state = getattr(document, "is_repaired", None)
+        result.diagnostics["parser_repaired"] = None if repair_state is None else bool(repair_state)
         try:
             metadata = document.metadata
         except Exception as error:

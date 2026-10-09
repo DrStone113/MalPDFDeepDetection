@@ -3,8 +3,8 @@
 from contextlib import contextmanager, nullcontext
 from time import perf_counter
 
-STAGES = ("read_hash", "raw_scan", "parse_pdf", "stream_decode", "js_ast", "inference")
-PROFILE_VERSION = "cic-static-profile-v1"
+STAGES = ("read_hash", "raw_scan", "parse_pdf", "stream_decode", "js_ast", "inference_gate", "inference")
+PROFILE_VERSION = "cic-static-profile-v2"
 
 
 class StageTimings:

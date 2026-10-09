@@ -23,10 +23,11 @@ import base64
 from malpdf.static.js_ast import CALL_NAMES, CodeInspectionError, inspect_js_syntax
 from malpdf.static.safety import read_bounded_bytes
 from malpdf.static.profiling import stage
+from malpdf.static.parser_diagnostics import ParserDiagnostics
 
 SECURITY_NAMES = frozenset({"/JS", "/JavaScript", "/OpenAction", "/AA", "/Launch",
     "/EmbeddedFile", "/EmbeddedFiles", "/XFA", "/AcroForm", "/JBIG2Decode", "/RichMedia", "/URI"})
-CODE_INSPECTION_SCHEMA_VERSION = "pdf-code-inspection-v3"
+CODE_INSPECTION_SCHEMA_VERSION = "pdf-code-inspection-v4"
 # Only fixed PDF vocabulary is exported in paths; untrusted keys remain redacted.
 _PATH_NAMES = SECURITY_NAMES | frozenset({"/Root", "/Pages", "/Kids", "/Annots", "/A",
     "/Next", "/Names", "/Fields", "/O", "/C", "/E", "/X", "/D", "/U", "/Fo",
@@ -59,11 +60,12 @@ class CodeInspectionLimits:
             raise ValueError("Code inspection exceeds the allowed resource budget")
 
 
-def _unavailable(code):
+def _unavailable(code, parser_diagnostics=None):
     return {"schema_version": CODE_INSPECTION_SCHEMA_VERSION,
             "status": "unavailable", "complete": False, "referral_recommended": True,
             "scripts_found": None, "scripts_parsed": None, "ast": None,
             "structural_indicators": None, "errors": [code],
+            "parser_diagnostics": parser_diagnostics,
             "traversal_complete": False, "javascript_state": "unavailable",
             "script_extraction_complete": False, "ast_complete": False,
             "observed": None, "script_sources": [],
@@ -149,12 +151,16 @@ def _inspect_code_bytes_inner(data, limits, timings):
 
     if len(data) > limits.max_file_bytes or not data.startswith(b"%PDF-"):
         return _unavailable("not_pdf_or_byte_limit")
+    diagnostic = ParserDiagnostics(strict=True)
     try:
-        reader = PdfReader(io.BytesIO(data), strict=True)
-    except Exception:
-        return _unavailable("pdf_parser_failure")
+        with diagnostic.capture_open_notices():
+            reader = PdfReader(io.BytesIO(data), strict=True)
+    except Exception as error:
+        diagnostic.failure(error, "open")
+        return _unavailable("pdf_parser_failure", diagnostic.data)
+    diagnostic.data["open_success"] = True
     if reader.is_encrypted:
-        return _unavailable("encrypted_pdf")
+        return _unavailable("encrypted_pdf", diagnostic.data)
     errors, seen, scripts_seen = set(), set(), set()
     indicators = Counter({name[1:]: 0 for name in sorted(SECURITY_NAMES)})
     nodes, calls = Counter(), Counter({name: 0 for name in sorted(CALL_NAMES)})
@@ -176,8 +182,9 @@ def _inspect_code_bytes_inner(data, limits, timings):
     traversal_complete = True
     try:
         root = reader.trailer.raw_get("/Root")
-    except Exception:
-        return _unavailable("pdf_root_unavailable")
+    except Exception as error:
+        diagnostic.failure(error, "root")
+        return _unavailable("pdf_root_unavailable", diagnostic.data)
 
     def dictionary_children(items, parent_path, parent_owner):
         for name, child in items:
@@ -209,7 +216,8 @@ def _inspect_code_bytes_inner(data, limits, timings):
             owner = key
         try:
             value = resolve(value)
-        except Exception:
+        except Exception as error:
+            diagnostic.failure(error, "reference")
             errors.add("pdf_reference_unavailable")
             traversal_complete = False
             continue
@@ -303,6 +311,7 @@ def _inspect_code_bytes_inner(data, limits, timings):
             "observed": {"scripts_found": found, "ast": ast_summary if parsed or complete_ast else None,
                          "structural_indicators": dict(indicators)},
             "script_sources": sources, "errors": sorted(errors),
+            "parser_diagnostics": diagnostic.data,
             "scope": "catalog-reachable syntax evidence only", "content_redacted": True,
             "active_content_executed": False}
 

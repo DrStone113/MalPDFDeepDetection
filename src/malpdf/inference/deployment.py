@@ -8,6 +8,9 @@ uses the already selected Protocol G XGBoost configuration but is never called
 from __future__ import annotations
 
 import json
+import hashlib
+import os
+import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -23,6 +26,7 @@ from malpdf.experiments.protocol_g_benchmark import G_DROP3CONSTANT, protocol_g_
 from malpdf.experiments.protocol_p import collect_environment_metadata, repository_git_state
 from malpdf.models.classical import create_model, model_configurations
 from malpdf.reproducibility import set_random_seed
+from malpdf.static.safety import read_bounded_bytes
 
 from malpdf.inference.schema import (
     DEPLOYMENT_FEATURE_ORDER,
@@ -43,6 +47,10 @@ from malpdf.inference.schema import (
 
 class DeploymentError(RuntimeError):
     """Raised when an immutable deployment model cannot safely be used."""
+
+    def __init__(self, message, *, code="deployment_error"):
+        super().__init__(message)
+        self.code = code
 
 
 @dataclass(frozen=True)
@@ -282,12 +290,13 @@ def load_deployment_manifest(repository_root: str | Path) -> tuple[dict[str, Any
     if not manifest_path.is_file():
         raise DeploymentError(
             "Deployment model is not installed/built. Build it explicitly with: "
-            ".\\.venv\\Scripts\\python.exe scripts\\build_deployment_model.py --execute"
+            ".\\.venv\\Scripts\\python.exe scripts\\build_deployment_model.py --execute",
+            code="deployment_manifest_missing",
         )
     try:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as error:
-        raise DeploymentError(f"Deployment manifest is unreadable: {error}") from error
+        raise DeploymentError(f"Deployment manifest is unreadable: {error}", code="deployment_manifest_unreadable") from error
     expected = {
         "model_id": DEPLOYMENT_MODEL_ID,
         "feature_schema": DEPLOYMENT_FEATURE_SCHEMA,
@@ -318,11 +327,12 @@ def load_deployment_manifest(repository_root: str | Path) -> tuple[dict[str, Any
     if not artifact_path.is_file():
         raise DeploymentError(
             "Deployment model artifact is missing. Build it explicitly with: "
-            ".\\.venv\\Scripts\\python.exe scripts\\build_deployment_model.py --execute"
+            ".\\.venv\\Scripts\\python.exe scripts\\build_deployment_model.py --execute",
+            code="deployment_artifact_missing",
         )
     expected_hash = manifest.get("artifact_sha256")
     if not isinstance(expected_hash, str) or sha256_file(artifact_path) != expected_hash:
-        raise DeploymentError("Deployment model artifact SHA-256 does not match its manifest")
+        raise DeploymentError("Deployment model artifact SHA-256 does not match its manifest", code="deployment_artifact_checksum_mismatch")
     return manifest, manifest_path, artifact_path
 
 
@@ -384,3 +394,40 @@ def load_verified_deployment_model(repository_root: str | Path) -> tuple[Any, di
         raise DeploymentError("Deployment model does not expose exactly 38 feature names")
     _assert_saved_xgboost_structure(model)
     return model, manifest
+
+
+def restore_verified_deployment_model(repository_root: str | Path, source: str | Path) -> dict:
+    """Install the exact saved JSON; no fitting, overwrite or pickle loading."""
+    root, source = Path(repository_root).absolute(), Path(source).absolute()
+    manifest = json.loads(read_bounded_bytes(deployment_manifest_path(root), boundary=root / "reports/deployment", max_bytes=64 * 1024))
+    if source.suffix.lower() != ".json":
+        raise DeploymentError("Only the saved deployment JSON is accepted", code="deployment_source_invalid")
+    content = read_bounded_bytes(source, boundary=source.parent, max_bytes=64 * 1024**2)
+    if hashlib.sha256(content).hexdigest() != manifest.get("artifact_sha256"):
+        raise DeploymentError("Saved deployment copy differs from manifest", code="deployment_artifact_checksum_mismatch")
+    target = deployment_artifact_path(root)
+    if any(part.is_symlink() for part in (target, *target.parents)):
+        raise DeploymentError("Deployment destination contains a symbolic link", code="deployment_destination_invalid")
+    created = False
+    temporary = None
+    try:
+        if not target.exists():
+            target.parent.mkdir(parents=True, exist_ok=True)
+            descriptor, name = tempfile.mkstemp(prefix=".deployment-", dir=target.parent)
+            temporary = Path(name)
+            with os.fdopen(descriptor, "wb") as output:
+                output.write(content)
+                output.flush()
+                os.fsync(output.fileno())
+            os.link(temporary, target)  # Refuse races/overwrites; publish complete bytes.
+            created = True
+        _model, verified = load_verified_deployment_model(root)
+        return {"status": "restored" if created else "already_verified", "model_id": verified["model_id"],
+                "artifact_sha256": verified["artifact_sha256"], "artifact_path": str(target.relative_to(root)), "fitting": False}
+    except Exception:
+        if created:
+            target.unlink()
+        raise
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)

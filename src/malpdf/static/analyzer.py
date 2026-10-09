@@ -117,6 +117,7 @@ class StaticPDFAnalyzer:
                 "structural_complete": parsed.structural_complete,
                 "encrypted": parsed.encrypted,
                 "resource_limit_reached": parsed.resource_limit_reached,
+                "diagnostics": parsed.diagnostics,
                 "header_version_string": header["header_version_string"],
                 "header_version_numeric": header["header_version_numeric"],
             }

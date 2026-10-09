@@ -13,12 +13,12 @@ import time
 from malpdf.static.code_inspector import (
     CodeInspectionLimits, _apply_code_limits, _stop_code_process, _worker_count,
 )
-from malpdf.static.profiling import STAGES, StageTimings
+from malpdf.static.profiling import STAGES, StageTimings, PROFILE_VERSION
 from malpdf.static.safety import read_bounded_bytes, StaticInspectionLimits
 
 
 def _failure(code, status="worker_error"):
-    return {"status": status, "errors": [code], "static": None, "code": None,
+    return {"profile_version": PROFILE_VERSION, "status": status, "errors": [code], "reasons": [code], "static": None, "code": None,
             "cache_hit": False, "timings": {name: None for name in STAGES}}
 
 
@@ -29,13 +29,23 @@ def resident_bytes(pid):
         return 0
 
 
+def current_process_peak_rss():
+    # VmHWM describes the current process image. Keep the rusage fallback
+    # explicitly identified instead of treating both measurements as equal.
+    try:
+        value = next(int(line.split()[1]) * 1024 for line in Path("/proc/self/status").read_text().splitlines() if line.startswith("VmHWM:"))
+        return value, "proc_vmhwm"
+    except (OSError, StopIteration, ValueError):
+        return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024, "rusage_fallback"
+
+
 def cached_profile(record, key, digest):
     from malpdf.static.schema import RIT_FEATURES
     value = record["profile"]
     encoded = json.dumps(value, sort_keys=True, allow_nan=False).encode()
     features = value["static"]["features"]
     if (record["key"] != key or record["profile_sha256"] != hashlib.sha256(encoded).hexdigest()
-            or value["status"] != "complete" or not value["code"]["complete"]
+            or value["profile_version"] != PROFILE_VERSION or value["status"] != "complete" or not value["code"]["complete"]
             or value["static"]["input"]["sha256"] != digest or set(features) != set(RIT_FEATURES)
             or any(v is not None and (type(v) not in (int, float) or not math.isfinite(v)) for v in features.values())):
         return None
@@ -82,6 +92,7 @@ def _profile_child(connection, path, boundary, digest, limits, cache_path, cache
             # in ignored LAB artifacts, never in aggregate Git reports.
             safe = {"input": {key: static.input[key] for key in ("size_bytes", "sha256")},
                     "features": static.features, "parser": static.parser,
+                    "reference_parser_repaired": static.diagnostics.get("rit_reference_diagnostics", {}).get("parser_repaired"),
                     "errors": [{"code": item.code, "fatal": item.fatal} for item in static.errors],
                     "warnings": [item.code for item in static.warnings]}
             missing_reference = (any(static.features.get(name) == -1 for name in ("images", "contains_text"))
@@ -95,20 +106,34 @@ def _profile_child(connection, path, boundary, digest, limits, cache_path, cache
             issues = {item.code for item in static.errors} | set(code["errors"])
             if missing_reference:
                 issues.add("reference_feature_partial")
-            result = {"status": status, "errors": sorted(issues),
+            reasons = set(issues)
+            if not static.parser.get("structural_complete"):
+                reasons.update(item.code for item in static.warnings if item.code.startswith(("structural_", "encrypted_pdf")))
+                if not reasons:
+                    reasons.add("structural_incomplete")
+            if static.parser.get("resource_limit_reached"):
+                reasons.add("static_resource_limit")
+            if not static.protocol_g_drop3constant_gate().passed:
+                reasons.add("feature_gate_failed")
+            if not code["complete"] and not code["errors"]:
+                reasons.add("code_inspection_incomplete")
+            if status != "complete" and not reasons:
+                reasons.add("analysis_incomplete")
+            result = {"profile_version": PROFILE_VERSION, "status": status, "errors": sorted(issues), "reasons": sorted(reasons),
                       "static": safe, "code": code, "cache_hit": False}
         if not result["cache_hit"] and result["code"] and result["code"]["complete"] and result["code"]["scripts_found"] == 0:
             timings.seconds["js_ast"] = 0.0
             timings.seconds["stream_decode"] = 0.0
+        memory, source = current_process_peak_rss()
         result.update(timings=dict(timings.seconds), resource_limits=applied,
-                      peak_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024)
+                      peak_rss_bytes=memory, rss_source=source)
     except BaseException as error:
         name = str(error) if str(error) in {"input_checksum_mismatch", "not_pdf"} else type(error).__name__
         result = _failure(name, "input_error" if isinstance(error, (OSError, ValueError)) else "worker_error")
         result["timings"] = dict(timings.seconds)
         if applied is not None:
             result["resource_limits"] = applied
-            result["peak_rss_bytes"] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024
+            result["peak_rss_bytes"], result["rss_source"] = current_process_peak_rss()
     try:
         connection.send_bytes(json.dumps({"event": "result", "profile": result}, allow_nan=False).encode())
     finally:

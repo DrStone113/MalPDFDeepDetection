@@ -21,6 +21,7 @@ from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject
 
 from malpdf.static.result import StructuredExtractionIssue
 from malpdf.static.safety import StaticInspectionLimits
+from malpdf.static.parser_diagnostics import ParserDiagnostics
 
 _STRUCTURAL_NAMES = frozenset(
     {
@@ -53,6 +54,7 @@ class ParserInspection:
     warnings: list[StructuredExtractionIssue] = field(default_factory=list)
     errors: list[StructuredExtractionIssue] = field(default_factory=list)
     resource_limit_reached: bool = False
+    diagnostics: dict[str, Any] = field(default_factory=dict)
 
 
 def _bounded_message(message: str, limits: StaticInspectionLimits) -> str:
@@ -63,8 +65,9 @@ def _bounded_message(message: str, limits: StaticInspectionLimits) -> str:
 class _StructureWalker:
     """Cycle-safe, bounded dictionary traversal without stream decoding."""
 
-    def __init__(self, limits: StaticInspectionLimits) -> None:
+    def __init__(self, limits: StaticInspectionLimits, diagnostics=None) -> None:
         self.limits = limits
+        self.diagnostics = diagnostics
         self.visited_indirect: set[tuple[int, int]] = set()
         self.object_count = 0
         self.limit_reached = False
@@ -96,7 +99,9 @@ class _StructureWalker:
                 if value is None:
                     self.failed_references += 1
                     return
-            except Exception:
+            except Exception as error:
+                if self.diagnostics is not None:
+                    self.diagnostics.failure(error, "reference")
                 self.failed_references += 1
                 return
         if isinstance(value, DictionaryObject):
@@ -156,8 +161,10 @@ def inspect_pdf_structure(data: bytes, limits: StaticInspectionLimits) -> Parser
     result = ParserInspection(
         structural_indicator_counts={_indicator_name(name): None for name in _STRUCTURAL_NAMES}
     )
+    diagnostic = ParserDiagnostics(strict=False)
+    result.diagnostics = diagnostic.data
     try:
-        with warnings.catch_warnings(record=True) as caught:
+        with diagnostic.capture_open_notices(), warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
             reader = PdfReader(io.BytesIO(data), strict=False)
         result.warnings.extend(
@@ -165,13 +172,16 @@ def inspect_pdf_structure(data: bytes, limits: StaticInspectionLimits) -> Parser
             for item in caught
         )
     except (PdfReadError, ValueError, OSError, EOFError) as error:
+        diagnostic.failure(error, "open")
         result.errors.append(StructuredExtractionIssue("parser_failure", _bounded_message(error, limits)))
         return result
     except Exception as error:  # pypdf can expose malformed-object implementation errors.
+        diagnostic.failure(error, "open")
         result.errors.append(StructuredExtractionIssue("parser_failure", _bounded_message(error, limits)))
         return result
 
     result.success = True
+    diagnostic.data["open_success"] = True
     try:
         result.encrypted = bool(reader.is_encrypted)
     except Exception as error:
@@ -185,7 +195,7 @@ def inspect_pdf_structure(data: bytes, limits: StaticInspectionLimits) -> Parser
         )
         return result
 
-    walker = _StructureWalker(limits)
+    walker = _StructureWalker(limits, diagnostic)
     try:
         walker.walk(reader.trailer)
         result.structural_complete = not (walker.limit_reached or walker.failed_references)
@@ -201,6 +211,7 @@ def inspect_pdf_structure(data: bytes, limits: StaticInspectionLimits) -> Parser
                 StructuredExtractionIssue("structural_object_limit", "Structural traversal reached a configured object or recursion limit.")
             )
     except Exception as error:
+        diagnostic.failure(error, "structure")
         result.warnings.append(StructuredExtractionIssue("structural_traversal_failure", _bounded_message(error, limits)))
     result.observed_structural_indicator_counts = dict(walker.indicators)
 

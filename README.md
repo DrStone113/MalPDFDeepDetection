@@ -5,8 +5,8 @@ A Python research project for reproducible malicious PDF detection experiments. 
 ## Static evidence and inference speed
 
 The October 2026 P0/P1 maintenance separates unknown structural/AST totals from
-observed partial evidence. JSON diagnostics use `static-diagnostics-v2` and code
-inspection now uses `pdf-code-inspection-v3` (bounded ASCIIHex/ASCII85 stream filters). Failed/incomplete PDF parsing refuses
+observed partial evidence. JSON diagnostics use `static-diagnostics-v3` and code
+inspection uses `pdf-code-inspection-v4` (fixed parser failure categories and recovery notices, with bounded ASCIIHex/ASCII85 stream filters). Failed/incomplete PDF parsing refuses
 deployment inference even when all numeric model inputs happen to be present.
 Canonical 41-feature RIT measurements, source-defined sentinels, model artifacts
 and locked partitions keep their established definitions.
@@ -27,6 +27,9 @@ from clean committed code without touching external datasets or Test partitions.
 `scripts/16_benchmark_cic_static.py prepare` locks a small CIC Train/dev subset
 from saved manifests without reading PDFs. Its `run` action requires the offline
 console LAB, records every parser/AST failure and times the actual pipeline.
+Profile v2 separates inference gate/refusal time from actual `predict_proba`,
+which is null when no model call occurs. `prepare --baseline-run <profile_id>`
+locks the same64 inputs/configuration and writes a paired status comparison.
 See [offline job and measurement limits](reports/analysis/cic_static_offline.md).
 
 ## Retrospective multi-cohort stacking v4

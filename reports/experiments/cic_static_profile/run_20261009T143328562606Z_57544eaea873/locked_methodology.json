@@ -1,0 +1,98 @@
+{
+  "protocol": "fixed CIC Train/dev static diagnosis and feature pilot",
+  "configuration": {
+    "seed": 42,
+    "prepared_cohort": "run_20261003T124714720715Z_c96868a21732",
+    "split_manifest": {
+      "path": "data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/split_manifest.csv",
+      "sha256": "e939a676c51c7a98b9dc4bb843e846f546e1ada2bfb576b41416c406415c0643"
+    },
+    "source_manifest": {
+      "path": "data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/source_manifest.csv",
+      "sha256": "d74729236017dc27a71c999bc4d69f84a16fa4148573c3bbc7f4eb03709b150b"
+    },
+    "normalization_manifest": {
+      "path": "data/processed/cic_normalization/run_20261003T104918756555Z_3b68d36a5705/normalization_manifest.csv",
+      "sha256": "c4dc77f00849518ee56dc34d0f0cc7daf0c92b3ce9fd1e93fd63d053caf8570f"
+    },
+    "samples_per_partition": 32,
+    "warm_repeats": 1,
+    "workers": 1,
+    "limits": {
+      "wall_seconds": 20,
+      "cpu_seconds": 12,
+      "memory_bytes": 1073741824,
+      "max_file_bytes": 10485760
+    },
+    "compare_models": true,
+    "rf": {
+      "n_estimators": 200,
+      "max_depth": 12,
+      "min_samples_leaf": 2,
+      "class_weight": "balanced"
+    },
+    "threshold": 0.5
+  },
+  "prepared_run": "run_20261009T141247420687Z_645c4a82dc11",
+  "subset_sha256": "bc0b8e0f65383d96b4f68065b8898563898d18cd2775f789da7141fb691ed209",
+  "fingerprint": {
+    "profile_version": "cic-static-profile-v1",
+    "code_schema": "pdf-code-inspection-v3",
+    "limits": {
+      "max_file_bytes": 10485760,
+      "max_objects": 2000,
+      "max_pdf_depth": 64,
+      "max_scripts": 64,
+      "max_script_bytes": 262144,
+      "max_decoded_bytes": 4194304,
+      "max_ast_nodes": 20000,
+      "max_ast_depth": 100,
+      "wall_seconds": 20,
+      "cpu_seconds": 12,
+      "memory_bytes": 1073741824
+    },
+    "backends": {
+      "pypdf": "5.9.0",
+      "PyMuPDF": "1.26.7",
+      "esprima": "4.0.1"
+    },
+    "sources": {
+      "static/analyzer.py": "6551dcaece61fe2805a5d23cc891ba0bf9f12baaaf1156a78e99092c1dd9c665",
+      "static/pdf_parser.py": "afa07f5ce09d73ef6d14f5147533655024b5f43d030e840f7565cd1060ff125b",
+      "static/rit_reference.py": "69bbe1813b02499da588c00452b061de41212cd5fcee055bd6027ec0e7c1dda3",
+      "static/raw_scan.py": "681e32599baa5741cee6a585700525c7c584f0f621cad6c5c7821ef37ac8ca45",
+      "static/code_inspector.py": "bb9a62f6fbbb35fedaf9a3b6cb6ea05f1f0b273b4f599d19476bc6708b2bf4b7",
+      "static/js_ast.py": "66c4dd9afe6cf9ef5c06eece9a094bec467f6a89985e815eeb9e03e8fe2ba960",
+      "static/profiling.py": "97f66df025e0f0da17600eade10421389194f10991986fcf2fbb2d0e1c91b45a",
+      "static/profile_worker.py": "ad1c4fd0c59674ff298ea61b6ebc2f747ef544c85d85e9730ee2a98ee98fb05c",
+      "static/schema.py": "f3952a013c5890aff201b00b4c72343d7d0766a6a1b9da720e233e05f26c9277",
+      "static/result.py": "105b7b95718550040513a1628b1206a4e37abca8bef8061dbc70cfdaf1803fcd",
+      "static/safety.py": "cc3a86a2ce9ffc2f7abefbdb19376e4e369f7dd24a7ad7bda9f6417b8a49f08d",
+      "static/lab_guard.py": "717ba03e4be7f153fb2ae67bff4c4b03da5aeb8b8412aaf49ff2898a0088b3b8",
+      "experiments/cic_static_benchmark.py": "669a60a90937502eb425ae192e9d85f3a34e53f8a1eb9c511df0a61c81ab1a29",
+      "inference/predictor.py": "e1cc068b6a1fe8385cab56b5324225a1f1b1bb41c55b5568694cd46187c2f306",
+      "inference/schema.py": "14f6b144ae8ac586ba0b497510b7b6be533616b2976e587a3498a66b1f85c6c6",
+      "inference/deployment.py": "a1dd7c9a61d525a81e3beddd1fcf5a66b9948bfa286945eda0c456f341db3549"
+    }
+  },
+  "lab_checks": {
+    "uid": 1000,
+    "connected_interfaces": [],
+    "unknown_interfaces": [],
+    "shared_mounts": [],
+    "ssh_session": false
+  },
+  "cache": "cold=fresh application feature cache; warm=complete-profile reuse after fresh PDF checksum verification; OS page cache uncontrolled",
+  "timing_scope": "exclusive stage timings; implicit xref/object/content decoding and reference text extraction remain inside parse_pdf; stream_decode covers explicit JS streams only; worker startup/cache/IPC overhead reported separately",
+  "ablation": "C0 same RIT41 definitions; C1 adds resolved structure/JS AST; RF settings and threshold0.5 locked before development evaluation; same saved partitions and refusals",
+  "dataset_scope": "CIC PDF only; RIT CSV unchanged, no AST fabrication or dataset merging",
+  "test_access": false,
+  "seed": 42,
+  "code_commit": "57544eaea873a5e51f4ab5073456d637ffaf1082",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

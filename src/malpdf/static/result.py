@@ -8,7 +8,7 @@ from enum import StrEnum
 from numbers import Real
 from typing import Any
 
-STATIC_DIAGNOSTIC_SCHEMA_VERSION = "static-diagnostics-v2"
+STATIC_DIAGNOSTIC_SCHEMA_VERSION = "static-diagnostics-v3"
 
 
 class FeatureStatus(StrEnum):

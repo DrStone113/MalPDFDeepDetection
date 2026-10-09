@@ -1,0 +1,86 @@
+{
+  "pytest": {
+    "command": [
+      ".venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/",
+      "--basetemp",
+      "artifacts/cic_static_diagnostics/run_20261009T160537173688Z_57544eaea873/pytest_full_suite",
+      "-q"
+    ],
+    "exit_code": 0,
+    "started_at_utc": "2026-10-09T16:20:28.126549+00:00",
+    "finished_at_utc": "2026-10-09T16:24:24.809455+00:00",
+    "scope": "benign synthetic fixtures only; no raw CIC PDFs",
+    "passed": 668,
+    "warnings": 2,
+    "warning_scope": "existing single-class sklearn confusion-matrix warnings"
+  },
+  "targeted": {
+    "command": [
+      ".venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/test_cic_static_benchmark.py",
+      "tests/test_static_acceleration.py",
+      "tests/test_static_pdf.py",
+      "tests/test_inference.py",
+      "--basetemp",
+      "artifacts/cic_static_diagnostics/run_20261009T160537173688Z_57544eaea873/pytest_targeted_2",
+      "-q"
+    ],
+    "exit_code": 0,
+    "utc": "2026-10-09T16:15:09.492997+00:00"
+  },
+  "earlier_check": {
+    "exit_code": 4,
+    "reason": "two incorrect test filenames caused collection refusal; corrected selection ran140 tests successfully"
+  },
+  "pip_check": {
+    "exit_code": 0,
+    "stdout": "No broken requirements found."
+  },
+  "diff_check": {
+    "exit_code": 0
+  },
+  "artifact_ignore_guards": "passed",
+  "tested_code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/research_log.md",
+      " M scripts/16_benchmark_cic_static.py",
+      " M src/malpdf/experiments/cic_static_benchmark.py",
+      " M src/malpdf/inference/deployment.py",
+      " M src/malpdf/inference/predictor.py",
+      " M src/malpdf/static/analyzer.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M src/malpdf/static/pdf_parser.py",
+      " M src/malpdf/static/profile_worker.py",
+      " M src/malpdf/static/profiling.py",
+      " M src/malpdf/static/result.py",
+      " M src/malpdf/static/rit_reference.py",
+      " M tests/test_cic_static_benchmark.py",
+      " M tests/test_inference.py",
+      " M tests/test_static_acceleration.py",
+      "?? reports/experiments/cic_static_diagnostics/",
+      "?? reports/experiments/cic_static_profile/",
+      "?? src/malpdf/static/parser_diagnostics.py"
+    ]
+  },
+  "tested_sources_digest": "465d6f5349cca376e95926d0badd8f2af58cb3dfc39384c8cfc9d0a4b8c5ece6",
+  "tested_sources_path": "artifacts/cic_static_diagnostics/run_20261009T160537173688Z_57544eaea873/tested_code_sha256.json",
+  "raw_pdf_access": false,
+  "real_model_fitting": false,
+  "test_partition_evaluation": false,
+  "deployment_artifact": {
+    "local_exact_filename_search": "not found under/home/drstone",
+    "restored": false,
+    "codespace": "exists; metadata state Available after read attempt; SSH server startup failed, remote file presence unverified"
+  },
+  "limits": "SSH/connected NICs remain; next real64-PDF run must be via disconnected console LAB",
+  "metrics": null,
+  "reason": "maintenance/benign fixtures only; no new real-CIC performance or model results"
+}

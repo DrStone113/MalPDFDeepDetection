@@ -23,13 +23,25 @@ from malpdf.provenance.research_runs import ResearchRun, write_json
 from malpdf.reproducibility import set_random_seed
 from malpdf.static.code_inspector import CodeInspectionLimits, CODE_INSPECTION_SCHEMA_VERSION, SECURITY_NAMES
 from malpdf.static.lab_guard import require_offline_lab
-from malpdf.static.profiling import STAGES, PROFILE_VERSION
+from malpdf.static.profiling import STAGES, PROFILE_VERSION, StageTimings
 from malpdf.static.safety import read_bounded_bytes
 
 
 def clean_code(root):
     if subprocess.check_output(["git", "-C", str(root), "status", "--porcelain"], text=True).strip():
         raise ValueError("Official CIC job requires clean committed code")
+
+
+def restore_profile_model(root, source):
+    root = Path(root).absolute()
+    clean_code(root)
+    from malpdf.inference.deployment import restore_verified_deployment_model
+    with ResearchRun(root, "cic_model_restore", {"protocol": "restore checksum-pinned existing deployment JSON", "test_access": False,
+            "fitting": False, "pdf_access": False}) as run:
+        result = restore_verified_deployment_model(root, source)
+        write_json(run.report / "restoration.json", result)
+        run.state["notes"] = "Existing deployment JSON restored/verified by manifest SHA,38-feature order and saved configuration; no fitting/PDF/Test access. Artifact stays ignored."
+    return run.state
 
 
 def checked_table(root, spec):
@@ -78,7 +90,7 @@ def select_subset(manifest, sources, count=32, seed=42):
 def source_fingerprint(root, limits):
     paths = ("static/analyzer.py", "static/pdf_parser.py", "static/rit_reference.py", "static/raw_scan.py",
              "static/code_inspector.py", "static/js_ast.py", "static/profiling.py", "static/profile_worker.py",
-             "static/schema.py", "static/result.py", "static/safety.py", "static/lab_guard.py",
+             "static/schema.py", "static/result.py", "static/safety.py", "static/lab_guard.py", "static/parser_diagnostics.py",
              "experiments/cic_static_benchmark.py", "inference/predictor.py", "inference/schema.py", "inference/deployment.py")
     return {"profile_version": PROFILE_VERSION, "code_schema": CODE_INSPECTION_SCHEMA_VERSION,
             "limits": asdict(limits), "backends": {name: importlib.metadata.version(name) for name in ("pypdf", "PyMuPDF", "esprima")},
@@ -99,7 +111,17 @@ def verify_label_provenance(rows, normalized):
     return rows
 
 
-def prepare_cic_profile(root, config):
+def baseline_method(root, identifier):
+    if not re.fullmatch(r"run_[A-Za-z0-9_-]{1,100}", identifier or ""):
+        raise ValueError("Unsafe baseline-run identifier")
+    directory = root / "reports/experiments/cic_static_profile" / identifier
+    state = json.loads(read_bounded_bytes(directory / "run_summary.json", boundary=root / "reports/experiments", max_bytes=1024**2))
+    if state["status"] != "completed":
+        raise ValueError("Baseline profile did not complete")
+    return json.loads(read_bounded_bytes(directory / "locked_methodology.json", boundary=root / "reports/experiments", max_bytes=1024**2))
+
+
+def prepare_cic_profile(root, config, *, baseline_run=None):
     root = Path(root).absolute()
     clean_code(root)
     cfg = yaml.safe_load(Path(config).read_text())
@@ -107,6 +129,7 @@ def prepare_cic_profile(root, config):
         raise ValueError("Locked seed/worker/threshold/warm budget changed")
     limits = CodeInspectionLimits(**cfg["limits"])
     method = {"protocol": "fixed CIC Train/dev diagnostic subset preparation", "configuration": cfg,
+              "baseline_run": baseline_run,
               "selection": "seed42 SHA-256 rank of saved identity within class/partition; no PDF reads or parser-driven selection",
               "split": "saved partitions/groups unchanged; no Test identities selected", "test_access": False,
               "interpretation": "balanced diagnostic pilot; Validation previously exposed, not an independent Test"}
@@ -118,9 +141,14 @@ def prepare_cic_profile(root, config):
         with subset.open("x", newline="") as output:
             writer = csv.DictWriter(output, fieldnames=list(rows[0]))
             writer.writeheader(); writer.writerows(rows)
+        subset_digest = hashlib.sha256(subset.read_bytes()).hexdigest()
+        if baseline_run is not None:
+            baseline = baseline_method(root, baseline_run)
+            if cfg != baseline["configuration"] or subset_digest != baseline["subset_sha256"]:
+                raise ValueError("Baseline configuration/subset changed: preserve the same64 rows, labels and partitions")
         fingerprint = source_fingerprint(root, limits)
-        lock = {"configuration": cfg, "subset_path": str(subset.relative_to(root)),
-                "subset_sha256": hashlib.sha256(subset.read_bytes()).hexdigest(), "rows": len(rows),
+        lock = {"configuration": cfg, "subset_path": str(subset.relative_to(root)), "baseline_run": baseline_run,
+                "subset_sha256": subset_digest, "rows": len(rows),
                 "fingerprint": fingerprint, "created_at_utc": datetime.now(timezone.utc).isoformat()}
         write_json(run.artifacts / "job_lock.json", lock)
         counts = Counter((row["split"], row["Label"]) for row in rows)
@@ -153,6 +181,10 @@ def load_job(root, identifier):
     rows = list(csv.DictReader(io.StringIO(subset.decode())))
     if rows != expected or len(rows) != lock["rows"]:
         raise ValueError("Subset no longer matches the saved manifest")
+    if lock.get("baseline_run"):
+        baseline = baseline_method(root, lock["baseline_run"])
+        if cfg != baseline["configuration"] or lock["subset_sha256"] != baseline["subset_sha256"]:
+            raise ValueError("Baseline configuration/subset changed")
     limits = CodeInspectionLimits(**cfg["limits"])
     if source_fingerprint(root, limits) != lock["fingerprint"]:
         raise ValueError("Extractor/config changed: prepare a new job; never reuse the old cache")
@@ -185,13 +217,27 @@ def summarize_profiles(records, planned):
         expected = planned[mode]
         statuses = Counter(row["status"] for row in selected)
         errors = Counter(error for row in selected for error in row["errors"])
+        reasons = Counter(reason for row in selected for reason in row.get("reasons", []))
+        failures = Counter((name, failure["stage"], failure["exception_type"], failure["reason"])
+            for row in selected for name, diagnostic in (
+                ("structural", (row.get("static") or {}).get("parser", {}).get("diagnostics")),
+                ("javascript", (row.get("code") or {}).get("parser_diagnostics")))
+            for failure in (diagnostic or {}).get("failures", []))
         summary[mode] = {"planned": expected, "recorded": len(selected), "not_started": expected - len(selected),
             "unique_pdf_samples": len({row["sample_id"] for row in selected}),
             "status_counts": dict(statuses), "error_counts_overlapping": dict(errors),
+            "analysis_reason_counts_overlapping": dict(reasons),
+            "parser_failure_categories": {"/".join(key): count for key, count in failures.items()},
+            "parser_disagreement_files": sum(bool((row.get("static") or {}).get("parser", {}).get("success"))
+                and "pdf_parser_failure" in (row.get("code") or {}).get("errors", []) for row in selected),
+            "reference_parser_repaired_files": sum((row.get("static") or {}).get("reference_parser_repaired") is True for row in selected),
             "ast_error_files": sum(bool(row.get("code") and any(source["extraction_status"] == "complete" and source["ast_status"] != "complete"
                 for source in row["code"].get("script_sources", []))) for row in selected),
             "cache_hits": sum(row["cache_hit"] for row in selected),
             "inference_available": sum(row.get("prediction", {}).get("available", False) for row in selected),
+            "inference_executed": sum(row.get("inference_executed", False) for row in selected),
+            "prediction_unavailable_reason_counts": dict(Counter(row.get("prediction", {}).get("reason") for row in selected
+                if not row.get("prediction", {}).get("available", False))),
             "total_seconds": distribution([row["total_seconds"] for row in selected]),
             "stages_seconds": {name: distribution([row["timings"][name] for row in selected]) for name in STAGES},
             "overhead_seconds": distribution([row["overhead_seconds"] for row in selected]),
@@ -199,6 +245,41 @@ def summarize_profiles(records, planned):
             "peak_family_rss_sampled_bytes": max((row["peak_family_rss_sampled_bytes"] for row in selected), default=None),
             "rss_lower_bound_records": sum(row["rss_quality"] == "sampled_lower_bound" for row in selected)}
     return summary
+
+
+def compare_saved_baseline(run, records, lock):
+    """Pair saved evidence only; never reread the baseline's raw PDFs."""
+    identifier = lock.get("baseline_run")
+    if not identifier:
+        return
+    root = run.root
+    baseline = baseline_method(root, identifier)
+    if baseline["subset_sha256"] != lock["subset_sha256"] or baseline["configuration"] != lock["configuration"]:
+        raise ValueError("Baseline cohort/configuration changed")
+    path = root / "artifacts/cic_static_profile" / identifier / "per_file.jsonl"
+    data = read_bounded_bytes(path, boundary=root / "artifacts/cic_static_profile", max_bytes=32 * 1024**2)
+    before = [json.loads(line) for line in data.decode().splitlines()]
+    before = {row["sample_id"]: row for row in before if row["cache_mode"] == "cold"}
+    after = {row["sample_id"]: row for row in records if row["cache_mode"] == "cold"}
+    if len(before) != lock["rows"] or set(before) != set(after) or any(
+            (old["pdf_sha256"], old["split"], old["Label"]) !=
+            (after[key]["pdf_sha256"], after[key]["split"], after[key]["Label"]) for key, old in before.items()):
+        raise ValueError("Before/after evidence does not retain the same PDFs, labels and partitions")
+    transitions = Counter((before[key]["status"], after[key]["status"]) for key in before)
+    write_json(run.report / "baseline_comparison.json", {"baseline_run": identifier, "same_subset_sha256": lock["subset_sha256"],
+        "paired_cold_samples": len(before), "status_transitions": {" -> ".join(key): count for key, count in transitions.items()},
+        "before_status_counts": dict(Counter(row["status"] for row in before.values())),
+        "after_status_counts": dict(Counter(row["status"] for row in after.values())),
+        "inference_time_comparable": False, "reason": "profile-v1 inference included refusals; v2 separates predict_proba from gate checks",
+        "memory_scope": "v2 prefers current-process VmHWM; earlier rusage peaks and new peaks are not an extraction-only memory comparison",
+        "model_metrics_scope": "C0/C1 use the same eligible rows within each run; changes in eligibility across runs require coverage/class denominators"})
+    with (run.artifacts / "baseline_file_pairs.csv").open("x", newline="") as output:
+        fields = ("sample_id", "before_status", "after_status", "before_errors", "after_reasons")
+        writer = csv.DictWriter(output, fieldnames=fields)
+        writer.writeheader()
+        for key in before:
+            writer.writerow(dict(sample_id=key, before_status=before[key]["status"], after_status=after[key]["status"],
+                before_errors=";".join(before[key]["errors"]), after_reasons=";".join(after[key]["reasons"])))
 
 
 def advanced_features(profile):
@@ -281,7 +362,7 @@ def compare_cic_features(run, records, configuration):
         "sample_ids": [row["sample_id"] for row, chosen in zip(cold, dev) if chosen]})
 
 
-def run_cic_profile(root, prepared_run, *, lab_attested=False):
+def run_cic_profile(root, prepared_run, *, lab_attested=False, model_file=None):
     root = Path(root).absolute()
     # This guard precedes every metadata/model/PDF operation in run mode.
     try:
@@ -297,11 +378,12 @@ def run_cic_profile(root, prepared_run, *, lab_attested=False):
     from malpdf.static.profile_worker import profile_pdf
     from malpdf.static.profile_worker import resident_bytes
     from malpdf.inference.predictor import StaticScanSession
-    from malpdf.inference.deployment import load_verified_deployment_model, DeploymentError
+    from malpdf.inference.deployment import load_verified_deployment_model, restore_verified_deployment_model, DeploymentError
     method = {"protocol": "fixed CIC Train/dev static diagnosis and feature pilot", "configuration": cfg,
+        "baseline_run": lock.get("baseline_run"),
         "prepared_run": prepared_run, "subset_sha256": lock["subset_sha256"], "fingerprint": lock["fingerprint"], "lab_checks": lab,
         "cache": "cold=fresh application feature cache; warm=complete-profile reuse after fresh PDF checksum verification; OS page cache uncontrolled",
-        "timing_scope": "exclusive stage timings; implicit xref/object/content decoding and reference text extraction remain inside parse_pdf; stream_decode covers explicit JS streams only; worker startup/cache/IPC overhead reported separately",
+        "timing_scope": "exclusive stage timings; inference=predict_proba only, null if not called; inference_gate=compatibility/feature/model checks and response validation; implicit xref/object/content decoding and reference text extraction remain in parse_pdf; stream_decode covers explicit JS streams; residual overhead includes startup/cache/IPC and any unfinished stage",
         "ablation": "C0 same RIT41 definitions; C1 adds resolved structure/JS AST; RF settings and threshold0.5 locked before development evaluation; same saved partitions and refusals",
         "dataset_scope": "CIC PDF only; RIT CSV unchanged, no AST fabrication or dataset merging", "test_access": False}
     with ResearchRun(root, "cic_static_profile", method) as run:
@@ -313,13 +395,18 @@ def run_cic_profile(root, prepared_run, *, lab_attested=False):
         readouts = {}
         start_run = perf_counter()
         model_start = perf_counter()
+        model_error_code = None
+        restoration = None
         try:
+            if model_file is not None:
+                restoration = restore_verified_deployment_model(root, model_file)
             loaded = load_verified_deployment_model(root)
             loaded[0].set_params(n_jobs=1)
             model_status = "verified_loaded"
         except Exception as error:
             loaded = None
             model_status = "unavailable_" + type(error).__name__
+            model_error_code = getattr(error, "code", "model_load_failed")
         model_setup_seconds = perf_counter() - model_start
 
         def loader(_root):
@@ -341,13 +428,20 @@ def run_cic_profile(root, prepared_run, *, lab_attested=False):
                         result = static_result(profile)
                         if result is not None:
                             readouts[index] = result
-                            infer_start = perf_counter()
+                            inference_timings = StageTimings()
+                            session.timings = inference_timings
                             prediction = session.scan_many([index], explain=False)[0].prediction
-                            profile["timings"]["inference"] = perf_counter() - infer_start
+                            for name in ("inference_gate", "inference"):
+                                profile["timings"][name] = inference_timings.seconds[name]
                             profile["prediction"] = {name: prediction[name] for name in ("available", "malicious_probability", "predicted_label")}
+                            profile["prediction"]["reason"] = (None if prediction["available"] else
+                                "extraction_incomplete" if not result.parser.get("success") or not result.parser.get("structural_complete") or result.parser.get("resource_limit_reached") or any(issue.fatal for issue in result.errors) else
+                                "feature_gate_failed" if not result.protocol_g_drop3constant_gate().passed else
+                                model_error_code if loaded is None else "prediction_failed")
                             readouts.pop(index)
                         else:
-                            profile["prediction"] = {"available": False, "malicious_probability": None, "predicted_label": None}
+                            profile["prediction"] = {"available": False, "malicious_probability": None, "predicted_label": None, "reason": "static_result_unavailable"}
+                        profile["inference_executed"] = profile["timings"]["inference"] is not None
                         profile.update(total_seconds=perf_counter() - start, cache_mode=mode, repeat=repeat,
                             sample_id=row["sample_id"], pdf_relative_path=row["pdf_relative_path"], pdf_sha256=row["pdf_sha256"], Label=row["Label"], split=row["split"])
                         measured = sum(value for value in profile["timings"].values() if value is not None)
@@ -360,30 +454,33 @@ def run_cic_profile(root, prepared_run, *, lab_attested=False):
                             with (run.artifacts / "failures.jsonl").open("a") as output:
                                 output.write(json.dumps(profile, allow_nan=False) + "\n")
                         inventory = run.artifacts / "per_file_inventory.csv"
-                        fields = ("sample_id", "pdf_relative_path", "split", "Label", "cache_mode", "repeat", "status", "last_stage", "worker_exit_code", "errors")
+                        fields = ("sample_id", "pdf_relative_path", "split", "Label", "cache_mode", "repeat", "status", "last_stage", "worker_exit_code", "errors", "reasons", "inference_executed")
                         exists = inventory.exists()
                         with inventory.open("a", newline="") as output:
                             writer = csv.DictWriter(output, fieldnames=fields)
                             if not exists:
                                 writer.writeheader()
-                            writer.writerow({name: ";".join(profile[name]) if name == "errors" else profile[name] for name in fields})
+                            writer.writerow({name: ";".join(profile[name]) if name in {"errors", "reasons"} else profile[name] for name in fields})
                         if mode == "cold" and profile["status"] == "complete" and not cache_path.exists():
-                            value = {name: profile[name] for name in ("status", "errors", "static", "code")}
+                            value = {name: profile[name] for name in ("profile_version", "status", "errors", "reasons", "static", "code")}
                             checksum = hashlib.sha256(json.dumps(value, sort_keys=True, allow_nan=False).encode()).hexdigest()
                             write_json(cache_path, {"key": key, "profile_sha256": checksum, "profile": value})
                         run.progress("file_completed", cache_mode=mode, processed=len(records), planned=sum(planned.values()), status=profile["status"])
             if cfg["compare_models"]:
                 require_offline_lab(lab_attested)
                 compare_cic_features(run, records, cfg)
+            compare_saved_baseline(run, records, lock)
             run.state["status"] = "completed"
         finally:
             summary = summarize_profiles(records, planned)
             summary["run_wall_seconds"] = perf_counter() - start_run
             summary["model_setup"] = {"seconds": model_setup_seconds, "status": model_status,
+                "error_code": model_error_code,
+                "restoration": restoration,
                 "requested_n_jobs": 1,
                 "scope": "verified frozen RIT deployment; inference timing only, no CIC accuracy claim; setup excluded from per-file inference"}
             summary["peak_parent_rss_bytes"] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024
-            summary["memory_scope"] = "worker kernel HWM when returned; killed worker polling lower bound; concurrent parent+worker RSS sum sampled, may double count shared pages"
+            summary["memory_scope"] = "worker current-process VmHWM when returned, rusage fallback explicitly tagged; killed worker polling lower bound; concurrent parent+worker RSS sum sampled and may double count shared pages"
             summary["failure_inventory"] = "private artifacts/per_file.jsonl and failures.jsonl; no samples silently discarded"
             summary["os_cache"] = "uncontrolled; cold/warm refer to application cache"
             summary["stage_scope"] = method["timing_scope"]
