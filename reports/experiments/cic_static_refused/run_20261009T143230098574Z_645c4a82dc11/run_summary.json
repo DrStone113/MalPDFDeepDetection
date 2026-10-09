@@ -1,0 +1,31 @@
+{
+  "run_id": "run_20261009T143230098574Z_645c4a82dc11",
+  "study": "cic_static_refused",
+  "status": "failed",
+  "started_at_utc": "2026-10-09T14:32:30.122767+00:00",
+  "code_commit": "645c4a82dc114df0c830c8619688e6a900a4bfbc",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      "?? reports/experiments/cic_static_prepare/run_20261009T141247420687Z_645c4a82dc11/",
+      "?? reports/experiments/cic_static_refused/run_20261009T143004768627Z_645c4a82dc11/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      "?? reports/experiments/cic_static_prepare/run_20261009T141247420687Z_645c4a82dc11/",
+      "?? reports/experiments/cic_static_refused/run_20261009T143004768627Z_645c4a82dc11/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "CIC offline job preflight",
+  "report_path": "reports/experiments/cic_static_refused/run_20261009T143230098574Z_645c4a82dc11/run_summary.json",
+  "artifact_path": "artifacts/cic_static_refused/run_20261009T143230098574Z_645c4a82dc11",
+  "metrics": {},
+  "notes": "Preflight refused before model/PDF access; dirty/unavailable LAB/config provenance recorded; no samples or metrics evaluated.",
+  "error_type": "ValueError",
+  "finished_at_utc": "2026-10-09T14:32:30.156598+00:00"
+}

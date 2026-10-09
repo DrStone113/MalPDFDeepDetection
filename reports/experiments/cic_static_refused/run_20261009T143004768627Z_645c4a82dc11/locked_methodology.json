@@ -1,0 +1,17 @@
+{
+  "protocol": "CIC offline job preflight",
+  "prepared_run": "run_20261009T133249514086Z_039f0a4595e",
+  "test_access": false,
+  "pdf_access": false,
+  "seed": 42,
+  "code_commit": "645c4a82dc114df0c830c8619688e6a900a4bfbc",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      "?? reports/experiments/cic_static_prepare/run_20261009T141247420687Z_645c4a82dc11/"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}
