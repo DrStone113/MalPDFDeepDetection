@@ -1,0 +1,9 @@
+{
+  "generating_commit": "34993818996a7ffaa3ca1bd4e836a35ee68c7154",
+  "worktree": "clean",
+  "base_bundle_code_commit": "def0ee6b76c9dd37e2dc95c0c98980ef9320a0a8",
+  "file_sha256": {
+    "code/src/malpdf/experiments/kaggle_vision_runner.py": "1956c38f54ff3b5eeb24e2c18ae4be202c9bf2e1a4bbfe31781169b0888ed869",
+    "code/src/malpdf/deep_learning/training.py": "cac3a31e8dcb0850be25a63b9b1bdb9bf3cd38efb44dbbc3593e260a108e8581"
+  }
+}

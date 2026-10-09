@@ -1,0 +1,36 @@
+{
+  "pip_check": {
+    "exit_code": 0,
+    "output": "No broken requirements found.\n"
+  },
+  "git_diff_check": {
+    "exit_code": 0,
+    "output": ""
+  },
+  "git_status": {
+    "exit_code": 0,
+    "output": " M README.md\n M pyproject.toml\n M reports/research_log.md\n M src/malpdf/data/vision_dataset.py\n M src/malpdf/evaluation/selective.py\n M src/malpdf/experiments/late_fusion_runner.py\n M src/malpdf/models/late_fusion.py\n?? configs/raw_datasets.yaml\n?? configs/safe_stacking_v3.yaml\n?? configs/tri_modal_fusion.yaml\n?? reports/experiments/late_fusion_v2/\n?? reports/experiments/markov_cache/\n?? reports/experiments/raw_downloads/\n?? reports/experiments/safe_stacking_v3/\n?? reports/experiments/tri_modal_fusion/\n?? reports/experiments/vision_resnet/\n?? scripts/05_evaluate_tri_modal_fusion.py\n?? scripts/06_optimize_and_stack_v3_safe.py\n?? scripts/download_raw_datasets.py\n?? src/malpdf/data/raw_downloads.py\n?? src/malpdf/experiments/safe_stacking_v3.py\n?? src/malpdf/experiments/tri_modal_runner.py\n?? src/malpdf/models/safe_stacking.py\n?? src/malpdf/models/v3_base_learners.py\n?? src/malpdf/static/obfuscation.py\n?? tests/test_raw_downloads.py\n?? tests/test_safe_stacking_v3.py\n?? tests/test_tri_modal_fusion.py\n"
+  },
+  "pytest": {
+    "command": "python -m pytest tests/",
+    "exit_code": 0,
+    "wall_seconds": 47.20350667399907,
+    "python": "/tmp/malpdf-raw-venv-20261002/bin/python",
+    "summary": "======================= 372 passed, 2 warnings in 44.90s ======================="
+  },
+  "verification": {
+    "sources_checksum_verified": 10,
+    "publisher_md5_archives_matched": 2,
+    "pdfs_verified": 5,
+    "all_pdf_magic_sha256_size_permissions_and_user_labels_verified": true,
+    "all_five_match_prior_verified_cve_sources": true,
+    "ignored_generated_files": 41,
+    "protected_reports_and_split_unchanged": 149,
+    "log_historical_prefix_preserved": true,
+    "staged_paths": [],
+    "pipeline_status": "partial"
+  },
+  "generating_module_unchanged": true,
+  "entrypoint_sha256": "12982fd6a471fa99b22fec6d7b2a50ee75213c34cb82c7f0c763393732363b9e",
+  "checked_at_utc": "2026-10-02T12:47:44.223632+00:00"
+}

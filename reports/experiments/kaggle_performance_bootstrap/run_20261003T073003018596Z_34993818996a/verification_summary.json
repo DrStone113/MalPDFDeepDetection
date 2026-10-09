@@ -1,0 +1,9 @@
+{
+  "notebook_syntax": "passed",
+  "real_bundle_bootstrap": "passed",
+  "code_matches_tested_checkout": true,
+  "protected_previous_evidence": 231,
+  "research_log_append_only": true,
+  "gpu_amp_executed": false,
+  "new_dataset_upload": false
+}

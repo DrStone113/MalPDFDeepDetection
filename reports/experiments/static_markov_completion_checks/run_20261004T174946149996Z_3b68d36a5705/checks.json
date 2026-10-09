@@ -1,0 +1,23 @@
+{
+  "pytest": {
+    "passed": 588,
+    "warnings": 2,
+    "seconds": 68.61
+  },
+  "checks": {
+    "pip_check": {
+      "exit_code": 0
+    },
+    "diff_check": {
+      "exit_code": 0
+    },
+    "git_status": {
+      "exit_code": 0
+    }
+  },
+  "verified_source_files_match_training_commit": 96,
+  "free_disk_bytes": 6180741120,
+  "existing_local_changes_preserved": true,
+  "main_staging_modified": false,
+  "test_inference": 0
+}

@@ -1,0 +1,12 @@
+{
+  "command": "/tmp/malpdf-raw-venv-20261002/bin/python -m pytest tests/ -q",
+  "exit_code": 0,
+  "passed": 398,
+  "warnings": 2,
+  "seconds": 83.3,
+  "recorded_at_utc": "2026-10-02T13:26:50.183645+00:00",
+  "final_module_sha256": "c7746d9b5750db3e9b662f06992cd1d6827fbca3c51b474d675757bc2b3cd5be",
+  "warning_context": "Two existing Vision smoke-test single-class confusion-matrix warnings",
+  "generating_code_snapshot": "artifacts/raw_downloads/run_20261002T131549363589Z_3b68d36a5705/generating_raw_downloads.py",
+  "note": "The active acquisition loaded the earlier module snapshot; final tests include handling EOF/deflate errors during candidate probing."
+}

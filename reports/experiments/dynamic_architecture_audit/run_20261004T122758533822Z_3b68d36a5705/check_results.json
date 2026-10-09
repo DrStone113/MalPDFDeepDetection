@@ -1,0 +1,18 @@
+{
+  "pytest": {
+    "exit_code": 0,
+    "evidence": "artifacts/dynamic_architecture_audit/run_20261004T122758533822Z_3b68d36a5705/pytest.txt"
+  },
+  "pip_check": {
+    "exit_code": 0,
+    "evidence": "artifacts/dynamic_architecture_audit/run_20261004T122758533822Z_3b68d36a5705/pip_check.txt"
+  },
+  "diff_check": {
+    "exit_code": 0,
+    "evidence": "artifacts/dynamic_architecture_audit/run_20261004T122758533822Z_3b68d36a5705/diff_check.txt"
+  },
+  "git_status": {
+    "exit_code": 0,
+    "evidence": "artifacts/dynamic_architecture_audit/run_20261004T122758533822Z_3b68d36a5705/git_status.txt"
+  }
+}

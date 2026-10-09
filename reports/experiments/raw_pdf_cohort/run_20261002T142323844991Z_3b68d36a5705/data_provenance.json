@@ -1,0 +1,18 @@
+{
+  "dataset": {
+    "path": "data/processed/raw_pdf_cohort/run_20261002T142323844991Z_3b68d36a5705/labeled_features.csv",
+    "sha256": "cdbe817de970e7ab0af46be32ebf7c3d32341915b06f48836a97a91dc35fc212"
+  },
+  "split_manifest": {
+    "path": "data/processed/raw_pdf_cohort/run_20261002T142323844991Z_3b68d36a5705/protocol_g_seed42_split_manifest.csv",
+    "sha256": "7d1cb8cce4630adf4637d4f84b28a17330d77b9284fa3bdd273fdd18ea749e63"
+  },
+  "source_manifest": {
+    "path": "data/processed/raw_pdf_cohort/run_20261002T142323844991Z_3b68d36a5705/source_pdf_manifest.csv",
+    "sha256": "db4e73ef7bac6a2c2c1b845df999d96156efca7b954b1ea2a7f5ca6931f0ee68"
+  },
+  "all_features": {
+    "path": "data/processed/raw_pdf_cohort/run_20261002T142323844991Z_3b68d36a5705/all_raw_features.csv",
+    "sha256": "f2affc133ae287e27fe943850aebbf54e599a6c439d8d3b6f231b089981b10cc"
+  }
+}

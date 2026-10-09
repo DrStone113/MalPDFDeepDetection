@@ -1,0 +1,110 @@
+{
+  "checked_at_utc": "2026-10-02T09:55:36.761639Z",
+  "run_id": "run_20261002T095151494329Z_3efd81e782c1",
+  "code_commit_sha": "3efd81e782c1e7800299368b2b8aa3ef4c945852",
+  "worktree": "dirty; current implementation and earlier authorized tasks uncommitted",
+  "pytest": {
+    "command": "/tmp/malpdf-markov-5ha1y7ut/venv/bin/python -m pytest tests/ -q",
+    "passed": 290,
+    "failed": 0,
+    "warnings": 2,
+    "seconds": 26.15,
+    "exit_code": 0,
+    "warning_reason": "Existing Vision single-class MCC smoke fixtures; zero-denominator convention documented"
+  },
+  "late_fusion_tests": {
+    "passed": 32,
+    "seconds": 10.29,
+    "exit_code": 0
+  },
+  "initial_targeted_tests": {
+    "passed": 29,
+    "failed": 2,
+    "reason": "Test assertions incorrectly assumed no fusion false negatives on tiny calibration data and expected a different duplicate-leakage error message; corrected assertions to validate actual confusion counts and rejection"
+  },
+  "pip_check": {
+    "exit_code": 0,
+    "output": "No broken requirements found."
+  },
+  "git_diff_check": {
+    "exit_code": 0
+  },
+  "new_source_config_test_whitespace": {
+    "paths": [
+      "src/malpdf/models/late_fusion.py",
+      "src/malpdf/experiments/late_fusion_runner.py",
+      "scripts/04_evaluate_late_fusion.py",
+      "configs/late_fusion_stacking.yaml",
+      "tests/test_late_fusion.py"
+    ],
+    "passed": true
+  },
+  "dry_run": {
+    "command": "python scripts/04_evaluate_late_fusion.py --dry-run",
+    "exit_code": 0,
+    "validation_rows": 4868,
+    "validation_role_rows": {
+      "meta_fit": 1056,
+      "calibration_fit": 1239,
+      "selection": 2573
+    },
+    "candidate_count": 8,
+    "test_evaluation_count": 0,
+    "models_fit": 0,
+    "test_predictions_decoded": false,
+    "metrics_unavailable_reason": "Preflight only; no model evaluation"
+  },
+  "synthetic_integration_coverage": [
+    "Two/three-branch stacking and declared Vision weights",
+    "Meta-fit/Platt-fit/selection group disjointness",
+    "No refit after selection",
+    "Persisted lock before test decode; test decoded once",
+    "Raw-probability columns only; exact ID/label joins",
+    "Checksum/duplicate-PDF/family leakage rejection",
+    "Dirty official worktree rejection and failed-run provenance",
+    "10% entropy routing and FN catch/retained Brier/log loss/ECE",
+    "Immutable outputs and append-only research log"
+  ],
+  "previous_evidence": {
+    "protected_files": 126,
+    "all_unchanged": true,
+    "old_research_log_prefix_unchanged": true
+  },
+  "limitations": {
+    "official_test_results": "N/A: clean committed worktree required; no official execution performed",
+    "vision_results": "N/A: no aligned official Protocol G Vision probability export; CVE smoke checkpoint ineligible"
+  },
+  "staged_paths": [],
+  "git_status_short": [
+    " M .gitignore",
+    " M AGENTS.md",
+    " M README.md",
+    " M reports/research_log.md",
+    " M src/malpdf/static/safety.py",
+    "?? configs/late_fusion_stacking.yaml",
+    "?? configs/markov_cache.yaml",
+    "?? configs/source_preparation.yaml",
+    "?? configs/vision_resnet18.yaml",
+    "?? reports/experiments/late_fusion_v2/",
+    "?? reports/experiments/markov_cache/",
+    "?? reports/experiments/vision_resnet/",
+    "?? scripts/02_build_markov_cache.py",
+    "?? scripts/03_train_vision_model.py",
+    "?? scripts/04_evaluate_late_fusion.py",
+    "?? scripts/prepare_source_datasets.py",
+    "?? src/malpdf/data/manifest_validator.py",
+    "?? src/malpdf/data/markov_preparation.py",
+    "?? src/malpdf/data/source_preparation.py",
+    "?? src/malpdf/data/vision_dataset.py",
+    "?? src/malpdf/experiments/late_fusion_runner.py",
+    "?? src/malpdf/experiments/vision_runner.py",
+    "?? src/malpdf/models/late_fusion.py",
+    "?? src/malpdf/models/vision_resnet.py",
+    "?? src/malpdf/static/cache_manager.py",
+    "?? src/malpdf/static/markov.py",
+    "?? tests/test_late_fusion.py",
+    "?? tests/test_markov_cache.py",
+    "?? tests/test_source_preparation.py",
+    "?? tests/test_vision_resnet.py"
+  ]
+}

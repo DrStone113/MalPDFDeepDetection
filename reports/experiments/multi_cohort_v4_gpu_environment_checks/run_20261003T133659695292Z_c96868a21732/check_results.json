@@ -1,0 +1,18 @@
+{
+  "pytest": {
+    "exit_code": 0,
+    "evidence": "artifacts/multi_cohort_v4_gpu_environment_checks/run_20261003T133659695292Z_c96868a21732/pytest.txt"
+  },
+  "pip_check": {
+    "exit_code": 0,
+    "evidence": "artifacts/multi_cohort_v4_gpu_environment_checks/run_20261003T133659695292Z_c96868a21732/pip_check.txt"
+  },
+  "diff_check": {
+    "exit_code": 0,
+    "evidence": "artifacts/multi_cohort_v4_gpu_environment_checks/run_20261003T133659695292Z_c96868a21732/diff_check.txt"
+  },
+  "git_status": {
+    "exit_code": 0,
+    "evidence": "artifacts/multi_cohort_v4_gpu_environment_checks/run_20261003T133659695292Z_c96868a21732/git_status.txt"
+  }
+}

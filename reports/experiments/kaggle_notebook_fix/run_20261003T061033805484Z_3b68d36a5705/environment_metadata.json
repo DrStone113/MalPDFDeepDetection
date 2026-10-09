@@ -1,0 +1,6 @@
+{
+  "python": "3.11.13 (main, Jul  1 2025, 05:27:07) [GCC 10.2.1 20210110]",
+  "status": "incomplete at initialization",
+  "missing_package": "lightgbm",
+  "observed_at_failure": "PackageNotFoundError before package version snapshot completed"
+}

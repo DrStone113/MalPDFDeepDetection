@@ -1,0 +1,58 @@
+============================= test session starts ==============================
+platform linux -- Python 3.11.13, pytest-8.4.2, pluggy-1.6.0
+rootdir: /workspaces/MalPDFDeepDetection/artifacts/code_checkouts/static_inspection
+configfile: pyproject.toml
+plugins: platformdirs-4.12.2
+collected 564 items
+
+tests/test_cape_lab_design.py ...                                        [  0%]
+tests/test_cic_normalization.py ........................................ [  7%]
+...........                                                              [  9%]
+tests/test_cic_pdfmal.py ........                                        [ 10%]
+tests/test_cic_source_fidelity.py ....                                   [ 11%]
+tests/test_cli.py .                                                      [ 11%]
+tests/test_cross_dataset_schema.py ...                                   [ 12%]
+tests/test_cross_dataset_strict6.py .......                              [ 13%]
+tests/test_deep_learning_protocol_g.py ............                      [ 15%]
+tests/test_dynamic.py .............                                      [ 18%]
+tests/test_inference.py ..............                                   [ 20%]
+tests/test_kaggle_handoff.py .................                           [ 23%]
+tests/test_late_fusion.py ................................               [ 29%]
+tests/test_mapping_resolution.py ...                                     [ 29%]
+tests/test_markov_cache.py ............................................. [ 37%]
+                                                                         [ 37%]
+tests/test_metric_semantics.py ......                                    [ 38%]
+tests/test_multi_cohort_v4.py ...............                            [ 41%]
+tests/test_multiseed_robustness.py ...........                           [ 43%]
+tests/test_protocol_g_benchmark.py .........                             [ 45%]
+tests/test_protocol_p.py .....                                           [ 45%]
+tests/test_protocol_p_benchmark.py .....                                 [ 46%]
+tests/test_protocol_p_vs_g_analysis.py ....                              [ 47%]
+tests/test_raw_downloads.py ............................................ [ 55%]
+..................                                                       [ 58%]
+tests/test_raw_pdf_cohort.py ....                                        [ 59%]
+tests/test_raw_tri_modal_resume.py ...........................           [ 64%]
+tests/test_raw_tri_modal_v3.py ...........                               [ 65%]
+tests/test_reproducibility.py ....                                       [ 66%]
+tests/test_rit_pdfmal.py ....                                            [ 67%]
+tests/test_rit_pdfmal_paper_alignment.py ..                              [ 67%]
+tests/test_rit_pdfmal_split.py ....                                      [ 68%]
+tests/test_safe_stacking_v3.py .......................                   [ 72%]
+tests/test_selective_static_ensemble.py .......                          [ 73%]
+tests/test_source_preparation.py ................                        [ 76%]
+tests/test_static_acceleration.py .................................      [ 82%]
+tests/test_static_pdf.py .....................                           [ 86%]
+tests/test_thesis_evidence.py ..                                         [ 86%]
+tests/test_tri_modal_fusion.py .......................                   [ 90%]
+tests/test_vision_resnet.py ....................................         [ 96%]
+tests/test_xgb_cv10.py ...........                                       [ 98%]
+tests/test_xgb_explainability.py ......                                  [100%]
+
+=============================== warnings summary ===============================
+tests/test_vision_resnet.py::test_vision_cli_smoke_training_runs_backward_and_checkpoint
+tests/test_vision_resnet.py::test_vision_cli_smoke_training_runs_backward_and_checkpoint
+  /home/vscode/.local/lib/python3.11/site-packages/sklearn/metrics/_classification.py:614: UserWarning: A single label was found in 'y_true' and 'y_pred'. For the confusion matrix to have the correct shape, use the 'labels' parameter to pass all known labels.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================= 564 passed, 2 warnings in 108.73s (0:01:48) ==================

@@ -1,0 +1,28 @@
+{
+  "offline_checks_from_same_task": {
+    "pytest": {
+      "exit_code": 0,
+      "elapsed_seconds": 57.628967401999944,
+      "evidence": "artifacts/cross_dataset_evasion_v3/run_20261003T091848313122Z_3b68d36a5705/pytest.txt"
+    },
+    "pip_check": {
+      "exit_code": 0,
+      "elapsed_seconds": 1.058973000000151,
+      "evidence": "artifacts/cross_dataset_evasion_v3/run_20261003T091848313122Z_3b68d36a5705/pip_check.txt"
+    },
+    "git_diff_check": {
+      "exit_code": 0,
+      "elapsed_seconds": 0.010541183999976056,
+      "evidence": "artifacts/cross_dataset_evasion_v3/run_20261003T091848313122Z_3b68d36a5705/git_diff_check.txt"
+    },
+    "git_status": {
+      "exit_code": 0,
+      "elapsed_seconds": 0.0097052700000404,
+      "evidence": "artifacts/cross_dataset_evasion_v3/run_20261003T091848313122Z_3b68d36a5705/git_status.txt"
+    }
+  },
+  "git_diff_check_exit_code": 0,
+  "staged_paths": [],
+  "source_code_modified": false,
+  "private_join_ignored": true
+}

@@ -1,0 +1,94 @@
+{
+  "pip_check": {
+    "command": [
+      "/tmp/malpdf-v3-venv-20261002/bin/python",
+      "-m",
+      "pip",
+      "check"
+    ],
+    "exit_code": 0,
+    "stdout": "No broken requirements found.\n",
+    "stderr": ""
+  },
+  "diff_check": {
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "git_status": {
+    "command": [
+      "git",
+      "status",
+      "--short"
+    ],
+    "exit_code": 0,
+    "stdout": " M README.md\n M pyproject.toml\n M reports/research_log.md\n M src/malpdf/data/vision_dataset.py\n M src/malpdf/evaluation/selective.py\n M src/malpdf/experiments/late_fusion_runner.py\n M src/malpdf/models/late_fusion.py\n?? configs/safe_stacking_v3.yaml\n?? configs/tri_modal_fusion.yaml\n?? reports/experiments/late_fusion_v2/\n?? reports/experiments/markov_cache/\n?? reports/experiments/safe_stacking_v3/\n?? reports/experiments/tri_modal_fusion/\n?? reports/experiments/vision_resnet/\n?? scripts/05_evaluate_tri_modal_fusion.py\n?? scripts/06_optimize_and_stack_v3_safe.py\n?? src/malpdf/experiments/safe_stacking_v3.py\n?? src/malpdf/experiments/tri_modal_runner.py\n?? src/malpdf/models/safe_stacking.py\n?? src/malpdf/models/v3_base_learners.py\n?? src/malpdf/static/obfuscation.py\n?? tests/test_safe_stacking_v3.py\n?? tests/test_tri_modal_fusion.py\n",
+    "stderr": ""
+  },
+  "staged_paths": {
+    "command": [
+      "git",
+      "diff",
+      "--name-only",
+      "--cached"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "pytest": {
+    "command": [
+      "/tmp/malpdf-v3-venv-20261002/bin/python",
+      "-m",
+      "pytest",
+      "tests/"
+    ],
+    "exit_code": 0,
+    "stdout": "============================= test session starts ==============================\nplatform linux -- Python 3.11.13, pytest-8.4.2, pluggy-1.6.0\nrootdir: /workspaces/MalPDFDeepDetection\nconfigfile: pyproject.toml\ncollected 336 items\n\ntests/test_cape_lab_design.py ...                                        [  0%]\ntests/test_cic_pdfmal.py ........                                        [  3%]\ntests/test_cic_source_fidelity.py ....                                   [  4%]\ntests/test_cli.py .                                                      [  4%]\ntests/test_cross_dataset_schema.py ...                                   [  5%]\ntests/test_cross_dataset_strict6.py .......                              [  7%]\ntests/test_deep_learning_protocol_g.py ...........                       [ 11%]\ntests/test_dynamic.py .............                                      [ 14%]\ntests/test_inference.py ..............                                   [ 19%]\ntests/test_late_fusion.py ................................               [ 28%]\ntests/test_mapping_resolution.py ...                                     [ 29%]\ntests/test_markov_cache.py ......................................        [ 40%]\ntests/test_metric_semantics.py ......                                    [ 42%]\ntests/test_multiseed_robustness.py ...........                           [ 45%]\ntests/test_protocol_g_benchmark.py .........                             [ 48%]\ntests/test_protocol_p.py .....                                           [ 50%]\ntests/test_protocol_p_benchmark.py .....                                 [ 51%]\ntests/test_protocol_p_vs_g_analysis.py ....                              [ 52%]\ntests/test_reproducibility.py ....                                       [ 53%]\ntests/test_rit_pdfmal.py ....                                            [ 55%]\ntests/test_rit_pdfmal_paper_alignment.py ..                              [ 55%]\ntests/test_rit_pdfmal_split.py ....                                      [ 56%]\ntests/test_safe_stacking_v3.py .......................                   [ 63%]\ntests/test_selective_static_ensemble.py .......                          [ 65%]\ntests/test_source_preparation.py ................                        [ 70%]\ntests/test_static_pdf.py .....................                           [ 76%]\ntests/test_thesis_evidence.py ..                                         [ 77%]\ntests/test_tri_modal_fusion.py .......................                   [ 84%]\ntests/test_vision_resnet.py ....................................         [ 94%]\ntests/test_xgb_cv10.py ...........                                       [ 98%]\ntests/test_xgb_explainability.py ......                                  [100%]\n\n=============================== warnings summary ===============================\ntests/test_vision_resnet.py::test_vision_cli_smoke_training_runs_backward_and_checkpoint\ntests/test_vision_resnet.py::test_vision_cli_smoke_training_runs_backward_and_checkpoint\n  /home/vscode/.local/lib/python3.11/site-packages/sklearn/metrics/_classification.py:614: UserWarning: A single label was found in 'y_true' and 'y_pred'. For the confusion matrix to have the correct shape, use the 'labels' parameter to pass all known labels.\n    warnings.warn(\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n======================= 336 passed, 2 warnings in 44.36s =======================\n",
+    "stderr": "",
+    "passed": 336,
+    "warnings": 2,
+    "seconds": 44.36,
+    "new_v3_test_count": 23,
+    "warning_note": "Two pre-existing synthetic Vision single-class MCC warnings"
+  },
+  "execution": {
+    "command": [
+      "/tmp/malpdf-v3-venv-20261002/bin/python",
+      "scripts/06_optimize_and_stack_v3_safe.py",
+      "--execute"
+    ],
+    "exit_code": 2,
+    "stdout": "Status: blocked_missing_pdf_source; base fits: 0; test evaluations: 0.\nReal PDF source mapping: 0/24337 IDs; foreign source IDs: 5.\nReason: Measured ObfuscationCount requires real PDF bytes for every Protocol G ID; no proxy, constant fill, foreign cohort or inferred file identity is permitted. No PDF measurements, fitting or test evaluation; metrics N/A.\nReport: reports/experiments/safe_stacking_v3/run_20261002T114320215160Z_3b68d36a5705/run_summary.json\n",
+    "stderr": ""
+  },
+  "provenance_preservation": {
+    "protected_previous_reports_cache_dataset_split_files": 152,
+    "all_unchanged": true,
+    "historical_log_prefix_unchanged": true
+  },
+  "new_file_whitespace": {
+    "passed": true,
+    "files": [
+      "scripts/06_optimize_and_stack_v3_safe.py",
+      "src/malpdf/static/obfuscation.py",
+      "src/malpdf/models/safe_stacking.py",
+      "src/malpdf/models/v3_base_learners.py",
+      "src/malpdf/experiments/safe_stacking_v3.py",
+      "tests/test_safe_stacking_v3.py",
+      "configs/safe_stacking_v3.yaml"
+    ]
+  },
+  "environment": {
+    "python": "3.11.13",
+    "fresh_venv": "/tmp/malpdf-v3-venv-20261002",
+    "install": "python -m pip install --no-build-isolation -e '.[dev]'",
+    "inherited_dependencies": "Existing compatible dependencies visible via --system-site-packages; new LightGBM/CatBoost installed in the fresh venv"
+  },
+  "requirement_update": "User explicitly requires measured ObfuscationCount from real PDF bytes, rejecting the initial suggested Encoding+ObjStm proxy; final implementation contains no proxy fallback"
+}

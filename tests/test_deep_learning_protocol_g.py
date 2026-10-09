@@ -121,6 +121,19 @@ def test_training_api_uses_bce_logits_and_has_no_test_loader_argument() -> None:
     assert "AdamW" in source
 
 
+def test_fp16_refuses_cpu_and_nonfinite_gradients_still_fail_closed() -> None:
+    from torch.utils.data import DataLoader, TensorDataset
+    loader = DataLoader(TensorDataset(torch.ones(2, 2), torch.zeros(2)), batch_size=2)
+    arguments = dict(device=torch.device('cpu'), learning_rate=0.001, weight_decay=0.0,
+                     max_epochs=1, patience=1, min_delta=0.0)
+    with pytest.raises(ValueError, match='CUDA'):
+        train_with_validation(torch.nn.Linear(2, 1), loader, loader, mixed_precision=True, **arguments)
+    model = torch.nn.Linear(2, 1)
+    model.weight.register_hook(lambda gradient: torch.full_like(gradient, float('inf')))
+    with pytest.raises(RuntimeError, match='gradient is non-finite'):
+        train_with_validation(model, loader, loader, **arguments)
+
+
 def test_synthetic_run_saves_only_best_checkpoint_then_evaluates_test_once(tmp_path: Path) -> None:
     partitions = {"train": _frame(12), "validation": _frame(8, 2.0), "test": _frame(8, 4.0)}
     scaler = experiment._fit_train_only_scaler(partitions, PROTOCOL_G_REQUIRED_FEATURES)

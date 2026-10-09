@@ -1,0 +1,27 @@
+{
+  "pytest_pytorch211.txt": [
+    "  /home/vscode/.local/lib/python3.11/site-packages/sklearn/metrics/_classification.py:614: UserWarning: A single label was found in 'y_true' and 'y_pred'. For the confusion matrix to have the correct shape, use the 'labels' parameter to pass all known labels.",
+    "    warnings.warn(",
+    "",
+    "-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html",
+    "578 passed, 2 warnings in 69.99s (0:01:09)"
+  ],
+  "pytest_pytorch211_default.txt": [
+    "  /home/vscode/.local/lib/python3.11/site-packages/sklearn/metrics/_classification.py:614: UserWarning: A single label was found in 'y_true' and 'y_pred'. For the confusion matrix to have the correct shape, use the 'labels' parameter to pass all known labels.",
+    "    warnings.warn(",
+    "",
+    "-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html",
+    "578 passed, 2 warnings in 65.82s (0:01:05)"
+  ],
+  "legacy_checkpoint_compatibility.json": {
+    "checkpoint_checksum_verified": true,
+    "load_weights_only": true,
+    "strict_state_dict": true,
+    "synthetic_forward_rows": 2,
+    "finite_logits": true,
+    "previous_torch": "2.7.1",
+    "effective_torch": "2.11.0+cpu",
+    "real_dataset_inference": false,
+    "real_Test_evaluated": false
+  }
+}

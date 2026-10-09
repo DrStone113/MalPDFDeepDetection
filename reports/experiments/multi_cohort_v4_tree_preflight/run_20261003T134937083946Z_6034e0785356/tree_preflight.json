@@ -1,0 +1,109 @@
+{
+  "verified_tree_folds": 20,
+  "validation_rows": 4268,
+  "validation_predictions_sha256": "5fda7976c8300db4237bff2327005b23500109e5b629bdc487ae54103525d859",
+  "max_absolute_replay_error": 2.220446049250313e-16,
+  "checkpoints": [
+    {
+      "model": "xgboost",
+      "fold": 1,
+      "checkpoint_sha256": "3d232c287e97efb3b6428812d91fda0b89af83ec0c9d1f5d5cd6e6b944f8e872"
+    },
+    {
+      "model": "xgboost",
+      "fold": 2,
+      "checkpoint_sha256": "564fd63f44e0f34c0263f30deef756ec611eb0be99e76300aae1bdd4c7009a91"
+    },
+    {
+      "model": "xgboost",
+      "fold": 3,
+      "checkpoint_sha256": "f9358bc483ba1af5917ea664104481ff45991e39357e43f5715b51cfc104d061"
+    },
+    {
+      "model": "xgboost",
+      "fold": 4,
+      "checkpoint_sha256": "af7a6718e77fca61cc26f8d8db346915a101a27501c3c45ff6702245aac6c2f8"
+    },
+    {
+      "model": "xgboost",
+      "fold": 5,
+      "checkpoint_sha256": "4172371eedbff4d83c4179c084d0f7915488fc9e41198d6c9661104f4621e090"
+    },
+    {
+      "model": "lightgbm",
+      "fold": 1,
+      "checkpoint_sha256": "78d1ff8d8c2b1dc60c9f19ef391fa737fc45ddc526ee06a0d4c9f68243f7c90a"
+    },
+    {
+      "model": "lightgbm",
+      "fold": 2,
+      "checkpoint_sha256": "e0f1864c667104b9017942c0933e0a344ed111837c9eb94f72299906e3a28a2b"
+    },
+    {
+      "model": "lightgbm",
+      "fold": 3,
+      "checkpoint_sha256": "28521a605dab0796da6798e3158045c8b67b4508bd8b91729fa72f51c131f0a9"
+    },
+    {
+      "model": "lightgbm",
+      "fold": 4,
+      "checkpoint_sha256": "393f9f14a99b93b48c52899e747fc6cff772d3d50ba7187a5dc138bbee245863"
+    },
+    {
+      "model": "lightgbm",
+      "fold": 5,
+      "checkpoint_sha256": "e07a0c58f80f7cecd9a3d13d0184a191b6e5397d8a82e127682c05cb56a8cae8"
+    },
+    {
+      "model": "catboost",
+      "fold": 1,
+      "checkpoint_sha256": "486064733944aed81a688110fa1f12c75af7f2894b7d0e4f8a53beeae17da2b5"
+    },
+    {
+      "model": "catboost",
+      "fold": 2,
+      "checkpoint_sha256": "6e6360922fb26bcb0f05e5bd021ce98ce762f20c9005271166343de572daa1b0"
+    },
+    {
+      "model": "catboost",
+      "fold": 3,
+      "checkpoint_sha256": "70282e1e7e9d54bcf87fd1fb1ecef9d022e520f9ec7487041fbbca3406328c74"
+    },
+    {
+      "model": "catboost",
+      "fold": 4,
+      "checkpoint_sha256": "0cb7fd28ae0a77344fb2be44487380792ded82daa702fdecd409cd2a366625de"
+    },
+    {
+      "model": "catboost",
+      "fold": 5,
+      "checkpoint_sha256": "c3b0ab03096c2a7a75360b616a8d355bf1529819703da88d4f75b91029dbba1a"
+    },
+    {
+      "model": "random_forest",
+      "fold": 1,
+      "checkpoint_sha256": "01340f1418566d11871cd4284ffff89756be9e030e4da77f2cb0db18f6891424"
+    },
+    {
+      "model": "random_forest",
+      "fold": 2,
+      "checkpoint_sha256": "a4f3c1f0c37bf1a8d7b2861361da38048e54c7053392a12edc7304ee9d8a295b"
+    },
+    {
+      "model": "random_forest",
+      "fold": 3,
+      "checkpoint_sha256": "067b0868e1c3bf34f8a0ccce7362573bac3dff8a2f58437e32696988956e2e3d"
+    },
+    {
+      "model": "random_forest",
+      "fold": 4,
+      "checkpoint_sha256": "616a9867e192a4013abcbe140e0cafa2b60b5edaee6f134261a909ebffaef2ac"
+    },
+    {
+      "model": "random_forest",
+      "fold": 5,
+      "checkpoint_sha256": "45b589327634db46d8e29db4feda99078f518b4412954a650855ae647404e503"
+    }
+  ],
+  "test_inference_performed": false
+}

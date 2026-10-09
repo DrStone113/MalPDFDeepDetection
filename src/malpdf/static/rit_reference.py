@@ -137,6 +137,9 @@ def inspect_rit_reference_features(data: bytes, size_bytes: int, limits: StaticI
 
         try:
             result.features["xref length"] = int(document.xref_length())
+            if result.features["xref length"] > limits.max_objects:
+                result.errors.append(StructuredExtractionIssue("reference_object_limit", "PDF xref exceeds the static object cap", fatal=True))
+                return result
         except Exception as error:
             result.warnings.append(StructuredExtractionIssue("reference_xref_length_unavailable", _bounded(error, limits)))
 

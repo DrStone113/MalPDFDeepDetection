@@ -1,0 +1,48 @@
+{
+  "seed": 42,
+  "shape": [
+    1,
+    256,
+    256
+  ],
+  "dtype": "float32",
+  "code_commit": "def0ee6b76c9dd37e2dc95c0c98980ef9320a0a8",
+  "raw_pdfs_included": false,
+  "raw_pdf_hashes_included": false,
+  "original_split_regenerated": false,
+  "partition_rows": {
+    "train": 11931,
+    "test": 4050,
+    "validation": 3977,
+    "unlabeled": 4
+  },
+  "validation_roles": {
+    "base_selection": 1525,
+    "meta_fit": 818,
+    "threshold_selection": 817,
+    "calibration_fit": 817
+  },
+  "file_sha256": {
+    "manifest.csv": "dc1a11f9f3a817f3119bfc22b86470f5a21a4c0ff54f10fddf5425f50efd74e9",
+    "validation_roles.csv": "3ce759af570b036145ebcaebbbcc62176bc81af13949360bbef008ad95293650",
+    "vision_configuration.json": "6029883b4547b271663147049b9c6d824a02a405c0b419a2c05dee10e7efd7ac",
+    "code/src/malpdf/__init__.py": "6e97db271f044470f04829fcec12f55d86f84659d8a730489574750b2b25852f",
+    "code/src/malpdf/reproducibility.py": "74bce8b8a02fdb443be65f11f1ed6c4fd3e1944bacd9f251f408d99708262935",
+    "code/src/malpdf/models/__init__.py": "ef4d3acff6e7a3d05dca8b225eae60a19c03b7d3985da4a4d6a6741d8c5a3876",
+    "code/src/malpdf/models/vision_resnet.py": "8361f9f81b1e4981bb58da53d6ff15ded81beef69aca1ed207df9d08324758f7",
+    "code/src/malpdf/data/__init__.py": "7d305ebc252772aa5eb28a3d7cb24056b8a3fffa2c0cf867e539b6d3e8529480",
+    "code/src/malpdf/data/markov_arrays.py": "401d116917b3e7c42fcebe057179dcff1505a650a8d0d487749b301495391c00",
+    "code/src/malpdf/deep_learning/__init__.py": "1ea0425288d2eb7ba7ee9d163bd9c0f04071330722e6001dae3a787596684cb9",
+    "code/src/malpdf/deep_learning/models.py": "fe805fe58f6117a45f2a68176503d87ff4458e96a809b27d659ffb8e9bd7b2c4",
+    "code/src/malpdf/deep_learning/training.py": "a0569f51b433326130f687a94f92673c27edcc7832aa44ac3b46a39183eb9f62",
+    "code/src/malpdf/evaluation/__init__.py": "08d88cc4580f0bd512dd196f99d782b857288f50a1fc076c90ae247f91376a1d",
+    "code/src/malpdf/evaluation/binary.py": "189aa3de3558df37533d895a5ce8607016222776bbc969fd32aa2323114a3de0",
+    "code/src/malpdf/experiments/__init__.py": "38303f448d75f23c5f985e9e154b76bcf269986a5fa0527dc080c41ad248cefe",
+    "code/src/malpdf/experiments/kaggle_vision_runner.py": "2703fc60848de85c13d279efe33f0ca5e8af609fe1b41d3f130bc40cc0695911"
+  },
+  "dataset_identity": "opaque IDs; private lookup retained in Codespace",
+  "archive_bytes": 479642283,
+  "archive_sha256": "9898212e487736f960f24397fd418dda2590d264d42a0ffce501798e825843f5",
+  "uncompressed_bytes": 5238379640,
+  "metadata_sha256": "d961bba1f2eee7b924be7eaf56a5dcf7c6609067a7c0666d30bc1ba4db83be62"
+}

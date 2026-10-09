@@ -1,0 +1,14 @@
+{
+  "manifest_path": "data/processed/source_preparation/run_20261001T133833267219Z_3efd81e782c1/cve_t4pdf/source_pdf_manifest.csv",
+  "manifest_sha256": "3dd3412cfdd277b3b14ff198db807679557b3b32bcb20af8b2f2770610eea4aa",
+  "preparation_report_path": "artifacts/source_preparation/run_20261001T133833267219Z_3efd81e782c1/preparation_report.json",
+  "preparation_report_sha256": "415df4bd64300e01fd55e3315b9579aa5d330719409ba76d7cd33888c6d60b96",
+  "sample_count": 5,
+  "unique_pdf_hashes": 5,
+  "label_counts": {
+    "benign": 0,
+    "malicious": 5
+  },
+  "scope": "Independent CVE-T4PDF cohort; no RIT Protocol G assignment",
+  "raw_checksum_match_fraction": 1.0
+}

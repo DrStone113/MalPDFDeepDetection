@@ -1,0 +1,99 @@
+{
+  "configuration": {
+    "seed": 42,
+    "folds": 5,
+    "inputs": {
+      "dataset": {
+        "path": "data/processed/raw_pdf_cohort/run_20261002T142323844991Z_3b68d36a5705/labeled_features.csv",
+        "sha256": "cdbe817de970e7ab0af46be32ebf7c3d32341915b06f48836a97a91dc35fc212"
+      },
+      "split_manifest": {
+        "path": "data/processed/raw_pdf_cohort/run_20261002T142323844991Z_3b68d36a5705/protocol_g_seed42_split_manifest.csv",
+        "sha256": "7d1cb8cce4630adf4637d4f84b28a17330d77b9284fa3bdd273fdd18ea749e63"
+      },
+      "source_manifest": {
+        "path": "data/processed/raw_pdf_cohort/run_20261002T142323844991Z_3b68d36a5705/source_pdf_manifest.csv",
+        "sha256": "db4e73ef7bac6a2c2c1b845df999d96156efca7b954b1ea2a7f5ca6931f0ee68"
+      },
+      "all_features": {
+        "path": "data/processed/raw_pdf_cohort/run_20261002T142323844991Z_3b68d36a5705/all_raw_features.csv",
+        "sha256": "f2affc133ae287e27fe943850aebbf54e599a6c439d8d3b6f231b089981b10cc"
+      }
+    },
+    "cpu_threads": 2,
+    "models": {
+      "xgboost": {
+        "n_estimators": 400,
+        "max_depth": 6,
+        "learning_rate": 0.05
+      },
+      "lightgbm": {
+        "n_estimators": 400,
+        "num_leaves": 31,
+        "learning_rate": 0.05,
+        "min_child_samples": 20,
+        "reg_lambda": 1.0
+      },
+      "catboost": {
+        "iterations": 400,
+        "depth": 6,
+        "learning_rate": 0.05,
+        "l2_leaf_reg": 3.0
+      },
+      "random_forest": {
+        "n_estimators": 300,
+        "max_depth": null,
+        "min_samples_leaf": 1
+      },
+      "ft_transformer": {
+        "input_features": 43,
+        "d_token": 32,
+        "n_blocks": 2,
+        "n_heads": 4,
+        "d_ffn": 128,
+        "attention_dropout": 0.1,
+        "ffn_dropout": 0.1
+      }
+    },
+    "training": {
+      "batch_size": 256,
+      "max_epochs": 20,
+      "patience": 4,
+      "learning_rate": 0.001,
+      "weight_decay": 0.0001,
+      "min_delta": 0.0
+    },
+    "meta_regularization_cs": [
+      0.1,
+      1.0,
+      10.0
+    ],
+    "expected_samples": {
+      "labeled": 19958,
+      "unlabeled": 4
+    },
+    "vision": {
+      "batch_size": 32,
+      "max_epochs": 2,
+      "patience": 3,
+      "learning_rate": 0.0003,
+      "weight_decay": 0.0001,
+      "min_delta": 0.0
+    }
+  },
+  "scope": "New acquired raw cohort, historical RIT split unchanged",
+  "train_policy": "Five group-aware train-only folds per tabular branch; Vision full Train from scratch, float32 channels-last CPU convolutions",
+  "validation_policy": "Four group-disjoint roles: base stopping, meta fit, Platt fit, MCC/Youden selection; no refit",
+  "missing_policy": "Raw nulls retained; native NaN boosting; RF/FT train-fold median plus fixed metadata flags",
+  "referral_policy": "Always refer parser failures; entropy fills remaining 10% budget, allowing excess forced referrals",
+  "test_policy": "One vector inference/evaluation after a persisted validation lock; fixed base threshold 0.5",
+  "unlabeled_policy": "Four S3 samples inferred separately; no label invented, no metrics",
+  "seed": 42,
+  "code_commit": "fa463d2ed5c482ed4578f06d8b0842b575772054",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

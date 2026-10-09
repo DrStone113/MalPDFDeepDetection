@@ -1,0 +1,2 @@
+model,partition,status,F1_malicious,MCC,ECE,Brier,reason
+N/A,N/A,partial,N/A,N/A,N/A,N/A,Dataset acquisition only; no model evaluation

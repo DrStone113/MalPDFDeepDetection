@@ -1,0 +1,5 @@
+cohort,split,rows,saved_groups,raw_tabular_vectors,mixed_label_vectors,rows_in_mixed_label_vectors,unavoidable_sample_errors_for_identical_deterministic_tabular_inputs,parser_failed_rows,malicious_rows
+source_raw,train,11931,5253,5256,0,0,0,394,6539
+source_raw,validation,3977,1749,1749,0,0,0,153,2180
+cic,train,870,501,501,71,406,154,0,480
+cic,validation,291,118,118,17,180,80,0,160

@@ -1,0 +1,44 @@
+[
+  {
+    "archive": "Benign.zip",
+    "bytes": 753571486,
+    "sha256": "1184d771388c109389200dd26ebb21f639c2b857223438b62fee39b597bfb590",
+    "directory_entries": 9,
+    "files": 9,
+    "encrypted_files": 0,
+    "declared_expanded_bytes": 753570618,
+    "maximum_member_bytes": 121584660,
+    "extension_counts": {
+      ".zip": 9
+    },
+    "directory_roots": []
+  },
+  {
+    "archive": "Malicious.zip",
+    "bytes": 503579900,
+    "sha256": "6ef0ec7975036e69a02bd605fbf173abced0b95b723ee62e84b0b66f2a2f33cb",
+    "directory_entries": 22,
+    "files": 22,
+    "encrypted_files": 0,
+    "declared_expanded_bytes": 503577916,
+    "maximum_member_bytes": 53565681,
+    "extension_counts": {
+      ".zip": 22
+    },
+    "directory_roots": []
+  },
+  {
+    "archive": "Malicious2.zip",
+    "bytes": 500589478,
+    "sha256": "6382a7434e60fe14d7b794aab204b34ff2f0815c4b918fb8cbd84b4a706da9e3",
+    "directory_entries": 1,
+    "files": 1,
+    "encrypted_files": 1,
+    "declared_expanded_bytes": 503579900,
+    "maximum_member_bytes": 503579900,
+    "extension_counts": {
+      ".zip": 1
+    },
+    "directory_roots": []
+  }
+]

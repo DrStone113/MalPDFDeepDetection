@@ -1,0 +1,63 @@
+{
+  "configuration": {
+    "allowed_hosts": [
+      "raw.githubusercontent.com",
+      "zenodo.org",
+      "s3.amazonaws.com"
+    ],
+    "limits": {
+      "max_pdf_bytes": 10485760,
+      "max_download_bytes": 1073741824,
+      "max_total_download_bytes": 2147483648,
+      "max_total_pdf_bytes": 2147483648,
+      "max_archive_members": 20000,
+      "max_compression_ratio": 200,
+      "timeout_seconds": 30,
+      "max_transfer_seconds": 600
+    },
+    "sources": [
+      {
+        "name": "contagio_s3_cve_2009_3957",
+        "kind": "zip",
+        "reference": "https://s3.amazonaws.com/contagio.deependresearch.org/index.html",
+        "expected_bytes": 161011,
+        "password_candidates_env": "MALPDF_CONTAGIO_S3_CVE_2009_3957_PASSWORD_CANDIDATES",
+        "label": null,
+        "label_source": "unlabeled_public_contagio_archive"
+      },
+      {
+        "name": "contagio_s3_obama_pdf",
+        "kind": "zip",
+        "reference": "https://s3.amazonaws.com/contagio.deependresearch.org/index.html",
+        "expected_bytes": 32243,
+        "password_candidates_env": "MALPDF_CONTAGIO_S3_OBAMA_PDF_PASSWORD_CANDIDATES",
+        "label": null,
+        "label_source": "unlabeled_public_contagio_archive"
+      },
+      {
+        "name": "contagio_s3_pdf_sample",
+        "kind": "zip",
+        "reference": "https://s3.amazonaws.com/contagio.deependresearch.org/index.html",
+        "expected_bytes": 77072,
+        "password_candidates_env": "MALPDF_CONTAGIO_S3_PDF_SAMPLE_PASSWORD_CANDIDATES",
+        "label": null,
+        "label_source": "unlabeled_public_contagio_archive"
+      }
+    ]
+  },
+  "detailed_configuration_path": "artifacts/raw_downloads/run_20261002T133145838160Z_3b68d36a5705/configuration.json",
+  "authorization": "Explicit user instruction; this invocation uses --execute-authorized",
+  "code_commit": "3b68d36a570531058543170e2debc7d5805e6bb5",
+  "worktree": "dirty",
+  "seed": null,
+  "protocol": null,
+  "policy": "Static opaque binary reads only; strict %PDF- at offset zero. No rendering, PDF parsing, code execution or uploads.",
+  "cohort_policy": "Separate acquisition inventory; no RIT identities inferred and no Protocol G split changed.",
+  "integrity_policy": "Local SHA-256 is an acquisition baseline; compare a publisher digest only when available. MD5 is an additional legacy publisher integrity lock, not authenticity proof.",
+  "reuse_policy": {
+    "source_run": "run_20261002T123152127309Z_3b68d36a5705",
+    "verification": "Read-only reuse requires original source identity, size, SHA-256, MD5 and available publisher checksums to match. Never fall back to HTTP on failure."
+  },
+  "password_policy": "Use only explicitly supplied environment candidates (max 8); inspect all ZIP paths and caps, then verify one bounded encrypted member's CRC before publishing. Record indices only, never password values.",
+  "metric_policy": "N/A: no model evaluation; Label=1 malicious; ECE would use 10 equal-width probability bins."
+}

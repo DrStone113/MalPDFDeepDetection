@@ -1,0 +1,42 @@
+{
+  "run_id": "run_20261002T131549363589Z_3b68d36a5705",
+  "status": "verified",
+  "manifest_rows": 19958,
+  "unique_sha256": 19958,
+  "label_distribution": {
+    "1": 10972,
+    "0": 8986
+  },
+  "source_distribution": {
+    "zenodo_malware_pdf_2011": 10967,
+    "zenodo_clean_pdf_9000": 8986,
+    "cve_t4pdf_bank_statment": 1,
+    "cve_t4pdf_link_uri": 1,
+    "cve_t4pdf_rce_foxit": 1,
+    "cve_t4pdf_url2_invoice_template": 1,
+    "cve_t4pdf_xss_popup": 1
+  },
+  "pdf_bytes_verified": 1059088167,
+  "pdf_checks": [
+    "leading %PDF- at byte zero",
+    "SHA-256 and sample ID",
+    "manifest byte count",
+    "regular stable file, no symlinks, <=10 MiB",
+    "permissions 0600"
+  ],
+  "verified_payload_records_matched_previous_run": 10,
+  "publisher_md5_locks_matched": 2,
+  "downloaded_bytes": 0,
+  "reused_bytes": 812740212,
+  "rejected_entries": {
+    "ZIP member exceeds the PDF size/compression cap": 13,
+    "Missing %PDF- magic at byte offset zero": 2
+  },
+  "clean_archive_duplicate_members": 14,
+  "protected_previous_files_unchanged": 190,
+  "original_research_log_prefix_preserved": true,
+  "protocol_g_split_unchanged": true,
+  "rit_identity_mapping": "Not inferred; separate acquisition cohort",
+  "metrics": "N/A: no model evaluation",
+  "label_provenance": "Publisher reported for Zenodo; user requested malicious for five CVE-T4PDF samples"
+}

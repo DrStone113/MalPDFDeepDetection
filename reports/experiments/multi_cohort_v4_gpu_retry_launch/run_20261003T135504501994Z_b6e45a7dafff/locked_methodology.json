@@ -1,0 +1,16 @@
+{
+  "upload_run": "run_20261003T135304451669Z_b6e45a7dafff",
+  "kernel": "nguyenkhang294/malpdf-v4-gpu-training-20261003-135304",
+  "dataset": "nguyenkhang294/malpdf-v4-delta-20261003-135304",
+  "retry_reason": "Kaggle status endpoint was transiently forbidden while dataset creation was pending; reuse successfully uploaded dataset",
+  "handoff_run": "run_20261003T135104281189Z_b6e45a7dafff",
+  "Test_policy": "Probability exports only; Test scoring later after Validation lock",
+  "seed": 42,
+  "code_commit": "b6e45a7dafff642cca0e4d277882894504d7ea46",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

@@ -1,0 +1,16 @@
+{
+  "protocol": "synthetic maintenance summary",
+  "kind": "aggregate saved evidence; mirrored CLI smoke only",
+  "benchmark": "reports/experiments/static_performance/run_20261004T130945651994Z_1daa23f01476",
+  "full_checks": "reports/experiments/static_final_checks/run_20261004T130706574563Z_fcd6395151c2",
+  "heldout_cohorts_accessed": false,
+  "maintenance_code_commit": "1daa23f014761e23a249cb0b4ab5640d973b4865",
+  "seed": 42,
+  "code_commit": "1daa23f014761e23a249cb0b4ab5640d973b4865",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

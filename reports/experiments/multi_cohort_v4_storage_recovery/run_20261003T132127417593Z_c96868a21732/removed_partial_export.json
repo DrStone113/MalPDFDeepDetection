@@ -1,0 +1,6 @@
+{
+  "path": "artifacts/multi_cohort_v4_gpu_handoff/run_20261003T125000338635Z_c96868a21732/malpdf-v4-numeric.zip",
+  "bytes": 312497267,
+  "sha256": "8d309f34c998e47638a0d2a76057eb778ae0c00b9711ed7982264e25833284c7",
+  "reason": "regenerable incomplete export from interrupted own run"
+}

@@ -1,0 +1,251 @@
+{
+  "run_id": "run_20261003T134937083946Z_6034e0785356",
+  "study": "multi_cohort_v4_tree_preflight",
+  "status": "completed",
+  "started_at_utc": "2026-10-03T13:49:37.105331+00:00",
+  "code_commit": "6034e078535653b078c518e9994ea2f47c668c1f",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M src/malpdf/data/kaggle_notebook.py",
+      " M src/malpdf/experiments/multi_cohort_v4.py",
+      " M tests/test_multi_cohort_v4.py"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M .gitignore",
+      " M AGENTS.md",
+      " M README.md",
+      " M pyproject.toml",
+      " M reports/research_log.md",
+      " M scripts/02_build_markov_cache.py",
+      " M src/malpdf/data/manifest_validator.py",
+      " M src/malpdf/data/markov_preparation.py",
+      " M src/malpdf/data/vision_dataset.py",
+      " M src/malpdf/deep_learning/training.py",
+      " M src/malpdf/evaluation/selective.py",
+      " M src/malpdf/experiments/late_fusion_runner.py",
+      " M src/malpdf/models/late_fusion.py",
+      " M src/malpdf/static/cache_manager.py",
+      " M src/malpdf/static/rit_reference.py",
+      " M tests/test_deep_learning_protocol_g.py",
+      " M tests/test_markov_cache.py",
+      "?? configs/cic_cross_dataset_v3.yaml",
+      "?? configs/kaggle_vision.yaml",
+      "?? configs/multi_cohort_v4.yaml",
+      "?? configs/raw_datasets.yaml",
+      "?? configs/raw_markov_cache.yaml",
+      "?? configs/raw_pdf_cohort.yaml",
+      "?? configs/raw_tri_modal_v3.yaml",
+      "?? configs/safe_stacking_v3.yaml",
+      "?? configs/tri_modal_fusion.yaml",
+      "?? notebooks/kaggle_vision_resnet18.ipynb",
+      "?? reports/experiments/cic_archive_inspection/",
+      "?? reports/experiments/cic_cross_dataset_summary/",
+      "?? reports/experiments/cic_execution_prechecks/",
+      "?? reports/experiments/cic_feature_group_preflight/",
+      "?? reports/experiments/cic_input_rejection_audit/",
+      "?? reports/experiments/cic_nested_archive_inspection/",
+      "?? reports/experiments/cic_normalization_checks/",
+      "?? reports/experiments/cic_normalization_v3/",
+      "?? reports/experiments/cic_valid_pdf_evasion_v3/",
+      "?? reports/experiments/cic_valid_pdf_prechecks/",
+      "?? reports/experiments/cross_dataset_evasion_v3/",
+      "?? reports/experiments/cross_dataset_identity_audit/",
+      "?? reports/experiments/cross_dataset_identity_recheck/",
+      "?? reports/experiments/kaggle_handoff/",
+      "?? reports/experiments/kaggle_handoff_checks/",
+      "?? reports/experiments/kaggle_notebook_fix/",
+      "?? reports/experiments/kaggle_notebook_inspection/",
+      "?? reports/experiments/kaggle_output_access/",
+      "?? reports/experiments/kaggle_output_access_checks/",
+      "?? reports/experiments/kaggle_output_download/",
+      "?? reports/experiments/kaggle_output_handoff/",
+      "?? reports/experiments/kaggle_output_identity_audit/",
+      "?? reports/experiments/kaggle_output_recheck/",
+      "?? reports/experiments/kaggle_performance/",
+      "?? reports/experiments/kaggle_performance_bootstrap/",
+      "?? reports/experiments/kaggle_performance_checks/",
+      "?? reports/experiments/kaggle_saved_version_inspection/",
+      "?? reports/experiments/kaggle_vision_import/",
+      "?? reports/experiments/late_fusion_v2/",
+      "?? reports/experiments/markov_cache/",
+      "?? reports/experiments/multi_cohort_v4_checks/",
+      "?? reports/experiments/multi_cohort_v4_delta_checks/",
+      "?? reports/experiments/multi_cohort_v4_gpu_environment_checks/",
+      "?? reports/experiments/multi_cohort_v4_gpu_handoff/",
+      "?? reports/experiments/multi_cohort_v4_gpu_launch/",
+      "?? reports/experiments/multi_cohort_v4_gpu_monitor/",
+      "?? reports/experiments/multi_cohort_v4_gpu_submission/",
+      "?? reports/experiments/multi_cohort_v4_mount_fix_checks/",
+      "?? reports/experiments/multi_cohort_v4_prepare/",
+      "?? reports/experiments/multi_cohort_v4_storage_recovery/",
+      "?? reports/experiments/multi_cohort_v4_trees/",
+      "?? reports/experiments/raw_downloads/",
+      "?? reports/experiments/raw_pdf_cohort/",
+      "?? reports/experiments/raw_tri_modal_resume_checks/",
+      "?? reports/experiments/raw_tri_modal_resume_seal/",
+      "?? reports/experiments/raw_tri_modal_v3/",
+      "?? reports/experiments/raw_tri_modal_v3_resume/",
+      "?? reports/experiments/safe_stacking_v3/",
+      "?? reports/experiments/tri_modal_final_audit/",
+      "?? reports/experiments/tri_modal_final_prechecks/",
+      "?? reports/experiments/tri_modal_fusion/",
+      "?? reports/experiments/vision_resnet/",
+      "?? scripts/05_evaluate_tri_modal_fusion.py",
+      "?? scripts/06_optimize_and_stack_v3_safe.py",
+      "?? scripts/07_prepare_raw_pdf_cohort.py",
+      "?? scripts/08_train_raw_tri_modal_v3.py",
+      "?? scripts/09_resume_raw_tri_modal_v3.py",
+      "?? scripts/10_export_kaggle_markov.py",
+      "?? scripts/11_export_kaggle_performance_notebook.py",
+      "?? scripts/12_normalize_cic_cross_dataset.py",
+      "?? scripts/13_multi_cohort_stacking_v4.py",
+      "?? scripts/download_raw_datasets.py",
+      "?? src/malpdf/data/cic_archives.py",
+      "?? src/malpdf/data/cic_normalization.py",
+      "?? src/malpdf/data/kaggle_export.py",
+      "?? src/malpdf/data/kaggle_notebook.py",
+      "?? src/malpdf/data/markov_arrays.py",
+      "?? src/malpdf/data/multi_cohort.py",
+      "?? src/malpdf/data/raw_cohort.py",
+      "?? src/malpdf/data/raw_downloads.py",
+      "?? src/malpdf/experiments/cic_cross_dataset.py",
+      "?? src/malpdf/experiments/kaggle_vision_runner.py",
+      "?? src/malpdf/experiments/multi_cohort_gpu.py",
+      "?? src/malpdf/experiments/multi_cohort_v4.py",
+      "?? src/malpdf/experiments/raw_tri_modal_resume.py",
+      "?? src/malpdf/experiments/raw_tri_modal_v3.py",
+      "?? src/malpdf/experiments/safe_stacking_v3.py",
+      "?? src/malpdf/experiments/tri_modal_runner.py",
+      "?? src/malpdf/models/safe_stacking.py",
+      "?? src/malpdf/models/v3_base_learners.py",
+      "?? src/malpdf/provenance/",
+      "?? src/malpdf/static/obfuscation.py",
+      "?? tests/test_cic_normalization.py",
+      "?? tests/test_kaggle_handoff.py",
+      "?? tests/test_multi_cohort_v4.py",
+      "?? tests/test_raw_downloads.py",
+      "?? tests/test_raw_pdf_cohort.py",
+      "?? tests/test_raw_tri_modal_resume.py",
+      "?? tests/test_raw_tri_modal_v3.py",
+      "?? tests/test_safe_stacking_v3.py",
+      "?? tests/test_tri_modal_fusion.py"
+    ]
+  },
+  "seed": 42,
+  "report_path": "reports/experiments/multi_cohort_v4_tree_preflight/run_20261003T134937083946Z_6034e0785356/run_summary.json",
+  "artifact_path": "artifacts/multi_cohort_v4_tree_preflight/run_20261003T134937083946Z_6034e0785356",
+  "metrics": {},
+  "verified_tree_folds": 20,
+  "validation_rows": 4268,
+  "validation_predictions_sha256": "5fda7976c8300db4237bff2327005b23500109e5b629bdc487ae54103525d859",
+  "max_absolute_replay_error": 2.220446049250313e-16,
+  "checkpoints": [
+    {
+      "model": "xgboost",
+      "fold": 1,
+      "checkpoint_sha256": "3d232c287e97efb3b6428812d91fda0b89af83ec0c9d1f5d5cd6e6b944f8e872"
+    },
+    {
+      "model": "xgboost",
+      "fold": 2,
+      "checkpoint_sha256": "564fd63f44e0f34c0263f30deef756ec611eb0be99e76300aae1bdd4c7009a91"
+    },
+    {
+      "model": "xgboost",
+      "fold": 3,
+      "checkpoint_sha256": "f9358bc483ba1af5917ea664104481ff45991e39357e43f5715b51cfc104d061"
+    },
+    {
+      "model": "xgboost",
+      "fold": 4,
+      "checkpoint_sha256": "af7a6718e77fca61cc26f8d8db346915a101a27501c3c45ff6702245aac6c2f8"
+    },
+    {
+      "model": "xgboost",
+      "fold": 5,
+      "checkpoint_sha256": "4172371eedbff4d83c4179c084d0f7915488fc9e41198d6c9661104f4621e090"
+    },
+    {
+      "model": "lightgbm",
+      "fold": 1,
+      "checkpoint_sha256": "78d1ff8d8c2b1dc60c9f19ef391fa737fc45ddc526ee06a0d4c9f68243f7c90a"
+    },
+    {
+      "model": "lightgbm",
+      "fold": 2,
+      "checkpoint_sha256": "e0f1864c667104b9017942c0933e0a344ed111837c9eb94f72299906e3a28a2b"
+    },
+    {
+      "model": "lightgbm",
+      "fold": 3,
+      "checkpoint_sha256": "28521a605dab0796da6798e3158045c8b67b4508bd8b91729fa72f51c131f0a9"
+    },
+    {
+      "model": "lightgbm",
+      "fold": 4,
+      "checkpoint_sha256": "393f9f14a99b93b48c52899e747fc6cff772d3d50ba7187a5dc138bbee245863"
+    },
+    {
+      "model": "lightgbm",
+      "fold": 5,
+      "checkpoint_sha256": "e07a0c58f80f7cecd9a3d13d0184a191b6e5397d8a82e127682c05cb56a8cae8"
+    },
+    {
+      "model": "catboost",
+      "fold": 1,
+      "checkpoint_sha256": "486064733944aed81a688110fa1f12c75af7f2894b7d0e4f8a53beeae17da2b5"
+    },
+    {
+      "model": "catboost",
+      "fold": 2,
+      "checkpoint_sha256": "6e6360922fb26bcb0f05e5bd021ce98ce762f20c9005271166343de572daa1b0"
+    },
+    {
+      "model": "catboost",
+      "fold": 3,
+      "checkpoint_sha256": "70282e1e7e9d54bcf87fd1fb1ecef9d022e520f9ec7487041fbbca3406328c74"
+    },
+    {
+      "model": "catboost",
+      "fold": 4,
+      "checkpoint_sha256": "0cb7fd28ae0a77344fb2be44487380792ded82daa702fdecd409cd2a366625de"
+    },
+    {
+      "model": "catboost",
+      "fold": 5,
+      "checkpoint_sha256": "c3b0ab03096c2a7a75360b616a8d355bf1529819703da88d4f75b91029dbba1a"
+    },
+    {
+      "model": "random_forest",
+      "fold": 1,
+      "checkpoint_sha256": "01340f1418566d11871cd4284ffff89756be9e030e4da77f2cb0db18f6891424"
+    },
+    {
+      "model": "random_forest",
+      "fold": 2,
+      "checkpoint_sha256": "a4f3c1f0c37bf1a8d7b2861361da38048e54c7053392a12edc7304ee9d8a295b"
+    },
+    {
+      "model": "random_forest",
+      "fold": 3,
+      "checkpoint_sha256": "067b0868e1c3bf34f8a0ccce7362573bac3dff8a2f58437e32696988956e2e3d"
+    },
+    {
+      "model": "random_forest",
+      "fold": 4,
+      "checkpoint_sha256": "616a9867e192a4013abcbe140e0cafa2b60b5edaee6f134261a909ebffaef2ac"
+    },
+    {
+      "model": "random_forest",
+      "fold": 5,
+      "checkpoint_sha256": "45b589327634db46d8e29db4feda99078f518b4412954a650855ae647404e503"
+    }
+  ],
+  "test_inference_performed": false,
+  "notes": "All 20 tree fold checkpoints verified before any Test claim; saved Validation scores reproduced from frozen weights. No new fitting or Test inference.",
+  "finished_at_utc": "2026-10-03T13:49:59.315815+00:00"
+}

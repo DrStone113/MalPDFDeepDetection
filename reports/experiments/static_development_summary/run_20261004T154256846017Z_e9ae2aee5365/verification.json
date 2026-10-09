@@ -1,0 +1,10 @@
+{
+  "committed_source_files_verified": 94,
+  "saved_validation_rows_recomputed": 96,
+  "comparison_metric_columns": 6,
+  "csv_parser": "pandas float_precision=round_trip; keeps probability equality at locked Youden threshold",
+  "new_test_evaluations": 0,
+  "training_seconds": 135.612437538,
+  "completed_fits": 50,
+  "cloud_checkpoint_downloaded": false
+}

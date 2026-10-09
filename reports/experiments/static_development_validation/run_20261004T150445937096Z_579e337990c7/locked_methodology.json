@@ -1,0 +1,16 @@
+{
+  "protocol": "retrospective saved multi-cohort Protocol G development",
+  "kernel": "nguyenkhang294/malpdf-static-development-20261004-140347",
+  "training_commit": "579e337990c75a2fe6baca198d4f1f38a282ed37",
+  "test_policy": "no Test inference or metrics",
+  "ECE": "10 equal-width bins; p=1 last bin",
+  "interpretation": "Validation diagnostics and selection; not independent Test evidence",
+  "seed": 42,
+  "code_commit": "579e337990c75a2fe6baca198d4f1f38a282ed37",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

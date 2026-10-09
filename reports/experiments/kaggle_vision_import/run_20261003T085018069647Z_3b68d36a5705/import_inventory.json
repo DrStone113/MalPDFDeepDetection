@@ -1,0 +1,26 @@
+{
+  "archive_path": "checkpoints/vision_export_20261003T083931164333Z.zip",
+  "archive_sha256": "5bfc4ddce0ba54a55f1d2e8949ecb7f736eec83d0fd469e7f456a8c816980aba",
+  "import_directory": "checkpoints/import_run_20261003T085018069647Z_3b68d36a5705",
+  "file_sha256": {
+    "vision_probs_val.csv": "1ad918c368cf90f1757de5ad33dc527f60e1aed01802e7e07d1c90e410e284d9",
+    "locked_methodology.json": "118a3f00393c9415218b31cdce1949b6a748ee80c510838e985ba48fc2689fc5",
+    "vision_selection_lock.json": "f0033a33406fb10cc32ed51fd3d0d3b1bb11e2c11dc385f68323790ae64025cb",
+    "model_comparison.csv": "affa83276e35ec5ea2a018d4e6284ccba1cf16eae9c5db725b3e042cd995f62b",
+    "vision_resnet_best.pt": "8417ed730cadf300f1fba0a8f77cc8e4b33d8a3f7a579646f59365a67654a05b",
+    "run_summary.json": "56945e1ec4f5dbaf383d946d2e8ed268ff5c81eab7bcf9a1285dc4d2d72e6120",
+    "environment_metadata.json": "522abbcab6d4364e913aed28dba8aed000628127232301d18d2b87189b6f5331",
+    "vision_probs_unlabeled.csv": "ce156f15d5c81c9df3f8627b7696278c268dc6043f8b8564fbee3e75141d403a",
+    "training_history.csv": "ccd04e73de4b1030bc53d54d63c23e3ee16270864f066ad747e9d008fc0b697e",
+    "vision_probs_test.csv": "fa780a6eaaec7aa6c5667a11e1648a2d44b10a861d6d25cf33534f20d0a7bfd4",
+    "research_log.md": "f15c8ffc81c03feeafbe1a206bfb98ee3ecd951d7f740426efe872d9ceb0aa5d",
+    "output_checksums.json": "c107e9ec00b870febf9a606eb65b9b1242d6c8d0f1ab9c3c99ef2b0ce7085315"
+  },
+  "source_vision_run_id": "run_20261003T075329107712Z_34993818996a",
+  "source_code_commit": "34993818996a7ffaa3ca1bd4e836a35ee68c7154",
+  "vision_best_epoch": 19,
+  "selection_rows": 1525,
+  "original_csvs_unchanged": true,
+  "weights_deserialized": false,
+  "test_evaluation_performed": false
+}

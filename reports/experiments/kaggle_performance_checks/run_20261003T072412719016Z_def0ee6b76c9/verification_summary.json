@@ -1,0 +1,36 @@
+{
+  "pytest": {
+    "exit_code": 0,
+    "seconds": 61.65,
+    "evidence": "artifacts/kaggle_performance_checks/run_20261003T072412719016Z_def0ee6b76c9/pytest.txt",
+    "summary": [
+      "",
+      "-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html",
+      "======================= 438 passed, 2 warnings in 59.21s ======================="
+    ]
+  },
+  "pip_check": {
+    "exit_code": 0,
+    "seconds": 1.59,
+    "evidence": "artifacts/kaggle_performance_checks/run_20261003T072412719016Z_def0ee6b76c9/pip_check.txt",
+    "summary": [
+      "No broken requirements found."
+    ]
+  },
+  "git_diff_check": {
+    "exit_code": 0,
+    "seconds": 0.01,
+    "evidence": "artifacts/kaggle_performance_checks/run_20261003T072412719016Z_def0ee6b76c9/git_diff_check.txt",
+    "summary": []
+  },
+  "checkout_diff_check": {
+    "exit_code": 0,
+    "seconds": 0.01,
+    "evidence": "artifacts/kaggle_performance_checks/run_20261003T072412719016Z_def0ee6b76c9/checkout_diff_check.txt",
+    "summary": []
+  },
+  "previous_evidence_unchanged": 231,
+  "research_log_append_only": true,
+  "unsafe_artifacts_staged": 0,
+  "main_staged_paths": []
+}

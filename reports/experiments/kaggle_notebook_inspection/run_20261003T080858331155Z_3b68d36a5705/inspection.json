@@ -1,0 +1,46 @@
+{
+  "status": {
+    "exit_code": 1,
+    "command": [
+      "kaggle",
+      "kernels",
+      "status",
+      "nguyenkhang294/malpdfdetect"
+    ],
+    "evidence": "artifacts/kaggle_notebook_inspection/run_20261003T080858331155Z_3b68d36a5705/status.txt"
+  },
+  "source": {
+    "exit_code": 0,
+    "command": [
+      "kaggle",
+      "kernels",
+      "pull",
+      "nguyenkhang294/malpdfdetect",
+      "-p",
+      "/workspaces/MalPDFDeepDetection/artifacts/kaggle_notebook_inspection/run_20261003T080858331155Z_3b68d36a5705/notebook_source",
+      "-m"
+    ],
+    "evidence": "artifacts/kaggle_notebook_inspection/run_20261003T080858331155Z_3b68d36a5705/source.txt"
+  },
+  "inspection": {
+    "notebook": {
+      "cells": 6,
+      "executed_cells": 4,
+      "has_sealed_runner": true,
+      "has_selection_lock": true,
+      "has_direct_state_dict_training": true,
+      "error_outputs": 0
+    },
+    "metadata": {
+      "id": "nguyenkhang294/malpdfdetect",
+      "title": "MalPDFDetect",
+      "is_private": true,
+      "enable_gpu": true,
+      "kernel_type": "notebook",
+      "dataset_sources": [
+        "nguyenkhang294/malpdf-markov-cache"
+      ]
+    }
+  },
+  "downloaded_source_executed": false
+}

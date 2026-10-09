@@ -1,0 +1,36 @@
+{
+  "python": "3.11.13",
+  "git": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M pyproject.toml",
+      " M reports/research_log.md",
+      " M src/malpdf/data/vision_dataset.py",
+      " M src/malpdf/evaluation/selective.py",
+      " M src/malpdf/experiments/late_fusion_runner.py",
+      " M src/malpdf/models/late_fusion.py",
+      "?? configs/raw_datasets.yaml",
+      "?? configs/safe_stacking_v3.yaml",
+      "?? configs/tri_modal_fusion.yaml",
+      "?? reports/experiments/late_fusion_v2/",
+      "?? reports/experiments/markov_cache/",
+      "?? reports/experiments/raw_downloads/",
+      "?? reports/experiments/safe_stacking_v3/",
+      "?? reports/experiments/tri_modal_fusion/",
+      "?? reports/experiments/vision_resnet/",
+      "?? scripts/05_evaluate_tri_modal_fusion.py",
+      "?? scripts/06_optimize_and_stack_v3_safe.py",
+      "?? scripts/download_raw_datasets.py",
+      "?? src/malpdf/data/raw_downloads.py",
+      "?? src/malpdf/experiments/safe_stacking_v3.py",
+      "?? src/malpdf/experiments/tri_modal_runner.py",
+      "?? src/malpdf/models/safe_stacking.py",
+      "?? src/malpdf/models/v3_base_learners.py",
+      "?? src/malpdf/static/obfuscation.py",
+      "?? tests/test_raw_downloads.py",
+      "?? tests/test_safe_stacking_v3.py",
+      "?? tests/test_tri_modal_fusion.py"
+    ]
+  }
+}

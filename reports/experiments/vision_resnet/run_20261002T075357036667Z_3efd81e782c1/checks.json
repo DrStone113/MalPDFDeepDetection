@@ -1,0 +1,46 @@
+{
+  "finished_at_utc": "2026-10-02T08:00:02.835816Z",
+  "status": "passed",
+  "run_id": "run_20261002T075357036667Z_3efd81e782c1",
+  "pytest": {
+    "command": "python -m pytest tests/ -q",
+    "passed": 246,
+    "failed": 0,
+    "duration_seconds": 26.88,
+    "new_vision_tests": 24
+  },
+  "pip_check": "No broken requirements found.",
+  "git_diff_check": "passed, including whitespace checks on six new vision files",
+  "dry_run_samples": 5,
+  "input_shape": [
+    5,
+    1,
+    256,
+    256
+  ],
+  "output_shape": [
+    5,
+    1
+  ],
+  "diagnostic_bce_loss": 0.7116346001625061,
+  "optimizer_steps": 0,
+  "checkpoints_saved": 0,
+  "model_metrics": "N/A: untrained forward-only smoke check",
+  "protocol_g_ready": false,
+  "protocol_g_id_matches": "0/24337; five independent CVE-T4PDF samples, all Label=1",
+  "source_cache_and_historical_files_preserved": 174,
+  "prior_research_log_bytes_preserved": true,
+  "original_protocol_g_split_preserved": true,
+  "synthetic_training_verified": "Real ResNet backward/AdamW step; synthetic pipeline checkpoint reload with weights_only=True, validation lock before test, test evaluated once",
+  "code_fingerprints_match_run_environment": true,
+  "supporting_code_sha256": {
+    "src/malpdf/static/safety.py": "f5c578875e9674a7b31591d641971598d375e631e6e51ca2625ea1d4bf10aecf",
+    "src/malpdf/deep_learning/training.py": "9165a806c74104f785d4b55735ebadbdf6a851b829883e7e2360eeedcbd293a5",
+    "src/malpdf/experiments/protocol_g_benchmark.py": "a5894e5ea5b9e835ce2bba753d2091639c31aaba69aae280fb31664369729327",
+    "src/malpdf/evaluation/selective.py": "104f8b612e2378dcfa27d97c50428c9e3df2ba59478d9aa25a86ee9a30b7d87d"
+  },
+  "ignored_cache_and_sample_artifacts": true,
+  "staged_files": 0,
+  "code_commit_sha": "3efd81e782c1e7800299368b2b8aa3ef4c945852",
+  "worktree": "dirty; implementation and prior task changes uncommitted"
+}

@@ -1,0 +1,15 @@
+{
+  "protocol": "maintenance; no research model evaluation",
+  "python": "3.11",
+  "package_policy": "pinned PyTorch 2.11.0 and torchvision 0.26.0 CPU builds",
+  "test_policy": "full synthetic pytest; no external datasets",
+  "environment_scope": "default Codespace environment plus separate freshly created venv reusing system site packages; Python3.13 QC uses a fully isolated fresh venv",
+  "seed": 42,
+  "code_commit": "e9ae2aee5365a2f27d807ac289e2453a44d51cf6",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

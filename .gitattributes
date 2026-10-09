@@ -1,0 +1,5 @@
+# Preserve historical evidence CSV bytes, including checksum-locked CRLF files.
+reports/experiments/**/*.csv -text whitespace=cr-at-eol
+
+# Canonical Git encoding for the new development study; working evidence is preserved.
+reports/experiments/static_development_*/**/*.csv text eol=lf

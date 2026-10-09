@@ -1,0 +1,14 @@
+{
+  "kind": "read-only consolidation and final maintenance",
+  "evaluation_summary_sha256": "a258729bafba151113974c261b6fd1a689a32a7431b84e22046d163a1ca059d7",
+  "test_evaluation": false,
+  "generating_evaluation_run": "run_20261003T112242694538Z_392482a1571c",
+  "seed": 42,
+  "code_commit": "392482a1571cf031018e51a1205bcfdd0a25c1ee",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

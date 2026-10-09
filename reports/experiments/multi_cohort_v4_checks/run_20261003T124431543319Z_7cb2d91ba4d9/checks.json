@@ -1,0 +1,17 @@
+{
+  "pytest": {
+    "exit_code": 0
+  },
+  "pip_check": {
+    "exit_code": 0
+  },
+  "diff_check": {
+    "exit_code": 0
+  },
+  "status": {
+    "exit_code": 0
+  },
+  "cli_help": {
+    "exit_code": 0
+  }
+}

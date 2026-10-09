@@ -1,0 +1,2 @@
+model,partition,accuracy,f1_malicious,mcc,brier,log_loss,ece,status
+vision_resnet18,validation_base_selection,0.9752014879107254,0.9822852081488043,0.9409797245190029,N/A,N/A,N/A,completed

@@ -1,0 +1,71 @@
+{
+  "code_config_test_files_matching": 188,
+  "checks": [
+    {
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "tests/"
+      ],
+      "exit_code": 0,
+      "seconds": 95.57891334600026,
+      "evidence": "final_check_0.txt"
+    },
+    {
+      "command": [
+        "python",
+        "-m",
+        "malpdf",
+        "code-inspect",
+        "/workspaces/MalPDFDeepDetection/artifacts/static_performance/run_20261004T130945651994Z_1daa23f01476/synthetic_syntax.pdf"
+      ],
+      "exit_code": 0,
+      "seconds": 4.535129860999405,
+      "evidence": "final_check_1.txt"
+    },
+    {
+      "command": [
+        "python",
+        "-m",
+        "pip",
+        "check"
+      ],
+      "exit_code": 0,
+      "seconds": 1.2878972150001573,
+      "evidence": "final_check_2.txt"
+    },
+    {
+      "command": [
+        "/workspaces/MalPDFDeepDetection/artifacts/venvs/static_inspection/bin/python",
+        "-m",
+        "pip",
+        "check"
+      ],
+      "exit_code": 0,
+      "seconds": 1.7056426850003845,
+      "evidence": "final_check_3.txt"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 0.15747345099953236,
+      "evidence": "final_check_4.txt"
+    },
+    {
+      "command": [
+        "git",
+        "status",
+        "--short"
+      ],
+      "exit_code": 0,
+      "seconds": 0.013041144000453642,
+      "evidence": "final_check_5.txt"
+    }
+  ],
+  "test_result": "564 passed; two existing single-class fixture warnings"
+}

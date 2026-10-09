@@ -1,0 +1,130 @@
+{
+  "run_id": "run_20261002T084455285904Z_3efd81e782c1",
+  "started_at_utc": "2026-10-02T08:44:55.310067+00:00",
+  "mode": "smoke_train",
+  "status": "smoke_train_completed",
+  "code_commit_sha": "3efd81e782c1e7800299368b2b8aa3ef4c945852",
+  "git_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M .gitignore",
+      " M AGENTS.md",
+      " M README.md",
+      " M reports/research_log.md",
+      " M src/malpdf/static/safety.py",
+      "?? configs/markov_cache.yaml",
+      "?? configs/source_preparation.yaml",
+      "?? configs/vision_resnet18.yaml",
+      "?? reports/experiments/markov_cache/",
+      "?? reports/experiments/vision_resnet/",
+      "?? scripts/02_build_markov_cache.py",
+      "?? scripts/03_train_vision_model.py",
+      "?? scripts/prepare_source_datasets.py",
+      "?? src/malpdf/data/manifest_validator.py",
+      "?? src/malpdf/data/markov_preparation.py",
+      "?? src/malpdf/data/source_preparation.py",
+      "?? src/malpdf/data/vision_dataset.py",
+      "?? src/malpdf/experiments/vision_runner.py",
+      "?? src/malpdf/models/vision_resnet.py",
+      "?? src/malpdf/static/cache_manager.py",
+      "?? src/malpdf/static/markov.py",
+      "?? tests/test_markov_cache.py",
+      "?? tests/test_source_preparation.py",
+      "?? tests/test_vision_resnet.py"
+    ]
+  },
+  "report_path": "reports/experiments/vision_resnet/run_20261002T084455285904Z_3efd81e782c1/run_summary.json",
+  "artifact_directory": "artifacts/vision_resnet/run_20261002T084455285904Z_3efd81e782c1",
+  "metrics": {
+    "smoke_same_samples": {
+      "positive_label": 1,
+      "accuracy": 1.0,
+      "precision_malicious": 1.0,
+      "recall_malicious": 1.0,
+      "f1_malicious": 1.0,
+      "precision_macro": 0.5,
+      "recall_macro": 0.5,
+      "f1_macro": 0.5,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "mcc": 0.0,
+      "confusion_matrix": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          5
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": null,
+      "pr_auc": null,
+      "score_source": null,
+      "brier": 0.020078999788937325,
+      "log_loss": 0.1528020412270582,
+      "ece": 0.1417003870010376,
+      "ece_bins": 10,
+      "threshold": 0.5,
+      "loss": 0.152802038192749,
+      "loss_function": "BCEWithLogitsLoss",
+      "sample_count": 5,
+      "evaluation_count": 1,
+      "scope": "Same-sample technical smoke diagnostic; no held-out Protocol G metrics",
+      "single_class_labels": true,
+      "mcc_defined": false,
+      "mcc_convention": "scikit-learn zero-denominator result is 0"
+    }
+  },
+  "protocol_g_readiness": {
+    "ready": false,
+    "source_samples": 5,
+    "protocol_g_samples": 24337,
+    "matched_ids": 0,
+    "missing_source_ids": 24337,
+    "foreign_source_ids": 5,
+    "reason": "A complete PDF-to-Protocol-G ID mapping is unavailable"
+  },
+  "parameter_count": 11170753,
+  "checkpoint": {
+    "path": "artifacts/vision_resnet/run_20261002T084455285904Z_3efd81e782c1/smoke_model.pt",
+    "sha256": "cd91ea12a53f65f947d9ef29222597ab4b2901cfda6dac5252925a5422a6a416",
+    "purpose": "technical_smoke_only",
+    "reload_verified": true
+  },
+  "smoke_training": {
+    "history": [
+      {
+        "epoch": 1,
+        "train_loss": 0.4033893868327141,
+        "optimizer_steps": 3
+      },
+      {
+        "epoch": 2,
+        "train_loss": 0.01617261804640293,
+        "optimizer_steps": 3
+      }
+    ],
+    "optimizer_steps": 6,
+    "gradients_finite": true,
+    "parameters_changed": true,
+    "parameter_sha256_before": "2d09dd0e252812c5dd8054805d2a60edcecfa52395e0ce1a58940bf996778d11",
+    "parameter_sha256_after": "1c2acd1a3b2b104e90f58bdc9c4d3eafeacc6e82b014a6f2d202e9239c65716e",
+    "training_seconds": 4.309789448000629,
+    "sample_count": 5,
+    "epochs": 2,
+    "batch_size": 2,
+    "checkpoint_saved": true,
+    "checkpoint_reload_verified": true,
+    "validation_evaluations": 0,
+    "test_evaluations": 0,
+    "same_sample_evaluations": 2,
+    "scope": "Same-sample technical smoke diagnostic; no held-out Protocol G metrics"
+  },
+  "finished_at_utc": "2026-10-02T08:45:06.382938Z"
+}

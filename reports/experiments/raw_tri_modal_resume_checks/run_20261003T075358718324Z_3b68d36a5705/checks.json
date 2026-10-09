@@ -1,0 +1,41 @@
+{
+  "pytest": {
+    "command": [
+      "/tmp/malpdf-kaggle-performance-20261003/bin/python",
+      "-m",
+      "pytest",
+      "tests/",
+      "-q"
+    ],
+    "exit_code": 0,
+    "output": "artifacts/raw_tri_modal_resume_checks/run_20261003T075358718324Z_3b68d36a5705/pytest.txt"
+  },
+  "pip_check": {
+    "command": [
+      "/tmp/malpdf-kaggle-performance-20261003/bin/python",
+      "-m",
+      "pip",
+      "check"
+    ],
+    "exit_code": 0,
+    "output": "artifacts/raw_tri_modal_resume_checks/run_20261003T075358718324Z_3b68d36a5705/pip_check.txt"
+  },
+  "git_diff_check": {
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exit_code": 0,
+    "output": "artifacts/raw_tri_modal_resume_checks/run_20261003T075358718324Z_3b68d36a5705/git_diff_check.txt"
+  },
+  "prior_reports_unchanged": true,
+  "research_log_append_only": true,
+  "git_status": "artifacts/raw_tri_modal_resume_checks/run_20261003T075358718324Z_3b68d36a5705/git_status.txt",
+  "kaggle_cli": {
+    "version": "2.2.4",
+    "credentials_available": false,
+    "notebook_identifier_available": false,
+    "download_performed": false
+  }
+}

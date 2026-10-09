@@ -1,0 +1,218 @@
+[
+  {
+    "cohort": "source_raw",
+    "policy": "parser_referral_then_entropy_10_percent",
+    "coverage": 0.9,
+    "referral_rate": 0.1,
+    "requested_referral_rate": 0.1,
+    "forced_parser_referrals": 0,
+    "referred_count": 405,
+    "fn_total": 0,
+    "fn_referred": 0,
+    "fn_retained": 0,
+    "fn_catch_rate": null,
+    "retained_metrics": {
+      "positive_label": 1,
+      "accuracy": 1.0,
+      "precision_malicious": 1.0,
+      "recall_malicious": 1.0,
+      "f1_malicious": 1.0,
+      "precision_macro": 1.0,
+      "recall_macro": 1.0,
+      "f1_macro": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "mcc": 1.0,
+      "confusion_matrix": [
+        [
+          1785,
+          0
+        ],
+        [
+          0,
+          1860
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "score_source": null,
+      "brier": 0.0010688331136043665,
+      "log_loss": 0.032874001329445526,
+      "ece": 0.03232723783159491,
+      "ece_bins": 10,
+      "threshold": 0.06252524495771992
+    },
+    "entropy_unit": "bits",
+    "dynamic_samples_executed": 0,
+    "referrals_counted_as_corrected": false
+  },
+  {
+    "cohort": "source_raw",
+    "policy": "top_entropy_10_percent",
+    "entropy_unit": "bits",
+    "requested_referral_rate": 0.1,
+    "referral_rate": 0.1,
+    "coverage": 0.9,
+    "referred_count": 405,
+    "retained_count": 3645,
+    "fn_total": 0,
+    "fn_referred": 0,
+    "fn_retained": 0,
+    "fn_catch_rate": null,
+    "fn_catch_rate_unavailable_reason": "No false negatives in the evaluated partition",
+    "errors_referred": 3,
+    "error_capture_rate": 1.0,
+    "retained_metrics": {
+      "positive_label": 1,
+      "accuracy": 1.0,
+      "precision_malicious": 1.0,
+      "recall_malicious": 1.0,
+      "f1_malicious": 1.0,
+      "precision_macro": 1.0,
+      "recall_macro": 1.0,
+      "f1_macro": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "mcc": 1.0,
+      "confusion_matrix": [
+        [
+          1785,
+          0
+        ],
+        [
+          0,
+          1860
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "score_source": null,
+      "brier": 0.0010688331136043665,
+      "log_loss": 0.032874001329445526,
+      "ece": 0.03232723783159491,
+      "ece_bins": 10,
+      "threshold": 0.06252524495771992
+    },
+    "threshold": 0.06252524495771992,
+    "dynamic_samples_executed": 0,
+    "referrals_counted_as_corrected": false
+  },
+  {
+    "cohort": "cic",
+    "policy": "parser_referral_then_entropy_10_percent",
+    "coverage": 0.9003436426116839,
+    "referral_rate": 0.09965635738831616,
+    "requested_referral_rate": 0.1,
+    "forced_parser_referrals": 0,
+    "referred_count": 29,
+    "fn_total": 2,
+    "fn_referred": 0,
+    "fn_retained": 2,
+    "fn_catch_rate": 0.0,
+    "retained_metrics": {
+      "positive_label": 1,
+      "accuracy": 0.549618320610687,
+      "precision_malicious": 0.5521235521235521,
+      "recall_malicious": 0.9862068965517241,
+      "f1_malicious": 0.7079207920792079,
+      "precision_macro": 0.4427284427284427,
+      "recall_macro": 0.4973769525493663,
+      "f1_macro": 0.3622937293729373,
+      "precision": 0.5521235521235521,
+      "recall": 0.9862068965517241,
+      "f1": 0.7079207920792079,
+      "mcc": -0.024513344308353995,
+      "confusion_matrix": [
+        [
+          1,
+          116
+        ],
+        [
+          2,
+          143
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 0.4267609784851164,
+      "pr_auc": 0.5184148081954936,
+      "score_source": null,
+      "brier": 0.36897433981335837,
+      "log_loss": 0.9989083968931965,
+      "ece": 0.34780318094330476,
+      "ece_bins": 10,
+      "threshold": 0.06252524495771992
+    },
+    "entropy_unit": "bits",
+    "dynamic_samples_executed": 0,
+    "referrals_counted_as_corrected": false
+  },
+  {
+    "cohort": "cic",
+    "policy": "top_entropy_10_percent",
+    "entropy_unit": "bits",
+    "requested_referral_rate": 0.1,
+    "referral_rate": 0.09965635738831616,
+    "coverage": 0.9003436426116839,
+    "referred_count": 29,
+    "retained_count": 262,
+    "fn_total": 2,
+    "fn_referred": 0,
+    "fn_retained": 2,
+    "fn_catch_rate": 0.0,
+    "fn_catch_rate_unavailable_reason": null,
+    "errors_referred": 14,
+    "error_capture_rate": 0.10606060606060606,
+    "retained_metrics": {
+      "positive_label": 1,
+      "accuracy": 0.549618320610687,
+      "precision_malicious": 0.5521235521235521,
+      "recall_malicious": 0.9862068965517241,
+      "f1_malicious": 0.7079207920792079,
+      "precision_macro": 0.4427284427284427,
+      "recall_macro": 0.4973769525493663,
+      "f1_macro": 0.3622937293729373,
+      "precision": 0.5521235521235521,
+      "recall": 0.9862068965517241,
+      "f1": 0.7079207920792079,
+      "mcc": -0.024513344308353995,
+      "confusion_matrix": [
+        [
+          1,
+          116
+        ],
+        [
+          2,
+          143
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 0.4267609784851164,
+      "pr_auc": 0.5184148081954936,
+      "score_source": null,
+      "brier": 0.36897433981335837,
+      "log_loss": 0.9989083968931965,
+      "ece": 0.34780318094330476,
+      "ece_bins": 10,
+      "threshold": 0.06252524495771992
+    },
+    "threshold": 0.06252524495771992,
+    "dynamic_samples_executed": 0,
+    "referrals_counted_as_corrected": false
+  }
+]

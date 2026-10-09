@@ -1,0 +1,2 @@
+ M src/malpdf/static/safety.py
+ M tests/test_static_acceleration.py

@@ -1,0 +1,31 @@
+{
+  "independent_join_matches_prior": true,
+  "candidate_identifier_matches": 8386,
+  "label_disagreements": 3727,
+  "by_source_partition": {
+    "train": 5046,
+    "validation": 1667,
+    "test": 1673
+  },
+  "source_to_target_labels": {
+    "source_1_target_1": 4659,
+    "source_1_target_0": 3727
+  },
+  "source_pdf_checksums_reverified": 16,
+  "checksum_mismatches": 0,
+  "raw_manifest_training_and_split_labels_consistent": true,
+  "class_to_label_mapping": {
+    "Benign": 0,
+    "Malicious": 1
+  },
+  "source_label_provenance": {
+    "publisher_reported_malicious_not_independently_verified": 8386
+  },
+  "cic_labels_verified_against_target_pdf_bytes": false,
+  "either_source_proven_wrong": false,
+  "reference_metrics_cohort": "raw public-PDF cohort, Protocol G independent Test; archive-derived label provenance",
+  "raw_labeled_cohort_rows": 19958,
+  "reference_test_rows": 4050,
+  "models_or_labels_changed": false,
+  "test_metric_computation_performed": false
+}

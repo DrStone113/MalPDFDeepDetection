@@ -1,0 +1,91 @@
+{
+  "pip_check": {
+    "command": [
+      "/tmp/malpdf-tri-modal-venv-20261002/bin/python",
+      "-m",
+      "pip",
+      "check"
+    ],
+    "exit_code": 0,
+    "stdout": "No broken requirements found.\n",
+    "stderr": ""
+  },
+  "git_diff_check": {
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "git_status": {
+    "command": [
+      "git",
+      "status",
+      "--short"
+    ],
+    "exit_code": 0,
+    "stdout": " M .gitignore\n M AGENTS.md\n M README.md\n M reports/research_log.md\n M src/malpdf/static/safety.py\n?? configs/late_fusion_stacking.yaml\n?? configs/markov_cache.yaml\n?? configs/source_preparation.yaml\n?? configs/tri_modal_fusion.yaml\n?? configs/vision_resnet18.yaml\n?? reports/experiments/late_fusion_v2/\n?? reports/experiments/markov_cache/\n?? reports/experiments/tri_modal_fusion/\n?? reports/experiments/vision_resnet/\n?? scripts/02_build_markov_cache.py\n?? scripts/03_train_vision_model.py\n?? scripts/04_evaluate_late_fusion.py\n?? scripts/05_evaluate_tri_modal_fusion.py\n?? scripts/prepare_source_datasets.py\n?? src/malpdf/data/manifest_validator.py\n?? src/malpdf/data/markov_preparation.py\n?? src/malpdf/data/source_preparation.py\n?? src/malpdf/data/vision_dataset.py\n?? src/malpdf/experiments/late_fusion_runner.py\n?? src/malpdf/experiments/tri_modal_runner.py\n?? src/malpdf/experiments/vision_runner.py\n?? src/malpdf/models/late_fusion.py\n?? src/malpdf/models/vision_resnet.py\n?? src/malpdf/static/cache_manager.py\n?? src/malpdf/static/markov.py\n?? tests/test_late_fusion.py\n?? tests/test_markov_cache.py\n?? tests/test_source_preparation.py\n?? tests/test_tri_modal_fusion.py\n?? tests/test_vision_resnet.py\n",
+    "stderr": ""
+  },
+  "staged_paths": {
+    "command": [
+      "git",
+      "diff",
+      "--name-only",
+      "--cached"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "pytest": {
+    "command": [
+      "/tmp/malpdf-tri-modal-venv-20261002/bin/python",
+      "-m",
+      "pytest",
+      "tests/",
+      "-q"
+    ],
+    "exit_code": 0,
+    "passed": 313,
+    "warnings": 2,
+    "duration_seconds": 32.49,
+    "evidence": "pytest_output.txt",
+    "warning_note": "Existing synthetic Vision same-class MCC fixtures; no failures"
+  },
+  "execution": {
+    "command": [
+      "/tmp/malpdf-tri-modal-venv-20261002/bin/python",
+      "scripts/05_evaluate_tri_modal_fusion.py",
+      "--execute"
+    ],
+    "exit_code": 2,
+    "stdout": "Status: blocked_missing_vision; test evaluations: 0.\nVision: 0/24337 Protocol G IDs matched; 5 source caches verified.\nReason: A complete PDF-to-Protocol-G ID mapping is unavailable; an official train-only RIT Vision checkpoint is also required. No inference/fitting/test evaluation; metrics N/A.\nReport: reports/experiments/tri_modal_fusion/run_20261002T105057352568Z_3efd81e782c1/run_summary.json\n",
+    "stderr": ""
+  },
+  "new_files_whitespace": {
+    "passed": true,
+    "paths": [
+      "src/malpdf/data/vision_dataset.py",
+      "src/malpdf/experiments/late_fusion_runner.py",
+      "src/malpdf/experiments/tri_modal_runner.py",
+      "scripts/05_evaluate_tri_modal_fusion.py",
+      "tests/test_tri_modal_fusion.py",
+      "configs/tri_modal_fusion.yaml"
+    ]
+  },
+  "provenance_preservation": {
+    "protected_file_count": 148,
+    "all_unchanged": true,
+    "historical_log_prefix_unchanged": true
+  },
+  "environment": {
+    "python": "3.11.13",
+    "fresh_virtualenv": "/tmp/malpdf-tri-modal-venv-20261002",
+    "install": "python -m pip install --no-deps --no-build-isolation -e '.[dev]'",
+    "declared_dependencies": "Existing compatible packages visible through --system-site-packages; pip check clean"
+  }
+}

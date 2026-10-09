@@ -1,0 +1,54 @@
+{
+  "run_id": "run_20261002T114320215160Z_3b68d36a5705",
+  "mode": "execute",
+  "status": "blocked_missing_pdf_source",
+  "code_commit_sha": "3b68d36a570531058543170e2debc7d5805e6bb5",
+  "git_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M pyproject.toml",
+      " M reports/research_log.md",
+      " M src/malpdf/data/vision_dataset.py",
+      " M src/malpdf/evaluation/selective.py",
+      " M src/malpdf/experiments/late_fusion_runner.py",
+      " M src/malpdf/models/late_fusion.py",
+      "?? configs/safe_stacking_v3.yaml",
+      "?? configs/tri_modal_fusion.yaml",
+      "?? reports/experiments/late_fusion_v2/",
+      "?? reports/experiments/markov_cache/",
+      "?? reports/experiments/tri_modal_fusion/",
+      "?? reports/experiments/vision_resnet/",
+      "?? scripts/05_evaluate_tri_modal_fusion.py",
+      "?? scripts/06_optimize_and_stack_v3_safe.py",
+      "?? src/malpdf/experiments/safe_stacking_v3.py",
+      "?? src/malpdf/experiments/tri_modal_runner.py",
+      "?? src/malpdf/models/safe_stacking.py",
+      "?? src/malpdf/models/v3_base_learners.py",
+      "?? src/malpdf/static/obfuscation.py",
+      "?? tests/test_safe_stacking_v3.py",
+      "?? tests/test_tri_modal_fusion.py"
+    ]
+  },
+  "started_at_utc": "2026-10-02T11:43:20.215925+00:00",
+  "report_path": "reports/experiments/safe_stacking_v3/run_20261002T114320215160Z_3b68d36a5705/run_summary.json",
+  "artifact_directory": "artifacts/safe_stacking_v3/run_20261002T114320215160Z_3b68d36a5705",
+  "metrics": {},
+  "test_evaluation_count": 0,
+  "completed_base_fits": 0,
+  "pdf_readiness": {
+    "ready": false,
+    "source_samples": 5,
+    "protocol_g_samples": 24337,
+    "matched_ids": 0,
+    "missing_source_ids": 24337,
+    "foreign_source_ids": 5,
+    "reason": "Measured ObfuscationCount requires real PDF bytes for every Protocol G ID; no proxy, constant fill, foreign cohort or inferred file identity is permitted"
+  },
+  "official_execution_ready": false,
+  "error": {
+    "type": "MissingRealProtocolGPdfs",
+    "message": "Measured ObfuscationCount requires real PDF bytes for every Protocol G ID; no proxy, constant fill, foreign cohort or inferred file identity is permitted"
+  },
+  "finished_at_utc": "2026-10-02T11:43:24.066412Z"
+}

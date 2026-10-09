@@ -1,0 +1,116 @@
+{
+  "configuration": {
+    "allowed_hosts": [
+      "raw.githubusercontent.com",
+      "zenodo.org",
+      "s3.amazonaws.com"
+    ],
+    "limits": {
+      "max_pdf_bytes": 10485760,
+      "max_download_bytes": 1073741824,
+      "max_total_download_bytes": 2147483648,
+      "max_total_pdf_bytes": 2147483648,
+      "max_archive_members": 20000,
+      "max_compression_ratio": 200,
+      "timeout_seconds": 30,
+      "max_transfer_seconds": 600
+    },
+    "sources": [
+      {
+        "name": "zenodo_malware_pdf_2011",
+        "kind": "zip",
+        "reference": "https://zenodo.org/records/3464032",
+        "expected_bytes": 129118746,
+        "password_env": "MALPDF_ZENODO_MALWARE_PASSWORD",
+        "label": 1,
+        "label_source": "publisher_reported_malicious_not_independently_verified"
+      },
+      {
+        "name": "zenodo_clean_pdf_9000",
+        "kind": "zip",
+        "reference": "https://zenodo.org/records/3464032",
+        "expected_bytes": 683344001,
+        "password_env": "MALPDF_ZENODO_CLEAN_PASSWORD",
+        "label": 0,
+        "label_source": "publisher_reported_benign_not_independently_verified"
+      },
+      {
+        "name": "contagio_s3_cve_2009_3957",
+        "kind": "zip",
+        "reference": "https://s3.amazonaws.com/contagio.deependresearch.org/index.html",
+        "expected_bytes": 161011,
+        "password_env": "MALPDF_CONTAGIO_PASSWORD",
+        "label": null,
+        "label_source": "unlabeled_public_contagio_archive"
+      },
+      {
+        "name": "contagio_s3_obama_pdf",
+        "kind": "zip",
+        "reference": "https://s3.amazonaws.com/contagio.deependresearch.org/index.html",
+        "expected_bytes": 32243,
+        "password_env": "MALPDF_CONTAGIO_PASSWORD",
+        "label": null,
+        "label_source": "unlabeled_public_contagio_archive"
+      },
+      {
+        "name": "contagio_s3_pdf_sample",
+        "kind": "zip",
+        "reference": "https://s3.amazonaws.com/contagio.deependresearch.org/index.html",
+        "expected_bytes": 77072,
+        "password_env": "MALPDF_CONTAGIO_PASSWORD",
+        "label": null,
+        "label_source": "unlabeled_public_contagio_archive"
+      },
+      {
+        "name": "cve_t4pdf_bank_statment",
+        "kind": "pdf",
+        "reference": "https://github.com/0xCyberY/CVE-T4PDF/tree/91e0c8080e34fbea79154cd21d1239bd51201f30",
+        "expected_bytes": 1137,
+        "label": 1,
+        "label_source": "user_requested_malicious"
+      },
+      {
+        "name": "cve_t4pdf_link_uri",
+        "kind": "pdf",
+        "reference": "https://github.com/0xCyberY/CVE-T4PDF/tree/91e0c8080e34fbea79154cd21d1239bd51201f30",
+        "expected_bytes": 662,
+        "label": 1,
+        "label_source": "user_requested_malicious"
+      },
+      {
+        "name": "cve_t4pdf_rce_foxit",
+        "kind": "pdf",
+        "reference": "https://github.com/0xCyberY/CVE-T4PDF/tree/91e0c8080e34fbea79154cd21d1239bd51201f30",
+        "expected_bytes": 3984,
+        "label": 1,
+        "label_source": "user_requested_malicious"
+      },
+      {
+        "name": "cve_t4pdf_url2_invoice_template",
+        "kind": "pdf",
+        "reference": "https://github.com/0xCyberY/CVE-T4PDF/tree/91e0c8080e34fbea79154cd21d1239bd51201f30",
+        "expected_bytes": 695,
+        "label": 1,
+        "label_source": "user_requested_malicious"
+      },
+      {
+        "name": "cve_t4pdf_xss_popup",
+        "kind": "pdf",
+        "reference": "https://github.com/0xCyberY/CVE-T4PDF/tree/91e0c8080e34fbea79154cd21d1239bd51201f30",
+        "expected_bytes": 661,
+        "label": 1,
+        "label_source": "user_requested_malicious"
+      }
+    ]
+  },
+  "detailed_configuration_path": "artifacts/raw_downloads/run_20261002T123152127309Z_3b68d36a5705/configuration.json",
+  "authorization": "Explicit user instruction; this invocation uses --execute-authorized",
+  "code_commit": "3b68d36a570531058543170e2debc7d5805e6bb5",
+  "worktree": "dirty",
+  "seed": null,
+  "protocol": null,
+  "policy": "Static opaque binary reads only; strict %PDF- at offset zero. No rendering, PDF parsing, code execution or uploads.",
+  "cohort_policy": "Separate acquisition inventory; no RIT identities inferred and no Protocol G split changed.",
+  "integrity_policy": "Local SHA-256 is an acquisition baseline; compare a publisher digest only when available. MD5 is an additional legacy publisher integrity lock, not authenticity proof.",
+  "metric_policy": "N/A: no model evaluation; Label=1 malicious; ECE would use 10 equal-width probability bins."
+}

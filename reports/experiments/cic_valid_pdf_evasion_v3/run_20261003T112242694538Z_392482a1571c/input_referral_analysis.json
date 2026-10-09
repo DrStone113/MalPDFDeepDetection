@@ -1,0 +1,10 @@
+{
+  "evaluated_valid_pdf_rows": 1452,
+  "unscored_input_referrals": 28,
+  "valid_pdf_referrals": 145,
+  "combined_referral_rate": 0.11689189189189189,
+  "combined_static_coverage": 0.8831081081081081,
+  "scope_denominator": 1480,
+  "input_referrals_counted_as_corrected": false,
+  "input_failure_probabilities_and_FN_catch": "N/A: no model predictions for unavailable inputs"
+}

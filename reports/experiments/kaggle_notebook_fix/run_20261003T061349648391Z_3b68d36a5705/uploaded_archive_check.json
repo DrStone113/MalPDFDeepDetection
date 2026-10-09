@@ -1,0 +1,9 @@
+{
+  "local_upload_directory": ".kaggle-malpdf-upload",
+  "file_name": "malpdf-markov-cache.zip",
+  "bytes": 479642283,
+  "same_inode_as_verified_original": true,
+  "discovery_on_local_uploaded_zip": "passed; selected by original sealed metadata",
+  "kaggle_remote_attachment_verified": false,
+  "verification_scope": "Local ZIP and generated notebook only; no upload, training or Test evaluation"
+}

@@ -1,0 +1,15 @@
+{
+  "pytest": "577 passed; 2 pre-existing synthetic single-class warnings",
+  "pip_check": "clean",
+  "git_diff_check": "pass",
+  "python": "3.11.13",
+  "numeric_preflight": {
+    "train": 12801,
+    "validation": 4268,
+    "features": 40,
+    "Test_rows_in_feature_matrix": 0
+  },
+  "sealed_source_syntax": "pass",
+  "initial_targeted_checks": "1 failed due destination collision exception type; corrected; full suite passed",
+  "model_training_executed": false
+}

@@ -1,0 +1,61 @@
+{
+  "python": "3.11.13",
+  "packages": {
+    "malpdf": "0.1.0",
+    "numpy": "2.4.6",
+    "pyyaml": "6.0.3"
+  },
+  "code_commit_sha": "3b68d36a570531058543170e2debc7d5805e6bb5",
+  "git_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M pyproject.toml",
+      " M reports/research_log.md",
+      " M src/malpdf/data/manifest_validator.py",
+      " M src/malpdf/data/markov_preparation.py",
+      " M src/malpdf/data/vision_dataset.py",
+      " M src/malpdf/evaluation/selective.py",
+      " M src/malpdf/experiments/late_fusion_runner.py",
+      " M src/malpdf/models/late_fusion.py",
+      " M src/malpdf/static/rit_reference.py",
+      "?? configs/raw_datasets.yaml",
+      "?? configs/raw_markov_cache.yaml",
+      "?? configs/raw_pdf_cohort.yaml",
+      "?? configs/safe_stacking_v3.yaml",
+      "?? configs/tri_modal_fusion.yaml",
+      "?? reports/experiments/late_fusion_v2/",
+      "?? reports/experiments/markov_cache/",
+      "?? reports/experiments/raw_downloads/",
+      "?? reports/experiments/raw_pdf_cohort/",
+      "?? reports/experiments/safe_stacking_v3/",
+      "?? reports/experiments/tri_modal_fusion/",
+      "?? reports/experiments/vision_resnet/",
+      "?? scripts/05_evaluate_tri_modal_fusion.py",
+      "?? scripts/06_optimize_and_stack_v3_safe.py",
+      "?? scripts/07_prepare_raw_pdf_cohort.py",
+      "?? scripts/download_raw_datasets.py",
+      "?? src/malpdf/data/raw_cohort.py",
+      "?? src/malpdf/data/raw_downloads.py",
+      "?? src/malpdf/experiments/safe_stacking_v3.py",
+      "?? src/malpdf/experiments/tri_modal_runner.py",
+      "?? src/malpdf/models/safe_stacking.py",
+      "?? src/malpdf/models/v3_base_learners.py",
+      "?? src/malpdf/provenance/",
+      "?? src/malpdf/static/obfuscation.py",
+      "?? tests/test_raw_downloads.py",
+      "?? tests/test_raw_pdf_cohort.py",
+      "?? tests/test_safe_stacking_v3.py",
+      "?? tests/test_tri_modal_fusion.py"
+    ]
+  },
+  "code_sha256": {
+    "src/malpdf/data/markov_preparation.py": "d67c29d6af0de9ad5e443a49638cc7dc00a4d661763b3d8f0d7edd46dc51f5ba",
+    "src/malpdf/data/manifest_validator.py": "e389e859df4e2ae43e4b47e6b43cc686bef0c18298d1c71277799f2c7b6414dc",
+    "src/malpdf/static/markov.py": "a755e02460bf2b12777b2005cd82c7d59d517d25f944c261f8ae5e89b37119c1",
+    "src/malpdf/static/cache_manager.py": "50083cd00faa45995f16892aea657bbd9ea02743cf0364ed6c25fda67343adbf",
+    "src/malpdf/static/safety.py": "f5c578875e9674a7b31591d641971598d375e631e6e51ca2625ea1d4bf10aecf",
+    "scripts/02_build_markov_cache.py": "8c94c26aba3701b34cfc2646d9362638683b0a378bd3ceeeb7ec545e9929c7a2",
+    "configs/markov_cache.yaml": "0a0500631e18d55f514fdb6e028e1c729e551a342ffdbdec385916e04879a86c"
+  }
+}

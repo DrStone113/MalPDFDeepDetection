@@ -1,0 +1,21 @@
+{
+  "pytest": {
+    "exit_code": 0,
+    "evidence": "artifacts/kaggle_output_access_checks/run_20261003T081409614116Z_3b68d36a5705/pytest.txt"
+  },
+  "pip_check": {
+    "exit_code": 0,
+    "evidence": "artifacts/kaggle_output_access_checks/run_20261003T081409614116Z_3b68d36a5705/pip_check.txt"
+  },
+  "git_diff_check": {
+    "exit_code": 0,
+    "evidence": "artifacts/kaggle_output_access_checks/run_20261003T081409614116Z_3b68d36a5705/git_diff_check.txt"
+  },
+  "vision_csv_sha256": {
+    "vision_probs_val.csv": "e6965a75c79c6d91f0db3f1e6d29f9b2a86f3223f89550bcb47c8bd083be4739",
+    "vision_probs_test.csv": "8802fc842cafe60355144f609234d50016f34703fa358d15844fd02306b67a99"
+  },
+  "vision_csvs_unchanged": true,
+  "test_evaluation_claims": 0,
+  "git_status": "artifacts/kaggle_output_access_checks/run_20261003T081409614116Z_3b68d36a5705/git_status.txt"
+}

@@ -2,10 +2,10 @@
 
 ## Context Check
 
-This repository is a Python 3.11 research project for malicious PDF detection.
+This repository is a Python research project for malicious PDF detection. Python 3.11 is the Codespace/test baseline; Python 3.13 is supported for the authorized Kaggle GPU runtime.
 
 - Before changing code, run `git status`, read `pyproject.toml` and `README.md`, and inspect the relevant package, scripts, configs, tests, and existing experiment reports. Preserve unrelated local changes.
-- Check Python and declared dependencies with `python --version` and `python -m pip check`. Use Python 3.11 and install the project from `pyproject.toml` in a fresh virtual environment: `python -m pip install -e '.[dev]'`.
+- Check Python and declared dependencies with `python --version` and `python -m pip check`. Use Python 3.11 for Codespace/local checks and install the project from `pyproject.toml` in a fresh virtual environment. On Codespace, select CPU wheels to avoid unused CUDA downloads: `python -m pip install --extra-index-url https://download.pytorch.org/whl/cpu -e '.[dev]'`. Authorized Kaggle GPU runs may use Python 3.13 with the declared PyTorch/torchvision versions; record the effective Python, library and CUDA versions and do not claim identical environments across runs.
 
 ## Modular Boundaries
 
@@ -44,6 +44,15 @@ Before writing new code, apply this order: (1) YAGNI: establish that the task ne
 - Automatically append to `reports/research_log.md` after every experiment invocation, including completed, failed, and interrupted attempts, and after each maintenance task. Use its run-register schema: UTC timestamp, run ID, kind/status, protocol/seed, model, partition, malicious F1, MCC, ECE, Brier score, generating commit/worktree state, evidence paths, and checks/notes.
 - Append one row per model and evaluated partition. Copy metrics only from saved evidence; use `N/A` with a reason for unavailable or inapplicable values. Define Label=1 as malicious and record the ECE binning convention. Never invent metrics, replace historical entries, or rerun experiments just to populate the log.
 - Keep code, tests, relevant documentation, and the appended research log consistent. Inspect changed and staged paths for unsafe artifacts before any authorized commit; `git status` must show only intended task changes before handoff.
+
+## Execution Budgets and Threat Coverage
+
+- Use Codespace/local for code, tests, tabular processing and lightweight stacking; use explicitly authorized cloud GPUs for new deep-learning runs. Keep established experiment designs locked.
+- Parallelize new static extraction/cache jobs with bounded processes using CPU affinity/quota and memory limits. Set BLAS/OpenMP threads per process explicitly; preserve parser isolation, deadlines and all byte caps. Never promise 100% utilization or a fixed runtime without measurement.
+- For new Kaggle Vision runs, preload verified float32 matrices into a single RAM tensor shared read-only with persistent Linux fork workers. Use `num_workers > 0`, pinned batches, nonblocking CUDA transfers and FP16 AMP with gradient scaling. Check RAM, loader shared memory and batch budgets first; CPU unit/smoke tests remain explicit and bounded. Use the current PyTorch AMP API and record requested/effective precision and epoch timings.
+- Preserve original Markov probabilities; do not normalize again or cast them to uint8. Fit no transform on validation or Test while preparing RAM data.
+- Retain measured security features regardless of SHAP importance. Document train-only constant exclusions; do not inspect Test to choose features. Raw nulls and parser flags remain intact.
+- Track evidence for JavaScript, embedded payloads, launch/actions, forms, font/image decoders, RichMedia, URI phishing and steganography separately. Token presence is not proof of exploit detection; claim coverage only with labeled evidence. Cross-dataset/evasion work requires a separately locked design, duplicate/source checks and preserved independent Test cohorts.
 
 ## GitHub Codespaces Boundary
 

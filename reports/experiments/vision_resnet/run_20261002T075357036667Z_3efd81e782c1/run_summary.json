@@ -1,0 +1,67 @@
+{
+  "run_id": "run_20261002T075357036667Z_3efd81e782c1",
+  "started_at_utc": "2026-10-02T07:53:57.068380+00:00",
+  "mode": "dry_run",
+  "status": "dry_run_completed",
+  "code_commit_sha": "3efd81e782c1e7800299368b2b8aa3ef4c945852",
+  "git_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M .gitignore",
+      " M AGENTS.md",
+      " M README.md",
+      " M reports/research_log.md",
+      " M src/malpdf/static/safety.py",
+      "?? configs/markov_cache.yaml",
+      "?? configs/source_preparation.yaml",
+      "?? configs/vision_resnet18.yaml",
+      "?? reports/experiments/markov_cache/",
+      "?? scripts/02_build_markov_cache.py",
+      "?? scripts/03_train_vision_model.py",
+      "?? scripts/prepare_source_datasets.py",
+      "?? src/malpdf/data/manifest_validator.py",
+      "?? src/malpdf/data/markov_preparation.py",
+      "?? src/malpdf/data/source_preparation.py",
+      "?? src/malpdf/data/vision_dataset.py",
+      "?? src/malpdf/experiments/vision_runner.py",
+      "?? src/malpdf/models/vision_resnet.py",
+      "?? src/malpdf/static/cache_manager.py",
+      "?? src/malpdf/static/markov.py",
+      "?? tests/test_markov_cache.py",
+      "?? tests/test_source_preparation.py",
+      "?? tests/test_vision_resnet.py"
+    ]
+  },
+  "report_path": "reports/experiments/vision_resnet/run_20261002T075357036667Z_3efd81e782c1/run_summary.json",
+  "artifact_directory": "artifacts/vision_resnet/run_20261002T075357036667Z_3efd81e782c1",
+  "metrics": {},
+  "protocol_g_readiness": {
+    "ready": false,
+    "source_samples": 5,
+    "protocol_g_samples": 24337,
+    "matched_ids": 0,
+    "missing_source_ids": 24337,
+    "foreign_source_ids": 5,
+    "reason": "A complete PDF-to-Protocol-G ID mapping is unavailable"
+  },
+  "parameter_count": 11170753,
+  "smoke": {
+    "sample_count": 5,
+    "input_shape": [
+      5,
+      1,
+      256,
+      256
+    ],
+    "output_shape": [
+      5,
+      1
+    ],
+    "bce_loss": 0.7116346001625061,
+    "model_trained": false,
+    "optimizer_steps": 0,
+    "checkpoint_saved": false,
+    "scope": "Untrained cache forward diagnostic; no held-out metrics"
+  },
+  "finished_at_utc": "2026-10-02T07:54:01.730654Z"
+}

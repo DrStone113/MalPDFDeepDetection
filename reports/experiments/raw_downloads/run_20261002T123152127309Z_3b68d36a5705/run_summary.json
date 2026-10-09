@@ -1,0 +1,142 @@
+{
+  "run_id": "run_20261002T123152127309Z_3b68d36a5705",
+  "code_commit": "3b68d36a570531058543170e2debc7d5805e6bb5",
+  "worktree": "dirty",
+  "status": "partial",
+  "report_path": "reports/experiments/raw_downloads/run_20261002T123152127309Z_3b68d36a5705/run_summary.json",
+  "raw_directory": "data/raw/public_pdf_sources/run_20261002T123152127309Z_3b68d36a5705",
+  "manifest_path": "artifacts/raw_downloads/run_20261002T123152127309Z_3b68d36a5705/source_pdf_manifest.csv",
+  "events_path": "artifacts/raw_downloads/run_20261002T123152127309Z_3b68d36a5705/progress.jsonl",
+  "sources": [
+    {
+      "name": "zenodo_malware_pdf_2011",
+      "status": "failed",
+      "unique_pdfs": 0,
+      "accepted": 0,
+      "rejected": 0,
+      "download": {
+        "bytes": 129118746,
+        "publisher_sha256_available": false,
+        "publisher_md5_available": true
+      },
+      "error_type": "AcquisitionError"
+    },
+    {
+      "name": "zenodo_clean_pdf_9000",
+      "status": "failed",
+      "unique_pdfs": 0,
+      "accepted": 0,
+      "rejected": 0,
+      "download": {
+        "bytes": 683344001,
+        "publisher_sha256_available": false,
+        "publisher_md5_available": true
+      },
+      "error_type": "AcquisitionError"
+    },
+    {
+      "name": "contagio_s3_cve_2009_3957",
+      "status": "failed",
+      "unique_pdfs": 0,
+      "accepted": 0,
+      "rejected": 0,
+      "download": {
+        "bytes": 161011,
+        "publisher_sha256_available": false,
+        "publisher_md5_available": false
+      },
+      "error_type": "AcquisitionError"
+    },
+    {
+      "name": "contagio_s3_obama_pdf",
+      "status": "failed",
+      "unique_pdfs": 0,
+      "accepted": 0,
+      "rejected": 0,
+      "download": {
+        "bytes": 32243,
+        "publisher_sha256_available": false,
+        "publisher_md5_available": false
+      },
+      "error_type": "AcquisitionError"
+    },
+    {
+      "name": "contagio_s3_pdf_sample",
+      "status": "failed",
+      "unique_pdfs": 0,
+      "accepted": 0,
+      "rejected": 0,
+      "download": {
+        "bytes": 77072,
+        "publisher_sha256_available": false,
+        "publisher_md5_available": false
+      },
+      "error_type": "AcquisitionError"
+    },
+    {
+      "name": "cve_t4pdf_bank_statment",
+      "status": "completed",
+      "unique_pdfs": 1,
+      "accepted": 1,
+      "rejected": 0,
+      "download": {
+        "bytes": 1137,
+        "publisher_sha256_available": false,
+        "publisher_md5_available": false
+      }
+    },
+    {
+      "name": "cve_t4pdf_link_uri",
+      "status": "completed",
+      "unique_pdfs": 1,
+      "accepted": 1,
+      "rejected": 0,
+      "download": {
+        "bytes": 662,
+        "publisher_sha256_available": false,
+        "publisher_md5_available": false
+      }
+    },
+    {
+      "name": "cve_t4pdf_rce_foxit",
+      "status": "completed",
+      "unique_pdfs": 1,
+      "accepted": 1,
+      "rejected": 0,
+      "download": {
+        "bytes": 3984,
+        "publisher_sha256_available": false,
+        "publisher_md5_available": false
+      }
+    },
+    {
+      "name": "cve_t4pdf_url2_invoice_template",
+      "status": "completed",
+      "unique_pdfs": 1,
+      "accepted": 1,
+      "rejected": 0,
+      "download": {
+        "bytes": 695,
+        "publisher_sha256_available": false,
+        "publisher_md5_available": false
+      }
+    },
+    {
+      "name": "cve_t4pdf_xss_popup",
+      "status": "completed",
+      "unique_pdfs": 1,
+      "accepted": 1,
+      "rejected": 0,
+      "download": {
+        "bytes": 661,
+        "publisher_sha256_available": false,
+        "publisher_md5_available": false
+      }
+    }
+  ],
+  "unique_pdfs": 5,
+  "downloaded_bytes": 812740212,
+  "published_pdf_bytes": 7139,
+  "finished_at_utc": "2026-10-02T12:38:15.591629+00:00",
+  "manifest_sha256": "433b0ce3de3145db911899f237fe751f2d97d29462206fb4e4f13c6370c8051f"
+}

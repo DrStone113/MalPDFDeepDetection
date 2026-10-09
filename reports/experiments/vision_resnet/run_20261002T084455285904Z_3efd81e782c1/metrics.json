@@ -1,0 +1,46 @@
+{
+  "smoke_same_samples": {
+    "positive_label": 1,
+    "accuracy": 1.0,
+    "precision_malicious": 1.0,
+    "recall_malicious": 1.0,
+    "f1_malicious": 1.0,
+    "precision_macro": 0.5,
+    "recall_macro": 0.5,
+    "f1_macro": 0.5,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "mcc": 0.0,
+    "confusion_matrix": [
+      [
+        0,
+        0
+      ],
+      [
+        0,
+        5
+      ]
+    ],
+    "confusion_matrix_labels": [
+      0,
+      1
+    ],
+    "roc_auc": null,
+    "pr_auc": null,
+    "score_source": null,
+    "brier": 0.020078999788937325,
+    "log_loss": 0.1528020412270582,
+    "ece": 0.1417003870010376,
+    "ece_bins": 10,
+    "threshold": 0.5,
+    "loss": 0.152802038192749,
+    "loss_function": "BCEWithLogitsLoss",
+    "sample_count": 5,
+    "evaluation_count": 1,
+    "scope": "Same-sample technical smoke diagnostic; no held-out Protocol G metrics",
+    "single_class_labels": true,
+    "mcc_defined": false,
+    "mcc_convention": "scikit-learn zero-denominator result is 0"
+  }
+}

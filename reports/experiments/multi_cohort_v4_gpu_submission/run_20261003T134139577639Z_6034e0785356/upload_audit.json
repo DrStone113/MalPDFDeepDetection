@@ -1,0 +1,12 @@
+{
+  "matrix_members": 1452,
+  "source_matrices_reused": 19962,
+  "raw_pdfs": false,
+  "original_pdf_ids_hashes_paths": false,
+  "numeric_member_integrity_passed": true,
+  "notebook_compiles": true,
+  "dataset": "nguyenkhang294/malpdf-v4-delta-20261003-134200",
+  "kernel": "nguyenkhang294/malpdf-v4-training-20261003-134200",
+  "archive_sha256": "fe80dff08a429754a993f13867ffd7cb0dabd8ec021d1b04a917af05502f9ebd",
+  "metadata_sha256": "23db6f10bfde320718eaa30d8c859e32c927a8026b79746e3b1914ea558f4cc9"
+}

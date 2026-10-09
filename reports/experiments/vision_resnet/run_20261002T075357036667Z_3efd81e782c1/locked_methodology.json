@@ -1,0 +1,37 @@
+{
+  "configuration": {
+    "seed": 42,
+    "paths": {
+      "source_manifest": "data/processed/source_preparation/run_20261001T133833267219Z_3efd81e782c1/cve_t4pdf/source_pdf_manifest.csv",
+      "source_manifest_sha256": "3dd3412cfdd277b3b14ff198db807679557b3b32bcb20af8b2f2770610eea4aa",
+      "dataset": "data/processed/source_preparation/run_20261001T132125227224Z_3efd81e782c1/rit/rit-pdfmal-2026.csv",
+      "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "split_manifest": "data/processed/rit-pdfmal-2026_split_manifest.csv",
+      "split_manifest_sha256": "802c3962bc537ed78f63c5b1a5308e09df357a096f703846d0e5fe57598b4e21"
+    },
+    "training": {
+      "batch_size": 4,
+      "max_epochs": 20,
+      "learning_rate": 0.001,
+      "weight_decay": 0.0001,
+      "patience": 5,
+      "min_delta": 0.0,
+      "threshold": 0.5,
+      "ece_bins": 10
+    },
+    "runtime": {
+      "device": "cpu",
+      "cpu_threads": 2,
+      "dry_run_max_samples": 8
+    }
+  },
+  "architecture": "ResNet-18, 1 channel, one binary logit",
+  "weights": "scratch; no download",
+  "training": "Existing train_with_validation; AdamW/BCEWithLogitsLoss; lowest validation loss",
+  "test_policy": "Test once after persisted checkpoint/validation lock",
+  "normalization": "Use cached row probabilities directly; no fitted scaling or augmentation",
+  "cache_reads": "Bounded NPY header/checksum validation; allow_pickle=False; no raw PDF reads",
+  "dry_run": "Untrained forward pass, no fitting/checkpoint/performance claims",
+  "mode": "dry_run",
+  "code_commit_sha": "3efd81e782c1e7800299368b2b8aa3ef4c945852"
+}

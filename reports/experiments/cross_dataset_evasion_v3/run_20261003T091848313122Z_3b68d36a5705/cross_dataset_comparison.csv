@@ -1,0 +1,3 @@
+dataset,partition,model,samples,accuracy,f1_malicious,mcc,brier,ece,coverage,referral_rate,status,evidence_run,notes
+Source raw-PDF cohort,locked_protocol_g_test,stacking_v3,4050,0.9992592592592593,0.9993346640053227,0.9985003673991468,0.0005068941898636756,0.022460849539768367,0.9,0.1,saved_reference,run_20261003T085417853973Z_4b4478ca98a8,Copied from immutable saved evidence; original Test not rerun
+CIC-Evasive-PDFMal2022 Kaggle mirror,external_cohort_not_evaluated,stacking_v3,10023,N/A,N/A,N/A,N/A,N/A,N/A,N/A,blocked,run_20261003T091848313122Z_3b68d36a5705,"Missing target Vision input, incompatible feature schema and unverified file independence; requested entropy routing budget=10% is not a measured referral rate"

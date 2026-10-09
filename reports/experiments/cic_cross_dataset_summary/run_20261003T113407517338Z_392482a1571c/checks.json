@@ -1,0 +1,27 @@
+{
+  "full_pytest_saved_evidence": {
+    "exit_code": 0,
+    "path": "artifacts/cic_valid_pdf_prechecks/run_20261003T111535030436Z_4b4478ca98a8/pytest.txt",
+    "sha256": "b8dc5f340ffd1715cf8ba183388179b49d02917c8cc2668e00290284f543cb35",
+    "passed": 516
+  },
+  "code_files_unchanged_since_pytest": true,
+  "code_pip_check": {
+    "exit_code": 0
+  },
+  "code_diff_check": {
+    "exit_code": 0
+  },
+  "code_git_status": {
+    "exit_code": 0
+  },
+  "main_pip_check": {
+    "exit_code": 0
+  },
+  "main_diff_check": {
+    "exit_code": 0
+  },
+  "main_git_status": {
+    "exit_code": 0
+  }
+}

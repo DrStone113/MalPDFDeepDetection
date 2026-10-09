@@ -1,0 +1,14 @@
+{
+  "handoff_run": "run_20261003T135104281189Z_b6e45a7dafff",
+  "gpu_directory": "checkpoints/multi_cohort_v4/run_20261003T135504501994Z_b6e45a7dafff/v4_outputs/run_20261003T140038693651Z_b6e45a7dafff",
+  "policy": "Verify imported model metadata, Train-only preprocessing, row alignment and saved Validation-only metrics; no Test scores or fitting",
+  "cloud_runtime": "Kaggle-managed Python/PyTorch versions explicitly recorded; local project environment Python3.11",
+  "seed": 42,
+  "code_commit": "b6e45a7dafff642cca0e4d277882894504d7ea46",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

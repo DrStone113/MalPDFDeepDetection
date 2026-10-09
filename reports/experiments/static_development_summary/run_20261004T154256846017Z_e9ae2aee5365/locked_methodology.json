@@ -1,0 +1,16 @@
+{
+  "protocol": "retrospective saved multi-cohort Protocol G development; Validation-only summary",
+  "source_report": "reports/experiments/static_development_validation/run_20261004T150445937096Z_579e337990c7",
+  "training_commit": "579e337990c75a2fe6baca198d4f1f38a282ed37",
+  "method": "five static branches, five saved Train folds, two fixed weighting schemes; existing Vision unchanged",
+  "test_policy": "zero Test inference/evaluation; no new independent holdout claim",
+  "ECE": "10 equal-width bins; p=1 last bin",
+  "seed": 42,
+  "code_commit": "e9ae2aee5365a2f27d807ac289e2453a44d51cf6",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

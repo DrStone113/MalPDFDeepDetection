@@ -1,0 +1,46 @@
+{
+  "checked_at_utc": "2026-10-02T10:15:34.458064Z",
+  "run_id": "run_20261002T100717843417Z_3b68d36a5705",
+  "code_commit_sha": "3b68d36a570531058543170e2debc7d5805e6bb5",
+  "source_branch": "codex/late-fusion-v2-20261002",
+  "source_worktree": "/tmp/malpdf-late-fusion-v2-20261002",
+  "source_worktree_at_invocation": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "environment_install": "Fresh Python 3.11 venv with system-site declared dependencies; pip install --no-build-isolation --no-deps -e .[dev]; pip check clean; imports verified to originate in committed worktree",
+  "pytest_committed_snapshot": {
+    "passed": 290,
+    "failed": 0,
+    "warnings": 2,
+    "seconds": 27.69,
+    "exit_code": 0,
+    "warning_reason": "Existing single-class Vision MCC smoke fixtures"
+  },
+  "pytest_main": {
+    "passed": 290,
+    "failed": 0,
+    "seconds": 26.15,
+    "exit_code": 0
+  },
+  "execution": {
+    "command": "python scripts/04_evaluate_late_fusion.py --execute",
+    "exit_code": 0,
+    "test_evaluation_count": 1,
+    "test_rows": 4867,
+    "validation_rows": 4868,
+    "vision": "not configured; smoke model ineligible"
+  },
+  "validation_lock_before_test": true,
+  "no_refit_after_selection": true,
+  "source_hashes_match_commit": true,
+  "validation_role_groups_disjoint": true,
+  "metrics_json_csv_consistent": true,
+  "routing_counts_match_confusion": true,
+  "derived_predictions_roles_gitignored": true,
+  "selected_model": "Platt-calibrated XGBoost control; convex weights XGB/FT=1/0; Vision absent; Logistic Regression stacking candidates were not selected",
+  "interpretation": "FT-Transformer raw has higher test F1/MCC and lower Brier/log loss/ECE than the selected v2 model; retain this unfavorable comparison without tuning/rerunning test",
+  "test_predictions": "Reuse checksum-locked historical raw base probabilities; no new base-model fit or inference",
+  "ece_convention": "10 equal-width bins of malicious probability; p=1 in final bin",
+  "routing_convention": "Fixed top 10% entropy in bits, round(0.1*n) with stable sample-ID ties; referrals are abstentions; no dynamic execution"
+}

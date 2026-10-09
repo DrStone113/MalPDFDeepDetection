@@ -1,0 +1,9 @@
+{
+  "kernel": "nguyenkhang294/malpdf-pytorch313-qc-20261004-154850",
+  "url": "https://www.kaggle.com/code/nguyenkhang294/malpdf-pytorch313-qc-20261004-154850",
+  "code_commit": "e9ae2aee5365a2f27d807ac289e2453a44d51cf6",
+  "script_sha256": "bd11482ac2029a17dc64b9482f0a0d1222aa166313c84cf6a97e17828519e933",
+  "payload_sha256": "0e384fcd546e9641e211f1749d30cd49ded1f65f2c27f0d64a30a6d513620f75",
+  "datasets_attached": 0,
+  "source_attempt": "run_20261004T154106669990Z_e9ae2aee5365"
+}

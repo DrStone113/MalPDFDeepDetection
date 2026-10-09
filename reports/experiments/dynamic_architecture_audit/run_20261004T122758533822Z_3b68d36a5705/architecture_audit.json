@@ -1,0 +1,17 @@
+{
+  "report_adapter_implemented": true,
+  "behavioral_schema_features": 21,
+  "routing_recommendations_implemented": true,
+  "live_submission_implemented": false,
+  "live_status_polling_implemented": false,
+  "live_report_retrieval_implemented": false,
+  "hybrid_verdict_implemented": false,
+  "cape_lab_state": "design_only",
+  "ast_js_deobfuscation_yara_pipeline_implemented": false,
+  "v4_cic_referrals": 29,
+  "v4_dynamic_samples_executed": 0,
+  "raw_pdf_access_performed": false,
+  "javascript_execution_performed": false,
+  "sandbox_contact_performed": false,
+  "code_modified": false
+}

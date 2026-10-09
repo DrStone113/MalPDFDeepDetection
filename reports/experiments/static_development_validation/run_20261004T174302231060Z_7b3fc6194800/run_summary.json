@@ -1,0 +1,977 @@
+{
+  "run_id": "run_20261004T174302231060Z_7b3fc6194800",
+  "study": "static_development_validation",
+  "status": "completed",
+  "started_at_utc": "2026-10-04T17:43:02.410032+00:00",
+  "code_commit": "7b3fc619480079024d3de11d6087296bcfddea11",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M .devcontainer/devcontainer.json",
+      " M .gitignore",
+      " M AGENTS.md",
+      " M README.md",
+      " M pyproject.toml",
+      " M reports/research_log.md",
+      " M scripts/02_build_markov_cache.py",
+      " M src/malpdf/cli.py",
+      " M src/malpdf/data/manifest_validator.py",
+      " M src/malpdf/data/markov_preparation.py",
+      " M src/malpdf/data/vision_dataset.py",
+      " M src/malpdf/deep_learning/training.py",
+      " M src/malpdf/evaluation/selective.py",
+      " M src/malpdf/experiments/late_fusion_runner.py",
+      " M src/malpdf/inference/__init__.py",
+      " M src/malpdf/inference/predictor.py",
+      " M src/malpdf/models/late_fusion.py",
+      " M src/malpdf/static/__init__.py",
+      " M src/malpdf/static/analyzer.py",
+      " M src/malpdf/static/cache_manager.py",
+      " M src/malpdf/static/rit_reference.py",
+      " M src/malpdf/static/safety.py",
+      " M tests/test_deep_learning_protocol_g.py",
+      " M tests/test_markov_cache.py",
+      "?? .gitattributes",
+      "?? configs/cic_cross_dataset_v3.yaml",
+      "?? configs/kaggle_vision.yaml",
+      "?? configs/multi_cohort_v4.yaml",
+      "?? configs/raw_datasets.yaml",
+      "?? configs/raw_markov_cache.yaml",
+      "?? configs/raw_pdf_cohort.yaml",
+      "?? configs/raw_tri_modal_v3.yaml",
+      "?? configs/safe_stacking_v3.yaml",
+      "?? configs/static_development.yaml",
+      "?? configs/static_markov_development.yaml",
+      "?? configs/tri_modal_fusion.yaml",
+      "?? notebooks/kaggle_vision_resnet18.ipynb",
+      "?? reports/analysis/static_acceleration_design.md",
+      "?? reports/experiments/cic_archive_inspection/",
+      "?? reports/experiments/cic_cross_dataset_summary/",
+      "?? reports/experiments/cic_execution_prechecks/",
+      "?? reports/experiments/cic_feature_group_preflight/",
+      "?? reports/experiments/cic_input_rejection_audit/",
+      "?? reports/experiments/cic_nested_archive_inspection/",
+      "?? reports/experiments/cic_normalization_checks/",
+      "?? reports/experiments/cic_normalization_v3/",
+      "?? reports/experiments/cic_static_diagnosis_checks/",
+      "?? reports/experiments/cic_static_failure_diagnosis/",
+      "?? reports/experiments/cic_valid_pdf_evasion_v3/",
+      "?? reports/experiments/cic_valid_pdf_prechecks/",
+      "?? reports/experiments/cross_dataset_evasion_v3/",
+      "?? reports/experiments/cross_dataset_identity_audit/",
+      "?? reports/experiments/cross_dataset_identity_recheck/",
+      "?? reports/experiments/dynamic_architecture_audit/",
+      "?? reports/experiments/kaggle_handoff/",
+      "?? reports/experiments/kaggle_handoff_checks/",
+      "?? reports/experiments/kaggle_notebook_fix/",
+      "?? reports/experiments/kaggle_notebook_inspection/",
+      "?? reports/experiments/kaggle_output_access/",
+      "?? reports/experiments/kaggle_output_access_checks/",
+      "?? reports/experiments/kaggle_output_download/",
+      "?? reports/experiments/kaggle_output_handoff/",
+      "?? reports/experiments/kaggle_output_identity_audit/",
+      "?? reports/experiments/kaggle_output_recheck/",
+      "?? reports/experiments/kaggle_performance/",
+      "?? reports/experiments/kaggle_performance_bootstrap/",
+      "?? reports/experiments/kaggle_performance_checks/",
+      "?? reports/experiments/kaggle_saved_version_inspection/",
+      "?? reports/experiments/kaggle_vision_import/",
+      "?? reports/experiments/late_fusion_v2/",
+      "?? reports/experiments/markov_cache/",
+      "?? reports/experiments/multi_cohort_v4_checks/",
+      "?? reports/experiments/multi_cohort_v4_delta_checks/",
+      "?? reports/experiments/multi_cohort_v4_evaluation/",
+      "?? reports/experiments/multi_cohort_v4_gpu_environment_checks/",
+      "?? reports/experiments/multi_cohort_v4_gpu_handoff/",
+      "?? reports/experiments/multi_cohort_v4_gpu_launch/",
+      "?? reports/experiments/multi_cohort_v4_gpu_monitor/",
+      "?? reports/experiments/multi_cohort_v4_gpu_preflight/",
+      "?? reports/experiments/multi_cohort_v4_gpu_retry/",
+      "?? reports/experiments/multi_cohort_v4_gpu_retry_launch/",
+      "?? reports/experiments/multi_cohort_v4_gpu_submission/",
+      "?? reports/experiments/multi_cohort_v4_mount_fix_checks/",
+      "?? reports/experiments/multi_cohort_v4_prepare/",
+      "?? reports/experiments/multi_cohort_v4_storage_recovery/",
+      "?? reports/experiments/multi_cohort_v4_summary/",
+      "?? reports/experiments/multi_cohort_v4_tree_preflight/",
+      "?? reports/experiments/multi_cohort_v4_trees/",
+      "?? reports/experiments/pytorch311_final_checks/",
+      "?? reports/experiments/pytorch313_fixture_failure/",
+      "?? reports/experiments/pytorch313_fixture_retry_launch/",
+      "?? reports/experiments/pytorch313_qc_failure/",
+      "?? reports/experiments/pytorch313_qc_launch/",
+      "?? reports/experiments/pytorch313_qc_retry_launch/",
+      "?? reports/experiments/pytorch_runtime_summary/",
+      "?? reports/experiments/pytorch_upgrade_checks/",
+      "?? reports/experiments/raw_downloads/",
+      "?? reports/experiments/raw_pdf_cohort/",
+      "?? reports/experiments/raw_tri_modal_resume_checks/",
+      "?? reports/experiments/raw_tri_modal_resume_seal/",
+      "?? reports/experiments/raw_tri_modal_v3/",
+      "?? reports/experiments/raw_tri_modal_v3_resume/",
+      "?? reports/experiments/safe_stacking_v3/",
+      "?? reports/experiments/static_development_checks/",
+      "?? reports/experiments/static_development_gpu_failure/",
+      "?? reports/experiments/static_development_gpu_launch/",
+      "?? reports/experiments/static_development_import_checks/",
+      "?? reports/experiments/static_development_summary/",
+      "?? reports/experiments/static_development_validation/",
+      "?? reports/experiments/static_final_checks/",
+      "?? reports/experiments/static_inspection_checks/",
+      "?? reports/experiments/static_inspection_initial_checks/",
+      "?? reports/experiments/static_markov_development_checks/",
+      "?? reports/experiments/static_performance/",
+      "?? reports/experiments/static_snapshot_allocation_checks/",
+      "?? reports/experiments/static_upgrade_summary/",
+      "?? reports/experiments/tri_modal_final_audit/",
+      "?? reports/experiments/tri_modal_final_prechecks/",
+      "?? reports/experiments/tri_modal_fusion/",
+      "?? reports/experiments/vision_resnet/",
+      "?? scripts/05_evaluate_tri_modal_fusion.py",
+      "?? scripts/06_optimize_and_stack_v3_safe.py",
+      "?? scripts/07_prepare_raw_pdf_cohort.py",
+      "?? scripts/08_train_raw_tri_modal_v3.py",
+      "?? scripts/09_resume_raw_tri_modal_v3.py",
+      "?? scripts/10_export_kaggle_markov.py",
+      "?? scripts/11_export_kaggle_performance_notebook.py",
+      "?? scripts/12_normalize_cic_cross_dataset.py",
+      "?? scripts/13_multi_cohort_stacking_v4.py",
+      "?? scripts/14_benchmark_static.py",
+      "?? scripts/15_train_static_development.py",
+      "?? scripts/download_raw_datasets.py",
+      "?? src/malpdf/data/cic_archives.py",
+      "?? src/malpdf/data/cic_normalization.py",
+      "?? src/malpdf/data/development_inputs.py",
+      "?? src/malpdf/data/kaggle_export.py",
+      "?? src/malpdf/data/kaggle_notebook.py",
+      "?? src/malpdf/data/markov_arrays.py",
+      "?? src/malpdf/data/multi_cohort.py",
+      "?? src/malpdf/data/raw_cohort.py",
+      "?? src/malpdf/data/raw_downloads.py",
+      "?? src/malpdf/experiments/cic_cross_dataset.py",
+      "?? src/malpdf/experiments/kaggle_vision_runner.py",
+      "?? src/malpdf/experiments/multi_cohort_gpu.py",
+      "?? src/malpdf/experiments/multi_cohort_v4.py",
+      "?? src/malpdf/experiments/raw_tri_modal_resume.py",
+      "?? src/malpdf/experiments/raw_tri_modal_v3.py",
+      "?? src/malpdf/experiments/safe_stacking_v3.py",
+      "?? src/malpdf/experiments/static_benchmark.py",
+      "?? src/malpdf/experiments/static_development.py",
+      "?? src/malpdf/experiments/static_development_handoff.py",
+      "?? src/malpdf/experiments/tri_modal_runner.py",
+      "?? src/malpdf/models/safe_stacking.py",
+      "?? src/malpdf/models/v3_base_learners.py",
+      "?? src/malpdf/provenance/",
+      "?? src/malpdf/static/code_inspector.py",
+      "?? src/malpdf/static/js_ast.py",
+      "?? src/malpdf/static/markov_profiles.py",
+      "?? src/malpdf/static/obfuscation.py",
+      "?? tests/test_cic_normalization.py",
+      "?? tests/test_kaggle_handoff.py",
+      "?? tests/test_markov_development.py",
+      "?? tests/test_multi_cohort_v4.py",
+      "?? tests/test_raw_downloads.py",
+      "?? tests/test_raw_pdf_cohort.py",
+      "?? tests/test_raw_tri_modal_resume.py",
+      "?? tests/test_raw_tri_modal_v3.py",
+      "?? tests/test_safe_stacking_v3.py",
+      "?? tests/test_static_acceleration.py",
+      "?? tests/test_static_development.py",
+      "?? tests/test_tri_modal_fusion.py"
+    ]
+  },
+  "seed": 42,
+  "protocol": "retrospective saved multi-cohort Protocol G development",
+  "report_path": "reports/experiments/static_development_validation/run_20261004T174302231060Z_7b3fc6194800/run_summary.json",
+  "artifact_path": "artifacts/static_development_validation/run_20261004T174302231060Z_7b3fc6194800",
+  "metrics": {
+    "structural:xgboost/validation_base_selection_source_raw": {
+      "accuracy": 0.9988344988344988,
+      "f1_malicious": 0.9992044550517104,
+      "mcc": 0.9970302207440523,
+      "brier": 0.0020145202551084865,
+      "log_loss": 0.021773995937690766,
+      "ece": 0.01947644224696091
+    },
+    "structural:lightgbm/validation_base_selection_source_raw": {
+      "accuracy": 0.9982517482517482,
+      "f1_malicious": 0.9988062077198567,
+      "mcc": 0.9955428910849855,
+      "brier": 0.0011347778281780314,
+      "log_loss": 0.009951907710328906,
+      "ece": 0.009137910684643629
+    },
+    "structural:catboost/validation_base_selection_source_raw": {
+      "accuracy": 0.9988344988344988,
+      "f1_malicious": 0.9992044550517104,
+      "mcc": 0.9970302207440523,
+      "brier": 0.0039925441574179595,
+      "log_loss": 0.05033560695280284,
+      "ece": 0.046544632183990076
+    },
+    "structural:random_forest/validation_base_selection_source_raw": {
+      "accuracy": 0.9982517482517482,
+      "f1_malicious": 0.9988043045037863,
+      "mcc": 0.9955638903634326,
+      "brier": 0.001530835024100697,
+      "log_loss": 0.008064833220301404,
+      "ece": 0.006402356830693365
+    },
+    "structural:ft_transformer/validation_base_selection_source_raw": {
+      "accuracy": 0.9953379953379954,
+      "f1_malicious": 0.9968102073365231,
+      "mcc": 0.9881696191116847,
+      "brier": 0.036130992696184645,
+      "log_loss": 0.1887791389228397,
+      "ece": 0.16166262217704533
+    },
+    "structural:static_stack/validation_base_selection_source_raw": {
+      "accuracy": 0.9988344988344988,
+      "f1_malicious": 0.9992044550517104,
+      "mcc": 0.9970302207440523,
+      "brier": 0.015220325399363412,
+      "log_loss": 0.1289569419510412,
+      "ece": 0.11974410621297688
+    },
+    "structural:xgboost/validation_base_selection_cic": {
+      "accuracy": 0.45161290322580644,
+      "f1_malicious": 0.30612244897959184,
+      "mcc": 0.011530122584761765,
+      "brier": 0.37764615853848466,
+      "log_loss": 1.0637246190262017,
+      "ece": 0.369879044461648
+    },
+    "structural:lightgbm/validation_base_selection_cic": {
+      "accuracy": 0.4838709677419355,
+      "f1_malicious": 0.3191489361702128,
+      "mcc": 0.11523196687080912,
+      "brier": 0.421422355812826,
+      "log_loss": 1.2739119323947985,
+      "ece": 0.4352295473874531
+    },
+    "structural:catboost/validation_base_selection_cic": {
+      "accuracy": 0.46774193548387094,
+      "f1_malicious": 0.3125,
+      "mcc": 0.06154707978619128,
+      "brier": 0.28336416023663114,
+      "log_loss": 0.785903023826608,
+      "ece": 0.21448547264639095
+    },
+    "structural:random_forest/validation_base_selection_cic": {
+      "accuracy": 0.4596774193548387,
+      "f1_malicious": 0.29473684210526313,
+      "mcc": 0.04497647427513535,
+      "brier": 0.2958546203134684,
+      "log_loss": 0.7988928618752753,
+      "ece": 0.2569451628941563
+    },
+    "structural:ft_transformer/validation_base_selection_cic": {
+      "accuracy": 0.49193548387096775,
+      "f1_malicious": 0.3076923076923077,
+      "mcc": 0.15833493483736366,
+      "brier": 0.2506557057816682,
+      "log_loss": 0.6960692048723255,
+      "ece": 0.1516389416928794
+    },
+    "structural:static_stack/validation_base_selection_cic": {
+      "accuracy": 0.45161290322580644,
+      "f1_malicious": 0.32,
+      "mcc": 0.004163217351909923,
+      "brier": 0.33130100014612374,
+      "log_loss": 0.8840303393957634,
+      "ece": 0.3108093250291519
+    },
+    "structural:xgboost/validation_meta_fit_source_raw": {
+      "accuracy": 0.9949685534591195,
+      "f1_malicious": 0.9951219512195122,
+      "mcc": 0.9899397649641333,
+      "brier": 0.0043609047076379305,
+      "log_loss": 0.02535366320427038,
+      "ece": 0.012948862607480597
+    },
+    "structural:lightgbm/validation_meta_fit_source_raw": {
+      "accuracy": 0.9937106918238994,
+      "f1_malicious": 0.9938949938949939,
+      "mcc": 0.9874130598266444,
+      "brier": 0.004638002700351962,
+      "log_loss": 0.021732062263316577,
+      "ece": 0.007264989363621839
+    },
+    "structural:catboost/validation_meta_fit_source_raw": {
+      "accuracy": 0.9924528301886792,
+      "f1_malicious": 0.9926650366748166,
+      "mcc": 0.984893015949428,
+      "brier": 0.005876251552822783,
+      "log_loss": 0.037308161997579144,
+      "ece": 0.024671350237994827
+    },
+    "structural:random_forest/validation_meta_fit_source_raw": {
+      "accuracy": 0.9974842767295597,
+      "f1_malicious": 0.9975490196078431,
+      "mcc": 0.9949776838372592,
+      "brier": 0.003970935773080838,
+      "log_loss": 0.020563501051773306,
+      "ece": 0.010860346513617341
+    },
+    "structural:ft_transformer/validation_meta_fit_source_raw": {
+      "accuracy": 0.9660377358490566,
+      "f1_malicious": 0.9659520807061791,
+      "mcc": 0.9339875567729453,
+      "brier": 0.03740340069627344,
+      "log_loss": 0.1494748825545901,
+      "ece": 0.0991045186647548
+    },
+    "structural:static_stack/validation_meta_fit_source_raw": {
+      "accuracy": 0.9962264150943396,
+      "f1_malicious": 0.9963369963369964,
+      "mcc": 0.9924491039810128,
+      "brier": 0.015616272041423112,
+      "log_loss": 0.12653255667000932,
+      "ece": 0.11300582443140686
+    },
+    "structural:xgboost/validation_meta_fit_cic": {
+      "accuracy": 0.48333333333333334,
+      "f1_malicious": 0.3111111111111111,
+      "mcc": -0.03849001794597505,
+      "brier": 0.30169755157581757,
+      "log_loss": 0.8454969921473302,
+      "ece": 0.2508241771700947
+    },
+    "structural:lightgbm/validation_meta_fit_cic": {
+      "accuracy": 0.43333333333333335,
+      "f1_malicious": 0.32,
+      "mcc": -0.1414213562373095,
+      "brier": 0.34919164475938924,
+      "log_loss": 1.0036434370046479,
+      "ece": 0.2612124517031938
+    },
+    "structural:catboost/validation_meta_fit_cic": {
+      "accuracy": 0.48333333333333334,
+      "f1_malicious": 0.5507246376811594,
+      "mcc": -0.03494282789073061,
+      "brier": 0.3301977892414546,
+      "log_loss": 0.9257323015307345,
+      "ece": 0.2079604166520635
+    },
+    "structural:random_forest/validation_meta_fit_cic": {
+      "accuracy": 0.45,
+      "f1_malicious": 0.35294117647058826,
+      "mcc": -0.10482848367219183,
+      "brier": 0.2953929089730227,
+      "log_loss": 0.8334565988620484,
+      "ece": 0.18450280973405217
+    },
+    "structural:ft_transformer/validation_meta_fit_cic": {
+      "accuracy": 0.48333333333333334,
+      "f1_malicious": 0.5079365079365079,
+      "mcc": -0.033501260508640406,
+      "brier": 0.2899558574402378,
+      "log_loss": 0.8054546116889902,
+      "ece": 0.1667821168123434
+    },
+    "structural:static_stack/validation_meta_fit_cic": {
+      "accuracy": 0.45,
+      "f1_malicious": 0.6024096385542169,
+      "mcc": -0.1557522394953495,
+      "brier": 0.3005276592942088,
+      "log_loss": 0.8166820679483743,
+      "ece": 0.18874858695769042
+    },
+    "structural:xgboost/validation_calibration_fit_source_raw": {
+      "accuracy": 0.998641304347826,
+      "f1_malicious": 0.9980276134122288,
+      "mcc": 0.996995862532168,
+      "brier": 0.0010264387708818622,
+      "log_loss": 0.012556848784810256,
+      "ece": 0.011874996594700149
+    },
+    "structural:lightgbm/validation_calibration_fit_source_raw": {
+      "accuracy": 0.998641304347826,
+      "f1_malicious": 0.9980276134122288,
+      "mcc": 0.996995862532168,
+      "brier": 0.0009298073255854727,
+      "log_loss": 0.006630121361687783,
+      "ece": 0.005875750626047314
+    },
+    "structural:catboost/validation_calibration_fit_source_raw": {
+      "accuracy": 1.0,
+      "f1_malicious": 1.0,
+      "mcc": 1.0,
+      "brier": 0.00234813850139079,
+      "log_loss": 0.029431009108496088,
+      "ece": 0.02808777066273141
+    },
+    "structural:random_forest/validation_calibration_fit_source_raw": {
+      "accuracy": 1.0,
+      "f1_malicious": 1.0,
+      "mcc": 1.0,
+      "brier": 0.0019632383257232044,
+      "log_loss": 0.014840349703440465,
+      "ece": 0.013638397903540137
+    },
+    "structural:ft_transformer/validation_calibration_fit_source_raw": {
+      "accuracy": 0.9864130434782609,
+      "f1_malicious": 0.9799196787148594,
+      "mcc": 0.9699425564911344,
+      "brier": 0.025420936791702008,
+      "log_loss": 0.12302509685716165,
+      "ece": 0.09654517378563153
+    },
+    "structural:static_stack/validation_calibration_fit_source_raw": {
+      "accuracy": 0.998641304347826,
+      "f1_malicious": 0.9980276134122288,
+      "mcc": 0.996995862532168,
+      "brier": 0.012535574322763136,
+      "log_loss": 0.11671343235158321,
+      "ece": 0.10987070840295633
+    },
+    "structural:xgboost/validation_calibration_fit_cic": {
+      "accuracy": 0.4745762711864407,
+      "f1_malicious": 0.5753424657534246,
+      "mcc": -0.09141928240378133,
+      "brier": 0.316008551117982,
+      "log_loss": 0.8741646060688988,
+      "ece": 0.2527024906811352
+    },
+    "structural:lightgbm/validation_calibration_fit_cic": {
+      "accuracy": 0.5084745762711864,
+      "f1_malicious": 0.6027397260273972,
+      "mcc": -0.017532465118533406,
+      "brier": 0.3516928332619826,
+      "log_loss": 1.0204342933535397,
+      "ece": 0.2737687650890925
+    },
+    "structural:catboost/validation_calibration_fit_cic": {
+      "accuracy": 0.5084745762711864,
+      "f1_malicious": 0.6027397260273972,
+      "mcc": -0.017532465118533406,
+      "brier": 0.3069026003765402,
+      "log_loss": 0.8402350488253822,
+      "ece": 0.24749492983739807
+    },
+    "structural:random_forest/validation_calibration_fit_cic": {
+      "accuracy": 0.4745762711864407,
+      "f1_malicious": 0.5633802816901409,
+      "mcc": -0.0828332573789972,
+      "brier": 0.2815770032382953,
+      "log_loss": 0.7706850153780257,
+      "ece": 0.17095155851134103
+    },
+    "structural:ft_transformer/validation_calibration_fit_cic": {
+      "accuracy": 0.5084745762711864,
+      "f1_malicious": 0.32558139534883723,
+      "mcc": 0.09031419234508498,
+      "brier": 0.2796288297351746,
+      "log_loss": 0.7638844176760525,
+      "ece": 0.17336208971564546
+    },
+    "structural:static_stack/validation_calibration_fit_cic": {
+      "accuracy": 0.4745762711864407,
+      "f1_malicious": 0.6265060240963856,
+      "mcc": -0.1650589670386155,
+      "brier": 0.28779169956649986,
+      "log_loss": 0.7847849531476557,
+      "ece": 0.15456774101465456
+    },
+    "structural:xgboost/validation_threshold_selection_source_raw": {
+      "accuracy": 0.9972602739726028,
+      "f1_malicious": 0.9961977186311787,
+      "mcc": 0.9940739978407609,
+      "brier": 0.0027242383132524404,
+      "log_loss": 0.02057769355391291,
+      "ece": 0.017515938315511747
+    },
+    "structural:lightgbm/validation_threshold_selection_source_raw": {
+      "accuracy": 0.9986301369863013,
+      "f1_malicious": 0.9980952380952381,
+      "mcc": 0.9970301354659576,
+      "brier": 0.001614733335732763,
+      "log_loss": 0.01062051838682405,
+      "ece": 0.008324811832979692
+    },
+    "structural:catboost/validation_threshold_selection_source_raw": {
+      "accuracy": 1.0,
+      "f1_malicious": 1.0,
+      "mcc": 1.0,
+      "brier": 0.0041099705191059805,
+      "log_loss": 0.03807676252821529,
+      "ece": 0.035619273700176146
+    },
+    "structural:random_forest/validation_threshold_selection_source_raw": {
+      "accuracy": 0.9958904109589041,
+      "f1_malicious": 0.9942418426103646,
+      "mcc": 0.9910868397554288,
+      "brier": 0.002354295268330006,
+      "log_loss": 0.014084220607173629,
+      "ece": 0.012502229165713802
+    },
+    "structural:ft_transformer/validation_threshold_selection_source_raw": {
+      "accuracy": 0.9958904109589041,
+      "f1_malicious": 0.994263862332696,
+      "mcc": 0.9910665713984724,
+      "brier": 0.022071262274426896,
+      "log_loss": 0.1123013831148194,
+      "ece": 0.09269487327156102
+    },
+    "structural:static_stack/validation_threshold_selection_source_raw": {
+      "accuracy": 0.9986301369863013,
+      "f1_malicious": 0.9980952380952381,
+      "mcc": 0.9970301354659576,
+      "brier": 0.013029599533091431,
+      "log_loss": 0.1181298464482754,
+      "ece": 0.11095195246281675
+    },
+    "structural:xgboost/validation_threshold_selection_cic": {
+      "accuracy": 0.5416666666666666,
+      "f1_malicious": 0.5217391304347826,
+      "mcc": 0.08931917937376474,
+      "brier": 0.3002770916838824,
+      "log_loss": 0.8977360167717162,
+      "ece": 0.19316896801077138
+    },
+    "structural:lightgbm/validation_threshold_selection_cic": {
+      "accuracy": 0.5625,
+      "f1_malicious": 0.5333333333333333,
+      "mcc": 0.13393240160154588,
+      "brier": 0.3063893371912078,
+      "log_loss": 0.9277496871307637,
+      "ece": 0.25454184290492876
+    },
+    "structural:catboost/validation_threshold_selection_cic": {
+      "accuracy": 0.5208333333333334,
+      "f1_malicious": 0.4888888888888889,
+      "mcc": 0.0493435163795169,
+      "brier": 0.27835810855027826,
+      "log_loss": 0.7782389763406644,
+      "ece": 0.1954867675650817
+    },
+    "structural:random_forest/validation_threshold_selection_cic": {
+      "accuracy": 0.4791666666666667,
+      "f1_malicious": 0.4186046511627907,
+      "mcc": -0.03230291412348993,
+      "brier": 0.2567616481257193,
+      "log_loss": 0.70529193047803,
+      "ece": 0.15796929942006
+    },
+    "structural:ft_transformer/validation_threshold_selection_cic": {
+      "accuracy": 0.4791666666666667,
+      "f1_malicious": 0.4186046511627907,
+      "mcc": -0.03230291412348993,
+      "brier": 0.29836250839784917,
+      "log_loss": 0.8484374353105987,
+      "ece": 0.17343720849021338
+    },
+    "structural:static_stack/validation_threshold_selection_cic": {
+      "accuracy": 0.5625,
+      "f1_malicious": 0.676923076923077,
+      "mcc": 0.13055067315364394,
+      "brier": 0.2857471183716384,
+      "log_loss": 0.7792589311683645,
+      "ece": 0.21188244304325204
+    },
+    "structural_markov:xgboost/validation_base_selection_source_raw": {
+      "accuracy": 0.9982517482517482,
+      "f1_malicious": 0.998805256869773,
+      "mcc": 0.995549026066736,
+      "brier": 0.0021431809508422025,
+      "log_loss": 0.02002401803251662,
+      "ece": 0.016689102760343806
+    },
+    "structural_markov:lightgbm/validation_base_selection_source_raw": {
+      "accuracy": 0.9976689976689976,
+      "f1_malicious": 0.998406374501992,
+      "mcc": 0.9940723624904536,
+      "brier": 0.0017087074289916233,
+      "log_loss": 0.011486232742824346,
+      "ece": 0.009081202131450253
+    },
+    "structural_markov:catboost/validation_base_selection_source_raw": {
+      "accuracy": 0.9982517482517482,
+      "f1_malicious": 0.9988071570576541,
+      "mcc": 0.9955455577856928,
+      "brier": 0.003988764954223745,
+      "log_loss": 0.04382233716966139,
+      "ece": 0.03913309153062702
+    },
+    "structural_markov:random_forest/validation_base_selection_source_raw": {
+      "accuracy": 0.9988344988344988,
+      "f1_malicious": 0.999203187250996,
+      "mcc": 0.9970383805561813,
+      "brier": 0.0021969865319865322,
+      "log_loss": 0.01426641639192224,
+      "ece": 0.012287878787878747
+    },
+    "structural_markov:ft_transformer/validation_base_selection_source_raw": {
+      "accuracy": 0.995920745920746,
+      "f1_malicious": 0.9972100438421682,
+      "mcc": 0.989635899677206,
+      "brier": 0.021366120951836275,
+      "log_loss": 0.13918385366582317,
+      "ece": 0.12157987950924383
+    },
+    "structural_markov:static_stack/validation_base_selection_source_raw": {
+      "accuracy": 0.9988344988344988,
+      "f1_malicious": 0.999203187250996,
+      "mcc": 0.9970383805561813,
+      "brier": 0.01453382019812164,
+      "log_loss": 0.12216156898053858,
+      "ece": 0.11109753543333896
+    },
+    "structural_markov:xgboost/validation_base_selection_cic": {
+      "accuracy": 0.5,
+      "f1_malicious": 0.45614035087719296,
+      "mcc": 0.06489847432323234,
+      "brier": 0.2855541480624794,
+      "log_loss": 0.8279883368660969,
+      "ece": 0.18375940935173624
+    },
+    "structural_markov:lightgbm/validation_base_selection_cic": {
+      "accuracy": 0.4596774193548387,
+      "f1_malicious": 0.464,
+      "mcc": -0.05356924894862604,
+      "brier": 0.29048693445279833,
+      "log_loss": 0.8572763505441039,
+      "ece": 0.20940429867178312
+    },
+    "structural_markov:catboost/validation_base_selection_cic": {
+      "accuracy": 0.5161290322580645,
+      "f1_malicious": 0.47368421052631576,
+      "mcc": 0.09973575058332243,
+      "brier": 0.2752853524522459,
+      "log_loss": 0.7732807367683742,
+      "ece": 0.16771141855554045
+    },
+    "structural_markov:random_forest/validation_base_selection_cic": {
+      "accuracy": 0.5080645161290323,
+      "f1_malicious": 0.5547445255474452,
+      "mcc": 0.010579079018698888,
+      "brier": 0.25048901075268815,
+      "log_loss": 0.701151741722816,
+      "ece": 0.11280645161290322
+    },
+    "structural_markov:ft_transformer/validation_base_selection_cic": {
+      "accuracy": 0.46774193548387094,
+      "f1_malicious": 0.25,
+      "mcc": 0.10903021874314524,
+      "brier": 0.25493939732498944,
+      "log_loss": 0.7035141789720949,
+      "ece": 0.16255738655285493
+    },
+    "structural_markov:static_stack/validation_base_selection_cic": {
+      "accuracy": 0.5887096774193549,
+      "f1_malicious": 0.7329842931937173,
+      "mcc": 0.04065189438420145,
+      "brier": 0.25836697568177897,
+      "log_loss": 0.7155787342276299,
+      "ece": 0.1517296315337124
+    },
+    "structural_markov:xgboost/validation_meta_fit_source_raw": {
+      "accuracy": 0.9974842767295597,
+      "f1_malicious": 0.9975550122249389,
+      "mcc": 0.9949643386498094,
+      "brier": 0.004910312703021998,
+      "log_loss": 0.026756183414858796,
+      "ece": 0.015928390698146423
+    },
+    "structural_markov:lightgbm/validation_meta_fit_source_raw": {
+      "accuracy": 0.9937106918238994,
+      "f1_malicious": 0.9938650306748467,
+      "mcc": 0.9874417545726767,
+      "brier": 0.006181690687717231,
+      "log_loss": 0.02653282822358691,
+      "ece": 0.013409419708626344
+    },
+    "structural_markov:catboost/validation_meta_fit_source_raw": {
+      "accuracy": 0.9874213836477987,
+      "f1_malicious": 0.9876543209876543,
+      "mcc": 0.975033945272228,
+      "brier": 0.009930179189427636,
+      "log_loss": 0.049495297483828575,
+      "ece": 0.03375998068374999
+    },
+    "structural_markov:random_forest/validation_meta_fit_source_raw": {
+      "accuracy": 0.9974842767295597,
+      "f1_malicious": 0.9975490196078431,
+      "mcc": 0.9949776838372592,
+      "brier": 0.007698673375262054,
+      "log_loss": 0.03768902915259564,
+      "ece": 0.02971069182389934
+    },
+    "structural_markov:ft_transformer/validation_meta_fit_source_raw": {
+      "accuracy": 0.9647798742138365,
+      "f1_malicious": 0.9646464646464646,
+      "mcc": 0.9316248264888608,
+      "brier": 0.042523511960374884,
+      "log_loss": 0.166284402247819,
+      "ece": 0.10939066608161106
+    },
+    "structural_markov:static_stack/validation_meta_fit_source_raw": {
+      "accuracy": 0.9974842767295597,
+      "f1_malicious": 0.9975550122249389,
+      "mcc": 0.9949643386498094,
+      "brier": 0.01952818181208125,
+      "log_loss": 0.13117266005604036,
+      "ece": 0.11525971547877525
+    },
+    "structural_markov:xgboost/validation_meta_fit_cic": {
+      "accuracy": 0.43333333333333335,
+      "f1_malicious": 0.39285714285714285,
+      "mcc": -0.1345345587992625,
+      "brier": 0.3301124351093537,
+      "log_loss": 1.0200195974841022,
+      "ece": 0.24513627948860328
+    },
+    "structural_markov:lightgbm/validation_meta_fit_cic": {
+      "accuracy": 0.5333333333333333,
+      "f1_malicious": 0.46153846153846156,
+      "mcc": 0.06917144638660747,
+      "brier": 0.3356499499275462,
+      "log_loss": 1.0511732355399086,
+      "ece": 0.2396704359959178
+    },
+    "structural_markov:catboost/validation_meta_fit_cic": {
+      "accuracy": 0.43333333333333335,
+      "f1_malicious": 0.39285714285714285,
+      "mcc": -0.1345345587992625,
+      "brier": 0.3274053908016813,
+      "log_loss": 0.9629032553649746,
+      "ece": 0.2293298055186577
+    },
+    "structural_markov:random_forest/validation_meta_fit_cic": {
+      "accuracy": 0.43333333333333335,
+      "f1_malicious": 0.37037037037037035,
+      "mcc": -0.13608276348795434,
+      "brier": 0.2980141703703704,
+      "log_loss": 0.8468590224520043,
+      "ece": 0.1786777777777777
+    },
+    "structural_markov:ft_transformer/validation_meta_fit_cic": {
+      "accuracy": 0.43333333333333335,
+      "f1_malicious": 0.46875,
+      "mcc": -0.1345345587992625,
+      "brier": 0.28954960270652663,
+      "log_loss": 0.7974426274036134,
+      "ece": 0.15974006056785583
+    },
+    "structural_markov:static_stack/validation_meta_fit_cic": {
+      "accuracy": 0.4666666666666667,
+      "f1_malicious": 0.6190476190476191,
+      "mcc": -0.1111111111111111,
+      "brier": 0.28784316191935094,
+      "log_loss": 0.8013840718419083,
+      "ece": 0.143326426200081
+    },
+    "structural_markov:xgboost/validation_calibration_fit_source_raw": {
+      "accuracy": 0.998641304347826,
+      "f1_malicious": 0.9980276134122288,
+      "mcc": 0.996995862532168,
+      "brier": 0.0019234784152026268,
+      "log_loss": 0.016666727134996194,
+      "ece": 0.015298222153397175
+    },
+    "structural_markov:lightgbm/validation_calibration_fit_source_raw": {
+      "accuracy": 0.998641304347826,
+      "f1_malicious": 0.9980276134122288,
+      "mcc": 0.996995862532168,
+      "brier": 0.0019501802545570195,
+      "log_loss": 0.010946613019708206,
+      "ece": 0.009260640604706596
+    },
+    "structural_markov:catboost/validation_calibration_fit_source_raw": {
+      "accuracy": 0.998641304347826,
+      "f1_malicious": 0.9980276134122288,
+      "mcc": 0.996995862532168,
+      "brier": 0.0044123243065137315,
+      "log_loss": 0.039010438422731095,
+      "ece": 0.03636841056257313
+    },
+    "structural_markov:random_forest/validation_calibration_fit_source_raw": {
+      "accuracy": 0.9972826086956522,
+      "f1_malicious": 0.996031746031746,
+      "mcc": 0.9939837769443177,
+      "brier": 0.0043455404589371974,
+      "log_loss": 0.028363657611605947,
+      "ece": 0.025620471014492753
+    },
+    "structural_markov:ft_transformer/validation_calibration_fit_source_raw": {
+      "accuracy": 0.9904891304347826,
+      "f1_malicious": 0.9859719438877755,
+      "mcc": 0.9790002852101517,
+      "brier": 0.028249491356069543,
+      "log_loss": 0.13496159350509318,
+      "ece": 0.10358492412437362
+    },
+    "structural_markov:static_stack/validation_calibration_fit_source_raw": {
+      "accuracy": 0.998641304347826,
+      "f1_malicious": 0.9980276134122288,
+      "mcc": 0.996995862532168,
+      "brier": 0.01501073409725739,
+      "log_loss": 0.1159636061663177,
+      "ece": 0.10602244085444465
+    },
+    "structural_markov:xgboost/validation_calibration_fit_cic": {
+      "accuracy": 0.559322033898305,
+      "f1_malicious": 0.6666666666666666,
+      "mcc": 0.08625498942549796,
+      "brier": 0.32251569789284074,
+      "log_loss": 0.9533201532944094,
+      "ece": 0.2889393036489541
+    },
+    "structural_markov:lightgbm/validation_calibration_fit_cic": {
+      "accuracy": 0.559322033898305,
+      "f1_malicious": 0.6666666666666666,
+      "mcc": 0.08625498942549796,
+      "brier": 0.32599493795185147,
+      "log_loss": 0.9698509792526091,
+      "ece": 0.2644032562994199
+    },
+    "structural_markov:catboost/validation_calibration_fit_cic": {
+      "accuracy": 0.4745762711864407,
+      "f1_malicious": 0.5753424657534246,
+      "mcc": -0.09141928240378133,
+      "brier": 0.29884625400698334,
+      "log_loss": 0.8327372510493769,
+      "ece": 0.2560721579665094
+    },
+    "structural_markov:random_forest/validation_calibration_fit_cic": {
+      "accuracy": 0.4745762711864407,
+      "f1_malicious": 0.5974025974025974,
+      "mcc": -0.11249959174267814,
+      "brier": 0.28294725423728806,
+      "log_loss": 0.7830811618951878,
+      "ece": 0.17369491525423728
+    },
+    "structural_markov:ft_transformer/validation_calibration_fit_cic": {
+      "accuracy": 0.4406779661016949,
+      "f1_malicious": 0.23255813953488372,
+      "mcc": -0.08439195022409579,
+      "brier": 0.2792697118786179,
+      "log_loss": 0.7581155275762117,
+      "ece": 0.16354378109987258
+    },
+    "structural_markov:static_stack/validation_calibration_fit_cic": {
+      "accuracy": 0.5254237288135594,
+      "f1_malicious": 0.6818181818181818,
+      "mcc": -0.057744572265298603,
+      "brier": 0.285707905565114,
+      "log_loss": 0.7811815539745354,
+      "ece": 0.14025653695332746
+    },
+    "structural_markov:xgboost/validation_threshold_selection_source_raw": {
+      "accuracy": 0.9986301369863013,
+      "f1_malicious": 0.9980952380952381,
+      "mcc": 0.9970301354659576,
+      "brier": 0.002287674209809508,
+      "log_loss": 0.01775535613148716,
+      "ece": 0.01629364191735507
+    },
+    "structural_markov:lightgbm/validation_threshold_selection_source_raw": {
+      "accuracy": 0.9986301369863013,
+      "f1_malicious": 0.9980952380952381,
+      "mcc": 0.9970301354659576,
+      "brier": 0.0016327432041947903,
+      "log_loss": 0.01074915866996695,
+      "ece": 0.008514134815709945
+    },
+    "structural_markov:catboost/validation_threshold_selection_source_raw": {
+      "accuracy": 1.0,
+      "f1_malicious": 1.0,
+      "mcc": 1.0,
+      "brier": 0.004535066444830348,
+      "log_loss": 0.03822186809680006,
+      "ece": 0.03549934424196839
+    },
+    "structural_markov:random_forest/validation_threshold_selection_source_raw": {
+      "accuracy": 0.9958904109589041,
+      "f1_malicious": 0.9942418426103646,
+      "mcc": 0.9910868397554288,
+      "brier": 0.0037803293759512933,
+      "log_loss": 0.023529078182444766,
+      "ece": 0.020035616438356184
+    },
+    "structural_markov:ft_transformer/validation_threshold_selection_source_raw": {
+      "accuracy": 0.9986301369863013,
+      "f1_malicious": 0.9980879541108987,
+      "mcc": 0.9970251491803572,
+      "brier": 0.021612638887985782,
+      "log_loss": 0.11871680616845166,
+      "ece": 0.1036032047524589
+    },
+    "structural_markov:static_stack/validation_threshold_selection_source_raw": {
+      "accuracy": 1.0,
+      "f1_malicious": 1.0,
+      "mcc": 1.0,
+      "brier": 0.013852456532911936,
+      "log_loss": 0.11241848961120948,
+      "ece": 0.09807847256506036
+    },
+    "structural_markov:xgboost/validation_threshold_selection_cic": {
+      "accuracy": 0.4375,
+      "f1_malicious": 0.37209302325581395,
+      "mcc": -0.11844401845279641,
+      "brier": 0.3593526402596721,
+      "log_loss": 1.051674635201237,
+      "ece": 0.3092656863300362
+    },
+    "structural_markov:lightgbm/validation_threshold_selection_cic": {
+      "accuracy": 0.4791666666666667,
+      "f1_malicious": 0.4186046511627907,
+      "mcc": -0.03230291412348993,
+      "brier": 0.3985076792584827,
+      "log_loss": 1.226919628177883,
+      "ece": 0.38728163426541684
+    },
+    "structural_markov:catboost/validation_threshold_selection_cic": {
+      "accuracy": 0.4375,
+      "f1_malicious": 0.4,
+      "mcc": -0.11983425406454104,
+      "brier": 0.3520349906952515,
+      "log_loss": 0.9755479553787091,
+      "ece": 0.2921689220388197
+    },
+    "structural_markov:random_forest/validation_threshold_selection_cic": {
+      "accuracy": 0.375,
+      "f1_malicious": 0.3181818181818182,
+      "mcc": -0.24694775280252948,
+      "brier": 0.3045495185185186,
+      "log_loss": 0.8196014039882651,
+      "ece": 0.2560277777777778
+    },
+    "structural_markov:ft_transformer/validation_threshold_selection_cic": {
+      "accuracy": 0.5208333333333334,
+      "f1_malicious": 0.30303030303030304,
+      "mcc": 0.09325048082403138,
+      "brier": 0.27751493566170543,
+      "log_loss": 0.7535852371743652,
+      "ece": 0.16483854327816513
+    },
+    "structural_markov:static_stack/validation_threshold_selection_cic": {
+      "accuracy": 0.5208333333333334,
+      "f1_malicious": 0.676056338028169,
+      "mcc": 0.008695652173913044,
+      "brier": 0.30926508821129023,
+      "log_loss": 0.8313837352274978,
+      "ece": 0.2375945897768837
+    }
+  },
+  "training_commit": "7b3fc619480079024d3de11d6087296bcfddea11",
+  "selected": {
+    "scheme": "cohort_group_class",
+    "regularization_c": 0.1,
+    "candidate_order": 0,
+    "threshold": 0.3042093091242817,
+    "youden_j": 0.5929903145886387,
+    "macro_mcc": 0.5637904043098008,
+    "macro_f1": 0.8375091575091576,
+    "minimum_cohort_mcc": 0.13055067315364394,
+    "macro_brier": 0.1493883589523649,
+    "feature_variant": "structural"
+  },
+  "elapsed_seconds": 226.60376897700002,
+  "notes": "Validation-only static ablation; Test untouched. Existing Vision unchanged. Checkpoints retained in private Kaggle Output. See cloud_input_provenance for cohort/role group counts.",
+  "finished_at_utc": "2026-10-04T17:43:45.939276+00:00"
+}

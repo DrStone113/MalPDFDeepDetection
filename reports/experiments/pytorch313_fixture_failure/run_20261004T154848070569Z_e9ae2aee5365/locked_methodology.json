@@ -1,0 +1,14 @@
+{
+  "protocol": "maintenance; no dataset evaluation",
+  "kernel": "nguyenkhang294/malpdf-pytorch313-qc-20261004-154106",
+  "failure": "sanitized thesis fixture omitted hard_validation field; 577 tests pass, one fixture failure",
+  "test_policy": "zero research Test inference/evaluation",
+  "seed": 42,
+  "code_commit": "e9ae2aee5365a2f27d807ac289e2453a44d51cf6",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

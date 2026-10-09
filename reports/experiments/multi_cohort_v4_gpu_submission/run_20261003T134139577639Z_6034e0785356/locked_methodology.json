@@ -1,0 +1,14 @@
+{
+  "handoff_run": "run_20261003T133840602381Z_6034e0785356",
+  "archive_sha256": "fe80dff08a429754a993f13867ffd7cb0dabd8ec021d1b04a917af05502f9ebd",
+  "authorized_scope": "Private numeric matrices/opaque features and GPU training following user continue; no raw PDFs, original IDs, original hashes or paths",
+  "fit_scope": "Combined Train; selection only Validation base_selection; no Test scoring on GPU",
+  "seed": 42,
+  "code_commit": "6034e078535653b078c518e9994ea2f47c668c1f",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

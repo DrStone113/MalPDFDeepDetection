@@ -1,0 +1,330 @@
+{
+  "run_id": "run_20261002T143830529362Z_fa463d2ed5c4",
+  "study": "raw_tri_modal_v3",
+  "status": "interrupted",
+  "started_at_utc": "2026-10-02T14:38:35.836247+00:00",
+  "code_commit": "fa463d2ed5c482ed4578f06d8b0842b575772054",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M pyproject.toml",
+      " M reports/research_log.md",
+      " M src/malpdf/data/manifest_validator.py",
+      " M src/malpdf/data/markov_preparation.py",
+      " M src/malpdf/data/vision_dataset.py",
+      " M src/malpdf/deep_learning/training.py",
+      " M src/malpdf/evaluation/selective.py",
+      " M src/malpdf/experiments/late_fusion_runner.py",
+      " M src/malpdf/models/late_fusion.py",
+      " M src/malpdf/static/rit_reference.py",
+      "?? configs/raw_datasets.yaml",
+      "?? configs/raw_markov_cache.yaml",
+      "?? configs/raw_pdf_cohort.yaml",
+      "?? configs/raw_tri_modal_v3.yaml",
+      "?? configs/safe_stacking_v3.yaml",
+      "?? configs/tri_modal_fusion.yaml",
+      "?? reports/experiments/late_fusion_v2/",
+      "?? reports/experiments/markov_cache/",
+      "?? reports/experiments/raw_downloads/",
+      "?? reports/experiments/raw_pdf_cohort/",
+      "?? reports/experiments/safe_stacking_v3/",
+      "?? reports/experiments/tri_modal_fusion/",
+      "?? reports/experiments/vision_resnet/",
+      "?? scripts/05_evaluate_tri_modal_fusion.py",
+      "?? scripts/06_optimize_and_stack_v3_safe.py",
+      "?? scripts/07_prepare_raw_pdf_cohort.py",
+      "?? scripts/08_train_raw_tri_modal_v3.py",
+      "?? scripts/download_raw_datasets.py",
+      "?? src/malpdf/data/raw_cohort.py",
+      "?? src/malpdf/data/raw_downloads.py",
+      "?? src/malpdf/experiments/raw_tri_modal_v3.py",
+      "?? src/malpdf/experiments/safe_stacking_v3.py",
+      "?? src/malpdf/experiments/tri_modal_runner.py",
+      "?? src/malpdf/models/safe_stacking.py",
+      "?? src/malpdf/models/v3_base_learners.py",
+      "?? src/malpdf/provenance/",
+      "?? src/malpdf/static/obfuscation.py",
+      "?? tests/test_raw_downloads.py",
+      "?? tests/test_raw_pdf_cohort.py",
+      "?? tests/test_raw_tri_modal_v3.py",
+      "?? tests/test_safe_stacking_v3.py",
+      "?? tests/test_tri_modal_fusion.py"
+    ]
+  },
+  "seed": 42,
+  "report_path": "reports/experiments/raw_tri_modal_v3/run_20261002T143830529362Z_fa463d2ed5c4/run_summary.json",
+  "artifact_path": "artifacts/raw_tri_modal_v3/run_20261002T143830529362Z_fa463d2ed5c4",
+  "metrics": {
+    "xgboost/train_oof": {
+      "positive_label": 1,
+      "accuracy": 0.9985751403905792,
+      "precision_malicious": 0.9992345376607471,
+      "recall_malicious": 0.9981648570117755,
+      "f1_malicious": 0.9986994109096473,
+      "precision_macro": 0.9985059519198345,
+      "recall_macro": 0.9986187786542557,
+      "f1_macro": 0.9985620120065797,
+      "precision": 0.9992345376607471,
+      "recall": 0.9981648570117755,
+      "f1": 0.9986994109096473,
+      "mcc": 0.9971247241908004,
+      "confusion_matrix": [
+        [
+          5387,
+          5
+        ],
+        [
+          12,
+          6527
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 0.9999494586918118,
+      "pr_auc": 0.9999651347936316,
+      "score_source": null,
+      "brier": 0.0011909266723521108,
+      "log_loss": 0.004699530894972695,
+      "ece": 0.0010874403969728906,
+      "ece_bins": 10,
+      "threshold": 0.5
+    },
+    "lightgbm/train_oof": {
+      "positive_label": 1,
+      "accuracy": 0.9986589556617216,
+      "precision_malicious": 0.9990818668706962,
+      "recall_malicious": 0.9984707141764796,
+      "f1_malicious": 0.9987761970322778,
+      "precision_macro": 0.9986143211299368,
+      "recall_macro": 0.9986789772662814,
+      "f1_macro": 0.9986465338146187,
+      "precision": 0.9990818668706962,
+      "recall": 0.9984707141764796,
+      "f1": 0.9987761970322778,
+      "mcc": 0.9972932963003371,
+      "confusion_matrix": [
+        [
+          5386,
+          6
+        ],
+        [
+          10,
+          6529
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 0.9999942992127127,
+      "pr_auc": 0.999995308736255,
+      "score_source": null,
+      "brier": 0.0010394599430527194,
+      "log_loss": 0.0038173879529017794,
+      "ece": 0.0008427272635900273,
+      "ece_bins": 10,
+      "threshold": 0.5
+    },
+    "catboost/train_oof": {
+      "positive_label": 1,
+      "accuracy": 0.9980722487637248,
+      "precision_malicious": 0.9992338338951885,
+      "recall_malicious": 0.9972472855176633,
+      "f1_malicious": 0.9982395713738997,
+      "precision_macro": 0.9979517920632279,
+      "recall_macro": 0.9981599929071996,
+      "f1_macro": 0.9980546750080576,
+      "precision": 0.9992338338951885,
+      "recall": 0.9972472855176633,
+      "f1": 0.9982395713738997,
+      "mcc": 0.9961117632120302,
+      "confusion_matrix": [
+        [
+          5387,
+          5
+        ],
+        [
+          18,
+          6521
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 0.9999643488078604,
+      "pr_auc": 0.9999738812644946,
+      "score_source": null,
+      "brier": 0.0012844792844503446,
+      "log_loss": 0.00522804765110342,
+      "ece": 0.002054612525776052,
+      "ece_bins": 10,
+      "threshold": 0.5
+    },
+    "random_forest/train_oof": {
+      "positive_label": 1,
+      "accuracy": 0.998323694577152,
+      "precision_malicious": 0.999693392610762,
+      "recall_malicious": 0.9972472855176633,
+      "f1_malicious": 0.9984688409125708,
+      "precision_macro": 0.998182495121949,
+      "recall_macro": 0.9984381828181788,
+      "f1_macro": 0.9983084945303595,
+      "precision": 0.999693392610762,
+      "recall": 0.9972472855176633,
+      "f1": 0.9984688409125708,
+      "mcc": 0.99662064514119,
+      "confusion_matrix": [
+        [
+          5390,
+          2
+        ],
+        [
+          18,
+          6521
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 0.9999920586047739,
+      "pr_auc": 0.9999933915283573,
+      "score_source": null,
+      "brier": 0.0015289833207610428,
+      "log_loss": 0.0077525950290806885,
+      "ece": 0.004817422401028138,
+      "ece_bins": 10,
+      "threshold": 0.5
+    },
+    "ft_transformer/train_oof": {
+      "positive_label": 1,
+      "accuracy": 0.9965635738831615,
+      "precision_malicious": 0.9995387453874539,
+      "recall_malicious": 0.9941887138706225,
+      "f1_malicious": 0.9968565514068849,
+      "precision_macro": 0.9962683592424648,
+      "recall_macro": 0.9968161670243321,
+      "f1_macro": 0.996533461025561,
+      "precision": 0.9995387453874539,
+      "recall": 0.9941887138706225,
+      "f1": 0.9968565514068849,
+      "mcc": 0.9930843751752326,
+      "confusion_matrix": [
+        [
+          5389,
+          3
+        ],
+        [
+          38,
+          6501
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 0.9997887872491141,
+      "pr_auc": 0.9998693018975432,
+      "score_source": null,
+      "brier": 0.0025798527400694967,
+      "log_loss": 0.011218286515640191,
+      "ece": 0.0025742534133277417,
+      "ece_bins": 10,
+      "threshold": 0.5
+    }
+  },
+  "inputs": {
+    "dataset": {
+      "path": "data/processed/raw_pdf_cohort/run_20261002T142323844991Z_3b68d36a5705/labeled_features.csv",
+      "sha256": "cdbe817de970e7ab0af46be32ebf7c3d32341915b06f48836a97a91dc35fc212"
+    },
+    "split_manifest": {
+      "path": "data/processed/raw_pdf_cohort/run_20261002T142323844991Z_3b68d36a5705/protocol_g_seed42_split_manifest.csv",
+      "sha256": "7d1cb8cce4630adf4637d4f84b28a17330d77b9284fa3bdd273fdd18ea749e63"
+    },
+    "source_manifest": {
+      "path": "data/processed/raw_pdf_cohort/run_20261002T142323844991Z_3b68d36a5705/source_pdf_manifest.csv",
+      "sha256": "db4e73ef7bac6a2c2c1b845df999d96156efca7b954b1ea2a7f5ca6931f0ee68"
+    },
+    "all_features": {
+      "path": "data/processed/raw_pdf_cohort/run_20261002T142323844991Z_3b68d36a5705/all_raw_features.csv",
+      "sha256": "f2affc133ae287e27fe943850aebbf54e599a6c439d8d3b6f231b089981b10cc"
+    }
+  },
+  "labeled_rows": 19958,
+  "unlabeled_rows": 4,
+  "partition_rows": {
+    "train": 11931,
+    "test": 4050,
+    "validation": 3977
+  },
+  "cuda_available": false,
+  "device": "cpu",
+  "feature_order": [
+    "pdfsize",
+    "metadata size",
+    "pages",
+    "xref length",
+    "title length",
+    "isEncrypted",
+    "embedded files",
+    "images",
+    "contains_text",
+    "pdf_ver",
+    "obj",
+    "endobj",
+    "stream",
+    "endstream",
+    "trailer",
+    "xref",
+    "startxref",
+    "page_command",
+    "Encrypt",
+    "ObjStm",
+    "JS",
+    "JavaScript",
+    "AA",
+    "OpenAction",
+    "JBIG2Decode",
+    "RichMedia",
+    "Launch",
+    "EmbeddedFile",
+    "XFA",
+    "URI",
+    "Encoding",
+    "ProcSet",
+    "Registry",
+    "Resources",
+    "www",
+    "server",
+    "Root",
+    "BitsPerComponent",
+    "script_ratio",
+    "ObfuscationCount"
+  ],
+  "train_constant_exclusions": [
+    "Acroform",
+    "Colors",
+    "BaseEncoding"
+  ],
+  "parser_failed_rows": 547,
+  "vision_determinism": {
+    "seed": 42,
+    "torch_deterministic_algorithms_requested": true,
+    "torch_deterministic_warn_only": true,
+    "cudnn_benchmark": false,
+    "cudnn_deterministic": true,
+    "cuda_seeded": false,
+    "limitation": "GPU kernels and drivers can still prevent bit-identical results across environments."
+  },
+  "error_type": "KeyboardInterrupt",
+  "finished_at_utc": "2026-10-02T15:27:06.621881+00:00"
+}

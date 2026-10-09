@@ -1,0 +1,2 @@
+policy,coverage,fn_catch_rate,referred_count,status,unavailable_reason
+top_entropy_10_percent,N/A,N/A,N/A,blocked_missing_vision,No independent test evaluation; A complete PDF-to-Protocol-G ID mapping is unavailable; an official train-only RIT Vision checkpoint is also required

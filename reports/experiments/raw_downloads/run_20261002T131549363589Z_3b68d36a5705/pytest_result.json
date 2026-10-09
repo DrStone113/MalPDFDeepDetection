@@ -1,0 +1,10 @@
+{
+  "command": "/tmp/malpdf-raw-venv-20261002/bin/python -m pytest tests/ -q",
+  "exit_code": 0,
+  "passed": 396,
+  "warnings": 2,
+  "seconds": 70.8,
+  "warning_context": "Existing synthetic Vision single-class confusion-matrix warnings",
+  "recorded_at_utc": "2026-10-02T13:19:07.816785+00:00",
+  "module_sha256": "b40736083043a1359ce73bd4138668ac00be7fdc2010e749de4d301616bd58e3"
+}

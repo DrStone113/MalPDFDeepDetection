@@ -1,0 +1,13 @@
+ M README.md
+ M pyproject.toml
+ M src/malpdf/cli.py
+ M src/malpdf/inference/__init__.py
+ M src/malpdf/inference/predictor.py
+ M src/malpdf/provenance/research_runs.py
+ M src/malpdf/static/analyzer.py
+?? reports/analysis/static_acceleration_design.md
+?? scripts/14_benchmark_static.py
+?? src/malpdf/experiments/static_benchmark.py
+?? src/malpdf/static/code_inspector.py
+?? src/malpdf/static/js_ast.py
+?? tests/test_static_acceleration.py

@@ -1,0 +1,55 @@
+{
+  "target_rows": 10023,
+  "known_source_overlap": 8386,
+  "unresolved_label_conflicts": 3727,
+  "unsupported_identifiers": 11,
+  "independent_identity_candidates": 1626,
+  "independent_raw_missing": 28,
+  "raw_pdf_members_extracted": 0,
+  "network_requests": 0,
+  "local_raw_pdf_hashes": 22145,
+  "conflict_rows_reparsed_for_audit": 3727,
+  "features_and_cache_prepared": 9984,
+  "target_labels_changed": 0,
+  "ground_truth_adjudications": 0,
+  "source_inspection": {
+    "official_url": "https://www.unb.ca/cic/datasets/pdfmal-2022.html",
+    "download_url": "https://cicresearch.ca/CICDataset/CIC-EvasivePDF2022/",
+    "official_status": "registration_form_with_server_error",
+    "kaggle_dataset": "dhoogla/cic-evasive-pdfmal2022",
+    "kaggle_files": [
+      "PDFMalware2022.parquet"
+    ],
+    "raw_zip_verified": false,
+    "supplied_zip_probes": [
+      {
+        "file": "Benign.zip",
+        "http_get_status": 403,
+        "content_type": "text/html",
+        "zip_magic": false
+      },
+      {
+        "file": "Malicious.zip",
+        "http_get_status": 403,
+        "content_type": "text/html",
+        "zip_magic": false
+      },
+      {
+        "file": "Malicious2.zip",
+        "http_get_status": 403,
+        "content_type": "text/html",
+        "zip_magic": false
+      }
+    ],
+    "acquisition_policy": "manual_local_upload_only_per_user_instruction"
+  },
+  "outputs": "data/processed/cic_normalization/run_20261003T104918756555Z_3b68d36a5705",
+  "related_sample_limit": "Known exact identities and model-input feature groups checked; unknown family relationships are not asserted.",
+  "raw_feature_columns": 43,
+  "frozen_model_feature_columns": 40,
+  "parser_failure_rows": 434,
+  "raw_missing_cells": 1736,
+  "cache_created": 1598,
+  "cache_reused": 8386,
+  "source_feature_group_overlap_excluded": 145
+}

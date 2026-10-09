@@ -1,0 +1,13 @@
+{
+  "kind": "maintenance: verify optimized notebook with original numeric bundle metadata",
+  "seed": 42,
+  "export_run": "run_20261003T072648112035Z_34993818996a",
+  "policy": "Read only sealed metadata, code and manifests; no matrices, PDFs, model training or Test inference",
+  "code_commit": "34993818996a7ffaa3ca1bd4e836a35ee68c7154",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

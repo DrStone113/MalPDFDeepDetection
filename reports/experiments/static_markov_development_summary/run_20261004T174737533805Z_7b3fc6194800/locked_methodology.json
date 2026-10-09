@@ -1,0 +1,16 @@
+{
+  "protocol": "retrospective Protocol G Train/Validation development; fixed partitions/seed42",
+  "import_run": "run_20261004T174302231060Z_7b3fc6194800",
+  "cloud_run": "run_20261004T173738560718Z_7b3fc6194800",
+  "cloud_kernel": "nguyenkhang294/malpdf-static-development-20261004-173402",
+  "test_policy": "No Test inference, extraction, fitting, selection or metrics",
+  "comparison": "same 48-row/29-group CIC and 730-row/437-group source Validation selection subsets; previous 64-row subset is not directly comparable",
+  "seed": 42,
+  "code_commit": "7b3fc619480079024d3de11d6087296bcfddea11",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

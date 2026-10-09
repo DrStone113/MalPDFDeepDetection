@@ -14,20 +14,12 @@ from malpdf.static.pdf_parser import inspect_pdf_structure, parse_pdf_header, pa
 from malpdf.static.raw_scan import scan_raw_pdf_tokens
 from malpdf.static.rit_reference import inspect_rit_reference_features, reference_parser_metadata
 from malpdf.static.result import StaticInspectionResult, StructuredExtractionIssue
-from malpdf.static.safety import StaticInspectionLimits
+from malpdf.static.safety import StaticInspectionLimits, read_bounded_bytes
 from malpdf.static.schema import RIT_FEATURES, implementation_statuses
 
 
 class StaticPDFAnalysisError(ValueError):
     """Raised only for invalid analyzer configuration, never for input PDFs."""
-
-
-def _sha256_path(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 class StaticPDFAnalyzer:
@@ -70,14 +62,10 @@ class StaticPDFAnalyzer:
         try:
             size = input_path.stat().st_size
             input_info["size_bytes"] = int(size)
-            input_info["sha256"] = _sha256_path(input_path)
-            with input_path.open("rb") as handle:
-                initial = handle.read(16)
         except OSError as error:
             errors.append(StructuredExtractionIssue("file_read_error", str(error)[: self.limits.max_warning_length], fatal=True))
             return result
 
-        diagnostics["file_header"] = parse_pdf_header(initial)
         if size > self.limits.max_file_size_bytes:
             errors.append(
                 StructuredExtractionIssue(
@@ -89,10 +77,15 @@ class StaticPDFAnalyzer:
             return result
 
         try:
-            data = input_path.read_bytes()
-        except OSError as error:
+            data = read_bounded_bytes(input_path, boundary=input_path.absolute().parent,
+                                      max_bytes=self.limits.max_file_size_bytes)
+        except (OSError, ValueError) as error:
             errors.append(StructuredExtractionIssue("file_read_error", str(error)[: self.limits.max_warning_length], fatal=True))
             return result
+
+        size = len(data)
+        input_info["size_bytes"] = size
+        input_info["sha256"] = hashlib.sha256(data).hexdigest()
 
         header = parse_pdf_header(data)
         diagnostics["file_header"] = header

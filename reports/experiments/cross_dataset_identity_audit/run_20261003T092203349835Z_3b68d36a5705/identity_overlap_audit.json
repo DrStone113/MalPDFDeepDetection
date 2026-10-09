@@ -1,0 +1,42 @@
+{
+  "parent_preflight": "reports/experiments/cross_dataset_evasion_v3/run_20261003T091848313122Z_3b68d36a5705",
+  "status": "completed candidate-identity audit; independent external evaluation still blocked",
+  "target_rows": 10023,
+  "candidate_identifier_matches": 8386,
+  "candidate_overlap_fraction": 0.8366756460141674,
+  "candidate_matches_by_source_partition": {
+    "train": 5046,
+    "test": 1673,
+    "validation": 1667
+  },
+  "candidate_matches_by_source_provenance": {
+    "zenodo_malware_pdf_2011": 8386
+  },
+  "nonmatching_identifier_rows": 1637,
+  "identity_linked_label_disagreements": 3727,
+  "identity_linked_label_transition_counts": {
+    "source_1_target_0": 3727,
+    "source_1_target_1": 4659
+  },
+  "actual_target_pdf_byte_identity_verified": false,
+  "nonmatching_identifiers_prove_independence": false,
+  "label_disagreements_resolved": false,
+  "label_policy": "Both source and target labels preserved without relabeling; disagreements are conditional on unverified identifier identity",
+  "metric_computation_performed": false,
+  "model_fitting_performed": false,
+  "original_test_reevaluated": false,
+  "inputs": {
+    "target": {
+      "path": "data/raw/cic_evasive/PDFMalware2022.parquet",
+      "sha256": "25db2059d59207d2040c5a999838514579ed4667b2b7fa39f2398dee484caf65"
+    },
+    "source": {
+      "path": "data/processed/raw_pdf_cohort/run_20261002T142323844991Z_3b68d36a5705/source_pdf_manifest.csv",
+      "sha256": "db4e73ef7bac6a2c2c1b845df999d96156efca7b954b1ea2a7f5ca6931f0ee68"
+    },
+    "split": {
+      "path": "data/processed/raw_pdf_cohort/run_20261002T142323844991Z_3b68d36a5705/protocol_g_seed42_split_manifest.csv",
+      "sha256": "7d1cb8cce4630adf4637d4f84b28a17330d77b9284fa3bdd273fdd18ea749e63"
+    }
+  }
+}

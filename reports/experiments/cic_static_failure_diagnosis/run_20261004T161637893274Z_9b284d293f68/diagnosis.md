@@ -1,0 +1,16 @@
+# CIC static failure diagnosis
+
+The reported53.125% is Validation candidate-selection accuracy on64 CIC rows (48saved groups), not the entire1452-row cohort or a new Tri-Modal Test score. The development study refit five static branches; Vision stayed frozen.
+
+Selected balanced stack: TN4, FP26, FN4, TP30. There are34 malicious and30 benign rows; an always-malicious rule also scores34/64=53.125%. The stack detects30/34 malicious rows but correctly rejects only4/30 benign rows. Balanced accuracy=0.507843; MCC=0.023669. ROC-AUC=0.426471, indicating weak ranking on this small selected Validation subset. Uniform training likewise scores53.125%, with TN2, FP28, FN2, TP32 and ROC-AUC=0.446078.
+
+The same40-feature tabular representation maps406/870 CIC Train rows into71 input-equivalence groups containing both labels. At least154 errors on those Train rows are unavoidable for any fixed deterministic classifier using that representation alone. The raw numerical table is unmodified and this sample-specific representation limit is not an estimate of independent generalization. For source Train, no equivalent vectors have mixed labels. Identical vectors do not prove duplicate PDF files or wrong labels: distinct payloads may be invisible to this representation.
+
+CIC Validation base_selection contains88 rows (51malicious/37benign) with one group, one exact raw feature vector and one probability per model. It has no missing feature values and zero parser-failure flags. This is not caused by imputation in that role. Early stopping uses unweighted loss over all1613 base_selection rows;1525 are source and88 are CIC. This can favor source performance and gives limited CIC stopping information. Causal impact requires a separately locked ablation; the current data show the limitation, not proof of a unique cause.
+
+The official UNB description explicitly constructs an evasive benchmark whose class features differ from their typical classes. The source-versus-CIC performance gap is consistent with domain shift and missing distinguishing input information. It is not proof of label noise, parser bugs or exploit coverage. Platt calibration changes probability scaling and (with a positive sigmoid slope as saved here) preserves ranking; it cannot create missing payload information. Balancing was already tried and did not materially improve CIC discrimination.
+
+Priority for a separately locked development study: audit extraction/schema/label joins without relabeling by heuristics; add bounded decoded-stream and reachable-action/JavaScript AST evidence to the measured security features while retaining nulls and failure indicators; design deterministic group-aware Validation roles with diverse CIC groups under a new immutable study without changing the established Train/Validation/Test partitions; compare lightweight tabular, richer static evidence and frozen Vision contributions separately; select by cohort-aware Validation MCC and calibration, then seek a genuinely unexposed external cohort for confirmation. No new training, role/split changes or Test evaluation was performed by this diagnosis.
+
+Sources: https://www.unb.ca/cic/datasets/pdfmal-2022.html ; https://scikit-learn.org/stable/modules/calibration.html
+Evidence: ranking_and_confusion.csv, input_equivalence_audit.csv, early_stopping_audit.json.

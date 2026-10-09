@@ -1,0 +1,14 @@
+{
+  "protocol": "maintenance; no dataset evaluation",
+  "kernel": "nguyenkhang294/malpdf-pytorch313-qc-20261004-153916",
+  "failure": "Kaggle Python3.13 ensurepip unavailable before package install/tests",
+  "test_policy": "zero model fitting or Test access",
+  "seed": 42,
+  "code_commit": "e9ae2aee5365a2f27d807ac289e2453a44d51cf6",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

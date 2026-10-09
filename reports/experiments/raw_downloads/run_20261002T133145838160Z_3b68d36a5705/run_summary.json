@@ -1,0 +1,85 @@
+{
+  "run_id": "run_20261002T133145838160Z_3b68d36a5705",
+  "code_commit": "3b68d36a570531058543170e2debc7d5805e6bb5",
+  "worktree": "dirty",
+  "status": "partial",
+  "report_path": "reports/experiments/raw_downloads/run_20261002T133145838160Z_3b68d36a5705/run_summary.json",
+  "raw_directory": "data/raw/public_pdf_sources/run_20261002T133145838160Z_3b68d36a5705",
+  "manifest_path": "artifacts/raw_downloads/run_20261002T133145838160Z_3b68d36a5705/source_pdf_manifest.csv",
+  "events_path": "artifacts/raw_downloads/run_20261002T133145838160Z_3b68d36a5705/progress.jsonl",
+  "sources": [
+    {
+      "name": "contagio_s3_cve_2009_3957",
+      "status": "completed_with_rejections",
+      "unique_pdfs": 2,
+      "accepted": 2,
+      "rejected": 4,
+      "download": {
+        "bytes": 161011,
+        "publisher_sha256_available": false,
+        "publisher_md5_available": false,
+        "reused_from_run": "run_20261002T123152127309Z_3b68d36a5705"
+      },
+      "members": 6,
+      "duplicates": 0,
+      "pdf_bytes": 141987,
+      "password_selection": {
+        "candidate_count": 3,
+        "attempts": 2,
+        "selected_index": 2,
+        "probe_crc_verified": true
+      }
+    },
+    {
+      "name": "contagio_s3_obama_pdf",
+      "status": "completed",
+      "unique_pdfs": 1,
+      "accepted": 1,
+      "rejected": 0,
+      "download": {
+        "bytes": 32243,
+        "publisher_sha256_available": false,
+        "publisher_md5_available": false,
+        "reused_from_run": "run_20261002T123152127309Z_3b68d36a5705"
+      },
+      "members": 1,
+      "duplicates": 0,
+      "pdf_bytes": 148263,
+      "password_selection": {
+        "candidate_count": 3,
+        "attempts": 2,
+        "selected_index": 2,
+        "probe_crc_verified": true
+      }
+    },
+    {
+      "name": "contagio_s3_pdf_sample",
+      "status": "completed",
+      "unique_pdfs": 1,
+      "accepted": 1,
+      "rejected": 0,
+      "download": {
+        "bytes": 77072,
+        "publisher_sha256_available": false,
+        "publisher_md5_available": false,
+        "reused_from_run": "run_20261002T123152127309Z_3b68d36a5705"
+      },
+      "members": 1,
+      "duplicates": 0,
+      "pdf_bytes": 178204,
+      "password_selection": {
+        "candidate_count": 3,
+        "attempts": 2,
+        "selected_index": 2,
+        "probe_crc_verified": true
+      }
+    }
+  ],
+  "unique_pdfs": 4,
+  "downloaded_bytes": 0,
+  "reused_bytes": 270326,
+  "reuse_run": "run_20261002T123152127309Z_3b68d36a5705",
+  "published_pdf_bytes": 468454,
+  "finished_at_utc": "2026-10-02T13:31:49.126042+00:00",
+  "manifest_sha256": "1afaeaed5d325f3aa3bc4edb2bb6b336b0e1ee09a0315187acabfe98b2e30f9a"
+}

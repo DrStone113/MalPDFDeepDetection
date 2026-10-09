@@ -1,0 +1,10 @@
+{
+  "files": {
+    "exit_code": 0,
+    "evidence": "artifacts/kaggle_saved_version_inspection/run_20261003T081409685095Z_3b68d36a5705/files.txt"
+  },
+  "status": {
+    "exit_code": 1,
+    "evidence": "artifacts/kaggle_saved_version_inspection/run_20261003T081409685095Z_3b68d36a5705/status.txt"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "run_id": "run_20261002T122729089650Z_3b68d36a5705",
+  "generating_module_sha256": "507dfb5bbc452b4988d591837ea403dc4db61ee466594e431fa0817fc9d257a4",
+  "generating_cli_sha256": "00971ccfc9f0e48019b9f2bb1cd3718e424a7c65f63df3db5b06882f41bdbedc",
+  "config_error": "Uppercase source identifier cve_t4pdf_link_URI; no network or PDF-byte access occurred."
+}

@@ -1,0 +1,15 @@
+{
+  "manifest_path": "data/processed/raw_pdf_cohort/run_20261002T140335782413Z_3b68d36a5705/source_pdf_manifest.csv",
+  "manifest_sha256": "564711952dfe18493911640ee1dcb6df72d3df3d7ce04a58ba997f74f21d0eaa",
+  "preparation_report_path": "artifacts/raw_pdf_cohort/run_20261002T140335782413Z_3b68d36a5705/source_preparation_report.json",
+  "preparation_report_sha256": "cdc4f846c666ccbc6a21b3f8dffbd96c8a04b60b424fc27e910a3c593fd66358",
+  "sample_count": 19962,
+  "unique_pdf_hashes": 19962,
+  "label_counts": {
+    "benign": 8986,
+    "malicious": 10972,
+    "unlabeled": 4
+  },
+  "scope": "Independent acquired raw PDF cohort; historical RIT split unchanged",
+  "raw_checksum_match_fraction": 1.0
+}

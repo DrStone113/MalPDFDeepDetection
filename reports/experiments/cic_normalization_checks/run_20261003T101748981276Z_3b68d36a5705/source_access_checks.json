@@ -1,0 +1,30 @@
+{
+  "observations_before_manual_upload_instruction": [
+    {
+      "url": "https://cicresearch.ca/CICDataset/CIC-EvasivePDF2022/download.php?file=Benign.zip",
+      "method": "GET",
+      "status": 403,
+      "content_type": "text/html; charset=UTF-8",
+      "zip_magic": false,
+      "prefix_read_cap": 1024
+    },
+    {
+      "url": "https://cicresearch.ca/CICDataset/CIC-EvasivePDF2022/download.php?file=Malicious.zip",
+      "method": "GET",
+      "status": 403,
+      "content_type": "text/html; charset=UTF-8",
+      "zip_magic": false,
+      "prefix_read_cap": 1024
+    },
+    {
+      "url": "https://cicresearch.ca/CICDataset/CIC-EvasivePDF2022/download.php?file=Malicious2.zip",
+      "method": "GET",
+      "status": 403,
+      "content_type": "text/html; charset=UTF-8",
+      "zip_magic": false,
+      "prefix_read_cap": 1024
+    }
+  ],
+  "automatic_downloads_stopped_at_user_request": true,
+  "verified_archives_downloaded": 0
+}

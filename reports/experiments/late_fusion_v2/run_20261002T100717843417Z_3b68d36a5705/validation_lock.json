@@ -1,0 +1,94 @@
+{
+  "candidate": {
+    "family": "weighted_average",
+    "regularization_c": 1.0,
+    "xgb_weight": 1.0,
+    "vision_weight": 0.0
+  },
+  "branches": [
+    "xgboost",
+    "ft_transformer"
+  ],
+  "meta_learner": null,
+  "platt_calibrator": {
+    "coefficients": [
+      [
+        8.08141676937422
+      ]
+    ],
+    "intercept": [
+      -3.5561082897412613
+    ],
+    "classes": [
+      0,
+      1
+    ],
+    "C": 1.0
+  },
+  "platt_input": "uncalibrated fused malicious-class probability",
+  "validation_roles": {
+    "meta_fit": {
+      "rows": 1056,
+      "groups": 846,
+      "sample_ids_sha256": "e569af204cacb1988b1101cf560cf8a7c4cbe99d7e5586c41d75a4a5473553d8"
+    },
+    "calibration_fit": {
+      "rows": 1239,
+      "groups": 847,
+      "sample_ids_sha256": "4ac92b3ebb23622d94c1b61de643300eb9e542961fd4fb1766f972acf94dcd4c"
+    },
+    "selection": {
+      "rows": 2573,
+      "groups": 1693,
+      "sample_ids_sha256": "cf900fb4ebf3680fc6a9adbcf938f434168ef499120dfc36a85649e4775a39f5"
+    }
+  },
+  "selection": {
+    "candidate_order": 7,
+    "family": "weighted_average",
+    "regularization_c": 1.0,
+    "xgb_weight": 1.0,
+    "vision_weight": 0.0,
+    "partition": "validation_selection",
+    "mcc": 0.9690336110231176,
+    "f1_malicious": 0.9838318512530315,
+    "brier": 0.01406704273023795,
+    "log_loss": 0.06644249040139937,
+    "ece": 0.01169936995412707
+  },
+  "selection_policy": "maximize validation-selection MCC; malicious F1 secondary; exact ties keep declared candidate order",
+  "seed": 42,
+  "threshold": 0.5,
+  "ece_bins": 10,
+  "test_used_for_fitting_or_selection": false,
+  "refit_after_selection": false,
+  "locked_at_utc": "2026-10-02T10:07:22.058359+00:00",
+  "test_evaluations_before_lock": 0,
+  "input_checksums": {
+    "dataset": {
+      "path": "data/processed/source_preparation/run_20261001T132125227224Z_3efd81e782c1/rit/rit-pdfmal-2026.csv",
+      "sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623"
+    },
+    "split_manifest": {
+      "path": "data/processed/rit-pdfmal-2026_split_manifest.csv",
+      "sha256": "802c3962bc537ed78f63c5b1a5308e09df357a096f703846d0e5fe57598b4e21"
+    },
+    "validation": {
+      "path": "reports/experiments/selective_ensemble/protocol_g_seed42/validation_predictions.parquet",
+      "sha256": "d3065ac848e00ac83a5dc53014cfdd8c334847b7c3e6d41503db42a21354f4e5"
+    },
+    "test": {
+      "path": "reports/experiments/selective_ensemble/protocol_g_seed42/test_predictions.parquet",
+      "sha256": "1e6039df96e2324ca442502e2b8c67fdc7df1314d02d3952fcd466bc2ccbbf93"
+    },
+    "base_provenance": {
+      "path": "reports/experiments/selective_ensemble/protocol_g_seed42/run_metadata.json",
+      "sha256": "f3e2d3596440ccfd3bf8ed2cdb156a5693941d471922933a0d8f1018c303ed77"
+    },
+    "base_configuration": {
+      "path": "reports/experiments/selective_ensemble/protocol_g_seed42/config.json",
+      "sha256": "1ab4eec40cd6283112e4cf4dac6cd0cb5d7e7bd1fad8beb120568c3f82db3b14"
+    }
+  },
+  "referral_rate": 0.1
+}

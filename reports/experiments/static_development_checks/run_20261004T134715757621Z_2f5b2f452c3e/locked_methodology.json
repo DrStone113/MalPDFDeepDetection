@@ -1,0 +1,20 @@
+{
+  "protocol": "maintenance; saved multi-cohort Protocol G development",
+  "scope": "Offline code checks; no real-data training or Test evaluation",
+  "seed": 42,
+  "code_commit": "2f5b2f452c3eeeabf77ad7cc4e175c040604cd15",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M src/malpdf/models/v3_base_learners.py",
+      "?? configs/static_development.yaml",
+      "?? scripts/15_train_static_development.py",
+      "?? src/malpdf/experiments/static_development.py",
+      "?? src/malpdf/experiments/static_development_handoff.py",
+      "?? tests/test_static_development.py"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

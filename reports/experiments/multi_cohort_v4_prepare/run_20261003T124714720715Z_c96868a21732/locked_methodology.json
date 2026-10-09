@@ -1,0 +1,42 @@
+{
+  "configuration": {
+    "seed": 42,
+    "source_configuration": {
+      "path": "reports/experiments/raw_tri_modal_v3_resume/run_20261003T085417853973Z_4b4478ca98a8/locked_methodology.json",
+      "sha256": "2a4097463dadca25a2d0070cf6abfea8d6ca1b91404cc9940c283645b48c17f4"
+    },
+    "source_summary": {
+      "path": "reports/experiments/raw_tri_modal_v3_resume/run_20261003T085417853973Z_4b4478ca98a8/run_summary.json",
+      "sha256": "43ee7b03af330e0a6231bb3243e62983b650c02b8b0d0e2e026acc675fd3a174"
+    },
+    "external_summary": {
+      "path": "reports/experiments/cic_valid_pdf_evasion_v3/run_20261003T112242694538Z_392482a1571c/run_summary.json",
+      "sha256": "a258729bafba151113974c261b6fd1a689a32a7431b84e22046d163a1ca059d7"
+    },
+    "external_cohort_lock": {
+      "path": "reports/experiments/cic_valid_pdf_evasion_v3/run_20261003T112242694538Z_392482a1571c/locked_external_cohort.json",
+      "sha256": "d6df82379d231e33452cb8a0e76d5af30b734d1c3cf7ecf5f46010c0ff29d794"
+    },
+    "external_predictions": {
+      "path": "artifacts/cic_valid_pdf_evasion_v3/run_20261003T112242694538Z_392482a1571c/external_predictions.csv",
+      "sha256": "8af6f99f6ea9eb078c94323a92f750360119a0637be25c5c4c9f74916d5b882f"
+    },
+    "source_roles": {
+      "path": "artifacts/raw_tri_modal_v3/run_20261002T143830529362Z_fa463d2ed5c4/validation_roles.csv",
+      "sha256": "ba1b40a4ce93a19840df8e86d24302e811d7911ccf691afe7e4219e206bc2ce3"
+    }
+  },
+  "study": "Retrospective multi-cohort v4",
+  "source": "Preserve raw-PDF Protocol G partitions and roles; source4050 is not historical RIT table",
+  "cic_split": "Seed42 whole v3-input-equivalence groups; exact Train870/Val291/Test291; keep publisher labels",
+  "previous_exposure": "Both source and CIC v3 outcomes were already inspected; not a confirmatory untouched holdout",
+  "selection": "Train-only base fitting; four disjoint Validation roles; one v4 dual Test after lock",
+  "seed": 42,
+  "code_commit": "c96868a21732a27472855c0f14dc46f8ea39b9a8",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

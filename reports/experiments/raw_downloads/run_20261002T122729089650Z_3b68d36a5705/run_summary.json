@@ -1,0 +1,10 @@
+{
+  "run_id": "run_20261002T122729089650Z_3b68d36a5705",
+  "code_commit": "3b68d36a570531058543170e2debc7d5805e6bb5",
+  "worktree": "dirty",
+  "status": "refused",
+  "error_type": "AcquisitionError",
+  "unique_pdfs": 0,
+  "report_path": "reports/experiments/raw_downloads/run_20261002T122729089650Z_3b68d36a5705/run_summary.json",
+  "reason": "Invocation failed before an acquisition report was established; no successful acquisition is claimed."
+}

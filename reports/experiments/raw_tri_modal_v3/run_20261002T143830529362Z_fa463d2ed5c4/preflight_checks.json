@@ -1,0 +1,49 @@
+{
+  "pytest": {
+    "passed": 413,
+    "warnings": 2,
+    "seconds": 42.13,
+    "scope": "Offline synthetic/benign tests from the clean generating checkout"
+  },
+  "pip_check": "No broken requirements found",
+  "git_diff_check": "passed",
+  "generating_commit": "fa463d2ed5c482ed4578f06d8b0842b575772054",
+  "generating_code_worktree": "clean",
+  "main_worktree": "dirty; existing local changes preserved",
+  "protected_history_files_unchanged": 299,
+  "research_log_prefix_unchanged": true,
+  "markov_cache_samples": 19962,
+  "labeled_samples": 19958,
+  "unlabeled_samples": 4,
+  "class_counts": {
+    "malicious": 10972,
+    "benign": 8986
+  },
+  "partition_rows": {
+    "train": 11931,
+    "validation": 3977,
+    "test": 4050
+  },
+  "parser_failure_counts": {
+    "train": 394,
+    "validation": 153,
+    "test": 0
+  },
+  "raw_missing_metadata_values": 2228,
+  "raw_values_imputed": 0,
+  "model_features": 40,
+  "fixed_metadata_missing_flags": 10,
+  "permitted_train_constant_exclusions": [
+    "Acroform",
+    "Colors",
+    "BaseEncoding"
+  ],
+  "ece_bins": "10 equal-width probability bins; p=1 in last bin",
+  "limitations": [
+    "The new acquired PDF cohort is separate from the historical RIT table; no assumed row-to-PDF match.",
+    "Known duplicate hashes, identical feature vectors, and declared related samples are grouped; unknown PDF family relations are not proven absent.",
+    "Test contains no parser failures under the saved group-aware split; forced-parser referral is verified by offline tests, not measured on parser-failing Test samples.",
+    "Vision uses the predeclared two-epoch CPU training budget; no claim of convergence or exhaustive optimization.",
+    "Referrals are abstentions and recommendations only; no dynamic analysis runs or corrected-referral accuracy."
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "python": "3.11.13",
+  "packages": {
+    "malpdf": "0.1.0",
+    "numpy": "2.4.6",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.9.1",
+    "pyarrow": "19.0.1",
+    "pyyaml": "6.0.3"
+  },
+  "code_commit_sha": "3efd81e782c1e7800299368b2b8aa3ef4c945852",
+  "git_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M .gitignore",
+      " M AGENTS.md",
+      " M README.md",
+      " M reports/research_log.md",
+      " M src/malpdf/static/safety.py",
+      "?? configs/late_fusion_stacking.yaml",
+      "?? configs/markov_cache.yaml",
+      "?? configs/source_preparation.yaml",
+      "?? configs/vision_resnet18.yaml",
+      "?? reports/experiments/markov_cache/",
+      "?? reports/experiments/vision_resnet/",
+      "?? scripts/02_build_markov_cache.py",
+      "?? scripts/03_train_vision_model.py",
+      "?? scripts/04_evaluate_late_fusion.py",
+      "?? scripts/prepare_source_datasets.py",
+      "?? src/malpdf/data/manifest_validator.py",
+      "?? src/malpdf/data/markov_preparation.py",
+      "?? src/malpdf/data/source_preparation.py",
+      "?? src/malpdf/data/vision_dataset.py",
+      "?? src/malpdf/experiments/late_fusion_runner.py",
+      "?? src/malpdf/experiments/vision_runner.py",
+      "?? src/malpdf/models/late_fusion.py",
+      "?? src/malpdf/models/vision_resnet.py",
+      "?? src/malpdf/static/cache_manager.py",
+      "?? src/malpdf/static/markov.py",
+      "?? tests/test_late_fusion.py",
+      "?? tests/test_markov_cache.py",
+      "?? tests/test_source_preparation.py",
+      "?? tests/test_vision_resnet.py"
+    ]
+  },
+  "code_sha256": {
+    "src/malpdf/models/late_fusion.py": "d83604183a97728d3bd4d12e8d045b47e8488983381e8bdfefcfdffad15146ce",
+    "src/malpdf/experiments/late_fusion_runner.py": "33f325e21cb973e8d73ee0f9985ad361fe9d8677d771f7b6668246a36856ab95",
+    "scripts/04_evaluate_late_fusion.py": "d53decc639202df45920f8a6b97b674c373aa29d24db09172cdf52278ba2314b",
+    "configs/late_fusion_stacking.yaml": "e8b7ec9e2eccc8a8122ba61192860d5d312b43ffbb5d63acf2ebc8a770b3014d"
+  }
+}

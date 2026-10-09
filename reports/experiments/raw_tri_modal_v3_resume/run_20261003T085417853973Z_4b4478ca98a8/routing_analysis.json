@@ -1,0 +1,108 @@
+[
+  {
+    "policy": "top_entropy_10_percent",
+    "entropy_unit": "bits",
+    "requested_referral_rate": 0.1,
+    "referral_rate": 0.1,
+    "coverage": 0.9,
+    "referred_count": 405,
+    "retained_count": 3645,
+    "fn_total": 0,
+    "fn_referred": 0,
+    "fn_retained": 0,
+    "fn_catch_rate": null,
+    "fn_catch_rate_unavailable_reason": "No false negatives in the evaluated partition",
+    "errors_referred": 3,
+    "error_capture_rate": 1.0,
+    "retained_metrics": {
+      "positive_label": 1,
+      "accuracy": 1.0,
+      "precision_malicious": 1.0,
+      "recall_malicious": 1.0,
+      "f1_malicious": 1.0,
+      "precision_macro": 1.0,
+      "recall_macro": 1.0,
+      "f1_macro": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "mcc": 1.0,
+      "confusion_matrix": [
+        [
+          1392,
+          0
+        ],
+        [
+          0,
+          2253
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "score_source": null,
+      "brier": 0.0005006482404355899,
+      "log_loss": 0.022628163008606463,
+      "ece": 0.02237404045968767,
+      "ece_bins": 10,
+      "threshold": 0.037803058353758114
+    },
+    "threshold": 0.037803058353758114,
+    "dynamic_samples_executed": 0,
+    "referrals_counted_as_corrected": false
+  },
+  {
+    "policy": "parser_referral_then_entropy_10_percent",
+    "coverage": 0.9,
+    "referral_rate": 0.1,
+    "requested_referral_rate": 0.1,
+    "forced_parser_referrals": 0,
+    "referred_count": 405,
+    "fn_total": 0,
+    "fn_referred": 0,
+    "fn_retained": 0,
+    "fn_catch_rate": null,
+    "retained_metrics": {
+      "positive_label": 1,
+      "accuracy": 1.0,
+      "precision_malicious": 1.0,
+      "recall_malicious": 1.0,
+      "f1_malicious": 1.0,
+      "precision_macro": 1.0,
+      "recall_macro": 1.0,
+      "f1_macro": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "mcc": 1.0,
+      "confusion_matrix": [
+        [
+          1392,
+          0
+        ],
+        [
+          0,
+          2253
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "score_source": null,
+      "brier": 0.0005006482404355899,
+      "log_loss": 0.022628163008606463,
+      "ece": 0.02237404045968767,
+      "ece_bins": 10,
+      "threshold": 0.037803058353758114
+    },
+    "entropy_unit": "bits",
+    "dynamic_samples_executed": 0,
+    "referrals_counted_as_corrected": false
+  }
+]

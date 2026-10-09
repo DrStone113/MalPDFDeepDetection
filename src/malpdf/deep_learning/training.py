@@ -93,20 +93,47 @@ class TrainingOutcome:
     history: list[dict[str, float | int]]
 
 
-def _mean_loss(model: nn.Module, loader: DataLoader, loss_function: nn.Module, device: torch.device) -> float:
+def _features_to_device(features, device, non_blocking, channels_last):
+    value = features.to(device, non_blocking=non_blocking)
+    return value.contiguous(memory_format=torch.channels_last) if channels_last and value.ndim == 4 else value
+
+
+def _mean_loss(model: nn.Module, loader: DataLoader, loss_function: nn.Module, device: torch.device,
+               *, mixed_precision=False, non_blocking=False, channels_last=False,
+               weighted_validation=False) -> float:
     model.eval()
-    total_loss = 0.0
-    total_rows = 0
+    total_loss = torch.zeros((), device=device, dtype=torch.float64)
+    total_mass = torch.zeros((), device=device, dtype=torch.float64)
     with torch.no_grad():
-        for features, labels in loader:
-            logits = model(features.to(device)).reshape(-1)
-            loss = loss_function(logits, labels.to(device))
-            batch_rows = int(labels.shape[0])
-            total_loss += float(loss.item()) * batch_rows
-            total_rows += batch_rows
-    if total_rows == 0:
+        for batch in loader:
+            if len(batch) != (3 if weighted_validation else 2):
+                raise ValueError("Validation batches differ from their declared weighting contract")
+            features, labels = batch[:2]
+            targets = labels.to(device, non_blocking=non_blocking)
+            with torch.autocast(device_type=device.type, dtype=torch.float16, enabled=mixed_precision):
+                logits = model(_features_to_device(features, device, non_blocking, channels_last)).reshape(-1)
+                if weighted_validation:
+                    if not isinstance(loss_function, nn.BCEWithLogitsLoss):
+                        raise ValueError("Weighted validation requires binary logit loss")
+                    loss = nn.functional.binary_cross_entropy_with_logits(logits, targets,
+                        weight=loss_function.weight, pos_weight=loss_function.pos_weight, reduction="none")
+                else:
+                    loss = loss_function(logits, targets)
+            if weighted_validation:
+                weights = batch[2].to(device, non_blocking=non_blocking).double()
+                if weights.shape != targets.shape or not torch.isfinite(weights).all() or (weights <= 0).any():
+                    raise ValueError("Validation weights must be aligned, positive and finite")
+                total_loss += (loss.detach().double() * weights).sum()
+                total_mass += weights.sum()
+            else:
+                total_loss += loss.detach().double() * len(labels)
+                total_mass += len(labels)
+    if total_mass.item() == 0:
         raise ValueError("A validation loader cannot be empty")
-    return total_loss / total_rows
+    result = float((total_loss / total_mass).item())
+    if not np.isfinite(result):
+        raise RuntimeError("Validation loss is non-finite")
+    return result
 
 
 def train_with_validation(
@@ -120,6 +147,12 @@ def train_with_validation(
     max_epochs: int,
     patience: int,
     min_delta: float,
+    progress=None,
+    mixed_precision: bool = False,
+    non_blocking: bool = False,
+    channels_last: bool = False,
+    record_performance: bool = False,
+    weighted_validation: bool = False,
 ) -> TrainingOutcome:
     """Fit using train data and choose the checkpoint solely by validation loss.
 
@@ -129,30 +162,70 @@ def train_with_validation(
     """
     if max_epochs < 1 or patience < 1:
         raise ValueError("max_epochs and patience must be positive")
+    if mixed_precision and device.type != "cuda":
+        raise ValueError("FP16 mixed precision requires a CUDA device")
     model.to(device)
     loss_function = nn.BCEWithLogitsLoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    scaler = torch.amp.GradScaler("cuda", enabled=mixed_precision)
     stopper = EarlyStopping(patience=patience, min_delta=min_delta)
     best_state: dict[str, torch.Tensor] | None = None
     history: list[dict[str, float | int]] = []
     training_started = perf_counter()
+    last_progress = training_started
     for epoch in range(1, max_epochs + 1):
+        epoch_started = perf_counter()
         model.train()
-        train_total = 0.0
+        train_total = torch.zeros((), device=device, dtype=torch.float64)
         train_rows = 0
+        data_wait_seconds = 0.0
+        skipped_steps = 0
+        steps = 0
+        waiting_since = perf_counter()
         for features, labels in train_loader:
+            data_wait_seconds += perf_counter() - waiting_since
             optimizer.zero_grad(set_to_none=True)
-            logits = model(features.to(device)).reshape(-1)
-            loss = loss_function(logits, labels.to(device))
-            loss.backward()
-            optimizer.step()
+            with torch.autocast(device_type=device.type, dtype=torch.float16, enabled=mixed_precision):
+                logits = model(_features_to_device(features, device, non_blocking, channels_last)).reshape(-1)
+                loss = loss_function(logits, labels.to(device, non_blocking=non_blocking))
+            if not torch.isfinite(loss):
+                raise RuntimeError("Training loss is non-finite")
+            scaler.scale(loss).backward()
+            scaler.unscale_(optimizer)
+            finite_checks = [torch.isfinite(p.grad).all() for p in model.parameters() if p.grad is not None]
+            finite_gradients = not finite_checks or bool(torch.stack(finite_checks).all())
+            if not finite_gradients and not mixed_precision:
+                raise RuntimeError("Training gradient is non-finite")
+            # AMP overflow skips the optimizer update and lowers the loss scale.
+            # Checks remain explicit; an epoch with no finite update is rejected.
+            skipped_steps += int(not finite_gradients)
+            steps += 1
+            scaler.step(optimizer)
+            scaler.update()
             batch_rows = int(labels.shape[0])
-            train_total += float(loss.item()) * batch_rows
+            train_total += loss.detach().double() * batch_rows
             train_rows += batch_rows
+            if progress is not None and perf_counter() - last_progress >= 20:
+                progress({"event": "training_progress", "epoch": epoch, "rows": train_rows,
+                          "train_loss": float(train_total.item()) / train_rows})
+                last_progress = perf_counter()
+            waiting_since = perf_counter()
         if train_rows == 0:
             raise ValueError("A training loader cannot be empty")
-        validation_loss = _mean_loss(model, validation_loader, loss_function, device)
-        history.append({"epoch": epoch, "train_loss": train_total / train_rows, "validation_loss": validation_loss})
+        if skipped_steps == steps:
+            raise RuntimeError("AMP did not produce any finite optimizer update")
+        validation_loss = _mean_loss(model, validation_loader, loss_function, device,
+            mixed_precision=mixed_precision, non_blocking=non_blocking, channels_last=channels_last,
+            weighted_validation=weighted_validation)
+        epoch_seconds = perf_counter() - epoch_started
+        entry = {"epoch": epoch, "train_loss": float(train_total.item()) / train_rows,
+                 "validation_loss": validation_loss}
+        if record_performance:
+            entry.update(epoch_seconds=epoch_seconds, train_data_wait_seconds=data_wait_seconds,
+                         train_rows_per_second=train_rows / epoch_seconds, amp_skipped_steps=skipped_steps)
+        history.append(entry)
+        if progress is not None:
+            progress({"event": "epoch_completed", **history[-1]})
         previous_best = stopper.best_epoch
         should_stop = stopper.update(epoch, validation_loss)
         if stopper.best_epoch != previous_best:

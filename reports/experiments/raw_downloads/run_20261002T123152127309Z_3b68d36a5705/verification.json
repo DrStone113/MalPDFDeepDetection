@@ -1,0 +1,12 @@
+{
+  "sources_checksum_verified": 10,
+  "publisher_md5_archives_matched": 2,
+  "pdfs_verified": 5,
+  "all_pdf_magic_sha256_size_permissions_and_user_labels_verified": true,
+  "all_five_match_prior_verified_cve_sources": true,
+  "ignored_generated_files": 41,
+  "protected_reports_and_split_unchanged": 149,
+  "log_historical_prefix_preserved": true,
+  "staged_paths": [],
+  "pipeline_status": "partial"
+}

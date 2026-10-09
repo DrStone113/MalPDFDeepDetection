@@ -1,0 +1,21 @@
+{
+  "notebook_source": "artifacts/kaggle_notebook_inspection/run_20261003T080858331155Z_3b68d36a5705/notebook_source/malpdfdetect.ipynb",
+  "notebook_source_sha256": "78aa578c0e164545269760c660d0cf09f42572c2e23f5a55117be27bae7ebce7",
+  "vision_output_run": "run_20261003T075329107712Z_34993818996a",
+  "comparison": {
+    "vision_probs_val.csv": {
+      "local_sha256": "e6965a75c79c6d91f0db3f1e6d29f9b2a86f3223f89550bcb47c8bd083be4739",
+      "notebook_printed_sha256": "1ad918c368cf90f1757de5ad33dc527f60e1aed01802e7e07d1c90e410e284d9",
+      "checksum_matches": false
+    },
+    "vision_probs_test.csv": {
+      "local_sha256": "8802fc842cafe60355144f609234d50016f34703fa358d15844fd02306b67a99",
+      "notebook_printed_sha256": "fa780a6eaaec7aa6c5667a11e1648a2d44b10a861d6d25cf33534f20d0a7bfd4",
+      "checksum_matches": false
+    }
+  },
+  "local_csvs_modified": false,
+  "test_evaluation_performed": false,
+  "download_attempt": "reports/experiments/kaggle_output_download/run_20261003T081214414993Z_3b68d36a5705/download_result.json",
+  "offline_checks": "reports/experiments/kaggle_output_access_checks/run_20261003T081409614116Z_3b68d36a5705/checks.json"
+}

@@ -1,0 +1,5 @@
+ M reports/analysis/static_acceleration_design.md
+ M src/malpdf/cli.py
+ M src/malpdf/static/code_inspector.py
+ M src/malpdf/static/safety.py
+ M tests/test_static_acceleration.py

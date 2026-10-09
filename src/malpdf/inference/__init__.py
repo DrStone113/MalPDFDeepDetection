@@ -11,7 +11,7 @@ from malpdf.inference.deployment import (
     build_deployment_model,
     preflight_deployment_build,
 )
-from malpdf.inference.predictor import scan_pdf
+from malpdf.inference.predictor import StaticScanSession, scan_pdf
 
 __all__ = [
     "DEPLOYMENT_MODEL_ID",
@@ -19,4 +19,5 @@ __all__ = [
     "build_deployment_model",
     "preflight_deployment_build",
     "scan_pdf",
+    "StaticScanSession",
 ]

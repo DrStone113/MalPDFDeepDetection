@@ -1,0 +1,44 @@
+[
+  {
+    "command": [
+      "/workspaces/MalPDFDeepDetection/artifacts/venvs/static_inspection/bin/python",
+      "-m",
+      "pytest",
+      "tests/"
+    ],
+    "exit_code": 0,
+    "seconds": 66.46097365599962,
+    "evidence": "check_0.txt"
+  },
+  {
+    "command": [
+      "/workspaces/MalPDFDeepDetection/artifacts/venvs/static_inspection/bin/python",
+      "-m",
+      "pip",
+      "check"
+    ],
+    "exit_code": 0,
+    "seconds": 1.0392563730001712,
+    "evidence": "check_1.txt"
+  },
+  {
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exit_code": 0,
+    "seconds": 0.008239269000114291,
+    "evidence": "check_2.txt"
+  },
+  {
+    "command": [
+      "git",
+      "status",
+      "--short"
+    ],
+    "exit_code": 0,
+    "seconds": 0.009453753000343568,
+    "evidence": "check_3.txt"
+  }
+]

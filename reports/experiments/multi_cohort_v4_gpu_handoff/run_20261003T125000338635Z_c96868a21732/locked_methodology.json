@@ -1,0 +1,33 @@
+{
+  "prepared_run": "run_20261003T124714720715Z_c96868a21732",
+  "tree_run": "run_20261003T124817237260Z_c96868a21732",
+  "inputs": {
+    "dataset": {
+      "path": "data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/dataset.csv",
+      "sha256": "35670e085c18423b0fbe24fb9b2f2f7bb3102ce0928338658ca753df54c7b636"
+    },
+    "all_features": {
+      "path": "data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/all_features.csv",
+      "sha256": "6c988d038915cc3aaf838bed3884e02e27501cc36f4fb60a31e74ca4d9e9a122"
+    },
+    "split_manifest": {
+      "path": "data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/split_manifest.csv",
+      "sha256": "e939a676c51c7a98b9dc4bb843e846f546e1ada2bfb576b41416c406415c0643"
+    },
+    "source_manifest": {
+      "path": "data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/source_manifest.csv",
+      "sha256": "d74729236017dc27a71c999bc4d69f84a16fa4148573c3bbc7f4eb03709b150b"
+    }
+  },
+  "policy": "Local opaque numeric package only; no upload/network calls",
+  "training": "Five FT Train folds + one Vision from scratch; base_selection-only stopping; FP16 GPU AMP",
+  "Test_policy": "Unlabeled probability export only; dual Test scoring awaits local Validation lock",
+  "seed": 42,
+  "code_commit": "c96868a21732a27472855c0f14dc46f8ea39b9a8",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

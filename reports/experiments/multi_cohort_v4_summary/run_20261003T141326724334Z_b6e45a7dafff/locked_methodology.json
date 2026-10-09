@@ -1,0 +1,15 @@
+{
+  "kind": "maintenance_summary",
+  "evaluation_run": "run_20261003T140953193222Z_b6e45a7dafff",
+  "policy": "Read saved metrics only; no new model fitting or Test evaluation",
+  "pytest_evidence": "artifacts/multi_cohort_v4_mount_fix_checks/run_20261003T134827018732Z_6034e0785356/pytest.txt",
+  "generating_sources_unchanged_since_full_tests": true,
+  "seed": 42,
+  "code_commit": "b6e45a7dafff642cca0e4d277882894504d7ea46",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

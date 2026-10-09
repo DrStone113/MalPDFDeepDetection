@@ -1,0 +1,53 @@
+{
+  "aligned_probability_exports": [
+    {
+      "model": "ft_transformer",
+      "partition": "validation",
+      "rows": 4268,
+      "finite_probabilities": true
+    },
+    {
+      "model": "ft_transformer",
+      "partition": "test",
+      "rows": 4341,
+      "finite_probabilities": true
+    },
+    {
+      "model": "vision",
+      "partition": "validation",
+      "rows": 4268,
+      "finite_probabilities": true
+    },
+    {
+      "model": "vision",
+      "partition": "test",
+      "rows": 4341,
+      "finite_probabilities": true
+    }
+  ],
+  "verified_ft_folds": 5,
+  "vision_best_epoch": 3,
+  "vision_trained_epochs": 8,
+  "vision_training_seconds": 161.75075103099994,
+  "ft_training_seconds": 40.04742996499999,
+  "vision_ram_bytes": 5613551616,
+  "cloud_environment": {
+    "python": "3.13.15",
+    "packages": {
+      "numpy": "2.1.3",
+      "pandas": "2.3.3",
+      "scikit-learn": "1.6.1",
+      "torch": "2.11.0+cu128",
+      "torchvision": "0.26.0+cu128"
+    },
+    "code_commit": "b6e45a7dafff642cca0e4d277882894504d7ea46",
+    "cuda_version": "12.8",
+    "device": "cuda:0",
+    "gpu_name": "Tesla T4",
+    "requested_precision": "cuda_fp16_amp",
+    "effective_precision": "cuda_fp16_amp"
+  },
+  "test_metrics_computed": false,
+  "test_marker_absent": true,
+  "tree_validation_checksum_matches": true
+}

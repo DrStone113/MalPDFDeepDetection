@@ -1,0 +1,14 @@
+{
+  "launch_run": "run_20261003T134248620622Z_6034e0785356",
+  "kernel": "nguyenkhang294/malpdf-v4-gpu-training-20261003-134200",
+  "kernel_identity_source": "Authoritative URL returned by Kaggle push; title-derived slug differs from planned metadata ID",
+  "policy": "Monitor authorized GPU run and download model outputs only; no dataset download or local Test evaluation",
+  "seed": 42,
+  "code_commit": "6034e078535653b078c518e9994ea2f47c668c1f",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

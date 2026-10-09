@@ -1,0 +1,14 @@
+{
+  "protocol": "maintenance; no training or new Test evaluation",
+  "purpose": "verify read-only CIC diagnostic task and saved aggregate evidence",
+  "diagnosis": "run_20261004T161637893274Z_9b284d293f68",
+  "test_scope": "offline synthetic suite only",
+  "seed": 42,
+  "code_commit": "9b284d293f686f09a0f90d65b4259cd501fa769b",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

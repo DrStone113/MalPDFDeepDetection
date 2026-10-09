@@ -1,0 +1,15 @@
+{
+  "selected": {
+    "scheme": "cohort_group_class",
+    "regularization_c": 0.1,
+    "candidate_order": 0,
+    "threshold": 0.14863979640166966,
+    "youden_j": 0.5361907944247052,
+    "macro_mcc": 0.5106002124522524,
+    "macro_f1": 0.8326549072817729,
+    "minimum_cohort_mcc": 0.023669053416557544,
+    "macro_brier": 0.1816774178607107
+  },
+  "test_inference": 0,
+  "deployment": "development candidate only; existing production/research checkpoints unchanged"
+}

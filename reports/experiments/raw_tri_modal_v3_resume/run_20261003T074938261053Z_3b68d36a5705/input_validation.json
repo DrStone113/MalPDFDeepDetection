@@ -1,0 +1,26 @@
+{
+  "exact_vision_id_match": true,
+  "zero_partition_overlap": true,
+  "partition_rows": {
+    "train": 11931,
+    "test": 4050,
+    "validation": 3977
+  },
+  "vision_rows": {
+    "validation": 3977,
+    "test": 4050
+  },
+  "csv_sha256": {
+    "vision_probs_val.csv": "e6965a75c79c6d91f0db3f1e6d29f9b2a86f3223f89550bcb47c8bd083be4739",
+    "vision_probs_test.csv": "8802fc842cafe60355144f609234d50016f34703fa358d15844fd02306b67a99"
+  },
+  "tabular_checkpoints_verified": 25,
+  "validation_role_rows": {
+    "base_selection": 1525,
+    "meta_fit": 818,
+    "calibration_fit": 817,
+    "threshold_selection": 817
+  },
+  "unknown_rows_excluded_from_evaluation": 4,
+  "test_metrics_computed": false
+}

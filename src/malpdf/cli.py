@@ -13,6 +13,7 @@ from malpdf.dynamic.features import extract_behavioral_features, summarize_behav
 from malpdf.inference import scan_pdf
 from malpdf.reproducibility import DEFAULT_RANDOM_SEED, set_random_seed
 from malpdf.static import StaticInspectionLimits, inspect_pdf
+from malpdf.static.code_inspector import inspect_pdf_code
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -47,12 +48,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     scan_parser.add_argument("path", help="local untrusted PDF path; it is read as bytes only")
     scan_parser.add_argument("--json", action="store_true", help="emit stable machine-readable JSON")
+    scan_parser.add_argument("--no-explanation", action="store_true", help="skip TreeSHAP when screening")
+    scan_parser.add_argument("--code-inspection", action="store_true", help="also collect isolated JavaScript syntax evidence")
     scan_parser.add_argument(
         "--max-file-size-mib", type=int, default=50,
         help="maximum input size before full parsing (default: 50 MiB)",
     )
     scan_parser.add_argument("--max-pages", type=int, default=1_000, help="maximum pages inspected (default: 1000)")
     scan_parser.add_argument("--max-objects", type=int, default=10_000, help="maximum structural objects traversed (default: 10000)")
+    code_parser = subparsers.add_parser("code-inspect", help="collect redacted JavaScript AST evidence without execution")
+    code_parser.add_argument("path", help="explicit local PDF path; byte inspection only")
     dynamic_parser = subparsers.add_parser(
         "dynamic",
         help="parse an already-produced sandbox JSON report; no sandbox submission or execution",
@@ -66,11 +71,21 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> int:
     """Initialize deterministic state for a future experiment command."""
-    args = build_parser().parse_args(argv)
+    parser = build_parser()
+    args = parser.parse_args(argv)
     set_random_seed(args.seed)
-    if args.command not in {"inspect", "scan", "dynamic"}:
+    if args.command not in {"inspect", "scan", "dynamic", "code-inspect"}:
         print(f"malpdf ready (seed={args.seed})")
         return 0
+
+    if args.command == "code-inspect":
+        try:
+            evidence = inspect_pdf_code(args.path)
+        except (OSError, ValueError) as error:
+            print(f"Code inspection unavailable: {error}")
+            return 2
+        print(json.dumps(evidence, indent=2, allow_nan=False))
+        return 0 if evidence["complete"] else 2
 
     if args.command == "dynamic":
         try:
@@ -103,8 +118,20 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.path,
             repository_root=Path(__file__).resolve().parents[2],
             limits=limits,
+            explain=not args.no_explanation,
         )
         payload = result.to_dict()
+        if args.code_inspection:
+            try:
+                payload["code_inspection"] = inspect_pdf_code(args.path, expected_sha256=payload["input"]["sha256"])
+            except (OSError, ValueError):
+                payload["code_inspection"] = {"complete": False, "referral_recommended": True,
+                                               "errors": ["isolation_unavailable"]}
+            referral = (not payload["prediction"]["available"]
+                        or not payload["code_inspection"]["complete"]
+                        or payload["code_inspection"]["referral_recommended"])
+            payload["static_decision"] = {"verdict": "REFERRAL_REQUIRED" if referral else payload["prediction"]["verdict"],
+                                           "dynamic_analysis_executed": False}
         if args.json:
             print(json.dumps(payload, ensure_ascii=False, indent=2, allow_nan=False))
         else:
@@ -125,13 +152,18 @@ def main(argv: Sequence[str] | None = None) -> int:
                     print(f"{heading}:")
                     for item in payload["explanation"][key]:
                         print(f"  {item['feature']}: value={item['extracted_value']:.6g}; model contribution={item['contribution']:.6g}")
-                if not payload["explanation"]["available"]:
+                if not payload["explanation"]["available"] and not args.no_explanation:
                     print("Local TreeSHAP explanation unavailable: " + str(payload["explanation"]["error"]))
             else:
                 print("Prediction unavailable: " + str(payload["prediction"]["error"]))
                 if compatibility["blockers"]:
                     print("Blocking features: " + "; ".join(f"{item['feature']} ({item['reason']})" for item in compatibility["blockers"]))
             print("Safety: no active PDF content was executed or external resource followed.")
+            if args.code_inspection:
+                print("Static decision: " + payload["static_decision"]["verdict"])
+                print("Code inspection: " + json.dumps(payload["code_inspection"], allow_nan=False))
+        if args.code_inspection and payload["static_decision"]["verdict"] == "REFERRAL_REQUIRED":
+            return 2
         if payload["prediction"]["available"]:
             return 0
         return 2 if not payload["compatibility"]["passed"] else 3

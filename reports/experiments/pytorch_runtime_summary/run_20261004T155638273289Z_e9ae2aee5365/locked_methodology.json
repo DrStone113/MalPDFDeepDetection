@@ -1,0 +1,25 @@
+{
+  "protocol": "maintenance; PyTorch/Python compatibility checks only",
+  "generating_cloud_commit": "e9ae2aee5365a2f27d807ac289e2453a44d51cf6",
+  "kernel": "nguyenkhang294/malpdf-pytorch313-qc-20261004-154850",
+  "supported_python": [
+    "3.11",
+    "3.13"
+  ],
+  "declared_torch": "2.11.0",
+  "declared_torchvision": "0.26.0",
+  "test_policy": "full synthetic suite; no datasets attached or research Test access",
+  "data_policy": "sealed committed code/tests and sanitized aggregate report fixtures; no individual identities or raw PDFs/caches/checkpoints uploaded",
+  "installation": "CPU wheels from official PyTorch index; Python3.13 fresh venv without system-site-packages; software-only network",
+  "prior_attempts": "ensurepip unavailable, then one missing fixture field; both failed attempts preserved; corrected fixture verified locally before final QC",
+  "seed": 42,
+  "code_commit": "e9ae2aee5365a2f27d807ac289e2453a44d51cf6",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

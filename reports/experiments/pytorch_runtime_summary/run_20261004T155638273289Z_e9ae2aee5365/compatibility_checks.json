@@ -1,0 +1,40 @@
+{
+  "python311": {
+    "python": "3.11.13",
+    "torch": "2.11.0+cpu",
+    "torchvision": "0.26.0+cpu",
+    "passed": 578,
+    "warnings": 2,
+    "pytest_seconds": 67.75,
+    "pip_check": 0,
+    "git_diff_check": 0,
+    "evidence": "reports/experiments/pytorch311_final_checks/run_20261004T154558757828Z_e9ae2aee5365"
+  },
+  "python313": {
+    "python": "3.13.15",
+    "torch": "2.11.0+cpu",
+    "torchvision": "0.26.0+cpu",
+    "passed": 578,
+    "warnings": 20,
+    "pytest_seconds": 90.88,
+    "pip_check": 0,
+    "fresh_venv_system_site_packages": false,
+    "verified_output_files": 10,
+    "verified_committed_code_or_aggregate_files": 215,
+    "sanitized_aggregate_json_fixtures": 3,
+    "newline_policy": "UTF-8 text sealed with normalized LF"
+  },
+  "legacy_ft_checkpoint": {
+    "checkpoint_checksum_verified": true,
+    "load_weights_only": true,
+    "strict_state_dict": true,
+    "synthetic_forward_rows": 2,
+    "finite_logits": true,
+    "previous_torch": "2.7.1",
+    "effective_torch": "2.11.0+cpu",
+    "real_dataset_inference": false,
+    "real_Test_evaluated": false
+  },
+  "test_inference": 0,
+  "test_evaluations": 0
+}

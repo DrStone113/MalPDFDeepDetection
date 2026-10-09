@@ -1,0 +1,36 @@
+{
+  "notebook": "nguyenkhang294/malpdfdetect",
+  "destination": "checkpoints/kaggle_import_run_20261003T081214414993Z_3b68d36a5705",
+  "attempts": {
+    "download": {
+      "exit_code": 1,
+      "command": [
+        "kaggle",
+        "kernels",
+        "output",
+        "nguyenkhang294/malpdfdetect",
+        "-p",
+        "/workspaces/MalPDFDeepDetection/checkpoints/kaggle_import_run_20261003T081214414993Z_3b68d36a5705",
+        "--file-pattern",
+        "(^|/)(vision_resnet_best\\.pt|vision_probs_(val|test|unlabeled)\\.csv|vision_selection_lock\\.json|output_checksums\\.json|run_summary\\.json|training_history\\.csv|locked_methodology\\.json|environment_metadata\\.json|model_comparison\\.csv|research_log\\.md)$"
+      ]
+    },
+    "listing": {
+      "exit_code": 0,
+      "command": [
+        "kaggle",
+        "kernels",
+        "list",
+        "--mine",
+        "--search",
+        "malpdfdetect",
+        "--csv",
+        "--page-size",
+        "20"
+      ]
+    }
+  },
+  "retrieved_files": [],
+  "kaggle_auth_method": "OAUTH (observed configuration; no token printed)",
+  "test_evaluation_performed": false
+}

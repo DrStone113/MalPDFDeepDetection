@@ -1,0 +1,15 @@
+{
+  "counter_profile": "Canonical PDFMalExtract v0.1 / RIT feature contract, reused without silent semantic changes",
+  "byte_features": "Literal byte occurrences with the released overlap rules; not parser-confirmed active-action reachability",
+  "preserved_reference_quirks": {
+    "Acroform": "Literal /Acroform, case sensitive",
+    "Colors": "Literal /Colors > 2^24",
+    "BaseEncoding": "Literal j/BaseEncoding"
+  },
+  "constant_exclusion_meaning": "Train zero variance in the declared counter profile; does not establish absence of all real PDF AcroForm, color or encoding structures",
+  "ObfuscationCount": "Actual raw PDF name-like tokens containing a valid #HH escape; each escaped token counted once; no encoded-stream inflation or malicious-intent claim",
+  "script_ratio": "(JS + JavaScript) / (1 + obj), using those declared raw counters",
+  "metadata_null_policy": "Unavailable values remain null and errors remain flagged in the saved raw table",
+  "missing_model_policy": "Native NaN boosting; RF/FT train-fold median plus ten fixed metadata flags; complete Markov input and finite generated probabilities need no imputation",
+  "static_security_boundary": "No rendering, embedded payload/action/URL execution or dynamic sandbox execution"
+}

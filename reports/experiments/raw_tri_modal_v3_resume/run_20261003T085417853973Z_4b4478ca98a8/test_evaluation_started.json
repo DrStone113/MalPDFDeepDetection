@@ -1,0 +1,6 @@
+{
+  "report": "reports/experiments/raw_tri_modal_v3_resume/run_20261003T085417853973Z_4b4478ca98a8",
+  "validation_lock_sha256": "636213baed0485ba77dd9a5ae361fe122e8c42f713c39a54fa88e39d6bfa8572",
+  "split_manifest_sha256": "7d1cb8cce4630adf4637d4f84b28a17330d77b9284fa3bdd273fdd18ea749e63",
+  "allowed_evaluations": 1
+}

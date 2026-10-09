@@ -1,0 +1,11 @@
+{
+  "cic_rows": 88,
+  "groups": 1,
+  "raw_feature_vectors": 1,
+  "benign": 37,
+  "malicious": 51,
+  "parser_failed_rows": 0,
+  "columns_with_missing_values_count": 0,
+  "all_branch_unique_scores": 1,
+  "interpretation": "Single vector has both publisher labels; limited stopping information. This does not establish identical PDFs or label errors."
+}

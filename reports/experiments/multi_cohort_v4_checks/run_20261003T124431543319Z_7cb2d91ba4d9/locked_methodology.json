@@ -1,0 +1,20 @@
+{
+  "policy": "Synthetic offline tests and maintenance only; no fitting or Test inference",
+  "new_tests": "Whole-group exact stratification; Train-only imputation; five GPU FT smoke folds; Test exclusivity",
+  "seed": 42,
+  "code_commit": "7cb2d91ba4d96165cd594388e31b8913d03c5dd0",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      "?? configs/multi_cohort_v4.yaml",
+      "?? scripts/13_multi_cohort_stacking_v4.py",
+      "?? src/malpdf/data/multi_cohort.py",
+      "?? src/malpdf/experiments/multi_cohort_gpu.py",
+      "?? src/malpdf/experiments/multi_cohort_v4.py",
+      "?? tests/test_multi_cohort_v4.py"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

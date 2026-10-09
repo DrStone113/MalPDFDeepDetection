@@ -1,0 +1,27 @@
+{
+  "protocol": "maintenance; no dataset access or Test evaluation",
+  "requested_python": [
+    "3.11",
+    "3.13"
+  ],
+  "dependencies": {
+    "torch": "2.11.0",
+    "torchvision": "0.26.0"
+  },
+  "installation": "official CPU wheels on Codespace; software-only installation",
+  "checks_source": "saved completed pytest/pip checks and checkpoint synthetic forward",
+  "seed": 42,
+  "code_commit": "579e337990c75a2fe6baca198d4f1f38a282ed37",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M .devcontainer/devcontainer.json",
+      " M AGENTS.md",
+      " M README.md",
+      " M pyproject.toml",
+      " M src/malpdf/experiments/static_development_handoff.py"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

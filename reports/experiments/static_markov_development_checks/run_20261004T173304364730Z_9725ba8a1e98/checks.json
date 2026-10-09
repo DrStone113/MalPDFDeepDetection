@@ -1,0 +1,19 @@
+{
+  "checks": {
+    "pip_check": {
+      "exit_code": 0
+    },
+    "diff_check": {
+      "exit_code": 0
+    },
+    "git_status": {
+      "exit_code": 0
+    }
+  },
+  "pytest": {
+    "passed": 588,
+    "warnings": 2,
+    "seconds": 66.73
+  },
+  "initial_collection_attempt": "Root editable install pointed to older checkout; rerun in project-installed worktree venv, targeted 35 passed then full 587/588 passed."
+}

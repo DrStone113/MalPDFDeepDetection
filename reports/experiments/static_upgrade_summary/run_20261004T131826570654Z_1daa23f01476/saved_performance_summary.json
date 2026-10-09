@@ -1,0 +1,11 @@
+{
+  "source": "reports/experiments/static_performance/run_20261004T130945651994Z_1daa23f01476",
+  "inference_previous_median_seconds": 1.5169445329993323,
+  "inference_current_median_seconds": 0.1921467020001728,
+  "inference_ratio": 7.89472063381014,
+  "probability_label_parity": "exact",
+  "read_hash_previous_median_seconds": 0.002823299999363371,
+  "read_hash_current_median_seconds": 0.0027330519997121883,
+  "read_hash_claim": "small observed difference with overlapping p95; no robust throughput claim",
+  "classification_metrics": "N/A: no held-out classification evaluation"
+}

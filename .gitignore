@@ -39,6 +39,7 @@ data/external/**
 # Models, checkpoints, experiment tracking, and generated artifacts
 artifacts/**
 !artifacts/.gitkeep
+.kaggle-malpdf-upload/
 checkpoints/
 runs/
 mlruns/
@@ -49,6 +50,15 @@ wandb/
 *.onnx
 *.joblib
 *.pkl
+
+# Private migration bundles and incomplete transfers
+*.bundle
+*.tar
+*.tar.*
+*.zip
+*.7z
+*.rar
+*.part
 
 # Generated reports and notebook state
 reports/figures/**

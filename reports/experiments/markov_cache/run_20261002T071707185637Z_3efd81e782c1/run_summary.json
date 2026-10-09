@@ -1,0 +1,49 @@
+{
+  "run_id": "run_20261002T071707185637Z_3efd81e782c1",
+  "started_at_utc": "2026-10-02T07:17:07.186312+00:00",
+  "seed": 42,
+  "code_commit_sha": "3efd81e782c1e7800299368b2b8aa3ef4c945852",
+  "git_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M .gitignore",
+      " M AGENTS.md",
+      " M README.md",
+      " M reports/research_log.md",
+      " M src/malpdf/static/safety.py",
+      "?? configs/markov_cache.yaml",
+      "?? configs/source_preparation.yaml",
+      "?? scripts/02_build_markov_cache.py",
+      "?? scripts/prepare_source_datasets.py",
+      "?? src/malpdf/data/manifest_validator.py",
+      "?? src/malpdf/data/markov_preparation.py",
+      "?? src/malpdf/data/source_preparation.py",
+      "?? src/malpdf/static/cache_manager.py",
+      "?? src/malpdf/static/markov.py",
+      "?? tests/test_markov_cache.py",
+      "?? tests/test_source_preparation.py"
+    ]
+  },
+  "status": "completed",
+  "created": 5,
+  "reused": 0,
+  "sample_count": 5,
+  "cache_directory": "data/processed/markov_cache",
+  "report_path": "reports/experiments/markov_cache/run_20261002T071707185637Z_3efd81e782c1/run_summary.json",
+  "inventory_path": "artifacts/markov_cache/run_20261002T071707185637Z_3efd81e782c1/cache_inventory.csv",
+  "provenance": {
+    "manifest_path": "data/processed/source_preparation/run_20261001T133833267219Z_3efd81e782c1/cve_t4pdf/source_pdf_manifest.csv",
+    "manifest_sha256": "3dd3412cfdd277b3b14ff198db807679557b3b32bcb20af8b2f2770610eea4aa",
+    "preparation_report_path": "artifacts/source_preparation/run_20261001T133833267219Z_3efd81e782c1/preparation_report.json",
+    "preparation_report_sha256": "415df4bd64300e01fd55e3315b9579aa5d330719409ba76d7cd33888c6d60b96",
+    "sample_count": 5,
+    "unique_pdf_hashes": 5,
+    "label_counts": {
+      "benign": 0,
+      "malicious": 5
+    },
+    "scope": "Independent CVE-T4PDF cohort; no RIT Protocol G assignment",
+    "raw_checksum_match_fraction": 1.0
+  },
+  "finished_at_utc": "2026-10-02T07:17:07.353366Z"
+}

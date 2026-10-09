@@ -1,0 +1,21 @@
+{
+  "protocol": "synthetic maintenance",
+  "kind": "full offline regression tests",
+  "reason": "same snapshot SHA guard between model scan and AST child",
+  "external_datasets_accessed": false,
+  "new_environment": "Python3.11 fresh artifacts/venvs/static_inspection; editable project .[dev] installed",
+  "seed": 42,
+  "code_commit": "fcd6395151c2aea135d901294135006ae301933f",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/analysis/static_acceleration_design.md",
+      " M src/malpdf/cli.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M src/malpdf/static/safety.py",
+      " M tests/test_static_acceleration.py"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

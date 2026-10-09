@@ -1,0 +1,8 @@
+seed: 42
+workers: auto
+manifest: data/processed/raw_pdf_cohort/run_20261002T140335782413Z_3b68d36a5705/source_pdf_manifest.csv
+preparation_report: artifacts/raw_pdf_cohort/run_20261002T140335782413Z_3b68d36a5705/source_preparation_report.json
+limits:
+  max_pdf_bytes: 10485760
+  max_metadata_bytes: 33554432
+  max_samples: 100000

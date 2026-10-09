@@ -1,0 +1,11 @@
+{
+  "policy": "Retain raw PDFs, Markov caches, installed packages and completed models. Remove only regenerable pip downloads and own incomplete numeric ZIP. No model fitting or Test evaluation.",
+  "seed": 42,
+  "code_commit": "c96868a21732a27472855c0f14dc46f8ea39b9a8",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

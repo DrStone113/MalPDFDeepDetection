@@ -1,0 +1,3 @@
+policy,entropy_unit,requested_referral_rate,referral_rate,coverage,referred_count,retained_count,fn_total,fn_referred,fn_retained,fn_catch_rate,fn_catch_rate_unavailable_reason,errors_referred,error_capture_rate,threshold,dynamic_samples_executed,referrals_counted_as_corrected,forced_parser_referrals
+top_entropy_10_percent,bits,0.1,0.09986225895316804,0.900137741046832,145,1307.0,214,0,214,0.0,,62.0,0.08794326241134752,0.037803058353758114,0,False,
+parser_referral_then_entropy_10_percent,bits,0.1,0.09986225895316804,0.900137741046832,145,,214,0,214,0.0,,,,,0,False,0.0

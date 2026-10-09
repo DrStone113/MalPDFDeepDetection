@@ -1,0 +1,8 @@
+{
+  "type": "ModuleNotFoundError",
+  "missing_package": "pymupdf",
+  "phase": "trusted numeric training module import",
+  "cloud_log": "artifacts/static_development_failure_135307/malpdf-static-development-20261004-135307.log",
+  "training_commit": "f951af11a2a36ee8e215f0fa695447041f1228ff",
+  "test_use": false
+}

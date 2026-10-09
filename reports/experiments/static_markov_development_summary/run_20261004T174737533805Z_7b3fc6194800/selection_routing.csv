@@ -1,0 +1,5 @@
+scheme,partition,coverage,referral_rate,referred_count,fn_total,fn_referred,fn_retained,fn_catch_rate
+structural,validation_threshold_selection_source_raw,0.9,0.1,73,0,0,0,
+structural,validation_threshold_selection_cic,0.8958333333333334,0.10416666666666667,5,3,0,3,0.0
+structural_markov,validation_threshold_selection_source_raw,0.9,0.1,73,0,0,0,
+structural_markov,validation_threshold_selection_cic,0.8958333333333334,0.10416666666666667,5,1,0,1,0.0

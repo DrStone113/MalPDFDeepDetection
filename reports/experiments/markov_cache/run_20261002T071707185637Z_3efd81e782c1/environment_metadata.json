@@ -1,0 +1,39 @@
+{
+  "python": "3.11.13",
+  "packages": {
+    "malpdf": "0.1.0",
+    "numpy": "2.4.6",
+    "pyyaml": "6.0.3"
+  },
+  "code_commit_sha": "3efd81e782c1e7800299368b2b8aa3ef4c945852",
+  "git_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M .gitignore",
+      " M AGENTS.md",
+      " M README.md",
+      " M reports/research_log.md",
+      " M src/malpdf/static/safety.py",
+      "?? configs/markov_cache.yaml",
+      "?? configs/source_preparation.yaml",
+      "?? scripts/02_build_markov_cache.py",
+      "?? scripts/prepare_source_datasets.py",
+      "?? src/malpdf/data/manifest_validator.py",
+      "?? src/malpdf/data/markov_preparation.py",
+      "?? src/malpdf/data/source_preparation.py",
+      "?? src/malpdf/static/cache_manager.py",
+      "?? src/malpdf/static/markov.py",
+      "?? tests/test_markov_cache.py",
+      "?? tests/test_source_preparation.py"
+    ]
+  },
+  "code_sha256": {
+    "src/malpdf/data/markov_preparation.py": "6643c216a773b04316072a2a057f80ba562acdd9f5344a4c09422276344f8a97",
+    "src/malpdf/data/manifest_validator.py": "edd89593c7d91b8430485d1824c68f5bab99dd1db517fb40f08b0b73a1e57053",
+    "src/malpdf/static/markov.py": "a755e02460bf2b12777b2005cd82c7d59d517d25f944c261f8ae5e89b37119c1",
+    "src/malpdf/static/cache_manager.py": "54dbf3137f927891c97aa3facbafcb169732504c048fc0fec744a92773cc85e9",
+    "src/malpdf/static/safety.py": "f5c578875e9674a7b31591d641971598d375e631e6e51ca2625ea1d4bf10aecf",
+    "scripts/02_build_markov_cache.py": "8c94c26aba3701b34cfc2646d9362638683b0a378bd3ceeeb7ec545e9929c7a2",
+    "configs/markov_cache.yaml": "0a0500631e18d55f514fdb6e028e1c729e551a342ffdbdec385916e04879a86c"
+  }
+}

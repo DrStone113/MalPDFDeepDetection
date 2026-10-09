@@ -1,0 +1,24 @@
+{
+  "pytest": {
+    "passed": 418,
+    "warnings": 2,
+    "seconds": 95.5,
+    "generating_commit": "def0ee6b76c9dd37e2dc95c0c98980ef9320a0a8"
+  },
+  "pip_check": "clean",
+  "git_diff_check": "passed",
+  "numeric_zip_members": 19979,
+  "matrices": 19962,
+  "raw_pdf_members": 0,
+  "raw_pdf_hashes_in_exported_text": 0,
+  "artifact_paths_gitignored": 138,
+  "main_staged_paths": 0,
+  "protected_history_files_unchanged": 299,
+  "research_log_append_only": true,
+  "bootstrap_from_actual_zip": "passed; 19962 rows, copied validation roles, portable code imports with zero PDF parser dependencies",
+  "code_commit": "def0ee6b76c9dd37e2dc95c0c98980ef9320a0a8",
+  "main_worktree": "dirty; intended task changes and prior local changes preserved",
+  "cpu_vision_run_status": "interrupted at explicit user request; all 25 tabular checkpoints retained; Test untouched",
+  "gpu_training": "pending execution on Kaggle",
+  "final_test_metrics": "N/A: awaiting GPU probability exports"
+}

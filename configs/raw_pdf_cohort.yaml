@@ -1,0 +1,12 @@
+seed: 42
+expected_samples: 19962
+inputs:
+- path: artifacts/raw_downloads/run_20261002T131549363589Z_3b68d36a5705/source_pdf_manifest.csv
+  sha256: 968e44203a310c5ad8e8745fb3a77002256a956f21bf610004a3d123f02c1d27
+- path: artifacts/raw_downloads/run_20261002T133145838160Z_3b68d36a5705/source_pdf_manifest.csv
+  sha256: 1afaeaed5d325f3aa3bc4edb2bb6b336b0e1ee09a0315187acabfe98b2e30f9a
+parser:
+  workers: 2
+  wall_seconds: 12
+  cpu_seconds: 8
+  memory_bytes: 2147483648

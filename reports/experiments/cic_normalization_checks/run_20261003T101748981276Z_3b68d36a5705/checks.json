@@ -1,0 +1,28 @@
+{
+  "pytest": {
+    "exit_code": 0,
+    "output_path": "artifacts/cic_normalization_checks/run_20261003T101748981276Z_3b68d36a5705/pytest.txt",
+    "sha256": "61006c8ae9e7061ee7687db8d632cf5e4a6a0f51290505b483ce679cae8a0289",
+    "passed": 501
+  },
+  "pip_check": {
+    "exit_code": 0,
+    "output_path": "artifacts/cic_normalization_checks/run_20261003T101748981276Z_3b68d36a5705/pip_check.txt",
+    "sha256": "9261363b733079a641c2e4cc9bc46ffa1d8336945a87f807b6cf68847dbc9b09"
+  },
+  "diff_check": {
+    "exit_code": 0,
+    "output_path": "artifacts/cic_normalization_checks/run_20261003T101748981276Z_3b68d36a5705/diff_check.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "cli_help": {
+    "exit_code": 0,
+    "output_path": "artifacts/cic_normalization_checks/run_20261003T101748981276Z_3b68d36a5705/cli_help.txt",
+    "sha256": "997661e6fdb80b2318d2eee6f7e5c05067ab77f943bc2751d7bb5c0b85ec4fe3"
+  },
+  "git_status": {
+    "exit_code": 0,
+    "output_path": "artifacts/cic_normalization_checks/run_20261003T101748981276Z_3b68d36a5705/git_status.txt",
+    "sha256": "dbe37adb94edb116992f908172d7e461c4978bba7d6718813ec6372f95f71814"
+  }
+}

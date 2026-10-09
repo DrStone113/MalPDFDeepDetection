@@ -1,0 +1,2 @@
+policy,coverage,fn_catch_rate,status,reason
+top_entropy_10_percent,N/A,N/A,blocked_missing_pdf_source,"Measured ObfuscationCount requires real PDF bytes for every Protocol G ID; no proxy, constant fill, foreign cohort or inferred file identity is permitted"

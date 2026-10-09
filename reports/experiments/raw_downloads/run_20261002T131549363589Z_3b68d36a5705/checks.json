@@ -1,0 +1,29 @@
+{
+  "pytest": {
+    "command": "python -m pytest tests/ -q",
+    "passed": 398,
+    "warnings": 2,
+    "exit_code": 0,
+    "evidence_path": "reports/experiments/raw_downloads/run_20261002T131549363589Z_3b68d36a5705/pytest_output.txt"
+  },
+  "pip_check": {
+    "command": "/tmp/malpdf-raw-venv-20261002/bin/python -m pip check",
+    "exit_code": 0,
+    "output": "No broken requirements found.\n"
+  },
+  "git_diff_check": {
+    "command": "git diff --check",
+    "exit_code": 0,
+    "output": ""
+  },
+  "git_status": {
+    "command": "git status --porcelain",
+    "exit_code": 0,
+    "output": " M README.md\n M pyproject.toml\n M reports/research_log.md\n M src/malpdf/data/vision_dataset.py\n M src/malpdf/evaluation/selective.py\n M src/malpdf/experiments/late_fusion_runner.py\n M src/malpdf/models/late_fusion.py\n?? configs/raw_datasets.yaml\n?? configs/safe_stacking_v3.yaml\n?? configs/tri_modal_fusion.yaml\n?? reports/experiments/late_fusion_v2/\n?? reports/experiments/markov_cache/\n?? reports/experiments/raw_downloads/\n?? reports/experiments/safe_stacking_v3/\n?? reports/experiments/tri_modal_fusion/\n?? reports/experiments/vision_resnet/\n?? scripts/05_evaluate_tri_modal_fusion.py\n?? scripts/06_optimize_and_stack_v3_safe.py\n?? scripts/download_raw_datasets.py\n?? src/malpdf/data/raw_downloads.py\n?? src/malpdf/experiments/safe_stacking_v3.py\n?? src/malpdf/experiments/tri_modal_runner.py\n?? src/malpdf/models/safe_stacking.py\n?? src/malpdf/models/v3_base_learners.py\n?? src/malpdf/static/obfuscation.py\n?? tests/test_raw_downloads.py\n?? tests/test_safe_stacking_v3.py\n?? tests/test_tri_modal_fusion.py\n"
+  },
+  "current_module_sha256": "c7746d9b5750db3e9b662f06992cd1d6827fbca3c51b474d675757bc2b3cd5be",
+  "generating_module_sha256": "b40736083043a1359ce73bd4138668ac00be7fdc2010e749de4d301616bd58e3",
+  "generating_code_snapshot": "artifacts/raw_downloads/run_20261002T131549363589Z_3b68d36a5705/generating_raw_downloads.py",
+  "protected_previous_files": 190,
+  "sample_identities_in_git": false
+}

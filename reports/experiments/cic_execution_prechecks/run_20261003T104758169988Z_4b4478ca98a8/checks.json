@@ -1,0 +1,23 @@
+{
+  "pytest": {
+    "exit_code": 0,
+    "evidence": "artifacts/cic_execution_prechecks/run_20261003T104758169988Z_4b4478ca98a8/pytest.txt",
+    "sha256": "6dd37162ec6a9614c52a8711b901935997c8809cc3079ebfeb52cfe2d3f6ea7a",
+    "passed": 509
+  },
+  "pip_check": {
+    "exit_code": 0,
+    "evidence": "artifacts/cic_execution_prechecks/run_20261003T104758169988Z_4b4478ca98a8/pip_check.txt",
+    "sha256": "9261363b733079a641c2e4cc9bc46ffa1d8336945a87f807b6cf68847dbc9b09"
+  },
+  "diff_check": {
+    "exit_code": 0,
+    "evidence": "artifacts/cic_execution_prechecks/run_20261003T104758169988Z_4b4478ca98a8/diff_check.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "git_status": {
+    "exit_code": 0,
+    "evidence": "artifacts/cic_execution_prechecks/run_20261003T104758169988Z_4b4478ca98a8/git_status.txt",
+    "sha256": "4be86fd76ba896af449bb3c58ce6c707f2d81f510d6975a3ae4f55d96cc9c4bb"
+  }
+}

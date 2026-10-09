@@ -1,0 +1,24 @@
+{
+  "status": "completed_with_rejections",
+  "main_run": "run_20261002T131549363589Z_3b68d36a5705",
+  "s3_followup_run": "run_20261002T133145838160Z_3b68d36a5705",
+  "archives_successfully_decrypted": 5,
+  "unique_pdfs_verified": 19962,
+  "labels": {
+    "1_malicious": 10972,
+    "0_benign": 8986,
+    "unlabeled": 4
+  },
+  "rejected_archive_members": 19,
+  "duplicate_clean_archive_members": 14,
+  "cross_run_duplicate_pdfs": 0,
+  "network_downloaded_bytes": 0,
+  "publisher_md5_archives_verified": 2,
+  "generating_commit": "3b68d36a570531058543170e2debc7d5805e6bb5",
+  "worktree": "dirty",
+  "metrics": "N/A: static acquisition only, no model evaluation",
+  "ece_convention": "10 equal-width probability bins when evaluated",
+  "protocol_g_split_unchanged": true,
+  "password_evidence": "Only candidate indices and bounded CRC verification are recorded; values remain in the supplied environment",
+  "finished_at_utc": "2026-10-02T13:37:06.229802+00:00"
+}

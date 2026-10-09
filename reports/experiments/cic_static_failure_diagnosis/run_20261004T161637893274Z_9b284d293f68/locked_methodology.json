@@ -1,0 +1,21 @@
+{
+  "protocol": "retrospective saved Train/Validation diagnosis; Protocol G seed42",
+  "source_run": "run_20261004T140504491340Z_579e337990c7",
+  "purpose": "explain CIC53.125% using saved probabilities and existing numeric feature tables",
+  "no_new_training": true,
+  "no_new_threshold_selection": true,
+  "test_policy": "no Test predictions, scoring or feature analysis; established partitions and four Validation roles preserved",
+  "identity_policy": "aggregate input-equivalence counts only; feature equivalence does not prove duplicate files or wrong labels",
+  "external_sources": [
+    "https://www.unb.ca/cic/datasets/pdfmal-2022.html",
+    "https://scikit-learn.org/stable/modules/calibration.html"
+  ],
+  "seed": 42,
+  "code_commit": "9b284d293f686f09a0f90d65b4259cd501fa769b",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

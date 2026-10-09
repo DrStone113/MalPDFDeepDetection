@@ -1,0 +1,57 @@
+{
+  "evaluated_rows": 1452,
+  "input_referrals": 28,
+  "source_identity_exclusions": 8386,
+  "source_feature_group_exclusions": 146,
+  "unsupported_identifiers": 11,
+  "external_evaluation_count": 1,
+  "base_models_refitted": 0,
+  "meta_models_refitted": 0,
+  "original_cic_table_rows": 10023,
+  "unresolved_source_label_conflicts": 3727,
+  "malicious_label_rows": 800,
+  "benign_label_rows": 652,
+  "majority_label_accuracy": 0.5509641873278237,
+  "metrics": {
+    "positive_label": 1,
+    "accuracy": 0.5144628099173554,
+    "precision_malicious": 0.5441039925719592,
+    "recall_malicious": 0.7325,
+    "f1_malicious": 0.6244006393180608,
+    "precision_macro": 0.48671866295264626,
+    "recall_macro": 0.4897162576687117,
+    "f1_macro": 0.4689676030085922,
+    "precision": 0.5441039925719592,
+    "recall": 0.7325,
+    "f1": 0.6244006393180608,
+    "mcc": -0.02337364738417862,
+    "confusion_matrix": [
+      [
+        161,
+        491
+      ],
+      [
+        214,
+        586
+      ]
+    ],
+    "confusion_matrix_labels": [
+      0,
+      1
+    ],
+    "roc_auc": 0.4784365414110429,
+    "pr_auc": 0.5452707208807788,
+    "score_source": null,
+    "brier": 0.46416972157734154,
+    "log_loss": 1.788034634062197,
+    "ece": 0.46148687832800944,
+    "ece_bins": 10,
+    "threshold": 0.037803058353758114
+  },
+  "entropy_referrals": 145,
+  "static_coverage": 0.900137741046832,
+  "fn_total": 214,
+  "fn_catch_rate": 0.0,
+  "ground_truth": "Publisher labels unchanged; not independently adjudicated",
+  "claim_limit": "No whole-CIC or demonstrated multi-threat/zero-day resilience claim"
+}

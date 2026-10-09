@@ -1,0 +1,22 @@
+{
+  "protocol": "maintenance; numeric cloud training dependency boundary",
+  "scope": "Parser-free imports and complete offline unit suite; no real-data training",
+  "seed": 42,
+  "code_commit": "f951af11a2a36ee8e215f0fa695447041f1228ff",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      " M src/malpdf/evaluation/selective.py",
+      " M src/malpdf/experiments/raw_tri_modal_v3.py",
+      " M src/malpdf/experiments/static_development.py",
+      " M src/malpdf/experiments/static_development_handoff.py",
+      " M src/malpdf/static/__init__.py",
+      " M tests/test_static_development.py",
+      "?? reports/experiments/static_development_gpu_failure/",
+      "?? reports/experiments/static_development_gpu_launch/run_20261004T135306926504Z_f951af11a2a3/"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

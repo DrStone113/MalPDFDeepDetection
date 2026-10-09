@@ -50,7 +50,10 @@ def read_bounded_bytes(path: Path, *, boundary: Path, max_bytes: int) -> bytes:
             raise ValueError("Opened input exceeds the regular-file/byte cap")
         if (initial.st_dev, initial.st_ino) != (before.st_dev, before.st_ino):
             raise ValueError("Input changed before opening")
-        data = handle.read(max_bytes + 1)
+        # Read the verified size plus one sentinel byte, rather than allocating
+        # the entire allowed cap for every small file. Growth still fails the
+        # length/identity checks below, even when the file grows beyond this read.
+        data = handle.read(before.st_size + 1)
         after = os.fstat(handle.fileno())
     identity = lambda info: (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
     if len(data) > max_bytes or len(data) != before.st_size or identity(before) != identity(after):

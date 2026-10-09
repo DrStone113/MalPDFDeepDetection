@@ -1,0 +1,16 @@
+{
+  "command": [
+    "kaggle",
+    "kernels",
+    "files",
+    "nguyenkhang294/malpdfdetect",
+    "--csv",
+    "--page-size",
+    "100"
+  ],
+  "exit_code": 0,
+  "authentication_setup_required": false,
+  "download_performed": false,
+  "test_evaluation_performed": false,
+  "evidence": "artifacts/kaggle_output_access/run_20261003T080727124067Z_3b68d36a5705/kaggle_files_output.txt"
+}

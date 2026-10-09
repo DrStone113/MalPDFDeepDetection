@@ -1,0 +1,31 @@
+{
+  "kind": "maintenance: CPU concurrency and GPU Vision performance controls",
+  "seed": 42,
+  "code_checkout": "/tmp/malpdf-kaggle-performance-code-20261003T071535Z",
+  "branch": "codex/kaggle-performance-20261003T071535Z",
+  "policy": "Offline synthetic tests only; no raw cohort rerun, training or Test evaluation",
+  "code_commit": "def0ee6b76c9dd37e2dc95c0c98980ef9320a0a8",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M .gitignore",
+      " M AGENTS.md",
+      " M README.md",
+      " M configs/kaggle_vision.yaml",
+      " M configs/raw_markov_cache.yaml",
+      " M notebooks/kaggle_vision_resnet18.ipynb",
+      " M scripts/02_build_markov_cache.py",
+      " M src/malpdf/data/kaggle_export.py",
+      " M src/malpdf/data/markov_preparation.py",
+      " M src/malpdf/deep_learning/training.py",
+      " M src/malpdf/experiments/kaggle_vision_runner.py",
+      " M tests/test_deep_learning_protocol_g.py",
+      " M tests/test_kaggle_handoff.py",
+      " M tests/test_markov_cache.py",
+      "?? scripts/11_export_kaggle_performance_notebook.py",
+      "?? src/malpdf/data/kaggle_notebook.py"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

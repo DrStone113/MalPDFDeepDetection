@@ -1,0 +1,43 @@
+{
+  "seed": 42,
+  "folds": 5,
+  "study_mode": "markov_profiles",
+  "schemes": [
+    "cohort_group_class"
+  ],
+  "feature_variants": [
+    "structural",
+    "structural_markov"
+  ],
+  "profile_workers": 2,
+  "regularization_cs": [
+    0.1,
+    1.0,
+    10.0
+  ],
+  "ece_bins": 10,
+  "test_policy": "no_test_inference_or_metrics",
+  "bundle_metadata_sha256": "2f6372e9b5d4ab1a844c5f77b757863b74ffab6cef25b1a75b7ef03ffe2c8bd0",
+  "kaggle_dataset": "nguyenkhang294/malpdf-v4-delta-20261003-135304",
+  "additional_existing_datasets": [
+    "nguyenkhang294/malpdf-markov-cache"
+  ],
+  "cpu_threads": 2,
+  "max_run_seconds": 7200,
+  "code_commit": "7b3fc619480079024d3de11d6087296bcfddea11",
+  "base_fit": "saved Train fitting folds only; Train-only preprocessing",
+  "ft_checkpoint_selection": "equal cohort/group mass in new Validation base_selection loss",
+  "validation_roles": "new diverse group-count allocation within existing Validation; original files unchanged",
+  "meta_fit": "Validation meta_fit",
+  "platt_fit": "Validation calibration_fit",
+  "candidate_and_youden_selection": "Validation threshold_selection only",
+  "selection_tie_breaker": "macro-cohort MCC, minimum cohort MCC, macro F1, lower macro Brier, declared candidate order",
+  "balanced_train": "equal cohort/class mass; inverse group multiplicity within each cohort/class; mean weight one",
+  "balanced_validation": "equal cohort mass within each separate fitting/selection role",
+  "ft_weighting": "seeded replacement sampling; unchanged BCE and batch/epoch budgets",
+  "no_refit": true,
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width bins; p=1 last bin",
+  "vision": "existing ResNet unchanged; this is a five-branch static ablation, not a new tri-modal Test evaluation",
+  "interpretation": "Previously exposed Test sets excluded. Validation improvements require a future independent cohort confirmation."
+}

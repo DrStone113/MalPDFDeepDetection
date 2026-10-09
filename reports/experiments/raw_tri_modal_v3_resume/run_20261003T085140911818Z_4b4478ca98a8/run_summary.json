@@ -1,0 +1,160 @@
+{
+  "run_id": "run_20261003T085140911818Z_4b4478ca98a8",
+  "study": "raw_tri_modal_v3_resume",
+  "status": "completed",
+  "started_at_utc": "2026-10-03T08:51:40.938205+00:00",
+  "code_commit": "4b4478ca98a814a9b3f5dfb64e5b5adc664bb2c1",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M .gitignore",
+      " M AGENTS.md",
+      " M README.md",
+      " M pyproject.toml",
+      " M reports/research_log.md",
+      " M scripts/02_build_markov_cache.py",
+      " M src/malpdf/data/manifest_validator.py",
+      " M src/malpdf/data/markov_preparation.py",
+      " M src/malpdf/data/vision_dataset.py",
+      " M src/malpdf/deep_learning/training.py",
+      " M src/malpdf/evaluation/selective.py",
+      " M src/malpdf/experiments/late_fusion_runner.py",
+      " M src/malpdf/models/late_fusion.py",
+      " M src/malpdf/static/cache_manager.py",
+      " M src/malpdf/static/rit_reference.py",
+      " M tests/test_deep_learning_protocol_g.py",
+      " M tests/test_markov_cache.py",
+      "?? configs/kaggle_vision.yaml",
+      "?? configs/raw_datasets.yaml",
+      "?? configs/raw_markov_cache.yaml",
+      "?? configs/raw_pdf_cohort.yaml",
+      "?? configs/raw_tri_modal_v3.yaml",
+      "?? configs/safe_stacking_v3.yaml",
+      "?? configs/tri_modal_fusion.yaml",
+      "?? notebooks/kaggle_vision_resnet18.ipynb",
+      "?? reports/experiments/kaggle_handoff/",
+      "?? reports/experiments/kaggle_handoff_checks/",
+      "?? reports/experiments/kaggle_notebook_fix/",
+      "?? reports/experiments/kaggle_notebook_inspection/",
+      "?? reports/experiments/kaggle_output_access/",
+      "?? reports/experiments/kaggle_output_access_checks/",
+      "?? reports/experiments/kaggle_output_download/",
+      "?? reports/experiments/kaggle_output_handoff/",
+      "?? reports/experiments/kaggle_output_identity_audit/",
+      "?? reports/experiments/kaggle_output_recheck/",
+      "?? reports/experiments/kaggle_performance/",
+      "?? reports/experiments/kaggle_performance_bootstrap/",
+      "?? reports/experiments/kaggle_performance_checks/",
+      "?? reports/experiments/kaggle_saved_version_inspection/",
+      "?? reports/experiments/kaggle_vision_import/",
+      "?? reports/experiments/late_fusion_v2/",
+      "?? reports/experiments/markov_cache/",
+      "?? reports/experiments/raw_downloads/",
+      "?? reports/experiments/raw_pdf_cohort/",
+      "?? reports/experiments/raw_tri_modal_resume_checks/",
+      "?? reports/experiments/raw_tri_modal_resume_seal/",
+      "?? reports/experiments/raw_tri_modal_v3/",
+      "?? reports/experiments/raw_tri_modal_v3_resume/",
+      "?? reports/experiments/safe_stacking_v3/",
+      "?? reports/experiments/tri_modal_final_prechecks/",
+      "?? reports/experiments/tri_modal_fusion/",
+      "?? reports/experiments/vision_resnet/",
+      "?? scripts/05_evaluate_tri_modal_fusion.py",
+      "?? scripts/06_optimize_and_stack_v3_safe.py",
+      "?? scripts/07_prepare_raw_pdf_cohort.py",
+      "?? scripts/08_train_raw_tri_modal_v3.py",
+      "?? scripts/09_resume_raw_tri_modal_v3.py",
+      "?? scripts/10_export_kaggle_markov.py",
+      "?? scripts/11_export_kaggle_performance_notebook.py",
+      "?? scripts/download_raw_datasets.py",
+      "?? src/malpdf/data/kaggle_export.py",
+      "?? src/malpdf/data/kaggle_notebook.py",
+      "?? src/malpdf/data/markov_arrays.py",
+      "?? src/malpdf/data/raw_cohort.py",
+      "?? src/malpdf/data/raw_downloads.py",
+      "?? src/malpdf/experiments/kaggle_vision_runner.py",
+      "?? src/malpdf/experiments/raw_tri_modal_resume.py",
+      "?? src/malpdf/experiments/raw_tri_modal_v3.py",
+      "?? src/malpdf/experiments/safe_stacking_v3.py",
+      "?? src/malpdf/experiments/tri_modal_runner.py",
+      "?? src/malpdf/models/safe_stacking.py",
+      "?? src/malpdf/models/v3_base_learners.py",
+      "?? src/malpdf/provenance/",
+      "?? src/malpdf/static/obfuscation.py",
+      "?? tests/test_kaggle_handoff.py",
+      "?? tests/test_raw_downloads.py",
+      "?? tests/test_raw_pdf_cohort.py",
+      "?? tests/test_raw_tri_modal_resume.py",
+      "?? tests/test_raw_tri_modal_v3.py",
+      "?? tests/test_safe_stacking_v3.py",
+      "?? tests/test_tri_modal_fusion.py"
+    ]
+  },
+  "seed": 42,
+  "report_path": "reports/experiments/raw_tri_modal_v3_resume/run_20261003T085140911818Z_4b4478ca98a8/run_summary.json",
+  "artifact_path": "artifacts/raw_tri_modal_v3_resume/run_20261003T085140911818Z_4b4478ca98a8",
+  "metrics": {},
+  "prior_tabular_run": "run_20261002T143830529362Z_fa463d2ed5c4",
+  "handoff_run": "run_20261002T154708928029Z_def0ee6b76c9",
+  "inputs": {
+    "dataset": {
+      "path": "data/processed/raw_pdf_cohort/run_20261002T142323844991Z_3b68d36a5705/labeled_features.csv",
+      "sha256": "cdbe817de970e7ab0af46be32ebf7c3d32341915b06f48836a97a91dc35fc212"
+    },
+    "split_manifest": {
+      "path": "data/processed/raw_pdf_cohort/run_20261002T142323844991Z_3b68d36a5705/protocol_g_seed42_split_manifest.csv",
+      "sha256": "7d1cb8cce4630adf4637d4f84b28a17330d77b9284fa3bdd273fdd18ea749e63"
+    },
+    "source_manifest": {
+      "path": "data/processed/raw_pdf_cohort/run_20261002T142323844991Z_3b68d36a5705/source_pdf_manifest.csv",
+      "sha256": "db4e73ef7bac6a2c2c1b845df999d96156efca7b954b1ea2a7f5ca6931f0ee68"
+    },
+    "all_features": {
+      "path": "data/processed/raw_pdf_cohort/run_20261002T142323844991Z_3b68d36a5705/all_raw_features.csv",
+      "sha256": "f2affc133ae287e27fe943850aebbf54e599a6c439d8d3b6f231b089981b10cc"
+    }
+  },
+  "partition_rows": {
+    "train": 11931,
+    "test": 4050,
+    "validation": 3977
+  },
+  "vision_rows": {
+    "validation": 3977,
+    "test": 4050
+  },
+  "tabular_checkpoints_verified": 25,
+  "validation_role_rows": {
+    "base_selection": 1525,
+    "meta_fit": 818,
+    "calibration_fit": 817,
+    "threshold_selection": 817
+  },
+  "test_evaluation_count": 0,
+  "unknown_rows": 4,
+  "unknown_prediction_status": "Not requested; unlabeled Vision CSV not imported",
+  "vision": {
+    "run_id": "run_20261003T075329107712Z_34993818996a",
+    "code_commit": "34993818996a7ffaa3ca1bd4e836a35ee68c7154",
+    "bundle_metadata_sha256": "d961bba1f2eee7b924be7eaf56a5dcf7c6609067a7c0666d30bc1ba4db83be62",
+    "checkpoint_sha256": "8417ed730cadf300f1fba0a8f77cc8e4b33d8a3f7a579646f59365a67654a05b",
+    "best_epoch": 19,
+    "selected_role": "validation_base_selection",
+    "selection_rows": 1525,
+    "csv_sha256": {
+      "vision_probs_val.csv": "1ad918c368cf90f1757de5ad33dc527f60e1aed01802e7e07d1c90e410e284d9",
+      "vision_probs_test.csv": "fa780a6eaaec7aa6c5667a11e1648a2d44b10a861d6d25cf33534f20d0a7bfd4"
+    },
+    "provenance_sha256": {
+      "vision_selection_lock.json": "f0033a33406fb10cc32ed51fd3d0d3b1bb11e2c11dc385f68323790ae64025cb",
+      "output_checksums.json": "c107e9ec00b870febf9a606eb65b9b1242d6c8d0f1ab9c3c99ef2b0ce7085315",
+      "run_summary.json": "56945e1ec4f5dbaf383d946d2e8ed268ff5c81eab7bcf9a1285dc4d2d72e6120"
+    }
+  },
+  "notes": "Preflight only; no fit, inference or Test metric computation",
+  "finished_at_utc": "2026-10-03T08:52:34.590937+00:00"
+}

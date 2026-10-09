@@ -1,0 +1,30 @@
+{
+  "pip_check": {
+    "exit_code": 0,
+    "evidence": "artifacts/multi_cohort_v4_summary/run_20261003T141326724334Z_b6e45a7dafff/pip_check.txt"
+  },
+  "code_diff_check": {
+    "exit_code": 0,
+    "evidence": "artifacts/multi_cohort_v4_summary/run_20261003T141326724334Z_b6e45a7dafff/code_diff_check.txt"
+  },
+  "code_status": {
+    "exit_code": 0,
+    "evidence": "artifacts/multi_cohort_v4_summary/run_20261003T141326724334Z_b6e45a7dafff/code_status.txt"
+  },
+  "main_diff_check": {
+    "exit_code": 0,
+    "evidence": "artifacts/multi_cohort_v4_summary/run_20261003T141326724334Z_b6e45a7dafff/main_diff_check.txt"
+  },
+  "main_status": {
+    "exit_code": 0,
+    "evidence": "artifacts/multi_cohort_v4_summary/run_20261003T141326724334Z_b6e45a7dafff/main_status.txt"
+  },
+  "pytest": {
+    "passed": 531,
+    "warnings": 2,
+    "exit_code": 0,
+    "evidence": "artifacts/multi_cohort_v4_mount_fix_checks/run_20261003T134827018732Z_6034e0785356/pytest.txt",
+    "sha256": "f69913794999af1f73d2ee1cd2b55b5ffa8e4620c915d35b71c7ec2971a30be9",
+    "current_generating_source_hashes_match": true
+  }
+}

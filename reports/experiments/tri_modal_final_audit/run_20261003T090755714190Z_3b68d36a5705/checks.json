@@ -1,0 +1,45 @@
+{
+  "commands": {
+    "pytest": {
+      "exit_code": 0,
+      "elapsed_seconds": 61.238787605999846,
+      "evidence": "artifacts/tri_modal_final_audit/run_20261003T090755714190Z_3b68d36a5705/pytest.txt"
+    },
+    "pip_check": {
+      "exit_code": 0,
+      "elapsed_seconds": 1.2111566759999732,
+      "evidence": "artifacts/tri_modal_final_audit/run_20261003T090755714190Z_3b68d36a5705/pip_check.txt"
+    },
+    "git_diff_check": {
+      "exit_code": 0,
+      "elapsed_seconds": 0.01585234499998478,
+      "evidence": "artifacts/tri_modal_final_audit/run_20261003T090755714190Z_3b68d36a5705/git_diff_check.txt"
+    },
+    "git_status": {
+      "exit_code": 0,
+      "elapsed_seconds": 0.009339737999880526,
+      "evidence": "artifacts/tri_modal_final_audit/run_20261003T090755714190Z_3b68d36a5705/git_status.txt"
+    }
+  },
+  "source_matches_experiment_commit": true,
+  "source_files_verified": 174,
+  "experiment_status": "completed",
+  "test_evaluation_count": 1,
+  "model_comparison_rows_verified": 10,
+  "research_log_metric_rows_verified": 10,
+  "test_guard_preserved": true,
+  "unsafe_artifact_ignore_coverage": true,
+  "staged_paths": [],
+  "report_sha256": {
+    "reports/experiments/raw_tri_modal_v3_resume/run_20261003T085417853973Z_4b4478ca98a8/locked_methodology.json": "2a4097463dadca25a2d0070cf6abfea8d6ca1b91404cc9940c283645b48c17f4",
+    "reports/experiments/raw_tri_modal_v3_resume/run_20261003T085417853973Z_4b4478ca98a8/validation_lock.json": "636213baed0485ba77dd9a5ae361fe122e8c42f713c39a54fa88e39d6bfa8572",
+    "reports/experiments/raw_tri_modal_v3_resume/run_20261003T085417853973Z_4b4478ca98a8/test_evaluation_started.json": "e8b8eb04a051415b96623039d3397faf9c5601d996100f08215e5a250a6909f9",
+    "reports/experiments/raw_tri_modal_v3_resume/run_20261003T085417853973Z_4b4478ca98a8/test_metrics.json": "ba64abaa9dbcb60ac0c67c33087b91be32bbefbe7147558272cce79865457afe",
+    "reports/experiments/raw_tri_modal_v3_resume/run_20261003T085417853973Z_4b4478ca98a8/model_comparison.csv": "8fca571c5014fbf3370f71f93a4491f8c3c12081e456b29c57cfa77c8d93ac44",
+    "reports/experiments/raw_tri_modal_v3_resume/run_20261003T085417853973Z_4b4478ca98a8/routing_analysis.csv": "3baf279319ef932b24e101217d7d253e5cef8365e089930d6eedfe1771f07b79",
+    "reports/experiments/raw_tri_modal_v3_resume/run_20261003T085417853973Z_4b4478ca98a8/run_summary.json": "43ee7b03af330e0a6231bb3243e62983b650c02b8b0d0e2e026acc675fd3a174",
+    "artifacts/raw_tri_modal_v3_test_locks/7d1cb8cce4630adf4637d4f84b28a17330d77b9284fa3bdd273fdd18ea749e63.json": "e8b8eb04a051415b96623039d3397faf9c5601d996100f08215e5a250a6909f9"
+  },
+  "model_fitting_performed": false,
+  "test_metric_computation_performed": false
+}

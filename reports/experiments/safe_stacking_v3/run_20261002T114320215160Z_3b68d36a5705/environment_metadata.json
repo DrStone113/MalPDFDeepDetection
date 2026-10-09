@@ -1,0 +1,53 @@
+{
+  "python": "3.11.13",
+  "packages": {
+    "malpdf": "0.1.0",
+    "numpy": "2.4.6",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.9.1",
+    "torch": "2.7.1",
+    "xgboost": "3.2.0",
+    "lightgbm": "4.7.0",
+    "catboost": "1.2.10"
+  },
+  "cpu_threads": 2,
+  "code_commit_sha": "3b68d36a570531058543170e2debc7d5805e6bb5",
+  "git_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M pyproject.toml",
+      " M reports/research_log.md",
+      " M src/malpdf/data/vision_dataset.py",
+      " M src/malpdf/evaluation/selective.py",
+      " M src/malpdf/experiments/late_fusion_runner.py",
+      " M src/malpdf/models/late_fusion.py",
+      "?? configs/safe_stacking_v3.yaml",
+      "?? configs/tri_modal_fusion.yaml",
+      "?? reports/experiments/late_fusion_v2/",
+      "?? reports/experiments/markov_cache/",
+      "?? reports/experiments/tri_modal_fusion/",
+      "?? reports/experiments/vision_resnet/",
+      "?? scripts/05_evaluate_tri_modal_fusion.py",
+      "?? scripts/06_optimize_and_stack_v3_safe.py",
+      "?? src/malpdf/experiments/safe_stacking_v3.py",
+      "?? src/malpdf/experiments/tri_modal_runner.py",
+      "?? src/malpdf/models/safe_stacking.py",
+      "?? src/malpdf/models/v3_base_learners.py",
+      "?? src/malpdf/static/obfuscation.py",
+      "?? tests/test_safe_stacking_v3.py",
+      "?? tests/test_tri_modal_fusion.py"
+    ]
+  },
+  "code_sha256": {
+    "pyproject.toml": "b5343b14fc6c244520d57ab0cd97d59af50b85217879f3183358597e11122836",
+    "configs/safe_stacking_v3.yaml": "2f704d8c2926ac808c0d6d3164a9b04e903f89597e7649daba1a19a977e0ca76",
+    "scripts/06_optimize_and_stack_v3_safe.py": "cef40f73c068179bee54ffb86a03c5ed828da419897a9ae12efdf7c9660d078e",
+    "src/malpdf/experiments/safe_stacking_v3.py": "d3de475d754b2e1eb7a2884edea2fc426d7b9c9f15b6faaa7191874d525186ad",
+    "src/malpdf/models/safe_stacking.py": "665f06fcef695e2131675739359c8e31a02ab4943f6ec1d05de8914c1e4d2481",
+    "src/malpdf/models/v3_base_learners.py": "3ae96b7895d790ab55185f1bd2cd84ceccd54a5d9206fdd8193ac45c472e88b8",
+    "src/malpdf/static/obfuscation.py": "a2da41944a5432c50c79a71464d3f3b09ba95167a7efc12d682a0078c674b02d",
+    "src/malpdf/evaluation/selective.py": "599cc762301031475fe6e7e9531530095f95fcdfa53659fb3121a8bc68b5be6e",
+    "src/malpdf/models/late_fusion.py": "45d1c65d134cb40ae5ab870dc0819e8bd3dba176148b4837153a2d26059ad2a3"
+  }
+}

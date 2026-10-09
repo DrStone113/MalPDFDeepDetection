@@ -1,0 +1,131 @@
+{
+  "configuration": {
+    "seed": 42,
+    "folds": 5,
+    "inputs": {
+      "dataset": {
+        "path": "data/processed/source_preparation/run_20261001T132125227224Z_3efd81e782c1/rit/rit-pdfmal-2026.csv",
+        "sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623"
+      },
+      "split_manifest": {
+        "path": "data/processed/rit-pdfmal-2026_split_manifest.csv",
+        "sha256": "802c3962bc537ed78f63c5b1a5308e09df357a096f703846d0e5fe57598b4e21"
+      },
+      "source_manifest": {
+        "path": "data/processed/source_preparation/run_20261001T133833267219Z_3efd81e782c1/cve_t4pdf/source_pdf_manifest.csv",
+        "sha256": "3dd3412cfdd277b3b14ff198db807679557b3b32bcb20af8b2f2770610eea4aa"
+      }
+    },
+    "cpu_threads": 2,
+    "models": {
+      "xgboost": {
+        "n_estimators": 400,
+        "max_depth": 6,
+        "learning_rate": 0.05
+      },
+      "lightgbm": {
+        "n_estimators": 400,
+        "num_leaves": 31,
+        "learning_rate": 0.05,
+        "min_child_samples": 20,
+        "reg_lambda": 1.0
+      },
+      "catboost": {
+        "iterations": 400,
+        "depth": 6,
+        "learning_rate": 0.05,
+        "l2_leaf_reg": 3.0
+      },
+      "random_forest": {
+        "n_estimators": 300,
+        "max_depth": null,
+        "min_samples_leaf": 1
+      },
+      "ft_transformer": {
+        "input_features": 40,
+        "d_token": 32,
+        "n_blocks": 2,
+        "n_heads": 4,
+        "d_ffn": 128,
+        "attention_dropout": 0.1,
+        "ffn_dropout": 0.1
+      }
+    },
+    "training": {
+      "batch_size": 256,
+      "max_epochs": 60,
+      "patience": 8,
+      "learning_rate": 0.001,
+      "weight_decay": 0.0001,
+      "min_delta": 0.0
+    },
+    "meta_regularization_cs": [
+      0.1,
+      1.0,
+      10.0
+    ]
+  },
+  "seed": 42,
+  "folds": 5,
+  "features": [
+    "pdfsize",
+    "metadata size",
+    "pages",
+    "xref length",
+    "title length",
+    "isEncrypted",
+    "embedded files",
+    "images",
+    "contains_text",
+    "pdf_ver",
+    "obj",
+    "endobj",
+    "stream",
+    "endstream",
+    "trailer",
+    "xref",
+    "startxref",
+    "page_command",
+    "Encrypt",
+    "ObjStm",
+    "JS",
+    "JavaScript",
+    "AA",
+    "OpenAction",
+    "JBIG2Decode",
+    "RichMedia",
+    "Launch",
+    "EmbeddedFile",
+    "XFA",
+    "URI",
+    "Encoding",
+    "ProcSet",
+    "Registry",
+    "Resources",
+    "www",
+    "server",
+    "Root",
+    "BitsPerComponent",
+    "script_ratio",
+    "ObfuscationCount"
+  ],
+  "only_dropped_features": [
+    "Acroform",
+    "Colors",
+    "BaseEncoding"
+  ],
+  "feature_interactions": {
+    "script_ratio": "(JS + JavaScript) / (1 + obj)",
+    "ObfuscationCount": "Number of raw PDF name tokens containing a valid #HH hexadecimal escape; checksum-verified PDF bytes only"
+  },
+  "obfuscation_scope": "Lexical escaped-name occurrences in raw PDF bytes, including strings/comments/streams; no inflation or active-object claim",
+  "validation": "Disjoint group-aware base-selection/meta-fit/calibration-fit/threshold-selection ~25% each",
+  "cv_policy": "Train only; feature/PDF/family-group stratified five folds, OOF descriptive only; no train-CV tuning",
+  "base_prediction_policy": "Equal mean of the five fold models for each family; no full-train refit",
+  "meta_policy": "Logistic stacking meta-fit only; Platt calibration-fit only; C selection by threshold-selection MCC/F1/order",
+  "threshold_policy": "Youden J only on threshold-selection; tied J -> MCC/F1/closest 0.5/larger threshold",
+  "test_policy": "No test PDF measurement or inference before persisted validation_lock.json; evaluate once",
+  "routing": "Fixed top 10% binary entropy in bits; ties by sample ID; abstentions only",
+  "ece": "10 equal-width malicious-probability bins; p=1 in last bin",
+  "code_commit_sha": "3b68d36a570531058543170e2debc7d5805e6bb5"
+}

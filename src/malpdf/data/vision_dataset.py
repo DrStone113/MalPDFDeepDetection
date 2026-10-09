@@ -20,7 +20,7 @@ from malpdf.static.safety import read_bounded_bytes
 @dataclass(frozen=True)
 class VisionSample:
     sample_id: str
-    label: int
+    label: int | None
     pdf_sha256: str
     related_group_id: str | None = None
     declared_split: str | None = None
@@ -104,14 +104,45 @@ def verify_vision_caches(samples: list[VisionSample], cache_directory: Path) -> 
     return verified
 
 
+def vision_validation_groups(samples: list[VisionSample], manifest: pd.DataFrame) -> dict[str, str]:
+    """Connected feature/file/family components for disjoint validation roles."""
+    _, readiness = align_protocol_g_samples(samples, manifest)
+    if not readiness["ready"]:
+        raise ValueError("Vision groups require complete Protocol G source alignment")
+    parent = {str(value): str(value) for value in manifest.sample_id}
+
+    def find(value):
+        while parent[value] != value:
+            parent[value] = parent[parent[value]]
+            value = parent[value]
+        return value
+
+    identities = {}
+    feature_group = manifest.set_index("sample_id").duplicate_group_id.to_dict()
+    for sample in samples:
+        keys = [("feature", feature_group[sample.sample_id]), ("pdf", sample.pdf_sha256)]
+        if sample.related_group_id is not None:
+            keys.append(("related", sample.related_group_id))
+        for key in keys:
+            if key in identities:
+                left, right = find(sample.sample_id), find(identities[key])
+                parent[max(left, right)] = min(left, right)
+            else:
+                identities[key] = sample.sample_id
+    return {value: find(value) for value in parent}
+
+
 class MarkovCacheDataset(Dataset):
     """Lazy (1,256,256) tensors; cache integrity is checked on every access."""
 
-    def __init__(self, samples: list[VisionSample], cache_directory: Path) -> None:
+    def __init__(self, samples: list[VisionSample], cache_directory: Path, *, include_labels: bool = True) -> None:
         if not samples or any(sample.npy_sha256 is None for sample in samples):
             raise ValueError("Dataset needs nonempty, preverified cache samples")
+        if include_labels and any(sample.label not in (0, 1) for sample in samples):
+            raise ValueError("Supervised vision data requires binary labels")
         self.samples = tuple(samples)
         self.cache_directory = cache_directory
+        self.include_labels = include_labels
 
     def __len__(self) -> int:
         return len(self.samples)
@@ -121,4 +152,5 @@ class MarkovCacheDataset(Dataset):
         matrix, metadata = load_cached_markov_pdf(sample.pdf_sha256, cache_directory=self.cache_directory)
         if metadata["npy_sha256"] != sample.npy_sha256:
             raise ValueError("Cache changed after vision preflight")
-        return torch.from_numpy(matrix).unsqueeze(0), torch.tensor(sample.label, dtype=torch.float32)
+        tensor = torch.from_numpy(matrix).unsqueeze(0)
+        return (tensor, torch.tensor(sample.label, dtype=torch.float32)) if self.include_labels else tensor

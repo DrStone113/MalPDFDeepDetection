@@ -1,0 +1,18 @@
+{
+  "kind": "maintenance",
+  "scope": "Full offline tests after GPU environment provenance; no real fitting or Test access",
+  "seed": 42,
+  "code_commit": "c96868a21732a27472855c0f14dc46f8ea39b9a8",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M src/malpdf/data/kaggle_notebook.py",
+      " M src/malpdf/experiments/multi_cohort_gpu.py",
+      " M src/malpdf/experiments/multi_cohort_v4.py",
+      " M tests/test_multi_cohort_v4.py"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

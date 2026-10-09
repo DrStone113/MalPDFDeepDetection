@@ -1,0 +1,280 @@
+{
+  "run_id": "run_20261003T124714720715Z_c96868a21732",
+  "study": "multi_cohort_v4_prepare",
+  "status": "completed",
+  "started_at_utc": "2026-10-03T12:47:14.740586+00:00",
+  "code_commit": "c96868a21732a27472855c0f14dc46f8ea39b9a8",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M .gitignore",
+      " M AGENTS.md",
+      " M README.md",
+      " M pyproject.toml",
+      " M reports/research_log.md",
+      " M scripts/02_build_markov_cache.py",
+      " M src/malpdf/data/manifest_validator.py",
+      " M src/malpdf/data/markov_preparation.py",
+      " M src/malpdf/data/vision_dataset.py",
+      " M src/malpdf/deep_learning/training.py",
+      " M src/malpdf/evaluation/selective.py",
+      " M src/malpdf/experiments/late_fusion_runner.py",
+      " M src/malpdf/models/late_fusion.py",
+      " M src/malpdf/static/cache_manager.py",
+      " M src/malpdf/static/rit_reference.py",
+      " M tests/test_deep_learning_protocol_g.py",
+      " M tests/test_markov_cache.py",
+      "?? configs/cic_cross_dataset_v3.yaml",
+      "?? configs/kaggle_vision.yaml",
+      "?? configs/raw_datasets.yaml",
+      "?? configs/raw_markov_cache.yaml",
+      "?? configs/raw_pdf_cohort.yaml",
+      "?? configs/raw_tri_modal_v3.yaml",
+      "?? configs/safe_stacking_v3.yaml",
+      "?? configs/tri_modal_fusion.yaml",
+      "?? notebooks/kaggle_vision_resnet18.ipynb",
+      "?? reports/experiments/cic_archive_inspection/",
+      "?? reports/experiments/cic_cross_dataset_summary/",
+      "?? reports/experiments/cic_execution_prechecks/",
+      "?? reports/experiments/cic_feature_group_preflight/",
+      "?? reports/experiments/cic_input_rejection_audit/",
+      "?? reports/experiments/cic_nested_archive_inspection/",
+      "?? reports/experiments/cic_normalization_checks/",
+      "?? reports/experiments/cic_normalization_v3/",
+      "?? reports/experiments/cic_valid_pdf_evasion_v3/",
+      "?? reports/experiments/cic_valid_pdf_prechecks/",
+      "?? reports/experiments/cross_dataset_evasion_v3/",
+      "?? reports/experiments/cross_dataset_identity_audit/",
+      "?? reports/experiments/cross_dataset_identity_recheck/",
+      "?? reports/experiments/kaggle_handoff/",
+      "?? reports/experiments/kaggle_handoff_checks/",
+      "?? reports/experiments/kaggle_notebook_fix/",
+      "?? reports/experiments/kaggle_notebook_inspection/",
+      "?? reports/experiments/kaggle_output_access/",
+      "?? reports/experiments/kaggle_output_access_checks/",
+      "?? reports/experiments/kaggle_output_download/",
+      "?? reports/experiments/kaggle_output_handoff/",
+      "?? reports/experiments/kaggle_output_identity_audit/",
+      "?? reports/experiments/kaggle_output_recheck/",
+      "?? reports/experiments/kaggle_performance/",
+      "?? reports/experiments/kaggle_performance_bootstrap/",
+      "?? reports/experiments/kaggle_performance_checks/",
+      "?? reports/experiments/kaggle_saved_version_inspection/",
+      "?? reports/experiments/kaggle_vision_import/",
+      "?? reports/experiments/late_fusion_v2/",
+      "?? reports/experiments/markov_cache/",
+      "?? reports/experiments/multi_cohort_v4_checks/",
+      "?? reports/experiments/raw_downloads/",
+      "?? reports/experiments/raw_pdf_cohort/",
+      "?? reports/experiments/raw_tri_modal_resume_checks/",
+      "?? reports/experiments/raw_tri_modal_resume_seal/",
+      "?? reports/experiments/raw_tri_modal_v3/",
+      "?? reports/experiments/raw_tri_modal_v3_resume/",
+      "?? reports/experiments/safe_stacking_v3/",
+      "?? reports/experiments/tri_modal_final_audit/",
+      "?? reports/experiments/tri_modal_final_prechecks/",
+      "?? reports/experiments/tri_modal_fusion/",
+      "?? reports/experiments/vision_resnet/",
+      "?? scripts/05_evaluate_tri_modal_fusion.py",
+      "?? scripts/06_optimize_and_stack_v3_safe.py",
+      "?? scripts/07_prepare_raw_pdf_cohort.py",
+      "?? scripts/08_train_raw_tri_modal_v3.py",
+      "?? scripts/09_resume_raw_tri_modal_v3.py",
+      "?? scripts/10_export_kaggle_markov.py",
+      "?? scripts/11_export_kaggle_performance_notebook.py",
+      "?? scripts/12_normalize_cic_cross_dataset.py",
+      "?? scripts/download_raw_datasets.py",
+      "?? src/malpdf/data/cic_archives.py",
+      "?? src/malpdf/data/cic_normalization.py",
+      "?? src/malpdf/data/kaggle_export.py",
+      "?? src/malpdf/data/kaggle_notebook.py",
+      "?? src/malpdf/data/markov_arrays.py",
+      "?? src/malpdf/data/raw_cohort.py",
+      "?? src/malpdf/data/raw_downloads.py",
+      "?? src/malpdf/experiments/cic_cross_dataset.py",
+      "?? src/malpdf/experiments/kaggle_vision_runner.py",
+      "?? src/malpdf/experiments/raw_tri_modal_resume.py",
+      "?? src/malpdf/experiments/raw_tri_modal_v3.py",
+      "?? src/malpdf/experiments/safe_stacking_v3.py",
+      "?? src/malpdf/experiments/tri_modal_runner.py",
+      "?? src/malpdf/models/safe_stacking.py",
+      "?? src/malpdf/models/v3_base_learners.py",
+      "?? src/malpdf/provenance/",
+      "?? src/malpdf/static/obfuscation.py",
+      "?? tests/test_cic_normalization.py",
+      "?? tests/test_kaggle_handoff.py",
+      "?? tests/test_raw_downloads.py",
+      "?? tests/test_raw_pdf_cohort.py",
+      "?? tests/test_raw_tri_modal_resume.py",
+      "?? tests/test_raw_tri_modal_v3.py",
+      "?? tests/test_safe_stacking_v3.py",
+      "?? tests/test_tri_modal_fusion.py"
+    ]
+  },
+  "seed": 42,
+  "report_path": "reports/experiments/multi_cohort_v4_prepare/run_20261003T124714720715Z_c96868a21732/run_summary.json",
+  "artifact_path": "artifacts/multi_cohort_v4_prepare/run_20261003T124714720715Z_c96868a21732",
+  "metrics": {},
+  "inputs": {
+    "dataset": {
+      "path": "data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/dataset.csv",
+      "sha256": "35670e085c18423b0fbe24fb9b2f2f7bb3102ce0928338658ca753df54c7b636"
+    },
+    "all_features": {
+      "path": "data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/all_features.csv",
+      "sha256": "6c988d038915cc3aaf838bed3884e02e27501cc36f4fb60a31e74ca4d9e9a122"
+    },
+    "split_manifest": {
+      "path": "data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/split_manifest.csv",
+      "sha256": "e939a676c51c7a98b9dc4bb843e846f546e1ada2bfb576b41416c406415c0643"
+    },
+    "source_manifest": {
+      "path": "data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/source_manifest.csv",
+      "sha256": "d74729236017dc27a71c999bc4d69f84a16fa4148573c3bbc7f4eb03709b150b"
+    }
+  },
+  "configuration": {
+    "seed": 42,
+    "source_configuration": {
+      "path": "reports/experiments/raw_tri_modal_v3_resume/run_20261003T085417853973Z_4b4478ca98a8/locked_methodology.json",
+      "sha256": "2a4097463dadca25a2d0070cf6abfea8d6ca1b91404cc9940c283645b48c17f4"
+    },
+    "source_summary": {
+      "path": "reports/experiments/raw_tri_modal_v3_resume/run_20261003T085417853973Z_4b4478ca98a8/run_summary.json",
+      "sha256": "43ee7b03af330e0a6231bb3243e62983b650c02b8b0d0e2e026acc675fd3a174"
+    },
+    "external_summary": {
+      "path": "reports/experiments/cic_valid_pdf_evasion_v3/run_20261003T112242694538Z_392482a1571c/run_summary.json",
+      "sha256": "a258729bafba151113974c261b6fd1a689a32a7431b84e22046d163a1ca059d7"
+    },
+    "external_cohort_lock": {
+      "path": "reports/experiments/cic_valid_pdf_evasion_v3/run_20261003T112242694538Z_392482a1571c/locked_external_cohort.json",
+      "sha256": "d6df82379d231e33452cb8a0e76d5af30b734d1c3cf7ecf5f46010c0ff29d794"
+    },
+    "external_predictions": {
+      "path": "artifacts/cic_valid_pdf_evasion_v3/run_20261003T112242694538Z_392482a1571c/external_predictions.csv",
+      "sha256": "8af6f99f6ea9eb078c94323a92f750360119a0637be25c5c4c9f74916d5b882f"
+    },
+    "source_roles": {
+      "path": "artifacts/raw_tri_modal_v3/run_20261002T143830529362Z_fa463d2ed5c4/validation_roles.csv",
+      "sha256": "ba1b40a4ce93a19840df8e86d24302e811d7911ccf691afe7e4219e206bc2ce3"
+    }
+  },
+  "feature_order": [
+    "pdfsize",
+    "metadata size",
+    "pages",
+    "xref length",
+    "title length",
+    "isEncrypted",
+    "embedded files",
+    "images",
+    "contains_text",
+    "pdf_ver",
+    "obj",
+    "endobj",
+    "stream",
+    "endstream",
+    "trailer",
+    "xref",
+    "startxref",
+    "page_command",
+    "Encrypt",
+    "ObjStm",
+    "JS",
+    "JavaScript",
+    "AA",
+    "OpenAction",
+    "JBIG2Decode",
+    "RichMedia",
+    "Launch",
+    "EmbeddedFile",
+    "XFA",
+    "URI",
+    "Encoding",
+    "ProcSet",
+    "Registry",
+    "Resources",
+    "www",
+    "server",
+    "Root",
+    "BitsPerComponent",
+    "script_ratio",
+    "ObfuscationCount"
+  ],
+  "train_constant_exclusions": [
+    "Acroform",
+    "Colors",
+    "BaseEncoding"
+  ],
+  "partition_rows": {
+    "cic": {
+      "test": 291,
+      "train": 870,
+      "validation": 291
+    },
+    "source_raw": {
+      "test": 4050,
+      "train": 11931,
+      "validation": 3977
+    }
+  },
+  "validation_role_rows": {
+    "base_selection": 1613,
+    "calibration_fit": 890,
+    "meta_fit": 884,
+    "threshold_selection": 881
+  },
+  "cic_groups": 650,
+  "cic_partition_groups": {
+    "test": 31,
+    "train": 501,
+    "validation": 118
+  },
+  "source_baseline": {
+    "positive_label": 1,
+    "accuracy": 0.9992592592592593,
+    "precision_malicious": 0.9986702127659575,
+    "recall_malicious": 1.0,
+    "f1_malicious": 0.9993346640053227,
+    "precision_macro": 0.9993351063829787,
+    "recall_macro": 0.9991652754590985,
+    "f1_macro": 0.9992496210586346,
+    "precision": 0.9986702127659575,
+    "recall": 1.0,
+    "f1": 0.9993346640053227,
+    "mcc": 0.9985003673991468,
+    "confusion_matrix": [
+      [
+        1794,
+        3
+      ],
+      [
+        0,
+        2253
+      ]
+    ],
+    "confusion_matrix_labels": [
+      0,
+      1
+    ],
+    "roc_auc": 1.0,
+    "pr_auc": 1.0,
+    "score_source": null,
+    "brier": 0.0005068941898636756,
+    "log_loss": 0.022718253896548166,
+    "ece": 0.022460849539768367,
+    "ece_bins": 10,
+    "threshold": 0.037803058353758114
+  },
+  "test_evaluation_count": 0,
+  "validation_roles_sha256": "de02c172f2467aada81714f8719df7b0808f70e7faa0e613da5d18114f21b227",
+  "training_configuration_sha256": "07ed7ebc56a91c7cb33a019ecac4d25f7b9c7a7679dd9214306eca16dce1ee35",
+  "baseline_cic_sha256": "e119a3f47c89f50b4b92f09a36b22ff6e73e9b40a5f8e191d080353239ad7c1b",
+  "notes": "Retrospective preparation only; v3 outcomes exposed; source is raw PDF cohort, not RIT table. CIC whole-group870/291/291; source split/roles unchanged. No invented metrics or labels.",
+  "finished_at_utc": "2026-10-03T12:47:44.548616+00:00"
+}

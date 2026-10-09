@@ -1,0 +1,24 @@
+{
+  "run_id": "run_20261002T133145838160Z_3b68d36a5705",
+  "status": "verified",
+  "pdfs_independently_verified": 4,
+  "source_distribution": {
+    "contagio_s3_cve_2009_3957": 2,
+    "contagio_s3_obama_pdf": 1,
+    "contagio_s3_pdf_sample": 1
+  },
+  "checks": [
+    "strict magic bytes",
+    "SHA-256",
+    "manifest size",
+    "regular stable files <=10 MiB",
+    "0600 permissions",
+    "source labels remain blank"
+  ],
+  "rejected_entries": {
+    "Missing %PDF- magic at byte offset zero": 4
+  },
+  "reused_bytes": 270326,
+  "downloaded_bytes": 0,
+  "metrics": "N/A: no model evaluation"
+}

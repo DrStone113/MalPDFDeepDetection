@@ -1,0 +1,168 @@
+{
+  "configuration": {
+    "seed": 42,
+    "folds": 5,
+    "inputs": {
+      "dataset": {
+        "path": "data/processed/raw_pdf_cohort/run_20261002T142323844991Z_3b68d36a5705/labeled_features.csv",
+        "sha256": "cdbe817de970e7ab0af46be32ebf7c3d32341915b06f48836a97a91dc35fc212"
+      },
+      "split_manifest": {
+        "path": "data/processed/raw_pdf_cohort/run_20261002T142323844991Z_3b68d36a5705/protocol_g_seed42_split_manifest.csv",
+        "sha256": "7d1cb8cce4630adf4637d4f84b28a17330d77b9284fa3bdd273fdd18ea749e63"
+      },
+      "source_manifest": {
+        "path": "data/processed/raw_pdf_cohort/run_20261002T142323844991Z_3b68d36a5705/source_pdf_manifest.csv",
+        "sha256": "db4e73ef7bac6a2c2c1b845df999d96156efca7b954b1ea2a7f5ca6931f0ee68"
+      },
+      "all_features": {
+        "path": "data/processed/raw_pdf_cohort/run_20261002T142323844991Z_3b68d36a5705/all_raw_features.csv",
+        "sha256": "f2affc133ae287e27fe943850aebbf54e599a6c439d8d3b6f231b089981b10cc"
+      }
+    },
+    "cpu_threads": 2,
+    "models": {
+      "xgboost": {
+        "n_estimators": 400,
+        "max_depth": 6,
+        "learning_rate": 0.05
+      },
+      "lightgbm": {
+        "n_estimators": 400,
+        "num_leaves": 31,
+        "learning_rate": 0.05,
+        "min_child_samples": 20,
+        "reg_lambda": 1.0
+      },
+      "catboost": {
+        "iterations": 400,
+        "depth": 6,
+        "learning_rate": 0.05,
+        "l2_leaf_reg": 3.0
+      },
+      "random_forest": {
+        "n_estimators": 300,
+        "max_depth": null,
+        "min_samples_leaf": 1
+      },
+      "ft_transformer": {
+        "input_features": 43,
+        "d_token": 32,
+        "n_blocks": 2,
+        "n_heads": 4,
+        "d_ffn": 128,
+        "attention_dropout": 0.1,
+        "ffn_dropout": 0.1
+      }
+    },
+    "training": {
+      "batch_size": 256,
+      "max_epochs": 20,
+      "patience": 4,
+      "learning_rate": 0.001,
+      "weight_decay": 0.0001,
+      "min_delta": 0.0
+    },
+    "meta_regularization_cs": [
+      0.1,
+      1.0,
+      10.0
+    ],
+    "expected_samples": {
+      "labeled": 19958,
+      "unlabeled": 4
+    },
+    "vision": {
+      "batch_size": 32,
+      "max_epochs": 2,
+      "patience": 3,
+      "learning_rate": 0.0003,
+      "weight_decay": 0.0001,
+      "min_delta": 0.0
+    }
+  },
+  "handoff_run": "run_20261002T154708928029Z_def0ee6b76c9",
+  "train_policy": "Reuse 25 checksum-pinned local Train-fold models; restore saved preprocessing without fit",
+  "validation_policy": "Preserve four saved group-disjoint roles; meta-fit, Platt-fit, MCC/Youden selection only",
+  "vision_policy": "Join sealed GPU probabilities by opaque ID; require pre-Test checkpoint selection evidence",
+  "test_policy": "One independent Test evaluation after persisted lock; exclusive cohort marker prohibits repeats",
+  "referral_policy": "Entropy 10 percent with deterministic ID ties; parser errors force referral; no dynamic execution",
+  "unlabeled_policy": "Four unknown labels excluded; no metric or fabricated prediction",
+  "seed": 42,
+  "code_commit": "3b68d36a570531058543170e2debc7d5805e6bb5",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M .gitignore",
+      " M AGENTS.md",
+      " M README.md",
+      " M pyproject.toml",
+      " M reports/research_log.md",
+      " M scripts/02_build_markov_cache.py",
+      " M src/malpdf/data/manifest_validator.py",
+      " M src/malpdf/data/markov_preparation.py",
+      " M src/malpdf/data/vision_dataset.py",
+      " M src/malpdf/deep_learning/training.py",
+      " M src/malpdf/evaluation/selective.py",
+      " M src/malpdf/experiments/late_fusion_runner.py",
+      " M src/malpdf/models/late_fusion.py",
+      " M src/malpdf/static/cache_manager.py",
+      " M src/malpdf/static/rit_reference.py",
+      " M tests/test_deep_learning_protocol_g.py",
+      " M tests/test_markov_cache.py",
+      "?? configs/kaggle_vision.yaml",
+      "?? configs/raw_datasets.yaml",
+      "?? configs/raw_markov_cache.yaml",
+      "?? configs/raw_pdf_cohort.yaml",
+      "?? configs/raw_tri_modal_v3.yaml",
+      "?? configs/safe_stacking_v3.yaml",
+      "?? configs/tri_modal_fusion.yaml",
+      "?? notebooks/kaggle_vision_resnet18.ipynb",
+      "?? reports/experiments/kaggle_handoff/",
+      "?? reports/experiments/kaggle_handoff_checks/",
+      "?? reports/experiments/kaggle_notebook_fix/",
+      "?? reports/experiments/kaggle_performance/",
+      "?? reports/experiments/kaggle_performance_bootstrap/",
+      "?? reports/experiments/kaggle_performance_checks/",
+      "?? reports/experiments/late_fusion_v2/",
+      "?? reports/experiments/markov_cache/",
+      "?? reports/experiments/raw_downloads/",
+      "?? reports/experiments/raw_pdf_cohort/",
+      "?? reports/experiments/raw_tri_modal_v3/",
+      "?? reports/experiments/safe_stacking_v3/",
+      "?? reports/experiments/tri_modal_fusion/",
+      "?? reports/experiments/vision_resnet/",
+      "?? scripts/05_evaluate_tri_modal_fusion.py",
+      "?? scripts/06_optimize_and_stack_v3_safe.py",
+      "?? scripts/07_prepare_raw_pdf_cohort.py",
+      "?? scripts/08_train_raw_tri_modal_v3.py",
+      "?? scripts/09_resume_raw_tri_modal_v3.py",
+      "?? scripts/10_export_kaggle_markov.py",
+      "?? scripts/11_export_kaggle_performance_notebook.py",
+      "?? scripts/download_raw_datasets.py",
+      "?? src/malpdf/data/kaggle_export.py",
+      "?? src/malpdf/data/kaggle_notebook.py",
+      "?? src/malpdf/data/markov_arrays.py",
+      "?? src/malpdf/data/raw_cohort.py",
+      "?? src/malpdf/data/raw_downloads.py",
+      "?? src/malpdf/experiments/kaggle_vision_runner.py",
+      "?? src/malpdf/experiments/raw_tri_modal_resume.py",
+      "?? src/malpdf/experiments/raw_tri_modal_v3.py",
+      "?? src/malpdf/experiments/safe_stacking_v3.py",
+      "?? src/malpdf/experiments/tri_modal_runner.py",
+      "?? src/malpdf/models/safe_stacking.py",
+      "?? src/malpdf/models/v3_base_learners.py",
+      "?? src/malpdf/provenance/",
+      "?? src/malpdf/static/obfuscation.py",
+      "?? tests/test_kaggle_handoff.py",
+      "?? tests/test_raw_downloads.py",
+      "?? tests/test_raw_pdf_cohort.py",
+      "?? tests/test_raw_tri_modal_resume.py",
+      "?? tests/test_raw_tri_modal_v3.py",
+      "?? tests/test_safe_stacking_v3.py",
+      "?? tests/test_tri_modal_fusion.py"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

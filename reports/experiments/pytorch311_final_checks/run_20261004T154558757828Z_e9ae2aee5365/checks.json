@@ -1,0 +1,19 @@
+{
+  "python": "3.11.13",
+  "pytest": {
+    "passed": 578,
+    "warnings": 2,
+    "seconds": 67.75,
+    "log_sha256": "3c0b387de54ced91363b0d0fe8cfc82b48b8ea3acca0014837197f8f313d24db"
+  },
+  "pip_check": {
+    "returncode": 0,
+    "stdout": "No broken requirements found.",
+    "stderr": ""
+  },
+  "git_diff_check": {
+    "returncode": 0,
+    "stdout": "",
+    "stderr": ""
+  }
+}

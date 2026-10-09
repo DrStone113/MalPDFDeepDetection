@@ -1,0 +1,15 @@
+{
+  "missing_independent_inputs": 28,
+  "mapped_rejection_members": 28,
+  "leading_pdf_magic_missing": 14,
+  "actual_sha_verified": 14,
+  "resource_capped_sha_unavailable": 14,
+  "size_over_cap": 2,
+  "compression_over_cap": 12,
+  "pdf_header_present_at_nonzero_offset": 9,
+  "maximum_declared_bytes": 20510442,
+  "labels": {
+    "1": 16,
+    "0": 12
+  }
+}

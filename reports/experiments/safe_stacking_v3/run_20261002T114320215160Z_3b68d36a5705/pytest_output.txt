@@ -1,0 +1,46 @@
+============================= test session starts ==============================
+platform linux -- Python 3.11.13, pytest-8.4.2, pluggy-1.6.0
+rootdir: /workspaces/MalPDFDeepDetection
+configfile: pyproject.toml
+collected 336 items
+
+tests/test_cape_lab_design.py ...                                        [  0%]
+tests/test_cic_pdfmal.py ........                                        [  3%]
+tests/test_cic_source_fidelity.py ....                                   [  4%]
+tests/test_cli.py .                                                      [  4%]
+tests/test_cross_dataset_schema.py ...                                   [  5%]
+tests/test_cross_dataset_strict6.py .......                              [  7%]
+tests/test_deep_learning_protocol_g.py ...........                       [ 11%]
+tests/test_dynamic.py .............                                      [ 14%]
+tests/test_inference.py ..............                                   [ 19%]
+tests/test_late_fusion.py ................................               [ 28%]
+tests/test_mapping_resolution.py ...                                     [ 29%]
+tests/test_markov_cache.py ......................................        [ 40%]
+tests/test_metric_semantics.py ......                                    [ 42%]
+tests/test_multiseed_robustness.py ...........                           [ 45%]
+tests/test_protocol_g_benchmark.py .........                             [ 48%]
+tests/test_protocol_p.py .....                                           [ 50%]
+tests/test_protocol_p_benchmark.py .....                                 [ 51%]
+tests/test_protocol_p_vs_g_analysis.py ....                              [ 52%]
+tests/test_reproducibility.py ....                                       [ 53%]
+tests/test_rit_pdfmal.py ....                                            [ 55%]
+tests/test_rit_pdfmal_paper_alignment.py ..                              [ 55%]
+tests/test_rit_pdfmal_split.py ....                                      [ 56%]
+tests/test_safe_stacking_v3.py .......................                   [ 63%]
+tests/test_selective_static_ensemble.py .......                          [ 65%]
+tests/test_source_preparation.py ................                        [ 70%]
+tests/test_static_pdf.py .....................                           [ 76%]
+tests/test_thesis_evidence.py ..                                         [ 77%]
+tests/test_tri_modal_fusion.py .......................                   [ 84%]
+tests/test_vision_resnet.py ....................................         [ 94%]
+tests/test_xgb_cv10.py ...........                                       [ 98%]
+tests/test_xgb_explainability.py ......                                  [100%]
+
+=============================== warnings summary ===============================
+tests/test_vision_resnet.py::test_vision_cli_smoke_training_runs_backward_and_checkpoint
+tests/test_vision_resnet.py::test_vision_cli_smoke_training_runs_backward_and_checkpoint
+  /home/vscode/.local/lib/python3.11/site-packages/sklearn/metrics/_classification.py:614: UserWarning: A single label was found in 'y_true' and 'y_pred'. For the confusion matrix to have the correct shape, use the 'labels' parameter to pass all known labels.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================= 336 passed, 2 warnings in 44.36s =======================

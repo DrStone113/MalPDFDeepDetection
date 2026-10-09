@@ -1,0 +1,293 @@
+{"utc": "2026-10-02T13:15:51.576235+00:00", "event": "source_started", "source": "zenodo_malware_pdf_2011"}
+{"utc": "2026-10-02T13:15:52.286032+00:00", "source": "zenodo_malware_pdf_2011", "event": "payload_reused", "bytes": 129118746}
+{"utc": "2026-10-02T13:15:52.536631+00:00", "source": "zenodo_malware_pdf_2011", "event": "password_selected", "candidate_count": 3, "attempts": 1, "selected_index": 1, "probe_crc_verified": true}
+{"utc": "2026-10-02T13:16:01.604609+00:00", "event": "pdf_progress", "source": "zenodo_malware_pdf_2011", "unique_pdfs": 648}
+{"utc": "2026-10-02T13:16:11.836253+00:00", "event": "pdf_progress", "source": "zenodo_malware_pdf_2011", "unique_pdfs": 1127}
+{"utc": "2026-10-02T13:16:21.888137+00:00", "event": "pdf_progress", "source": "zenodo_malware_pdf_2011", "unique_pdfs": 1499}
+{"utc": "2026-10-02T13:16:32.009838+00:00", "event": "pdf_progress", "source": "zenodo_malware_pdf_2011", "unique_pdfs": 1933}
+{"utc": "2026-10-02T13:16:42.018092+00:00", "event": "pdf_progress", "source": "zenodo_malware_pdf_2011", "unique_pdfs": 2324}
+{"utc": "2026-10-02T13:16:52.026058+00:00", "event": "pdf_progress", "source": "zenodo_malware_pdf_2011", "unique_pdfs": 2667}
+{"utc": "2026-10-02T13:17:02.029733+00:00", "event": "pdf_progress", "source": "zenodo_malware_pdf_2011", "unique_pdfs": 3018}
+{"utc": "2026-10-02T13:17:12.043148+00:00", "event": "pdf_progress", "source": "zenodo_malware_pdf_2011", "unique_pdfs": 3447}
+{"utc": "2026-10-02T13:17:22.083298+00:00", "event": "pdf_progress", "source": "zenodo_malware_pdf_2011", "unique_pdfs": 4109}
+{"utc": "2026-10-02T13:17:32.083501+00:00", "event": "pdf_progress", "source": "zenodo_malware_pdf_2011", "unique_pdfs": 4970}
+{"utc": "2026-10-02T13:17:42.085202+00:00", "event": "pdf_progress", "source": "zenodo_malware_pdf_2011", "unique_pdfs": 5784}
+{"utc": "2026-10-02T13:17:52.086744+00:00", "event": "pdf_progress", "source": "zenodo_malware_pdf_2011", "unique_pdfs": 6526}
+{"utc": "2026-10-02T13:18:02.097623+00:00", "event": "pdf_progress", "source": "zenodo_malware_pdf_2011", "unique_pdfs": 7361}
+{"utc": "2026-10-02T13:18:12.097964+00:00", "event": "pdf_progress", "source": "zenodo_malware_pdf_2011", "unique_pdfs": 8189}
+{"utc": "2026-10-02T13:18:22.098309+00:00", "event": "pdf_progress", "source": "zenodo_malware_pdf_2011", "unique_pdfs": 8979}
+{"utc": "2026-10-02T13:18:32.106967+00:00", "event": "pdf_progress", "source": "zenodo_malware_pdf_2011", "unique_pdfs": 9757}
+{"utc": "2026-10-02T13:18:42.107733+00:00", "event": "pdf_progress", "source": "zenodo_malware_pdf_2011", "unique_pdfs": 10562}
+{"utc": "2026-10-02T13:18:47.139987+00:00", "event": "source_finished", "source": "zenodo_malware_pdf_2011", "status": "completed_with_rejections", "unique_pdfs": 10967}
+{"utc": "2026-10-02T13:18:47.140387+00:00", "event": "source_started", "source": "zenodo_clean_pdf_9000"}
+{"utc": "2026-10-02T13:18:50.646397+00:00", "source": "zenodo_clean_pdf_9000", "event": "payload_reused", "bytes": 683344001}
+{"utc": "2026-10-02T13:18:50.720845+00:00", "source": "zenodo_clean_pdf_9000", "event": "password_selected", "candidate_count": 2, "attempts": 1, "selected_index": 1, "probe_crc_verified": true}
+{"utc": "2026-10-02T13:18:52.162988+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 11}
+{"utc": "2026-10-02T13:19:02.163225+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 163}
+{"utc": "2026-10-02T13:19:12.181898+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 293}
+{"utc": "2026-10-02T13:19:22.228698+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 442}
+{"utc": "2026-10-02T13:19:32.270309+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 612}
+{"utc": "2026-10-02T13:19:42.305902+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 788}
+{"utc": "2026-10-02T13:19:52.359824+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 915}
+{"utc": "2026-10-02T13:20:02.392453+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 1036}
+{"utc": "2026-10-02T13:20:12.397279+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 1229}
+{"utc": "2026-10-02T13:20:22.401651+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 1367}
+{"utc": "2026-10-02T13:20:32.442332+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 1536}
+{"utc": "2026-10-02T13:20:42.535629+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 1671}
+{"utc": "2026-10-02T13:20:52.563227+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 1743}
+{"utc": "2026-10-02T13:21:02.625868+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 1903}
+{"utc": "2026-10-02T13:21:12.640522+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 1992}
+{"utc": "2026-10-02T13:21:22.791337+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 2134}
+{"utc": "2026-10-02T13:21:32.825195+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 2273}
+{"utc": "2026-10-02T13:21:42.878032+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 2427}
+{"utc": "2026-10-02T13:21:52.958835+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 2581}
+{"utc": "2026-10-02T13:22:03.107088+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 2713}
+{"utc": "2026-10-02T13:22:13.129811+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 2870}
+{"utc": "2026-10-02T13:22:23.201650+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 3022}
+{"utc": "2026-10-02T13:22:33.388097+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 3171}
+{"utc": "2026-10-02T13:22:43.492962+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 3343}
+{"utc": "2026-10-02T13:22:53.590985+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 3522}
+{"utc": "2026-10-02T13:23:03.616361+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 3671}
+{"utc": "2026-10-02T13:23:13.704169+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 3804}
+{"utc": "2026-10-02T13:23:23.723485+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 3957}
+{"utc": "2026-10-02T13:23:33.828746+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 4087}
+{"utc": "2026-10-02T13:23:43.889386+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 4197}
+{"utc": "2026-10-02T13:23:53.938606+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 4310}
+{"utc": "2026-10-02T13:24:03.987181+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 4418}
+{"utc": "2026-10-02T13:24:13.999059+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 4516}
+{"utc": "2026-10-02T13:24:24.035612+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 4575}
+{"utc": "2026-10-02T13:24:34.220050+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 4632}
+{"utc": "2026-10-02T13:24:44.325619+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 4708}
+{"utc": "2026-10-02T13:24:54.460198+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 4760}
+{"utc": "2026-10-02T13:25:04.569110+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 4829}
+{"utc": "2026-10-02T13:25:14.744101+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 4888}
+{"utc": "2026-10-02T13:25:24.997599+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 4949}
+{"utc": "2026-10-02T13:25:35.031818+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 5015}
+{"utc": "2026-10-02T13:25:45.160378+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 5128}
+{"utc": "2026-10-02T13:25:55.272305+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 5245}
+{"utc": "2026-10-02T13:26:05.329644+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 5346}
+{"utc": "2026-10-02T13:26:15.345935+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 5471}
+{"utc": "2026-10-02T13:26:25.399761+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 5586}
+{"utc": "2026-10-02T13:26:35.431986+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 5692}
+{"utc": "2026-10-02T13:26:45.460779+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 5814}
+{"utc": "2026-10-02T13:26:55.573486+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 5927}
+{"utc": "2026-10-02T13:27:05.607032+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 6039}
+{"utc": "2026-10-02T13:27:15.651580+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 6116}
+{"utc": "2026-10-02T13:27:25.661434+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 6190}
+{"utc": "2026-10-02T13:27:35.690907+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 6279}
+{"utc": "2026-10-02T13:27:45.702680+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 6374}
+{"utc": "2026-10-02T13:27:55.722216+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 6418}
+{"utc": "2026-10-02T13:28:05.752779+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 6475}
+{"utc": "2026-10-02T13:28:15.801276+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 6655}
+{"utc": "2026-10-02T13:28:25.818056+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 6925}
+{"utc": "2026-10-02T13:28:35.878369+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 7288}
+{"utc": "2026-10-02T13:28:45.967181+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 7506}
+{"utc": "2026-10-02T13:28:56.094996+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 7597}
+{"utc": "2026-10-02T13:29:06.198837+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 7660}
+{"utc": "2026-10-02T13:29:16.312789+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 7752}
+{"utc": "2026-10-02T13:29:26.322357+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 7888}
+{"utc": "2026-10-02T13:29:36.374496+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 8109}
+{"utc": "2026-10-02T13:29:46.435220+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 8398}
+{"utc": "2026-10-02T13:29:56.446332+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 8739}
+{"utc": "2026-10-02T13:30:06.511156+00:00", "event": "pdf_progress", "source": "zenodo_clean_pdf_9000", "unique_pdfs": 8941}
+{"utc": "2026-10-02T13:30:10.269635+00:00", "event": "source_finished", "source": "zenodo_clean_pdf_9000", "status": "completed", "unique_pdfs": 8986}
+{"utc": "2026-10-02T13:30:10.270353+00:00", "event": "source_started", "source": "contagio_s3_cve_2009_3957"}
+{"utc": "2026-10-02T13:30:10.290056+00:00", "source": "contagio_s3_cve_2009_3957", "event": "payload_reused", "bytes": 161011}
+{"utc": "2026-10-02T13:30:10.291520+00:00", "source": "contagio_s3_cve_2009_3957", "event": "password_probe_rejected", "candidate_index": 1, "error_type": "RuntimeError"}
+{"utc": "2026-10-02T13:30:10.291759+00:00", "source": "contagio_s3_cve_2009_3957", "event": "password_probe_rejected", "candidate_index": 2, "error_type": "RuntimeError"}
+{"utc": "2026-10-02T13:30:10.652737+00:00", "event": "source_finished", "source": "contagio_s3_cve_2009_3957", "status": "failed", "unique_pdfs": 0}
+{"utc": "2026-10-02T13:30:10.653036+00:00", "event": "source_started", "source": "contagio_s3_obama_pdf"}
+{"utc": "2026-10-02T13:30:10.667113+00:00", "source": "contagio_s3_obama_pdf", "event": "payload_reused", "bytes": 32243}
+{"utc": "2026-10-02T13:30:10.668137+00:00", "source": "contagio_s3_obama_pdf", "event": "password_probe_rejected", "candidate_index": 1, "error_type": "RuntimeError"}
+{"utc": "2026-10-02T13:30:10.668331+00:00", "source": "contagio_s3_obama_pdf", "event": "password_probe_rejected", "candidate_index": 2, "error_type": "RuntimeError"}
+{"utc": "2026-10-02T13:30:11.056499+00:00", "event": "source_finished", "source": "contagio_s3_obama_pdf", "status": "failed", "unique_pdfs": 0}
+{"utc": "2026-10-02T13:30:11.057141+00:00", "event": "source_started", "source": "contagio_s3_pdf_sample"}
+{"utc": "2026-10-02T13:30:11.069965+00:00", "source": "contagio_s3_pdf_sample", "event": "payload_reused", "bytes": 77072}
+{"utc": "2026-10-02T13:30:11.071068+00:00", "source": "contagio_s3_pdf_sample", "event": "password_probe_rejected", "candidate_index": 1, "error_type": "RuntimeError"}
+{"utc": "2026-10-02T13:30:11.071341+00:00", "source": "contagio_s3_pdf_sample", "event": "password_probe_rejected", "candidate_index": 2, "error_type": "RuntimeError"}
+{"utc": "2026-10-02T13:30:11.445317+00:00", "event": "source_finished", "source": "contagio_s3_pdf_sample", "status": "failed", "unique_pdfs": 0}
+{"utc": "2026-10-02T13:30:11.445642+00:00", "event": "source_started", "source": "cve_t4pdf_bank_statment"}
+{"utc": "2026-10-02T13:30:11.456476+00:00", "source": "cve_t4pdf_bank_statment", "event": "payload_reused", "bytes": 1137}
+{"utc": "2026-10-02T13:30:11.876187+00:00", "event": "source_finished", "source": "cve_t4pdf_bank_statment", "status": "completed", "unique_pdfs": 1}
+{"utc": "2026-10-02T13:30:11.876469+00:00", "event": "source_started", "source": "cve_t4pdf_link_uri"}
+{"utc": "2026-10-02T13:30:11.888490+00:00", "source": "cve_t4pdf_link_uri", "event": "payload_reused", "bytes": 662}
+{"utc": "2026-10-02T13:30:12.601745+00:00", "event": "source_finished", "source": "cve_t4pdf_link_uri", "status": "completed", "unique_pdfs": 1}
+{"utc": "2026-10-02T13:30:12.602333+00:00", "event": "source_started", "source": "cve_t4pdf_rce_foxit"}
+{"utc": "2026-10-02T13:30:12.616371+00:00", "source": "cve_t4pdf_rce_foxit", "event": "payload_reused", "bytes": 3984}
+{"utc": "2026-10-02T13:30:13.061716+00:00", "event": "source_finished", "source": "cve_t4pdf_rce_foxit", "status": "completed", "unique_pdfs": 1}
+{"utc": "2026-10-02T13:30:13.062070+00:00", "event": "source_started", "source": "cve_t4pdf_url2_invoice_template"}
+{"utc": "2026-10-02T13:30:13.081652+00:00", "source": "cve_t4pdf_url2_invoice_template", "event": "payload_reused", "bytes": 695}
+{"utc": "2026-10-02T13:30:13.474382+00:00", "event": "source_finished", "source": "cve_t4pdf_url2_invoice_template", "status": "completed", "unique_pdfs": 1}
+{"utc": "2026-10-02T13:30:13.474693+00:00", "event": "source_started", "source": "cve_t4pdf_xss_popup"}
+{"utc": "2026-10-02T13:30:13.492371+00:00", "source": "cve_t4pdf_xss_popup", "event": "payload_reused", "bytes": 661}
+{"utc": "2026-10-02T13:30:13.860913+00:00", "event": "source_finished", "source": "cve_t4pdf_xss_popup", "status": "completed", "unique_pdfs": 1}
+{
+  "run_id": "run_20261002T131549363589Z_3b68d36a5705",
+  "code_commit": "3b68d36a570531058543170e2debc7d5805e6bb5",
+  "worktree": "dirty",
+  "status": "partial",
+  "report_path": "reports/experiments/raw_downloads/run_20261002T131549363589Z_3b68d36a5705/run_summary.json",
+  "raw_directory": "data/raw/public_pdf_sources/run_20261002T131549363589Z_3b68d36a5705",
+  "manifest_path": "artifacts/raw_downloads/run_20261002T131549363589Z_3b68d36a5705/source_pdf_manifest.csv",
+  "events_path": "artifacts/raw_downloads/run_20261002T131549363589Z_3b68d36a5705/progress.jsonl",
+  "sources": [
+    {
+      "name": "zenodo_malware_pdf_2011",
+      "status": "completed_with_rejections",
+      "unique_pdfs": 10967,
+      "accepted": 10967,
+      "rejected": 15,
+      "download": {
+        "bytes": 129118746,
+        "publisher_sha256_available": false,
+        "publisher_md5_available": true,
+        "reused_from_run": "run_20261002T123152127309Z_3b68d36a5705"
+      },
+      "members": 10982,
+      "duplicates": 0,
+      "pdf_bytes": 204806992,
+      "password_selection": {
+        "candidate_count": 3,
+        "attempts": 1,
+        "selected_index": 1,
+        "probe_crc_verified": true
+      }
+    },
+    {
+      "name": "zenodo_clean_pdf_9000",
+      "status": "completed",
+      "unique_pdfs": 8986,
+      "accepted": 9000,
+      "rejected": 0,
+      "download": {
+        "bytes": 683344001,
+        "publisher_sha256_available": false,
+        "publisher_md5_available": true,
+        "reused_from_run": "run_20261002T123152127309Z_3b68d36a5705"
+      },
+      "members": 9000,
+      "duplicates": 14,
+      "pdf_bytes": 854274036,
+      "password_selection": {
+        "candidate_count": 2,
+        "attempts": 1,
+        "selected_index": 1,
+        "probe_crc_verified": true
+      }
+    },
+    {
+      "name": "contagio_s3_cve_2009_3957",
+      "status": "failed",
+      "unique_pdfs": 0,
+      "accepted": 0,
+      "rejected": 0,
+      "download": {
+        "bytes": 161011,
+        "publisher_sha256_available": false,
+        "publisher_md5_available": false,
+        "reused_from_run": "run_20261002T123152127309Z_3b68d36a5705"
+      },
+      "error_type": "AcquisitionError"
+    },
+    {
+      "name": "contagio_s3_obama_pdf",
+      "status": "failed",
+      "unique_pdfs": 0,
+      "accepted": 0,
+      "rejected": 0,
+      "download": {
+        "bytes": 32243,
+        "publisher_sha256_available": false,
+        "publisher_md5_available": false,
+        "reused_from_run": "run_20261002T123152127309Z_3b68d36a5705"
+      },
+      "error_type": "AcquisitionError"
+    },
+    {
+      "name": "contagio_s3_pdf_sample",
+      "status": "failed",
+      "unique_pdfs": 0,
+      "accepted": 0,
+      "rejected": 0,
+      "download": {
+        "bytes": 77072,
+        "publisher_sha256_available": false,
+        "publisher_md5_available": false,
+        "reused_from_run": "run_20261002T123152127309Z_3b68d36a5705"
+      },
+      "error_type": "AcquisitionError"
+    },
+    {
+      "name": "cve_t4pdf_bank_statment",
+      "status": "completed",
+      "unique_pdfs": 1,
+      "accepted": 1,
+      "rejected": 0,
+      "download": {
+        "bytes": 1137,
+        "publisher_sha256_available": false,
+        "publisher_md5_available": false,
+        "reused_from_run": "run_20261002T123152127309Z_3b68d36a5705"
+      }
+    },
+    {
+      "name": "cve_t4pdf_link_uri",
+      "status": "completed",
+      "unique_pdfs": 1,
+      "accepted": 1,
+      "rejected": 0,
+      "download": {
+        "bytes": 662,
+        "publisher_sha256_available": false,
+        "publisher_md5_available": false,
+        "reused_from_run": "run_20261002T123152127309Z_3b68d36a5705"
+      }
+    },
+    {
+      "name": "cve_t4pdf_rce_foxit",
+      "status": "completed",
+      "unique_pdfs": 1,
+      "accepted": 1,
+      "rejected": 0,
+      "download": {
+        "bytes": 3984,
+        "publisher_sha256_available": false,
+        "publisher_md5_available": false,
+        "reused_from_run": "run_20261002T123152127309Z_3b68d36a5705"
+      }
+    },
+    {
+      "name": "cve_t4pdf_url2_invoice_template",
+      "status": "completed",
+      "unique_pdfs": 1,
+      "accepted": 1,
+      "rejected": 0,
+      "download": {
+        "bytes": 695,
+        "publisher_sha256_available": false,
+        "publisher_md5_available": false,
+        "reused_from_run": "run_20261002T123152127309Z_3b68d36a5705"
+      }
+    },
+    {
+      "name": "cve_t4pdf_xss_popup",
+      "status": "completed",
+      "unique_pdfs": 1,
+      "accepted": 1,
+      "rejected": 0,
+      "download": {
+        "bytes": 661,
+        "publisher_sha256_available": false,
+        "publisher_md5_available": false,
+        "reused_from_run": "run_20261002T123152127309Z_3b68d36a5705"
+      }
+    }
+  ],
+  "unique_pdfs": 19958,
+  "downloaded_bytes": 0,
+  "reused_bytes": 812740212,
+  "reuse_run": "run_20261002T123152127309Z_3b68d36a5705",
+  "published_pdf_bytes": 1059088167,
+  "finished_at_utc": "2026-10-02T13:30:13.861730+00:00",
+  "manifest_sha256": "968e44203a310c5ad8e8745fb3a77002256a956f21bf610004a3d123f02c1d27"
+}

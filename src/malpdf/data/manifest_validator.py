@@ -18,7 +18,7 @@ REQUIRED_COLUMNS = {"sample_id", "Label", "pdf_relative_path", "pdf_sha256"}
 @dataclass(frozen=True)
 class PdfSample:
     sample_id: str
-    label: int
+    label: int | None
     raw_path: Path
     pdf_sha256: str
     label_source: str
@@ -60,17 +60,25 @@ def validate_locked_source_manifest(
         raise ValueError("Manifest limits must be positive integers")
     manifest_path = _local_path(root, manifest_path.as_posix()) if not manifest_path.is_absolute() else manifest_path
     preparation_report_path = _local_path(root, preparation_report_path.as_posix()) if not preparation_report_path.is_absolute() else preparation_report_path
-    report_bytes = read_bounded_bytes(preparation_report_path, boundary=root / "artifacts/source_preparation", max_bytes=max_metadata_bytes)
+    raw_cohort = preparation_report_path.is_relative_to(root / "artifacts/raw_pdf_cohort")
+    report_boundary = root / "artifacts/raw_pdf_cohort" if raw_cohort else root / "artifacts/source_preparation"
+    report_bytes = read_bounded_bytes(preparation_report_path, boundary=report_boundary, max_bytes=max_metadata_bytes)
     report = json.loads(report_bytes)
     if not isinstance(report, dict) or report.get("status") != "completed":
         raise ValueError("Source preparation must be completed")
-    datasets = report.get("datasets")
-    if not isinstance(datasets, dict) or not isinstance(datasets.get("cve"), dict):
-        raise ValueError("Preparation report requires a CVE cohort object")
-    cve = datasets["cve"]
+    if raw_cohort:
+        if report.get("cohort_type") != "public_raw_pdf_v1" or not isinstance(report.get("cohort"), dict):
+            raise ValueError("Preparation report requires an explicit public raw PDF cohort")
+        cve = report["cohort"]
+    else:
+        datasets = report.get("datasets")
+        if not isinstance(datasets, dict) or not isinstance(datasets.get("cve"), dict):
+            raise ValueError("Preparation report requires a CVE cohort object")
+        cve = datasets["cve"]
     if type(cve.get("sample_count")) is not int or cve["sample_count"] <= 0:
         raise ValueError("Locked sample count must be a positive integer")
-    if not isinstance(cve.get("labels"), dict) or set(cve["labels"]) - {"benign", "malicious"}:
+    permitted_labels = {"benign", "malicious", "unlabeled"} if raw_cohort else {"benign", "malicious"}
+    if not isinstance(cve.get("labels"), dict) or set(cve["labels"]) - permitted_labels:
         raise ValueError("Locked cohort must have binary label counts")
     if any(type(value) is not int or value < 0 for value in cve["labels"].values()):
         raise ValueError("Locked label counts must be nonnegative integers")
@@ -100,7 +108,7 @@ def validate_locked_source_manifest(
     samples: list[PdfSample] = []
     identifiers: set[str] = set()
     hash_assignments: dict[str, tuple[int, str | None]] = {}
-    label_counts = {"benign": 0, "malicious": 0}
+    label_counts = {name: 0 for name in sorted(permitted_labels)}
     for row in reader:
         if len(samples) >= max_samples or None in row or any(value is None for value in row.values()):
             raise ValueError("Invalid manifest row width or sample cap")
@@ -108,10 +116,12 @@ def validate_locked_source_manifest(
         if not sample_id or sample_id != sample_id.strip() or sample_id in identifiers:
             raise ValueError("Manifest sample IDs must be nonempty and unique")
         identifiers.add(sample_id)
-        if row["Label"] not in {"0", "1"}:
+        if row["Label"] not in ({"0", "1", ""} if raw_cohort else {"0", "1"}):
             raise ValueError("Manifest Label must be 0 or 1 (malicious)")
-        label = int(row["Label"])
+        label = int(row["Label"]) if row["Label"] else None
         pdf_sha = validate_sha256(row["pdf_sha256"])
+        if raw_cohort and sample_id != "public_pdf:" + pdf_sha:
+            raise ValueError("Raw cohort sample identity differs from its PDF hash")
         declared_path = _local_path(root, row["pdf_relative_path"])
         if declared_path.suffix.lower() != ".pdf":
             raise ValueError("Manifest must reference a PDF path")
@@ -130,8 +140,10 @@ def validate_locked_source_manifest(
         data = read_bounded_bytes(raw_path, boundary=root / "data/raw", max_bytes=max_pdf_bytes)
         if len(data) < 2 or hashlib.sha256(data).hexdigest() != pdf_sha:
             raise ValueError("Raw PDF checksum or minimum byte length differs from the manifest")
+        if raw_cohort and data[:5] != b"%PDF-":
+            raise ValueError("Raw cohort requires strict leading PDF magic")
         samples.append(PdfSample(sample_id, label, raw_path, pdf_sha, row.get("label_source", "unspecified"), split))
-        label_counts["malicious" if label else "benign"] += 1
+        label_counts["unlabeled" if label is None else "malicious" if label else "benign"] += 1
     if not samples or len(samples) != cve["sample_count"] or len(by_hash) != len(hash_assignments):
         raise ValueError("Manifest does not cover the full acquired PDF cohort")
     if any(label_counts[name] != cve["labels"].get(name, 0) for name in label_counts):
@@ -144,7 +156,7 @@ def validate_locked_source_manifest(
         "sample_count": len(samples),
         "unique_pdf_hashes": len(hash_assignments),
         "label_counts": label_counts,
-        "scope": "Independent CVE-T4PDF cohort; no RIT Protocol G assignment",
+        "scope": "Independent acquired raw PDF cohort; historical RIT split unchanged" if raw_cohort else "Independent CVE-T4PDF cohort; no RIT Protocol G assignment",
         "raw_checksum_match_fraction": 1.0,
     }
     return samples, provenance

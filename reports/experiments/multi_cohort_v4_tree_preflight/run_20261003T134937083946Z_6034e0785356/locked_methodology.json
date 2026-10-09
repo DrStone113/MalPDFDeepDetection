@@ -1,0 +1,16 @@
+{
+  "tree_run": "run_20261003T124817237260Z_c96868a21732",
+  "policy": "Verify all existing tree folds and replay Validation probabilities only; no fitting, threshold changes, Test inference or Test metrics",
+  "seed": 42,
+  "code_commit": "6034e078535653b078c518e9994ea2f47c668c1f",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M src/malpdf/data/kaggle_notebook.py",
+      " M src/malpdf/experiments/multi_cohort_v4.py",
+      " M tests/test_multi_cohort_v4.py"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

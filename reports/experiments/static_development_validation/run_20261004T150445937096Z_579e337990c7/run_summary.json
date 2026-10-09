@@ -1,0 +1,958 @@
+{
+  "run_id": "run_20261004T150445937096Z_579e337990c7",
+  "study": "static_development_validation",
+  "status": "completed",
+  "started_at_utc": "2026-10-04T15:04:45.966897+00:00",
+  "code_commit": "579e337990c75a2fe6baca198d4f1f38a282ed37",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M .gitignore",
+      " M AGENTS.md",
+      " M README.md",
+      " M pyproject.toml",
+      " M reports/research_log.md",
+      " M scripts/02_build_markov_cache.py",
+      " M src/malpdf/cli.py",
+      " M src/malpdf/data/manifest_validator.py",
+      " M src/malpdf/data/markov_preparation.py",
+      " M src/malpdf/data/vision_dataset.py",
+      " M src/malpdf/deep_learning/training.py",
+      " M src/malpdf/evaluation/selective.py",
+      " M src/malpdf/experiments/late_fusion_runner.py",
+      " M src/malpdf/inference/__init__.py",
+      " M src/malpdf/inference/predictor.py",
+      " M src/malpdf/models/late_fusion.py",
+      " M src/malpdf/static/__init__.py",
+      " M src/malpdf/static/analyzer.py",
+      " M src/malpdf/static/cache_manager.py",
+      " M src/malpdf/static/rit_reference.py",
+      " M src/malpdf/static/safety.py",
+      " M tests/test_deep_learning_protocol_g.py",
+      " M tests/test_markov_cache.py",
+      "?? .gitattributes",
+      "?? configs/cic_cross_dataset_v3.yaml",
+      "?? configs/kaggle_vision.yaml",
+      "?? configs/multi_cohort_v4.yaml",
+      "?? configs/raw_datasets.yaml",
+      "?? configs/raw_markov_cache.yaml",
+      "?? configs/raw_pdf_cohort.yaml",
+      "?? configs/raw_tri_modal_v3.yaml",
+      "?? configs/safe_stacking_v3.yaml",
+      "?? configs/static_development.yaml",
+      "?? configs/tri_modal_fusion.yaml",
+      "?? notebooks/kaggle_vision_resnet18.ipynb",
+      "?? reports/analysis/static_acceleration_design.md",
+      "?? reports/experiments/cic_archive_inspection/",
+      "?? reports/experiments/cic_cross_dataset_summary/",
+      "?? reports/experiments/cic_execution_prechecks/",
+      "?? reports/experiments/cic_feature_group_preflight/",
+      "?? reports/experiments/cic_input_rejection_audit/",
+      "?? reports/experiments/cic_nested_archive_inspection/",
+      "?? reports/experiments/cic_normalization_checks/",
+      "?? reports/experiments/cic_normalization_v3/",
+      "?? reports/experiments/cic_valid_pdf_evasion_v3/",
+      "?? reports/experiments/cic_valid_pdf_prechecks/",
+      "?? reports/experiments/cross_dataset_evasion_v3/",
+      "?? reports/experiments/cross_dataset_identity_audit/",
+      "?? reports/experiments/cross_dataset_identity_recheck/",
+      "?? reports/experiments/dynamic_architecture_audit/",
+      "?? reports/experiments/kaggle_handoff/",
+      "?? reports/experiments/kaggle_handoff_checks/",
+      "?? reports/experiments/kaggle_notebook_fix/",
+      "?? reports/experiments/kaggle_notebook_inspection/",
+      "?? reports/experiments/kaggle_output_access/",
+      "?? reports/experiments/kaggle_output_access_checks/",
+      "?? reports/experiments/kaggle_output_download/",
+      "?? reports/experiments/kaggle_output_handoff/",
+      "?? reports/experiments/kaggle_output_identity_audit/",
+      "?? reports/experiments/kaggle_output_recheck/",
+      "?? reports/experiments/kaggle_performance/",
+      "?? reports/experiments/kaggle_performance_bootstrap/",
+      "?? reports/experiments/kaggle_performance_checks/",
+      "?? reports/experiments/kaggle_saved_version_inspection/",
+      "?? reports/experiments/kaggle_vision_import/",
+      "?? reports/experiments/late_fusion_v2/",
+      "?? reports/experiments/markov_cache/",
+      "?? reports/experiments/multi_cohort_v4_checks/",
+      "?? reports/experiments/multi_cohort_v4_delta_checks/",
+      "?? reports/experiments/multi_cohort_v4_evaluation/",
+      "?? reports/experiments/multi_cohort_v4_gpu_environment_checks/",
+      "?? reports/experiments/multi_cohort_v4_gpu_handoff/",
+      "?? reports/experiments/multi_cohort_v4_gpu_launch/",
+      "?? reports/experiments/multi_cohort_v4_gpu_monitor/",
+      "?? reports/experiments/multi_cohort_v4_gpu_preflight/",
+      "?? reports/experiments/multi_cohort_v4_gpu_retry/",
+      "?? reports/experiments/multi_cohort_v4_gpu_retry_launch/",
+      "?? reports/experiments/multi_cohort_v4_gpu_submission/",
+      "?? reports/experiments/multi_cohort_v4_mount_fix_checks/",
+      "?? reports/experiments/multi_cohort_v4_prepare/",
+      "?? reports/experiments/multi_cohort_v4_storage_recovery/",
+      "?? reports/experiments/multi_cohort_v4_summary/",
+      "?? reports/experiments/multi_cohort_v4_tree_preflight/",
+      "?? reports/experiments/multi_cohort_v4_trees/",
+      "?? reports/experiments/raw_downloads/",
+      "?? reports/experiments/raw_pdf_cohort/",
+      "?? reports/experiments/raw_tri_modal_resume_checks/",
+      "?? reports/experiments/raw_tri_modal_resume_seal/",
+      "?? reports/experiments/raw_tri_modal_v3/",
+      "?? reports/experiments/raw_tri_modal_v3_resume/",
+      "?? reports/experiments/safe_stacking_v3/",
+      "?? reports/experiments/static_development_checks/",
+      "?? reports/experiments/static_development_gpu_failure/",
+      "?? reports/experiments/static_development_gpu_launch/",
+      "?? reports/experiments/static_development_import_checks/",
+      "?? reports/experiments/static_final_checks/",
+      "?? reports/experiments/static_inspection_checks/",
+      "?? reports/experiments/static_inspection_initial_checks/",
+      "?? reports/experiments/static_performance/",
+      "?? reports/experiments/static_snapshot_allocation_checks/",
+      "?? reports/experiments/static_upgrade_summary/",
+      "?? reports/experiments/tri_modal_final_audit/",
+      "?? reports/experiments/tri_modal_final_prechecks/",
+      "?? reports/experiments/tri_modal_fusion/",
+      "?? reports/experiments/vision_resnet/",
+      "?? scripts/05_evaluate_tri_modal_fusion.py",
+      "?? scripts/06_optimize_and_stack_v3_safe.py",
+      "?? scripts/07_prepare_raw_pdf_cohort.py",
+      "?? scripts/08_train_raw_tri_modal_v3.py",
+      "?? scripts/09_resume_raw_tri_modal_v3.py",
+      "?? scripts/10_export_kaggle_markov.py",
+      "?? scripts/11_export_kaggle_performance_notebook.py",
+      "?? scripts/12_normalize_cic_cross_dataset.py",
+      "?? scripts/13_multi_cohort_stacking_v4.py",
+      "?? scripts/14_benchmark_static.py",
+      "?? scripts/15_train_static_development.py",
+      "?? scripts/download_raw_datasets.py",
+      "?? src/malpdf/data/cic_archives.py",
+      "?? src/malpdf/data/cic_normalization.py",
+      "?? src/malpdf/data/kaggle_export.py",
+      "?? src/malpdf/data/kaggle_notebook.py",
+      "?? src/malpdf/data/markov_arrays.py",
+      "?? src/malpdf/data/multi_cohort.py",
+      "?? src/malpdf/data/raw_cohort.py",
+      "?? src/malpdf/data/raw_downloads.py",
+      "?? src/malpdf/experiments/cic_cross_dataset.py",
+      "?? src/malpdf/experiments/kaggle_vision_runner.py",
+      "?? src/malpdf/experiments/multi_cohort_gpu.py",
+      "?? src/malpdf/experiments/multi_cohort_v4.py",
+      "?? src/malpdf/experiments/raw_tri_modal_resume.py",
+      "?? src/malpdf/experiments/raw_tri_modal_v3.py",
+      "?? src/malpdf/experiments/safe_stacking_v3.py",
+      "?? src/malpdf/experiments/static_benchmark.py",
+      "?? src/malpdf/experiments/static_development.py",
+      "?? src/malpdf/experiments/static_development_handoff.py",
+      "?? src/malpdf/experiments/tri_modal_runner.py",
+      "?? src/malpdf/models/safe_stacking.py",
+      "?? src/malpdf/models/v3_base_learners.py",
+      "?? src/malpdf/provenance/",
+      "?? src/malpdf/static/code_inspector.py",
+      "?? src/malpdf/static/js_ast.py",
+      "?? src/malpdf/static/obfuscation.py",
+      "?? tests/test_cic_normalization.py",
+      "?? tests/test_kaggle_handoff.py",
+      "?? tests/test_multi_cohort_v4.py",
+      "?? tests/test_raw_downloads.py",
+      "?? tests/test_raw_pdf_cohort.py",
+      "?? tests/test_raw_tri_modal_resume.py",
+      "?? tests/test_raw_tri_modal_v3.py",
+      "?? tests/test_safe_stacking_v3.py",
+      "?? tests/test_static_acceleration.py",
+      "?? tests/test_static_development.py",
+      "?? tests/test_tri_modal_fusion.py"
+    ]
+  },
+  "seed": 42,
+  "protocol": "retrospective saved multi-cohort Protocol G development",
+  "report_path": "reports/experiments/static_development_validation/run_20261004T150445937096Z_579e337990c7/run_summary.json",
+  "artifact_path": "artifacts/static_development_validation/run_20261004T150445937096Z_579e337990c7",
+  "metrics": {
+    "uniform:xgboost/validation_base_selection_source_raw": {
+      "accuracy": 0.999344262295082,
+      "f1_malicious": 0.9995355318160706,
+      "mcc": 0.998421950550528,
+      "brier": 0.0006339082169708,
+      "log_loss": 0.0024399576376572,
+      "ece": 0.0018707671436015
+    },
+    "uniform:lightgbm/validation_base_selection_source_raw": {
+      "accuracy": 0.999344262295082,
+      "f1_malicious": 0.9995355318160706,
+      "mcc": 0.998421950550528,
+      "brier": 0.000743974434844,
+      "log_loss": 0.0024471824048848,
+      "ece": 0.0017515895888819
+    },
+    "uniform:catboost/validation_base_selection_source_raw": {
+      "accuracy": 0.999344262295082,
+      "f1_malicious": 0.9995355318160706,
+      "mcc": 0.998421950550528,
+      "brier": 0.0004904210817542,
+      "log_loss": 0.0044430191392199,
+      "ece": 0.0040883903960581
+    },
+    "uniform:random_forest/validation_base_selection_source_raw": {
+      "accuracy": 0.999344262295082,
+      "f1_malicious": 0.9995355318160706,
+      "mcc": 0.998421950550528,
+      "brier": 0.0004887491388987,
+      "log_loss": 0.0030758218503381,
+      "ece": 0.0027569442529319
+    },
+    "uniform:ft_transformer/validation_base_selection_source_raw": {
+      "accuracy": 1.0,
+      "f1_malicious": 1.0,
+      "mcc": 1.0,
+      "brier": 0.0002841848203532,
+      "log_loss": 0.0042463699579593,
+      "ece": 0.0040557453996448
+    },
+    "uniform:static_stack/validation_base_selection_source_raw": {
+      "accuracy": 0.9960655737704918,
+      "f1_malicious": 0.9972196478220574,
+      "mcc": 0.9905381296873136,
+      "brier": 0.0017003377957234,
+      "log_loss": 0.0379595382397093,
+      "ece": 0.0368934077347253
+    },
+    "uniform:xgboost/validation_base_selection_cic": {
+      "accuracy": 0.4204545454545454,
+      "f1_malicious": 0.0,
+      "mcc": 0.0,
+      "brier": 0.2916668526397892,
+      "log_loss": 0.7792901281557612,
+      "ece": 0.2190760871903463
+    },
+    "uniform:lightgbm/validation_base_selection_cic": {
+      "accuracy": 0.4204545454545454,
+      "f1_malicious": 0.0,
+      "mcc": 0.0,
+      "brier": 0.3443495031335938,
+      "log_loss": 0.9035795414605186,
+      "ece": 0.3172963637869758
+    },
+    "uniform:catboost/validation_base_selection_cic": {
+      "accuracy": 0.5795454545454546,
+      "f1_malicious": 0.7338129496402878,
+      "mcc": 0.0,
+      "brier": 0.2439222426756886,
+      "log_loss": 0.6809545236287012,
+      "ece": 0.015802595183438
+    },
+    "uniform:random_forest/validation_base_selection_cic": {
+      "accuracy": 0.4204545454545454,
+      "f1_malicious": 0.0,
+      "mcc": 0.0,
+      "brier": 0.2935954587287064,
+      "log_loss": 0.7834843152521391,
+      "ece": 0.2234344155844156
+    },
+    "uniform:ft_transformer/validation_base_selection_cic": {
+      "accuracy": 0.5795454545454546,
+      "f1_malicious": 0.7338129496402878,
+      "mcc": 0.0,
+      "brier": 0.2582584818982701,
+      "log_loss": 0.7131077686744088,
+      "ece": 0.1207723529501394
+    },
+    "uniform:static_stack/validation_base_selection_cic": {
+      "accuracy": 0.5795454545454546,
+      "f1_malicious": 0.7338129496402878,
+      "mcc": 0.0,
+      "brier": 0.294800223160864,
+      "log_loss": 0.7861158743942034,
+      "ece": 0.2261143571286598
+    },
+    "uniform:xgboost/validation_meta_fit_source_raw": {
+      "accuracy": 0.9975550122249388,
+      "f1_malicious": 0.997275204359673,
+      "mcc": 0.9950700911699136,
+      "brier": 0.0026915121338027,
+      "log_loss": 0.0176812199243889,
+      "ece": 0.0059805981644619
+    },
+    "uniform:lightgbm/validation_meta_fit_source_raw": {
+      "accuracy": 0.9987775061124694,
+      "f1_malicious": 0.998639455782313,
+      "mcc": 0.997532625558338,
+      "brier": 0.0024156906072052,
+      "log_loss": 0.016221383927422,
+      "ece": 0.0057577970177276
+    },
+    "uniform:catboost/validation_meta_fit_source_raw": {
+      "accuracy": 0.9987775061124694,
+      "f1_malicious": 0.998639455782313,
+      "mcc": 0.997532625558338,
+      "brier": 0.0025820042998522,
+      "log_loss": 0.0185594911972147,
+      "ece": 0.0088903118801005
+    },
+    "uniform:random_forest/validation_meta_fit_source_raw": {
+      "accuracy": 0.9963325183374084,
+      "f1_malicious": 0.9959072305593452,
+      "mcc": 0.9926123601070934,
+      "brier": 0.0046803210816592,
+      "log_loss": 0.0242076597189735,
+      "ece": 0.0131967801606997
+    },
+    "uniform:ft_transformer/validation_meta_fit_source_raw": {
+      "accuracy": 0.9926650366748166,
+      "f1_malicious": 0.9917808219178084,
+      "mcc": 0.9852676226942196,
+      "brier": 0.0058207026145823,
+      "log_loss": 0.0265526114678404,
+      "ece": 0.0116501406535991
+    },
+    "uniform:static_stack/validation_meta_fit_source_raw": {
+      "accuracy": 0.991442542787286,
+      "f1_malicious": 0.99055330634278,
+      "mcc": 0.9828074842564865,
+      "brier": 0.0031945780313031,
+      "log_loss": 0.0418542553557975,
+      "ece": 0.0351489561668882
+    },
+    "uniform:xgboost/validation_meta_fit_cic": {
+      "accuracy": 0.4848484848484848,
+      "f1_malicious": 0.5277777777777778,
+      "mcc": -0.0388888888888888,
+      "brier": 0.3012306703839646,
+      "log_loss": 0.8650459460050516,
+      "ece": 0.2466126700667452
+    },
+    "uniform:lightgbm/validation_meta_fit_cic": {
+      "accuracy": 0.5454545454545454,
+      "f1_malicious": 0.5714285714285714,
+      "mcc": 0.0885614885540095,
+      "brier": 0.3014409435382385,
+      "log_loss": 0.9075544791846448,
+      "ece": 0.2165009078040281
+    },
+    "uniform:catboost/validation_meta_fit_cic": {
+      "accuracy": 0.5606060606060606,
+      "f1_malicious": 0.6027397260273972,
+      "mcc": 0.1114729533239837,
+      "brier": 0.2761834863584718,
+      "log_loss": 0.8071590648389751,
+      "ece": 0.2388925856715734
+    },
+    "uniform:random_forest/validation_meta_fit_cic": {
+      "accuracy": 0.5,
+      "f1_malicious": 0.5074626865671642,
+      "mcc": 0.0055427399547369,
+      "brier": 0.2625936054137722,
+      "log_loss": 0.7282151380005377,
+      "ece": 0.2309420511985204
+    },
+    "uniform:ft_transformer/validation_meta_fit_cic": {
+      "accuracy": 0.5757575757575758,
+      "f1_malicious": 0.6216216216216216,
+      "mcc": 0.139929269637389,
+      "brier": 0.257865294196366,
+      "log_loss": 0.8212977523166195,
+      "ece": 0.1619082455872558
+    },
+    "uniform:static_stack/validation_meta_fit_cic": {
+      "accuracy": 0.5151515151515151,
+      "f1_malicious": 0.68,
+      "mcc": -0.1613743060919757,
+      "brier": 0.317854637269255,
+      "log_loss": 0.9335771331380524,
+      "ece": 0.2795141844642636
+    },
+    "uniform:xgboost/validation_calibration_fit_source_raw": {
+      "accuracy": 0.9951040391676866,
+      "f1_malicious": 0.994550408719346,
+      "mcc": 0.9901181396848862,
+      "brier": 0.0023362045633666,
+      "log_loss": 0.0083175909212326,
+      "ece": 0.0055592337587616
+    },
+    "uniform:lightgbm/validation_calibration_fit_source_raw": {
+      "accuracy": 0.9951040391676866,
+      "f1_malicious": 0.994550408719346,
+      "mcc": 0.9901181396848862,
+      "brier": 0.002754198112313,
+      "log_loss": 0.0086549329621304,
+      "ece": 0.0041296075829397
+    },
+    "uniform:catboost/validation_calibration_fit_source_raw": {
+      "accuracy": 0.9975520195838432,
+      "f1_malicious": 0.997275204359673,
+      "mcc": 0.995065188127082,
+      "brier": 0.0019765885719963,
+      "log_loss": 0.0116639799891577,
+      "ece": 0.0099130651054879
+    },
+    "uniform:random_forest/validation_calibration_fit_source_raw": {
+      "accuracy": 0.9975520195838432,
+      "f1_malicious": 0.997275204359673,
+      "mcc": 0.995065188127082,
+      "brier": 0.0025315644114221,
+      "log_loss": 0.0138257286284649,
+      "ece": 0.0119771833460594
+    },
+    "uniform:ft_transformer/validation_calibration_fit_source_raw": {
+      "accuracy": 0.9975520195838432,
+      "f1_malicious": 0.997275204359673,
+      "mcc": 0.995065188127082,
+      "brier": 0.0023242007978538,
+      "log_loss": 0.0125359224977909,
+      "ece": 0.0107446687130814
+    },
+    "uniform:static_stack/validation_calibration_fit_source_raw": {
+      "accuracy": 0.9938800489596084,
+      "f1_malicious": 0.9932523616734144,
+      "mcc": 0.9877290068791188,
+      "brier": 0.0033024955010413,
+      "log_loss": 0.0400943718074518,
+      "ece": 0.0365860126237966
+    },
+    "uniform:xgboost/validation_calibration_fit_cic": {
+      "accuracy": 0.4931506849315068,
+      "f1_malicious": 0.5647058823529412,
+      "mcc": -0.0327277938148645,
+      "brier": 0.3098071089720732,
+      "log_loss": 0.8581774460054626,
+      "ece": 0.2511585994164318
+    },
+    "uniform:lightgbm/validation_calibration_fit_cic": {
+      "accuracy": 0.4794520547945205,
+      "f1_malicious": 0.5476190476190477,
+      "mcc": -0.0587971881935036,
+      "brier": 0.3047417985638502,
+      "log_loss": 0.8524198871427109,
+      "ece": 0.2647622237742139
+    },
+    "uniform:catboost/validation_calibration_fit_cic": {
+      "accuracy": 0.4931506849315068,
+      "f1_malicious": 0.5542168674698795,
+      "mcc": -0.0284449139852512,
+      "brier": 0.3031886838008411,
+      "log_loss": 0.8257431367019249,
+      "ece": 0.2170739531971779
+    },
+    "uniform:random_forest/validation_calibration_fit_cic": {
+      "accuracy": 0.4520547945205479,
+      "f1_malicious": 0.5121951219512195,
+      "mcc": -0.1101021690771055,
+      "brier": 0.2729397873413612,
+      "log_loss": 0.747517046133068,
+      "ece": 0.157230370730142
+    },
+    "uniform:ft_transformer/validation_calibration_fit_cic": {
+      "accuracy": 0.4520547945205479,
+      "f1_malicious": 0.4117647058823529,
+      "mcc": -0.0837971790376321,
+      "brier": 0.2698541580047502,
+      "log_loss": 0.7776667841041469,
+      "ece": 0.1034102756609782
+    },
+    "uniform:static_stack/validation_calibration_fit_cic": {
+      "accuracy": 0.5342465753424658,
+      "f1_malicious": 0.6964285714285714,
+      "mcc": 0.0,
+      "brier": 0.3588067447857145,
+      "log_loss": 0.9956238408687056,
+      "ece": 0.3502644512867679
+    },
+    "uniform:xgboost/validation_threshold_selection_source_raw": {
+      "accuracy": 0.9975520195838432,
+      "f1_malicious": 0.997275204359673,
+      "mcc": 0.995065188127082,
+      "brier": 0.0018575286435138,
+      "log_loss": 0.0084185489049419,
+      "ece": 0.0052160975620851
+    },
+    "uniform:lightgbm/validation_threshold_selection_source_raw": {
+      "accuracy": 0.9987760097919216,
+      "f1_malicious": 0.998639455782313,
+      "mcc": 0.9975301625117772,
+      "brier": 0.0013291083319783,
+      "log_loss": 0.0065721079717704,
+      "ece": 0.0043620526113943
+    },
+    "uniform:catboost/validation_threshold_selection_source_raw": {
+      "accuracy": 0.9987760097919216,
+      "f1_malicious": 0.998639455782313,
+      "mcc": 0.9975301625117772,
+      "brier": 0.0022559894294232,
+      "log_loss": 0.0154125266679983,
+      "ece": 0.0127741024627471
+    },
+    "uniform:random_forest/validation_threshold_selection_source_raw": {
+      "accuracy": 0.9975520195838432,
+      "f1_malicious": 0.997275204359673,
+      "mcc": 0.995065188127082,
+      "brier": 0.0022733053430915,
+      "log_loss": 0.0162278677243215,
+      "ece": 0.0147327008056978
+    },
+    "uniform:ft_transformer/validation_threshold_selection_source_raw": {
+      "accuracy": 0.9951040391676866,
+      "f1_malicious": 0.994535519125683,
+      "mcc": 0.9901496812140926,
+      "brier": 0.0054750917240868,
+      "log_loss": 0.0250146275491412,
+      "ece": 0.0155861249708726
+    },
+    "uniform:static_stack/validation_threshold_selection_source_raw": {
+      "accuracy": 0.9975520195838432,
+      "f1_malicious": 0.997289972899729,
+      "mcc": 0.9950700121799624,
+      "brier": 0.0026487612517144,
+      "log_loss": 0.03989220999337,
+      "ece": 0.034118975810265
+    },
+    "uniform:xgboost/validation_threshold_selection_cic": {
+      "accuracy": 0.46875,
+      "f1_malicious": 0.5526315789473685,
+      "mcc": -0.0865253200863353,
+      "brier": 0.3471107108838813,
+      "log_loss": 1.0180948644499457,
+      "ece": 0.2727811214567737
+    },
+    "uniform:lightgbm/validation_threshold_selection_cic": {
+      "accuracy": 0.4375,
+      "f1_malicious": 0.4375,
+      "mcc": -0.1215686274509803,
+      "brier": 0.3703952571505498,
+      "log_loss": 1.1323892642328386,
+      "ece": 0.3262667336028048
+    },
+    "uniform:catboost/validation_threshold_selection_cic": {
+      "accuracy": 0.5,
+      "f1_malicious": 0.5675675675675675,
+      "mcc": -0.0161690416690888,
+      "brier": 0.3046373658488126,
+      "log_loss": 0.9186630092261504,
+      "ece": 0.1979499303016679
+    },
+    "uniform:random_forest/validation_threshold_selection_cic": {
+      "accuracy": 0.46875,
+      "f1_malicious": 0.5526315789473685,
+      "mcc": -0.0865253200863353,
+      "brier": 0.3148398719444057,
+      "log_loss": 0.8691006503442578,
+      "ece": 0.2218189806294053
+    },
+    "uniform:ft_transformer/validation_threshold_selection_cic": {
+      "accuracy": 0.53125,
+      "f1_malicious": 0.4230769230769231,
+      "mcc": 0.1001088731950106,
+      "brier": 0.3128361884618124,
+      "log_loss": 1.0445952448172826,
+      "ece": 0.2032228054968072
+    },
+    "uniform:static_stack/validation_threshold_selection_cic": {
+      "accuracy": 0.53125,
+      "f1_malicious": 0.6808510638297872,
+      "mcc": 0.0161690416690888,
+      "brier": 0.3849470064394446,
+      "log_loss": 1.1269409137142974,
+      "ece": 0.3593607728711843
+    },
+    "cohort_group_class:xgboost/validation_base_selection_source_raw": {
+      "accuracy": 0.997377049180328,
+      "f1_malicious": 0.9981447124304268,
+      "mcc": 0.9936903971865152,
+      "brier": 0.001553210837956,
+      "log_loss": 0.0182328580639073,
+      "ece": 0.0169051756849595
+    },
+    "cohort_group_class:lightgbm/validation_base_selection_source_raw": {
+      "accuracy": 0.997377049180328,
+      "f1_malicious": 0.9981447124304268,
+      "mcc": 0.9936903971865152,
+      "brier": 0.0011427528868488,
+      "log_loss": 0.0081469573852031,
+      "ece": 0.0071485959502125
+    },
+    "cohort_group_class:catboost/validation_base_selection_source_raw": {
+      "accuracy": 0.998688524590164,
+      "f1_malicious": 0.999071494893222,
+      "mcc": 0.9968443376642044,
+      "brier": 0.0035246290379337,
+      "log_loss": 0.0486762602289672,
+      "ece": 0.046530480313046
+    },
+    "cohort_group_class:random_forest/validation_base_selection_source_raw": {
+      "accuracy": 1.0,
+      "f1_malicious": 1.0,
+      "mcc": 1.0,
+      "brier": 0.0004652933962086,
+      "log_loss": 0.0033255673473784,
+      "ece": 0.0030311900548033
+    },
+    "cohort_group_class:ft_transformer/validation_base_selection_source_raw": {
+      "accuracy": 0.998688524590164,
+      "f1_malicious": 0.999071494893222,
+      "mcc": 0.9968443376642044,
+      "brier": 0.0068268765686432,
+      "log_loss": 0.0470115449046752,
+      "ece": 0.0422819672566151
+    },
+    "cohort_group_class:static_stack/validation_base_selection_source_raw": {
+      "accuracy": 0.99672131147541,
+      "f1_malicious": 0.9976819656930924,
+      "mcc": 0.992114057375338,
+      "brier": 0.00858100396817,
+      "log_loss": 0.0938593007486158,
+      "ece": 0.0891514065933509
+    },
+    "cohort_group_class:xgboost/validation_base_selection_cic": {
+      "accuracy": 0.4204545454545454,
+      "f1_malicious": 0.0,
+      "mcc": 0.0,
+      "brier": 0.4065854460749687,
+      "log_loss": 1.0884419266200502,
+      "ece": 0.4036247334019704
+    },
+    "cohort_group_class:lightgbm/validation_base_selection_cic": {
+      "accuracy": 0.4204545454545454,
+      "f1_malicious": 0.0,
+      "mcc": 0.0,
+      "brier": 0.4731972159930898,
+      "log_loss": 1.3763172740484009,
+      "ece": 0.4790873566813602
+    },
+    "cohort_group_class:catboost/validation_base_selection_cic": {
+      "accuracy": 0.4204545454545454,
+      "f1_malicious": 0.0,
+      "mcc": 0.0,
+      "brier": 0.2802835464395362,
+      "log_loss": 0.7549719119185144,
+      "ece": 0.1913400788605961
+    },
+    "cohort_group_class:random_forest/validation_base_selection_cic": {
+      "accuracy": 0.4204545454545454,
+      "f1_malicious": 0.0,
+      "mcc": 0.0,
+      "brier": 0.3030005444297023,
+      "log_loss": 0.8042732391322864,
+      "ece": 0.2435734463535492
+    },
+    "cohort_group_class:ft_transformer/validation_base_selection_cic": {
+      "accuracy": 0.4204545454545454,
+      "f1_malicious": 0.0,
+      "mcc": 0.0,
+      "brier": 0.2562385880152449,
+      "log_loss": 0.7056435333402346,
+      "ece": 0.1120984716848894
+    },
+    "cohort_group_class:static_stack/validation_base_selection_cic": {
+      "accuracy": 0.5795454545454546,
+      "f1_malicious": 0.7338129496402878,
+      "mcc": 0.0,
+      "brier": 0.3748893385355505,
+      "log_loss": 0.9876616997413892,
+      "ece": 0.3622386200757637
+    },
+    "cohort_group_class:xgboost/validation_meta_fit_source_raw": {
+      "accuracy": 0.9963325183374084,
+      "f1_malicious": 0.9959294436906376,
+      "mcc": 0.992595439609112,
+      "brier": 0.0041931098096852,
+      "log_loss": 0.0258960446689685,
+      "ece": 0.0117586129361221
+    },
+    "cohort_group_class:lightgbm/validation_meta_fit_source_raw": {
+      "accuracy": 0.9975550122249388,
+      "f1_malicious": 0.9972826086956522,
+      "mcc": 0.99506038647343,
+      "brier": 0.0033020928913569,
+      "log_loss": 0.0194222866396658,
+      "ece": 0.0066902655053342
+    },
+    "cohort_group_class:catboost/validation_meta_fit_source_raw": {
+      "accuracy": 0.9963325183374084,
+      "f1_malicious": 0.9959294436906376,
+      "mcc": 0.992595439609112,
+      "brier": 0.0052648611376113,
+      "log_loss": 0.0375119030128351,
+      "ece": 0.0265577677275864
+    },
+    "cohort_group_class:random_forest/validation_meta_fit_source_raw": {
+      "accuracy": 0.9951100244498776,
+      "f1_malicious": 0.994535519125683,
+      "mcc": 0.9901593958498854,
+      "brier": 0.0051254906940594,
+      "log_loss": 0.0252903183137426,
+      "ece": 0.0165076875105043
+    },
+    "cohort_group_class:ft_transformer/validation_meta_fit_source_raw": {
+      "accuracy": 0.9877750611246944,
+      "f1_malicious": 0.9863387978142076,
+      "mcc": 0.975325139699607,
+      "brier": 0.0132518778290933,
+      "log_loss": 0.064124455328885,
+      "ece": 0.0419600172763039
+    },
+    "cohort_group_class:static_stack/validation_meta_fit_source_raw": {
+      "accuracy": 0.9926650366748166,
+      "f1_malicious": 0.991891891891892,
+      "mcc": 0.9852438061119017,
+      "brier": 0.00897462440091,
+      "log_loss": 0.0893961097943805,
+      "ece": 0.0804114313661935
+    },
+    "cohort_group_class:xgboost/validation_meta_fit_cic": {
+      "accuracy": 0.5454545454545454,
+      "f1_malicious": 0.5161290322580645,
+      "mcc": 0.1132277034144595,
+      "brier": 0.3032594981913253,
+      "log_loss": 0.8767957320227261,
+      "ece": 0.2253262379019747
+    },
+    "cohort_group_class:lightgbm/validation_meta_fit_cic": {
+      "accuracy": 0.5606060606060606,
+      "f1_malicious": 0.5671641791044776,
+      "mcc": 0.1274830189589494,
+      "brier": 0.3066502196737424,
+      "log_loss": 0.9060620310896158,
+      "ece": 0.2324275353013848
+    },
+    "cohort_group_class:catboost/validation_meta_fit_cic": {
+      "accuracy": 0.5454545454545454,
+      "f1_malicious": 0.5161290322580645,
+      "mcc": 0.1132277034144595,
+      "brier": 0.2844326465871831,
+      "log_loss": 0.8022358616823134,
+      "ece": 0.1900183480824107
+    },
+    "cohort_group_class:random_forest/validation_meta_fit_cic": {
+      "accuracy": 0.5151515151515151,
+      "f1_malicious": 0.5,
+      "mcc": 0.0447773662839645,
+      "brier": 0.2547210551219909,
+      "log_loss": 0.7141300188495402,
+      "ece": 0.2165889204502932
+    },
+    "cohort_group_class:ft_transformer/validation_meta_fit_cic": {
+      "accuracy": 0.5,
+      "f1_malicious": 0.4923076923076923,
+      "mcc": 0.0111472953323983,
+      "brier": 0.2587507040486087,
+      "log_loss": 0.7544423282147759,
+      "ece": 0.1791426151828614
+    },
+    "cohort_group_class:static_stack/validation_meta_fit_cic": {
+      "accuracy": 0.5303030303030303,
+      "f1_malicious": 0.6666666666666666,
+      "mcc": -0.0080608472234445,
+      "brier": 0.2834053269251911,
+      "log_loss": 0.7898518860202802,
+      "ece": 0.216784706546183
+    },
+    "cohort_group_class:xgboost/validation_calibration_fit_source_raw": {
+      "accuracy": 0.9975520195838432,
+      "f1_malicious": 0.997289972899729,
+      "mcc": 0.9950700121799624,
+      "brier": 0.0025533529639402,
+      "log_loss": 0.01709230155706,
+      "ece": 0.0129531209926835
+    },
+    "cohort_group_class:lightgbm/validation_calibration_fit_source_raw": {
+      "accuracy": 0.9975520195838432,
+      "f1_malicious": 0.997289972899729,
+      "mcc": 0.9950700121799624,
+      "brier": 0.0024281846921473,
+      "log_loss": 0.011064299464833,
+      "ece": 0.0063269869302008
+    },
+    "cohort_group_class:catboost/validation_calibration_fit_source_raw": {
+      "accuracy": 0.9975520195838432,
+      "f1_malicious": 0.9972826086956522,
+      "mcc": 0.9950554372034472,
+      "brier": 0.0042958963413973,
+      "log_loss": 0.0346496282554986,
+      "ece": 0.0294061117610519
+    },
+    "cohort_group_class:random_forest/validation_calibration_fit_source_raw": {
+      "accuracy": 0.9975520195838432,
+      "f1_malicious": 0.997275204359673,
+      "mcc": 0.995065188127082,
+      "brier": 0.0025529666812688,
+      "log_loss": 0.0142030623156861,
+      "ece": 0.0124030077205461
+    },
+    "cohort_group_class:ft_transformer/validation_calibration_fit_source_raw": {
+      "accuracy": 0.9938800489596084,
+      "f1_malicious": 0.9931600547195624,
+      "mcc": 0.9876990754801136,
+      "brier": 0.0084157744606558,
+      "log_loss": 0.0505290221487247,
+      "ece": 0.036398405819331
+    },
+    "cohort_group_class:static_stack/validation_calibration_fit_source_raw": {
+      "accuracy": 0.9975520195838432,
+      "f1_malicious": 0.997289972899729,
+      "mcc": 0.9950700121799624,
+      "brier": 0.0080443050182325,
+      "log_loss": 0.0853097897921508,
+      "ece": 0.080625915737858
+    },
+    "cohort_group_class:xgboost/validation_calibration_fit_cic": {
+      "accuracy": 0.4931506849315068,
+      "f1_malicious": 0.5542168674698795,
+      "mcc": -0.0284449139852512,
+      "brier": 0.2835969127694932,
+      "log_loss": 0.8120466197796251,
+      "ece": 0.1840144373119285
+    },
+    "cohort_group_class:lightgbm/validation_calibration_fit_cic": {
+      "accuracy": 0.5616438356164384,
+      "f1_malicious": 0.6,
+      "mcc": 0.1159986009490581,
+      "brier": 0.3002235595470197,
+      "log_loss": 0.8868868980428535,
+      "ece": 0.213487728038573
+    },
+    "cohort_group_class:catboost/validation_calibration_fit_cic": {
+      "accuracy": 0.547945205479452,
+      "f1_malicious": 0.6796116504854369,
+      "mcc": 0.0675101398885089,
+      "brier": 0.2793992156091999,
+      "log_loss": 0.7786631424488873,
+      "ece": 0.1581682407375198
+    },
+    "cohort_group_class:random_forest/validation_calibration_fit_cic": {
+      "accuracy": 0.4794520547945205,
+      "f1_malicious": 0.5128205128205128,
+      "mcc": -0.0460030165912518,
+      "brier": 0.2701088395227783,
+      "log_loss": 0.741014040123217,
+      "ece": 0.1263212852854266
+    },
+    "cohort_group_class:ft_transformer/validation_calibration_fit_cic": {
+      "accuracy": 0.5068493150684932,
+      "f1_malicious": 0.5135135135135135,
+      "mcc": 0.0165662838473168,
+      "brier": 0.2957373103138793,
+      "log_loss": 0.8155379268806289,
+      "ece": 0.2048167627151698
+    },
+    "cohort_group_class:static_stack/validation_calibration_fit_cic": {
+      "accuracy": 0.5205479452054794,
+      "f1_malicious": 0.6788990825688074,
+      "mcc": -0.0549561864756565,
+      "brier": 0.2701419470794309,
+      "log_loss": 0.7490570830773073,
+      "ece": 0.094576519105959
+    },
+    "cohort_group_class:xgboost/validation_threshold_selection_source_raw": {
+      "accuracy": 1.0,
+      "f1_malicious": 1.0,
+      "mcc": 1.0,
+      "brier": 0.0021827284952716,
+      "log_loss": 0.0230494648930918,
+      "ece": 0.0217462229910475
+    },
+    "cohort_group_class:lightgbm/validation_threshold_selection_source_raw": {
+      "accuracy": 0.9975520195838432,
+      "f1_malicious": 0.997275204359673,
+      "mcc": 0.995065188127082,
+      "brier": 0.0013096051353613,
+      "log_loss": 0.0117945382232494,
+      "ece": 0.0108919854178506
+    },
+    "cohort_group_class:catboost/validation_threshold_selection_source_raw": {
+      "accuracy": 0.9987760097919216,
+      "f1_malicious": 0.998639455782313,
+      "mcc": 0.9975301625117772,
+      "brier": 0.0037452523503765,
+      "log_loss": 0.0394961687516753,
+      "ece": 0.0362612157564519
+    },
+    "cohort_group_class:random_forest/validation_threshold_selection_source_raw": {
+      "accuracy": 0.9975520195838432,
+      "f1_malicious": 0.997275204359673,
+      "mcc": 0.995065188127082,
+      "brier": 0.0023982719694171,
+      "log_loss": 0.0171705545530681,
+      "ece": 0.0147548311996169
+    },
+    "cohort_group_class:ft_transformer/validation_threshold_selection_source_raw": {
+      "accuracy": 0.9694002447980417,
+      "f1_malicious": 0.9651324965132496,
+      "mcc": 0.9389499709675974,
+      "brier": 0.0199287119066676,
+      "log_loss": 0.078242340394541,
+      "ece": 0.0368992401371884
+    },
+    "cohort_group_class:static_stack/validation_threshold_selection_source_raw": {
+      "accuracy": 0.9987760097919216,
+      "f1_malicious": 0.9986431478968792,
+      "mcc": 0.9975313714879472,
+      "brier": 0.0085287555342258,
+      "log_loss": 0.0881451655437192,
+      "ece": 0.0831644138487977
+    },
+    "cohort_group_class:xgboost/validation_threshold_selection_cic": {
+      "accuracy": 0.46875,
+      "f1_malicious": 0.4848484848484848,
+      "mcc": -0.0626224291085149,
+      "brier": 0.3357900141048549,
+      "log_loss": 1.0057484648628017,
+      "ece": 0.2675392800952068
+    },
+    "cohort_group_class:lightgbm/validation_threshold_selection_cic": {
+      "accuracy": 0.4375,
+      "f1_malicious": 0.4375,
+      "mcc": -0.1215686274509803,
+      "brier": 0.388560106268709,
+      "log_loss": 1.2072271312822993,
+      "ece": 0.3592964367848116
+    },
+    "cohort_group_class:catboost/validation_threshold_selection_cic": {
+      "accuracy": 0.453125,
+      "f1_malicious": 0.4776119402985074,
+      "mcc": -0.0959374504728752,
+      "brier": 0.3528721305555297,
+      "log_loss": 0.9952773011369084,
+      "ece": 0.2913836674588423
+    },
+    "cohort_group_class:random_forest/validation_threshold_selection_cic": {
+      "accuracy": 0.453125,
+      "f1_malicious": 0.4776119402985074,
+      "mcc": -0.0959374504728752,
+      "brier": 0.314899483208084,
+      "log_loss": 0.8811232524656296,
+      "ece": 0.262478698443207
+    },
+    "cohort_group_class:ft_transformer/validation_threshold_selection_cic": {
+      "accuracy": 0.484375,
+      "f1_malicious": 0.4210526315789473,
+      "mcc": -0.0142748680796164,
+      "brier": 0.3195189733778193,
+      "log_loss": 0.9134699911545198,
+      "ece": 0.2267794612344005
+    },
+    "cohort_group_class:static_stack/validation_threshold_selection_cic": {
+      "accuracy": 0.53125,
+      "f1_malicious": 0.6666666666666666,
+      "mcc": 0.0236690534165575,
+      "brier": 0.3548260801871955,
+      "log_loss": 0.9699882340971412,
+      "ece": 0.3291550772742805
+    }
+  },
+  "training_commit": "579e337990c75a2fe6baca198d4f1f38a282ed37",
+  "selected": {
+    "scheme": "cohort_group_class",
+    "regularization_c": 0.1,
+    "candidate_order": 0,
+    "threshold": 0.14863979640166966,
+    "youden_j": 0.5361907944247052,
+    "macro_mcc": 0.5106002124522524,
+    "macro_f1": 0.8326549072817729,
+    "minimum_cohort_mcc": 0.023669053416557544,
+    "macro_brier": 0.1816774178607107
+  },
+  "elapsed_seconds": 135.612437538,
+  "notes": "Validation-only static ablation; Test untouched. Existing Vision unchanged. Checkpoints retained in private Kaggle Output. CIC base_selection has one group.",
+  "finished_at_utc": "2026-10-04T15:05:27.353715+00:00"
+}

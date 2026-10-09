@@ -1,0 +1,40 @@
+{
+  "source_manifest_sha256": "3dd3412cfdd277b3b14ff198db807679557b3b32bcb20af8b2f2770610eea4aa",
+  "dataset_sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+  "split_manifest_sha256": "802c3962bc537ed78f63c5b1a5308e09df357a096f703846d0e5fe57598b4e21",
+  "protocol_g_readiness": {
+    "ready": false,
+    "source_samples": 5,
+    "protocol_g_samples": 24337,
+    "matched_ids": 0,
+    "missing_source_ids": 24337,
+    "foreign_source_ids": 5,
+    "reason": "A complete PDF-to-Protocol-G ID mapping is unavailable"
+  },
+  "split_validation": {
+    "zero_group_overlap": {
+      "train_validation": 0,
+      "train_test": 0,
+      "validation_test": 0,
+      "is_valid": true
+    },
+    "zero_exact_feature_vector_overlap": {
+      "is_valid": true,
+      "basis": "Feature-equivalent groups are canonical hashes of all 41 static feature values, excluding Label."
+    },
+    "all_rows_assigned_exactly_once": {
+      "manifest_row_count": 24337,
+      "source_row_count": 24337,
+      "unique_sample_identifier_count": 24337,
+      "is_valid": true,
+      "raw_sample_identifier_count": 24337
+    },
+    "labels_and_group_ids_match_raw_dataset": {
+      "is_valid": true
+    },
+    "feature_equivalent_group_label_purity": {
+      "is_valid": true,
+      "conflicting_group_count": 0
+    }
+  }
+}

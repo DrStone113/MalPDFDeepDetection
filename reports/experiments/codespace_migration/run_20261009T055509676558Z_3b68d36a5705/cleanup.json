@@ -1,0 +1,124 @@
+{
+  "actions": [
+    {
+      "action": "remove_abandoned_partial_archive",
+      "path": "/workspaces/MalPDFDeepDetection-transfer.tar.gz.part",
+      "bytes": 6178086912
+    },
+    {
+      "action": "remove_abandoned_partial_archive",
+      "path": "/tmp/malpdf-transfer-20261009T055256Z/previous-incomplete-transfer.tar.gz.part",
+      "bytes": 1048838144
+    },
+    {
+      "action": "remove_recreatable_virtualenv",
+      "path": "artifacts/venvs/model_development",
+      "bytes": 22611890,
+      "configuration": "home = /usr/local/bin\ninclude-system-site-packages = true\nversion = 3.11.13\nexecutable = /usr/local/bin/python3.11\ncommand = /usr/local/bin/python -m venv --system-site-packages /workspaces/MalPDFDeepDetection/artifacts/venvs/model_development\n"
+    },
+    {
+      "action": "remove_recreatable_virtualenv",
+      "path": "artifacts/venvs/pytorch211",
+      "bytes": 784537104,
+      "configuration": "home = /usr/local/bin\ninclude-system-site-packages = true\nversion = 3.11.13\nexecutable = /usr/local/bin/python3.11\ncommand = /usr/local/bin/python -m venv --system-site-packages /workspaces/MalPDFDeepDetection/artifacts/venvs/pytorch211\n"
+    },
+    {
+      "action": "remove_recreatable_virtualenv",
+      "path": "artifacts/venvs/static_inspection",
+      "bytes": 23230603,
+      "configuration": "home = /usr/local/bin\ninclude-system-site-packages = true\nversion = 3.11.13\nexecutable = /usr/local/bin/python3.11\ncommand = /usr/local/bin/python -m venv --system-site-packages /workspaces/MalPDFDeepDetection/artifacts/venvs/static_inspection\n"
+    },
+    {
+      "action": "remove_recreatable_virtualenv",
+      "path": "artifacts/venvs/v4",
+      "bytes": 382697123,
+      "configuration": "home = /usr/local/bin\ninclude-system-site-packages = true\nversion = 3.11.13\nexecutable = /usr/local/bin/python3.11\ncommand = /usr/local/bin/python -m venv --system-site-packages /workspaces/MalPDFDeepDetection/artifacts/venvs/v4\n"
+    },
+    {
+      "action": "remove_python_cache",
+      "path": "src/malpdf/__pycache__"
+    },
+    {
+      "action": "remove_python_cache",
+      "path": "src/malpdf/deep_learning/__pycache__"
+    },
+    {
+      "action": "remove_python_cache",
+      "path": "src/malpdf/data/__pycache__"
+    },
+    {
+      "action": "remove_python_cache",
+      "path": "src/malpdf/static/__pycache__"
+    },
+    {
+      "action": "remove_python_cache",
+      "path": "src/malpdf/experiments/__pycache__"
+    },
+    {
+      "action": "remove_python_cache",
+      "path": "src/malpdf/models/__pycache__"
+    },
+    {
+      "action": "remove_python_cache",
+      "path": "src/malpdf/evaluation/__pycache__"
+    },
+    {
+      "action": "remove_python_cache",
+      "path": "scripts/__pycache__"
+    },
+    {
+      "action": "remove_python_cache",
+      "path": "artifacts/code_checkouts/static_inspection/.pytest_cache"
+    },
+    {
+      "action": "remove_python_cache",
+      "path": "artifacts/code_checkouts/static_inspection/src/malpdf/static/__pycache__"
+    },
+    {
+      "action": "remove_python_cache",
+      "path": "artifacts/code_checkouts/static_inspection/src/malpdf/experiments/__pycache__"
+    },
+    {
+      "action": "remove_python_cache",
+      "path": "artifacts/code_checkouts/static_inspection/scripts/__pycache__"
+    },
+    {
+      "action": "remove_python_cache",
+      "path": "artifacts/code_checkouts/multi_cohort_v4/.pytest_cache"
+    },
+    {
+      "action": "remove_python_cache",
+      "path": "artifacts/code_checkouts/model_development/.pytest_cache"
+    },
+    {
+      "action": "remove_python_cache",
+      "path": "artifacts/code_checkouts/model_development/src/malpdf/__pycache__"
+    },
+    {
+      "action": "remove_python_cache",
+      "path": "artifacts/code_checkouts/model_development/src/malpdf/deep_learning/__pycache__"
+    },
+    {
+      "action": "remove_python_cache",
+      "path": "artifacts/code_checkouts/model_development/src/malpdf/data/__pycache__"
+    },
+    {
+      "action": "remove_python_cache",
+      "path": "artifacts/code_checkouts/model_development/src/malpdf/static/__pycache__"
+    },
+    {
+      "action": "remove_python_cache",
+      "path": "artifacts/code_checkouts/model_development/src/malpdf/experiments/__pycache__"
+    },
+    {
+      "action": "remove_python_cache",
+      "path": "artifacts/code_checkouts/model_development/src/malpdf/models/__pycache__"
+    },
+    {
+      "action": "remove_python_cache",
+      "path": "artifacts/code_checkouts/model_development/src/malpdf/evaluation/__pycache__"
+    }
+  ],
+  "worktree_prune": "Removing worktrees/malpdf-late-fusion-v2-20261002: gitdir file points to non-existent location\nRemoving worktrees/malpdf-multi-cohort-v4-code-20261003: gitdir file points to non-existent location\nRemoving worktrees/malpdf-raw-tri-modal-resume-code-20261003T0755: gitdir file points to non-existent location\nRemoving worktrees/malpdf-raw-tri-modal-v3-code-20261002T143617Z: gitdir file points to non-existent location\nRemoving worktrees/malpdf-kaggle-performance-code-20261003T071535Z: gitdir file points to non-existent location\nRemoving worktrees/malpdf-tri-modal-final-code-20261003: gitdir file points to non-existent location\nRemoving worktrees/malpdf-cic-cross-dataset-code-20261003: gitdir file points to non-existent location\n",
+  "original_data_preserved": true
+}

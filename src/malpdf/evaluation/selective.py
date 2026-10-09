@@ -57,11 +57,13 @@ def expected_calibration_error(labels: Any, probabilities: Any, *, n_bins: int =
     return float(error)
 
 
-def calibration_metrics(labels: Any, probabilities: Any, *, n_bins: int = 10) -> dict[str, Any]:
+def calibration_metrics(labels: Any, probabilities: Any, *, n_bins: int = 10, threshold: float = 0.5) -> dict[str, Any]:
     """Combine calibration and score-based metrics without hard-score shortcuts."""
     values = _probabilities(probabilities)
     truth = _labels(labels, len(values), require_both_classes=False)
-    predictions = (values >= 0.5).astype(int)
+    if type(threshold) not in (int, float) or not np.isfinite(threshold) or not 0 <= threshold <= 1:
+        raise ValueError("Decision threshold must be finite and within [0,1]")
+    predictions = (values >= threshold).astype(int)
     result = evaluate_binary_predictions(truth, predictions, values)
     result.update(
         {
@@ -69,7 +71,7 @@ def calibration_metrics(labels: Any, probabilities: Any, *, n_bins: int = 10) ->
             "log_loss": float(log_loss(truth, values, labels=[0, 1])),
             "ece": expected_calibration_error(truth, values, n_bins=n_bins),
             "ece_bins": n_bins,
-            "threshold": 0.5,
+            "threshold": float(threshold),
         }
     )
     return result
@@ -164,14 +166,16 @@ def referral_by_uncertainty(uncertainty: Any, *, referral_rate: float, always_re
     return ReferralResult(referral_rate, actual_rate, 1.0 - actual_rate, referred)
 
 
-def selective_metrics(labels: Any, probabilities: Any, referred: Any) -> dict[str, Any]:
+def selective_metrics(labels: Any, probabilities: Any, referred: Any, *, threshold: float = 0.5) -> dict[str, Any]:
     """Evaluate only static-retained samples; referrals are never corrected."""
     values = _probabilities(probabilities)
     truth = _labels(labels, len(values), require_both_classes=False)
     routed = np.asarray(referred, dtype=bool).reshape(-1)
     if len(routed) != len(values) or routed.all():
         raise ValueError("Selective metrics require at least one retained row")
-    predictions = (values >= 0.5).astype(int)
+    if type(threshold) not in (int, float) or not np.isfinite(threshold) or not 0 <= threshold <= 1:
+        raise ValueError("Decision threshold must be finite and within [0,1]")
+    predictions = (values >= threshold).astype(int)
     retained = ~routed
     metrics = evaluate_binary_predictions(truth[retained], predictions[retained], values[retained])
     errors = predictions != truth
@@ -200,3 +204,23 @@ def validate_candidate_grid(weights: Iterable[float]) -> tuple[float, ...]:
     if not selected or any(not 0.0 <= weight <= 1.0 for weight in selected) or len(set(selected)) != len(selected):
         raise ValueError("Fusion weights must be unique values within [0, 1]")
     return selected
+
+
+def fail_closed_routing(labels, probabilities, identifiers, parser_failed, *, threshold):
+    """Forced parser referrals first; entropy fills the remaining 10% budget."""
+    order = np.argsort(np.asarray(identifiers), kind="stable")
+    forced = np.asarray(parser_failed, bool)
+    entropy = binary_entropy(probabilities) / np.log(2.0)
+    decision = referral_by_uncertainty(entropy[order], referral_rate=0.1, always_refer=forced[order])
+    mask = np.empty(len(order), bool)
+    mask[order] = decision.referred
+    measured = selective_metrics(labels, probabilities, mask, threshold=threshold)
+    fn_total = measured["fn_referred"] + measured["fn_retained"]
+    summary = {"policy": "parser_referral_then_entropy_10_percent", "coverage": decision.coverage,
+               "referral_rate": decision.referral_rate, "requested_referral_rate": 0.1,
+               "forced_parser_referrals": int(forced.sum()), "referred_count": int(mask.sum()),
+               "fn_total": fn_total, "fn_referred": measured["fn_referred"], "fn_retained": measured["fn_retained"],
+               "fn_catch_rate": measured["fn_referred"] / fn_total if fn_total else None,
+               "retained_metrics": calibration_metrics(np.asarray(labels)[~mask], np.asarray(probabilities)[~mask], threshold=threshold),
+               "entropy_unit": "bits", "dynamic_samples_executed": 0, "referrals_counted_as_corrected": False}
+    return summary, mask

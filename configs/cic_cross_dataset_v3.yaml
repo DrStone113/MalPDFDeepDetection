@@ -1,0 +1,23 @@
+seed: 42
+target:
+  path: data/raw/cic_evasive/PDFMalware2022.parquet
+  sha256: 25db2059d59207d2040c5a999838514579ed4667b2b7fa39f2398dee484caf65
+reference:
+  directory: reports/experiments/raw_tri_modal_v3_resume/run_20261003T085417853973Z_4b4478ca98a8
+  summary_sha256: 43ee7b03af330e0a6231bb3243e62983b650c02b8b0d0e2e026acc675fd3a174
+  validation_lock_sha256: 636213baed0485ba77dd9a5ae361fe122e8c42f713c39a54fa88e39d6bfa8572
+raw_directory: data/raw/cic_pdf
+vision_directory: checkpoints/import_run_20261003T085018069647Z_3b68d36a5705
+workers: 2
+source_inspection:
+  official_url: https://www.unb.ca/cic/datasets/pdfmal-2022.html
+  download_url: https://cicresearch.ca/CICDataset/CIC-EvasivePDF2022/
+  official_status: registration_form_with_server_error
+  kaggle_dataset: dhoogla/cic-evasive-pdfmal2022
+  kaggle_files: [PDFMalware2022.parquet]
+  raw_zip_verified: false
+  supplied_zip_probes:
+    - {file: Benign.zip, http_get_status: 403, content_type: text/html, zip_magic: false}
+    - {file: Malicious.zip, http_get_status: 403, content_type: text/html, zip_magic: false}
+    - {file: Malicious2.zip, http_get_status: 403, content_type: text/html, zip_magic: false}
+  acquisition_policy: manual_local_upload_only_per_user_instruction

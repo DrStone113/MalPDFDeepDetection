@@ -1,0 +1,22 @@
+{
+  "protocol": "maintenance; software compatibility only",
+  "python": "3.13",
+  "torch": "2.11.0",
+  "torchvision": "0.26.0",
+  "datasets_attached": 0,
+  "data_policy": "sealed committed code/tests/configs and aggregate-only sanitized thesis fixtures; no PDFs, caches, individual identities or model checkpoints",
+  "test_policy": "full synthetic pytest suite; zero research Test inference/evaluation",
+  "fixture_projections": {
+    "reports/rit-pdfmal-2026_inspection.json": "aggregate fields required by deterministic thesis test only; sample/group identities and source dataset checksum excluded",
+    "reports/rit-pdfmal-2026_split_report.json": "aggregate fields required by deterministic thesis test only; sample/group identities and source dataset checksum excluded",
+    "reports/experiments/xgb_cv10/seed42/metrics.json": "aggregate fields required by deterministic thesis test only; sample/group identities and source dataset checksum excluded"
+  },
+  "seed": 42,
+  "code_commit": "e9ae2aee5365a2f27d807ac289e2453a44d51cf6",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

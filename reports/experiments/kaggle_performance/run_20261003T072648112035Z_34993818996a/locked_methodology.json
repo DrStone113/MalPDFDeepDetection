@@ -1,0 +1,14 @@
+{
+  "seed": 42,
+  "prior_export_run": "run_20261002T154708928029Z_def0ee6b76c9",
+  "input_archive_sha256": "9898212e487736f960f24397fd418dda2590d264d42a0ffce501798e825843f5",
+  "metadata_sha256": "d961bba1f2eee7b924be7eaf56a5dcf7c6609067a7c0666d30bc1ba4db83be62",
+  "policy": "Notebook-only performance handoff; preserve ZIP, PDFs, split, raw features and historical reports; no upload or training",
+  "code_commit": "34993818996a7ffaa3ca1bd4e836a35ee68c7154",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

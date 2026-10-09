@@ -1,0 +1,8 @@
+{
+  "verified_numeric_files": 89,
+  "verified_committed_source_files": 96,
+  "cloud_checkpoints_preserved": 50,
+  "kernel": "nguyenkhang294/malpdf-static-development-20261004-173402",
+  "model_downloaded_or_deserialized": false,
+  "cloud_run": "run_20261004T173738560718Z_7b3fc6194800"
+}

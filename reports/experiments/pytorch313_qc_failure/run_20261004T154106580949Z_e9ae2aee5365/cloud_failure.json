@@ -1,0 +1,11 @@
+{
+  "status": "failed",
+  "python": "3.13.15",
+  "code_commit": "e9ae2aee5365a2f27d807ac289e2453a44d51cf6",
+  "datasets_attached": 0,
+  "test_inference": 0,
+  "test_evaluations": 0,
+  "error_type": "CalledProcessError",
+  "error": "Command '['/tmp/malpdf_qc_env_x06gtnxr/bin/python3', '-m', 'ensurepip', '--upgrade', '--default-pip']' returned non-zero exit status 1.",
+  "elapsed_seconds": 0.2238029990000996
+}

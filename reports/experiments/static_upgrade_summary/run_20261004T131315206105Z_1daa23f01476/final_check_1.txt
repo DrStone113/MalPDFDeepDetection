@@ -1,0 +1,2 @@
+malpdf 0.1.0 requires catboost, which is not installed.
+malpdf 0.1.0 requires lightgbm, which is not installed.

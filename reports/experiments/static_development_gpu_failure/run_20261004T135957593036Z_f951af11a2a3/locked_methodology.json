@@ -1,0 +1,21 @@
+{
+  "protocol": "retrospective saved multi-cohort Protocol G development",
+  "kernel": "nguyenkhang294/malpdf-static-development-20261004-135307",
+  "training_commit": "f951af11a2a36ee8e215f0fa695447041f1228ff",
+  "scope": "cloud startup failed before data loading/fitting",
+  "seed": 42,
+  "code_commit": "f951af11a2a36ee8e215f0fa695447041f1228ff",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M src/malpdf/evaluation/selective.py",
+      " M src/malpdf/experiments/raw_tri_modal_v3.py",
+      " M src/malpdf/experiments/static_development.py",
+      " M src/malpdf/experiments/static_development_handoff.py",
+      " M src/malpdf/static/__init__.py",
+      " M tests/test_static_development.py"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

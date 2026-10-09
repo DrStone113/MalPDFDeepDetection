@@ -1,0 +1,9 @@
+partition,cohort,variant,rows,vectors,mixed_vectors,mixed_vector_rows,minority_label_rows,identity_claim
+train,cic,structural,870,501,71,406,154,numeric profile equivalence only; hash grouping is not PDF identity
+train,cic,structural_markov,870,870,0,0,0,numeric profile equivalence only; hash grouping is not PDF identity
+train,source_raw,structural,11931,5256,0,0,0,numeric profile equivalence only; hash grouping is not PDF identity
+train,source_raw,structural_markov,11931,11920,0,0,0,numeric profile equivalence only; hash grouping is not PDF identity
+validation,cic,structural,291,118,17,180,80,numeric profile equivalence only; hash grouping is not PDF identity
+validation,cic,structural_markov,291,291,0,0,0,numeric profile equivalence only; hash grouping is not PDF identity
+validation,source_raw,structural,3977,1749,0,0,0,numeric profile equivalence only; hash grouping is not PDF identity
+validation,source_raw,structural_markov,3977,3977,0,0,0,numeric profile equivalence only; hash grouping is not PDF identity

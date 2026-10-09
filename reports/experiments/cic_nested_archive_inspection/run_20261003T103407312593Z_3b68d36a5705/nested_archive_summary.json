@@ -1,0 +1,14 @@
+{
+  "Benign.zip": {
+    "children": 9,
+    "files": 9107,
+    "encrypted_files": 0,
+    "expanded_bytes": 929831829
+  },
+  "Malicious.zip": {
+    "children": 22,
+    "files": 21899,
+    "encrypted_files": 0,
+    "expanded_bytes": 783700580
+  }
+}

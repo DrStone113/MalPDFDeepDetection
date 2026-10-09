@@ -1,0 +1,169 @@
+{
+  "status": "blocked",
+  "inference_ready": false,
+  "source": {
+    "path": "data/raw/cic_evasive/PDFMalware2022.parquet",
+    "sha256": "25db2059d59207d2040c5a999838514579ed4667b2b7fa39f2398dee484caf65",
+    "bytes": 885132,
+    "physical_rows": 10023,
+    "columns": [
+      "FileName",
+      "PdfSize",
+      "MetadataSize",
+      "Pages",
+      "XrefLength",
+      "TitleCharacters",
+      "isEncrypted",
+      "EmbeddedFiles",
+      "Images",
+      "Text",
+      "Header",
+      "Obj",
+      "Endobj",
+      "Stream",
+      "Endstream",
+      "Xref",
+      "Trailer",
+      "StartXref",
+      "PageNo",
+      "Encrypt",
+      "ObjStm",
+      "JS",
+      "Javascript",
+      "AA",
+      "OpenAction",
+      "Acroform",
+      "JBIG2Decode",
+      "RichMedia",
+      "Launch",
+      "EmbeddedFile",
+      "XFA",
+      "Colors",
+      "Class"
+    ],
+    "class_counts": {
+      "benign": 4468,
+      "malicious": 5555
+    },
+    "population_fidelity": "SUBSET_OR_TRUNCATED",
+    "publisher_population_difference": 2,
+    "dataset_acquisition_performed": false,
+    "source_bytes_changed": false
+  },
+  "archive": {
+    "sha256": "9fab815c3c854f67c753de0bbfb5113fc3c9b03f325ecca0ce6f3294dbe36c1a",
+    "members": [
+      {
+        "name": "PDFMalware2022.parquet",
+        "uncompressed_bytes": 885132,
+        "compressed_bytes": 651288
+      }
+    ],
+    "file_type_counts": {
+      ".parquet": 1,
+      ".zip": 1
+    }
+  },
+  "model": {
+    "reference_run": "run_20261003T085417853973Z_4b4478ca98a8",
+    "generating_commit": "4b4478ca98a814a9b3f5dfb64e5b5adc664bb2c1",
+    "branches": [
+      "xgboost",
+      "lightgbm",
+      "catboost",
+      "random_forest",
+      "ft_transformer",
+      "vision_resnet18"
+    ],
+    "meta_parameters_read": true,
+    "threshold": 0.037803058353758114,
+    "vision_checkpoint_sha256_verified": true,
+    "parameters_updated": false
+  },
+  "compatibility": {
+    "required_raw_features": 40,
+    "mapping_counts": {
+      "AMBIGUOUS": 18,
+      "EXACT": 6,
+      "NO_MATCH": 16
+    },
+    "absent_features": [
+      "URI",
+      "Encoding",
+      "ProcSet",
+      "Registry",
+      "Resources",
+      "www",
+      "server",
+      "Root",
+      "BitsPerComponent",
+      "script_ratio",
+      "ObfuscationCount"
+    ],
+    "parser_flags_available": false,
+    "target_markov_matrices_available": false
+  },
+  "duplicate_and_source_audit": {
+    "target_identifier_quality": {
+      "missing": 0,
+      "duplicate_rows": 0,
+      "unique": 10023,
+      "32_hex_characters": 0,
+      "64_hex_characters": 10012,
+      "semantic_status": "Identifier text is not a verified per-PDF checksum; no cross-source zero-overlap claim"
+    },
+    "source_cohort_source_counts": {
+      "zenodo_malware_pdf_2011": 10967,
+      "zenodo_clean_pdf_9000": 8986,
+      "contagio_s3_cve_2009_3957": 2,
+      "contagio_s3_pdf_sample": 1,
+      "cve_t4pdf_url2_invoice_template": 1,
+      "cve_t4pdf_bank_statment": 1,
+      "cve_t4pdf_link_uri": 1,
+      "cve_t4pdf_xss_popup": 1,
+      "contagio_s3_obama_pdf": 1,
+      "cve_t4pdf_rce_foxit": 1
+    },
+    "cross_cohort_pdf_overlap": "unverified",
+    "independent_target_cohort_verified": false,
+    "official_source_url": "https://www.unb.ca/cic/datasets/pdfmal-2022.html",
+    "source_overlap_requires_hash_and_related_group_checks": true
+  },
+  "blockers": [
+    {
+      "code": "missing_cic_vision_inputs",
+      "reason": "The local CIC archive contains only Parquet; no CIC raw PDF or verified Markov cohort/manifest is present. Existing source-cohort matrices and Vision probability CSVs cannot be reused as CIC identities."
+    },
+    {
+      "code": "incompatible_measured_feature_schema",
+      "reason": "Frozen v3 needs 40 raw features: {'AMBIGUOUS': 18, 'EXACT': 6, 'NO_MATCH': 16}. Security counts cannot be manufactured, dropped or equated solely by similar names.",
+      "absent_features": [
+        "URI",
+        "Encoding",
+        "ProcSet",
+        "Registry",
+        "Resources",
+        "www",
+        "server",
+        "Root",
+        "BitsPerComponent",
+        "script_ratio",
+        "ObfuscationCount"
+      ]
+    },
+    {
+      "code": "unverified_external_independence",
+      "reason": "CIC publisher lists Contagio and VirusTotal sources; the v3 source cohort includes mirrored Contagio archives. Target per-PDF identity/related-group evidence is absent, so file overlap and independence are unverified."
+    }
+  ],
+  "base_refits": 0,
+  "meta_refits": 0,
+  "target_inference_passes": 0,
+  "target_metric_evaluations": 0,
+  "original_test_reevaluations": 0,
+  "needed_inputs": [
+    "Labeled CIC PDF manifest with actual file SHA-256 and provenance, or a verified same-parser feature table plus numeric Markov matrices with identical sample identities",
+    "All frozen v3 measured security features and parser/missingness flags",
+    "An external cohort screened for known PDF/related-group overlap with original source cohort"
+  ]
+}

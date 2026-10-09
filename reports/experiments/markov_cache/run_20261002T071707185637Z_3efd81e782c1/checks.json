@@ -1,0 +1,34 @@
+{
+  "finished_at_utc": "2026-10-02T07:20:26.406772Z",
+  "status": "passed",
+  "run_id": "run_20261002T071707185637Z_3efd81e782c1",
+  "pytest": {
+    "command": "python -m pytest tests/ -q",
+    "passed": 222,
+    "failed": 0,
+    "duration_seconds": 15.84
+  },
+  "pip_check": "No broken requirements found.",
+  "git_diff_check": "passed, including separate whitespace checks of seven new files",
+  "pdfs_verified": 5,
+  "matrices_verified": 5,
+  "matrix_shape": [
+    256,
+    256
+  ],
+  "channels": 1,
+  "dtype": "float32",
+  "probability_verification": "Independent Counter of all adjacent raw-byte pairs matched every nonzero matrix cell; observed rows sum to 1, unseen rows to 0",
+  "raw_total_bytes": 7139,
+  "npy_total_bytes": 1311360,
+  "cache_source_and_output_checksums": "5/5 matched",
+  "source_and_historical_files_preserved": 157,
+  "prior_research_log_bytes_preserved": true,
+  "rit_protocol_g_manifest_preserved": true,
+  "ignored_cache_and_artifact_outputs": 11,
+  "staged_files": 0,
+  "code_commit_sha": "3efd81e782c1e7800299368b2b8aa3ef4c945852",
+  "worktree": "dirty; task changes uncommitted",
+  "environment": "Fresh Python 3.11 venv; editable pyproject.toml install with preinstalled declared dependencies; pip check clean",
+  "model_metrics": "N/A: deterministic static cache preparation only"
+}

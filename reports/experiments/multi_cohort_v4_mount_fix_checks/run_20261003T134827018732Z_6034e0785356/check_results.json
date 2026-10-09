@@ -1,0 +1,18 @@
+{
+  "pytest": {
+    "exit_code": 0,
+    "evidence": "artifacts/multi_cohort_v4_mount_fix_checks/run_20261003T134827018732Z_6034e0785356/pytest.txt"
+  },
+  "pip_check": {
+    "exit_code": 0,
+    "evidence": "artifacts/multi_cohort_v4_mount_fix_checks/run_20261003T134827018732Z_6034e0785356/pip_check.txt"
+  },
+  "diff_check": {
+    "exit_code": 0,
+    "evidence": "artifacts/multi_cohort_v4_mount_fix_checks/run_20261003T134827018732Z_6034e0785356/diff_check.txt"
+  },
+  "git_status": {
+    "exit_code": 0,
+    "evidence": "artifacts/multi_cohort_v4_mount_fix_checks/run_20261003T134827018732Z_6034e0785356/git_status.txt"
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "checked_at_utc": "2026-10-02T08:48:01.186355Z",
+  "run_id": "run_20261002T084455285904Z_3efd81e782c1",
+  "code_commit_sha": "3efd81e782c1e7800299368b2b8aa3ef4c945852",
+  "worktree_state": "dirty; current task and earlier authorized changes uncommitted",
+  "baseline_pytest": {
+    "command": "python -m pytest tests/ -q",
+    "passed": 246,
+    "failed": 0,
+    "seconds": 22.93,
+    "exit_code": 0
+  },
+  "final_pytest": {
+    "command": "/tmp/malpdf-markov-5ha1y7ut/venv/bin/python -m pytest tests/ -q",
+    "passed": 258,
+    "failed": 0,
+    "warnings": 2,
+    "seconds": 24.61,
+    "exit_code": 0,
+    "warning_reason": "scikit-learn MCC receives single-class truth/predictions; recorded zero-denominator convention, mcc_defined=False"
+  },
+  "pip_check": {
+    "exit_code": 0,
+    "output": "No broken requirements found."
+  },
+  "git_diff_check": {
+    "exit_code": 0
+  },
+  "untracked_source_config_test_whitespace": {
+    "files_checked": 17,
+    "passed": true
+  },
+  "smoke_command": "python scripts/03_train_vision_model.py --smoke-train --smoke-epochs 2 --smoke-batch-size 2",
+  "smoke_exit_code": 0,
+  "checkpoint_and_metrics_verification": {
+    "checkpoint_sha256_verified": true,
+    "checkpoint_weights_only_reload": true,
+    "checkpoint_parameters_match_saved_run": true,
+    "checkpoint_all_tensors_finite": true,
+    "checkpoint_permissions": "0600",
+    "checkpoint_gitignored": true,
+    "checkpoint_size_bytes": 44762123,
+    "metrics_json_csv_summary_consistent": true,
+    "sample_count": 5,
+    "epochs": 2,
+    "batch_size": 2,
+    "optimizer_steps": 6,
+    "validation_evaluations": 0,
+    "test_evaluations": 0,
+    "single_class_mcc_convention_documented": true
+  },
+  "provenance_integrity": {
+    "protected_previous_files": 181,
+    "all_unchanged": true,
+    "old_research_log_prefix_unchanged": true,
+    "locked_split_unchanged": true,
+    "existing_caches_unchanged": true
+  },
+  "staged_paths": [],
+  "git_status_short": [
+    " M .gitignore",
+    " M AGENTS.md",
+    " M README.md",
+    " M reports/research_log.md",
+    " M src/malpdf/static/safety.py",
+    "?? configs/markov_cache.yaml",
+    "?? configs/source_preparation.yaml",
+    "?? configs/vision_resnet18.yaml",
+    "?? reports/experiments/markov_cache/",
+    "?? reports/experiments/vision_resnet/",
+    "?? scripts/02_build_markov_cache.py",
+    "?? scripts/03_train_vision_model.py",
+    "?? scripts/prepare_source_datasets.py",
+    "?? src/malpdf/data/manifest_validator.py",
+    "?? src/malpdf/data/markov_preparation.py",
+    "?? src/malpdf/data/source_preparation.py",
+    "?? src/malpdf/data/vision_dataset.py",
+    "?? src/malpdf/experiments/vision_runner.py",
+    "?? src/malpdf/models/vision_resnet.py",
+    "?? src/malpdf/static/cache_manager.py",
+    "?? src/malpdf/static/markov.py",
+    "?? tests/test_markov_cache.py",
+    "?? tests/test_source_preparation.py",
+    "?? tests/test_vision_resnet.py"
+  ],
+  "limitations": "Same-sample technical diagnostics on five Label=1 CVE caches; no benign samples and no Protocol G PDF-ID mapping. No held-out validation/test evaluation, tuning, calibration, or generalization claim."
+}

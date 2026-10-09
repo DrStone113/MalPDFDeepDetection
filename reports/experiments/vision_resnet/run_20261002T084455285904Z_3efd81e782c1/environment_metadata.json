@@ -1,0 +1,60 @@
+{
+  "python": "3.11.13",
+  "packages": {
+    "malpdf": "0.1.0",
+    "torch": "2.7.1",
+    "torchvision": "0.22.1",
+    "numpy": "2.4.6",
+    "scikit-learn": "1.9.1",
+    "pyyaml": "6.0.3"
+  },
+  "device": "cpu",
+  "cpu_threads": 2,
+  "determinism": {
+    "seed": 42,
+    "torch_deterministic_algorithms_requested": true,
+    "torch_deterministic_warn_only": true,
+    "cudnn_benchmark": false,
+    "cudnn_deterministic": true,
+    "cuda_seeded": false,
+    "limitation": "GPU kernels and drivers can still prevent bit-identical results across environments."
+  },
+  "code_commit_sha": "3efd81e782c1e7800299368b2b8aa3ef4c945852",
+  "git_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M .gitignore",
+      " M AGENTS.md",
+      " M README.md",
+      " M reports/research_log.md",
+      " M src/malpdf/static/safety.py",
+      "?? configs/markov_cache.yaml",
+      "?? configs/source_preparation.yaml",
+      "?? configs/vision_resnet18.yaml",
+      "?? reports/experiments/markov_cache/",
+      "?? reports/experiments/vision_resnet/",
+      "?? scripts/02_build_markov_cache.py",
+      "?? scripts/03_train_vision_model.py",
+      "?? scripts/prepare_source_datasets.py",
+      "?? src/malpdf/data/manifest_validator.py",
+      "?? src/malpdf/data/markov_preparation.py",
+      "?? src/malpdf/data/source_preparation.py",
+      "?? src/malpdf/data/vision_dataset.py",
+      "?? src/malpdf/experiments/vision_runner.py",
+      "?? src/malpdf/models/vision_resnet.py",
+      "?? src/malpdf/static/cache_manager.py",
+      "?? src/malpdf/static/markov.py",
+      "?? tests/test_markov_cache.py",
+      "?? tests/test_source_preparation.py",
+      "?? tests/test_vision_resnet.py"
+    ]
+  },
+  "code_sha256": {
+    "src/malpdf/models/vision_resnet.py": "8361f9f81b1e4981bb58da53d6ff15ded81beef69aca1ed207df9d08324758f7",
+    "src/malpdf/data/vision_dataset.py": "79fd6428af26bf81f4d76dad0f3c7c47e96b5fc25e5a5f90ad97b0e533fc404c",
+    "src/malpdf/experiments/vision_runner.py": "c539090b88d09c30fc5385ee19088107197d3a10c52932e1e58e563e2cfff6f8",
+    "src/malpdf/static/cache_manager.py": "50083cd00faa45995f16892aea657bbd9ea02743cf0364ed6c25fda67343adbf",
+    "scripts/03_train_vision_model.py": "32c6cf499896b6c77ab9850a02377f6487c1867dafa417f90b37c5dbc72ebb80",
+    "configs/vision_resnet18.yaml": "01c9c0ac4d583acb01092e38fbc14a49e044e053efc41c39cb2f9f1d7d2e7980"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "protocol": "maintenance; software compatibility only",
+  "python": "3.13",
+  "torch": "2.11.0",
+  "torchvision": "0.26.0",
+  "datasets_attached": 0,
+  "data_policy": "same sealed committed source/tests and sanitized aggregate-only fixtures as failed attempt",
+  "retry_reason": "bootstrap fresh pip-free venv via system pip --python; no system packages inherited",
+  "test_policy": "full pytest; zero real sample inference or research Test evaluation",
+  "seed": 42,
+  "code_commit": "e9ae2aee5365a2f27d807ac289e2453a44d51cf6",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

@@ -1,0 +1,13 @@
+{
+  "independent_verified_rows": 1598,
+  "source_equivalent_groups_excluded": 146,
+  "remaining_valid_identity_and_feature_candidates": 1452,
+  "remaining_labels": {
+    "1": 800,
+    "0": 652
+  },
+  "all_parser_flagged_rows": 434,
+  "remaining_parser_flagged_rows": 0,
+  "remaining_missing_security_rows": 0,
+  "remaining_missing_metadata_rows": 0
+}

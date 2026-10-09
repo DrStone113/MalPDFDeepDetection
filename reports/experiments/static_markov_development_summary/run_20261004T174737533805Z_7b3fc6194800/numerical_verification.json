@@ -1,0 +1,11 @@
+{
+  "metric_rows_recomputed": 96,
+  "roles_match_deterministic_design": true,
+  "labels_cohorts_flags_match_pinned_original_input": true,
+  "stack_state_predictions_max_tolerance": 1e-12,
+  "source_code_files_verified": 96,
+  "numeric_files_sha256_verified": 89,
+  "cloud_checkpoints_retained": 50,
+  "test_evaluations": 0,
+  "test_inference": 0
+}

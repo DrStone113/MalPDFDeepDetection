@@ -1,0 +1,19 @@
+{
+  "protocol": "maintenance; software compatibility only",
+  "python": "3.13",
+  "torch": "2.11.0",
+  "torchvision": "0.26.0",
+  "datasets_attached": 0,
+  "data_policy": "same sealed committed code/tests and aggregate-only fixture; include actual zero-overlap booleans, no individual/group identities",
+  "retry_reason": "correct omitted fixture validation field; isolate child interpreter PYTHONPATH",
+  "precheck": "both thesis tests passed locally against corrected sealed fixture",
+  "test_policy": "full pytest; zero research Test evaluation",
+  "seed": 42,
+  "code_commit": "e9ae2aee5365a2f27d807ac289e2453a44d51cf6",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

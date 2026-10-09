@@ -1,0 +1,14 @@
+{
+  "upload_run": "run_20261003T134139577639Z_6034e0785356",
+  "dataset": "nguyenkhang294/malpdf-v4-delta-20261003-134200",
+  "kernel": "nguyenkhang294/malpdf-v4-training-20261003-134200",
+  "policy": "Authorized private GPU training; sealed numerical inputs only; no Test metrics",
+  "seed": 42,
+  "code_commit": "6034e078535653b078c518e9994ea2f47c668c1f",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

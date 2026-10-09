@@ -1,0 +1,75 @@
+{
+  "prepared_run": "run_20261003T104918756555Z_3b68d36a5705",
+  "prepared_summary_sha256": "1b45314312a5330adf1c3999822744930cbcd4eedfeb7af798a3dce9d8c80382",
+  "inputs": {
+    "features": {
+      "path": "data/processed/cic_normalization/run_20261003T104918756555Z_3b68d36a5705/static_extraction/raw_v3_features.csv",
+      "sha256": "29cc069566eaa08eeafc2f399da235a7a813e4d2dc951f0d7d65b3ad39c23ac2"
+    },
+    "cache": {
+      "path": "data/processed/cic_normalization/run_20261003T104918756555Z_3b68d36a5705/static_extraction/cache_manifest.csv",
+      "sha256": "ca4fe3284a5c3d386f33e3cf1a6016a60a8a4c9a0a0047c19f9e42481b0a1850"
+    },
+    "plan": {
+      "path": "data/processed/cic_normalization/run_20261003T104918756555Z_3b68d36a5705/final_eligibility_manifest.csv",
+      "sha256": "74b5deb060b0f480eaae72f321686318f7b71e83386c13e75d68a0769194d2ec"
+    }
+  },
+  "reference": {
+    "directory": "reports/experiments/raw_tri_modal_v3_resume/run_20261003T085417853973Z_4b4478ca98a8",
+    "summary_sha256": "43ee7b03af330e0a6231bb3243e62983b650c02b8b0d0e2e026acc675fd3a174",
+    "validation_lock_sha256": "636213baed0485ba77dd9a5ae361fe122e8c42f713c39a54fa88e39d6bfa8572"
+  },
+  "evaluated_rows": 1452,
+  "input_referrals": 28,
+  "additional_source_feature_group_exclusions_after_CSV_loading": 1,
+  "labels": {
+    "1": 800,
+    "0": 652
+  },
+  "feature_order": [
+    "pdfsize",
+    "metadata size",
+    "pages",
+    "xref length",
+    "title length",
+    "isEncrypted",
+    "embedded files",
+    "images",
+    "contains_text",
+    "pdf_ver",
+    "obj",
+    "endobj",
+    "stream",
+    "endstream",
+    "trailer",
+    "xref",
+    "startxref",
+    "page_command",
+    "Encrypt",
+    "ObjStm",
+    "JS",
+    "JavaScript",
+    "AA",
+    "OpenAction",
+    "JBIG2Decode",
+    "RichMedia",
+    "Launch",
+    "EmbeddedFile",
+    "XFA",
+    "URI",
+    "Encoding",
+    "ProcSet",
+    "Registry",
+    "Resources",
+    "www",
+    "server",
+    "Root",
+    "BitsPerComponent",
+    "script_ratio",
+    "ObfuscationCount"
+  ],
+  "threshold": 0.037803058353758114,
+  "seed": 42,
+  "metrics_scope": "Verified independent valid PDFs only; no metrics on unavailable inputs or whole CIC table"
+}

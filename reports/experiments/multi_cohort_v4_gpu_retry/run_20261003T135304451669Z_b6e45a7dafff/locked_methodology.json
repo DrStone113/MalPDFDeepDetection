@@ -1,0 +1,15 @@
+{
+  "handoff_run": "run_20261003T135104281189Z_b6e45a7dafff",
+  "previous_failed_kernel": "nguyenkhang294/malpdf-v4-gpu-training-20261003-134200",
+  "retry_reason": "Read-only Kaggle mount bootstrap fixed before any model fitting; training design unchanged",
+  "authorized_scope": "Private numeric GPU inputs only; no PDFs/original identifiers/hashes/paths",
+  "Test_policy": "Probability export only; no Test metrics",
+  "seed": 42,
+  "code_commit": "b6e45a7dafff642cca0e4d277882894504d7ea46",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

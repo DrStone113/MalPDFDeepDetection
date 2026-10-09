@@ -1,0 +1,12 @@
+{
+  "kind": "maintenance",
+  "scope": "Seal tested continuation code; no training, Test evaluation, or Kaggle download",
+  "seed": 42,
+  "code_commit": "4b4478ca98a814a9b3f5dfb64e5b5adc664bb2c1",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

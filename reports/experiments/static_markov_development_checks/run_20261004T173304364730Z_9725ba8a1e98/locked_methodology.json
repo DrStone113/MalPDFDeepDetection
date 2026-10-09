@@ -1,0 +1,21 @@
+{
+  "protocol": "maintenance; new retrospective Train/Validation byte-profile design; no Test scoring",
+  "seed": 42,
+  "code_commit": "9725ba8a1e985d3f28dca25e9b1c58c69b0e9a7b",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M src/malpdf/deep_learning/training.py",
+      " M src/malpdf/experiments/static_development.py",
+      " M src/malpdf/experiments/static_development_handoff.py",
+      " M src/malpdf/models/v3_base_learners.py",
+      "?? configs/static_markov_development.yaml",
+      "?? src/malpdf/data/development_inputs.py",
+      "?? src/malpdf/static/markov_profiles.py",
+      "?? tests/test_markov_development.py"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

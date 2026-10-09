@@ -1,0 +1,10 @@
+{
+  "authorization": "Explicit human acquisition instruction",
+  "configuration_lock": "N/A: invocation was refused before acquisition",
+  "code_commit": "3b68d36a570531058543170e2debc7d5805e6bb5",
+  "worktree": "dirty",
+  "seed": null,
+  "test_evaluations": 0,
+  "metrics": "N/A: no model evaluation",
+  "module_sha256": "507dfb5bbc452b4988d591837ea403dc4db61ee466594e431fa0817fc9d257a4"
+}

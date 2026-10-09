@@ -1,0 +1,8 @@
+{
+  "pytest": "578 passed; 2 known synthetic single-class warnings",
+  "targeted_tests": "68 passed",
+  "pip_check": "clean",
+  "git_diff_check": "pass",
+  "pdf_parser_imports": "blocked; numeric training imports succeeded",
+  "cloud_training_status": "Prior startup failure recorded; corrected same-design submission pending"
+}

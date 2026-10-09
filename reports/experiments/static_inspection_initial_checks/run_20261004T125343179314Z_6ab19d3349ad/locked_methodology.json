@@ -1,0 +1,23 @@
+{
+  "kind": "maintenance",
+  "protocol": "synthetic fixtures only",
+  "test_command": "pytest tests/test_static_acceleration.py tests/test_inference.py tests/test_static_pdf.py -q",
+  "no_external_data": true,
+  "seed": 42,
+  "code_commit": "6ab19d3349ad7261289475470360753865fce4f0",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M pyproject.toml",
+      " M src/malpdf/cli.py",
+      " M src/malpdf/inference/__init__.py",
+      " M src/malpdf/inference/predictor.py",
+      " M src/malpdf/static/analyzer.py",
+      "?? src/malpdf/static/code_inspector.py",
+      "?? src/malpdf/static/js_ast.py",
+      "?? tests/test_static_acceleration.py"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

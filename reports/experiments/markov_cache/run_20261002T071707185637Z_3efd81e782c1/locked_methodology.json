@@ -1,0 +1,24 @@
+{
+  "algorithm": "byte-transition-row-probability-v1",
+  "seed": 42,
+  "manifest_path": "data/processed/source_preparation/run_20261001T133833267219Z_3efd81e782c1/cve_t4pdf/source_pdf_manifest.csv",
+  "preparation_report_path": "artifacts/source_preparation/run_20261001T133833267219Z_3efd81e782c1/preparation_report.json",
+  "limits": {
+    "max_pdf_bytes": 10485760,
+    "max_metadata_bytes": 2097152,
+    "max_samples": 100000
+  },
+  "matrix_shape": [
+    256,
+    256
+  ],
+  "channels": 1,
+  "dtype": "float32",
+  "normalization": "P(next byte | current byte); unobserved rows stay zero",
+  "cache_filename": "<pdf_sha256>.npy",
+  "safety": "Bounded static binary reads only; no parser/rendering/execution",
+  "existing_cache_policy": "Checksum/header/normalization validation; refuse corruption and overwrites",
+  "metrics": "N/A: cache preparation only",
+  "protocol_g": "RIT split untouched; independent CVE cohort",
+  "code_commit_sha": "3efd81e782c1e7800299368b2b8aa3ef4c945852"
+}

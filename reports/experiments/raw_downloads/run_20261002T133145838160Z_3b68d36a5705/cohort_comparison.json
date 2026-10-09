@@ -1,0 +1,14 @@
+{
+  "main_run": "run_20261002T131549363589Z_3b68d36a5705",
+  "s3_followup_run": "run_20261002T133145838160Z_3b68d36a5705",
+  "main_manifest_unique_pdfs": 19958,
+  "s3_manifest_unique_pdfs": 4,
+  "cross_run_duplicate_pdfs": 0,
+  "unique_pdfs_across_runs": 19962,
+  "main_label_distribution": {
+    "1": 10972,
+    "0": 8986
+  },
+  "s3_declared_labels": "unlabeled; no labels inferred",
+  "cohort_policy": "No RIT mapping, split changes or model evaluation; known file-hash duplicates must remain grouped in future designs"
+}

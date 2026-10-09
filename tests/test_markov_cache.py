@@ -83,6 +83,48 @@ def test_markov_direction_counts_normalization_and_unseen_rows():
     assert np.array_equal(matrix, byte_transition_matrix(bytes([0, 1, 0, 2, 0, 1])))
 
 
+def test_spawn_parallel_cache_is_equivalent_and_keeps_locked_sources(locked_sources, monkeypatch):
+    from malpdf.data import markov_preparation
+    root, manifest, report, _ = locked_sources
+    monkeypatch.setattr(markov_preparation, 'effective_cpu_count', lambda: 2)
+    before_manifest = manifest.read_bytes()
+    outcome = build_markov_cache(root, manifest, report, run_id='parallel', workers='auto')
+    assert outcome['workers'] == 2 and outcome['created'] == 2
+    sources, _ = validate_locked_source_manifest(root, manifest, report)
+    for source in sources:
+        cache = root / 'data/processed/markov_cache' / (source.pdf_sha256 + '.npy')
+        with source.raw_path.open('rb') as handle:
+            expected = byte_transition_matrix(handle.read())
+        assert np.array_equal(np.load(cache, allow_pickle=False), expected)
+    assert manifest.read_bytes() == before_manifest
+    assert 'cache preparation / completed' in (root / 'reports/research_log.md').read_text()
+
+
+@pytest.mark.parametrize('workers', [0, -1, True, 'unbounded', 3])
+def test_worker_budget_is_rejected_before_outputs(locked_sources, monkeypatch, workers):
+    from malpdf.data import markov_preparation
+    root, manifest, report, _ = locked_sources
+    monkeypatch.setattr(markov_preparation, 'effective_cpu_count', lambda: 2)
+    with pytest.raises(ValueError, match='workers'):
+        build_markov_cache(root, manifest, report, run_id='bad_workers', workers=workers)
+    assert not (root / 'reports/experiments/markov_cache/bad_workers').exists()
+
+
+def test_parallel_duplicate_hash_has_one_cache_writer(locked_sources, monkeypatch):
+    from malpdf.data import markov_preparation
+    root, manifest, report, rows = locked_sources
+    monkeypatch.setattr(markov_preparation, 'effective_cpu_count', lambda: 2)
+    rows.append({**rows[0], 'sample_id': 'synthetic_alias'})
+    rewrite_locked_manifest(manifest, report, rows)
+    metadata = json.loads(report.read_text())
+    metadata['datasets']['cve']['sample_count'] = 3
+    metadata['datasets']['cve']['labels']['malicious'] = 3
+    report.write_text(json.dumps(metadata))
+    result = build_markov_cache(root, manifest, report, run_id='duplicate_parallel', workers=2)
+    assert result['sample_count'] == 3 and result['created'] == 2 and result['reused'] == 1
+    assert len(list((root / 'data/processed/markov_cache').glob('*.npy'))) == 2
+
+
 def test_high_byte_indices_do_not_overflow():
     matrix = byte_transition_matrix(bytes([255, 255, 0, 255]))
     assert matrix[255, 255] == matrix[255, 0] == 0.5

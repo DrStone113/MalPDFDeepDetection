@@ -1,0 +1,8 @@
+{
+  "kind": "informal dirty maintenance check",
+  "reported_median_seconds": 0.013057232000392105,
+  "repeats": 5,
+  "concurrent_full_test_suite": true,
+  "input": "previous generated benign PDF",
+  "interpretation": "not comparable to clean benchmark; excluded from speed claims"
+}

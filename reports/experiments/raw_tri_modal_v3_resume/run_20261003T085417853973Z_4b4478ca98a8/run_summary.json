@@ -1,0 +1,679 @@
+{
+  "run_id": "run_20261003T085417853973Z_4b4478ca98a8",
+  "study": "raw_tri_modal_v3_resume",
+  "status": "completed",
+  "started_at_utc": "2026-10-03T08:54:17.871870+00:00",
+  "code_commit": "4b4478ca98a814a9b3f5dfb64e5b5adc664bb2c1",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M .gitignore",
+      " M AGENTS.md",
+      " M README.md",
+      " M pyproject.toml",
+      " M reports/research_log.md",
+      " M scripts/02_build_markov_cache.py",
+      " M src/malpdf/data/manifest_validator.py",
+      " M src/malpdf/data/markov_preparation.py",
+      " M src/malpdf/data/vision_dataset.py",
+      " M src/malpdf/deep_learning/training.py",
+      " M src/malpdf/evaluation/selective.py",
+      " M src/malpdf/experiments/late_fusion_runner.py",
+      " M src/malpdf/models/late_fusion.py",
+      " M src/malpdf/static/cache_manager.py",
+      " M src/malpdf/static/rit_reference.py",
+      " M tests/test_deep_learning_protocol_g.py",
+      " M tests/test_markov_cache.py",
+      "?? configs/kaggle_vision.yaml",
+      "?? configs/raw_datasets.yaml",
+      "?? configs/raw_markov_cache.yaml",
+      "?? configs/raw_pdf_cohort.yaml",
+      "?? configs/raw_tri_modal_v3.yaml",
+      "?? configs/safe_stacking_v3.yaml",
+      "?? configs/tri_modal_fusion.yaml",
+      "?? notebooks/kaggle_vision_resnet18.ipynb",
+      "?? reports/experiments/kaggle_handoff/",
+      "?? reports/experiments/kaggle_handoff_checks/",
+      "?? reports/experiments/kaggle_notebook_fix/",
+      "?? reports/experiments/kaggle_notebook_inspection/",
+      "?? reports/experiments/kaggle_output_access/",
+      "?? reports/experiments/kaggle_output_access_checks/",
+      "?? reports/experiments/kaggle_output_download/",
+      "?? reports/experiments/kaggle_output_handoff/",
+      "?? reports/experiments/kaggle_output_identity_audit/",
+      "?? reports/experiments/kaggle_output_recheck/",
+      "?? reports/experiments/kaggle_performance/",
+      "?? reports/experiments/kaggle_performance_bootstrap/",
+      "?? reports/experiments/kaggle_performance_checks/",
+      "?? reports/experiments/kaggle_saved_version_inspection/",
+      "?? reports/experiments/kaggle_vision_import/",
+      "?? reports/experiments/late_fusion_v2/",
+      "?? reports/experiments/markov_cache/",
+      "?? reports/experiments/raw_downloads/",
+      "?? reports/experiments/raw_pdf_cohort/",
+      "?? reports/experiments/raw_tri_modal_resume_checks/",
+      "?? reports/experiments/raw_tri_modal_resume_seal/",
+      "?? reports/experiments/raw_tri_modal_v3/",
+      "?? reports/experiments/raw_tri_modal_v3_resume/",
+      "?? reports/experiments/safe_stacking_v3/",
+      "?? reports/experiments/tri_modal_final_prechecks/",
+      "?? reports/experiments/tri_modal_fusion/",
+      "?? reports/experiments/vision_resnet/",
+      "?? scripts/05_evaluate_tri_modal_fusion.py",
+      "?? scripts/06_optimize_and_stack_v3_safe.py",
+      "?? scripts/07_prepare_raw_pdf_cohort.py",
+      "?? scripts/08_train_raw_tri_modal_v3.py",
+      "?? scripts/09_resume_raw_tri_modal_v3.py",
+      "?? scripts/10_export_kaggle_markov.py",
+      "?? scripts/11_export_kaggle_performance_notebook.py",
+      "?? scripts/download_raw_datasets.py",
+      "?? src/malpdf/data/kaggle_export.py",
+      "?? src/malpdf/data/kaggle_notebook.py",
+      "?? src/malpdf/data/markov_arrays.py",
+      "?? src/malpdf/data/raw_cohort.py",
+      "?? src/malpdf/data/raw_downloads.py",
+      "?? src/malpdf/experiments/kaggle_vision_runner.py",
+      "?? src/malpdf/experiments/raw_tri_modal_resume.py",
+      "?? src/malpdf/experiments/raw_tri_modal_v3.py",
+      "?? src/malpdf/experiments/safe_stacking_v3.py",
+      "?? src/malpdf/experiments/tri_modal_runner.py",
+      "?? src/malpdf/models/safe_stacking.py",
+      "?? src/malpdf/models/v3_base_learners.py",
+      "?? src/malpdf/provenance/",
+      "?? src/malpdf/static/obfuscation.py",
+      "?? tests/test_kaggle_handoff.py",
+      "?? tests/test_raw_downloads.py",
+      "?? tests/test_raw_pdf_cohort.py",
+      "?? tests/test_raw_tri_modal_resume.py",
+      "?? tests/test_raw_tri_modal_v3.py",
+      "?? tests/test_safe_stacking_v3.py",
+      "?? tests/test_tri_modal_fusion.py"
+    ]
+  },
+  "seed": 42,
+  "report_path": "reports/experiments/raw_tri_modal_v3_resume/run_20261003T085417853973Z_4b4478ca98a8/run_summary.json",
+  "artifact_path": "artifacts/raw_tri_modal_v3_resume/run_20261003T085417853973Z_4b4478ca98a8",
+  "metrics": {
+    "stacking_v3/validation_threshold_selection": {
+      "positive_label": 1,
+      "accuracy": 0.9987760097919217,
+      "precision_malicious": 0.997289972899729,
+      "recall_malicious": 1.0,
+      "f1_malicious": 0.9986431478968792,
+      "precision_macro": 0.9986449864498645,
+      "recall_macro": 0.9988864142538976,
+      "f1_macro": 0.9987641603475478,
+      "precision": 0.997289972899729,
+      "recall": 1.0,
+      "f1": 0.9986431478968792,
+      "mcc": 0.9975313714879472,
+      "confusion_matrix": [
+        [
+          448,
+          1
+        ],
+        [
+          0,
+          368
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 0.9999878958071077,
+      "pr_auc": 0.9999852515804222,
+      "score_source": null,
+      "brier": 0.0027513831399445885,
+      "log_loss": 0.030483285835675653,
+      "ece": 0.02040638854160748,
+      "ece_bins": 10,
+      "threshold": 0.037803058353758114
+    },
+    "xgboost/test": {
+      "positive_label": 1,
+      "accuracy": 1.0,
+      "precision_malicious": 1.0,
+      "recall_malicious": 1.0,
+      "f1_malicious": 1.0,
+      "precision_macro": 1.0,
+      "recall_macro": 1.0,
+      "f1_macro": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "mcc": 1.0,
+      "confusion_matrix": [
+        [
+          1797,
+          0
+        ],
+        [
+          0,
+          2253
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "score_source": null,
+      "brier": 6.411858229322229e-05,
+      "log_loss": 0.00048636535439083053,
+      "ece": 0.00044698033050578635,
+      "ece_bins": 10,
+      "threshold": 0.5
+    },
+    "lightgbm/test": {
+      "positive_label": 1,
+      "accuracy": 1.0,
+      "precision_malicious": 1.0,
+      "recall_malicious": 1.0,
+      "f1_malicious": 1.0,
+      "precision_macro": 1.0,
+      "recall_macro": 1.0,
+      "f1_macro": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "mcc": 1.0,
+      "confusion_matrix": [
+        [
+          1797,
+          0
+        ],
+        [
+          0,
+          2253
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "score_source": null,
+      "brier": 6.466329052216314e-05,
+      "log_loss": 0.0003747700101102794,
+      "ece": 0.00033510194217946344,
+      "ece_bins": 10,
+      "threshold": 0.5
+    },
+    "catboost/test": {
+      "positive_label": 1,
+      "accuracy": 1.0,
+      "precision_malicious": 1.0,
+      "recall_malicious": 1.0,
+      "f1_malicious": 1.0,
+      "precision_macro": 1.0,
+      "recall_macro": 1.0,
+      "f1_macro": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "mcc": 1.0,
+      "confusion_matrix": [
+        [
+          1797,
+          0
+        ],
+        [
+          0,
+          2253
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "score_source": null,
+      "brier": 0.0001218245177311665,
+      "log_loss": 0.0012448196234227558,
+      "ece": 0.0011680242261981535,
+      "ece_bins": 10,
+      "threshold": 0.5
+    },
+    "random_forest/test": {
+      "positive_label": 1,
+      "accuracy": 1.0,
+      "precision_malicious": 1.0,
+      "recall_malicious": 1.0,
+      "f1_malicious": 1.0,
+      "precision_macro": 1.0,
+      "recall_macro": 1.0,
+      "f1_macro": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "mcc": 1.0,
+      "confusion_matrix": [
+        [
+          1797,
+          0
+        ],
+        [
+          0,
+          2253
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "score_source": null,
+      "brier": 0.0002666036762688614,
+      "log_loss": 0.002086061077188533,
+      "ece": 0.0019173662551440328,
+      "ece_bins": 10,
+      "threshold": 0.5
+    },
+    "ft_transformer/test": {
+      "positive_label": 1,
+      "accuracy": 0.9997530864197531,
+      "precision_malicious": 0.9995563442768411,
+      "recall_malicious": 1.0,
+      "f1_malicious": 0.9997781229199024,
+      "precision_macro": 0.9997781721384206,
+      "recall_macro": 0.9997217584863662,
+      "f1_macro": 0.9997499019831908,
+      "precision": 0.9995563442768411,
+      "recall": 1.0,
+      "f1": 0.9997781229199024,
+      "mcc": 0.9994999290327405,
+      "confusion_matrix": [
+        [
+          1796,
+          1
+        ],
+        [
+          0,
+          2253
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "score_source": null,
+      "brier": 0.0001275975183845765,
+      "log_loss": 0.0015112411111303501,
+      "ece": 0.0013814084008249832,
+      "ece_bins": 10,
+      "threshold": 0.5
+    },
+    "vision_resnet18/test": {
+      "positive_label": 1,
+      "accuracy": 0.9997530864197531,
+      "precision_malicious": 0.9995563442768411,
+      "recall_malicious": 1.0,
+      "f1_malicious": 0.9997781229199024,
+      "precision_macro": 0.9997781721384206,
+      "recall_macro": 0.9997217584863662,
+      "f1_macro": 0.9997499019831908,
+      "precision": 0.9995563442768411,
+      "recall": 1.0,
+      "f1": 0.9997781229199024,
+      "mcc": 0.9994999290327405,
+      "confusion_matrix": [
+        [
+          1796,
+          1
+        ],
+        [
+          0,
+          2253
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "score_source": null,
+      "brier": 0.00024117298250768242,
+      "log_loss": 0.0008093987743326556,
+      "ece": 0.0005515801369233172,
+      "ece_bins": 10,
+      "threshold": 0.5
+    },
+    "stacking_v3/test": {
+      "positive_label": 1,
+      "accuracy": 0.9992592592592593,
+      "precision_malicious": 0.9986702127659575,
+      "recall_malicious": 1.0,
+      "f1_malicious": 0.9993346640053227,
+      "precision_macro": 0.9993351063829787,
+      "recall_macro": 0.9991652754590985,
+      "f1_macro": 0.9992496210586346,
+      "precision": 0.9986702127659575,
+      "recall": 1.0,
+      "f1": 0.9993346640053227,
+      "mcc": 0.9985003673991468,
+      "confusion_matrix": [
+        [
+          1794,
+          3
+        ],
+        [
+          0,
+          2253
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "score_source": null,
+      "brier": 0.0005068941898636756,
+      "log_loss": 0.022718253896548166,
+      "ece": 0.022460849539768367,
+      "ece_bins": 10,
+      "threshold": 0.037803058353758114
+    },
+    "stacking_v3/test_retained_top_entropy_10_percent": {
+      "positive_label": 1,
+      "accuracy": 1.0,
+      "precision_malicious": 1.0,
+      "recall_malicious": 1.0,
+      "f1_malicious": 1.0,
+      "precision_macro": 1.0,
+      "recall_macro": 1.0,
+      "f1_macro": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "mcc": 1.0,
+      "confusion_matrix": [
+        [
+          1392,
+          0
+        ],
+        [
+          0,
+          2253
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "score_source": null,
+      "brier": 0.0005006482404355899,
+      "log_loss": 0.022628163008606463,
+      "ece": 0.02237404045968767,
+      "ece_bins": 10,
+      "threshold": 0.037803058353758114
+    },
+    "stacking_v3/test_retained_parser_referral_then_entropy_10_percent": {
+      "positive_label": 1,
+      "accuracy": 1.0,
+      "precision_malicious": 1.0,
+      "recall_malicious": 1.0,
+      "f1_malicious": 1.0,
+      "precision_macro": 1.0,
+      "recall_macro": 1.0,
+      "f1_macro": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "mcc": 1.0,
+      "confusion_matrix": [
+        [
+          1392,
+          0
+        ],
+        [
+          0,
+          2253
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "score_source": null,
+      "brier": 0.0005006482404355899,
+      "log_loss": 0.022628163008606463,
+      "ece": 0.02237404045968767,
+      "ece_bins": 10,
+      "threshold": 0.037803058353758114
+    }
+  },
+  "prior_tabular_run": "run_20261002T143830529362Z_fa463d2ed5c4",
+  "handoff_run": "run_20261002T154708928029Z_def0ee6b76c9",
+  "inputs": {
+    "dataset": {
+      "path": "data/processed/raw_pdf_cohort/run_20261002T142323844991Z_3b68d36a5705/labeled_features.csv",
+      "sha256": "cdbe817de970e7ab0af46be32ebf7c3d32341915b06f48836a97a91dc35fc212"
+    },
+    "split_manifest": {
+      "path": "data/processed/raw_pdf_cohort/run_20261002T142323844991Z_3b68d36a5705/protocol_g_seed42_split_manifest.csv",
+      "sha256": "7d1cb8cce4630adf4637d4f84b28a17330d77b9284fa3bdd273fdd18ea749e63"
+    },
+    "source_manifest": {
+      "path": "data/processed/raw_pdf_cohort/run_20261002T142323844991Z_3b68d36a5705/source_pdf_manifest.csv",
+      "sha256": "db4e73ef7bac6a2c2c1b845df999d96156efca7b954b1ea2a7f5ca6931f0ee68"
+    },
+    "all_features": {
+      "path": "data/processed/raw_pdf_cohort/run_20261002T142323844991Z_3b68d36a5705/all_raw_features.csv",
+      "sha256": "f2affc133ae287e27fe943850aebbf54e599a6c439d8d3b6f231b089981b10cc"
+    }
+  },
+  "partition_rows": {
+    "train": 11931,
+    "test": 4050,
+    "validation": 3977
+  },
+  "vision_rows": {
+    "validation": 3977,
+    "test": 4050
+  },
+  "tabular_checkpoints_verified": 25,
+  "validation_role_rows": {
+    "base_selection": 1525,
+    "meta_fit": 818,
+    "calibration_fit": 817,
+    "threshold_selection": 817
+  },
+  "test_evaluation_count": 1,
+  "unknown_rows": 4,
+  "unknown_prediction_status": "Not requested; unlabeled Vision CSV not imported",
+  "vision": {
+    "run_id": "run_20261003T075329107712Z_34993818996a",
+    "code_commit": "34993818996a7ffaa3ca1bd4e836a35ee68c7154",
+    "bundle_metadata_sha256": "d961bba1f2eee7b924be7eaf56a5dcf7c6609067a7c0666d30bc1ba4db83be62",
+    "checkpoint_sha256": "8417ed730cadf300f1fba0a8f77cc8e4b33d8a3f7a579646f59365a67654a05b",
+    "best_epoch": 19,
+    "selected_role": "validation_base_selection",
+    "selection_rows": 1525,
+    "csv_sha256": {
+      "vision_probs_val.csv": "1ad918c368cf90f1757de5ad33dc527f60e1aed01802e7e07d1c90e410e284d9",
+      "vision_probs_test.csv": "fa780a6eaaec7aa6c5667a11e1648a2d44b10a861d6d25cf33534f20d0a7bfd4"
+    },
+    "provenance_sha256": {
+      "vision_selection_lock.json": "f0033a33406fb10cc32ed51fd3d0d3b1bb11e2c11dc385f68323790ae64025cb",
+      "output_checksums.json": "c107e9ec00b870febf9a606eb65b9b1242d6c8d0f1ab9c3c99ef2b0ce7085315",
+      "run_summary.json": "56945e1ec4f5dbaf383d946d2e8ed268ff5c81eab7bcf9a1285dc4d2d72e6120"
+    }
+  },
+  "threshold": 0.037803058353758114,
+  "routing": [
+    {
+      "policy": "top_entropy_10_percent",
+      "entropy_unit": "bits",
+      "requested_referral_rate": 0.1,
+      "referral_rate": 0.1,
+      "coverage": 0.9,
+      "referred_count": 405,
+      "retained_count": 3645,
+      "fn_total": 0,
+      "fn_referred": 0,
+      "fn_retained": 0,
+      "fn_catch_rate": null,
+      "fn_catch_rate_unavailable_reason": "No false negatives in the evaluated partition",
+      "errors_referred": 3,
+      "error_capture_rate": 1.0,
+      "retained_metrics": {
+        "positive_label": 1,
+        "accuracy": 1.0,
+        "precision_malicious": 1.0,
+        "recall_malicious": 1.0,
+        "f1_malicious": 1.0,
+        "precision_macro": 1.0,
+        "recall_macro": 1.0,
+        "f1_macro": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "mcc": 1.0,
+        "confusion_matrix": [
+          [
+            1392,
+            0
+          ],
+          [
+            0,
+            2253
+          ]
+        ],
+        "confusion_matrix_labels": [
+          0,
+          1
+        ],
+        "roc_auc": 1.0,
+        "pr_auc": 1.0,
+        "score_source": null,
+        "brier": 0.0005006482404355899,
+        "log_loss": 0.022628163008606463,
+        "ece": 0.02237404045968767,
+        "ece_bins": 10,
+        "threshold": 0.037803058353758114
+      },
+      "threshold": 0.037803058353758114,
+      "dynamic_samples_executed": 0,
+      "referrals_counted_as_corrected": false
+    },
+    {
+      "policy": "parser_referral_then_entropy_10_percent",
+      "coverage": 0.9,
+      "referral_rate": 0.1,
+      "requested_referral_rate": 0.1,
+      "forced_parser_referrals": 0,
+      "referred_count": 405,
+      "fn_total": 0,
+      "fn_referred": 0,
+      "fn_retained": 0,
+      "fn_catch_rate": null,
+      "retained_metrics": {
+        "positive_label": 1,
+        "accuracy": 1.0,
+        "precision_malicious": 1.0,
+        "recall_malicious": 1.0,
+        "f1_malicious": 1.0,
+        "precision_macro": 1.0,
+        "recall_macro": 1.0,
+        "f1_macro": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "mcc": 1.0,
+        "confusion_matrix": [
+          [
+            1392,
+            0
+          ],
+          [
+            0,
+            2253
+          ]
+        ],
+        "confusion_matrix_labels": [
+          0,
+          1
+        ],
+        "roc_auc": 1.0,
+        "pr_auc": 1.0,
+        "score_source": null,
+        "brier": 0.0005006482404355899,
+        "log_loss": 0.022628163008606463,
+        "ece": 0.02237404045968767,
+        "ece_bins": 10,
+        "threshold": 0.037803058353758114
+      },
+      "entropy_unit": "bits",
+      "dynamic_samples_executed": 0,
+      "referrals_counted_as_corrected": false
+    }
+  ],
+  "feature_order": [
+    "pdfsize",
+    "metadata size",
+    "pages",
+    "xref length",
+    "title length",
+    "isEncrypted",
+    "embedded files",
+    "images",
+    "contains_text",
+    "pdf_ver",
+    "obj",
+    "endobj",
+    "stream",
+    "endstream",
+    "trailer",
+    "xref",
+    "startxref",
+    "page_command",
+    "Encrypt",
+    "ObjStm",
+    "JS",
+    "JavaScript",
+    "AA",
+    "OpenAction",
+    "JBIG2Decode",
+    "RichMedia",
+    "Launch",
+    "EmbeddedFile",
+    "XFA",
+    "URI",
+    "Encoding",
+    "ProcSet",
+    "Registry",
+    "Resources",
+    "www",
+    "server",
+    "Root",
+    "BitsPerComponent",
+    "script_ratio",
+    "ObfuscationCount"
+  ],
+  "train_constant_exclusions": [
+    "Acroform",
+    "Colors",
+    "BaseEncoding"
+  ],
+  "tabular_models_refitted": 0,
+  "vision_models_refitted": 0,
+  "notes": "25 original Tabular folds reused; GPU Vision probabilities verified. Meta/Platt/Youden use disjoint saved Validation roles only. One Test evaluation; ECE=10 equal-width bins; referrals do not count as corrected predictions. Four unlabeled S3 rows excluded.",
+  "finished_at_utc": "2026-10-03T08:54:37.297828+00:00"
+}

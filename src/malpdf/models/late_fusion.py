@@ -188,7 +188,7 @@ def fit_validation_stack(validation: FusionPartition, candidates: tuple[FusionCa
     return fitted[best], rows, roles
 
 
-def entropy_routing(labels, probabilities, sample_ids) -> tuple[dict, np.ndarray]:
+def entropy_routing(labels, probabilities, sample_ids, *, threshold: float = 0.5) -> tuple[dict, np.ndarray]:
     """Refer the fixed top 10% entropy without labels influencing routing."""
     ids = tuple(sample_ids)
     values = np.asarray(probabilities, dtype=float)
@@ -200,9 +200,9 @@ def entropy_routing(labels, probabilities, sample_ids) -> tuple[dict, np.ndarray
     decision = referral_by_uncertainty(entropy[order], referral_rate=0.10)
     referred = np.empty(len(ids), dtype=bool)
     referred[order] = decision.referred
-    measured = selective_metrics(truth, values, referred)
-    retained = calibration_metrics(truth[~referred], values[~referred], n_bins=10)
-    fn_count = int(((truth == 1) & (values < 0.5)).sum())
+    measured = selective_metrics(truth, values, referred, threshold=threshold)
+    retained = calibration_metrics(truth[~referred], values[~referred], n_bins=10, threshold=threshold)
+    fn_count = int(((truth == 1) & (values < threshold)).sum())
     summary = {"policy": "top_entropy_10_percent", "entropy_unit": "bits", "requested_referral_rate": 0.10,
                "referral_rate": decision.referral_rate, "coverage": decision.coverage,
                "referred_count": int(referred.sum()), "retained_count": int((~referred).sum()),
@@ -210,6 +210,6 @@ def entropy_routing(labels, probabilities, sample_ids) -> tuple[dict, np.ndarray
                "fn_catch_rate": measured["fn_referred"] / fn_count if fn_count else None,
                "fn_catch_rate_unavailable_reason": None if fn_count else "No false negatives in the evaluated partition",
                "errors_referred": measured["errors_referred"], "error_capture_rate": measured["error_capture_rate"],
-               "retained_metrics": retained, "dynamic_samples_executed": 0,
+               "retained_metrics": retained, "threshold": float(threshold), "dynamic_samples_executed": 0,
                "referrals_counted_as_corrected": False}
     return summary, referred
