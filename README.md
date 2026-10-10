@@ -69,6 +69,26 @@ earlier run. No full-pipeline classification improvement is established.
 See [the measured v5 result](reports/analysis/cic_static_offline.md#completed-v5-paired-measurement).
 Prepared jobs must match their locked extractor fingerprints.
 
+The separately locked saved-profile ablation reuses that completed v5 LAB
+evidence without reopening PDFs:
+
+```bash
+.venv/bin/python scripts/17_train_cic_static.py --config configs/cic_profile_accuracy.yaml
+```
+
+Three fixed RF variants share the same eligible 32 Train and 32 development
+rows: canonical RIT41 measurements, additional complete/observed structure and
+AST evidence, then additional parser-status flags. Unknown totals stay null;
+observed values are explicitly named lower bounds. Median imputation and
+missing indicators fit on Train only. An experimental raw-feature fallback
+retains parser-error rows whose bounded byte snapshot and raw measurements
+were verified; missing input still refuses classification. This study does not
+change the production gate. All failures stay in coverage denominators and
+status-stratum results. Fixed threshold 0.5, no tuning or Test access, and
+separate LAB-only model identities prevent replacing the supplied RIT model.
+Previously exposed, balanced development evidence requires larger and fresh
+offline confirmation before any deployment or full-pipeline accuracy claim.
+
 ## Retrospective multi-cohort stacking v4
 
 `scripts/13_multi_cohort_stacking_v4.py` adds a separately locked adaptation study.

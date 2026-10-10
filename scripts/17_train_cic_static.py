@@ -1,4 +1,4 @@
-"""Fixed CPU CIC Train-only static adaptation using controlled cached features."""
+"""Fixed CIC Train-only models from controlled tables or saved offline profiles."""
 
 import argparse
 import json

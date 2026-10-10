@@ -1,0 +1,25 @@
+seed: 42
+threshold: 0.5
+source_profile: run_20261010T064045861512Z_53173f5a5625
+rf:
+  n_estimators: 200
+  max_depth: 12
+  min_samples_leaf: 2
+  class_weight: balanced
+expected_counts:
+  train/0: 16
+  train/1: 16
+  validation/0: 16
+  validation/1: 16
+profile_summary:
+  path: reports/experiments/cic_static_profile/run_20261010T064045861512Z_53173f5a5625/run_summary.json
+  sha256: afea50ff01b201bb14b4cff775edd3fd879925f2af47a961b44c584e4c9cfad5
+profile_methodology:
+  path: reports/experiments/cic_static_profile/run_20261010T064045861512Z_53173f5a5625/locked_methodology.json
+  sha256: be80330dad2ddc62bc1b6dbcf90892a490d923ac532f801bcd766dd6fa66229b
+profile_comparison:
+  path: reports/experiments/cic_static_profile/run_20261010T064045861512Z_53173f5a5625/feature_comparison.json
+  sha256: 77e715b2a6761d54b1f4fb1884dd0ef0a730feb0ee37baa84419bd78a9b655af
+profile_records:
+  path: artifacts/cic_static_profile/run_20261010T064045861512Z_53173f5a5625/per_file.jsonl
+  sha256: bf4b77706aee81897559a1902bbfa8e6de14697dcec1976a9d37e42bf9dddb37

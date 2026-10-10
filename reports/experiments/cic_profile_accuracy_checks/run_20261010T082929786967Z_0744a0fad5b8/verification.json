@@ -1,0 +1,32 @@
+{
+  "targeted": {
+    "exit_code": 0,
+    "seconds": 9.4187248799999,
+    "last_line": "16 passed in 5.46s",
+    "output": "artifacts/cic_profile_accuracy_checks/run_20261010T082929786967Z_0744a0fad5b8/targeted.txt"
+  },
+  "suite": {
+    "exit_code": 0,
+    "seconds": 237.59829539600014,
+    "last_line": "720 passed, 2 warnings in 228.93s (0:03:48)",
+    "output": "artifacts/cic_profile_accuracy_checks/run_20261010T082929786967Z_0744a0fad5b8/suite.txt"
+  },
+  "pip": {
+    "exit_code": 0,
+    "seconds": 1.9115205420002894,
+    "last_line": "No broken requirements found.",
+    "output": "artifacts/cic_profile_accuracy_checks/run_20261010T082929786967Z_0744a0fad5b8/pip.txt"
+  },
+  "diff": {
+    "exit_code": 0,
+    "seconds": 0.04333884500010754,
+    "last_line": "no output",
+    "output": "artifacts/cic_profile_accuracy_checks/run_20261010T082929786967Z_0744a0fad5b8/diff.txt"
+  },
+  "status": {
+    "exit_code": 0,
+    "seconds": 0.0523522409994257,
+    "last_line": "?? tests/test_cic_profile_accuracy.py",
+    "output": "artifacts/cic_profile_accuracy_checks/run_20261010T082929786967Z_0744a0fad5b8/status.txt"
+  }
+}

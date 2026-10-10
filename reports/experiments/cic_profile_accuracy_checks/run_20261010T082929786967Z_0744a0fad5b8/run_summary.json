@@ -1,0 +1,36 @@
+{
+  "run_id": "run_20261010T082929786967Z_0744a0fad5b8",
+  "study": "cic_profile_accuracy_checks",
+  "status": "completed",
+  "started_at_utc": "2026-10-10T08:29:29.851958+00:00",
+  "code_commit": "0744a0fad5b888884f93654dab95a4ab4bdf3643",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_accuracy.md",
+      " M scripts/17_train_cic_static.py",
+      " M src/malpdf/experiments/cic_static_accuracy.py",
+      "?? configs/cic_profile_accuracy.yaml",
+      "?? tests/test_cic_profile_accuracy.py"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_accuracy.md",
+      " M scripts/17_train_cic_static.py",
+      " M src/malpdf/experiments/cic_static_accuracy.py",
+      "?? configs/cic_profile_accuracy.yaml",
+      "?? tests/test_cic_profile_accuracy.py"
+    ]
+  },
+  "seed": 42,
+  "protocol": "CIC observed-evidence fixed-ablation maintenance verification",
+  "report_path": "reports/experiments/cic_profile_accuracy_checks/run_20261010T082929786967Z_0744a0fad5b8/run_summary.json",
+  "artifact_path": "artifacts/cic_profile_accuracy_checks/run_20261010T082929786967Z_0744a0fad5b8",
+  "metrics": {},
+  "notes": "Observed lower bounds kept separate from unknown totals; fixed Train-only fitting, checksum/identity/label/split/execution and feature-equivalence guards, parser-error inclusion and missing-input refusal denominators verified. 720 passed, 2 warnings in 228.93s (0:03:48); pip/diff/status saved. No real PDF/Test/model evaluation in maintenance.",
+  "finished_at_utc": "2026-10-10T08:33:39.143797+00:00"
+}

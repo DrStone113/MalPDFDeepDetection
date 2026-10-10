@@ -1,0 +1,37 @@
+{
+  "python": "3.11.17",
+  "packages": {
+    "numpy": "2.4.6",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.9.1",
+    "PyMuPDF": "1.26.7",
+    "torch": "2.11.0+cpu",
+    "torchvision": "0.26.0+cpu",
+    "xgboost": "3.2.0",
+    "lightgbm": "4.7.0",
+    "catboost": "1.2.10"
+  },
+  "generating_commit": "0744a0fad5b888884f93654dab95a4ab4bdf3643",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_accuracy.md",
+      " M scripts/17_train_cic_static.py",
+      " M src/malpdf/experiments/cic_static_accuracy.py",
+      "?? configs/cic_profile_accuracy.yaml",
+      "?? tests/test_cic_profile_accuracy.py"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_accuracy.md",
+      " M scripts/17_train_cic_static.py",
+      " M src/malpdf/experiments/cic_static_accuracy.py",
+      "?? configs/cic_profile_accuracy.yaml",
+      "?? tests/test_cic_profile_accuracy.py"
+    ]
+  }
+}

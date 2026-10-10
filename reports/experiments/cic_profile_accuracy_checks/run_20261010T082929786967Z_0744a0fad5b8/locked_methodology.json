@@ -1,0 +1,29 @@
+{
+  "protocol": "CIC observed-evidence fixed-ablation maintenance verification",
+  "seed": 42,
+  "pdf_access": false,
+  "test_dataset_access": false,
+  "fixtures": "benign synthetic bytes/tables/profile metadata only",
+  "config_sha256": "9ca68eec94349e09f15e4c4881a1360abf899dc8e89962d0022ace87c02ef105",
+  "checks": [
+    "targeted",
+    "suite",
+    "pip",
+    "diff",
+    "status"
+  ],
+  "code_commit": "0744a0fad5b888884f93654dab95a4ab4bdf3643",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_accuracy.md",
+      " M scripts/17_train_cic_static.py",
+      " M src/malpdf/experiments/cic_static_accuracy.py",
+      "?? configs/cic_profile_accuracy.yaml",
+      "?? tests/test_cic_profile_accuracy.py"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

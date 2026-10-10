@@ -93,6 +93,61 @@ the code/schema fingerprint invalidates previous prepared jobs and caches.
 The text-stream encoding definition is in Adobe's
 [PDF Reference 1.7, Table 8.90](https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/pdfreference1.7old.pdf);
 [PDF 2.0 adds UTF-8 text with a BOM](https://pdfa.org/understanding-utf-8-in-pdf-2-0/).
-These fixture corrections have no new real-CIC recall/FPR result yet. The
-same 64-file offline diagnostic subset must be measured again through the
-existing CLI after clean source and preparation commits.
+The same64 offline v5 run subsequently completed in
+`reports/experiments/cic_static_profile/run_20261010T064045861512Z_53173f5a5625/`.
+Observed AST coverage rose from11 to20 files; complete/partial/parser-error
+counts stayed23/23/18, and the strict RF pilot's recall/FPR stayed unchanged.
+Its `advanced_features()` uses only complete totals, leaving recovered partial
+AST evidence out of the classifier input. Eighteen files have fatal structural
+parse failures, including14 missing-startxref failures. These failures are
+retained in all reported denominators; they are not benign predictions.
+
+## Locked observed-evidence ablation
+
+The existing entry point also supports a distinct saved-profile study:
+
+```bash
+.venv/bin/python scripts/17_train_cic_static.py --config configs/cic_profile_accuracy.yaml
+```
+
+The config pins the completed profile, its methodology, comparison and private
+per-file JSONL checksums. The loader verifies every development identity,
+label, split, original manifest/group boundary, snapshot checksum, v5 schema
+and static-only execution state before fitting. It reads saved bounded metadata;
+it does not reopen/hash PDF bytes or convert any Test measurements. Only cold
+records are used, avoiding repeated cold/warm observations as training samples.
+
+All three variants use RF200 trees/depth12/min-leaf2/class-balanced, seed42 and
+threshold0.5, matching the original RF budget. No threshold/hyperparameter
+search, calibration, selection or production promotion occurs. The canonical
+41 measurements preserve original `-1` and null evidence. Unknown advanced
+totals stay null, while observed values have separate lower-bound names.
+The29 AST node-type names are fixed syntax categories, not selected from
+Validation. Imputation/missing indicators fit on eligible Train only.
+
+| Variant | Fixed input group |
+| --- | --- |
+| P0 | Canonical RIT41 measurements; explicit experimental raw-feature fallback |
+| P1 | P0 plus existing complete totals, observed structure/AST/node types and analysis-coverage flags |
+| P2 | P1 plus parser success/completeness/resource/encryption/repair flags |
+
+Eligible input requires the saved capped, checksum-verified byte snapshot and
+measured raw features. On the locked source64 rows, all32 Train and32 Validation
+rows meet this condition, including parser errors. Input/worker failures still
+refuse classification. Counts, coverage, malicious recall, FPR and analysis-status
+strata keep every planned row in their denominators. Unknown fields are not
+replaced with invented source measurements or default benign predictions.
+Cross-partition feature equivalence causes failure before fitting, rather than
+changing the saved split or silently dropping rows.
+
+Only P0/P1/P2 share the same fitting rows and fallback policy. The older C0/C1
+models trained on18 and classified11/32 development rows under a strict gate;
+their conditional recall/FPR cannot be treated as directly comparable feature
+ablation results. Full-class detection/false-positive fractions and refusals
+are reported separately. Binary development models remain in ignored LAB
+artifacts; the frozen RIT model and production refusal gate stay unchanged.
+
+This is a small, balanced, previously exposed development cohort. A positive
+result would require a larger locked Train/dev measurement and separate fresh
+offline raw-to-result confirmation; it would not establish independent Test
+accuracy or justify silently deploying a fallback on unknown PDFs.
