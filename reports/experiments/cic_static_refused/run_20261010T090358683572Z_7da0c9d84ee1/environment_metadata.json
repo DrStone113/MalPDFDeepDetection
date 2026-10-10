@@ -1,0 +1,29 @@
+{
+  "python": "3.11.17",
+  "packages": {
+    "numpy": "2.4.6",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.9.1",
+    "PyMuPDF": "1.26.7",
+    "torch": "2.11.0+cpu",
+    "torchvision": "0.26.0+cpu",
+    "xgboost": "3.2.0",
+    "lightgbm": "4.7.0",
+    "catboost": "1.2.10"
+  },
+  "generating_commit": "7da0c9d84ee1604ec6071540230262e17643fcef",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M src/malpdf/experiments/cic_static_accuracy.py",
+      "?? configs/cic_static_rf_accuracy.yaml"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M src/malpdf/experiments/cic_static_accuracy.py",
+      "?? configs/cic_static_rf_accuracy.yaml"
+    ]
+  }
+}

@@ -32,6 +32,9 @@ from malpdf.static.js_ast import CALL_NAMES
 CIC_FEATURE_ORDER = (*DEPLOYMENT_FEATURE_ORDER, "script_ratio", "ObfuscationCount")
 CIC_FEATURE_SCHEMA = "cic-static-40/v1"
 CIC_MODEL_ID = "xgb-cic-train-static40-v1"
+CIC_RF_MODEL_ID = "rf-cic-train-static40-v1"
+# Same fixed RF budget as the PDF diagnostic pilot, now using all saved Train.
+CIC_RF_PARAMETERS = {"max_depth": 12, "min_samples_leaf": 2, "class_weight": "balanced"}
 PROFILE_FEATURE_SCHEMA = "cic-observed-profile/v1"
 PROFILE_VARIANTS = ("P0_rit41_fallback", "P1_observed_static", "P2_observed_plus_status")
 AST_NODE_TYPES = ("ArrayExpression", "AssignmentExpression", "BinaryExpression", "BlockStatement",
@@ -332,15 +335,25 @@ def train_cic_static(root, configuration):
         raise ValueError("Locked seed/threshold changed")
     if "source_profile" in cfg:
         return train_cic_profile(root, cfg)
+    family = cfg.get("candidate_model", "xgboost")
+    if family not in {"xgboost", "random_forest"}:
+        raise ValueError("Unsupported fixed CIC candidate family")
+    model_configuration = model_configurations(42)[family]
+    if family == "random_forest":
+        model_configuration["parameters"].update(CIC_RF_PARAMETERS)
+        model_configuration["preprocessing"] = {"name": "SimpleImputer median/add_indicator/keep_empty_features",
+            "fit_scope": "CIC Train only; original source null/-1 measurements unchanged"}
+    study = "cic_static_accuracy" if family == "xgboost" else "cic_static_rf_accuracy"
+    candidate_label = "CIC_train_static40" if family == "xgboost" else "CIC_train_rf_static40"
     method = {"protocol": "retrospective CIC Train-only static adaptation; saved Protocol G partitions",
         "configuration": cfg, "feature_order": list(CIC_FEATURE_ORDER),
-        "model_configuration": model_configurations(42)["xgboost"],
+        "model_configuration": model_configuration, "candidate_family": family,
         "selection": "one fixed candidate; no hyperparameter/calibration/threshold selection",
         "baseline": "frozen user-supplied RIT G-drop3constant; original training lineage user-reported",
         "test_access": False, "pdf_access": False,
         "scope": "cached numeric feature classification; raw-to-result coverage/latency require offline PDF benchmark",
         "limitations": "Validation previously exposed; RIT PDF overlap cannot be excluded from CSV-only identities"}
-    with ResearchRun(root, "cic_static_accuracy", method) as run:
+    with ResearchRun(root, study, method) as run:
         set_random_seed(42)
         frame = load_development_tables(root, cfg)
         train = frame.split.eq("train").to_numpy()
@@ -355,14 +368,26 @@ def train_cic_static(root, configuration):
         baseline_spec = json.loads(baseline_bytes)
         baseline, _ = load_profile_model(root, baseline_spec)
         baseline.set_params(n_jobs=1)
-        candidate = create_model("xgboost", 42)
+        candidate = create_model(family, 42)
+        if family == "random_forest":
+            from sklearn.impute import SimpleImputer
+            from sklearn.pipeline import make_pipeline
+            candidate.set_params(**CIC_RF_PARAMETERS)
+            candidate = make_pipeline(SimpleImputer(strategy="median", add_indicator=True, keep_empty_features=True), candidate)
         candidate.fit(features.loc[train], frame.loc[train, "Label"].astype(int))
-        target = run.artifacts / "cic_xgb40.json"
-        candidate.save_model(str(target))
-        manifest = {"model_id": CIC_MODEL_ID, "artifact_relative_path": str(target.relative_to(root)),
+        if family == "xgboost":
+            target = run.artifacts / "cic_xgb40.json"
+            candidate.save_model(str(target))
+        else:
+            import joblib
+            target = run.artifacts / "cic_rf40.joblib"
+            joblib.dump(candidate, target)
+        manifest = {"model_id": CIC_MODEL_ID if family == "xgboost" else CIC_RF_MODEL_ID,
+            "model_family": family, "artifact_relative_path": str(target.relative_to(root)),
             "artifact_sha256": hashlib.sha256(target.read_bytes()).hexdigest(), "feature_schema": CIC_FEATURE_SCHEMA,
             "feature_order": list(CIC_FEATURE_ORDER), "threshold": 0.5,
-            "model_configuration": model_configurations(42)["xgboost"],
+            "model_configuration": model_configuration,
+            "artifact_scope": "experimental LAB-only candidate; no production promotion or binary transfer to host for loading",
             "training_dataset": {"sha256": cfg["feature_table"]["sha256"], "training_rows": int(train.sum()),
                 "fit_scope": "saved CIC Train only; no Test rows used"},
             "excluded_train_constants": list(EXCLUDED_CONSTANT_FEATURES), "excluded_nonpredictors": ["sample_id", "Label", "split", "cohort", "path", "hash", "source", "parser_failed"]}
@@ -371,7 +396,7 @@ def train_cic_static(root, configuration):
         output = {}
         probabilities = {}
         for name, model, columns in (("RIT_frozen_to_CIC", baseline, DEPLOYMENT_FEATURE_ORDER),
-                                      ("CIC_train_static40", candidate, CIC_FEATURE_ORDER)):
+                                      (candidate_label, candidate, CIC_FEATURE_ORDER)):
             scores = model.predict_proba(features.loc[mask, list(columns)])[:, 1]
             labels = frame.loc[mask, "Label"].astype(int).to_numpy()
             metrics = calibration_metrics(labels, scores, threshold=0.5)
@@ -390,5 +415,5 @@ def train_cic_static(root, configuration):
             "scope": "same cached CIC Validation rows; numeric eligibility only; no new raw-PDF coverage or independent Test claim"})
         write_json(run.report / "feature_information.json", feature_information(frame))
         write_json(run.artifacts / "validation_predictions.json", {"sample_ids": frame.loc[mask, "sample_id"].tolist(), "probabilities": probabilities})
-        run.state["notes"] = "Fixed CIC Train-only XGBoost candidate compared with preserved frozen RIT model on the same cached Validation rows. Native candidate artifact ignored; threshold0.5 unchanged; no tuning/Test/PDF access. Validation was previously exposed; no independent generalization or raw-pipeline improvement claimed."
+        run.state["notes"] = f"Fixed CIC Train-only {family} candidate compared with preserved frozen RIT model on the same cached Validation rows. Candidate artifact ignored and experimental LAB-only; threshold0.5 unchanged; no tuning/Test/PDF access. Validation was previously exposed; no independent generalization or raw-pipeline improvement claimed."
     return run.state

@@ -1,0 +1,17 @@
+{
+  "protocol": "CIC offline job preflight",
+  "prepared_run": "run_20261010T084845105719Z_266319ceaeec",
+  "test_access": false,
+  "pdf_access": false,
+  "seed": 42,
+  "code_commit": "7da0c9d84ee1604ec6071540230262e17643fcef",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M src/malpdf/experiments/cic_static_accuracy.py",
+      "?? configs/cic_static_rf_accuracy.yaml"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}
