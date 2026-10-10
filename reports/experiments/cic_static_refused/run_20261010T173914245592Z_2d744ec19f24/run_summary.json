@@ -1,0 +1,29 @@
+{
+  "run_id": "run_20261010T173914245592Z_2d744ec19f24",
+  "study": "cic_static_refused",
+  "status": "failed",
+  "started_at_utc": "2026-10-10T17:39:14.279095+00:00",
+  "code_commit": "2d744ec19f247ceffb3fae144748736b9fb93da2",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      "?? reports/experiments/cic_static_profile/run_20261010T172942216671Z_2d744ec19f24/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      "?? reports/experiments/cic_static_profile/run_20261010T172942216671Z_2d744ec19f24/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "CIC offline job preflight",
+  "report_path": "reports/experiments/cic_static_refused/run_20261010T173914245592Z_2d744ec19f24/run_summary.json",
+  "artifact_path": "artifacts/cic_static_refused/run_20261010T173914245592Z_2d744ec19f24",
+  "metrics": {},
+  "notes": "Preflight refused before model/PDF access; dirty/unavailable LAB/config provenance recorded; no samples or metrics evaluated.",
+  "error_type": "ValueError",
+  "finished_at_utc": "2026-10-10T17:39:14.341232+00:00"
+}

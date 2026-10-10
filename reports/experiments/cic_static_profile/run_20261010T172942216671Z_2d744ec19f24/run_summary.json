@@ -1,0 +1,32 @@
+{
+  "run_id": "run_20261010T172942216671Z_2d744ec19f24",
+  "study": "cic_static_profile",
+  "status": "failed",
+  "started_at_utc": "2026-10-10T17:29:42.284105+00:00",
+  "code_commit": "2d744ec19f247ceffb3fae144748736b9fb93da2",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "data_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "seed": 42,
+  "protocol": "fixed CIC Train/dev static diagnosis and feature pilot",
+  "report_path": "reports/experiments/cic_static_profile/run_20261010T172942216671Z_2d744ec19f24/run_summary.json",
+  "artifact_path": "artifacts/cic_static_profile/run_20261010T172942216671Z_2d744ec19f24",
+  "metrics": {},
+  "evidence_paths": {
+    "pipeline": "reports/experiments/cic_static_profile/run_20261010T172942216671Z_2d744ec19f24/pipeline_summary.json",
+    "per_file": "artifacts/cic_static_profile/run_20261010T172942216671Z_2d744ec19f24/per_file.jsonl",
+    "comparison": "reports/experiments/cic_static_profile/run_20261010T172942216671Z_2d744ec19f24/v7_v8_comparison.json",
+    "parser_comparison": "reports/experiments/cic_static_profile/run_20261010T172942216671Z_2d744ec19f24/parser_comparison.json",
+    "c1_error_analysis": "artifacts/cic_static_profile/run_20261010T172942216671Z_2d744ec19f24/c1_error_analysis.json"
+  },
+  "config_hash": "f013f327ba998b760749c126841de2faa55b456643d9d0b2346f9df426d370f7",
+  "dataset_manifest_hash": "bc0b8e0f65383d96b4f68065b8898563898d18cd2775f789da7141fb691ed209",
+  "notes": "CIC Train/dev only, one worker; all planned samples retained in coverage/refusal denominators. Full per-file identities/errors stay in LAB artifacts. Stage timings distinguish explicit JS decoding from implicit backend decoding. Balanced pilot and previously exposed Validation, no independent Test/improvement claim. RIT CSV unchanged.",
+  "error_type": "ValueError",
+  "finished_at_utc": "2026-10-10T17:29:42.790576+00:00"
+}
