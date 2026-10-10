@@ -1,0 +1,35 @@
+{
+  "run_id": "run_20261010T181226185135Z_d5cb3d5309e1",
+  "study": "cic_v8_ram_handoff",
+  "status": "completed",
+  "started_at_utc": "2026-10-10T18:12:26.217203+00:00",
+  "code_commit": "d5cb3d5309e1cb725d0c5af8faa94b85329b51af",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_v8.md",
+      " M reports/research_log.md",
+      " M scripts/18_launch_cic_offline.py",
+      "?? reports/experiments/cic_static_prepare/run_20261010T181103978407Z_d5cb3d5309e1/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_v8.md",
+      " M reports/research_log.md",
+      " M scripts/18_launch_cic_offline.py",
+      "?? reports/experiments/cic_static_prepare/run_20261010T181103978407Z_d5cb3d5309e1/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "v8 replacement console-job provenance and startup repair handoff",
+  "report_path": "reports/experiments/cic_v8_ram_handoff/run_20261010T181226185135Z_d5cb3d5309e1/run_summary.json",
+  "artifact_path": "artifacts/cic_v8_ram_handoff/run_20261010T181226185135Z_d5cb3d5309e1",
+  "metrics": {},
+  "release_status": "pending_actual_offline_benchmark",
+  "notes": "RAM admission now precedes the evaluation claim and is rechecked after model loading;1GiB parser cap and256MiB reserve retained. Benign pytest cache moved from RAM-backed /tmp to ignored disk; short on-disk validation TMPDIR verified. Initial long-path maintenance check was interrupted on AF_UNIX path limit; preserved with no CIC metrics. Final fresh Python3.11 CPU suite passed810 tests with2 known warnings; source/tests stable and six launcher tests passed after the metadata-only pin. New same64/config/design/model lock verified against old zero-input failed launch and sealed v7; old marker/report preserved. No PDFs opened or benchmark repeated here. Use a new console window through the selected isolated LAB procedure; release/accuracy unverified.",
+  "finished_at_utc": "2026-10-10T18:12:30.500862+00:00"
+}

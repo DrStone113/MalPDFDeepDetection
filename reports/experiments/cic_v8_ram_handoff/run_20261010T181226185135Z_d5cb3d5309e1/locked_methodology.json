@@ -1,0 +1,23 @@
+{
+  "protocol": "v8 replacement console-job provenance and startup repair handoff",
+  "seed": 42,
+  "pdf_access": false,
+  "test_access": false,
+  "failed_prepared_run": "run_20261010T172048450685Z_c3c2eeec64a6",
+  "prepared_run": "run_20261010T181103978407Z_d5cb3d5309e1",
+  "validation_run": "run_20261010T180544719622Z_66ef2cf467d8",
+  "reason": "old run stopped on RAM admission at0/64; no model selection or evaluated benchmark repeated",
+  "code_commit": "d5cb3d5309e1cb725d0c5af8faa94b85329b51af",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_v8.md",
+      " M reports/research_log.md",
+      " M scripts/18_launch_cic_offline.py",
+      "?? reports/experiments/cic_static_prepare/run_20261010T181103978407Z_d5cb3d5309e1/"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

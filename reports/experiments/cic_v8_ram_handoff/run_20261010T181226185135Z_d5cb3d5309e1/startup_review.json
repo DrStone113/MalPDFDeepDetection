@@ -1,0 +1,55 @@
+{
+  "prepared_run": "run_20261010T181103978407Z_d5cb3d5309e1",
+  "rows": 64,
+  "same64_subset_labels_splits": true,
+  "configuration_unchanged": true,
+  "baseline_evidence_unchanged": true,
+  "frozen_model_bytes_identical": true,
+  "core_sources_match_full810_validation": true,
+  "full_tests": 810,
+  "known_warnings": 2,
+  "launcher_tests_after_pin": 6,
+  "memory_admission": {
+    "available_bytes": 3247001600,
+    "worker_bytes": 1073741824,
+    "reserve_bytes": 268435456
+  },
+  "old_outcome": {
+    "prepared_run": "run_20261010T172048450685Z_c3c2eeec64a6",
+    "status": "failed",
+    "report_path": "reports/experiments/cic_static_profile/run_20261010T172942216671Z_2d744ec19f24/run_summary.json",
+    "recorded": 0,
+    "planned": 64,
+    "error_code": "insufficient_parser_ram"
+  },
+  "new_attempt_claimed": false,
+  "release_status": "pending_actual_offline_benchmark",
+  "checks": {
+    "launcher_check": {
+      "exit_code": 0,
+      "output": "Job \u0111\u00e3 kh\u00f3a h\u1ee3p l\u1ec7: run_20261010T181103978407Z_d5cb3d5309e1; 64 m\u1eabu; pdf-evidence-v8\nCh\u1ec9 ki\u1ec3m tra metadata/model; ch\u01b0a ch\u1ea1y PDF v\u00e0 ch\u01b0a x\u00e1c nh\u1eadn LAB \u0111\u00e3 ng\u1eaft m\u1ea1ng.\n"
+    },
+    "pip_check": {
+      "exit_code": 0,
+      "output": "No broken requirements found.\n"
+    },
+    "diff_check": {
+      "exit_code": 0,
+      "output": ""
+    },
+    "status": {
+      "exit_code": 0,
+      "output": " M README.md\n M reports/analysis/cic_static_v8.md\n M reports/research_log.md\n M scripts/18_launch_cic_offline.py\n?? reports/experiments/cic_static_prepare/run_20261010T181103978407Z_d5cb3d5309e1/\n?? reports/experiments/cic_v8_ram_handoff/\n"
+    },
+    "ignore_check": {
+      "exit_code": 0,
+      "output": "data/raw/__v8_guard__\nartifacts/__v8_guard__\n__v8_guard__.pdf\n__v8_guard__.npy\n"
+    }
+  },
+  "current_connection": {
+    "ssh": true,
+    "connected_interfaces": 2,
+    "unknown_interfaces": 0,
+    "shared_mounts": 0
+  }
+}

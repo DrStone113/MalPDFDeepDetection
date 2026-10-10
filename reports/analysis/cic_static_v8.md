@@ -97,11 +97,17 @@ stop a job and must remain recorded. Fresh validation uses ignored on-disk
 temporary files rather than consuming `/tmp` RAM. Existing claims are displayed
 with their saved status and `report_path`, without launching a new process.
 
-A replacement metadata-only job is prepared from clean committed repaired code
+A [replacement metadata-only job](../experiments/cic_static_prepare/run_20261010T181103978407Z_d5cb3d5309e1/run_summary.json)
+is prepared from clean committed repaired code `d5cb3d5309e1`
 using the exact sealed v7 subset/configuration and byte-identical native frozen
 model. This replaces a zero-input failed launch, not an evaluated benchmark;
 no validation result or model setting was used to choose a favorable repeat.
-The existing Desktop **Chạy CIC offline** launcher will target that new lock.
+The existing Desktop **Chạy CIC offline** launcher targets that new lock.
+Close the old terminal window and reopen the shortcut to load the new job ID.
+The [startup review](../experiments/cic_v8_ram_handoff/run_20261010T181226185135Z_d5cb3d5309e1/startup_review.json)
+verifies the same64/configuration/design, identical frozen-model bytes and the
+core source hashes tested by the full810 suite; six launcher checks passed after
+pinning the new metadata-only job. The new evaluation claim is absent.
 After the selected LAB isolation steps, use the VMware console and press Enter.
 `scripts/18_launch_cic_offline.py --check` verifies metadata/model only, with
 no PDF access or execution. Final CIC evaluation remains pending.

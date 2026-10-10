@@ -69,7 +69,9 @@ The [first v8 invocation](reports/experiments/cic_static_profile/run_20261010T17
 failed before PDF access because available RAM did not meet the isolated parser
 budget. Its claim and reports remain intact. Parser admission now runs before
 claiming and again after model loading; repeated launches display the saved status
-and report instead of starting another attempt. See
+and report instead of starting another attempt. The shortcut now targets the
+[replacement v8 job](reports/experiments/cic_static_prepare/run_20261010T181103978407Z_d5cb3d5309e1/run_summary.json);
+close any old console window before reopening it. See
 [current launcher status and RAM preparation](reports/analysis/cic_static_v8.md#limits-and-final-execution).
 Its VM-specific desktop entry is versioned
 in `configs/cic_offline_launcher.desktop`; the thin entry point is
