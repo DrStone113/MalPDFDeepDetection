@@ -1,0 +1,34 @@
+{
+  "run_id": "run_20261010T085021877075Z_266319ceaeec",
+  "study": "cic_v6_launcher_checks",
+  "status": "completed",
+  "started_at_utc": "2026-10-10T08:50:21.984336+00:00",
+  "code_commit": "266319ceaeec05b9b297e831657006fda35aee2c",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/research_log.md",
+      " M scripts/18_launch_cic_offline.py",
+      "?? reports/experiments/cic_static_prepare/run_20261010T084845105719Z_266319ceaeec/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/research_log.md",
+      " M scripts/18_launch_cic_offline.py",
+      "?? reports/experiments/cic_static_prepare/run_20261010T084845105719Z_266319ceaeec/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "v6 paired console job metadata and launcher maintenance",
+  "report_path": "reports/experiments/cic_v6_launcher_checks/run_20261010T085021877075Z_266319ceaeec/run_summary.json",
+  "artifact_path": "artifacts/cic_v6_launcher_checks/run_20261010T085021877075Z_266319ceaeec",
+  "metrics": {},
+  "notes": "Desktop launcher now pins v6 same64 job; metadata/subset/config/source-model/native-model checksums match previous job; no Test selected/PDF access/model fitting. Full724-pass suite saved before launcher pin change; launcher 4 passed in 4.54s; metadata/desktop/pip/diff/status passed. Human-run disconnected console measurement remains pending.",
+  "finished_at_utc": "2026-10-10T08:50:41.229628+00:00"
+}

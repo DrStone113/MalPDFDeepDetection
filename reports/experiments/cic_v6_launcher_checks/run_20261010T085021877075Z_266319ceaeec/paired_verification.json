@@ -1,0 +1,10 @@
+{
+  "rows": 64,
+  "schema": "pdf-code-inspection-v6",
+  "same_subset": true,
+  "same_configuration": true,
+  "same_frozen_model": true,
+  "same_original_model": true,
+  "test_selected": false,
+  "pdf_read": false
+}

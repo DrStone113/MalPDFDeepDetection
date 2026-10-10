@@ -175,7 +175,7 @@ transfer payloads or binary model/pickle artifacts to the host for loading.
 Retain needed results, restore the clean VM baseline, then reconnect networking
 according to the previously chosen LAB procedure.
 
-## Current v5 paired job
+## Historical v5 paired job
 
 The metadata-only job `run_20261010T060459185898Z_03bb11cdea2b` was prepared
 from clean committed code. Its subset, configuration and frozen Protocol G
@@ -186,16 +186,9 @@ passed 706 tests; the dependency and whitespace checks passed. Preparation
 verification is saved under the matching `reports/experiments/cic_static_prepare/`
 directory.
 
-After using the already selected disconnected non-root VMware console LAB
-procedure (NAT and host-only off; shared folders/clipboard/drag-drop off), run:
-
-On this VM, **Chạy CIC offline** on `/home/drstone/Desktop` starts this exact
-command. Double-click it (choose Execute if the file manager asks), then press
-Enter to attest that the selected LAB isolation steps are complete. Type `q`
-to cancel. The terminal remains open with the result path or error until Enter
-is pressed again. It preserves the CLI's isolation, clean-worktree, checksum,
-split and resource checks. The shortcut does not disconnect any interface.
-The command below remains available for terminal use:
+The completed v5 measurement used this historical command. The Desktop
+shortcut now points to the new v6 preparation described below; the old
+fingerprint cannot run against the changed code.
 
 ```bash
 .venv/bin/python scripts/16_benchmark_cic_static.py run \
@@ -203,7 +196,37 @@ The command below remains available for terminal use:
   --lab-isolated
 ```
 
-### Completed v5 paired measurement
+## Current v6 paired job
+
+`run_20261010T084845105719Z_266319ceaeec` was prepared from clean commit
+266319ceaeec without reading any PDF. Its subset/configuration and supplied
+frozen Protocol G native-model checksums match the completed v5 measurement.
+The new fingerprint uses `pdf-code-inspection-v6`; the missing-startxref
+reconstruction is verified on synthetic benign inputs only. The full suite
+passed724 tests, with2 existing single-label metric warnings; dependencies and
+whitespace checks passed. No v6 real-CIC coverage/recall/FPR result exists yet.
+
+After completing the already chosen disconnected non-root VMware console LAB
+procedure, double-click **Chạy CIC offline** on `/home/drstone/Desktop` and
+press Enter. Type `q` to cancel before starting. The terminal keeps the result
+path/error visible until Enter is pressed again. The launcher preserves the
+CLI's isolation, clean-source, checksums, split and resource checks; it does
+not change NIC settings. The corresponding command is:
+
+```bash
+.venv/bin/python scripts/16_benchmark_cic_static.py run \
+  --prepared-run run_20261010T084845105719Z_266319ceaeec \
+  --lab-isolated
+```
+
+This run verifies extraction on exactly the prior64 identities, not on a new
+independent cohort. Whole-file status retains structural failures even when
+the code branch reconstructs partial object evidence. The original strict
+C0/C1 RF pilot remains separately recorded; future observed-evidence training
+must explicitly pin the completed v6 profile and historical split. Earlier
+profiles, failed attempts, negative ablations and the frozen model stay intact.
+
+## Completed v5 paired measurement
 
 The console job completed as
 `run_20261010T064045861512Z_53173f5a5625` on 2026-10-10, using clean commit

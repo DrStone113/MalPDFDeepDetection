@@ -42,7 +42,7 @@ See [offline job and measurement limits](reports/analysis/cic_static_offline.md)
 
 On the current Lubuntu VM, double-click **Chạy CIC offline** on the Desktop
 after completing the selected disconnected console LAB procedure, then press
-Enter. The shortcut invokes the locked v5 same-64 job through the existing
+Enter. The shortcut invokes the locked v6 same-64 job through the existing
 guarded CLI and keeps the terminal open after completion or failure.
 Type `q` to cancel before starting. Its VM-specific desktop entry is versioned
 in `configs/cic_offline_launcher.desktop`; the thin entry point is

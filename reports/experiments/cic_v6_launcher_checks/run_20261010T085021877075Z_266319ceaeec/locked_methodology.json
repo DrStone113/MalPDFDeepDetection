@@ -1,0 +1,21 @@
+{
+  "protocol": "v6 paired console job metadata and launcher maintenance",
+  "prepared_run": "run_20261010T084845105719Z_266319ceaeec",
+  "seed": 42,
+  "pdf_access": false,
+  "test_access": false,
+  "suite_evidence": "reports/experiments/cic_startxref_checks/run_20261010T084107969747Z_9e3c8c3e3d9f/verification.json",
+  "code_commit": "266319ceaeec05b9b297e831657006fda35aee2c",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/research_log.md",
+      " M scripts/18_launch_cic_offline.py",
+      "?? reports/experiments/cic_static_prepare/run_20261010T084845105719Z_266319ceaeec/"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

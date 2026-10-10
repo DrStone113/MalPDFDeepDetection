@@ -1,0 +1,38 @@
+{
+  "launcher": {
+    "exit_code": 0,
+    "seconds": 7.008357815999261,
+    "last_line": "4 passed in 4.54s",
+    "output": "artifacts/cic_v6_launcher_checks/run_20261010T085021877075Z_266319ceaeec/launcher.txt"
+  },
+  "metadata": {
+    "exit_code": 0,
+    "seconds": 7.75381236999965,
+    "last_line": "Ch\u1ec9 ki\u1ec3m tra metadata/model; ch\u01b0a ch\u1ea1y PDF v\u00e0 ch\u01b0a x\u00e1c nh\u1eadn LAB \u0111\u00e3 ng\u1eaft m\u1ea1ng.",
+    "output": "artifacts/cic_v6_launcher_checks/run_20261010T085021877075Z_266319ceaeec/metadata.txt"
+  },
+  "desktop": {
+    "exit_code": 0,
+    "seconds": 0.033735816000444174,
+    "last_line": "no output",
+    "output": "artifacts/cic_v6_launcher_checks/run_20261010T085021877075Z_266319ceaeec/desktop.txt"
+  },
+  "pip": {
+    "exit_code": 0,
+    "seconds": 2.203043899000477,
+    "last_line": "No broken requirements found.",
+    "output": "artifacts/cic_v6_launcher_checks/run_20261010T085021877075Z_266319ceaeec/pip.txt"
+  },
+  "diff": {
+    "exit_code": 0,
+    "seconds": 0.03492314999948576,
+    "last_line": "no output",
+    "output": "artifacts/cic_v6_launcher_checks/run_20261010T085021877075Z_266319ceaeec/diff.txt"
+  },
+  "status": {
+    "exit_code": 0,
+    "seconds": 0.03643491499951779,
+    "last_line": "?? reports/experiments/cic_v6_launcher_checks/",
+    "output": "artifacts/cic_v6_launcher_checks/run_20261010T085021877075Z_266319ceaeec/status.txt"
+  }
+}
