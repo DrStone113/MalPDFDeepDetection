@@ -1,0 +1,34 @@
+[
+  {
+    "name": "launcher_tests",
+    "returncode": 0,
+    "evidence": "artifacts/cic_v7_launcher_checks/run_20261010T151513688798Z_06a272fc8e36/launcher_tests.log",
+    "passed": 4,
+    "seconds": 1.96
+  },
+  {
+    "name": "metadata_cli",
+    "returncode": 0,
+    "evidence": "artifacts/cic_v7_launcher_checks/run_20261010T151513688798Z_06a272fc8e36/metadata_cli.log"
+  },
+  {
+    "name": "pip_check",
+    "returncode": 0,
+    "evidence": "artifacts/cic_v7_launcher_checks/run_20261010T151513688798Z_06a272fc8e36/pip_check.log"
+  },
+  {
+    "name": "git_diff_check",
+    "returncode": 0,
+    "evidence": "artifacts/cic_v7_launcher_checks/run_20261010T151513688798Z_06a272fc8e36/git_diff_check.log"
+  },
+  {
+    "name": "git_fsck",
+    "returncode": 0,
+    "evidence": "artifacts/cic_v7_launcher_checks/run_20261010T151513688798Z_06a272fc8e36/git_fsck.log"
+  },
+  {
+    "name": "git_status",
+    "returncode": 0,
+    "evidence": "artifacts/cic_v7_launcher_checks/run_20261010T151513688798Z_06a272fc8e36/git_status.log"
+  }
+]

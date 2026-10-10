@@ -1,0 +1,15 @@
+{
+  "same64_subset_verified": true,
+  "same_configuration_verified": true,
+  "same_frozen_model_verified": true,
+  "schema": "pdf-code-inspection-v7",
+  "backends": {
+    "pypdf": "5.9.0",
+    "PyMuPDF": "1.26.7",
+    "esprima": "4.0.1",
+    "python": "3.11.17",
+    "expat": "expat_2.8.5"
+  },
+  "desktop_entry_matches_and_executable": true,
+  "dataset_pdf_access": false
+}

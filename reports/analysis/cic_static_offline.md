@@ -196,6 +196,33 @@ fingerprint cannot run against the changed code.
   --lab-isolated
 ```
 
+## Current v7 XFA paired job
+
+`run_20261010T151403329485Z_06a272fc8e36` was prepared from clean commit06a272f,
+without reading PDFs or fitting a dataset model. It retains the exact64 v6
+identities, labels, Train/dev split, limits, configuration and frozen native
+Protocol G model checksum. Its fingerprint includes v7 XFA extraction,
+Python/Expat versions and the reused observed-evidence fitting implementation.
+The completed full synthetic suite passed760 tests; real-CIC v7 results remain
+unavailable until the user runs the disconnected console LAB job.
+
+After completing the selected non-root LAB procedure (NAT and host-only off;
+shared folders, clipboard and drag/drop off), double-click **Chạy CIC offline**
+on the Desktop and press Enter. The launcher now pins this new job. Its CLI is:
+
+```bash
+.venv/bin/python scripts/16_benchmark_cic_static.py run \
+  --prepared-run run_20261010T151403329485Z_06a272fc8e36 --lab-isolated
+```
+
+One invocation preserves cold/warm timings, every parse/AST failure, strict
+C0/C1 metrics and `observed_feature_comparison.json` for the fixed P0/P1/P2
+fallback ablation. Fitting happens after extraction in the same locked run;
+no second PDF pass or manual training command is needed. Numeric availability
+and complete-parser coverage remain separate, with all planned class/refusal
+denominators retained. No model/threshold is selected or deployed, and Test
+remains untouched. See [XFA scope and verification](cic_static_xfa.md).
+
 ## Historical v6 paired job
 
 `run_20261010T084845105719Z_266319ceaeec` was prepared from clean commit

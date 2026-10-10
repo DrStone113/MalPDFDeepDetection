@@ -79,3 +79,10 @@ produced output, and its interrupted status is preserved. The subsequent
 two existing single-label metric warnings, consistent dependencies and clean
 diff checks. No actual dataset PDFs or Test partitions were analysed in these
 maintenance checks. The generating source state was recorded as dirty.
+
+The metadata-only paired job is
+`run_20261010T151403329485Z_06a272fc8e36`, using the completed v6 profile as its
+baseline. The Desktop launcher pins this job, preserving exact64 inputs and
+the frozen model checksum. Its real-PDF execution is deferred to the selected
+disconnected console LAB. Both extraction and the reused P0/P1/P2 study run in
+one invocation; results must be reviewed before any improvement claim.

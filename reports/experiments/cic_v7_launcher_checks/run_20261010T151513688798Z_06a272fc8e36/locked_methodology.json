@@ -1,0 +1,22 @@
+{
+  "protocol": "v7 paired offline launcher and Git recovery maintenance",
+  "prepared_run": "run_20261010T151403329485Z_06a272fc8e36",
+  "dataset_pdf_access": false,
+  "test_access": false,
+  "model_fitting": false,
+  "scope": "metadata/model checksum validation only; actual run deferred to disconnected console LAB",
+  "seed": 42,
+  "code_commit": "06a272fc8e36481b4ebc202400f79c42ce2da594",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/analysis/cic_static_xfa.md",
+      " M reports/research_log.md",
+      " M scripts/18_launch_cic_offline.py",
+      "?? reports/experiments/cic_static_prepare/run_20261010T151403329485Z_06a272fc8e36/"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

@@ -1,0 +1,34 @@
+{
+  "run_id": "run_20261010T151513688798Z_06a272fc8e36",
+  "study": "cic_v7_launcher_checks",
+  "status": "completed",
+  "started_at_utc": "2026-10-10T15:15:13.727742+00:00",
+  "code_commit": "06a272fc8e36481b4ebc202400f79c42ce2da594",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/analysis/cic_static_xfa.md",
+      " M reports/research_log.md",
+      " M scripts/18_launch_cic_offline.py",
+      "?? reports/experiments/cic_static_prepare/run_20261010T151403329485Z_06a272fc8e36/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/analysis/cic_static_xfa.md",
+      " M reports/research_log.md",
+      " M scripts/18_launch_cic_offline.py",
+      "?? reports/experiments/cic_static_prepare/run_20261010T151403329485Z_06a272fc8e36/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "v7 paired offline launcher and Git recovery maintenance",
+  "report_path": "reports/experiments/cic_v7_launcher_checks/run_20261010T151513688798Z_06a272fc8e36/run_summary.json",
+  "artifact_path": "artifacts/cic_v7_launcher_checks/run_20261010T151513688798Z_06a272fc8e36",
+  "metrics": {},
+  "notes": "Desktop pins new same64 v7 job; metadata/config/seed/split/frozen-model checksums match v6; source/schema/Python/Expat/fitting fingerprints locked. Full760-pass suite recorded before launcher-only pin change; launcher/metadata/pip/diff/fsck/status checks pass. Git empty objects recovered by exact hashes, HEAD/index/source preserved; cause unestablished, backups ignored. No dataset PDF/Test access or dataset fitting; actual LAB measurement pending.",
+  "finished_at_utc": "2026-10-10T15:15:22.654739+00:00"
+}

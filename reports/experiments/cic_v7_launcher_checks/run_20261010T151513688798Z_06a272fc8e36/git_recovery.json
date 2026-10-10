@@ -1,0 +1,36 @@
+{
+  "head": "06a272fc8e36481b4ebc202400f79c42ce2da594",
+  "index_sha256_unchanged": "b1103cda669a13ef4bda6826d6ed19fcc6be5ef5a96b0c167da23101cf2e62c4",
+  "restored_exact_objects": [
+    "126bc8ec5b55a160065bade8e4b7b771aa4c8ff8",
+    "29360c197e210a30778c04ee545da05e1ebc4bef",
+    "3b784afdb01b67946fd8893a7646dc59d8ae1aee",
+    "792c7f2888718a6d5d4d2ea5e737dee4b0d1fc5c",
+    "7aa9d819aee439f0d9e934091f3574c2ef95dc57",
+    "af91090ab17b32b844954755c4291a27bcf26062",
+    "c40e85055f6b6ce69c61262864477ff6f4cc0692",
+    "c4abb01a47f42a8f3d5882d7505996192dd8a089",
+    "d4d79806b1b33641f56b602bd09368747028d504",
+    "d6191ad3fddfa0b1efbeaf9631e1f510ff55154d",
+    "e15a095e12c28c1d165cc6f2f64468512fd0700b",
+    "e1b317ce6da5667f97556d366b0d5363696c7410",
+    "e9ac5001113cfc15b4f36e99948674bce4ae5688",
+    "fb9133c2e1ed1548af32a58fddf9ac58fbe7a819"
+  ],
+  "quarantined_empty_unreachable_objects": [
+    "006cbd85509fbdd12009d77c6cdddbdfc4948121",
+    "07e4a8196e507253640389a86501a1441ce29282",
+    "2aa43deb59d318314a64248a82b76e09ba516bcf",
+    "65e498a149790a2ab9b086d4097f316893b29385",
+    "8d985290e39416e98b2e8c28a1868a420e81d455",
+    "a1eb8516bbe9311d2cfc0d71845703f47978787e",
+    "a9538003ab6e26158fc8c737818c0bf5d072edd9",
+    "bf4b41fb0aa12050c94d139819e42e4386259daa"
+  ],
+  "quarantined_empty_tool_refs": [
+    "refs/codex/turn-diffs/checkpoints/51ca2bc1b04243186fa5dd4823d79a0e/3dabecf8e61678534bbbd000c7752062/1791628682152/932e3d99-5c48-4fd4-845a-4cd044e8198e"
+  ],
+  "backup_path": "artifacts/git_recovery/run_20261010T151341724472Z",
+  "source_files_modified": false,
+  "cause": "not established"
+}

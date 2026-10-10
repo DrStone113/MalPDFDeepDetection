@@ -9,7 +9,7 @@ for name in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS"):
     os.environ[name] = "1"
 
 ROOT = Path(__file__).resolve().parents[1]
-PREPARED_RUN = "run_20261010T084845105719Z_266319ceaeec"
+PREPARED_RUN = "run_20261010T151403329485Z_06a272fc8e36"
 
 
 def main(argv=None):
