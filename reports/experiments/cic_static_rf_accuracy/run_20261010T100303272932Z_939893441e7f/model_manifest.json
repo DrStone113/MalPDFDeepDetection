@@ -1,0 +1,90 @@
+{
+  "model_id": "rf-cic-train-static40-v1",
+  "model_family": "random_forest",
+  "artifact_relative_path": "artifacts/cic_static_rf_accuracy/run_20261010T100303272932Z_939893441e7f/cic_rf40.joblib",
+  "artifact_sha256": "8cf509f22ca2f7739199dd0f5f64b169b6470206ed821f18c5f0fd43862f607d",
+  "feature_schema": "cic-static-40/v1",
+  "feature_order": [
+    "pdfsize",
+    "metadata size",
+    "pages",
+    "xref length",
+    "title length",
+    "isEncrypted",
+    "embedded files",
+    "images",
+    "contains_text",
+    "pdf_ver",
+    "obj",
+    "endobj",
+    "stream",
+    "endstream",
+    "trailer",
+    "xref",
+    "startxref",
+    "page_command",
+    "Encrypt",
+    "ObjStm",
+    "JS",
+    "JavaScript",
+    "AA",
+    "OpenAction",
+    "JBIG2Decode",
+    "RichMedia",
+    "Launch",
+    "EmbeddedFile",
+    "XFA",
+    "URI",
+    "Encoding",
+    "ProcSet",
+    "Registry",
+    "Resources",
+    "www",
+    "server",
+    "Root",
+    "BitsPerComponent",
+    "script_ratio",
+    "ObfuscationCount"
+  ],
+  "threshold": 0.5,
+  "model_configuration": {
+    "paper_model_name": "Random Forest (RF)",
+    "preprocessing": {
+      "name": "SimpleImputer median/add_indicator/keep_empty_features",
+      "fit_scope": "CIC Train only; original source null/-1 measurements unchanged"
+    },
+    "parameters": {
+      "bootstrap": true,
+      "class_weight": "balanced",
+      "criterion": "gini",
+      "max_depth": 12,
+      "max_features": "sqrt",
+      "min_samples_leaf": 2,
+      "min_samples_split": 2,
+      "n_estimators": 200,
+      "n_jobs": 1,
+      "random_state": 42
+    }
+  },
+  "artifact_scope": "experimental LAB-only candidate; no production promotion or binary transfer to host for loading",
+  "training_dataset": {
+    "sha256": "35670e085c18423b0fbe24fb9b2f2f7bb3102ce0928338658ca753df54c7b636",
+    "training_rows": 870,
+    "fit_scope": "saved CIC Train only; no Test rows used"
+  },
+  "excluded_train_constants": [
+    "Acroform",
+    "Colors",
+    "BaseEncoding"
+  ],
+  "excluded_nonpredictors": [
+    "sample_id",
+    "Label",
+    "split",
+    "cohort",
+    "path",
+    "hash",
+    "source",
+    "parser_failed"
+  ]
+}

@@ -210,3 +210,13 @@ eligibility retains comparable refusal denominators. Test is removed before
 numeric conversion. Its LAB-only RF artifact has a distinct model identity;
 numeric results do not establish end-to-end PDF coverage or independent Test
 accuracy.
+
+The RF study completed from clean9398934 in
+`reports/experiments/cic_static_rf_accuracy/run_20261010T100303272932Z_939893441e7f/`.
+Both models classified the same291 numeric Validation rows, with no refusals.
+The frozen RIT baseline remained134/160 TP and112/131 FP. The RF candidate
+detected38/160 malicious rows (recall23.75%) and flagged34/131 benign rows
+(FPR25.95%). Its malicious F1 was0.3276 and MCC-0.0254, compared with baseline
+F10.6601 and MCC-0.0240. Lower false positives came with substantial recall
+loss. This candidate is retained as negative development evidence and is not
+promoted; the numeric40 features alone did not solve the accuracy problem.
