@@ -1,0 +1,30 @@
+{
+  "protocol": "XFA static extraction and shared offline ablation maintenance",
+  "pdf_access": "synthetic benign fixtures only",
+  "dataset_pdf_access": false,
+  "test_partition_access": false,
+  "code_schema": "pdf-code-inspection-v7",
+  "checks": "before/after synthetic XFA evidence, targeted117-pass result, full synthetic suite, dependency/diff/status checks",
+  "model_fitting": "synthetic unit tables only; no dataset candidate fitting",
+  "scope": "accuracy goal unproven until locked real-CIC offline measurement",
+  "seed": 42,
+  "code_commit": "535278a7e6c7639a25aa347c7b0816d88b937315",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/static_acceleration_design.md",
+      " M src/malpdf/experiments/cic_static_accuracy.py",
+      " M src/malpdf/experiments/cic_static_benchmark.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M tests/test_cic_profile_accuracy.py",
+      " M tests/test_cic_static_benchmark.py",
+      " M tests/test_static_acceleration.py",
+      "?? reports/analysis/cic_static_xfa.md",
+      "?? src/malpdf/static/xfa_xml.py",
+      "?? tests/test_static_xfa.py"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

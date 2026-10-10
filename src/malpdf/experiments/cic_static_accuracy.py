@@ -103,7 +103,7 @@ def load_profile_development(root, cfg):
             or method["test_access"] is not False
             or method["seed"] != 42 or method["configuration"]["rf"] != cfg["rf"]
             or method["fingerprint"]["profile_version"] != "cic-static-profile-v2"
-            or code_schema not in {"pdf-code-inspection-v5", "pdf-code-inspection-v6"}
+            or code_schema not in {"pdf-code-inspection-v5", "pdf-code-inspection-v6", "pdf-code-inspection-v7"}
             or method["fingerprint"]["code_schema"] != code_schema):
         raise ValueError("Source profile/methodology differs from the locked study")
     source_cfg = method["configuration"]
@@ -164,15 +164,87 @@ def _profile_scores(labels, probabilities, planned):
         "metrics_classified": calibration_metrics(labels, probabilities, threshold=0.5) if len(labels) else None}
 
 
+def fit_profile_ablations(records, rf, max_file_bytes):
+    """Reuse the fixed observed-evidence study inside a locked offline job."""
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.impute import SimpleImputer
+    from sklearn.pipeline import make_pipeline
+
+    if (not records or any(r['split'] not in {'train', 'validation'} or r['cache_mode'] != 'cold' for r in records)
+            or len({r['sample_id'] for r in records}) != len(records)):
+        raise ValueError("Ablation requires unique cold Train/development records only")
+    set_random_seed(42)
+    labels = np.asarray([int(row["Label"]) for row in records])
+    eligible = np.asarray([profile_input_available(row, max_file_bytes) for row in records])
+    train = eligible & np.asarray([row["split"] == "train" for row in records])
+    validation = eligible & np.asarray([row["split"] == "validation" for row in records])
+    planned = Counter(int(row["Label"]) for row in records if row["split"] == "validation")
+    if set(labels[train]) != {0, 1} or set(labels[validation]) != {0, 1}:
+        raise ValueError("Insufficient known-input Train/Validation classes for fixed fallback study")
+    matrices = {}
+    for variant in PROFILE_VARIANTS:
+        features = pd.DataFrame([profile_feature_values(row, variant) for row in records], dtype=float)
+        vectors = [tuple(None if pd.isna(value) else float(value) for value in row) for row in features.to_numpy()]
+        if {v for v, mask in zip(vectors, train) if mask} & {v for v, mask in zip(vectors, validation) if mask}:
+            raise ValueError("Derived feature-equivalence groups cross the saved split")
+        matrices[variant] = features
+    output, models, predictions = {}, {}, {}
+    for variant, features in matrices.items():
+        model = make_pipeline(SimpleImputer(strategy="median", add_indicator=True, keep_empty_features=True),
+            RandomForestClassifier(**rf, random_state=42, n_jobs=1))
+        model.fit(features.loc[train], labels[train])
+        probabilities = model.predict_proba(features.loc[validation])[:, 1]
+        score = _profile_scores(labels[validation], probabilities, planned)
+        score.update(train_available=int(train.sum()), feature_count=features.shape[1], threshold=0.5)
+        score["by_analysis_status"] = {}
+        for status in sorted({r["status"] for r in records if r["split"] == "validation"}):
+            subset = np.asarray([r["status"] == status for r in records])
+            subgroup_planned = Counter(int(r["Label"]) for r in records if r["split"] == "validation" and r["status"] == status)
+            score["by_analysis_status"][status] = _profile_scores(labels[validation & subset],
+                probabilities[subset[validation]], subgroup_planned)
+        output[variant], models[variant], predictions[variant] = score, model, probabilities.tolist()
+    return output, models, predictions, [r["sample_id"] for r, keep in zip(records, validation) if keep], labels[validation].tolist()
+
+
+def compare_profile_evidence(run, records, configuration):
+    """Record P0/P1/P2 in the original clean-start offline run, without a PDF pass."""
+    import joblib
+    cold = [r for r in records if r['cache_mode'] == 'cold']
+    try:
+        output, models, probabilities, identities, labels = fit_profile_ablations(
+            cold, configuration['rf'], configuration['limits']['max_file_bytes'])
+    except ValueError as error:
+        reason = str(error)
+        if reason not in {'Insufficient known-input Train/Validation classes for fixed fallback study',
+                          'Derived feature-equivalence groups cross the saved split'}:
+            raise
+        write_json(run.report / 'observed_feature_comparison.json', {'status':'unavailable', 'reason':reason,
+            'metrics':None, 'scope':'No rows removed or split changed; all extraction records retained'})
+        return
+    write_json(run.report / 'observed_feature_comparison.json', {'status':'completed', 'models':output,
+        'scope':'P0/P1/P2 use the same known-input Train/dev rows and threshold0.5; experimental fallback includes parser errors; no Test/tuning/promotion; numeric availability differs from complete analysis coverage and strict C0/C1 eligibility'})
+    write_json(run.artifacts / 'observed_development_predictions.json', {'sample_ids':identities,
+        'labels':labels, 'probabilities':probabilities})
+    for variant, model in models.items():
+        target = run.artifacts / (variant + '.joblib')
+        joblib.dump(model, target)
+        score = output[variant]
+        run.state['metrics'][variant + '/cic_development_known_input'] = score['metrics_classified']
+        write_json(run.report / (variant + '_manifest.json'), {'model_id':variant+'-v1',
+            'feature_schema':PROFILE_FEATURE_SCHEMA, 'feature_order':list(profile_feature_values({},variant)),
+            'artifact_relative_path':str(target.relative_to(run.root)),
+            'artifact_sha256':hashlib.sha256(target.read_bytes()).hexdigest(), 'threshold':0.5, 'seed':42,
+            'training_rows':score['train_available'], 'source_profile':run.identifier, 'configuration':configuration['rf'],
+            'preprocessing_fit_scope':'eligible CIC Train only', 'promotion':False,
+            'artifact_scope':'trusted generated LAB-only sklearn binary; never transfer to host for loading'})
+
+
 def train_cic_profile(root, cfg):
     """Fixed Train-only RF ablations over sealed offline evidence, including failures.
 
     Experimental fallback policies are evaluated here; the production refusal
     gate and original frozen RIT estimator remain unchanged.
     """
-    from sklearn.ensemble import RandomForestClassifier
-    from sklearn.impute import SimpleImputer
-    from sklearn.pipeline import make_pipeline
     import joblib
 
     root = Path(root).absolute()
@@ -197,49 +269,25 @@ def train_cic_profile(root, cfg):
     with ResearchRun(root, "cic_profile_accuracy", method) as run:
         set_random_seed(42)
         records, source_method = load_profile_development(root, cfg)
-        labels = np.asarray([int(row["Label"]) for row in records])
-        eligible = np.asarray([profile_input_available(row, source_method["configuration"]["limits"]["max_file_bytes"]) for row in records])
-        train = eligible & np.asarray([row["split"] == "train" for row in records])
-        validation = eligible & np.asarray([row["split"] == "validation" for row in records])
-        planned = Counter(int(row["Label"]) for row in records if row["split"] == "validation")
-        if set(labels[train]) != {0, 1} or set(labels[validation]) != {0, 1}:
-            raise ValueError("Insufficient known-input Train/Validation classes for fixed fallback study")
-        output, predictions = {}, {}
-        for variant in PROFILE_VARIANTS:
-            rows = [profile_feature_values(row, variant) for row in records]
-            features = pd.DataFrame(rows, columns=method["feature_orders"][variant], dtype=float)
-            vectors = [tuple(None if pd.isna(value) else float(value) for value in row) for row in features.to_numpy()]
-            if {v for v, mask in zip(vectors, train) if mask} & {v for v, mask in zip(vectors, validation) if mask}:
-                raise ValueError("Derived feature-equivalence groups cross the saved split")
-            model = make_pipeline(SimpleImputer(strategy="median", add_indicator=True, keep_empty_features=True),
-                RandomForestClassifier(**cfg["rf"], random_state=42, n_jobs=1))
-            model.fit(features.loc[train], labels[train])
-            probabilities = model.predict_proba(features.loc[validation])[:, 1]
-            score = _profile_scores(labels[validation], probabilities, planned)
-            score.update(train_available=int(train.sum()), feature_count=features.shape[1], threshold=0.5)
-            score["by_analysis_status"] = {}
-            for status in sorted({r["status"] for r in records if r["split"] == "validation"}):
-                subset = np.asarray([r["status"] == status for r in records])
-                subgroup_planned = Counter(int(r["Label"]) for r in records if r["split"] == "validation" and r["status"] == status)
-                score["by_analysis_status"][status] = _profile_scores(labels[validation & subset],
-                    probabilities[subset[validation]], subgroup_planned)
-            output[variant] = score
+        output, models, predictions, identities, labels = fit_profile_ablations(
+            records, cfg['rf'], source_method['configuration']['limits']['max_file_bytes'])
+        for variant, model in models.items():
+            score = output[variant]
             run.state["metrics"][variant + "/cic_development_known_input"] = score["metrics_classified"]
             target = run.artifacts / (variant + ".joblib")
             joblib.dump(model, target)
             write_json(run.report / (variant + "_manifest.json"), {"model_id": variant + "-v1", "feature_schema": PROFILE_FEATURE_SCHEMA,
                 "feature_order": method["feature_orders"][variant], "artifact_relative_path": str(target.relative_to(root)),
                 "artifact_sha256": hashlib.sha256(target.read_bytes()).hexdigest(), "threshold": 0.5, "seed": 42,
-                "training_rows": int(train.sum()), "source_profile": cfg["source_profile"], "configuration": cfg["rf"],
+                "training_rows": score['train_available'], "source_profile": cfg["source_profile"], "configuration": cfg["rf"],
                 "preprocessing_fit_scope": "eligible CIC Train only", "promotion": False,
                 "artifact_scope": "trusted generated LAB-only sklearn binary; never transfer to host for loading"})
-            predictions[variant] = probabilities.tolist()
         baseline = json.loads(_profile_content(root, cfg["profile_comparison"], "reports/experiments"))
         write_json(run.report / "validation_comparison.json", {"status": "completed", "models": output,
             "saved_strict_pilot": baseline, "scope": method["limitations"],
             "comparability": "P0/P1/P2 share all eligible Train/dev rows; old C0/C1 used fewer Train rows and have a different refusal policy; compare all-class detection/false-positive fractions and denominators, not only conditional recall"})
-        write_json(run.artifacts / "validation_predictions.json", {"sample_ids": [r["sample_id"] for r, keep in zip(records, validation) if keep],
-            "probabilities": predictions, "labels": labels[validation].tolist()})
+        write_json(run.artifacts / "validation_predictions.json", {"sample_ids": identities,
+            "probabilities": predictions, "labels": labels})
         run.state["notes"] = "Fixed CIC Train-only RF ablations use canonical measurements plus explicitly named observed lower bounds and separately ablated coverage flags. Parser errors remain in evaluation; no fake RIT AST, Test/raw-PDF access, threshold selection or deployment. Validation was already exposed and pilot is small. Raw bytes-to-result timing awaits a separately locked offline job if a candidate warrants it."
     return run.state
 

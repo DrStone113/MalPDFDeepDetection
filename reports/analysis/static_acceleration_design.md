@@ -24,13 +24,16 @@ dictionaries, including decoded PDF names, and parses literal or Flate-compresse
 JavaScript using Esprima 4.0.1. `malpdf scan /explicit/local/sample.pdf --json
 --no-explanation --code-inspection` attaches the same evidence to a model result.
 These explicit paths are manual local inspection requests, not acquisition jobs.
-The current v3 code evidence schema additionally supports ASCIIHex/ASCII85
-streams and their bounded chains with Flate. Invalid encodings and output caps
+The current v7 code evidence schema supports ASCIIHex/ASCII85 streams and their
+bounded chains with Flate, bounded PDF text encodings, partial xref recovery,
+and declared JavaScript in XFA XML. Invalid encodings and output caps
 remain explicit failures. Its null/partial contract is inherited from v2;
 canonical RIT features and deployment models are unchanged. The CIC offline
 profiler fingerprints this version, backend versions, code and limits before
 reusing complete-profile caches. See `cic_static_offline.md` for the fixed
-Train/dev job; actual CIC coverage improvements have not yet been measured.
+Train/dev job and measured historical v5/v6 coverage. The new XFA path is
+verified on benign fixtures; its CIC recall/FPR improvement remains unmeasured.
+See [XFA scope and limits](cic_static_xfa.md).
 
 Results contain AST node/loop counts and syntactically named calls (`eval`,
 `unescape`, `atob`, `Function`, `String.fromCharCode`, `util.printf`,
@@ -43,7 +46,8 @@ deobfuscation runtime, rendering, YARA-based relabeling or dynamic submission.
 Every PDF uses a disposable Linux spawn process with a 10 MiB input cap, 1 GiB
 address-space cap, 4 CPU seconds and 8-second wall deadline. Traversal is bounded
 to 2,000 visited values/depth 64, at most 64 scripts, 256 KiB per decoded script,
-4 MiB total decoded script bytes and 20,000 total AST nodes/depth 100. Flate
+4 MiB total decoded script/XML bytes and 20,000 total AST nodes/depth 100. XFA
+XML uses a separate document-wide 2,000-node/depth-64 traversal cap. Flate
 decompression is explicitly capped per filter layer. The OS caps also cover
 implicit pypdf xref/object-stream parsing. Parallel inspection uses bounded
 processes with CPU quota/affinity and available RAM checks; worker BLAS threads

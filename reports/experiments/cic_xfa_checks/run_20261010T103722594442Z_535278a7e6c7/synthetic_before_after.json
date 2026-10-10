@@ -1,0 +1,38 @@
+{
+  "cases": {
+    "stream": {
+      "before_schema": "pdf-code-inspection-v6",
+      "after_schema": "pdf-code-inspection-v7",
+      "before_scripts_parsed": 0,
+      "after_scripts_parsed": 1,
+      "before_status": "complete",
+      "after_status": "complete",
+      "after_ast_nodes": 5,
+      "active_content_executed": false,
+      "content_redacted": true
+    },
+    "flate": {
+      "before_schema": "pdf-code-inspection-v6",
+      "after_schema": "pdf-code-inspection-v7",
+      "before_scripts_parsed": 0,
+      "after_scripts_parsed": 1,
+      "before_status": "complete",
+      "after_status": "complete",
+      "after_ast_nodes": 5,
+      "active_content_executed": false,
+      "content_redacted": true
+    },
+    "packet_array": {
+      "before_schema": "pdf-code-inspection-v6",
+      "after_schema": "pdf-code-inspection-v7",
+      "before_scripts_parsed": 0,
+      "after_scripts_parsed": 1,
+      "before_status": "complete",
+      "after_status": "complete",
+      "after_ast_nodes": 5,
+      "active_content_executed": false,
+      "content_redacted": true
+    }
+  },
+  "scope": "known inert script presence/AST coverage; no malicious classification accuracy or dataset PDF analysis"
+}

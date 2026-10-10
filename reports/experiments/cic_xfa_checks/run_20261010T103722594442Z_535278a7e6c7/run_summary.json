@@ -1,0 +1,47 @@
+{
+  "run_id": "run_20261010T103722594442Z_535278a7e6c7",
+  "study": "cic_xfa_checks",
+  "status": "interrupted",
+  "started_at_utc": "2026-10-10T10:37:22.594442+00:00",
+  "code_commit": "535278a7e6c7639a25aa347c7b0816d88b937315",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/static_acceleration_design.md",
+      " M src/malpdf/experiments/cic_static_accuracy.py",
+      " M src/malpdf/experiments/cic_static_benchmark.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M tests/test_cic_profile_accuracy.py",
+      " M tests/test_cic_static_benchmark.py",
+      " M tests/test_static_acceleration.py",
+      "?? reports/analysis/cic_static_xfa.md",
+      "?? src/malpdf/static/xfa_xml.py",
+      "?? tests/test_static_xfa.py"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/static_acceleration_design.md",
+      " M src/malpdf/experiments/cic_static_accuracy.py",
+      " M src/malpdf/experiments/cic_static_benchmark.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M tests/test_cic_profile_accuracy.py",
+      " M tests/test_cic_static_benchmark.py",
+      " M tests/test_static_acceleration.py",
+      "?? reports/analysis/cic_static_xfa.md",
+      "?? src/malpdf/static/xfa_xml.py",
+      "?? tests/test_static_xfa.py"
+    ]
+  },
+  "seed": 42,
+  "protocol": "XFA static extraction and shared offline ablation maintenance",
+  "report_path": "reports/experiments/cic_xfa_checks/run_20261010T103722594442Z_535278a7e6c7/run_summary.json",
+  "artifact_path": "artifacts/cic_xfa_checks/run_20261010T103722594442Z_535278a7e6c7",
+  "metrics": {},
+  "notes": "Maintenance runner/session disappeared; authoritative process inspection finds no pytest/runner alive and no terminal summary. Synthetic before/after evidence retained; pytest log empty, so full suite unavailable. Marked interrupted before a new verification attempt; no PDF/Test access.",
+  "error_type": "KeyboardInterrupt",
+  "finished_at_utc": "2026-10-10T15:07:06.714671+00:00"
+}

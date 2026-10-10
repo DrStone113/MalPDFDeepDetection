@@ -174,12 +174,16 @@ def select_subset(manifest, sources, count=32, seed=42):
 
 
 def source_fingerprint(root, limits):
+    import platform
+    from xml.parsers import expat
     paths = ("static/analyzer.py", "static/pdf_parser.py", "static/rit_reference.py", "static/raw_scan.py",
-             "static/code_inspector.py", "static/js_ast.py", "static/profiling.py", "static/profile_worker.py",
+             "static/code_inspector.py", "static/js_ast.py", "static/xfa_xml.py", "static/profiling.py", "static/profile_worker.py",
              "static/schema.py", "static/result.py", "static/safety.py", "static/lab_guard.py", "static/parser_diagnostics.py",
-             "experiments/cic_static_benchmark.py", "inference/predictor.py", "inference/schema.py", "inference/deployment.py")
+             "experiments/cic_static_benchmark.py", "experiments/cic_static_accuracy.py",
+             "inference/predictor.py", "inference/schema.py", "inference/deployment.py")
     return {"profile_version": PROFILE_VERSION, "code_schema": CODE_INSPECTION_SCHEMA_VERSION,
-            "limits": asdict(limits), "backends": {name: importlib.metadata.version(name) for name in ("pypdf", "PyMuPDF", "esprima")},
+            "limits": asdict(limits), "backends": {**{name: importlib.metadata.version(name) for name in ("pypdf", "PyMuPDF", "esprima")},
+                                                   "python": platform.python_version(), "expat": expat.EXPAT_VERSION},
             "sources": {path: hashlib.sha256((root / "src/malpdf" / path).read_bytes()).hexdigest() for path in paths}}
 
 
@@ -488,8 +492,9 @@ def run_cic_profile(root, prepared_run, *, lab_attested=False, model_file=None):
         "inference_model": lock.get("inference_model"),
         "prepared_run": prepared_run, "subset_sha256": lock["subset_sha256"], "fingerprint": lock["fingerprint"], "lab_checks": lab,
         "cache": "cold=fresh application feature cache; warm=complete-profile reuse after fresh PDF checksum verification; OS page cache uncontrolled",
-        "timing_scope": "exclusive stage timings; inference=predict_proba only, null if not called; inference_gate=compatibility/feature/model checks and response validation; implicit xref/object/content decoding and reference text extraction remain in parse_pdf; stream_decode covers explicit JS streams; residual overhead includes startup/cache/IPC and any unfinished stage",
+        "timing_scope": "exclusive stage timings; inference=predict_proba only, null if not called; inference_gate=compatibility/feature/model checks and response validation; implicit xref/object/content decoding, XML traversal and reference text extraction remain in parse_pdf; stream_decode covers explicit JS/XFA streams; residual overhead includes startup/cache/IPC and any unfinished stage; RF ablation fitting is outside file timings",
         "ablation": "C0 same RIT41 definitions; C1 adds resolved structure/JS AST; RF settings and threshold0.5 locked before development evaluation; same saved partitions and refusals",
+        "observed_evidence_ablation": "Reuse fixed P0 RIT41 fallback / P1 observed structure-AST / P2 parser flags on identical known-input Train/dev rows; original RF budget/seed42/threshold0.5; Train-only median imputation; all failures/refusals retained; no selection/deployment; strict C0/C1 have different eligibility",
         "dataset_scope": "CIC PDF only; RIT CSV unchanged, no AST fabrication or dataset merging", "test_access": False}
     with ResearchRun(root, "cic_static_profile", method) as run:
         set_random_seed(42)
@@ -574,6 +579,8 @@ def run_cic_profile(root, prepared_run, *, lab_attested=False, model_file=None):
             if cfg["compare_models"]:
                 require_offline_lab(lab_attested)
                 compare_cic_features(run, records, cfg)
+                from malpdf.experiments.cic_static_accuracy import compare_profile_evidence
+                compare_profile_evidence(run, records, cfg)
             compare_saved_baseline(run, records, lock)
             run.state["status"] = "completed"
         finally:

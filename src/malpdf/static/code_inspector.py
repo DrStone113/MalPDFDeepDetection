@@ -28,13 +28,13 @@ from malpdf.static.parser_diagnostics import ParserDiagnostics
 
 SECURITY_NAMES = frozenset({"/JS", "/JavaScript", "/OpenAction", "/AA", "/Launch",
     "/EmbeddedFile", "/EmbeddedFiles", "/XFA", "/AcroForm", "/JBIG2Decode", "/RichMedia", "/URI"})
-CODE_INSPECTION_SCHEMA_VERSION = "pdf-code-inspection-v6"
+CODE_INSPECTION_SCHEMA_VERSION = "pdf-code-inspection-v7"
 # Only fixed PDF vocabulary is exported in paths; untrusted keys remain redacted.
 _PATH_NAMES = SECURITY_NAMES | frozenset({"/Root", "/Pages", "/Kids", "/Annots", "/A",
     "/Next", "/Names", "/Fields", "/O", "/C", "/E", "/X", "/D", "/U", "/Fo",
     "/Bl", "/PO", "/PC", "/PV", "/PI", "/K", "/F", "/V"})
 _ACTION_PATH_NAMES = frozenset({"/OpenAction", "/AA", "/A", "/Next", "/Names",
-    "/JavaScript", "/JS", "/AcroForm", "/Fields", "/Annots"})
+    "/JavaScript", "/JS", "/AcroForm", "/XFA", "/Fields", "/Annots"})
 
 
 @dataclass(frozen=True)
@@ -73,7 +73,7 @@ def _unavailable(code, parser_diagnostics=None):
             "script_extraction_complete": False, "ast_complete": False,
             "parser_recovered": False,
             "observed": None, "script_sources": [],
-            "scope": "catalog-reachable syntax evidence only",
+            "scope": "catalog-reachable PDF actions and declared XFA JavaScript syntax only",
             "content_redacted": True, "active_content_executed": False}
 
 
@@ -99,68 +99,73 @@ def _decode_script_bytes(data, limits):
     return text
 
 
+def _stream_bytes(value, limits, *, byte_limit=None, overflow="script_byte_limit"):
+    """Reuse bounded JS filters for XML; never call backend get_data()."""
+    from pypdf.generic import NullObject
+
+    byte_limit = limits.max_script_bytes if byte_limit is None else byte_limit
+    data = value._data
+    if not isinstance(data, bytes) or len(data) > limits.max_file_bytes:
+        raise CodeInspectionError("invalid_script_stream")
+    if byte_limit <= 0:
+        raise CodeInspectionError(overflow)
+    filters = value.get("/Filter", [])
+    filters = filters if isinstance(filters, list) else [filters]
+    if len(filters) > 3:
+        raise CodeInspectionError("stream_filter_limit")
+    parms = value.get("/DecodeParms")
+    if parms is not None and not isinstance(parms, NullObject):
+        raise CodeInspectionError("unsupported_decode_parameters")
+    for filter_name in filters:
+        if str(filter_name) in {"/ASCIIHexDecode", "/AHx"}:
+            compact = re.sub(rb"[\x00\t\n\f\r ]", b"", data)
+            if b">" not in compact or compact.split(b">", 1)[1]:
+                raise CodeInspectionError("invalid_asciihex_stream")
+            digits = compact[:-1]
+            if (len(digits) + 1) // 2 > byte_limit:
+                raise CodeInspectionError(overflow)
+            try:
+                data = binascii.unhexlify(digits + (b"0" if len(digits) % 2 else b""))
+            except binascii.Error:
+                raise CodeInspectionError("invalid_asciihex_stream") from None
+            continue
+        if str(filter_name) in {"/ASCII85Decode", "/A85"}:
+            compact = re.sub(rb"[\x00\t\n\f\r ]", b"", data)
+            body = compact[2:] if compact.startswith(b"<~") else compact
+            if not body.endswith(b"~>"):
+                raise CodeInspectionError("invalid_ascii85_stream")
+            body = body[:-2]
+            upper = body.count(b"z") * 4 + ((len(body) - body.count(b"z") + 4) // 5) * 4
+            if upper > byte_limit:
+                raise CodeInspectionError(overflow)
+            try:
+                data = base64.a85decode(compact, adobe=True, ignorechars=b"\x00\t\n\f\r ")
+            except (ValueError, binascii.Error):
+                raise CodeInspectionError("invalid_ascii85_stream") from None
+            continue
+        if str(filter_name) not in {"/FlateDecode", "/Fl"}:
+            raise CodeInspectionError("unsupported_script_filter")
+        decoder = zlib.decompressobj()
+        data = decoder.decompress(data, byte_limit + 1)
+        if len(data) > byte_limit or decoder.unconsumed_tail:
+            raise CodeInspectionError(overflow)
+        if not decoder.eof or decoder.unused_data:
+            raise CodeInspectionError("invalid_flate_stream")
+    if len(data) > byte_limit:
+        raise CodeInspectionError(overflow)
+    return data
+
+
 def _script_text(value, limits):
-    from pypdf.generic import ByteStringObject, StreamObject, TextStringObject, NullObject
+    from pypdf.generic import ByteStringObject, StreamObject, TextStringObject
 
     if isinstance(value, TextStringObject):
-        # pypdf 5.x does not recognize the PDF 2.0 UTF-8 BOM and may guess
-        # UTF-16 for BOM-less strings. Reuse original bytes when available.
         original = getattr(value, "_original_bytes", None)
         text = _decode_script_bytes(original, limits) if isinstance(original, bytes) else str(value)
     elif isinstance(value, ByteStringObject):
         text = _decode_script_bytes(bytes(value), limits)
     elif isinstance(value, StreamObject):
-        # pypdf 5.x exposes encoded stream bytes here. Do not call get_data().
-        data = value._data
-        if not isinstance(data, bytes) or len(data) > limits.max_file_bytes:
-            raise CodeInspectionError("invalid_script_stream")
-        filters = value.get("/Filter", [])
-        filters = filters if isinstance(filters, list) else [filters]
-        if len(filters) > 3:
-            raise CodeInspectionError("stream_filter_limit")
-        parms = value.get("/DecodeParms")
-        if parms is not None and not isinstance(parms, NullObject):
-            raise CodeInspectionError("unsupported_decode_parameters")
-        for filter_name in filters:
-            if str(filter_name) in {"/ASCIIHexDecode", "/AHx"}:
-                compact = re.sub(rb"[\x00\t\n\f\r ]", b"", data)
-                if b">" not in compact or compact.split(b">", 1)[1]:
-                    raise CodeInspectionError("invalid_asciihex_stream")
-                digits = compact[:-1]
-                if (len(digits) + 1) // 2 > limits.max_script_bytes:
-                    raise CodeInspectionError("script_byte_limit")
-                try:
-                    data = binascii.unhexlify(digits + (b"0" if len(digits) % 2 else b""))
-                except binascii.Error:
-                    raise CodeInspectionError("invalid_asciihex_stream") from None
-                continue
-            if str(filter_name) in {"/ASCII85Decode", "/A85"}:
-                compact = re.sub(rb"[\x00\t\n\f\r ]", b"", data)
-                body = compact[2:] if compact.startswith(b"<~") else compact
-                if not body.endswith(b"~>"):
-                    raise CodeInspectionError("invalid_ascii85_stream")
-                body = body[:-2]
-                # z abbreviates four bytes; use a conservative output bound
-                # before the stdlib decoder can allocate the decoded buffer.
-                upper = body.count(b"z") * 4 + ((len(body) - body.count(b"z") + 4) // 5) * 4
-                if upper > limits.max_script_bytes:
-                    raise CodeInspectionError("script_byte_limit")
-                try:
-                    data = base64.a85decode(compact, adobe=True, ignorechars=b"\x00\t\n\f\r ")
-                except (ValueError, binascii.Error):
-                    raise CodeInspectionError("invalid_ascii85_stream") from None
-                continue
-            if str(filter_name) not in {"/FlateDecode", "/Fl"}:
-                raise CodeInspectionError("unsupported_script_filter")
-            decoder = zlib.decompressobj()
-            data = decoder.decompress(data, limits.max_script_bytes + 1)
-            if len(data) > limits.max_script_bytes or decoder.unconsumed_tail:
-                raise CodeInspectionError("script_byte_limit")
-            if not decoder.eof or decoder.unused_data:
-                raise CodeInspectionError("invalid_flate_stream")
-        if len(data) > limits.max_script_bytes:
-            raise CodeInspectionError("script_byte_limit")
-        text = _decode_script_bytes(data, limits)
+        text = _decode_script_bytes(_stream_bytes(value, limits), limits)
     else:
         raise CodeInspectionError("unsupported_script_object")
     if len(text.encode("utf-8")) > limits.max_script_bytes:
@@ -177,7 +182,8 @@ def _inspect_code_bytes_inner(data, limits, timings):
     """Internal parser routine: production access must use inspect_pdf_code(s)."""
     from pypdf import PdfReader
     from pypdf.errors import PdfReadError
-    from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject, StreamObject
+    from pypdf.generic import ArrayObject, ByteStringObject, DictionaryObject, IndirectObject, StreamObject, TextStringObject
+    from malpdf.static.xfa_xml import inspect_xfa_xml
 
     if len(data) > limits.max_file_bytes or not data.startswith(b"%PDF-"):
         return _unavailable("not_pdf_or_byte_limit")
@@ -236,6 +242,111 @@ def _inspect_code_bytes_inner(data, limits, timings):
 
     sources = []
     traversal_complete = not recovered
+    xfa_seen = set()
+    xfa_info = {"containers_found": 0, "containers_parsed": 0,
+                "xml_nodes_observed": 0, "non_javascript_scripts_observed": 0}
+
+    def start_source(owner, script, path, kind="pdf_javascript"):
+        nonlocal found, traversal_complete
+        found += 1
+        if found > limits.max_scripts:
+            traversal_complete = False
+            raise CodeInspectionError("script_count_limit")
+        source_path = "/" + "/".join(part.lstrip("/") for part in path)
+        source = {"container_object": list(owner) if owner else None,
+                  "script_object": script, "kind": kind,
+                  "path": source_path[:256], "path_truncated": len(source_path) > 256,
+                  "extraction_status": "unavailable", "ast_status": "unavailable", "status": "unavailable"}
+        sources.append(source)
+        return source
+
+    def finish_source(source, text):
+        nonlocal parsed, decoded, total_nodes, depth_max, loops, computed, traversal_complete
+        decoded += len(text.encode("utf-8"))
+        if decoded > limits.max_decoded_bytes:
+            source["error"] = "decoded_byte_limit"
+            traversal_complete = False
+            raise CodeInspectionError("decoded_byte_limit")
+        source["extraction_status"] = "complete"
+        try:
+            with stage(timings, "js_ast"):
+                ast = inspect_js_syntax(text, max_bytes=limits.max_script_bytes,
+                    max_nodes=limits.max_ast_nodes - total_nodes, max_depth=limits.max_ast_depth)
+        except CodeInspectionError as error:
+            source["error"] = str(error)
+            if str(error) == "ast_node_limit":
+                traversal_complete = False
+            raise
+        parsed += 1
+        total_nodes += ast["node_count"]
+        depth_max = max(depth_max, ast["max_depth"])
+        loops += ast["loops"]
+        computed += ast["computed_members"]
+        nodes.update(ast["node_types"])
+        calls.update(ast["named_calls"])
+        source["status"] = "parsed"
+        source["ast_status"] = "complete"
+
+    def xfa_problem(code):
+        nonlocal traversal_complete
+        errors.add(code)
+        traversal_complete = False
+
+    def inspect_xfa(raw, owner, path):
+        nonlocal decoded
+        container = resolve(raw)
+        if id(container) in xfa_seen:
+            return
+        xfa_seen.add(id(container))
+        xfa_info["containers_found"] += 1
+        if isinstance(container, ArrayObject):
+            if not container or len(container) % 2 or len(container) > limits.max_objects:
+                raise CodeInspectionError("xfa_packet_array_invalid_or_limit")
+            indices = range(1, len(container), 2)
+        elif isinstance(container, StreamObject):
+            indices = (None,)
+        else:
+            raise CodeInspectionError("xfa_object_unsupported")
+
+        def chunks():
+            nonlocal decoded
+            for index in indices:
+                if index is not None and not isinstance(resolve(container[index - 1]), (TextStringObject, ByteStringObject)):
+                    raise CodeInspectionError("xfa_packet_array_invalid_or_limit")
+                raw_stream = raw if index is None else container[index]
+                stream = container if index is None else resolve(raw_stream)
+                if not isinstance(stream, StreamObject):
+                    raise CodeInspectionError("xfa_object_unsupported")
+                with stage(timings, "stream_decode"):
+                    content = _stream_bytes(stream, limits, byte_limit=limits.max_decoded_bytes - decoded,
+                                            overflow="decoded_byte_limit")
+                decoded += len(content)
+                yield content, {"packet_index": 0 if index is None else index // 2,
+                    "stream_object": [raw_stream.idnum, raw_stream.generation] if isinstance(raw_stream, IndirectObject) else None}
+
+        def begin(metadata):
+            source = start_source(owner, metadata["stream_object"],
+                path + ("/XFA", f"packet[{metadata['packet_index']}]", "script"), "xfa_javascript")
+            source.update(xfa_packet_index=metadata["packet_index"], xfa_xml_byte_offset=metadata["xml_byte_offset"])
+            return source
+
+        def finish(source, text):
+            try:
+                finish_source(source, text)
+            except CodeInspectionError as error:
+                errors.add(str(error))
+                if str(error) in {"decoded_byte_limit", "ast_node_limit"}:
+                    raise
+
+        def node_observed():
+            xfa_info["xml_nodes_observed"] += 1
+
+        stats = inspect_xfa_xml(chunks(), start_script=begin, finish_script=finish, problem=xfa_problem,
+            node_observed=node_observed, max_nodes=limits.max_objects - xfa_info["xml_nodes_observed"],
+            max_depth=limits.max_pdf_depth, max_script_bytes=limits.max_script_bytes)
+        xfa_info["containers_parsed"] += 1
+        xfa_info["non_javascript_scripts_observed"] += stats["non_javascript_scripts"]
+
     try:
         root = reader.trailer.raw_get("/Root")
     except Exception as error:
@@ -293,6 +404,17 @@ def _inspect_code_bytes_inner(data, limits, timings):
                     traversal_complete = False
                     break
                 indicators.update(str(v)[1:] for v in items if str(v) in SECURITY_NAMES)
+            if "/XFA" in value:
+                try:
+                    inspect_xfa(value.raw_get("/XFA"), owner, path)
+                except CodeInspectionError as error:
+                    xfa_problem(str(error))
+                except (UnicodeError, zlib.error):
+                    xfa_problem("xfa_decode_error")
+                except Exception:
+                    xfa_problem("xfa_read_error")
+                if errors & {"decoded_byte_limit", "ast_node_limit", "script_count_limit", "xfa_xml_node_limit"}:
+                    break
             if "/JS" in value or str(value.get("/S")) == "/JavaScript":
                 missing_script = "/JS" not in value
                 script = None if missing_script else value.raw_get("/JS")
@@ -300,20 +422,10 @@ def _inspect_code_bytes_inner(data, limits, timings):
                        else ("missing", id(value)) if missing_script else ("direct", id(script)))
                 if key not in scripts_seen:
                     scripts_seen.add(key)
-                    found += 1
-                    if found > limits.max_scripts:
-                        errors.add("script_count_limit")
-                        traversal_complete = False
-                        break
-                    source_path = "/" + "/".join(part.lstrip("/") for part in path + ("/JS",))
-                    source = {"container_object": list(owner) if owner else None,
-                              "script_object": [script.idnum, script.generation] if isinstance(script, IndirectObject) else None,
-                              "path": source_path[:256],
-                              "path_truncated": len(source_path) > 256,
-                              "extraction_status": "unavailable", "ast_status": "unavailable",
-                              "status": "unavailable"}
-                    sources.append(source)
+                    source = None
                     try:
+                        source = start_source(owner, [script.idnum, script.generation] if isinstance(script, IndirectObject) else None,
+                                              path + ("/JS",))
                         if missing_script:
                             raise CodeInspectionError("javascript_payload_missing")
                         payload = resolve(script)
@@ -322,26 +434,12 @@ def _inspect_code_bytes_inner(data, limits, timings):
                                 text = _script_text(payload, limits)
                         else:
                             text = _script_text(payload, limits)
-                        decoded += len(text.encode("utf-8"))
-                        if decoded > limits.max_decoded_bytes:
-                            raise CodeInspectionError("decoded_byte_limit")
-                        source["extraction_status"] = "complete"
-                        with stage(timings, "js_ast"):
-                            ast = inspect_js_syntax(text, max_bytes=limits.max_script_bytes,
-                                max_nodes=limits.max_ast_nodes - total_nodes, max_depth=limits.max_ast_depth)
-                        parsed += 1
-                        total_nodes += ast["node_count"]
-                        depth_max = max(depth_max, ast["max_depth"])
-                        loops += ast["loops"]
-                        computed += ast["computed_members"]
-                        nodes.update(ast["node_types"])
-                        calls.update(ast["named_calls"])
-                        source["status"] = "parsed"
-                        source["ast_status"] = "complete"
+                        finish_source(source, text)
                     except CodeInspectionError as error:
                         errors.add(str(error))
-                        source["error"] = str(error)
-                        if str(error) in {"decoded_byte_limit", "ast_node_limit"}:
+                        if source is not None:
+                            source["error"] = str(error)
+                        if str(error) in {"decoded_byte_limit", "ast_node_limit", "script_count_limit"}:
                             traversal_complete = False
                             break
                     except (UnicodeError, zlib.error):
@@ -370,10 +468,10 @@ def _inspect_code_bytes_inner(data, limits, timings):
             "structural_indicators": dict(indicators) if traversal_complete else None,
             "observed": {"scripts_found": found, "ast": ast_summary if parsed or complete_ast else None,
                          "structural_indicators": dict(indicators)},
-            "script_sources": sources, "errors": sorted(errors),
+            "script_sources": sources, "errors": sorted(errors), "xfa_observed": xfa_info,
             "parser_diagnostics": diagnostic.data,
             "parser_recovered": recovered,
-            "scope": "catalog-reachable syntax evidence only", "content_redacted": True,
+            "scope": "catalog-reachable PDF actions and declared XFA JavaScript syntax only", "content_redacted": True,
             "active_content_executed": False}
 
 

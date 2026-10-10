@@ -1,0 +1,29 @@
+{
+  "protocol": "XFA v7 full synthetic verification after interrupted runner",
+  "dataset_pdf_access": false,
+  "test_access": false,
+  "checks": "full pytest, pip check, diff/status",
+  "scope": "no source changes after targeted117-pass verification; previous interrupted evidence preserved; real-CIC accuracy remains unmeasured",
+  "seed": 42,
+  "code_commit": "535278a7e6c7639a25aa347c7b0816d88b937315",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/static_acceleration_design.md",
+      " M reports/research_log.md",
+      " M src/malpdf/experiments/cic_static_accuracy.py",
+      " M src/malpdf/experiments/cic_static_benchmark.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M tests/test_cic_profile_accuracy.py",
+      " M tests/test_cic_static_benchmark.py",
+      " M tests/test_static_acceleration.py",
+      "?? reports/analysis/cic_static_xfa.md",
+      "?? reports/experiments/cic_xfa_checks/",
+      "?? src/malpdf/static/xfa_xml.py",
+      "?? tests/test_static_xfa.py"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

@@ -1,0 +1,50 @@
+{
+  "run_id": "run_20261010T150741420725Z_535278a7e6c7",
+  "study": "cic_xfa_checks",
+  "status": "completed",
+  "started_at_utc": "2026-10-10T15:07:41.468642+00:00",
+  "code_commit": "535278a7e6c7639a25aa347c7b0816d88b937315",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/static_acceleration_design.md",
+      " M reports/research_log.md",
+      " M src/malpdf/experiments/cic_static_accuracy.py",
+      " M src/malpdf/experiments/cic_static_benchmark.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M tests/test_cic_profile_accuracy.py",
+      " M tests/test_cic_static_benchmark.py",
+      " M tests/test_static_acceleration.py",
+      "?? reports/analysis/cic_static_xfa.md",
+      "?? reports/experiments/cic_xfa_checks/",
+      "?? src/malpdf/static/xfa_xml.py",
+      "?? tests/test_static_xfa.py"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/static_acceleration_design.md",
+      " M reports/research_log.md",
+      " M src/malpdf/experiments/cic_static_accuracy.py",
+      " M src/malpdf/experiments/cic_static_benchmark.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M tests/test_cic_profile_accuracy.py",
+      " M tests/test_cic_static_benchmark.py",
+      " M tests/test_static_acceleration.py",
+      "?? reports/analysis/cic_static_xfa.md",
+      "?? reports/experiments/cic_xfa_checks/",
+      "?? src/malpdf/static/xfa_xml.py",
+      "?? tests/test_static_xfa.py"
+    ]
+  },
+  "seed": 42,
+  "protocol": "XFA v7 full synthetic verification after interrupted runner",
+  "report_path": "reports/experiments/cic_xfa_checks/run_20261010T150741420725Z_535278a7e6c7/run_summary.json",
+  "artifact_path": "artifacts/cic_xfa_checks/run_20261010T150741420725Z_535278a7e6c7",
+  "metrics": {},
+  "notes": "V7 bounded XFA XML/JS extraction and same-run fixed observed-evidence RF reuse pass full synthetic suite/dependencies/diff/status. Previous runner interruption retained. No actual dataset PDFs, Test scoring, dataset model fitting or claim of accuracy gain. Paired offline job is required.",
+  "finished_at_utc": "2026-10-10T15:10:06.506555+00:00"
+}

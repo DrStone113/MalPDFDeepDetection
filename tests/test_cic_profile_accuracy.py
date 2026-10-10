@@ -117,19 +117,20 @@ def test_parser_failures_stay_eligible_but_missing_bytes_are_refused(profiles):
     assert not study.profile_input_available(records[1], 1024**2)
 
 
-def test_v6_profile_requires_explicit_schema_lock_and_preserves_v5_support(tmp_path, profiles):
+@pytest.mark.parametrize("schema", ["pdf-code-inspection-v6", "pdf-code-inspection-v7"])
+def test_new_profile_requires_explicit_schema_lock_and_preserves_v5_support(tmp_path, profiles, schema):
     cfg, records = profiles
     for row in records:
-        row["code"]["schema_version"] = "pdf-code-inspection-v6"
+        row["code"]["schema_version"] = schema
     save_records(tmp_path, cfg, records)
     method_path = tmp_path / cfg["profile_methodology"]["path"]
     method = json.loads(method_path.read_text())
-    method["fingerprint"]["code_schema"] = "pdf-code-inspection-v6"
+    method["fingerprint"]["code_schema"] = schema
     method_path.write_text(json.dumps(method))
     cfg["profile_methodology"] = spec(tmp_path, method_path)
     with pytest.raises(ValueError, match="methodology differs"):
         study.load_profile_development(tmp_path, cfg)
-    cfg["profile_code_schema"] = "pdf-code-inspection-v6"
+    cfg["profile_code_schema"] = schema
     loaded, _ = study.load_profile_development(tmp_path, cfg)
     assert len(loaded) == 16
 
@@ -139,6 +140,46 @@ def test_malformed_analysis_flag_is_not_coerced_to_a_measurement(profiles):
     records[0]["code"]["traversal_complete"] = "false"
     with pytest.raises(ValueError, match="Non-boolean"):
         study.profile_feature_values(records[0], study.PROFILE_VARIANTS[1])
+
+
+def test_offline_job_reuses_ablations_keeps_warm_rows_out_and_retains_refusals(tmp_path, profiles, monkeypatch):
+    from types import SimpleNamespace
+    from sklearn.ensemble import RandomForestClassifier
+    cfg,records=profiles
+    records[8]['static']=None;records[8]['code']=None;records[8]['status']='worker_error'
+    warm=[{**r,'cache_mode':'warm'} for r in records]
+    calls=[];original=RandomForestClassifier.fit
+    def fit(model,features,labels,*args,**kwargs):
+        calls.append(np.asarray(features).copy())
+        return original(model,features,labels,*args,**kwargs)
+    monkeypatch.setattr(RandomForestClassifier,'fit',fit)
+    report=tmp_path/'reports/offline_fixture';report.mkdir(parents=True)
+    artifacts=tmp_path/'artifacts/offline_fixture';artifacts.mkdir(parents=True)
+    run=SimpleNamespace(root=tmp_path,identifier='run_fixture',report=report,artifacts=artifacts,state={'metrics':{}})
+    study.compare_profile_evidence(run,records+warm,{'rf':cfg['rf'],'limits':{'max_file_bytes':1024**2}})
+    scores=json.loads((report/'observed_feature_comparison.json').read_text())
+    assert scores['status']=='completed' and set(scores['models'])==set(study.PROFILE_VARIANTS)
+    assert len(calls)==3 and all(len(x)==8 and set(x[:,0])==set(range(1,9)) for x in calls)
+    assert all(s['planned']==8 and s['classified']==7 and s['refusals']==1 for s in scores['models'].values())
+    assert len(run.state['metrics'])==3
+    for variant in study.PROFILE_VARIANTS:
+        manifest=json.loads((report/(variant+'_manifest.json')).read_text())
+        assert manifest['training_rows']==8 and manifest['promotion'] is False
+        assert hashlib.sha256((tmp_path/manifest['artifact_relative_path']).read_bytes()).hexdigest()==manifest['artifact_sha256']
+    predictions=json.loads((artifacts/'observed_development_predictions.json').read_text())
+    assert len(predictions['sample_ids'])==7 and all(x.startswith('validation_') for x in predictions['sample_ids'])
+
+
+@pytest.mark.parametrize('change',['test','warm','duplicate'])
+def test_shared_ablation_refuses_invalid_partitions_or_repeat_records_before_fitting(profiles, monkeypatch, change):
+    from sklearn.ensemble import RandomForestClassifier
+    cfg,records=profiles
+    if change=='test':records[0]['split']='test'
+    elif change=='warm':records[0]['cache_mode']='warm'
+    else:records.append(records[0])
+    monkeypatch.setattr(RandomForestClassifier,'fit',lambda *args,**kwargs:pytest.fail('Invalid records must not fit'))
+    with pytest.raises(ValueError,match='unique cold Train/development'):
+        study.fit_profile_ablations(records,cfg['rf'],1024**2)
 
 
 @pytest.mark.parametrize("overlap", [False, True])

@@ -6,7 +6,7 @@ A Python research project for reproducible malicious PDF detection experiments. 
 
 The October 2026 P0/P1 maintenance separates unknown structural/AST totals from
 observed partial evidence. JSON diagnostics use `static-diagnostics-v3` and code
-inspection uses `pdf-code-inspection-v6`: bounded PDFDocEncoding/Unicode text
+inspection uses `pdf-code-inspection-v7`: bounded PDFDocEncoding/Unicode text
 decoding, action traversal priority, and explicit partial xref recovery alongside
 ASCIIHex/ASCII85/Flate filters. Failed/incomplete PDF parsing refuses
 deployment inference even when all numeric model inputs happen to be present.
@@ -14,6 +14,15 @@ Canonical 41-feature RIT measurements, source-defined sentinels, model artifacts
 and locked partitions keep their established definitions.
 See [the metadata audit, feature groups and offline commands](reports/analysis/static_p0_p1.md).
 This maintenance uses benign synthetic fixtures and reads dataset metadata only.
+
+V7 extracts declared JavaScript from bounded XFA XML streams and ordered packet
+arrays through the same inert AST worker. XML encoding/escapes and object/packet
+provenance are retained; FormCalc is counted separately. DTDs, references,
+malformed XML and exhausted budgets remain explicit partial evidence. The next
+locked offline job also records the existing P0/P1/P2 observed-evidence ablation
+inside its original run, without another PDF pass or source-cleanliness bypass.
+See [scope and verification](reports/analysis/cic_static_xfa.md). Synthetic
+coverage is verified; v7 real-CIC recall/FPR improvement is not yet measured.
 
 Static inspection now reads one size-capped, stable byte snapshot.
 `malpdf.inference.StaticScanSession` reuses a verified frozen XGBoost deployment

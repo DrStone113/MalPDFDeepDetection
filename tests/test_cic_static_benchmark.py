@@ -66,7 +66,7 @@ def test_exclusive_nested_stage_times_and_unknowns(monkeypatch):
 def test_ascii_streams_and_filter_chains_recover_js_without_execution(filters):
     timer = StageTimings()
     result = _inspect_code_bytes(fixture_pdf(filters=filters), CodeInspectionLimits(), timings=timer)
-    assert result["complete"] and result["schema_version"] == "pdf-code-inspection-v6"
+    assert result["complete"] and result["schema_version"] == "pdf-code-inspection-v7"
     assert result["ast"]["named_calls"]["util.printf"] == 1
     assert timer.seconds["stream_decode"] > 0 and timer.seconds["js_ast"] > 0
     assert not result["active_content_executed"]
