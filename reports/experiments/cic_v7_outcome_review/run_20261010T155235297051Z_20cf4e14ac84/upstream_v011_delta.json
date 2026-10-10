@@ -1,0 +1,24 @@
+{
+  "upstream_commit": "ec63665c671fb26e987b1b0640af500c192eddc4",
+  "source_url": "https://raw.githubusercontent.com/Mo-Alani/PDFMalExtract/ec63665c671fb26e987b1b0640af500c192eddc4/PDFMalExtract.py",
+  "source_sha256": "a49b4d7979ee2f2ad63503a921fc4459ce94465fb1aef099fd52028c89809420",
+  "differences_from_pinned_v01": [
+    {
+      "item": "version header",
+      "before": "v0.1",
+      "after": "v0.1.1"
+    },
+    {
+      "item": "Acroform raw token",
+      "before": "/Acroform",
+      "after": "/AcroForm"
+    },
+    {
+      "item": "BaseEncoding raw token",
+      "before": "j/BaseEncoding",
+      "after": "/BaseEncoding"
+    }
+  ],
+  "remaining_changes": "final newline only",
+  "impact": "Two raw-feature definitions change. Existing locked RIT v0.1 contract and supplied G-drop3constant model exclude Acroform and BaseEncoding as historical Train constants; do not silently replace definitions or retrofit historical predictions. Upstream still skips open failures and does not extract XFA XML JS/AST. No parser-coverage remedy established."
+}

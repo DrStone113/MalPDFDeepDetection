@@ -245,8 +245,8 @@ development threshold is adjusted to rescue these negative results.
 The confirmed remaining extraction gaps include 24 unresolved-reference files,
 18 failed structural parsers and 3 AST-error files on the 64-file cohort.
 All 14 newly recovered missing-marker files share AcroForm/XFA/EmbeddedFile
-counts, across both published labels. The current inspector traverses PDF
-dictionaries but does not parse JavaScript inside XFA XML or inspect embedded
+counts, across both published labels. At the v6 review, the inspector traversed PDF
+dictionaries but did not parse JavaScript inside XFA XML or inspect embedded
 payload content; `inspect_js_syntax()` also discards its AST on syntax/resource
 failure without separate lexical evidence. These are code-level coverage gaps,
 not proof that any particular CIC file contains missed malicious behavior.
@@ -260,3 +260,47 @@ artifacts; aggregate provenance is recorded in
 `reports/experiments/cic_v6_review_checks/run_20261010T095754964749Z_537d06776817/`.
 Empty Git objects were reconstructed with their original hashes; HEAD, index
 and source files were preserved. This repair is separate from model outcomes.
+
+## Completed v7 same 64 outcome
+
+The user ran the prepared XFA job through the disconnected console LAB.
+`run_20261010T154029301301Z_20cf4e14ac84` completed from clean commit 20cf4e1
+at 15:44:41 UTC on 2026-10-10. Saved evidence verifies identical 64 identities,
+labels, partitions, raw canonical features, configuration, limits and frozen
+model bytes relative to v6; no Test rows are involved.
+
+The strict C0/C1 pilots still classify 11/32 development rows (6 malicious,
+5 benign). C0 retains 2/6 TP and 4/5 FP. C1 retains 2/6 TP and decreases from 3/5
+to 2/5 FP: recall 33.33%, FPR 40%, malicious F1 0.4000 and MCC -0.0690.
+Twenty-one refusals remain explicit; planned-class detection is 2/16 and
+false-positive fraction 2/16. This is one fewer false positive on five benign
+inputs, not independent evidence of a general accuracy gain. These are RF
+pilot metrics, not the supplied frozen XGBoost's CIC accuracy.
+
+The same-run observed P0/P1/P2 variants classify 32/32 known-input development
+rows and exactly retain the v6 ablation's hard-label counts:
+
+| Variant | Recall | FPR | Malicious F1 | MCC |
+| --- | ---: | ---: | ---: | ---: |
+| P0 canonical RIT41 fallback | 12/16 (75%) | 13/16 (81.25%) | 0.5854 | -0.0756 |
+| P1 observed structure/AST | 12/16 (75%) | 14/16 (87.5%) | 0.5714 | -0.1601 |
+| P2 observed plus parser flags | 12/16 (75%) | 13/16 (81.25%) | 0.5854 | -0.0756 |
+
+Complete-parser coverage remains 23/64, with 23 partial and 18 parser-error
+files. V7 records a declared XFA JS source, but its AST reaches the existing
+node budget; another input reaches the XFA XML node budget. Observed JS/AST
+file counts remain 25/20, with 22 parsed scripts and 4 AST-error files. The XFA
+XML omission described in the historical v6 review is addressed in code,
+without measured additional successful JS/AST coverage on this cohort.
+Embedded-payload content and other recorded gaps remain outside the scope.
+No limit, feature contract, threshold or candidate is selected from these
+previously exposed development outcomes.
+
+The requested upstream PDFMalExtract main now declares v0.1.1 and changes two
+raw counters to `/AcroForm` and `/BaseEncoding`. The existing implementation
+preserves the pinned v0.1 dataset contract and its Train-constant exclusions.
+The upstream script still skips failed PDFs and does not inspect XFA XML/AST;
+its source does not establish a remedy for the saved parser failures.
+See [the paired measurement and source comparison](cic_static_offline.md#completed-v7-xfa-paired-measurement)
+and the immutable
+[model metrics](../experiments/cic_static_profile/run_20261010T154029301301Z_20cf4e14ac84/model_comparison.csv).

@@ -1,0 +1,42 @@
+{
+  "baseline_run": "run_20261010T154029301301Z_20cf4e14ac84",
+  "rows": 64,
+  "status_counts": {
+    "parser_error": 18,
+    "partial": 23,
+    "complete": 23
+  },
+  "errors_overlapping_by_status": {
+    "parser_error": {
+      "parser_failure": 18,
+      "pdf_parser_failure": 4,
+      "invalid_flate_stream": 14,
+      "pdf_reference_unavailable": 14,
+      "pdf_xref_recovered": 14
+    },
+    "partial": {
+      "pdf_structure_limit": 5,
+      "unsupported_script_filter": 1,
+      "encrypted_pdf": 2,
+      "ast_node_limit": 4,
+      "pdf_reference_unavailable": 9,
+      "pdf_xref_recovered": 12,
+      "xfa_xml_node_limit": 1,
+      "invalid_asciihex_stream": 1,
+      "reference_feature_partial": 1,
+      "reference_object_limit": 2
+    },
+    "complete": {}
+  },
+  "c1_outcomes": {
+    "Inconclusive": 21,
+    "TN": 3,
+    "FP": 2,
+    "FN": 4,
+    "TP": 2
+  },
+  "inventory_path": "artifacts/cic_v8_audit/run_20261010T163245301129Z_20cf4e14ac84/failure_inventory.json",
+  "dataset_subset_sha256": "bc0b8e0f65383d96b4f68065b8898563898d18cd2775f789da7141fb691ed209",
+  "pdf_access": false,
+  "certainty": "14 missing-startxref structural failures; 4 unclassified exceptions; actual cause/irrecoverability remains unverified"
+}

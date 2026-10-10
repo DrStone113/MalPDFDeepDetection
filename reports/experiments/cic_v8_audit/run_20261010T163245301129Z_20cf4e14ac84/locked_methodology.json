@@ -1,0 +1,29 @@
+{
+  "protocol": "v8 saved baseline failure audit",
+  "pdf_access": false,
+  "test_access": false,
+  "model_fitting": false,
+  "seed": 42,
+  "code_commit": "20cf4e14ac84526eb0f4cde578e6ed8d04e66825",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_accuracy.md",
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/analysis/cic_static_xfa.md",
+      " M reports/research_log.md",
+      " M src/malpdf/experiments/cic_static_benchmark.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M src/malpdf/static/profile_worker.py",
+      "?? reports/experiments/cic_static_profile/run_20261010T154029301301Z_20cf4e14ac84/",
+      "?? reports/experiments/cic_v7_outcome_review/",
+      "?? src/malpdf/experiments/cic_v8.py",
+      "?? src/malpdf/inference/evidence_policy.py",
+      "?? src/malpdf/static/evidence.py",
+      "?? src/malpdf/static/recovery.py"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

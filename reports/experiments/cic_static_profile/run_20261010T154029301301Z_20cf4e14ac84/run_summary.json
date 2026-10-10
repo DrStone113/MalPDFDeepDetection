@@ -1,0 +1,203 @@
+{
+  "run_id": "run_20261010T154029301301Z_20cf4e14ac84",
+  "study": "cic_static_profile",
+  "status": "completed",
+  "started_at_utc": "2026-10-10T15:40:29.335610+00:00",
+  "code_commit": "20cf4e14ac84526eb0f4cde578e6ed8d04e66825",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "data_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "seed": 42,
+  "protocol": "fixed CIC Train/dev static diagnosis and feature pilot",
+  "report_path": "reports/experiments/cic_static_profile/run_20261010T154029301301Z_20cf4e14ac84/run_summary.json",
+  "artifact_path": "artifacts/cic_static_profile/run_20261010T154029301301Z_20cf4e14ac84",
+  "metrics": {
+    "C0_rit_baseline/cic_development_classified": {
+      "positive_label": 1,
+      "accuracy": 0.2727272727272727,
+      "precision_malicious": 0.3333333333333333,
+      "recall_malicious": 0.3333333333333333,
+      "f1_malicious": 0.3333333333333333,
+      "precision_macro": 0.26666666666666666,
+      "recall_macro": 0.26666666666666666,
+      "f1_macro": 0.26666666666666666,
+      "precision": 0.3333333333333333,
+      "recall": 0.3333333333333333,
+      "f1": 0.3333333333333333,
+      "mcc": -0.4666666666666667,
+      "confusion_matrix": [
+        [
+          1,
+          4
+        ],
+        [
+          4,
+          2
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 0.3333333333333333,
+      "pr_auc": 0.5975228475228476,
+      "score_source": null,
+      "brier": 0.4014740603741496,
+      "log_loss": 1.0616246934870341,
+      "ece": 0.5019978354978355,
+      "ece_bins": 10,
+      "threshold": 0.5
+    },
+    "C1_rit_plus_structure_ast/cic_development_classified": {
+      "positive_label": 1,
+      "accuracy": 0.45454545454545453,
+      "precision_malicious": 0.5,
+      "recall_malicious": 0.3333333333333333,
+      "f1_malicious": 0.4,
+      "precision_macro": 0.4642857142857143,
+      "recall_macro": 0.4666666666666667,
+      "f1_macro": 0.45,
+      "precision": 0.5,
+      "recall": 0.3333333333333333,
+      "f1": 0.4,
+      "mcc": -0.06900655593423542,
+      "confusion_matrix": [
+        [
+          3,
+          2
+        ],
+        [
+          4,
+          2
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 0.36666666666666664,
+      "pr_auc": 0.5427609427609428,
+      "score_source": null,
+      "brier": 0.3336807822600834,
+      "log_loss": 0.8920532343572543,
+      "ece": 0.2750040414131323,
+      "ece_bins": 10,
+      "threshold": 0.5
+    },
+    "P0_rit41_fallback/cic_development_known_input": {
+      "positive_label": 1,
+      "accuracy": 0.46875,
+      "precision_malicious": 0.48,
+      "recall_malicious": 0.75,
+      "f1_malicious": 0.5853658536585366,
+      "precision_macro": 0.4542857142857143,
+      "recall_macro": 0.46875,
+      "f1_macro": 0.4231177094379639,
+      "precision": 0.48,
+      "recall": 0.75,
+      "f1": 0.5853658536585366,
+      "mcc": -0.07559289460184544,
+      "confusion_matrix": [
+        [
+          3,
+          13
+        ],
+        [
+          4,
+          12
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 0.494140625,
+      "pr_auc": 0.5436226652769415,
+      "score_source": null,
+      "brier": 0.33096192110596834,
+      "log_loss": 0.8920153899687062,
+      "ece": 0.30541865643037514,
+      "ece_bins": 10,
+      "threshold": 0.5
+    },
+    "P1_observed_static/cic_development_known_input": {
+      "positive_label": 1,
+      "accuracy": 0.4375,
+      "precision_malicious": 0.46153846153846156,
+      "recall_malicious": 0.75,
+      "f1_malicious": 0.5714285714285714,
+      "precision_macro": 0.39743589743589747,
+      "recall_macro": 0.4375,
+      "f1_macro": 0.37662337662337664,
+      "precision": 0.46153846153846156,
+      "recall": 0.75,
+      "f1": 0.5714285714285714,
+      "mcc": -0.16012815380508713,
+      "confusion_matrix": [
+        [
+          2,
+          14
+        ],
+        [
+          4,
+          12
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 0.529296875,
+      "pr_auc": 0.5861584887618538,
+      "score_source": null,
+      "brier": 0.2842382731929075,
+      "log_loss": 0.7677644360249947,
+      "ece": 0.20782642834595969,
+      "ece_bins": 10,
+      "threshold": 0.5
+    },
+    "P2_observed_plus_status/cic_development_known_input": {
+      "positive_label": 1,
+      "accuracy": 0.46875,
+      "precision_malicious": 0.48,
+      "recall_malicious": 0.75,
+      "f1_malicious": 0.5853658536585366,
+      "precision_macro": 0.4542857142857143,
+      "recall_macro": 0.46875,
+      "f1_macro": 0.4231177094379639,
+      "precision": 0.48,
+      "recall": 0.75,
+      "f1": 0.5853658536585366,
+      "mcc": -0.07559289460184544,
+      "confusion_matrix": [
+        [
+          3,
+          13
+        ],
+        [
+          4,
+          12
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 0.490234375,
+      "pr_auc": 0.5063271887020421,
+      "score_source": null,
+      "brier": 0.2900071509198962,
+      "log_loss": 0.7817443710736225,
+      "ece": 0.1957753725543249,
+      "ece_bins": 10,
+      "threshold": 0.5
+    }
+  },
+  "notes": "CIC Train/dev only, one worker; all planned samples retained in coverage/refusal denominators. Full per-file identities/errors stay in LAB artifacts. Stage timings distinguish explicit JS decoding from implicit backend decoding. Balanced pilot and previously exposed Validation, no independent Test/improvement claim. RIT CSV unchanged.",
+  "finished_at_utc": "2026-10-10T15:44:41.303496+00:00"
+}

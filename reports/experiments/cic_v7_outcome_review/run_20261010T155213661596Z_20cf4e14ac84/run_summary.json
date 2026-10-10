@@ -1,0 +1,28 @@
+{
+  "run_id": "run_20261010T155213661596Z_20cf4e14ac84",
+  "study": "cic_v7_outcome_review",
+  "status": "failed",
+  "started_at_utc": "2026-10-10T15:52:13.721892+00:00",
+  "code_commit": "20cf4e14ac84526eb0f4cde578e6ed8d04e66825",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      "?? reports/experiments/cic_static_profile/run_20261010T154029301301Z_20cf4e14ac84/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      "?? reports/experiments/cic_static_profile/run_20261010T154029301301Z_20cf4e14ac84/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "saved v7 CIC outcome review and synthetic maintenance checks",
+  "report_path": "reports/experiments/cic_v7_outcome_review/run_20261010T155213661596Z_20cf4e14ac84/run_summary.json",
+  "artifact_path": "artifacts/cic_v7_outcome_review/run_20261010T155213661596Z_20cf4e14ac84",
+  "metrics": {},
+  "error_type": "AssertionError",
+  "finished_at_utc": "2026-10-10T15:52:13.881351+00:00"
+}

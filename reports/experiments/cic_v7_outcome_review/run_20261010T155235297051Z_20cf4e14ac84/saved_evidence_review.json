@@ -1,0 +1,693 @@
+{
+  "source_profile": "run_20261010T154029301301Z_20cf4e14ac84",
+  "baseline_profile": "run_20261010T093051159853Z_537d06776817",
+  "v7_status": "completed",
+  "finished_at_utc": "2026-10-10T15:44:41.303496+00:00",
+  "paired_checks": {
+    "same64_identities_labels_partitions": true,
+    "same_raw_canonical_features": true,
+    "same_configuration_limits_seed": true,
+    "same_frozen_model": true,
+    "saved_lab_checks_passed": true,
+    "cold_warm_evidence_consistent": true,
+    "test_access": false
+  },
+  "v6_observations": {
+    "js_candidate_files": 25,
+    "ast_evidence_files": 20,
+    "parsed_scripts": 22
+  },
+  "v7_observations": {
+    "js_candidate_files": 25,
+    "ast_evidence_files": 20,
+    "parsed_scripts": 22,
+    "xfa_xml_node_limit_files": 1,
+    "xfa_javascript_sources": 1,
+    "xfa_ast_node_limit": 1
+  },
+  "strict_models": {
+    "v6": {
+      "C0_rit_baseline": {
+        "coverage": 0.34375,
+        "refusals": 21,
+        "true_positives": 2,
+        "false_positives": 4,
+        "malicious_classified": 6,
+        "benign_classified": 5,
+        "malicious_planned": 16,
+        "benign_planned": 16,
+        "recall_malicious_classified": 0.3333333333333333,
+        "fpr_classified": 0.8
+      },
+      "C1_rit_plus_structure_ast": {
+        "coverage": 0.34375,
+        "refusals": 21,
+        "true_positives": 2,
+        "false_positives": 3,
+        "malicious_classified": 6,
+        "benign_classified": 5,
+        "malicious_planned": 16,
+        "benign_planned": 16,
+        "recall_malicious_classified": 0.3333333333333333,
+        "fpr_classified": 0.6
+      }
+    },
+    "v7": {
+      "C0_rit_baseline": {
+        "coverage": 0.34375,
+        "refusals": 21,
+        "true_positives": 2,
+        "false_positives": 4,
+        "malicious_classified": 6,
+        "benign_classified": 5,
+        "malicious_planned": 16,
+        "benign_planned": 16,
+        "recall_malicious_classified": 0.3333333333333333,
+        "fpr_classified": 0.8
+      },
+      "C1_rit_plus_structure_ast": {
+        "coverage": 0.34375,
+        "refusals": 21,
+        "true_positives": 2,
+        "false_positives": 2,
+        "malicious_classified": 6,
+        "benign_classified": 5,
+        "malicious_planned": 16,
+        "benign_planned": 16,
+        "recall_malicious_classified": 0.3333333333333333,
+        "fpr_classified": 0.4
+      }
+    }
+  },
+  "observed_models": {
+    "v6": {
+      "P0_rit41_fallback": {
+        "coverage": 1.0,
+        "refusals": 0,
+        "true_positives": 12,
+        "false_positives": 13,
+        "malicious_classified": 16,
+        "benign_classified": 16,
+        "malicious_planned": 16,
+        "benign_planned": 16,
+        "recall_malicious_classified": 0.75,
+        "fpr_classified": 0.8125
+      },
+      "P1_observed_static": {
+        "coverage": 1.0,
+        "refusals": 0,
+        "true_positives": 12,
+        "false_positives": 14,
+        "malicious_classified": 16,
+        "benign_classified": 16,
+        "malicious_planned": 16,
+        "benign_planned": 16,
+        "recall_malicious_classified": 0.75,
+        "fpr_classified": 0.875
+      },
+      "P2_observed_plus_status": {
+        "coverage": 1.0,
+        "refusals": 0,
+        "true_positives": 12,
+        "false_positives": 13,
+        "malicious_classified": 16,
+        "benign_classified": 16,
+        "malicious_planned": 16,
+        "benign_planned": 16,
+        "recall_malicious_classified": 0.75,
+        "fpr_classified": 0.8125
+      }
+    },
+    "v7": {
+      "P0_rit41_fallback": {
+        "coverage": 1.0,
+        "refusals": 0,
+        "true_positives": 12,
+        "false_positives": 13,
+        "malicious_classified": 16,
+        "benign_classified": 16,
+        "malicious_planned": 16,
+        "benign_planned": 16,
+        "recall_malicious_classified": 0.75,
+        "fpr_classified": 0.8125
+      },
+      "P1_observed_static": {
+        "coverage": 1.0,
+        "refusals": 0,
+        "true_positives": 12,
+        "false_positives": 14,
+        "malicious_classified": 16,
+        "benign_classified": 16,
+        "malicious_planned": 16,
+        "benign_planned": 16,
+        "recall_malicious_classified": 0.75,
+        "fpr_classified": 0.875
+      },
+      "P2_observed_plus_status": {
+        "coverage": 1.0,
+        "refusals": 0,
+        "true_positives": 12,
+        "false_positives": 13,
+        "malicious_classified": 16,
+        "benign_classified": 16,
+        "malicious_planned": 16,
+        "benign_planned": 16,
+        "recall_malicious_classified": 0.75,
+        "fpr_classified": 0.8125
+      }
+    }
+  },
+  "pipeline": {
+    "v6": {
+      "wall_seconds": 312.06240459699995,
+      "cold": {
+        "planned": 64,
+        "recorded": 64,
+        "not_started": 0,
+        "unique_pdf_samples": 64,
+        "status_counts": {
+          "parser_error": 18,
+          "partial": 23,
+          "complete": 23
+        },
+        "error_counts_overlapping": {
+          "parser_failure": 18,
+          "pdf_parser_failure": 4,
+          "pdf_structure_limit": 5,
+          "unsupported_script_filter": 1,
+          "encrypted_pdf": 2,
+          "ast_node_limit": 3,
+          "pdf_reference_unavailable": 24,
+          "pdf_xref_recovered": 26,
+          "script_byte_limit": 1,
+          "reference_feature_partial": 1,
+          "reference_object_limit": 2
+        },
+        "analysis_reason_counts_overlapping": {
+          "parser_failure": 18,
+          "pdf_parser_failure": 4,
+          "structural_reference_unavailable": 13,
+          "pdf_structure_limit": 5,
+          "unsupported_script_filter": 1,
+          "encrypted_pdf": 2,
+          "encrypted_pdf_partial_extraction": 2,
+          "ast_node_limit": 3,
+          "pdf_reference_unavailable": 24,
+          "pdf_xref_recovered": 26,
+          "script_byte_limit": 1,
+          "reference_feature_partial": 1,
+          "feature_gate_failed": 2,
+          "reference_object_limit": 2,
+          "static_resource_limit": 2,
+          "structural_object_limit": 2
+        },
+        "parser_failure_categories": {
+          "structural/open/PdfReadError/unclassified_parser_exception": 1,
+          "javascript/open/PdfReadError/unclassified_parser_exception": 1,
+          "javascript/open/PdfReadError/xref_invalid": 12,
+          "javascript/reference/CodeInspectionError/unclassified_parser_exception": 24,
+          "structural/open/PdfReadError/startxref_missing": 14,
+          "javascript/open/PdfReadError/startxref_missing": 14,
+          "structural/open/OtherError/unclassified_parser_exception": 3,
+          "javascript/open/OtherError/unclassified_parser_exception": 3
+        },
+        "parser_disagreement_files": 0,
+        "reference_parser_repaired_files": 30,
+        "ast_error_files": 3,
+        "cache_hits": 0,
+        "inference_available": 29,
+        "inference_executed": 29,
+        "prediction_unavailable_reason_counts": {
+          "extraction_incomplete": 35
+        },
+        "total_seconds": {
+          "measured": 64,
+          "unavailable": 0,
+          "p50": 2.428595689500014,
+          "p95": 6.516839818550028,
+          "sum": 186.71716816500043
+        },
+        "stages_seconds": {
+          "read_hash": {
+            "measured": 64,
+            "unavailable": 0,
+            "p50": 0.0032051430000024084,
+            "p95": 0.010953257999977947,
+            "sum": 0.2962145410000403
+          },
+          "raw_scan": {
+            "measured": 64,
+            "unavailable": 0,
+            "p50": 0.0008510959999625811,
+            "p95": 0.019621501849894685,
+            "sum": 0.5442211759997235
+          },
+          "parse_pdf": {
+            "measured": 64,
+            "unavailable": 0,
+            "p50": 0.04039113300007102,
+            "p95": 0.9622421260000348,
+            "sum": 16.76189804199987
+          },
+          "stream_decode": {
+            "measured": 19,
+            "unavailable": 45,
+            "p50": 0.0,
+            "p95": 0.0013106599999673425,
+            "sum": 0.008189624999999978
+          },
+          "js_ast": {
+            "measured": 38,
+            "unavailable": 26,
+            "p50": 0.9001567590000263,
+            "p95": 4.046856015900032,
+            "sum": 41.79912552400003
+          },
+          "inference_gate": {
+            "measured": 64,
+            "unavailable": 0,
+            "p50": 0.00039703249996136947,
+            "p95": 0.006914422599811587,
+            "sum": 0.14591741599917896
+          },
+          "inference": {
+            "measured": 29,
+            "unavailable": 35,
+            "p50": 0.011703848000024664,
+            "p95": 0.05446854619999612,
+            "sum": 0.542980556000316
+          }
+        },
+        "overhead_seconds": {
+          "measured": 64,
+          "unavailable": 0,
+          "p50": 1.745042645500007,
+          "p95": 3.984365554199998,
+          "sum": 126.61862128500127
+        },
+        "peak_worker_rss_bytes": 302886912,
+        "peak_family_rss_sampled_bytes": 581599232,
+        "rss_lower_bound_records": 0
+      },
+      "warm": {
+        "planned": 64,
+        "recorded": 64,
+        "not_started": 0,
+        "unique_pdf_samples": 64,
+        "status_counts": {
+          "parser_error": 18,
+          "partial": 23,
+          "complete": 23
+        },
+        "error_counts_overlapping": {
+          "parser_failure": 18,
+          "pdf_parser_failure": 4,
+          "pdf_structure_limit": 5,
+          "unsupported_script_filter": 1,
+          "encrypted_pdf": 2,
+          "ast_node_limit": 3,
+          "pdf_reference_unavailable": 24,
+          "pdf_xref_recovered": 26,
+          "script_byte_limit": 1,
+          "reference_feature_partial": 1,
+          "reference_object_limit": 2
+        },
+        "analysis_reason_counts_overlapping": {
+          "parser_failure": 18,
+          "pdf_parser_failure": 4,
+          "structural_reference_unavailable": 13,
+          "pdf_structure_limit": 5,
+          "unsupported_script_filter": 1,
+          "encrypted_pdf": 2,
+          "encrypted_pdf_partial_extraction": 2,
+          "ast_node_limit": 3,
+          "pdf_reference_unavailable": 24,
+          "pdf_xref_recovered": 26,
+          "script_byte_limit": 1,
+          "reference_feature_partial": 1,
+          "feature_gate_failed": 2,
+          "reference_object_limit": 2,
+          "static_resource_limit": 2,
+          "structural_object_limit": 2
+        },
+        "parser_failure_categories": {
+          "structural/open/PdfReadError/unclassified_parser_exception": 1,
+          "javascript/open/PdfReadError/unclassified_parser_exception": 1,
+          "javascript/open/PdfReadError/xref_invalid": 12,
+          "javascript/reference/CodeInspectionError/unclassified_parser_exception": 24,
+          "structural/open/PdfReadError/startxref_missing": 14,
+          "javascript/open/PdfReadError/startxref_missing": 14,
+          "structural/open/OtherError/unclassified_parser_exception": 3,
+          "javascript/open/OtherError/unclassified_parser_exception": 3
+        },
+        "parser_disagreement_files": 0,
+        "reference_parser_repaired_files": 30,
+        "ast_error_files": 3,
+        "cache_hits": 23,
+        "inference_available": 29,
+        "inference_executed": 29,
+        "prediction_unavailable_reason_counts": {
+          "extraction_incomplete": 35
+        },
+        "total_seconds": {
+          "measured": 64,
+          "unavailable": 0,
+          "p50": 1.4931581929999993,
+          "p95": 4.766464817349947,
+          "sum": 122.71304245499869
+        },
+        "stages_seconds": {
+          "read_hash": {
+            "measured": 64,
+            "unavailable": 0,
+            "p50": 0.0007430995001413976,
+            "p95": 0.0034066595999433925,
+            "sum": 0.08860665600150242
+          },
+          "raw_scan": {
+            "measured": 41,
+            "unavailable": 23,
+            "p50": 0.0004099440000118193,
+            "p95": 0.023828626999829794,
+            "sum": 0.3115710589995615
+          },
+          "parse_pdf": {
+            "measured": 41,
+            "unavailable": 23,
+            "p50": 0.027274912999928347,
+            "p95": 1.952431449000187,
+            "sum": 12.466063988000087
+          },
+          "stream_decode": {
+            "measured": 1,
+            "unavailable": 63,
+            "p50": 3.189599988218106e-05,
+            "p95": 3.189599988218106e-05,
+            "sum": 3.189599988218106e-05
+          },
+          "js_ast": {
+            "measured": 15,
+            "unavailable": 49,
+            "p50": 1.0910805749999781,
+            "p95": 3.6412467685999665,
+            "sum": 23.006617801000175
+          },
+          "inference_gate": {
+            "measured": 64,
+            "unavailable": 0,
+            "p50": 0.00021031649998803914,
+            "p95": 0.004768462949834884,
+            "sum": 0.09163720299989109
+          },
+          "inference": {
+            "measured": 29,
+            "unavailable": 35,
+            "p50": 0.009407273999840982,
+            "p95": 0.017603686400070723,
+            "sum": 0.3025337869999021
+          }
+        },
+        "overhead_seconds": {
+          "measured": 64,
+          "unavailable": 0,
+          "p50": 1.2626858200002289,
+          "p95": 2.3969708806998464,
+          "sum": 86.44598006499768
+        },
+        "peak_worker_rss_bytes": 303607808,
+        "peak_family_rss_sampled_bytes": 587235328,
+        "rss_lower_bound_records": 0
+      }
+    },
+    "v7": {
+      "wall_seconds": 251.86320735800018,
+      "cold": {
+        "planned": 64,
+        "recorded": 64,
+        "not_started": 0,
+        "unique_pdf_samples": 64,
+        "status_counts": {
+          "parser_error": 18,
+          "partial": 23,
+          "complete": 23
+        },
+        "error_counts_overlapping": {
+          "parser_failure": 18,
+          "pdf_parser_failure": 4,
+          "pdf_structure_limit": 5,
+          "unsupported_script_filter": 1,
+          "encrypted_pdf": 2,
+          "ast_node_limit": 4,
+          "pdf_reference_unavailable": 23,
+          "pdf_xref_recovered": 26,
+          "xfa_xml_node_limit": 1,
+          "invalid_asciihex_stream": 1,
+          "reference_feature_partial": 1,
+          "invalid_flate_stream": 14,
+          "reference_object_limit": 2
+        },
+        "analysis_reason_counts_overlapping": {
+          "parser_failure": 18,
+          "pdf_parser_failure": 4,
+          "structural_reference_unavailable": 13,
+          "pdf_structure_limit": 5,
+          "unsupported_script_filter": 1,
+          "encrypted_pdf": 2,
+          "encrypted_pdf_partial_extraction": 2,
+          "ast_node_limit": 4,
+          "pdf_reference_unavailable": 23,
+          "pdf_xref_recovered": 26,
+          "xfa_xml_node_limit": 1,
+          "invalid_asciihex_stream": 1,
+          "reference_feature_partial": 1,
+          "invalid_flate_stream": 14,
+          "feature_gate_failed": 2,
+          "reference_object_limit": 2,
+          "static_resource_limit": 2,
+          "structural_object_limit": 2
+        },
+        "parser_failure_categories": {
+          "structural/open/PdfReadError/unclassified_parser_exception": 1,
+          "javascript/open/PdfReadError/unclassified_parser_exception": 1,
+          "javascript/open/PdfReadError/xref_invalid": 12,
+          "javascript/reference/CodeInspectionError/unclassified_parser_exception": 23,
+          "structural/open/PdfReadError/startxref_missing": 14,
+          "javascript/open/PdfReadError/startxref_missing": 14,
+          "structural/open/OtherError/unclassified_parser_exception": 3,
+          "javascript/open/OtherError/unclassified_parser_exception": 3
+        },
+        "parser_disagreement_files": 0,
+        "reference_parser_repaired_files": 30,
+        "ast_error_files": 4,
+        "cache_hits": 0,
+        "inference_available": 29,
+        "inference_executed": 29,
+        "prediction_unavailable_reason_counts": {
+          "extraction_incomplete": 35
+        },
+        "total_seconds": {
+          "measured": 64,
+          "unavailable": 0,
+          "p50": 1.4899236789999577,
+          "p95": 4.610393346149883,
+          "sum": 115.90478377000227
+        },
+        "stages_seconds": {
+          "read_hash": {
+            "measured": 64,
+            "unavailable": 0,
+            "p50": 0.0030970675002208736,
+            "p95": 0.0076929356502432695,
+            "sum": 0.2735369229976641
+          },
+          "raw_scan": {
+            "measured": 64,
+            "unavailable": 0,
+            "p50": 0.000811449000138964,
+            "p95": 0.012700624900048745,
+            "sum": 0.34238260199890647
+          },
+          "parse_pdf": {
+            "measured": 64,
+            "unavailable": 0,
+            "p50": 0.02747714850011107,
+            "p95": 0.8883318339002917,
+            "sum": 12.782052745999863
+          },
+          "stream_decode": {
+            "measured": 39,
+            "unavailable": 25,
+            "p50": 6.0847999975521816e-05,
+            "p95": 0.000619526599894016,
+            "sum": 0.00661395499810169
+          },
+          "js_ast": {
+            "measured": 39,
+            "unavailable": 25,
+            "p50": 0.6868508850002399,
+            "p95": 2.8900903338001633,
+            "sum": 29.71913899099991
+          },
+          "inference_gate": {
+            "measured": 64,
+            "unavailable": 0,
+            "p50": 0.00021761300013167784,
+            "p95": 0.0034212018999824063,
+            "sum": 0.07475985200062496
+          },
+          "inference": {
+            "measured": 29,
+            "unavailable": 35,
+            "p50": 0.007745995999812294,
+            "p95": 0.014578292200076247,
+            "sum": 0.24004232100014633
+          }
+        },
+        "overhead_seconds": {
+          "measured": 64,
+          "unavailable": 0,
+          "p50": 1.0818007275006494,
+          "p95": 1.4939006071501353,
+          "sum": 72.46625638000705
+        },
+        "peak_worker_rss_bytes": 303349760,
+        "peak_family_rss_sampled_bytes": 582774784,
+        "rss_lower_bound_records": 0
+      },
+      "warm": {
+        "planned": 64,
+        "recorded": 64,
+        "not_started": 0,
+        "unique_pdf_samples": 64,
+        "status_counts": {
+          "parser_error": 18,
+          "partial": 23,
+          "complete": 23
+        },
+        "error_counts_overlapping": {
+          "parser_failure": 18,
+          "pdf_parser_failure": 4,
+          "pdf_structure_limit": 5,
+          "unsupported_script_filter": 1,
+          "encrypted_pdf": 2,
+          "ast_node_limit": 4,
+          "pdf_reference_unavailable": 23,
+          "pdf_xref_recovered": 26,
+          "xfa_xml_node_limit": 1,
+          "invalid_asciihex_stream": 1,
+          "reference_feature_partial": 1,
+          "invalid_flate_stream": 14,
+          "reference_object_limit": 2
+        },
+        "analysis_reason_counts_overlapping": {
+          "parser_failure": 18,
+          "pdf_parser_failure": 4,
+          "structural_reference_unavailable": 13,
+          "pdf_structure_limit": 5,
+          "unsupported_script_filter": 1,
+          "encrypted_pdf": 2,
+          "encrypted_pdf_partial_extraction": 2,
+          "ast_node_limit": 4,
+          "pdf_reference_unavailable": 23,
+          "pdf_xref_recovered": 26,
+          "xfa_xml_node_limit": 1,
+          "invalid_asciihex_stream": 1,
+          "reference_feature_partial": 1,
+          "invalid_flate_stream": 14,
+          "feature_gate_failed": 2,
+          "reference_object_limit": 2,
+          "static_resource_limit": 2,
+          "structural_object_limit": 2
+        },
+        "parser_failure_categories": {
+          "structural/open/PdfReadError/unclassified_parser_exception": 1,
+          "javascript/open/PdfReadError/unclassified_parser_exception": 1,
+          "javascript/open/PdfReadError/xref_invalid": 12,
+          "javascript/reference/CodeInspectionError/unclassified_parser_exception": 23,
+          "structural/open/PdfReadError/startxref_missing": 14,
+          "javascript/open/PdfReadError/startxref_missing": 14,
+          "structural/open/OtherError/unclassified_parser_exception": 3,
+          "javascript/open/OtherError/unclassified_parser_exception": 3
+        },
+        "parser_disagreement_files": 0,
+        "reference_parser_repaired_files": 30,
+        "ast_error_files": 4,
+        "cache_hits": 23,
+        "inference_available": 29,
+        "inference_executed": 29,
+        "prediction_unavailable_reason_counts": {
+          "extraction_incomplete": 35
+        },
+        "total_seconds": {
+          "measured": 64,
+          "unavailable": 0,
+          "p50": 1.6049158465000346,
+          "p95": 4.891459937900162,
+          "sum": 130.5219176010014
+        },
+        "stages_seconds": {
+          "read_hash": {
+            "measured": 64,
+            "unavailable": 0,
+            "p50": 0.0007581160002700926,
+            "p95": 0.005166186299970829,
+            "sum": 0.10367545400231393
+          },
+          "raw_scan": {
+            "measured": 41,
+            "unavailable": 23,
+            "p50": 0.0004243419998601894,
+            "p95": 0.04453378199968938,
+            "sum": 0.4002438639990942
+          },
+          "parse_pdf": {
+            "measured": 41,
+            "unavailable": 23,
+            "p50": 0.030803360999925644,
+            "p95": 2.0476167329998134,
+            "sum": 13.426904707999256
+          },
+          "stream_decode": {
+            "measured": 18,
+            "unavailable": 46,
+            "p50": 0.00010559449992797454,
+            "p95": 0.000394961300048635,
+            "sum": 0.003066232999572094
+          },
+          "js_ast": {
+            "measured": 16,
+            "unavailable": 48,
+            "p50": 1.3874828725001862,
+            "p95": 3.354390967499853,
+            "sum": 26.078037543999926
+          },
+          "inference_gate": {
+            "measured": 64,
+            "unavailable": 0,
+            "p50": 0.0001886990000912192,
+            "p95": 0.006031935899591189,
+            "sum": 0.1026152340000408
+          },
+          "inference": {
+            "measured": 29,
+            "unavailable": 35,
+            "p50": 0.009980260000247654,
+            "p95": 0.020711543000197695,
+            "sum": 0.33316147799905593
+          }
+        },
+        "overhead_seconds": {
+          "measured": 64,
+          "unavailable": 0,
+          "p50": 1.2975176754996482,
+          "p95": 2.450260837100607,
+          "sum": 90.07421308600215
+        },
+        "peak_worker_rss_bytes": 303300608,
+        "peak_family_rss_sampled_bytes": 584445952,
+        "rss_lower_bound_records": 0
+      }
+    }
+  },
+  "conclusion": "v7 completed; no recall or parser-coverage gain; strict C1 has one fewer false positive on five classified benign files; P0/P1/P2 hard-label counts unchanged; no promotion or independent Test claim"
+}

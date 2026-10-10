@@ -1,0 +1,7 @@
+{
+  "pypdf": "5.9.0",
+  "PyMuPDF": "1.26.7",
+  "esprima": "4.0.1",
+  "python": "3.11.17",
+  "expat": "expat_2.8.5"
+}

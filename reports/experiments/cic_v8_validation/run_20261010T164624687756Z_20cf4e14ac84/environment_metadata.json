@@ -1,0 +1,59 @@
+{
+  "python": "3.11.17",
+  "packages": {
+    "numpy": "2.4.6",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.9.1",
+    "PyMuPDF": "1.26.7",
+    "torch": "2.11.0+cpu",
+    "torchvision": "0.26.0+cpu",
+    "xgboost": "3.2.0",
+    "lightgbm": "4.7.0",
+    "catboost": "1.2.10"
+  },
+  "generating_commit": "20cf4e14ac84526eb0f4cde578e6ed8d04e66825",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_accuracy.md",
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/analysis/cic_static_xfa.md",
+      " M reports/research_log.md",
+      " M src/malpdf/experiments/cic_static_benchmark.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M src/malpdf/static/profile_worker.py",
+      "?? reports/experiments/cic_static_profile/run_20261010T154029301301Z_20cf4e14ac84/",
+      "?? reports/experiments/cic_v7_outcome_review/",
+      "?? reports/experiments/cic_v8_audit/",
+      "?? scripts/19_validate_pdf_evidence_v8.py",
+      "?? src/malpdf/experiments/cic_v8.py",
+      "?? src/malpdf/inference/evidence_policy.py",
+      "?? src/malpdf/static/evidence.py",
+      "?? src/malpdf/static/recovery.py",
+      "?? tests/test_pdf_evidence_v8.py"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_accuracy.md",
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/analysis/cic_static_xfa.md",
+      " M reports/research_log.md",
+      " M src/malpdf/experiments/cic_static_benchmark.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M src/malpdf/static/profile_worker.py",
+      "?? reports/experiments/cic_static_profile/run_20261010T154029301301Z_20cf4e14ac84/",
+      "?? reports/experiments/cic_v7_outcome_review/",
+      "?? reports/experiments/cic_v8_audit/",
+      "?? scripts/19_validate_pdf_evidence_v8.py",
+      "?? src/malpdf/experiments/cic_v8.py",
+      "?? src/malpdf/inference/evidence_policy.py",
+      "?? src/malpdf/static/evidence.py",
+      "?? src/malpdf/static/recovery.py",
+      "?? tests/test_pdf_evidence_v8.py"
+    ]
+  }
+}

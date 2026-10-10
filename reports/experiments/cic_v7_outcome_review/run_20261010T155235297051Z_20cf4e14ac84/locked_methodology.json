@@ -1,0 +1,24 @@
+{
+  "protocol": "saved v7 CIC outcome review and synthetic maintenance checks",
+  "pdf_access": false,
+  "test_access": false,
+  "model_fitting": false,
+  "source_profile": "run_20261010T154029301301Z_20cf4e14ac84",
+  "baseline_profile": "run_20261010T093051159853Z_537d06776817",
+  "baseline_observed_study": "run_20261010T100355572064Z_18f2aa3b29d5",
+  "scope": "read saved evidence only; preserve official reports; no model/threshold/limit selection or PDF rerun",
+  "prior_review_attempt": "run_20261010T155213661596Z_20cf4e14ac84; failed overly broad equality check on relocated identical model snapshot, preserved without changing source evidence",
+  "checks_environment": "fresh Python3.11 venv, editable pyproject dev install with CPU wheels and constraints copied from installed LAB environment",
+  "seed": 42,
+  "code_commit": "20cf4e14ac84526eb0f4cde578e6ed8d04e66825",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      "?? reports/experiments/cic_static_profile/run_20261010T154029301301Z_20cf4e14ac84/",
+      "?? reports/experiments/cic_v7_outcome_review/"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

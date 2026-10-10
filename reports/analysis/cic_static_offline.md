@@ -196,19 +196,25 @@ fingerprint cannot run against the changed code.
   --lab-isolated
 ```
 
-## Current v7 XFA paired job
+## Completed v7 XFA paired measurement
 
-`run_20261010T151403329485Z_06a272fc8e36` was prepared from clean commit06a272f,
-without reading PDFs or fitting a dataset model. It retains the exact64 v6
+`run_20261010T151403329485Z_06a272fc8e36` was prepared from clean commit 06a272f,
+without reading PDFs or fitting a dataset model. It retains the exact 64 v6
 identities, labels, Train/dev split, limits, configuration and frozen native
 Protocol G model checksum. Its fingerprint includes v7 XFA extraction,
 Python/Expat versions and the reused observed-evidence fitting implementation.
-The completed full synthetic suite passed760 tests; real-CIC v7 results remain
-unavailable until the user runs the disconnected console LAB job.
+The full synthetic suite passed 760 tests. The user subsequently ran this job
+through the console shortcut; it completed as
+`run_20261010T154029301301Z_20cf4e14ac84` from clean commit 20cf4e1 on
+2026-10-10 at 15:44:41 UTC (22:44:41 Asia/Ho_Chi_Minh), in 251.863 seconds.
+Saved LAB checks confirm a non-root console, no connected/unknown interfaces,
+no shared mounts and the human isolation attestation. Both passes recorded
+all 64 inputs, with no Test access. No further PDF run is needed to inspect this
+result.
 
-After completing the selected non-root LAB procedure (NAT and host-only off;
-shared folders, clipboard and drag/drop off), double-click **Chạy CIC offline**
-on the Desktop and press Enter. The launcher now pins this new job. Its CLI is:
+The historical invocation followed the selected non-root LAB procedure (NAT
+and host-only off; shared folders, clipboard and drag/drop off), then
+**Chạy CIC offline** and Enter. The launcher pins that prepared job. Its CLI was:
 
 ```bash
 .venv/bin/python scripts/16_benchmark_cic_static.py run \
@@ -222,6 +228,68 @@ no second PDF pass or manual training command is needed. Numeric availability
 and complete-parser coverage remain separate, with all planned class/refusal
 denominators retained. No model/threshold is selected or deployed, and Test
 remains untouched. See [XFA scope and verification](cic_static_xfa.md).
+
+Saved-record checks confirm identical 64 identities, labels, Train/dev
+partitions, canonical raw features, limits, configuration and frozen-model
+bytes between v6 and v7. The model snapshot path differs because preparation
+made a new private copy; its checksum and contract are identical.
+
+| Observation | v6 | v7 |
+| --- | ---: | ---: |
+| Complete / partial / parser errors | 23 / 23 / 18 | 23 / 23 / 18 |
+| Files with observed JS / AST evidence | 25 / 20 | 25 / 20 |
+| Successfully parsed scripts | 22 | 22 |
+| AST-error files | 3 | 4 |
+| Frozen-model inference available | 29/64 | 29/64 |
+| Strict C0/C1 development coverage | 11/32 | 11/32 |
+| C0 detected malicious / false positives | 2/6 / 4/5 | 2/6 / 4/5 |
+| C1 detected malicious / false positives | 2/6 / 3/5 | 2/6 / 2/5 |
+
+The strict C1 pilot's classified recall remains 33.33%; classified FPR falls
+from 60% to 40%, one fewer false positive among five benign inputs. Its 21/32
+refusals remain in the planned denominators: detection is 2/16 planned
+malicious inputs and false positives 2/16 planned benign inputs. These RF pilot
+metrics are separate from the frozen XGBoost's inference timings. Previously
+exposed development rows and the small classified cohort do not establish a
+general accuracy improvement or authorize model promotion.
+
+The same-run P0/P1/P2 fallback covers 32/32 known-input development rows and
+matches the separately saved v6 ablation's hard-label counts exactly: all
+detect 12/16 malicious files; false positives are 13/16, 14/16 and 13/16.
+This numerical availability is separate from complete-parser coverage 23/64
+and strict-pilot coverage 11/32. No candidate, threshold or routing policy is
+selected from these results.
+
+V7 records one declared XFA JavaScript source whose extraction completed but
+AST inspection reached `ast_node_limit`; another input records
+`xfa_xml_node_limit`. JS/AST file counts and successful-script counts did not
+increase. These explicit resource failures stay partial; neither proves
+malicious behavior or justifies raising a locked budget after seeing results.
+Fourteen missing-`startxref` structural failures remain in the inventory.
+
+Cold/warm per-file sums are 115.905/130.522 seconds, with p50
+1.490/1.605 seconds and p95 4.610/4.891 seconds. Actual frozen-model inference
+ran on 29/64 inputs per pass. Runtime definitions match v6, but host load and
+OS page-cache state were uncontrolled; a faster cold pass and slower warm
+pass do not establish a general speedup.
+
+The requested [PDFMalExtract source](https://github.com/Mo-Alani/PDFMalExtract/blob/ec63665c671fb26e987b1b0640af500c192eddc4/PDFMalExtract.py)
+was read without running it. Its current v0.1.1 corrects the raw `/Acroform` and `j/BaseEncoding` counters to
+`/AcroForm` and `/BaseEncoding`. The project intentionally preserves the
+pinned v0.1 RIT dataset contract; both affected predictors are excluded by the
+supplied G-drop3constant model's historical Train-constant contract. Upstream
+still skips failed PDFs and only counts the `/XFA` token, so adopting its main
+script would change feature definitions without resolving XFA AST or parser
+coverage. Retain all failures and the production gate.
+
+Evidence: [completed run](../experiments/cic_static_profile/run_20261010T154029301301Z_20cf4e14ac84/run_summary.json),
+[pipeline summary](../experiments/cic_static_profile/run_20261010T154029301301Z_20cf4e14ac84/pipeline_summary.json),
+[strict pilots](../experiments/cic_static_profile/run_20261010T154029301301Z_20cf4e14ac84/feature_comparison.json),
+[observed fallback](../experiments/cic_static_profile/run_20261010T154029301301Z_20cf4e14ac84/observed_feature_comparison.json),
+[saved-evidence review](../experiments/cic_v7_outcome_review/run_20261010T155235297051Z_20cf4e14ac84/saved_evidence_review.json)
+and [upstream source delta](../experiments/cic_v7_outcome_review/run_20261010T155235297051Z_20cf4e14ac84/upstream_v011_delta.json).
+Official reports and private per-file evidence remain intact. The review reads
+saved records only, with no PDF pass, dataset fitting or Test evaluation.
 
 ## Historical v6 paired job
 

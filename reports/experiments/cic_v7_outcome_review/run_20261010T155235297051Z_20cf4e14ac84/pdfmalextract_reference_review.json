@@ -1,0 +1,20 @@
+{
+  "main": {
+    "url": "https://raw.githubusercontent.com/Mo-Alani/PDFMalExtract/main/PDFMalExtract.py",
+    "sha256": "a49b4d7979ee2f2ad63503a921fc4459ce94465fb1aef099fd52028c89809420",
+    "bytes": 10160
+  },
+  "pinned": {
+    "url": "https://raw.githubusercontent.com/Mo-Alani/PDFMalExtract/1aaba0896ae395ddadbf1010ab9e887eedc38ea1/PDFMalExtract.py",
+    "sha256": "b582d4848472842751a24f141e22f200c40ed8890fa99c5847a93385f8ae4857",
+    "bytes": 10158
+  },
+  "main_matches_pinned": false,
+  "comparison": {
+    "canonical_features": "existing rit_reference/raw_scan already reuse upstream definitions and PyMuPDF1.26.7",
+    "open_failures": "upstream skips failed files; current pipeline retains them in coverage/refusal denominators",
+    "xfa": "upstream counts /XFA bytes; no XML JavaScript/AST inspection",
+    "execution": "read source only; upstream script never imported or executed",
+    "resolution": "no new source-contract gap established; preserve failure flags, resource limits and production gate"
+  }
+}

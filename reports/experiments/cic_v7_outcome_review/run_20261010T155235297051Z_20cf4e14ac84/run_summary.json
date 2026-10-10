@@ -1,0 +1,30 @@
+{
+  "run_id": "run_20261010T155235297051Z_20cf4e14ac84",
+  "study": "cic_v7_outcome_review",
+  "status": "completed",
+  "started_at_utc": "2026-10-10T15:52:35.351779+00:00",
+  "code_commit": "20cf4e14ac84526eb0f4cde578e6ed8d04e66825",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      "?? reports/experiments/cic_static_profile/run_20261010T154029301301Z_20cf4e14ac84/",
+      "?? reports/experiments/cic_v7_outcome_review/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      "?? reports/experiments/cic_static_profile/run_20261010T154029301301Z_20cf4e14ac84/",
+      "?? reports/experiments/cic_v7_outcome_review/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "saved v7 CIC outcome review and synthetic maintenance checks",
+  "report_path": "reports/experiments/cic_v7_outcome_review/run_20261010T155235297051Z_20cf4e14ac84/run_summary.json",
+  "artifact_path": "artifacts/cic_v7_outcome_review/run_20261010T155235297051Z_20cf4e14ac84",
+  "metrics": {},
+  "notes": "Completed saved same64 v6/v7 audit and public PDFMalExtract source review. v7 completed at15:44:41UTC; no recall/parser-coverage gain; C1 FP3/5->2/5; P0/P1/P2 labels unchanged. README/XFA/offline/accuracy docs updated. Fresh Python3.11 CPU pyproject install, full synthetic pytest, pip/diff/status/ignore checks passed. No dataset PDF read, fitting, Test evaluation, threshold/budget change, promotion, historical report rewrite or staging. Maintenance metrics N/A because only saved evidence reviewed.",
+  "finished_at_utc": "2026-10-10T16:00:08.192545+00:00"
+}

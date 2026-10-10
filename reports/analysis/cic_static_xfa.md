@@ -67,8 +67,9 @@ XML escapes, FormCalc, redaction/provenance, malformed XML, DTD/reference refusa
 missing packets, unsupported filters, alias deduplication, shared budgets and an
 actual disposable worker. Separate synthetic numeric tests verify the reused
 offline ablation's Train-only fitting, cold/warm separation and refusal counts.
-Real-CIC recall/FPR and latency improvement require the newly prepared paired
-same-64 console run; synthetic success does not establish that improvement.
+Real-CIC recall/FPR and latency improvement require a paired same-64 console
+run; synthetic success does not establish that improvement. The completed v7
+result is recorded below.
 
 The historical-source fixture comparison is saved in
 `reports/experiments/cic_xfa_checks/run_20261010T103722594442Z_535278a7e6c7/synthetic_before_after.json`:
@@ -82,7 +83,30 @@ maintenance checks. The generating source state was recorded as dirty.
 
 The metadata-only paired job is
 `run_20261010T151403329485Z_06a272fc8e36`, using the completed v6 profile as its
-baseline. The Desktop launcher pins this job, preserving exact64 inputs and
-the frozen model checksum. Its real-PDF execution is deferred to the selected
-disconnected console LAB. Both extraction and the reused P0/P1/P2 study run in
-one invocation; results must be reviewed before any improvement claim.
+baseline. The Desktop launcher pins this job, preserving exact 64 inputs and
+the frozen model checksum. The user completed its disconnected console LAB
+execution as `run_20261010T154029301301Z_20cf4e14ac84` at 15:44:41 UTC on
+2026-10-10. Both extraction and the reused P0/P1/P2 study ran in one invocation.
+
+The paired saved records retain 23 complete,23 partial and 18 parser-error files;
+observed JS/AST files remain 25/20 and parsed scripts 22. One declared XFA JS
+source was extracted but reached the shared AST node cap; one other input hit
+the XML node cap. AST-error files rise from 3 to4. These resource outcomes remain
+explicit partial evidence rather than zero features or complete analysis.
+Classified C1 recall stays 2/6 and false positives fall from 3/5 to 2/5, with
+coverage 11/32 unchanged. P0/P1/P2 retain the v6 hard-label counts, 12/16 TP and
+13/16, 14/16, 13/16 FP. No recall/parser-coverage gain or general accuracy gain
+is established; no limit, model, threshold or deployment policy changes.
+See [the completed same 64 measurement](cic_static_offline.md#completed-v7-xfa-paired-measurement).
+
+The saved-evidence review installed `.[dev]` from `pyproject.toml` into a fresh
+Python 3.11.17 virtual environment with CPU PyTorch wheels and the existing
+LAB package versions. Its full `pytest tests/` run passed 760 tests in 253.01
+seconds, with the two existing single-label metric warnings. Dependency,
+whitespace, status and artifact-ignore checks passed. The review read no PDF
+bytes and fit no dataset model; methodology, source comparison, environment
+and check results are preserved under
+`reports/experiments/cic_v7_outcome_review/run_20261010T155235297051Z_20cf4e14ac84/`.
+An earlier metadata review stopped because it compared model snapshot paths;
+that failed record is preserved separately. The completed review verified
+matching model contracts and bytes despite their different snapshot paths.
