@@ -1,0 +1,123 @@
+{
+  "protocol": "retrospective CIC Train-only static adaptation; saved Protocol G partitions",
+  "configuration": {
+    "seed": 42,
+    "threshold": 0.5,
+    "audit_stratum_size": 32,
+    "expected_counts": {
+      "train/0": 390,
+      "train/1": 480,
+      "validation/0": 131,
+      "validation/1": 160
+    },
+    "feature_table": {
+      "path": "data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/dataset.csv",
+      "sha256": "35670e085c18423b0fbe24fb9b2f2f7bb3102ce0928338658ca753df54c7b636"
+    },
+    "split_manifest": {
+      "path": "data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/split_manifest.csv",
+      "sha256": "e939a676c51c7a98b9dc4bb843e846f546e1ada2bfb576b41416c406415c0643"
+    },
+    "source_manifest": {
+      "path": "data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/source_manifest.csv",
+      "sha256": "d74729236017dc27a71c999bc4d69f84a16fa4148573c3bbc7f4eb03709b150b"
+    },
+    "normalization_manifest": {
+      "path": "data/processed/cic_normalization/run_20261003T104918756555Z_3b68d36a5705/normalization_manifest.csv",
+      "sha256": "c4dc77f00849518ee56dc34d0f0cc7daf0c92b3ce9fd1e93fd63d053caf8570f"
+    },
+    "baseline_manifest": {
+      "path": "reports/experiments/cic_static_prepare/run_20261009T171959106244Z_3c64208e275d/inference_model.json",
+      "sha256": "2b4ae34bda1604bb274abafd9f7207e4891ce26f901e729fce03b05e30d903c6"
+    }
+  },
+  "feature_order": [
+    "pdfsize",
+    "metadata size",
+    "pages",
+    "xref length",
+    "title length",
+    "isEncrypted",
+    "embedded files",
+    "images",
+    "contains_text",
+    "pdf_ver",
+    "obj",
+    "endobj",
+    "stream",
+    "endstream",
+    "trailer",
+    "xref",
+    "startxref",
+    "page_command",
+    "Encrypt",
+    "ObjStm",
+    "JS",
+    "JavaScript",
+    "AA",
+    "OpenAction",
+    "JBIG2Decode",
+    "RichMedia",
+    "Launch",
+    "EmbeddedFile",
+    "XFA",
+    "URI",
+    "Encoding",
+    "ProcSet",
+    "Registry",
+    "Resources",
+    "www",
+    "server",
+    "Root",
+    "BitsPerComponent",
+    "script_ratio",
+    "ObfuscationCount"
+  ],
+  "model_configuration": {
+    "paper_model_name": "eXtreme Gradient Boost (XGB)",
+    "preprocessing": {
+      "name": null,
+      "fit_scope": null,
+      "paper_status": "No scaling is used for this tree model."
+    },
+    "parameters": {
+      "base_score": 0.5,
+      "booster": "gbtree",
+      "colsample_bylevel": 1.0,
+      "colsample_bynode": 1.0,
+      "colsample_bytree": 1.0,
+      "eval_metric": "logloss",
+      "gamma": 0.0,
+      "learning_rate": 0.1,
+      "max_delta_step": 0.0,
+      "max_depth": 6,
+      "min_child_weight": 1.0,
+      "missing": "NaN",
+      "n_estimators": 200,
+      "n_jobs": 1,
+      "objective": "binary:logistic",
+      "random_state": 42,
+      "reg_alpha": 0.0,
+      "reg_lambda": 1.0,
+      "scale_pos_weight": 1.0,
+      "subsample": 1.0,
+      "tree_method": "hist",
+      "verbosity": 0
+    },
+    "missing_value_assumption": "The JSON-safe string 'NaN' is converted to the explicit IEEE NaN missing-value sentinel required by XGBoost 3.2 at runtime. This fixes a library compatibility error; it does not alter feature values or tune the model."
+  },
+  "selection": "one fixed candidate; no hyperparameter/calibration/threshold selection",
+  "baseline": "frozen user-supplied RIT G-drop3constant; original training lineage user-reported",
+  "test_access": false,
+  "pdf_access": false,
+  "scope": "cached numeric feature classification; raw-to-result coverage/latency require offline PDF benchmark",
+  "limitations": "Validation previously exposed; RIT PDF overlap cannot be excluded from CSV-only identities",
+  "seed": 42,
+  "code_commit": "a476b20fd847a04c9635aced5da0175e4f1d6f73",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

@@ -19,6 +19,7 @@ import time
 import zlib
 import binascii
 import base64
+import codecs
 
 from malpdf.static.js_ast import CALL_NAMES, CodeInspectionError, inspect_js_syntax
 from malpdf.static.safety import read_bounded_bytes
@@ -27,11 +28,13 @@ from malpdf.static.parser_diagnostics import ParserDiagnostics
 
 SECURITY_NAMES = frozenset({"/JS", "/JavaScript", "/OpenAction", "/AA", "/Launch",
     "/EmbeddedFile", "/EmbeddedFiles", "/XFA", "/AcroForm", "/JBIG2Decode", "/RichMedia", "/URI"})
-CODE_INSPECTION_SCHEMA_VERSION = "pdf-code-inspection-v4"
+CODE_INSPECTION_SCHEMA_VERSION = "pdf-code-inspection-v5"
 # Only fixed PDF vocabulary is exported in paths; untrusted keys remain redacted.
 _PATH_NAMES = SECURITY_NAMES | frozenset({"/Root", "/Pages", "/Kids", "/Annots", "/A",
     "/Next", "/Names", "/Fields", "/O", "/C", "/E", "/X", "/D", "/U", "/Fo",
     "/Bl", "/PO", "/PC", "/PV", "/PI", "/K", "/F", "/V"})
+_ACTION_PATH_NAMES = frozenset({"/OpenAction", "/AA", "/A", "/Next", "/Names",
+    "/JavaScript", "/JS", "/AcroForm", "/Fields", "/Annots"})
 
 
 @dataclass(frozen=True)
@@ -68,18 +71,44 @@ def _unavailable(code, parser_diagnostics=None):
             "parser_diagnostics": parser_diagnostics,
             "traversal_complete": False, "javascript_state": "unavailable",
             "script_extraction_complete": False, "ast_complete": False,
+            "parser_recovered": False,
             "observed": None, "script_sources": [],
             "scope": "catalog-reachable syntax evidence only",
             "content_redacted": True, "active_content_executed": False}
+
+
+def _decode_script_bytes(data, limits):
+    """Decode PDF text-stream bytes, without guessing from leading NULs.
+
+    PDFDocEncoding is the default; Unicode requires a BOM. UTF-16LE is
+    accepted as an explicit compatibility form, as in the pypdf backend.
+    Both encoded and UTF-8 output sizes remain bounded.
+    """
+    from pypdf.generic import decode_pdfdocencoding
+
+    if len(data) > limits.max_script_bytes:
+        raise CodeInspectionError("script_byte_limit")
+    if data.startswith((codecs.BOM_UTF16_BE, codecs.BOM_UTF16_LE)):
+        text = data.decode("utf-16", errors="strict")
+    elif data.startswith(codecs.BOM_UTF8):
+        text = data.decode("utf-8-sig", errors="strict")
+    else:
+        text = decode_pdfdocencoding(data)
+    if len(text.encode("utf-8")) > limits.max_script_bytes:
+        raise CodeInspectionError("script_byte_limit")
+    return text
 
 
 def _script_text(value, limits):
     from pypdf.generic import ByteStringObject, StreamObject, TextStringObject, NullObject
 
     if isinstance(value, TextStringObject):
-        text = str(value)
+        # pypdf 5.x does not recognize the PDF 2.0 UTF-8 BOM and may guess
+        # UTF-16 for BOM-less strings. Reuse original bytes when available.
+        original = getattr(value, "_original_bytes", None)
+        text = _decode_script_bytes(original, limits) if isinstance(original, bytes) else str(value)
     elif isinstance(value, ByteStringObject):
-        text = bytes(value).decode("utf-8", errors="strict")
+        text = _decode_script_bytes(bytes(value), limits)
     elif isinstance(value, StreamObject):
         # pypdf 5.x exposes encoded stream bytes here. Do not call get_data().
         data = value._data
@@ -131,7 +160,7 @@ def _script_text(value, limits):
                 raise CodeInspectionError("invalid_flate_stream")
         if len(data) > limits.max_script_bytes:
             raise CodeInspectionError("script_byte_limit")
-        text = data.decode("utf-8", errors="strict")
+        text = _decode_script_bytes(data, limits)
     else:
         raise CodeInspectionError("unsupported_script_object")
     if len(text.encode("utf-8")) > limits.max_script_bytes:
@@ -147,21 +176,40 @@ def _inspect_code_bytes(data, limits, *, timings=None):
 def _inspect_code_bytes_inner(data, limits, timings):
     """Internal parser routine: production access must use inspect_pdf_code(s)."""
     from pypdf import PdfReader
+    from pypdf.errors import PdfReadError
     from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject, StreamObject
 
     if len(data) > limits.max_file_bytes or not data.startswith(b"%PDF-"):
         return _unavailable("not_pdf_or_byte_limit")
     diagnostic = ParserDiagnostics(strict=True)
+    recovered = False
     try:
         with diagnostic.capture_open_notices():
             reader = PdfReader(io.BytesIO(data), strict=True)
     except Exception as error:
         diagnostic.failure(error, "open")
-        return _unavailable("pdf_parser_failure", diagnostic.data)
-    diagnostic.data["open_success"] = True
+        reason = diagnostic.data["failures"][0]["reason"]
+        # One bounded retry for known xref failures, in the same capped worker.
+        # Reconstructed evidence is partial even when traversal/AST succeeds.
+        if not isinstance(error, PdfReadError) or reason not in {"xref_invalid", "xref_read_failed", "xref_missing"}:
+            return _unavailable("pdf_parser_failure", diagnostic.data)
+        retry = ParserDiagnostics(strict=False)
+        try:
+            with retry.capture_open_notices():
+                reader = PdfReader(io.BytesIO(data), strict=False)
+        except Exception as retry_error:
+            retry.failure(retry_error, "open_recovery")
+            diagnostic.data["recovery_attempt"] = retry.data
+            return _unavailable("pdf_parser_failure", diagnostic.data)
+        retry.data["open_success"] = True
+        diagnostic.data["recovery_attempt"] = retry.data
+        recovered = True
+    diagnostic.data["open_success"] = not recovered
     if reader.is_encrypted:
         return _unavailable("encrypted_pdf", diagnostic.data)
     errors, seen, scripts_seen = set(), set(), set()
+    if recovered:
+        errors.add("pdf_xref_recovered")
     indicators = Counter({name[1:]: 0 for name in sorted(SECURITY_NAMES)})
     nodes, calls = Counter(), Counter({name: 0 for name in sorted(CALL_NAMES)})
     found = parsed = decoded = total_nodes = depth_max = loops = computed = visited = 0
@@ -179,7 +227,7 @@ def _inspect_code_bytes_inner(data, limits, timings):
         return value
 
     sources = []
-    traversal_complete = True
+    traversal_complete = not recovered
     try:
         root = reader.trailer.raw_get("/Root")
     except Exception as error:
@@ -187,8 +235,12 @@ def _inspect_code_bytes_inner(data, limits, timings):
         return _unavailable("pdf_root_unavailable", diagnostic.data)
 
     def dictionary_children(items, parent_path, parent_owner):
-        for name, child in items:
-            yield child, parent_path + (str(name) if str(name) in _PATH_NAMES else "{key}",), parent_owner
+        # Two lazy passes prioritize action routes before large page/resource
+        # branches, without copying an untrusted dictionary or raising caps.
+        for preferred in (True, False):
+            for name, child in items:
+                if (str(name) in _ACTION_PATH_NAMES) == preferred:
+                    yield child, parent_path + (str(name) if str(name) in _PATH_NAMES else "{key}",), parent_owner
 
     def array_children(items, parent_path, parent_owner):
         for index, child in enumerate(items):
@@ -312,6 +364,7 @@ def _inspect_code_bytes_inner(data, limits, timings):
                          "structural_indicators": dict(indicators)},
             "script_sources": sources, "errors": sorted(errors),
             "parser_diagnostics": diagnostic.data,
+            "parser_recovered": recovered,
             "scope": "catalog-reachable syntax evidence only", "content_redacted": True,
             "active_content_executed": False}
 

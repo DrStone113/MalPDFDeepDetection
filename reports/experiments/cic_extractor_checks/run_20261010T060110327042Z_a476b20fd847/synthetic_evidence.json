@@ -1,0 +1,193 @@
+{
+  "utf16_be": {
+    "schema_version": "pdf-code-inspection-v5",
+    "complete": true,
+    "errors": [],
+    "scripts_found": 1,
+    "scripts_parsed": 1,
+    "javascript_state": "extracted",
+    "observed": {
+      "scripts_found": 1,
+      "ast": {
+        "node_count": 5,
+        "max_depth": 3,
+        "node_types": {
+          "Identifier": 1,
+          "Literal": 1,
+          "Program": 1,
+          "VariableDeclaration": 1,
+          "VariableDeclarator": 1
+        },
+        "named_calls": {
+          "Collab.collectEmailInfo": 0,
+          "Function": 0,
+          "String.fromCharCode": 0,
+          "app.launchURL": 0,
+          "atob": 0,
+          "eval": 0,
+          "unescape": 0,
+          "util.printf": 0
+        },
+        "loops": 0,
+        "computed_members": 0
+      },
+      "structural_indicators": {
+        "AA": 0,
+        "AcroForm": 0,
+        "EmbeddedFile": 0,
+        "EmbeddedFiles": 0,
+        "JBIG2Decode": 0,
+        "JS": 1,
+        "JavaScript": 1,
+        "Launch": 0,
+        "OpenAction": 1,
+        "RichMedia": 0,
+        "URI": 0,
+        "XFA": 0
+      }
+    },
+    "parser_recovered": false,
+    "parser_diagnostics": {
+      "strict": true,
+      "open_success": true,
+      "recovery_notice_codes": [],
+      "failures": [],
+      "scope": "fixed exception categories and pypdf open-time recovery notices; no raw messages or complete repair history"
+    },
+    "active_content_executed": false
+  },
+  "action_budget": {
+    "schema_version": "pdf-code-inspection-v5",
+    "complete": false,
+    "errors": [
+      "pdf_structure_limit"
+    ],
+    "scripts_found": null,
+    "scripts_parsed": 1,
+    "javascript_state": "partial",
+    "observed": {
+      "scripts_found": 1,
+      "ast": {
+        "node_count": 5,
+        "max_depth": 3,
+        "node_types": {
+          "Identifier": 1,
+          "Literal": 1,
+          "Program": 1,
+          "VariableDeclaration": 1,
+          "VariableDeclarator": 1
+        },
+        "named_calls": {
+          "Collab.collectEmailInfo": 0,
+          "Function": 0,
+          "String.fromCharCode": 0,
+          "app.launchURL": 0,
+          "atob": 0,
+          "eval": 0,
+          "unescape": 0,
+          "util.printf": 0
+        },
+        "loops": 0,
+        "computed_members": 0
+      },
+      "structural_indicators": {
+        "AA": 0,
+        "AcroForm": 0,
+        "EmbeddedFile": 0,
+        "EmbeddedFiles": 0,
+        "JBIG2Decode": 0,
+        "JS": 1,
+        "JavaScript": 1,
+        "Launch": 0,
+        "OpenAction": 1,
+        "RichMedia": 0,
+        "URI": 0,
+        "XFA": 0
+      }
+    },
+    "parser_recovered": false,
+    "parser_diagnostics": {
+      "strict": true,
+      "open_success": true,
+      "recovery_notice_codes": [],
+      "failures": [],
+      "scope": "fixed exception categories and pypdf open-time recovery notices; no raw messages or complete repair history"
+    },
+    "active_content_executed": false
+  },
+  "xref_recovery": {
+    "schema_version": "pdf-code-inspection-v5",
+    "complete": false,
+    "errors": [
+      "pdf_xref_recovered"
+    ],
+    "scripts_found": null,
+    "scripts_parsed": 1,
+    "javascript_state": "partial",
+    "observed": {
+      "scripts_found": 1,
+      "ast": {
+        "node_count": 5,
+        "max_depth": 3,
+        "node_types": {
+          "Identifier": 1,
+          "Literal": 1,
+          "Program": 1,
+          "VariableDeclaration": 1,
+          "VariableDeclarator": 1
+        },
+        "named_calls": {
+          "Collab.collectEmailInfo": 0,
+          "Function": 0,
+          "String.fromCharCode": 0,
+          "app.launchURL": 0,
+          "atob": 0,
+          "eval": 0,
+          "unescape": 0,
+          "util.printf": 0
+        },
+        "loops": 0,
+        "computed_members": 0
+      },
+      "structural_indicators": {
+        "AA": 0,
+        "AcroForm": 0,
+        "EmbeddedFile": 0,
+        "EmbeddedFiles": 0,
+        "JBIG2Decode": 0,
+        "JS": 1,
+        "JavaScript": 1,
+        "Launch": 0,
+        "OpenAction": 1,
+        "RichMedia": 0,
+        "URI": 0,
+        "XFA": 0
+      }
+    },
+    "parser_recovered": true,
+    "parser_diagnostics": {
+      "strict": true,
+      "open_success": false,
+      "recovery_notice_codes": [],
+      "failures": [
+        {
+          "stage": "open",
+          "exception_type": "PdfReadError",
+          "reason": "xref_invalid"
+        }
+      ],
+      "scope": "fixed exception categories and pypdf open-time recovery notices; no raw messages or complete repair history",
+      "recovery_attempt": {
+        "strict": false,
+        "open_success": true,
+        "recovery_notice_codes": [
+          "object_stream_recovery",
+          "xref_offset_recovery"
+        ],
+        "failures": [],
+        "scope": "fixed exception categories and pypdf open-time recovery notices; no raw messages or complete repair history"
+      }
+    },
+    "active_content_executed": false
+  }
+}

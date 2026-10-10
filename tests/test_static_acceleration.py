@@ -353,7 +353,7 @@ def test_timeout_kills_worker_descendants(tmp_path, monkeypatch):
     while state.exists():
         try:
             stopped = state.read_text().split()[2] in {"Z", "X"}
-        except FileNotFoundError:
+        except (FileNotFoundError, ProcessLookupError):
             break
         if stopped:
             break
@@ -508,7 +508,7 @@ def test_js_representations_and_reachable_action_locations(location, representat
     writer.write(output)
     result = _inspect_code_bytes(output.getvalue(), CodeInspectionLimits())
     assert result["complete"] and result["scripts_found"] == result["scripts_parsed"] == 1
-    assert result["schema_version"] == "pdf-code-inspection-v4"
+    assert result["schema_version"] == "pdf-code-inspection-v5"
     assert result["script_sources"][0]["container_object"] == [action.idnum, 0]
     assert result["script_sources"][0]["status"] == "parsed"
     assert "private script name" not in json.dumps(result) and script not in json.dumps(result)

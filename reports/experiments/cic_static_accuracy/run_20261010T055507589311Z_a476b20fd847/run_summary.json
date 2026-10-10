@@ -1,0 +1,95 @@
+{
+  "run_id": "run_20261010T055507589311Z_a476b20fd847",
+  "study": "cic_static_accuracy",
+  "status": "completed",
+  "started_at_utc": "2026-10-10T05:55:07.632474+00:00",
+  "code_commit": "a476b20fd847a04c9635aced5da0175e4f1d6f73",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "data_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "seed": 42,
+  "protocol": "retrospective CIC Train-only static adaptation; saved Protocol G partitions",
+  "report_path": "reports/experiments/cic_static_accuracy/run_20261010T055507589311Z_a476b20fd847/run_summary.json",
+  "artifact_path": "artifacts/cic_static_accuracy/run_20261010T055507589311Z_a476b20fd847",
+  "metrics": {
+    "RIT_frozen_to_CIC/cic_validation_numeric": {
+      "positive_label": 1,
+      "accuracy": 0.5257731958762887,
+      "precision_malicious": 0.5447154471544715,
+      "recall_malicious": 0.8375,
+      "f1_malicious": 0.6600985221674877,
+      "precision_macro": 0.4834688346883469,
+      "recall_macro": 0.49126908396946567,
+      "f1_macro": 0.4380038065382893,
+      "precision": 0.5447154471544715,
+      "recall": 0.8375,
+      "f1": 0.6600985221674877,
+      "mcc": -0.024027668736098854,
+      "confusion_matrix": [
+        [
+          19,
+          112
+        ],
+        [
+          26,
+          134
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 0.5360448473282442,
+      "pr_auc": 0.5884593584770368,
+      "score_source": null,
+      "brier": 0.43980597981632574,
+      "log_loss": 2.8302131814940967,
+      "ece": 0.44580756384278075,
+      "ece_bins": 10,
+      "threshold": 0.5
+    },
+    "CIC_train_static40/cic_validation_numeric": {
+      "positive_label": 1,
+      "accuracy": 0.4639175257731959,
+      "precision_malicious": 0.5181818181818182,
+      "recall_malicious": 0.35625,
+      "f1_malicious": 0.4222222222222222,
+      "precision_macro": 0.4745605223505776,
+      "recall_macro": 0.47583492366412217,
+      "f1_macro": 0.46111111111111114,
+      "precision": 0.5181818181818182,
+      "recall": 0.35625,
+      "f1": 0.4222222222222222,
+      "mcc": -0.04958818082338375,
+      "confusion_matrix": [
+        [
+          78,
+          53
+        ],
+        [
+          103,
+          57
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 0.4677242366412213,
+      "pr_auc": 0.5371826013418458,
+      "score_source": null,
+      "brier": 0.3349954358830584,
+      "log_loss": 0.9315503394099987,
+      "ece": 0.2739034376308782,
+      "ece_bins": 10,
+      "threshold": 0.5
+    }
+  },
+  "notes": "Fixed CIC Train-only XGBoost candidate compared with preserved frozen RIT model on the same cached Validation rows. Native candidate artifact ignored; threshold0.5 unchanged; no tuning/Test/PDF access. Validation was previously exposed; no independent generalization or raw-pipeline improvement claimed.",
+  "finished_at_utc": "2026-10-10T05:55:10.191624+00:00"
+}

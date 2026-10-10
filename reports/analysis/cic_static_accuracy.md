@@ -59,3 +59,40 @@ not end-to-end parser coverage, and RIT PDF overlap cannot be excluded from
 CSV-only identities. The candidate is a development artifact; deploying it or
 claiming improved full-PDF accuracy requires the corresponding offline LAB
 measurement on saved partitions and a separately locked evaluation design.
+
+## Measured outcome and extractor maintenance
+
+The fixed study completed in
+`reports/experiments/cic_static_accuracy/run_20261010T055507589311Z_a476b20fd847/`.
+Both models scored all 291 cached Validation rows at the locked threshold 0.5.
+The frozen RIT model detected 134/160 malicious rows and falsely flagged
+112/131 benign rows. The CIC candidate detected 57/160 and falsely flagged
+53/131. Its malicious F1 fell from 0.6601 to 0.4222 and MCC from -0.0240 to
+-0.0496. The candidate is preserved as negative development evidence and
+has not replaced the frozen model. This comparison changes training cohort
+and input projection; it does not establish a feature-only improvement.
+
+Three extractor limitations were reproduced using generated benign bytes:
+
+| Fixture | Previous behavior | Maintenance behavior |
+| --- | --- | --- |
+| UTF-16BE BOM JavaScript stream | `script_decode_error`, zero parsed scripts | One correctly decoded and parsed script |
+| 100-page PDF, `/OpenAction`, 16-object traversal budget | Budget exhausted before reading JS | Known script AST retained; total counts still unknown and result partial |
+| Incorrect `startxref` offset | Strict parser failure, no JS evidence | One xref-only retry in the same capped worker; recovered AST retained as partial evidence |
+
+Code-inspection schema v5 decodes PDFDocEncoding and explicit Unicode BOMs
+for strings/streams, prioritizes action routes during bounded traversal, and
+retains strict failure plus recovery diagnostics. UTF-16LE BOM compatibility
+is explicit; BOM-less UTF-8/UTF-16 is not guessed. Encoding corruption, decoded
+byte caps, unsupported filters, memory failures and incomplete traversal retain
+their failure states. Recovered xref evidence is never marked complete or
+cached as a complete result. Full-history/incremental-revision coverage is
+still unverified. The RIT numeric schema and existing model remain unchanged;
+the code/schema fingerprint invalidates previous prepared jobs and caches.
+
+The text-stream encoding definition is in Adobe's
+[PDF Reference 1.7, Table 8.90](https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/pdfreference1.7old.pdf);
+[PDF 2.0 adds UTF-8 text with a BOM](https://pdfa.org/understanding-utf-8-in-pdf-2-0/).
+These fixture corrections have no new real-CIC recall/FPR result yet. The
+same 64-file offline diagnostic subset must be measured again through the
+existing CLI after clean source and preparation commits.

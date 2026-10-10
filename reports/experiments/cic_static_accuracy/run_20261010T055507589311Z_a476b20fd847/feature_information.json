@@ -1,0 +1,16 @@
+{
+  "train": {
+    "rows": 870,
+    "unique_vectors": 501,
+    "conflicting_vectors": 71,
+    "label_oracle_correct_ceiling": 716,
+    "interpretation": "diagnostic ceiling on these labeled vectors only; no classifier/generalization claim"
+  },
+  "validation": {
+    "rows": 291,
+    "unique_vectors": 118,
+    "conflicting_vectors": 17,
+    "label_oracle_correct_ceiling": 211,
+    "interpretation": "diagnostic ceiling on these labeled vectors only; no classifier/generalization claim"
+  }
+}

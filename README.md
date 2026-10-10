@@ -6,7 +6,9 @@ A Python research project for reproducible malicious PDF detection experiments. 
 
 The October 2026 P0/P1 maintenance separates unknown structural/AST totals from
 observed partial evidence. JSON diagnostics use `static-diagnostics-v3` and code
-inspection uses `pdf-code-inspection-v4` (fixed parser failure categories and recovery notices, with bounded ASCIIHex/ASCII85 stream filters). Failed/incomplete PDF parsing refuses
+inspection uses `pdf-code-inspection-v5`: bounded PDFDocEncoding/Unicode text
+decoding, action traversal priority, and explicit partial xref recovery alongside
+ASCIIHex/ASCII85/Flate filters. Failed/incomplete PDF parsing refuses
 deployment inference even when all numeric model inputs happen to be present.
 Canonical 41-feature RIT measurements, source-defined sentinels, model artifacts
 and locked partitions keep their established definitions.
@@ -49,6 +51,12 @@ Numeric Validation classification and missing-row denominators are reported
 separately from PDF parser coverage. This does not replace deployment artifacts
 or establish independent Test accuracy. See
 [the accuracy diagnosis](reports/analysis/cic_static_accuracy.md).
+The completed fixed candidate reduced false positives but lost malicious recall
+on the 291 previously exposed CIC Validation rows; it remains a development
+artifact. The frozen model stays in use. Extractor v5 fixture corrections still
+require the paired offline PDF measurement before any full-pipeline gain is
+claimed. Previous prepared jobs must be prepared again because their code
+fingerprints are locked.
 
 ## Retrospective multi-cohort stacking v4
 

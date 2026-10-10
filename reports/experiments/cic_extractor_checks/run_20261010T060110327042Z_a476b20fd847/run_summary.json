@@ -1,0 +1,36 @@
+{
+  "run_id": "run_20261010T060110327042Z_a476b20fd847",
+  "study": "cic_extractor_checks",
+  "status": "completed",
+  "started_at_utc": "2026-10-10T06:01:10.370786+00:00",
+  "code_commit": "a476b20fd847a04c9635aced5da0175e4f1d6f73",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/analysis/cic_static_accuracy.md",
+      " M reports/research_log.md",
+      " M src/malpdf/static/code_inspector.py",
+      " M tests/test_cic_static_benchmark.py",
+      " M tests/test_static_acceleration.py",
+      "?? reports/experiments/cic_static_accuracy/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/analysis/cic_static_accuracy.md",
+      " M reports/research_log.md",
+      " M src/malpdf/static/code_inspector.py",
+      " M tests/test_cic_static_benchmark.py",
+      " M tests/test_static_acceleration.py",
+      "?? reports/experiments/cic_static_accuracy/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "CIC static extractor P1 fixture maintenance",
+  "report_path": "reports/experiments/cic_extractor_checks/run_20261010T060110327042Z_a476b20fd847/run_summary.json",
+  "artifact_path": "artifacts/cic_extractor_checks/run_20261010T060110327042Z_a476b20fd847",
+  "metrics": {},
+  "notes": "Fixture maintenance: v5 fixes UTF-16/PDFDocEncoding, discovers OpenAction before page budget, retains xref-recovered AST as partial; no cap increases or inferred absence/benign labels. Synthetic full suite: 706 passed, 2 warnings in 141.51s (0:02:21). Checks recorded; actual CIC PDF/accuracy not evaluated.",
+  "finished_at_utc": "2026-10-10T06:03:38.651128+00:00"
+}

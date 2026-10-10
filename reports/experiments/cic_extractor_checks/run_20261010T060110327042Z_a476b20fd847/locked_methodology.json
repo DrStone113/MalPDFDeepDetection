@@ -1,0 +1,28 @@
+{
+  "protocol": "CIC static extractor P1 fixture maintenance",
+  "seed": 42,
+  "pdf_access": "generated benign fixtures only; no actual dataset bytes",
+  "test_access": false,
+  "code_schema": "pdf-code-inspection-v5",
+  "changes": [
+    "PDF text-stream encodings",
+    "bounded action-route priority",
+    "explicit partial xref recovery"
+  ],
+  "resource_contract": "one capped child; no cap increase, no active-content execution",
+  "previous_targeted_attempt": "132 passed; one expected changed recovery-code assertion and a /proc disappearing-process test race fixed; full final suite recorded below",
+  "code_commit": "a476b20fd847a04c9635aced5da0175e4f1d6f73",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/analysis/cic_static_accuracy.md",
+      " M reports/research_log.md",
+      " M src/malpdf/static/code_inspector.py",
+      " M tests/test_cic_static_benchmark.py",
+      " M tests/test_static_acceleration.py",
+      "?? reports/experiments/cic_static_accuracy/"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

@@ -2,6 +2,7 @@
 
 from dataclasses import replace
 import base64
+import codecs
 import hashlib
 import io
 import json
@@ -65,10 +66,113 @@ def test_exclusive_nested_stage_times_and_unknowns(monkeypatch):
 def test_ascii_streams_and_filter_chains_recover_js_without_execution(filters):
     timer = StageTimings()
     result = _inspect_code_bytes(fixture_pdf(filters=filters), CodeInspectionLimits(), timings=timer)
-    assert result["complete"] and result["schema_version"] == "pdf-code-inspection-v4"
+    assert result["complete"] and result["schema_version"] == "pdf-code-inspection-v5"
     assert result["ast"]["named_calls"]["util.printf"] == 1
     assert timer.seconds["stream_decode"] > 0 and timer.seconds["js_ast"] > 0
     assert not result["active_content_executed"]
+
+
+@pytest.mark.parametrize("data,expected", [
+    (codecs.BOM_UTF16_BE + 'var text="café";'.encode("utf-16-be"), 'var text="café";'),
+    (codecs.BOM_UTF16_LE + 'var text="café";'.encode("utf-16-le"), 'var text="café";'),
+    (codecs.BOM_UTF8 + 'var text="café";'.encode("utf-8"), 'var text="café";'),
+    (b'var text="\x80";', 'var text="•";'),
+])
+@pytest.mark.parametrize("filters", [(), ("/FlateDecode",), ("/ASCIIHexDecode", "/FlateDecode")])
+def test_pdf_text_encodings_recover_stream_scripts_through_indirect_actions(data, expected, filters):
+    from pypdf.generic import ByteStringObject
+    # Equality verifies character meaning as well as a nonempty AST.
+    assert _script_text(ByteStringObject(data), CodeInspectionLimits()) == expected
+    result = _inspect_code_bytes(fixture_pdf(script=data, filters=filters), CodeInspectionLimits())
+    assert result["complete"] and result["scripts_found"] == result["scripts_parsed"] == 1
+    assert result["script_sources"][0]["script_object"] is not None
+    assert result["script_sources"][0]["path"] == "/Root/OpenAction/JS"
+    assert result["ast"]["node_types"]["Literal"] == 1
+    assert not result["active_content_executed"] and expected not in json.dumps(result)
+
+
+@pytest.mark.parametrize("data", [b"\xfe\xff\x00", b"\xff\xfe\x00", b"\xef\xbb\xbf\xff", b"\x7f"])
+def test_invalid_unicode_or_undefined_pdfdoc_byte_remains_unavailable(data):
+    result = _inspect_code_bytes(fixture_pdf(script=data), CodeInspectionLimits())
+    assert result["errors"] == ["script_decode_error"]
+    assert not result["complete"] and result["ast"] is None and result["scripts_found"] == 1
+    assert result["javascript_state"] == "present_unavailable"
+
+
+@pytest.mark.parametrize("data", [
+    codecs.BOM_UTF16_BE + 'var text="café";'.encode("utf-16-be"),
+    codecs.BOM_UTF8 + 'var text="café";'.encode("utf-8"),
+    b'var text="\x80";',
+])
+def test_hex_and_indirect_text_string_decode_using_original_bytes(data):
+    from pypdf.generic import ByteStringObject
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    writer._root_object[NameObject("/OpenAction")] = writer._add_object(DictionaryObject({
+        NameObject("/S"): NameObject("/JavaScript"), NameObject("/JS"): writer._add_object(ByteStringObject(data))}))
+    output = io.BytesIO()
+    writer.write(output)
+    result = _inspect_code_bytes(output.getvalue(), CodeInspectionLimits())
+    assert result["complete"] and result["scripts_parsed"] == 1
+    assert result["script_sources"][0]["script_object"] is not None
+
+
+def test_encoded_and_unicode_expansion_script_limits_are_both_enforced():
+    from pypdf.generic import ByteStringObject
+    limits = replace(CodeInspectionLimits(), max_script_bytes=8)
+    for data in (codecs.BOM_UTF16_BE + "var n=1;".encode("utf-16-be"), b"\x80" * 4):
+        with pytest.raises(ValueError, match="script_byte_limit"):
+            _script_text(ByteStringObject(data), limits)
+
+
+def test_xref_recovery_retains_ast_as_partial_and_never_promotes_a_cache_hit(tmp_path):
+    content = fixture_pdf()
+    content = re.sub(rb"(startxref\s+)(\d+)", lambda match: match[1] + str(int(match[2]) + 1).encode(), content)
+    path = tmp_path / "benign_broken_xref.pdf"
+    path.write_bytes(content)
+    result = profile_pdf(path, boundary=tmp_path, digest=hashlib.sha256(content).hexdigest(), cache_key="new-v5")
+    code = result["code"]
+    assert code["errors"] == ["pdf_xref_recovered"] and code["parser_recovered"]
+    assert result["status"] == "partial" and not result["cache_hit"] and not code["complete"]
+    assert code["scripts_found"] is None and code["ast"] is None
+    assert code["observed"]["scripts_found"] == code["scripts_parsed"] == 1
+    assert code["observed"]["ast"]["named_calls"]["util.printf"] == 1
+    assert not code["script_extraction_complete"] and not code["ast_complete"]
+    assert code["parser_diagnostics"]["strict"] and not code["parser_diagnostics"]["open_success"]
+    assert code["parser_diagnostics"]["failures"][0]["reason"] == "xref_invalid"
+    recovered = code["parser_diagnostics"]["recovery_attempt"]
+    assert not recovered["strict"] and recovered["open_success"]
+    assert "xref_offset_recovery" in recovered["recovery_notice_codes"]
+    assert not code["active_content_executed"]
+
+
+def test_xref_retry_never_retries_memory_error(monkeypatch):
+    attempts = []
+    def fail(*args, **kwargs):
+        attempts.append(kwargs["strict"])
+        raise MemoryError("synthetic")
+    monkeypatch.setattr("pypdf.PdfReader", fail)
+    result = _inspect_code_bytes(fixture_pdf(), CodeInspectionLimits())
+    assert attempts == [True] and result["scripts_found"] is None
+    assert result["errors"] == ["pdf_parser_failure"]
+
+
+def test_action_priority_retains_known_ast_before_page_budget_exhaustion():
+    from pypdf.generic import TextStringObject
+    from dataclasses import replace
+    writer = PdfWriter()
+    for _ in range(100):
+        writer.add_blank_page(72, 72)
+    writer._root_object[NameObject("/OpenAction")] = writer._add_object(DictionaryObject({
+        NameObject("/S"): NameObject("/JavaScript"), NameObject("/JS"): TextStringObject("var fixture=1;")}))
+    output = io.BytesIO()
+    writer.write(output)
+    result = _inspect_code_bytes(output.getvalue(), replace(CodeInspectionLimits(), max_objects=16))
+    assert not result["complete"] and result["errors"] == ["pdf_structure_limit"]
+    assert result["scripts_found"] is None and result["ast"] is None
+    assert result["scripts_parsed"] == result["observed"]["scripts_found"] == 1
+    assert result["observed"]["ast"]["node_count"] > 0
+    assert result["script_sources"][0]["path"] == "/Root/OpenAction/JS"
 
 
 @pytest.mark.parametrize("filter_name,data,error", [
@@ -334,7 +438,10 @@ def test_broken_xref_fixture_keeps_strict_failure_and_reports_recovery(tmp_path)
     strict = profile["code"]["parser_diagnostics"]
     assert strict["strict"] is True and not strict["open_success"]
     assert strict["failures"] == [{"stage": "open", "exception_type": "PdfReadError", "reason": "xref_invalid"}]
-    assert profile["status"] == "partial" and "pdf_parser_failure" in profile["reasons"]
+    assert profile["status"] == "partial" and "pdf_xref_recovered" in profile["reasons"]
+    assert profile["code"]["parser_recovered"] and profile["code"]["scripts_found"] is None
+    assert profile["code"]["observed"]["scripts_found"] == 0
+    assert not profile["code"]["ast_complete"]
 
 
 def test_unresolved_reference_partial_has_reason_even_when_errors_empty(tmp_path):
