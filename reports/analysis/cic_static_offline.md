@@ -189,6 +189,14 @@ directory.
 After using the already selected disconnected non-root VMware console LAB
 procedure (NAT and host-only off; shared folders/clipboard/drag-drop off), run:
 
+On this VM, **Chạy CIC offline** on `/home/drstone/Desktop` starts this exact
+command. Double-click it (choose Execute if the file manager asks), then press
+Enter to attest that the selected LAB isolation steps are complete. Type `q`
+to cancel. The terminal remains open with the result path or error until Enter
+is pressed again. It preserves the CLI's isolation, clean-worktree, checksum,
+split and resource checks. The shortcut does not disconnect any interface.
+The command below remains available for terminal use:
+
 ```bash
 .venv/bin/python scripts/16_benchmark_cic_static.py run \
   --prepared-run run_20261010T060459185898Z_03bb11cdea2b \

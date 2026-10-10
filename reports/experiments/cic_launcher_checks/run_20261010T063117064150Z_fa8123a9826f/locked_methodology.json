@@ -1,0 +1,37 @@
+{
+  "protocol": "CIC offline console launcher maintenance",
+  "prepared_run": "run_20261010T060459185898Z_03bb11cdea2b",
+  "configuration": {
+    "launch_action": "existing guarded CIC run CLI",
+    "desktop": "/home/drstone/Desktop/Chay-CIC-offline.desktop",
+    "confirmation": "Enter attests previously chosen LAB isolation; q cancels",
+    "threads": 1
+  },
+  "pdf_access": false,
+  "test_partition_access": false,
+  "dataset_access": "prepared metadata and trusted native model checksum only",
+  "source_sha256": {
+    "scripts/18_launch_cic_offline.py": "8a1e2388ace9f6f8a5746b650d7e926271d649ff1324524b1cb17e2a25e0470b",
+    "configs/cic_offline_launcher.desktop": "de5f14d3949316f9dc71ddde51c840e1d11272275589d24e9cd1cd174c9972cd",
+    "tests/test_cic_offline_launcher.py": "c334226139c59f7c04ceea81371af3d54cb32c0f822bd74b4077105d8f61629b",
+    "README.md": "af90595406a5885cd50b42ed10d9743e31f9b98d9b6f53a557047f16389480a1",
+    "reports/analysis/cic_static_offline.md": "00a983e72f2f9e3559c868ad1ddf2def04341aa543b90d0c4afeead80b950ac5"
+  },
+  "metrics": "N/A: maintenance only; no model evaluation",
+  "seed": 42,
+  "code_commit": "fa8123a9826fb1bd9f8c19b8c8d151a33b07a130",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/research_log.md",
+      "?? configs/cic_offline_launcher.desktop",
+      "?? reports/experiments/cic_gate_audit/",
+      "?? scripts/18_launch_cic_offline.py",
+      "?? tests/test_cic_offline_launcher.py"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

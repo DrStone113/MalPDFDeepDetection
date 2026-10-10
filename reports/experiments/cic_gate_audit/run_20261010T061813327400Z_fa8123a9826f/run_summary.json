@@ -1,0 +1,239 @@
+{
+  "run_id": "run_20261010T061813327400Z_fa8123a9826f",
+  "study": "cic_gate_audit",
+  "status": "completed",
+  "started_at_utc": "2026-10-10T06:18:13.377087+00:00",
+  "code_commit": "fa8123a9826fb1bd9f8c19b8c8d151a33b07a130",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "data_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "seed": 42,
+  "protocol": "retrospective CIC cached Validation gate audit; saved Protocol G partitions",
+  "report_path": "reports/experiments/cic_gate_audit/run_20261010T061813327400Z_fa8123a9826f/run_summary.json",
+  "artifact_path": "artifacts/cic_gate_audit/run_20261010T061813327400Z_fa8123a9826f",
+  "metrics": {
+    "RIT_frozen_to_CIC/cached_numeric": {
+      "positive_label": 1,
+      "accuracy": 0.5,
+      "precision_malicious": 0.5,
+      "recall_malicious": 0.875,
+      "f1_malicious": 0.6363636363636364,
+      "precision_macro": 0.5,
+      "recall_macro": 0.5,
+      "f1_macro": 0.4181818181818182,
+      "precision": 0.5,
+      "recall": 0.875,
+      "f1": 0.6363636363636364,
+      "mcc": 0.0,
+      "confusion_matrix": [
+        [
+          2,
+          14
+        ],
+        [
+          2,
+          14
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 0.470703125,
+      "pr_auc": 0.47718035287591737,
+      "score_source": null,
+      "brier": 0.4753991472937985,
+      "log_loss": 3.1699865759126107,
+      "ece": 0.49740676401233946,
+      "ece_bins": 10,
+      "threshold": 0.5
+    },
+    "CIC_train_static40/cached_numeric": {
+      "positive_label": 1,
+      "accuracy": 0.5,
+      "precision_malicious": 0.5,
+      "recall_malicious": 0.5625,
+      "f1_malicious": 0.5294117647058824,
+      "precision_macro": 0.5,
+      "recall_macro": 0.5,
+      "f1_macro": 0.4980392156862745,
+      "precision": 0.5,
+      "recall": 0.5625,
+      "f1": 0.5294117647058824,
+      "mcc": 0.0,
+      "confusion_matrix": [
+        [
+          7,
+          9
+        ],
+        [
+          7,
+          9
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 0.474609375,
+      "pr_auc": 0.5519996106571059,
+      "score_source": null,
+      "brier": 0.331790561586079,
+      "log_loss": 0.9248253068988368,
+      "ece": 0.31360745849087834,
+      "ece_bins": 10,
+      "threshold": 0.5
+    },
+    "RIT_frozen_to_CIC/static_gate": {
+      "positive_label": 1,
+      "accuracy": 0.45454545454545453,
+      "precision_malicious": 0.5,
+      "recall_malicious": 0.6666666666666666,
+      "f1_malicious": 0.5714285714285714,
+      "precision_macro": 0.41666666666666663,
+      "recall_macro": 0.43333333333333335,
+      "f1_macro": 0.4107142857142857,
+      "precision": 0.5,
+      "recall": 0.6666666666666666,
+      "f1": 0.5714285714285714,
+      "mcc": -0.14907119849998599,
+      "confusion_matrix": [
+        [
+          1,
+          4
+        ],
+        [
+          2,
+          4
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 0.4333333333333333,
+      "pr_auc": 0.6305916305916306,
+      "score_source": null,
+      "brier": 0.48429663163304065,
+      "log_loss": 2.3439862950543575,
+      "ece": 0.5403268357569522,
+      "ece_bins": 10,
+      "threshold": 0.5
+    },
+    "CIC_train_static40/static_gate": {
+      "positive_label": 1,
+      "accuracy": 0.5454545454545454,
+      "precision_malicious": 0.5454545454545454,
+      "recall_malicious": 1.0,
+      "f1_malicious": 0.7058823529411765,
+      "precision_macro": 0.2727272727272727,
+      "recall_macro": 0.5,
+      "f1_macro": 0.35294117647058826,
+      "precision": 0.5454545454545454,
+      "recall": 1.0,
+      "f1": 0.7058823529411765,
+      "mcc": 0.0,
+      "confusion_matrix": [
+        [
+          0,
+          5
+        ],
+        [
+          0,
+          6
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 0.6,
+      "pr_auc": 0.7327380952380952,
+      "score_source": null,
+      "brier": 0.2744626223135114,
+      "log_loss": 0.8056067671191433,
+      "ece": 0.23077524250203912,
+      "ece_bins": 10,
+      "threshold": 0.5
+    },
+    "RIT_frozen_to_CIC/complete_evidence": {
+      "positive_label": 1,
+      "accuracy": 0.4444444444444444,
+      "precision_malicious": 0.5714285714285714,
+      "recall_malicious": 0.6666666666666666,
+      "f1_malicious": 0.6153846153846154,
+      "precision_macro": 0.2857142857142857,
+      "recall_macro": 0.3333333333333333,
+      "f1_macro": 0.3076923076923077,
+      "precision": 0.5714285714285714,
+      "recall": 0.6666666666666666,
+      "f1": 0.6153846153846154,
+      "mcc": -0.3779644730092272,
+      "confusion_matrix": [
+        [
+          0,
+          3
+        ],
+        [
+          2,
+          4
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 0.3888888888888889,
+      "pr_auc": 0.7041666666666666,
+      "score_source": null,
+      "brier": 0.47108951795804965,
+      "log_loss": 2.4828159745985663,
+      "ece": 0.5060145250625081,
+      "ece_bins": 10,
+      "threshold": 0.5
+    },
+    "CIC_train_static40/complete_evidence": {
+      "positive_label": 1,
+      "accuracy": 0.6666666666666666,
+      "precision_malicious": 0.6666666666666666,
+      "recall_malicious": 1.0,
+      "f1_malicious": 0.8,
+      "precision_macro": 0.3333333333333333,
+      "recall_macro": 0.5,
+      "f1_macro": 0.4,
+      "precision": 0.6666666666666666,
+      "recall": 1.0,
+      "f1": 0.8,
+      "mcc": 0.0,
+      "confusion_matrix": [
+        [
+          0,
+          3
+        ],
+        [
+          0,
+          6
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": 0.7222222222222223,
+      "pr_auc": 0.8555555555555555,
+      "score_source": null,
+      "brier": 0.18420977485862977,
+      "log_loss": 0.5270538526372263,
+      "ece": 0.2693523433473375,
+      "ece_bins": 10,
+      "threshold": 0.5
+    }
+  },
+  "notes": "Descriptive replay of saved Validation numeric scores on matched first64 profile identities; no models fit/scored/PDF reads, no Test/threshold/selection. Frozen RIT38 input equality verified on eligible rows. Conditional coverage and class refusals preserved. All11 gate-eligible CIC-candidate rows predict malicious; conditional score alone would mask false positives. Existing v5 job/source unchanged and still valid; original models retained.",
+  "finished_at_utc": "2026-10-10T06:18:16.353975+00:00"
+}

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Chạy CIC offline
+Comment=Chạy job CIC Train/dev đã khóa qua console VMware
+Exec=/home/drstone/MalPDFDeepDetection/.venv/bin/python /home/drstone/MalPDFDeepDetection/scripts/18_launch_cic_offline.py
+Path=/home/drstone/MalPDFDeepDetection
+Icon=utilities-terminal
+Terminal=true
+StartupNotify=false

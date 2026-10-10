@@ -1,0 +1,38 @@
+{
+  "run_id": "run_20261010T063117064150Z_fa8123a9826f",
+  "study": "cic_launcher_checks",
+  "status": "completed",
+  "started_at_utc": "2026-10-10T06:31:17.136203+00:00",
+  "code_commit": "fa8123a9826fb1bd9f8c19b8c8d151a33b07a130",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/research_log.md",
+      "?? configs/cic_offline_launcher.desktop",
+      "?? reports/experiments/cic_gate_audit/",
+      "?? scripts/18_launch_cic_offline.py",
+      "?? tests/test_cic_offline_launcher.py"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/research_log.md",
+      "?? configs/cic_offline_launcher.desktop",
+      "?? reports/experiments/cic_gate_audit/",
+      "?? scripts/18_launch_cic_offline.py",
+      "?? tests/test_cic_offline_launcher.py"
+    ]
+  },
+  "seed": 42,
+  "protocol": "CIC offline console launcher maintenance",
+  "report_path": "reports/experiments/cic_launcher_checks/run_20261010T063117064150Z_fa8123a9826f/run_summary.json",
+  "artifact_path": "artifacts/cic_launcher_checks/run_20261010T063117064150Z_fa8123a9826f",
+  "metrics": {},
+  "notes": "Installed executable trusted Desktop launcher for existing locked v5 same64 CIC job; Enter console attestation/q cancel and unchanged guarded CLI tested. Full synthetic suite: ================= 710 passed, 2 warnings in 208.68s (0:03:28) ==================. Pip/metadata/desktop/diff/status checks saved. No real PDFs/Test accessed or new accuracy/latency evaluated. GUI activation deferred to disconnected VMware console.",
+  "finished_at_utc": "2026-10-10T06:35:06.121254+00:00"
+}

@@ -1,0 +1,99 @@
+{
+  "checks": [
+    {
+      "name": "pytest",
+      "command": [
+        "/home/drstone/MalPDFDeepDetection/.venv/bin/python",
+        "-m",
+        "pytest",
+        "tests/"
+      ],
+      "exit_code": 0,
+      "output_path": "artifacts/cic_launcher_checks/run_20261010T063117064150Z_fa8123a9826f/pytest.txt",
+      "summary": "  /home/drstone/MalPDFDeepDetection/.venv/lib/python3.11/site-packages/sklearn/metrics/_classification.py:614: UserWarning: A single label was found in 'y_true' and 'y_pred'. For the confusion matrix to have the correct shape, use the 'labels' parameter to pass all known labels.\n    warnings.warn(\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n================= 710 passed, 2 warnings in 208.68s (0:03:28) =================="
+    },
+    {
+      "name": "pip_check",
+      "command": [
+        "/home/drstone/MalPDFDeepDetection/.venv/bin/python",
+        "-m",
+        "pip",
+        "check"
+      ],
+      "exit_code": 0,
+      "output_path": "artifacts/cic_launcher_checks/run_20261010T063117064150Z_fa8123a9826f/pip_check.txt",
+      "summary": "No broken requirements found."
+    },
+    {
+      "name": "metadata_check",
+      "command": [
+        "/home/drstone/MalPDFDeepDetection/.venv/bin/python",
+        "scripts/18_launch_cic_offline.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "output_path": "artifacts/cic_launcher_checks/run_20261010T063117064150Z_fa8123a9826f/metadata_check.txt",
+      "summary": "Job \u0111\u00e3 kh\u00f3a h\u1ee3p l\u1ec7: run_20261010T060459185898Z_03bb11cdea2b; 64 m\u1eabu; pdf-code-inspection-v5\nCh\u1ec9 ki\u1ec3m tra metadata/model; ch\u01b0a ch\u1ea1y PDF v\u00e0 ch\u01b0a x\u00e1c nh\u1eadn LAB \u0111\u00e3 ng\u1eaft m\u1ea1ng."
+    },
+    {
+      "name": "desktop_template",
+      "command": [
+        "desktop-file-validate",
+        "configs/cic_offline_launcher.desktop"
+      ],
+      "exit_code": 0,
+      "output_path": "artifacts/cic_launcher_checks/run_20261010T063117064150Z_fa8123a9826f/desktop_template.txt",
+      "summary": ""
+    },
+    {
+      "name": "installed_desktop",
+      "command": [
+        "desktop-file-validate",
+        "/home/drstone/Desktop/Chay-CIC-offline.desktop"
+      ],
+      "exit_code": 0,
+      "output_path": "artifacts/cic_launcher_checks/run_20261010T063117064150Z_fa8123a9826f/installed_desktop.txt",
+      "summary": ""
+    },
+    {
+      "name": "diff_check",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "output_path": "artifacts/cic_launcher_checks/run_20261010T063117064150Z_fa8123a9826f/diff_check.txt",
+      "summary": ""
+    },
+    {
+      "name": "git_status",
+      "command": [
+        "git",
+        "status",
+        "--short"
+      ],
+      "exit_code": 0,
+      "output_path": "artifacts/cic_launcher_checks/run_20261010T063117064150Z_fa8123a9826f/git_status.txt",
+      "summary": "?? configs/cic_offline_launcher.desktop\n?? reports/experiments/cic_gate_audit/\n?? reports/experiments/cic_launcher_checks/\n?? scripts/18_launch_cic_offline.py\n?? tests/test_cic_offline_launcher.py"
+    }
+  ],
+  "installed_launcher": {
+    "path": "/home/drstone/Desktop/Chay-CIC-offline.desktop",
+    "executable": true,
+    "sha256": "de5f14d3949316f9dc71ddde51c840e1d11272275589d24e9cd1cd174c9972cd",
+    "matches_template": true,
+    "trust_metadata_set": true,
+    "GUI_activation": "not performed; actual PDF job requires disconnected console"
+  },
+  "changed_source_sha256": {
+    "scripts/18_launch_cic_offline.py": "8a1e2388ace9f6f8a5746b650d7e926271d649ff1324524b1cb17e2a25e0470b",
+    "configs/cic_offline_launcher.desktop": "de5f14d3949316f9dc71ddde51c840e1d11272275589d24e9cd1cd174c9972cd",
+    "tests/test_cic_offline_launcher.py": "c334226139c59f7c04ceea81371af3d54cb32c0f822bd74b4077105d8f61629b",
+    "README.md": "af90595406a5885cd50b42ed10d9743e31f9b98d9b6f53a557047f16389480a1",
+    "reports/analysis/cic_static_offline.md": "00a983e72f2f9e3559c868ad1ddf2def04341aa543b90d0c4afeead80b950ac5"
+  },
+  "pdf_job_status": "not run; user corrected earlier reply",
+  "real_pdf_access": false,
+  "accuracy_metrics": "unavailable; no new PDF benchmark"
+}

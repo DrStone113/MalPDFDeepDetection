@@ -40,6 +40,14 @@ snapshot and source checksum without fitting. This supplied Protocol G model
 has its own identity; it does not replace the full-RIT deployment manifest.
 See [offline job and measurement limits](reports/analysis/cic_static_offline.md).
 
+On the current Lubuntu VM, double-click **Chạy CIC offline** on the Desktop
+after completing the selected disconnected console LAB procedure, then press
+Enter. The shortcut invokes the locked v5 same-64 job through the existing
+guarded CLI and keeps the terminal open after completion or failure.
+Type `q` to cancel before starting. Its VM-specific desktop entry is versioned
+in `configs/cic_offline_launcher.desktop`; the thin entry point is
+`scripts/18_launch_cic_offline.py`. This shortcut does not change network settings.
+
 The fixed CPU study `scripts/17_train_cic_static.py` compares the supplied frozen
 RIT model against one XGBoost candidate fit on the saved CIC Train partition
 using the controlled cached feature table. Its 40 predictors retain measured

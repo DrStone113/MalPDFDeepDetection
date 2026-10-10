@@ -1,0 +1,29 @@
+{
+  "protocol": "retrospective CIC cached Validation gate audit; saved Protocol G partitions",
+  "seed": 42,
+  "probability_run": "run_20261010T055507589311Z_a476b20fd847",
+  "profile_run": "run_20261009T143328562606Z_57544eaea873",
+  "prepared_v5_job": "run_20261010T060459185898Z_03bb11cdea2b",
+  "inputs": {
+    "probabilities_sha256": "7c1232d6142283957e3b4720bc4a6c32cf2b707ec0b4413f589b0100cd8230c5",
+    "profile_records_sha256": "1c54a5bcc44fa5c0f98e8b25f4101eea7779fe8b85e0327bf6e7fe985ead5403"
+  },
+  "views": [
+    "cached numeric predictions",
+    "existing static inference eligibility",
+    "static eligibility plus complete code evidence"
+  ],
+  "threshold": 0.5,
+  "selection": "descriptive fixed masks only; no threshold/model selection, calibration, fitting or new scoring",
+  "scope": "saved numeric predictions joined to previously parsed metadata; no new raw-PDF pipeline accuracy/latency measurement",
+  "limitations": "Validation previously exposed; balanced 32-row pilot; candidate extras not measured in old profile; conditional metrics retain refused-class denominators",
+  "test_access": false,
+  "pdf_access": false,
+  "code_commit": "fa8123a9826fb1bd9f8c19b8c8d151a33b07a130",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}
