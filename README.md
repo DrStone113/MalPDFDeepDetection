@@ -6,7 +6,7 @@ A Python research project for reproducible malicious PDF detection experiments. 
 
 The October 2026 P0/P1 maintenance separates unknown structural/AST totals from
 observed partial evidence. JSON diagnostics use `static-diagnostics-v3` and code
-inspection uses `pdf-code-inspection-v5`: bounded PDFDocEncoding/Unicode text
+inspection uses `pdf-code-inspection-v6`: bounded PDFDocEncoding/Unicode text
 decoding, action traversal priority, and explicit partial xref recovery alongside
 ASCIIHex/ASCII85/Flate filters. Failed/incomplete PDF parsing refuses
 deployment inference even when all numeric model inputs happen to be present.
@@ -68,6 +68,21 @@ counts remain 23/23/18; the small RF pilot's recall/FPR are unchanged from the
 earlier run. No full-pipeline classification improvement is established.
 See [the measured v5 result](reports/analysis/cic_static_offline.md#completed-v5-paired-measurement).
 Prepared jobs must match their locked extractor fingerprints.
+
+The saved-profile ablation found no hard-label gain from observed AST on the
+first64 cohort: P0 and P1 detected12/16 malicious development files and falsely
+flagged13/16 benign files. Additional parser flags reduced false positives by
+one, with MCC0. All32 development inputs were eligible for the experimental
+fallback; this is not complete parser coverage or a deployable improvement.
+The negative evidence is retained and no candidate is promoted.
+
+Code-inspection v6 addresses the specific missing-`startxref` case with one
+fixed, in-memory reconstruction retry through the existing bounded pypdf
+worker. Original bytes/hash/raw counts stay unchanged; strict failure remains
+visible and recovered evidence stays partial, with unknown totals. Existing
+markers and resource failures are not replaced/retried by this path. Benign
+fixtures pass; real-CIC gains require a new locked offline run. Previously
+prepared v5 jobs cannot run with the changed fingerprint.
 
 The separately locked saved-profile ablation reuses that completed v5 LAB
 evidence without reopening PDFs:

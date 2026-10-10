@@ -66,7 +66,7 @@ def test_exclusive_nested_stage_times_and_unknowns(monkeypatch):
 def test_ascii_streams_and_filter_chains_recover_js_without_execution(filters):
     timer = StageTimings()
     result = _inspect_code_bytes(fixture_pdf(filters=filters), CodeInspectionLimits(), timings=timer)
-    assert result["complete"] and result["schema_version"] == "pdf-code-inspection-v5"
+    assert result["complete"] and result["schema_version"] == "pdf-code-inspection-v6"
     assert result["ast"]["named_calls"]["util.printf"] == 1
     assert timer.seconds["stream_decode"] > 0 and timer.seconds["js_ast"] > 0
     assert not result["active_content_executed"]
@@ -155,6 +155,48 @@ def test_xref_retry_never_retries_memory_error(monkeypatch):
     result = _inspect_code_bytes(fixture_pdf(), CodeInspectionLimits())
     assert attempts == [True] and result["scripts_found"] is None
     assert result["errors"] == ["pdf_parser_failure"]
+
+
+@pytest.mark.parametrize("script", [None, b'var fixture=1; util.printf("inert");'])
+def test_missing_startxref_recovers_only_partial_evidence_and_preserves_source(tmp_path, script):
+    original = re.sub(rb"startxref\s+\d+\s*", b"", fixture_pdf(script=script))
+    assert b"startxref" not in original
+    digest = hashlib.sha256(original).hexdigest()
+    path = tmp_path / "benign_missing_startxref.pdf"
+    path.write_bytes(original)
+    result = profile_pdf(path, boundary=tmp_path, digest=digest,
+        limits=CodeInspectionLimits(wall_seconds=20, cpu_seconds=12), cache_key="missing-marker-v6")
+    code = result["code"]
+    assert path.read_bytes() == original and result["static"]["input"]["sha256"] == digest
+    assert result["static"]["features"]["startxref"] == 0
+    assert result["status"] == "parser_error" and not result["cache_hit"]
+    assert code["parser_recovered"] and code["status"] == "partial" and not code["complete"]
+    assert code["ast"] is None and code["scripts_found"] is None and not code["traversal_complete"]
+    assert code["observed"]["scripts_found"] == code["scripts_parsed"] == int(script is not None)
+    if script is not None:
+        assert code["observed"]["ast"]["named_calls"]["util.printf"] == 1
+    else:
+        assert code["observed"]["ast"] is None  # No full-history absence claim.
+    diagnostic = code["parser_diagnostics"]
+    assert diagnostic["failures"][0]["reason"] == "startxref_missing" and not diagnostic["open_success"]
+    retry = diagnostic["recovery_attempt"]
+    assert retry["open_success"] and retry["reconstruction"]["source_bytes_changed"] is False
+    assert retry["reconstruction"]["parser_buffer_suffix_bytes"] == len(b"\nstartxref\n0\n%%EOF\n")
+    assert not code["active_content_executed"] and not code["ast_complete"]
+
+
+def test_missing_marker_retry_does_not_accept_fake_pdf_or_replace_existing_marker(monkeypatch):
+    from pypdf.errors import PdfReadError
+    result = _inspect_code_bytes(b"%PDF-1.7\ninvalid fixture\n%%EOF\n", CodeInspectionLimits())
+    assert result["status"] == "unavailable" and result["scripts_found"] is None
+    assert not result["complete"] and not result["active_content_executed"]
+    attempts = []
+    def fail(*args, **kwargs):
+        attempts.append(kwargs["strict"])
+        raise PdfReadError("startxref not found")
+    monkeypatch.setattr("pypdf.PdfReader", fail)
+    result = _inspect_code_bytes(fixture_pdf(), CodeInspectionLimits())
+    assert attempts == [True] and result["status"] == "unavailable"
 
 
 def test_action_priority_retains_known_ast_before_page_budget_exhaustion():

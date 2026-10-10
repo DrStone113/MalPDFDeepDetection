@@ -43,6 +43,7 @@ def profiles(tmp_path):
                     "observed": {"scripts_found": 1, "ast": ast, "structural_indicators": structure}, "scripts_parsed": 1}
                 if number == 1:
                     code = _unavailable("pdf_parser_failure")
+                code["schema_version"] = "pdf-code-inspection-v5"  # Pinned historical profile.
                 record = {"sample_id": identifier, "pdf_sha256": digest, "pdf_relative_path": path,
                     "Label": label, "split": partition, "cache_mode": "cold", "status": "parser_error" if number == 1 else "partial",
                     "static": {"input": {"size_bytes": 2000, "sha256": digest}, "features": raw,
@@ -114,6 +115,23 @@ def test_parser_failures_stay_eligible_but_missing_bytes_are_refused(profiles):
     assert study.profile_input_available(records[1], 1024**2)
     records[1]["static"] = None
     assert not study.profile_input_available(records[1], 1024**2)
+
+
+def test_v6_profile_requires_explicit_schema_lock_and_preserves_v5_support(tmp_path, profiles):
+    cfg, records = profiles
+    for row in records:
+        row["code"]["schema_version"] = "pdf-code-inspection-v6"
+    save_records(tmp_path, cfg, records)
+    method_path = tmp_path / cfg["profile_methodology"]["path"]
+    method = json.loads(method_path.read_text())
+    method["fingerprint"]["code_schema"] = "pdf-code-inspection-v6"
+    method_path.write_text(json.dumps(method))
+    cfg["profile_methodology"] = spec(tmp_path, method_path)
+    with pytest.raises(ValueError, match="methodology differs"):
+        study.load_profile_development(tmp_path, cfg)
+    cfg["profile_code_schema"] = "pdf-code-inspection-v6"
+    loaded, _ = study.load_profile_development(tmp_path, cfg)
+    assert len(loaded) == 16
 
 
 def test_malformed_analysis_flag_is_not_coerced_to_a_measurement(profiles):

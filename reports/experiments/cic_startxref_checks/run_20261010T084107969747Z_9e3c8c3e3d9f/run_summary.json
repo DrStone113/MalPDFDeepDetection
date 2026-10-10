@@ -1,0 +1,42 @@
+{
+  "run_id": "run_20261010T084107969747Z_9e3c8c3e3d9f",
+  "study": "cic_startxref_checks",
+  "status": "completed",
+  "started_at_utc": "2026-10-10T08:41:08.064483+00:00",
+  "code_commit": "9e3c8c3e3d9f58cd0bf0287135de5ac814defd10",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_accuracy.md",
+      " M reports/research_log.md",
+      " M src/malpdf/experiments/cic_static_accuracy.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M tests/test_cic_profile_accuracy.py",
+      " M tests/test_cic_static_benchmark.py",
+      " M tests/test_static_acceleration.py",
+      "?? reports/experiments/cic_profile_accuracy/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_accuracy.md",
+      " M reports/research_log.md",
+      " M src/malpdf/experiments/cic_static_accuracy.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M tests/test_cic_profile_accuracy.py",
+      " M tests/test_cic_static_benchmark.py",
+      " M tests/test_static_acceleration.py",
+      "?? reports/experiments/cic_profile_accuracy/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "missing-startxref bounded code-inspection v6 maintenance verification",
+  "report_path": "reports/experiments/cic_startxref_checks/run_20261010T084107969747Z_9e3c8c3e3d9f/run_summary.json",
+  "artifact_path": "artifacts/cic_startxref_checks/run_20261010T084107969747Z_9e3c8c3e3d9f",
+  "metrics": {},
+  "notes": "One bounded in-memory missing-startxref reconstruction retry retains strict failure and partial/unknown totals; original source/hash/raw count unchanged, no complete cache promotion, fake PDFs/existing markers/resource failures stay refused. v6 invalidates old jobs/caches; explicit historical v5 metadata stays supported. 724 passed, 2 warnings in 241.77s (0:04:01); pip/diff/status saved. No real PDFs/Test or new model fitting in maintenance.",
+  "finished_at_utc": "2026-10-10T08:46:39.344903+00:00"
+}

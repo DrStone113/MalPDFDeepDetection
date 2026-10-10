@@ -28,7 +28,7 @@ from malpdf.static.parser_diagnostics import ParserDiagnostics
 
 SECURITY_NAMES = frozenset({"/JS", "/JavaScript", "/OpenAction", "/AA", "/Launch",
     "/EmbeddedFile", "/EmbeddedFiles", "/XFA", "/AcroForm", "/JBIG2Decode", "/RichMedia", "/URI"})
-CODE_INSPECTION_SCHEMA_VERSION = "pdf-code-inspection-v5"
+CODE_INSPECTION_SCHEMA_VERSION = "pdf-code-inspection-v6"
 # Only fixed PDF vocabulary is exported in paths; untrusted keys remain redacted.
 _PATH_NAMES = SECURITY_NAMES | frozenset({"/Root", "/Pages", "/Kids", "/Annots", "/A",
     "/Next", "/Names", "/Fields", "/O", "/C", "/E", "/X", "/D", "/U", "/Fo",
@@ -191,12 +191,20 @@ def _inspect_code_bytes_inner(data, limits, timings):
         reason = diagnostic.data["failures"][0]["reason"]
         # One bounded retry for known xref failures, in the same capped worker.
         # Reconstructed evidence is partial even when traversal/AST succeeds.
-        if not isinstance(error, PdfReadError) or reason not in {"xref_invalid", "xref_read_failed", "xref_missing"}:
+        missing_marker = reason == "startxref_missing" and b"startxref" not in data
+        if not isinstance(error, PdfReadError) or (not missing_marker and reason not in {"xref_invalid", "xref_read_failed", "xref_missing"}):
             return _unavailable("pdf_parser_failure", diagnostic.data)
         retry = ParserDiagnostics(strict=False)
+        # A fixed in-memory zero-offset marker asks pypdf to rebuild its xref.
+        # Original bytes/hash/raw features are untouched. This is reconstructed
+        # catalog evidence, never a valid repaired PDF or complete revision view.
+        suffix = b"\nstartxref\n0\n%%EOF\n" if missing_marker else b""
+        if missing_marker:
+            retry.data["reconstruction"] = {"kind": "missing_startxref_marker", "source_bytes_changed": False,
+                "parser_buffer_suffix_bytes": len(suffix), "scope": "in-memory catalog reconstruction; revision completeness unknown"}
         try:
             with retry.capture_open_notices():
-                reader = PdfReader(io.BytesIO(data), strict=False)
+                reader = PdfReader(io.BytesIO(data + suffix), strict=False)
         except Exception as retry_error:
             retry.failure(retry_error, "open_recovery")
             diagnostic.data["recovery_attempt"] = retry.data

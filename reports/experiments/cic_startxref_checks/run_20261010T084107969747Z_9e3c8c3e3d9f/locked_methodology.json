@@ -1,0 +1,38 @@
+{
+  "protocol": "missing-startxref bounded code-inspection v6 maintenance verification",
+  "seed": 42,
+  "pdf_access": "synthetic benign fixtures only",
+  "test_dataset_access": false,
+  "source_profile": "run_20261010T064045861512Z_53173f5a5625",
+  "measured_ablation": "run_20261010T083405354981Z_9e3c8c3e3d9f",
+  "code_schema": "pdf-code-inspection-v6",
+  "checks": [
+    "targeted",
+    "suite",
+    "pip",
+    "diff",
+    "status"
+  ],
+  "synthetic_test_sha256": {
+    "tests/test_cic_static_benchmark.py": "41d8196d1cd5f2475a3128e8e3e45a74d2bff0abec45f5981a5e6ba5c02f7088",
+    "tests/test_cic_profile_accuracy.py": "3cbb8bf3b7ec43efcf35c4fd7de40f76154a14729fbdb8a8b5a83d536fc8f88d",
+    "tests/test_static_acceleration.py": "d57b781adae62bd69a75f5e1beed4e6d9aabdab5b524a9c5da4340141028cb2f"
+  },
+  "code_commit": "9e3c8c3e3d9f58cd0bf0287135de5ac814defd10",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_accuracy.md",
+      " M reports/research_log.md",
+      " M src/malpdf/experiments/cic_static_accuracy.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M tests/test_cic_profile_accuracy.py",
+      " M tests/test_cic_static_benchmark.py",
+      " M tests/test_static_acceleration.py",
+      "?? reports/experiments/cic_profile_accuracy/"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

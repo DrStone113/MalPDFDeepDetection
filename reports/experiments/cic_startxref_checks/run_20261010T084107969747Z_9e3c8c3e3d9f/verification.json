@@ -1,0 +1,32 @@
+{
+  "targeted": {
+    "exit_code": 0,
+    "seconds": 74.75716214400018,
+    "last_line": "155 passed in 70.07s (0:01:10)",
+    "output": "artifacts/cic_startxref_checks/run_20261010T084107969747Z_9e3c8c3e3d9f/targeted.txt"
+  },
+  "suite": {
+    "exit_code": 0,
+    "seconds": 253.30014256199956,
+    "last_line": "724 passed, 2 warnings in 241.77s (0:04:01)",
+    "output": "artifacts/cic_startxref_checks/run_20261010T084107969747Z_9e3c8c3e3d9f/suite.txt"
+  },
+  "pip": {
+    "exit_code": 0,
+    "seconds": 2.876168095000139,
+    "last_line": "No broken requirements found.",
+    "output": "artifacts/cic_startxref_checks/run_20261010T084107969747Z_9e3c8c3e3d9f/pip.txt"
+  },
+  "diff": {
+    "exit_code": 0,
+    "seconds": 0.08895600699997885,
+    "last_line": "no output",
+    "output": "artifacts/cic_startxref_checks/run_20261010T084107969747Z_9e3c8c3e3d9f/diff.txt"
+  },
+  "status": {
+    "exit_code": 0,
+    "seconds": 0.042050092000863515,
+    "last_line": "?? reports/experiments/cic_startxref_checks/",
+    "output": "artifacts/cic_startxref_checks/run_20261010T084107969747Z_9e3c8c3e3d9f/status.txt"
+  }
+}

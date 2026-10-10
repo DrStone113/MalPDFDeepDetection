@@ -95,11 +95,13 @@ def load_profile_development(root, cfg):
     """Verify the sealed offline run and fixed identities; never reopen a PDF."""
     summary = json.loads(_profile_content(root, cfg["profile_summary"], "reports/experiments"))
     method = json.loads(_profile_content(root, cfg["profile_methodology"], "reports/experiments"))
+    code_schema = cfg.get("profile_code_schema", "pdf-code-inspection-v5")
     if (summary["status"] != "completed" or summary["run_id"] != cfg["source_profile"]
             or method["test_access"] is not False
             or method["seed"] != 42 or method["configuration"]["rf"] != cfg["rf"]
             or method["fingerprint"]["profile_version"] != "cic-static-profile-v2"
-            or method["fingerprint"]["code_schema"] != "pdf-code-inspection-v5"):
+            or code_schema not in {"pdf-code-inspection-v5", "pdf-code-inspection-v6"}
+            or method["fingerprint"]["code_schema"] != code_schema):
         raise ValueError("Source profile/methodology differs from the locked study")
     source_cfg = method["configuration"]
     expected = select_subset(checked_table(root, source_cfg["split_manifest"]),
@@ -124,7 +126,7 @@ def load_profile_development(root, cfg):
         raise ValueError("Profile development class/partition counts changed")
     for row in records:
         code = row.get("code")
-        if code is not None and (code.get("schema_version") != "pdf-code-inspection-v5"
+        if code is not None and (code.get("schema_version") != code_schema
                 or code.get("active_content_executed") is not False or code.get("content_redacted") is not True):
             raise ValueError("Unexpected profile code schema or execution state")
         static = row.get("static")

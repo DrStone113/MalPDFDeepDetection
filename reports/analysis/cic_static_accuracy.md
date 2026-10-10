@@ -151,3 +151,44 @@ This is a small, balanced, previously exposed development cohort. A positive
 result would require a larger locked Train/dev measurement and separate fresh
 offline raw-to-result confirmation; it would not establish independent Test
 accuracy or justify silently deploying a fallback on unknown PDFs.
+
+The invocation completed from clean code9e3c8c3 in
+`reports/experiments/cic_profile_accuracy/run_20261010T083405354981Z_9e3c8c3e3d9f/`.
+All variants fit32 Train rows and classified32 Validation rows (16 of each
+class), keeping threshold0.5. These are cached-profile measurements, not new
+raw-to-result timings or Test scores.
+
+| Variant | TP / malicious | FP / benign | Malicious F1 | MCC |
+| --- | --- | --- | --- | --- |
+| P0 | 12/16 | 13/16 | 0.5854 | -0.0756 |
+| P1 | 12/16 | 13/16 | 0.5854 | -0.0756 |
+| P2 | 12/16 | 12/16 | 0.6000 | 0.0000 |
+
+Observed AST did not improve hard-label recall/FPR. Parser-status flags changed
+one partial benign prediction, leaving poor discrimination. All15 Validation
+parser-error files (8 malicious,7 benign) were predicted malicious by all three
+variants. Only3 Train files had parser errors, illustrating the small cohort's
+uneven failure coverage. No fallback candidate is promoted. Coverage1.0 here
+means model input availability, not successful full structural/AST analysis.
+
+## Missing-startxref maintenance
+
+The14 missing-startxref files have recorded raw object/trailer counts, while
+the code inspector previously stopped before object traversal. A benign
+fixture with the marker removed reproduced this failure. V6 now permits one
+in-memory zero-offset marker suffix only after the strict parser reports
+`startxref_missing` and the original bounded bytes contain no `startxref` token.
+Pypdf's existing lenient xref reconstruction remains inside the same OS-capped
+worker and deadline. This changes a parser-only buffer, never the source file,
+source checksum or canonical raw count. Its fixed diagnostic records that
+reconstruction occurred. Original strict failure is retained; recovered AST
+is an observed lower bound, all global counts/completeness remain unknown,
+and reconstructed profiles are not cached as complete. A fake PDF still
+refuses analysis, an existing marker is not replaced, and MemoryError is not
+retried. Reconstruction does not establish valid revision history or safe PDF
+behavior. Old v5 job/cache fingerprints are invalidated; saved v5 records remain
+readable by their explicit historical schema contract.
+
+This correction is verified on synthetic benign inputs only. A paired same64
+offline console measurement must verify real recovery and model effects;
+there is no measured new real-PDF accuracy or parser coverage gain for v6 yet.
