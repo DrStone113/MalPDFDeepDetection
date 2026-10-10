@@ -1,0 +1,61 @@
+{
+  "checks": [
+    {
+      "name": "pytest",
+      "command": [
+        "/home/drstone/MalPDFDeepDetection/.venv/bin/python",
+        "-m",
+        "pytest",
+        "tests/",
+        "--durations=5"
+      ],
+      "exit_code": 1,
+      "output_path": "artifacts/cic_review_checks/run_20261010T072353471458Z_53173f5a5625/pytest.txt",
+      "summary": "49.97s call     tests/test_static_development.py::test_numeric_cloud_training_imports_without_any_pdf_parser\n29.53s call     tests/test_tri_modal_fusion.py::test_real_resnet_checkpoint_forward_path_uses_verified_cache\n26.52s call     tests/test_static_benchmark.py::test_benchmark_spawn_replay_keeps_parser_startup_lightweight\n23.18s call     tests/test_cic_static_benchmark.py::test_benign_whole_job_keeps_failed_rows_cache_misses_and_both_passes[missing]\n22.74s call     tests/test_cic_static_benchmark.py::test_actual_profile_cold_warm_invalid_hash_and_ast_failure\n=========================== short test summary info ============================\nFAILED tests/test_static_benchmark.py::test_benchmark_spawn_replay_keeps_parser_startup_lightweight\n============ 1 failed, 709 passed, 2 warnings in 550.04s (0:09:10) ============="
+    },
+    {
+      "name": "pip_check",
+      "command": [
+        "/home/drstone/MalPDFDeepDetection/.venv/bin/python",
+        "-m",
+        "pip",
+        "check"
+      ],
+      "exit_code": 0,
+      "output_path": "artifacts/cic_review_checks/run_20261010T072353471458Z_53173f5a5625/pip_check.txt",
+      "summary": "No broken requirements found."
+    },
+    {
+      "name": "diff_check",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "output_path": "artifacts/cic_review_checks/run_20261010T072353471458Z_53173f5a5625/diff_check.txt",
+      "summary": ""
+    },
+    {
+      "name": "git_status",
+      "command": [
+        "git",
+        "status",
+        "--short"
+      ],
+      "exit_code": 0,
+      "output_path": "artifacts/cic_review_checks/run_20261010T072353471458Z_53173f5a5625/git_status.txt",
+      "summary": " M README.md\n M reports/analysis/cic_static_offline.md\n M reports/research_log.md\n M tests/test_static_benchmark.py\n M tests/test_static_development.py\n?? reports/experiments/cic_profile_review/\n?? reports/experiments/cic_review_checks/\n?? reports/experiments/cic_static_profile/run_20261010T064045861512Z_53173f5a5625/"
+    }
+  ],
+  "source_sha256": {
+    "tests/test_static_benchmark.py": "88466b78fa467cb860632a5ffabe68e6a4236f9440428b3a7a498dc9f8650e7e",
+    "tests/test_static_development.py": "19be589a7aa9ed80bff28556fb1a3a8f74696a4114a1f58001e6ff76fc98d99d",
+    "README.md": "73d14382c2aec2f638fb545ac34c9f782fb2a88e5f6955cf774cc0822e19b13a",
+    "reports/analysis/cic_static_offline.md": "c2fa6f81298c0808fe14367ef6a94adb2d8d7b993041c5e92a301c472b34893b"
+  },
+  "real_pdf_access": false,
+  "test_partition_access": false,
+  "production_worker_limits_changed": false,
+  "model_fit_or_scoring": "synthetic unit-test fixtures only; no dataset model fitting/scoring"
+}

@@ -1,0 +1,39 @@
+{
+  "protocol": "CIC result review final maintenance verification",
+  "failed_review_run": "run_20261010T070203791065Z_53173f5a5625",
+  "completed_pdf_run": "run_20261010T064045861512Z_53173f5a5625",
+  "configuration": {
+    "outer_import_harness_timeout_seconds": 60,
+    "synthetic_pdf_child_wall_seconds": 8,
+    "synthetic_pdf_child_cpu_seconds": 4,
+    "synthetic_pdf_child_address_space_bytes": 1073741824,
+    "threads": 1
+  },
+  "source_sha256": {
+    "tests/test_static_benchmark.py": "88466b78fa467cb860632a5ffabe68e6a4236f9440428b3a7a498dc9f8650e7e",
+    "tests/test_static_development.py": "19be589a7aa9ed80bff28556fb1a3a8f74696a4114a1f58001e6ff76fc98d99d",
+    "README.md": "73d14382c2aec2f638fb545ac34c9f782fb2a88e5f6955cf774cc0822e19b13a",
+    "reports/analysis/cic_static_offline.md": "c2fa6f81298c0808fe14367ef6a94adb2d8d7b993041c5e92a301c472b34893b"
+  },
+  "scope": "test harness import allowance only; production extractor/resource caps/model/split/schema/cache unchanged",
+  "pdf_access": "synthetic benign fixtures only; no new dataset PDFs",
+  "test_partition_access": false,
+  "model_evaluation": "N/A; only tests/maintenance and saved-report review",
+  "retry_evidence": "Original full suite708 passed/2 startup timeouts retained. Unchanged30s targeted retry1 passed/1 timeout. With outer60s targeted2 passed95.83s; numeric import36.92s, spawn replay22.12s.",
+  "seed": 42,
+  "code_commit": "53173f5a56253549722416752bba8f9f672be517",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/research_log.md",
+      " M tests/test_static_benchmark.py",
+      " M tests/test_static_development.py",
+      "?? reports/experiments/cic_profile_review/",
+      "?? reports/experiments/cic_static_profile/run_20261010T064045861512Z_53173f5a5625/"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

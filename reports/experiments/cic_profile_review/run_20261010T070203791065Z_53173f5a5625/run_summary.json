@@ -1,0 +1,32 @@
+{
+  "run_id": "run_20261010T070203791065Z_53173f5a5625",
+  "study": "cic_profile_review",
+  "status": "failed",
+  "started_at_utc": "2026-10-10T07:02:04.190985+00:00",
+  "code_commit": "53173f5a56253549722416752bba8f9f672be517",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/research_log.md",
+      "?? reports/experiments/cic_static_profile/run_20261010T064045861512Z_53173f5a5625/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/research_log.md",
+      "?? reports/experiments/cic_static_profile/run_20261010T064045861512Z_53173f5a5625/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "same64 CIC offline result review from saved evidence",
+  "report_path": "reports/experiments/cic_profile_review/run_20261010T070203791065Z_53173f5a5625/run_summary.json",
+  "artifact_path": "artifacts/cic_profile_review/run_20261010T070203791065Z_53173f5a5625",
+  "metrics": {},
+  "error_type": "RuntimeError",
+  "finished_at_utc": "2026-10-10T07:14:24.545774+00:00"
+}

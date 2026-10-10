@@ -1,0 +1,31 @@
+{
+  "protocol": "same64 CIC offline result review from saved evidence",
+  "baseline_run": "run_20261009T143328562606Z_57544eaea873",
+  "completed_run": "run_20261010T064045861512Z_53173f5a5625",
+  "inputs": {
+    "baseline_records_sha256": "1c54a5bcc44fa5c0f98e8b25f4101eea7779fe8b85e0327bf6e7fe985ead5403",
+    "completed_records_sha256": "bf4b77706aee81897559a1902bbfa8e6de14697dcec1976a9d37e42bf9dddb37"
+  },
+  "configuration": {
+    "comparison": "paired fixed identities/labels/partitions; observed lower bounds only",
+    "test_access": false,
+    "pdf_access": false,
+    "model_fit_or_scoring": false,
+    "maintenance_threads": 1
+  },
+  "metrics": "N/A: extraction/review maintenance only; RF metrics already registered by the console experiment",
+  "scope": "read saved bounded LAB metadata; no raw PDFs, Test rows or extracted payload execution",
+  "seed": 42,
+  "code_commit": "53173f5a56253549722416752bba8f9f672be517",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/research_log.md",
+      "?? reports/experiments/cic_static_profile/run_20261010T064045861512Z_53173f5a5625/"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

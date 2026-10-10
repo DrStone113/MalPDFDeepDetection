@@ -32,20 +32,24 @@ if __name__ == "__mp_main__":
     runpy.run_path({str(script)!r}, run_name=__name__)
     assert "malpdf.experiments.static_benchmark" not in sys.modules
     assert "numpy" not in sys.modules
-from malpdf.static.code_inspector import inspect_pdf_code
+from malpdf.static.code_inspector import CodeInspectionLimits, inspect_pdf_code
 if __name__ == "__main__":
     from malpdf.experiments.static_benchmark import benchmark_static
-    print(json.dumps(inspect_pdf_code({str(pdf)!r})))
+    print(json.dumps(inspect_pdf_code({str(pdf)!r}, limits=CodeInspectionLimits(wall_seconds=20))))
 ''', encoding="utf-8")
     environment = dict(os.environ)
     environment.update({name: "1" for name in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS")})
+    # Cold VM interpreter startup is separate from parser work. This benign
+    # replay uses the CIC job's 20s wall budget, retaining 4s CPU/1GiB caps and
+    # checking that no model stack is imported in the child. Defaults stay 8s.
     completed = subprocess.run([sys.executable, str(launcher)], env=environment,
-        capture_output=True, text=True, timeout=30, check=True)
+        capture_output=True, text=True, timeout=60, check=True)
     result = json.loads(completed.stdout)
     (tmp_path / "worker_evidence.json").write_text(completed.stdout, encoding="utf-8")
     assert result["complete"], (result, completed.stderr)
     assert result["scripts_parsed"] == 1
     assert result["ast"]["named_calls"]["util.printf"] == 1
+    assert result["resource_limits"]["wall_seconds"] == 20
     assert result["resource_limits"]["cpu_seconds"] == [4, 4]
     assert result["resource_limits"]["address_space_bytes"] == [1024**3, 1024**3]
     assert result["active_content_executed"] is False

@@ -1,0 +1,14 @@
+{
+  "source": "observed final targeted pytest stdout",
+  "command": "python -m pytest tests/test_static_benchmark.py -q --durations=3",
+  "passed": 3,
+  "failed": 0,
+  "duration_seconds": 6.86,
+  "spawn_replay_seconds": 3.79,
+  "fixture_wall_seconds": 20,
+  "fixture_cpu_seconds": 4,
+  "fixture_address_space_bytes": 1073741824,
+  "previous_failures": "preserved original full708/2 startup timeouts; second full709/1 parser_exit_or_timeout under8s fixture budget. Real PDF benchmark remained completed.",
+  "production_default_wall_seconds": 8,
+  "production_default_cpu_seconds": 4
+}

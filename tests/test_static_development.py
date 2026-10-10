@@ -195,6 +195,8 @@ import malpdf.experiments.static_development
 from malpdf.static import StaticInspectionLimits
 print('numeric imports verified')
 """
-    result = subprocess.run([sys.executable, "-E", "-c", script], text=True, capture_output=True, timeout=30)
+    # Cold torch/model imports on the small VM can exceed 30s. This bounded
+    # harness checks the import boundary; no PDF parser or sample is allowed.
+    result = subprocess.run([sys.executable, "-E", "-c", script], text=True, capture_output=True, timeout=60)
     assert result.returncode == 0, result.stderr
     assert "numeric imports verified" in result.stdout

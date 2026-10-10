@@ -1,0 +1,122 @@
+{
+  "status": "completed",
+  "models": {
+    "C0_rit_baseline": {
+      "threshold": 0.5,
+      "fit_seconds": 0.2902014549999876,
+      "train_available": 18,
+      "dev_planned": 32,
+      "dev_available": 11,
+      "coverage": 0.34375,
+      "refusals": 21,
+      "true_positives": 2,
+      "false_positives": 4,
+      "malicious_classified": 6,
+      "benign_classified": 5,
+      "malicious_planned": 16,
+      "benign_planned": 16,
+      "malicious_coverage": 0.375,
+      "benign_coverage": 0.3125,
+      "recall_malicious_classified": 0.3333333333333333,
+      "fpr_classified": 0.8,
+      "detected_fraction_all_malicious": 0.125,
+      "false_positive_fraction_all_benign": 0.25,
+      "metrics_classified": {
+        "positive_label": 1,
+        "accuracy": 0.2727272727272727,
+        "precision_malicious": 0.3333333333333333,
+        "recall_malicious": 0.3333333333333333,
+        "f1_malicious": 0.3333333333333333,
+        "precision_macro": 0.26666666666666666,
+        "recall_macro": 0.26666666666666666,
+        "f1_macro": 0.26666666666666666,
+        "precision": 0.3333333333333333,
+        "recall": 0.3333333333333333,
+        "f1": 0.3333333333333333,
+        "mcc": -0.4666666666666667,
+        "confusion_matrix": [
+          [
+            1,
+            4
+          ],
+          [
+            4,
+            2
+          ]
+        ],
+        "confusion_matrix_labels": [
+          0,
+          1
+        ],
+        "roc_auc": 0.3333333333333333,
+        "pr_auc": 0.5975228475228476,
+        "score_source": null,
+        "brier": 0.4014740603741496,
+        "log_loss": 1.0616246934870341,
+        "ece": 0.5019978354978355,
+        "ece_bins": 10,
+        "threshold": 0.5
+      },
+      "feature_count": 41
+    },
+    "C1_rit_plus_structure_ast": {
+      "threshold": 0.5,
+      "fit_seconds": 0.24761140100000034,
+      "train_available": 18,
+      "dev_planned": 32,
+      "dev_available": 11,
+      "coverage": 0.34375,
+      "refusals": 21,
+      "true_positives": 2,
+      "false_positives": 3,
+      "malicious_classified": 6,
+      "benign_classified": 5,
+      "malicious_planned": 16,
+      "benign_planned": 16,
+      "malicious_coverage": 0.375,
+      "benign_coverage": 0.3125,
+      "recall_malicious_classified": 0.3333333333333333,
+      "fpr_classified": 0.6,
+      "detected_fraction_all_malicious": 0.125,
+      "false_positive_fraction_all_benign": 0.1875,
+      "metrics_classified": {
+        "positive_label": 1,
+        "accuracy": 0.36363636363636365,
+        "precision_malicious": 0.4,
+        "recall_malicious": 0.3333333333333333,
+        "f1_malicious": 0.36363636363636365,
+        "precision_macro": 0.3666666666666667,
+        "recall_macro": 0.3666666666666667,
+        "f1_macro": 0.36363636363636365,
+        "precision": 0.4,
+        "recall": 0.3333333333333333,
+        "f1": 0.36363636363636365,
+        "mcc": -0.26666666666666666,
+        "confusion_matrix": [
+          [
+            2,
+            3
+          ],
+          [
+            4,
+            2
+          ]
+        ],
+        "confusion_matrix_labels": [
+          0,
+          1
+        ],
+        "roc_auc": 0.3333333333333333,
+        "pr_auc": 0.5260942760942761,
+        "score_source": null,
+        "brier": 0.3340631725449729,
+        "log_loss": 0.8928804583649582,
+        "ece": 0.39643088729452364,
+        "ece_bins": 10,
+        "threshold": 0.5
+      },
+      "feature_count": 67
+    }
+  },
+  "scope": "balanced fixed Train/dev pilot; train-only imputation; fixed threshold0.5, no tuning/Test access; refusals excluded from classified metrics and retained in coverage/all-class denominators"
+}

@@ -1,0 +1,280 @@
+{
+  "cold": {
+    "planned": 64,
+    "recorded": 64,
+    "not_started": 0,
+    "unique_pdf_samples": 64,
+    "status_counts": {
+      "parser_error": 18,
+      "partial": 23,
+      "complete": 23
+    },
+    "error_counts_overlapping": {
+      "parser_failure": 18,
+      "pdf_parser_failure": 18,
+      "pdf_structure_limit": 5,
+      "unsupported_script_filter": 1,
+      "encrypted_pdf": 2,
+      "ast_node_limit": 3,
+      "pdf_reference_unavailable": 10,
+      "pdf_xref_recovered": 12,
+      "script_byte_limit": 1,
+      "reference_feature_partial": 1,
+      "reference_object_limit": 2
+    },
+    "analysis_reason_counts_overlapping": {
+      "parser_failure": 18,
+      "pdf_parser_failure": 18,
+      "structural_reference_unavailable": 13,
+      "pdf_structure_limit": 5,
+      "unsupported_script_filter": 1,
+      "encrypted_pdf": 2,
+      "encrypted_pdf_partial_extraction": 2,
+      "ast_node_limit": 3,
+      "pdf_reference_unavailable": 10,
+      "pdf_xref_recovered": 12,
+      "script_byte_limit": 1,
+      "reference_feature_partial": 1,
+      "feature_gate_failed": 2,
+      "reference_object_limit": 2,
+      "static_resource_limit": 2,
+      "structural_object_limit": 2
+    },
+    "parser_failure_categories": {
+      "structural/open/PdfReadError/unclassified_parser_exception": 1,
+      "javascript/open/PdfReadError/unclassified_parser_exception": 1,
+      "javascript/open/PdfReadError/xref_invalid": 12,
+      "javascript/reference/CodeInspectionError/unclassified_parser_exception": 10,
+      "structural/open/PdfReadError/startxref_missing": 14,
+      "javascript/open/PdfReadError/startxref_missing": 14,
+      "structural/open/OtherError/unclassified_parser_exception": 3,
+      "javascript/open/OtherError/unclassified_parser_exception": 3
+    },
+    "parser_disagreement_files": 0,
+    "reference_parser_repaired_files": 30,
+    "ast_error_files": 3,
+    "cache_hits": 0,
+    "inference_available": 29,
+    "inference_executed": 29,
+    "prediction_unavailable_reason_counts": {
+      "extraction_incomplete": 35
+    },
+    "total_seconds": {
+      "measured": 64,
+      "unavailable": 0,
+      "p50": 0.7890917965000028,
+      "p95": 3.133419594599993,
+      "sum": 76.49723070800007
+    },
+    "stages_seconds": {
+      "read_hash": {
+        "measured": 64,
+        "unavailable": 0,
+        "p50": 0.0019405900000109,
+        "p95": 0.0066875419500035975,
+        "sum": 0.1709055319999777
+      },
+      "raw_scan": {
+        "measured": 64,
+        "unavailable": 0,
+        "p50": 0.0007109850000048823,
+        "p95": 0.017024709999999714,
+        "sum": 0.2746232680000702
+      },
+      "parse_pdf": {
+        "measured": 64,
+        "unavailable": 0,
+        "p50": 0.02232515000001456,
+        "p95": 0.5105837320499956,
+        "sum": 9.294799451000102
+      },
+      "stream_decode": {
+        "measured": 19,
+        "unavailable": 45,
+        "p50": 0.0,
+        "p95": 0.0005883033999694424,
+        "sum": 0.0034791519999544107
+      },
+      "js_ast": {
+        "measured": 38,
+        "unavailable": 26,
+        "p50": 0.49452299150001267,
+        "p95": 1.9393150563500035,
+        "sum": 20.04425595200003
+      },
+      "inference_gate": {
+        "measured": 64,
+        "unavailable": 0,
+        "p50": 0.00019637699999464076,
+        "p95": 0.0025622112000021954,
+        "sum": 0.05950577999988127
+      },
+      "inference": {
+        "measured": 29,
+        "unavailable": 35,
+        "p50": 0.005868486999986544,
+        "p95": 0.009324819400001159,
+        "sum": 0.18312182600000426
+      }
+    },
+    "overhead_seconds": {
+      "measured": 64,
+      "unavailable": 0,
+      "p50": 0.6446644950000149,
+      "p95": 1.0571088993500004,
+      "sum": 46.466539747000056
+    },
+    "peak_worker_rss_bytes": 303382528,
+    "peak_family_rss_sampled_bytes": 582184960,
+    "rss_lower_bound_records": 0
+  },
+  "warm": {
+    "planned": 64,
+    "recorded": 64,
+    "not_started": 0,
+    "unique_pdf_samples": 64,
+    "status_counts": {
+      "parser_error": 18,
+      "partial": 23,
+      "complete": 23
+    },
+    "error_counts_overlapping": {
+      "parser_failure": 18,
+      "pdf_parser_failure": 18,
+      "pdf_structure_limit": 5,
+      "unsupported_script_filter": 1,
+      "encrypted_pdf": 2,
+      "ast_node_limit": 3,
+      "pdf_reference_unavailable": 10,
+      "pdf_xref_recovered": 12,
+      "script_byte_limit": 1,
+      "reference_feature_partial": 1,
+      "reference_object_limit": 2
+    },
+    "analysis_reason_counts_overlapping": {
+      "parser_failure": 18,
+      "pdf_parser_failure": 18,
+      "structural_reference_unavailable": 13,
+      "pdf_structure_limit": 5,
+      "unsupported_script_filter": 1,
+      "encrypted_pdf": 2,
+      "encrypted_pdf_partial_extraction": 2,
+      "ast_node_limit": 3,
+      "pdf_reference_unavailable": 10,
+      "pdf_xref_recovered": 12,
+      "script_byte_limit": 1,
+      "reference_feature_partial": 1,
+      "feature_gate_failed": 2,
+      "reference_object_limit": 2,
+      "static_resource_limit": 2,
+      "structural_object_limit": 2
+    },
+    "parser_failure_categories": {
+      "structural/open/PdfReadError/unclassified_parser_exception": 1,
+      "javascript/open/PdfReadError/unclassified_parser_exception": 1,
+      "javascript/open/PdfReadError/xref_invalid": 12,
+      "javascript/reference/CodeInspectionError/unclassified_parser_exception": 10,
+      "structural/open/PdfReadError/startxref_missing": 14,
+      "javascript/open/PdfReadError/startxref_missing": 14,
+      "structural/open/OtherError/unclassified_parser_exception": 3,
+      "javascript/open/OtherError/unclassified_parser_exception": 3
+    },
+    "parser_disagreement_files": 0,
+    "reference_parser_repaired_files": 30,
+    "ast_error_files": 3,
+    "cache_hits": 23,
+    "inference_available": 29,
+    "inference_executed": 29,
+    "prediction_unavailable_reason_counts": {
+      "extraction_incomplete": 35
+    },
+    "total_seconds": {
+      "measured": 64,
+      "unavailable": 0,
+      "p50": 0.6469598829999939,
+      "p95": 2.6381794498999986,
+      "sum": 56.97291430400003
+    },
+    "stages_seconds": {
+      "read_hash": {
+        "measured": 64,
+        "unavailable": 0,
+        "p50": 0.00035334599999714555,
+        "p95": 0.0019447692000142047,
+        "sum": 0.04762729600003013
+      },
+      "raw_scan": {
+        "measured": 41,
+        "unavailable": 23,
+        "p50": 0.0002434630000038851,
+        "p95": 0.017996686000003592,
+        "sum": 0.21446591999995235
+      },
+      "parse_pdf": {
+        "measured": 41,
+        "unavailable": 23,
+        "p50": 0.018475976000019045,
+        "p95": 1.393595538999989,
+        "sum": 8.211033334999911
+      },
+      "stream_decode": {
+        "measured": 1,
+        "unavailable": 63,
+        "p50": 3.127400000835223e-05,
+        "p95": 3.127400000835223e-05,
+        "sum": 3.127400000835223e-05
+      },
+      "js_ast": {
+        "measured": 15,
+        "unavailable": 49,
+        "p50": 0.4982679249999933,
+        "p95": 1.8582479961000102,
+        "sum": 11.90935089900006
+      },
+      "inference_gate": {
+        "measured": 64,
+        "unavailable": 0,
+        "p50": 9.559449999585468e-05,
+        "p95": 0.001413743750012486,
+        "sum": 0.040340193999895746
+      },
+      "inference": {
+        "measured": 29,
+        "unavailable": 35,
+        "p50": 0.005515149999979485,
+        "p95": 0.0061791634000030625,
+        "sum": 0.16045627800008333
+      }
+    },
+    "overhead_seconds": {
+      "measured": 64,
+      "unavailable": 0,
+      "p50": 0.6077730870000124,
+      "p95": 0.6506844184499456,
+      "sum": 36.38960910800009
+    },
+    "peak_worker_rss_bytes": 303136768,
+    "peak_family_rss_sampled_bytes": 581939200,
+    "rss_lower_bound_records": 0
+  },
+  "run_wall_seconds": 134.955835469,
+  "model_setup": {
+    "seconds": 0.6353373039999894,
+    "status": "verified_loaded",
+    "error_code": null,
+    "restoration": null,
+    "model_id": "xgb-rit-supplied-g-drop3constant-v1",
+    "artifact_sha256": "4046925dda2e65cbbdf91f1c1e8b93308b2f062ff206cd15a225419d7f14387a",
+    "training_provenance": {
+      "sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "fit_scope": "user-reported original Protocol G Train; training lineage not independently verified"
+    },
+    "requested_n_jobs": 1,
+    "scope": "checksum-verified frozen RIT model recorded by identity; inference timing only, no CIC accuracy claim; setup excluded from per-file inference"
+  },
+  "peak_parent_rss_bytes": 298815488,
+  "memory_scope": "worker current-process VmHWM when returned, rusage fallback explicitly tagged; killed worker polling lower bound; concurrent parent+worker RSS sum sampled and may double count shared pages",
+  "failure_inventory": "private artifacts/per_file.jsonl and failures.jsonl; no samples silently discarded",
+  "os_cache": "uncontrolled; cold/warm refer to application cache",
+  "stage_scope": "exclusive stage timings; inference=predict_proba only, null if not called; inference_gate=compatibility/feature/model checks and response validation; implicit xref/object/content decoding and reference text extraction remain in parse_pdf; stream_decode covers explicit JS streams; residual overhead includes startup/cache/IPC and any unfinished stage"
+}

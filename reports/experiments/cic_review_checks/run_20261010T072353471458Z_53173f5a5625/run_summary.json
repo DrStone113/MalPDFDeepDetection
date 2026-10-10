@@ -1,0 +1,38 @@
+{
+  "run_id": "run_20261010T072353471458Z_53173f5a5625",
+  "study": "cic_review_checks",
+  "status": "failed",
+  "started_at_utc": "2026-10-10T07:23:53.685344+00:00",
+  "code_commit": "53173f5a56253549722416752bba8f9f672be517",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/research_log.md",
+      " M tests/test_static_benchmark.py",
+      " M tests/test_static_development.py",
+      "?? reports/experiments/cic_profile_review/",
+      "?? reports/experiments/cic_static_profile/run_20261010T064045861512Z_53173f5a5625/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/research_log.md",
+      " M tests/test_static_benchmark.py",
+      " M tests/test_static_development.py",
+      "?? reports/experiments/cic_profile_review/",
+      "?? reports/experiments/cic_static_profile/run_20261010T064045861512Z_53173f5a5625/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "CIC result review final maintenance verification",
+  "report_path": "reports/experiments/cic_review_checks/run_20261010T072353471458Z_53173f5a5625/run_summary.json",
+  "artifact_path": "artifacts/cic_review_checks/run_20261010T072353471458Z_53173f5a5625",
+  "metrics": {},
+  "error_type": "RuntimeError",
+  "finished_at_utc": "2026-10-10T07:33:23.152007+00:00"
+}

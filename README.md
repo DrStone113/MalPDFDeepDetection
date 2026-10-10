@@ -61,10 +61,13 @@ or establish independent Test accuracy. See
 [the accuracy diagnosis](reports/analysis/cic_static_accuracy.md).
 The completed fixed candidate reduced false positives but lost malicious recall
 on the 291 previously exposed CIC Validation rows; it remains a development
-artifact. The frozen model stays in use. Extractor v5 fixture corrections still
-require the paired offline PDF measurement before any full-pipeline gain is
-claimed. Previous prepared jobs must be prepared again because their code
-fingerprints are locked.
+artifact. The frozen model stays in use. The completed same-64 offline v5
+profile increased files with observed AST evidence from 11 to 20, retaining
+partial status for recovered/incomplete analysis. Complete/partial/parser-error
+counts remain 23/23/18; the small RF pilot's recall/FPR are unchanged from the
+earlier run. No full-pipeline classification improvement is established.
+See [the measured v5 result](reports/analysis/cic_static_offline.md#completed-v5-paired-measurement).
+Prepared jobs must match their locked extractor fingerprints.
 
 ## Retrospective multi-cohort stacking v4
 

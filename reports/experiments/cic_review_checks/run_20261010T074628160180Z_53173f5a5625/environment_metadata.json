@@ -1,0 +1,41 @@
+{
+  "python": "3.11.17",
+  "packages": {
+    "numpy": "2.4.6",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.9.1",
+    "PyMuPDF": "1.26.7",
+    "torch": "2.11.0+cpu",
+    "torchvision": "0.26.0+cpu",
+    "xgboost": "3.2.0",
+    "lightgbm": "4.7.0",
+    "catboost": "1.2.10"
+  },
+  "generating_commit": "53173f5a56253549722416752bba8f9f672be517",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/research_log.md",
+      " M tests/test_static_benchmark.py",
+      " M tests/test_static_development.py",
+      "?? reports/experiments/cic_profile_review/",
+      "?? reports/experiments/cic_review_checks/",
+      "?? reports/experiments/cic_static_profile/run_20261010T064045861512Z_53173f5a5625/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/research_log.md",
+      " M tests/test_static_benchmark.py",
+      " M tests/test_static_development.py",
+      "?? reports/experiments/cic_profile_review/",
+      "?? reports/experiments/cic_review_checks/",
+      "?? reports/experiments/cic_static_profile/run_20261010T064045861512Z_53173f5a5625/"
+    ]
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "source": "observed pytest stdout; retained full failed invocation under the previous review run",
+  "before_harness_fix": {
+    "passed": 1,
+    "failed": 1,
+    "duration_seconds": 109.8,
+    "spawn_replay_seconds": 21.15,
+    "numeric_import_seconds": 30.23,
+    "failure": "numeric import outer subprocess30s timeout"
+  },
+  "after_harness_fix": {
+    "passed": 2,
+    "failed": 0,
+    "duration_seconds": 95.83,
+    "spawn_replay_seconds": 22.12,
+    "numeric_import_seconds": 36.92,
+    "wall_cap_assertion": "8s assertion added after this retry; verified by the following full suite"
+  },
+  "classification_metrics": "N/A: synthetic tests only"
+}

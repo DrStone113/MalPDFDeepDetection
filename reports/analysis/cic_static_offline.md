@@ -203,11 +203,61 @@ The command below remains available for terminal use:
   --lab-isolated
 ```
 
-This is the next measurement, not a completed new PDF benchmark. Inspect its
-`pipeline_summary.json`, `baseline_comparison.json`, `feature_comparison.json`
-and private failure inventory after the run. Recovered xref or traversal-budget
-AST evidence remains partial. Changes in usable class counts must accompany
-recall/FPR comparisons. The fixed cached-table CIC candidate did not improve
-malicious F1/MCC and is not used by this job; see the
-[accuracy diagnosis](cic_static_accuracy.md). End-to-end accuracy improvement
-has not yet been demonstrated.
+### Completed v5 paired measurement
+
+The console job completed as
+`run_20261010T064045861512Z_53173f5a5625` on 2026-10-10, using clean commit
+`53173f5a56253549722416752bba8f9f672be517` and the locked same-64 subset.
+The saved LAB checks confirm disconnected interfaces, non-root console and no
+shared mounts, with the human isolation attestation. All 64 PDFs were retained
+in each cold/warm pass; no Test rows were used. This replaces the earlier
+pending-job status; another PDF run is not needed merely to populate results.
+
+| Observation | Earlier same-64 run | v5 run |
+| --- | ---: | ---: |
+| Complete / partial / parser errors | 23 / 23 / 18 | 23 / 23 / 18 |
+| PDF files with observed JS candidates | 13 | 25 |
+| PDF files with observed AST nodes | 11 | 20 |
+| Successfully parsed scripts | 13 | 22 |
+
+The additional observations are partial evidence, not verified whole-document
+totals or malware labels. Twelve files retain explicit xref-recovery status;
+nine of those have observed JS candidates and six have observed AST nodes.
+The AST failure count is three files with `ast_node_limit`; there were no
+worker timeouts. Fourteen of the 18 fatal structural failures are categorized
+as `startxref_missing`; one PdfReadError and three other exception types remain
+unclassified. Raw error strings are redacted. These categories identify the
+next diagnosis targets without proving that the PDF lacks those structures.
+
+| Measurement | Cold cache | Warm cache |
+| --- | ---: | ---: |
+| Sum of per-file times | 76.497 s | 56.973 s |
+| Per-file p50 / p95 | 0.789 / 3.133 s | 0.647 / 2.638 s |
+| Cache hits | 0 | 23 |
+
+Cold stage sums were 0.171 s read/hash, 9.295 s parse, 0.00348 s explicit JS
+stream decoding, 20.044 s JS/AST, 0.183 s actual frozen-model inference and
+46.467 s residual overhead. Implicit backend decoding remains in parse time;
+unfinished steps and process startup/IPC remain in overhead. Actual inference
+ran on 29/64 rows with p50 5.87 ms, excluding the 35 refusals. These inference
+numbers cannot be compared directly with the old profile-v1 gate-inclusive
+timing. Peak worker RSS was 289.3 MiB; the sampled parent/worker sum was
+555.2 MiB and may double-count shared pages. OS page-cache state was uncontrolled.
+
+The two fixed RF pilots fit on the same 18 eligible Train rows and classify
+11/32 dev rows (six malicious, five benign), leaving 21 explicit refusals.
+Both detect 2/6 malicious files. C0 has 4/5 false positives, C1 has 3/5; these
+counts equal the earlier pilot's results. One fewer false positive than C0 on
+five benign files does not establish a new v5 classification improvement.
+The supplied frozen XGBoost is measured for inference timing; these RF metrics
+are not that estimator's CIC accuracy. The fixed cached-table candidate remains
+undeployed; see the [accuracy diagnosis](cic_static_accuracy.md).
+
+Evidence: [pipeline summary](../experiments/cic_static_profile/run_20261010T064045861512Z_53173f5a5625/pipeline_summary.json),
+[paired status comparison](../experiments/cic_static_profile/run_20261010T064045861512Z_53173f5a5625/baseline_comparison.json),
+[RF feature comparison](../experiments/cic_static_profile/run_20261010T064045861512Z_53173f5a5625/feature_comparison.json).
+Per-file identities, failure inventory and partial observations remain in
+ignored LAB artifacts. The review aggregates those saved records without
+rereading PDFs or fitting/scoring models. Prioritize the missing-startxref
+failures and unresolved references with benign fixtures; preserve nullable
+totals, inference refusals and the established split.

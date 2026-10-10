@@ -1,0 +1,43 @@
+{
+  "before": {
+    "rows": 64,
+    "statuses": {
+      "parser_error": 18,
+      "partial": 23,
+      "complete": 23
+    },
+    "files_with_observed_js_candidates": 13,
+    "files_with_observed_ast_nodes": 11,
+    "scripts_parsed": 13,
+    "recovered_files": 0,
+    "recovered_with_js": 0,
+    "recovered_with_ast": 0
+  },
+  "after": {
+    "rows": 64,
+    "statuses": {
+      "parser_error": 18,
+      "partial": 23,
+      "complete": 23
+    },
+    "files_with_observed_js_candidates": 25,
+    "files_with_observed_ast_nodes": 20,
+    "scripts_parsed": 22,
+    "recovered_files": 12,
+    "recovered_with_js": 9,
+    "recovered_with_ast": 6
+  },
+  "paired_presence_transitions": {
+    "js": {
+      "False -> False": 39,
+      "True -> True": 13,
+      "False -> True": 12
+    },
+    "ast": {
+      "False -> False": 44,
+      "True -> True": 11,
+      "False -> True": 9
+    }
+  },
+  "limits": "Observed candidates/AST nodes are partial evidence; they neither assert complete totals nor label maliciousness. Full classification coverage and RF metrics are unchanged."
+}

@@ -1,0 +1,40 @@
+{
+  "run_id": "run_20261010T074628160180Z_53173f5a5625",
+  "study": "cic_review_checks",
+  "status": "completed",
+  "started_at_utc": "2026-10-10T07:46:28.220832+00:00",
+  "code_commit": "53173f5a56253549722416752bba8f9f672be517",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/research_log.md",
+      " M tests/test_static_benchmark.py",
+      " M tests/test_static_development.py",
+      "?? reports/experiments/cic_profile_review/",
+      "?? reports/experiments/cic_review_checks/",
+      "?? reports/experiments/cic_static_profile/run_20261010T064045861512Z_53173f5a5625/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/research_log.md",
+      " M tests/test_static_benchmark.py",
+      " M tests/test_static_development.py",
+      "?? reports/experiments/cic_profile_review/",
+      "?? reports/experiments/cic_review_checks/",
+      "?? reports/experiments/cic_static_profile/run_20261010T064045861512Z_53173f5a5625/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "CIC completed-profile review and VM fixture verification",
+  "report_path": "reports/experiments/cic_review_checks/run_20261010T074628160180Z_53173f5a5625/run_summary.json",
+  "artifact_path": "artifacts/cic_review_checks/run_20261010T074628160180Z_53173f5a5625",
+  "metrics": {},
+  "notes": "Reviewed/saved actual completed same64 console profile; observed AST files11->20, whole-file statuses23/23/18 and RF pilot recall/FPR unchanged. Earlier check failures retained; test-only outer startup budget60s and explicit bounded benign fixture wall20s (CPU4s/AS1GiB); production default8s and actual CIC20s budgets unchanged. ================= 710 passed, 2 warnings in 226.73s (0:03:46) ==================. No new raw PDF/Test/model evaluation.",
+  "finished_at_utc": "2026-10-10T07:50:25.630492+00:00"
+}

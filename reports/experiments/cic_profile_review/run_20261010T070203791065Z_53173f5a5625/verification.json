@@ -1,0 +1,57 @@
+{
+  "checks": [
+    {
+      "name": "pytest",
+      "command": [
+        "/home/drstone/MalPDFDeepDetection/.venv/bin/python",
+        "-m",
+        "pytest",
+        "tests/"
+      ],
+      "exit_code": 1,
+      "output_path": "artifacts/cic_profile_review/run_20261010T070203791065Z_53173f5a5625/pytest.txt",
+      "summary": "=========================== short test summary info ============================\nFAILED tests/test_static_benchmark.py::test_benchmark_spawn_replay_keeps_parser_startup_lightweight\nFAILED tests/test_static_development.py::test_numeric_cloud_training_imports_without_any_pdf_parser\n============ 2 failed, 708 passed, 2 warnings in 691.99s (0:11:31) ============="
+    },
+    {
+      "name": "pip_check",
+      "command": [
+        "/home/drstone/MalPDFDeepDetection/.venv/bin/python",
+        "-m",
+        "pip",
+        "check"
+      ],
+      "exit_code": 0,
+      "output_path": "artifacts/cic_profile_review/run_20261010T070203791065Z_53173f5a5625/pip_check.txt",
+      "summary": "No broken requirements found."
+    },
+    {
+      "name": "diff_check",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "output_path": "artifacts/cic_profile_review/run_20261010T070203791065Z_53173f5a5625/diff_check.txt",
+      "summary": ""
+    },
+    {
+      "name": "git_status",
+      "command": [
+        "git",
+        "status",
+        "--short"
+      ],
+      "exit_code": 0,
+      "output_path": "artifacts/cic_profile_review/run_20261010T070203791065Z_53173f5a5625/git_status.txt",
+      "summary": " M reports/analysis/cic_static_offline.md\n M reports/research_log.md\n?? reports/experiments/cic_profile_review/\n?? reports/experiments/cic_static_profile/run_20261010T064045861512Z_53173f5a5625/"
+    }
+  ],
+  "real_pdf_access": false,
+  "test_partition_access": false,
+  "model_fit_or_scoring": false,
+  "documentation_sha256": {
+    "README.md": "73d14382c2aec2f638fb545ac34c9f782fb2a88e5f6955cf774cc0822e19b13a",
+    "reports/analysis/cic_static_offline.md": "c2fa6f81298c0808fe14367ef6a94adb2d8d7b993041c5e92a301c472b34893b"
+  }
+}
