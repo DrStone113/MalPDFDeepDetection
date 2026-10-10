@@ -196,22 +196,20 @@ fingerprint cannot run against the changed code.
   --lab-isolated
 ```
 
-## Current v6 paired job
+## Historical v6 paired job
 
 `run_20261010T084845105719Z_266319ceaeec` was prepared from clean commit
 266319ceaeec without reading any PDF. Its subset/configuration and supplied
 frozen Protocol G native-model checksums match the completed v5 measurement.
 The new fingerprint uses `pdf-code-inspection-v6`; the missing-startxref
-reconstruction is verified on synthetic benign inputs only. The full suite
-passed724 tests, with2 existing single-label metric warnings; dependencies and
-whitespace checks passed. No v6 real-CIC coverage/recall/FPR result exists yet.
+reconstruction was first verified on synthetic benign inputs. The preparation
+suite passed724 tests, with2 existing single-label metric warnings; dependencies
+and whitespace checks passed. The console measurement completed below.
 
-After completing the already chosen disconnected non-root VMware console LAB
-procedure, double-click **Chạy CIC offline** on `/home/drstone/Desktop` and
-press Enter. Type `q` to cancel before starting. The terminal keeps the result
-path/error visible until Enter is pressed again. The launcher preserves the
-CLI's isolation, clean-source, checksums, split and resource checks; it does
-not change NIC settings. The corresponding command is:
+The user ran **Chạy CIC offline** from `/home/drstone/Desktop` in the selected
+disconnected non-root VMware console LAB. The terminal keeps the result
+path/error visible until Enter is pressed again. This was the historical command;
+later source changes require a new preparation, rather than rerunning this job:
 
 ```bash
 .venv/bin/python scripts/16_benchmark_cic_static.py run \
@@ -225,6 +223,51 @@ the code branch reconstructs partial object evidence. The original strict
 C0/C1 RF pilot remains separately recorded; future observed-evidence training
 must explicitly pin the completed v6 profile and historical split. Earlier
 profiles, failed attempts, negative ablations and the frozen model stay intact.
+
+## Completed v6 paired measurement
+
+`run_20261010T093051159853Z_537d06776817` completed from clean commit537d067.
+The saved isolation checks passed. Its64 cold and64 warm records preserve every
+v5 sample identity, byte checksum, label and Train/dev partition. Both runs use
+profilev2, the same resource/model configuration and the same subset checksum.
+Neither run accesses Test. Per-file identities remain in ignored LAB artifacts.
+
+| Observation | v5 | v6 |
+| --- | --- | --- |
+| Whole-file complete / partial / parser-error | 23 / 23 / 18 | 23 / 23 / 18 |
+| Code branch unavailable / partial / complete | 20 / 18 / 26 | 6 / 32 / 26 |
+| Files with observed JS / AST | 25 / 20 | 25 / 20 |
+| Code open failures / unresolved-reference files | 18 / 10 | 4 / 24 |
+| AST-error files / timeouts | 3 / 0 | 3 / 0 |
+
+All14 missing-marker files newly yield the same observed lower bounds:
+AcroForm1, XFA1, EmbeddedFile6, with no observed JS. They still have unresolved
+references and unknown global totals. Opening reconstructed catalog objects
+does not establish complete structural parsing. The strict C0/C1 pilot still
+fits18 Train rows and classifies11/32 development rows; both detect2/6 malicious
+rows, with4/5 and3/5 false positives respectively. No classification gain is
+established by this measurement. Refusals remain in the planned32 denominator.
+
+| Timing/resource observation | Cold | Warm |
+| --- | --- | --- |
+| Sum of64 file totals (seconds) | 186.717 | 122.713 |
+| Per-file p50 / p95 (seconds) | 2.429 / 6.517 | 1.493 / 4.766 |
+| Parse / JS-AST sums (seconds) | 16.762 / 41.799 | 12.466 / 23.007 |
+| Residual startup/cache/IPC overhead (seconds) | 126.619 | 86.446 |
+| Actual inference sum (29 calls, seconds) | 0.543 | 0.303 |
+| Peak worker / sampled family RSS (MiB) | 288.86 / 554.66 | 289.54 / 560.03 |
+
+There are23 warm application-cache hits; partial/failure results are recomputed.
+The measured total is slower than v5 (76.497/56.973seconds). Much of the recorded
+cost is residual worker/startup/cache/IPC overhead. Host load and OS page cache
+are uncontrolled, so the paired run does not isolate the reconstruction's cost.
+Stream timing covers explicit JS decoding; backend decoding remains in parse.
+
+The immutable `baseline_comparison.json` contains an incorrect canned v1/v2
+timing caveat even though both source methodologies are v2. It is preserved as
+generated evidence; this review records the correction. The comparison helper
+now checks the locked profile versions and distinguishes matching measurement
+definitions from uncontrolled runtime conditions. No historical report is edited.
 
 ## Completed v5 paired measurement
 

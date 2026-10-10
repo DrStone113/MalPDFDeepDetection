@@ -1,0 +1,32 @@
+[
+  {
+    "name": "pytest",
+    "returncode": 0,
+    "seconds": 267.8595569009999,
+    "evidence": "artifacts/cic_v6_review_checks/run_20261010T095754964749Z_537d06776817/pytest.log"
+  },
+  {
+    "name": "pip_check",
+    "returncode": 0,
+    "seconds": 3.144762333000017,
+    "evidence": "artifacts/cic_v6_review_checks/run_20261010T095754964749Z_537d06776817/pip_check.log"
+  },
+  {
+    "name": "git_diff_check",
+    "returncode": 0,
+    "seconds": 0.03599823500007915,
+    "evidence": "artifacts/cic_v6_review_checks/run_20261010T095754964749Z_537d06776817/git_diff_check.log"
+  },
+  {
+    "name": "git_fsck",
+    "returncode": 0,
+    "seconds": 1.09767334199978,
+    "evidence": "artifacts/cic_v6_review_checks/run_20261010T095754964749Z_537d06776817/git_fsck.log"
+  },
+  {
+    "name": "git_status",
+    "returncode": 0,
+    "seconds": 0.03279766599962386,
+    "evidence": "artifacts/cic_v6_review_checks/run_20261010T095754964749Z_537d06776817/git_status.log"
+  }
+]

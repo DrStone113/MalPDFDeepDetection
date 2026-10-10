@@ -1,0 +1,30 @@
+{
+  "protocol": "v6 saved-result review, Git object repair and fixed RF maintenance",
+  "pdf_access": false,
+  "test_partition_access": false,
+  "source_profiles": [
+    "run_20261010T064045861512Z_53173f5a5625",
+    "run_20261010T093051159853Z_537d06776817"
+  ],
+  "checks": "synthetic unit suite, dependencies, diff/status, Git fsck; metadata-only v6 identity/schema gate",
+  "scope": "no actual PDF parsing, execution, deployment or model fitting during maintenance",
+  "seed": 42,
+  "code_commit": "537d06776817b2ffedfbcdfe01ec3443beb0cfc1",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_accuracy.md",
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/research_log.md",
+      " M src/malpdf/experiments/cic_static_accuracy.py",
+      " M src/malpdf/experiments/cic_static_benchmark.py",
+      " M tests/test_cic_static_accuracy.py",
+      " M tests/test_cic_static_benchmark.py",
+      "?? configs/cic_profile_accuracy_v6.yaml",
+      "?? reports/experiments/cic_static_profile/run_20261010T093051159853Z_537d06776817/"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

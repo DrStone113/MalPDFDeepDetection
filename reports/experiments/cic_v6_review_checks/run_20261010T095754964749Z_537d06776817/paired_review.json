@@ -1,0 +1,328 @@
+{
+  "run_20261010T064045861512Z_53173f5a5625": {
+    "records_sha256": "bf4b77706aee81897559a1902bbfa8e6de14697dcec1976a9d37e42bf9dddb37",
+    "counts": {
+      "observed_js_files": 25,
+      "observed_ast_files": 20,
+      "scripts_parsed": 22,
+      "code_open_failures": 18,
+      "reference_failure_files": 10
+    },
+    "whole_file_statuses": {
+      "parser_error": 18,
+      "partial": 23,
+      "complete": 23
+    },
+    "code_statuses": {
+      "unavailable": 20,
+      "complete": 26,
+      "partial": 18
+    },
+    "timing_and_memory": {
+      "cold": {
+        "total_seconds": {
+          "measured": 64,
+          "unavailable": 0,
+          "p50": 0.7890917965000028,
+          "p95": 3.133419594599993,
+          "sum": 76.49723070800007
+        },
+        "stages_seconds": {
+          "read_hash": {
+            "measured": 64,
+            "unavailable": 0,
+            "p50": 0.0019405900000109,
+            "p95": 0.0066875419500035975,
+            "sum": 0.1709055319999777
+          },
+          "raw_scan": {
+            "measured": 64,
+            "unavailable": 0,
+            "p50": 0.0007109850000048823,
+            "p95": 0.017024709999999714,
+            "sum": 0.2746232680000702
+          },
+          "parse_pdf": {
+            "measured": 64,
+            "unavailable": 0,
+            "p50": 0.02232515000001456,
+            "p95": 0.5105837320499956,
+            "sum": 9.294799451000102
+          },
+          "stream_decode": {
+            "measured": 19,
+            "unavailable": 45,
+            "p50": 0.0,
+            "p95": 0.0005883033999694424,
+            "sum": 0.0034791519999544107
+          },
+          "js_ast": {
+            "measured": 38,
+            "unavailable": 26,
+            "p50": 0.49452299150001267,
+            "p95": 1.9393150563500035,
+            "sum": 20.04425595200003
+          },
+          "inference_gate": {
+            "measured": 64,
+            "unavailable": 0,
+            "p50": 0.00019637699999464076,
+            "p95": 0.0025622112000021954,
+            "sum": 0.05950577999988127
+          },
+          "inference": {
+            "measured": 29,
+            "unavailable": 35,
+            "p50": 0.005868486999986544,
+            "p95": 0.009324819400001159,
+            "sum": 0.18312182600000426
+          }
+        },
+        "overhead_seconds": {
+          "measured": 64,
+          "unavailable": 0,
+          "p50": 0.6446644950000149,
+          "p95": 1.0571088993500004,
+          "sum": 46.466539747000056
+        },
+        "peak_worker_rss_bytes": 303382528,
+        "peak_family_rss_sampled_bytes": 582184960,
+        "cache_hits": 0
+      },
+      "warm": {
+        "total_seconds": {
+          "measured": 64,
+          "unavailable": 0,
+          "p50": 0.6469598829999939,
+          "p95": 2.6381794498999986,
+          "sum": 56.97291430400003
+        },
+        "stages_seconds": {
+          "read_hash": {
+            "measured": 64,
+            "unavailable": 0,
+            "p50": 0.00035334599999714555,
+            "p95": 0.0019447692000142047,
+            "sum": 0.04762729600003013
+          },
+          "raw_scan": {
+            "measured": 41,
+            "unavailable": 23,
+            "p50": 0.0002434630000038851,
+            "p95": 0.017996686000003592,
+            "sum": 0.21446591999995235
+          },
+          "parse_pdf": {
+            "measured": 41,
+            "unavailable": 23,
+            "p50": 0.018475976000019045,
+            "p95": 1.393595538999989,
+            "sum": 8.211033334999911
+          },
+          "stream_decode": {
+            "measured": 1,
+            "unavailable": 63,
+            "p50": 3.127400000835223e-05,
+            "p95": 3.127400000835223e-05,
+            "sum": 3.127400000835223e-05
+          },
+          "js_ast": {
+            "measured": 15,
+            "unavailable": 49,
+            "p50": 0.4982679249999933,
+            "p95": 1.8582479961000102,
+            "sum": 11.90935089900006
+          },
+          "inference_gate": {
+            "measured": 64,
+            "unavailable": 0,
+            "p50": 9.559449999585468e-05,
+            "p95": 0.001413743750012486,
+            "sum": 0.040340193999895746
+          },
+          "inference": {
+            "measured": 29,
+            "unavailable": 35,
+            "p50": 0.005515149999979485,
+            "p95": 0.0061791634000030625,
+            "sum": 0.16045627800008333
+          }
+        },
+        "overhead_seconds": {
+          "measured": 64,
+          "unavailable": 0,
+          "p50": 0.6077730870000124,
+          "p95": 0.6506844184499456,
+          "sum": 36.38960910800009
+        },
+        "peak_worker_rss_bytes": 303136768,
+        "peak_family_rss_sampled_bytes": 581939200,
+        "cache_hits": 23
+      }
+    }
+  },
+  "run_20261010T093051159853Z_537d06776817": {
+    "records_sha256": "311b954c4a2ef2b72e7fe5529a351986090713c850462d228fb0aecf86917c1a",
+    "counts": {
+      "observed_js_files": 25,
+      "observed_ast_files": 20,
+      "scripts_parsed": 22,
+      "code_open_failures": 4,
+      "reference_failure_files": 24
+    },
+    "whole_file_statuses": {
+      "parser_error": 18,
+      "partial": 23,
+      "complete": 23
+    },
+    "code_statuses": {
+      "unavailable": 6,
+      "complete": 26,
+      "partial": 32
+    },
+    "timing_and_memory": {
+      "cold": {
+        "total_seconds": {
+          "measured": 64,
+          "unavailable": 0,
+          "p50": 2.428595689500014,
+          "p95": 6.516839818550028,
+          "sum": 186.71716816500043
+        },
+        "stages_seconds": {
+          "read_hash": {
+            "measured": 64,
+            "unavailable": 0,
+            "p50": 0.0032051430000024084,
+            "p95": 0.010953257999977947,
+            "sum": 0.2962145410000403
+          },
+          "raw_scan": {
+            "measured": 64,
+            "unavailable": 0,
+            "p50": 0.0008510959999625811,
+            "p95": 0.019621501849894685,
+            "sum": 0.5442211759997235
+          },
+          "parse_pdf": {
+            "measured": 64,
+            "unavailable": 0,
+            "p50": 0.04039113300007102,
+            "p95": 0.9622421260000348,
+            "sum": 16.76189804199987
+          },
+          "stream_decode": {
+            "measured": 19,
+            "unavailable": 45,
+            "p50": 0.0,
+            "p95": 0.0013106599999673425,
+            "sum": 0.008189624999999978
+          },
+          "js_ast": {
+            "measured": 38,
+            "unavailable": 26,
+            "p50": 0.9001567590000263,
+            "p95": 4.046856015900032,
+            "sum": 41.79912552400003
+          },
+          "inference_gate": {
+            "measured": 64,
+            "unavailable": 0,
+            "p50": 0.00039703249996136947,
+            "p95": 0.006914422599811587,
+            "sum": 0.14591741599917896
+          },
+          "inference": {
+            "measured": 29,
+            "unavailable": 35,
+            "p50": 0.011703848000024664,
+            "p95": 0.05446854619999612,
+            "sum": 0.542980556000316
+          }
+        },
+        "overhead_seconds": {
+          "measured": 64,
+          "unavailable": 0,
+          "p50": 1.745042645500007,
+          "p95": 3.984365554199998,
+          "sum": 126.61862128500127
+        },
+        "peak_worker_rss_bytes": 302886912,
+        "peak_family_rss_sampled_bytes": 581599232,
+        "cache_hits": 0
+      },
+      "warm": {
+        "total_seconds": {
+          "measured": 64,
+          "unavailable": 0,
+          "p50": 1.4931581929999993,
+          "p95": 4.766464817349947,
+          "sum": 122.71304245499869
+        },
+        "stages_seconds": {
+          "read_hash": {
+            "measured": 64,
+            "unavailable": 0,
+            "p50": 0.0007430995001413976,
+            "p95": 0.0034066595999433925,
+            "sum": 0.08860665600150242
+          },
+          "raw_scan": {
+            "measured": 41,
+            "unavailable": 23,
+            "p50": 0.0004099440000118193,
+            "p95": 0.023828626999829794,
+            "sum": 0.3115710589995615
+          },
+          "parse_pdf": {
+            "measured": 41,
+            "unavailable": 23,
+            "p50": 0.027274912999928347,
+            "p95": 1.952431449000187,
+            "sum": 12.466063988000087
+          },
+          "stream_decode": {
+            "measured": 1,
+            "unavailable": 63,
+            "p50": 3.189599988218106e-05,
+            "p95": 3.189599988218106e-05,
+            "sum": 3.189599988218106e-05
+          },
+          "js_ast": {
+            "measured": 15,
+            "unavailable": 49,
+            "p50": 1.0910805749999781,
+            "p95": 3.6412467685999665,
+            "sum": 23.006617801000175
+          },
+          "inference_gate": {
+            "measured": 64,
+            "unavailable": 0,
+            "p50": 0.00021031649998803914,
+            "p95": 0.004768462949834884,
+            "sum": 0.09163720299989109
+          },
+          "inference": {
+            "measured": 29,
+            "unavailable": 35,
+            "p50": 0.009407273999840982,
+            "p95": 0.017603686400070723,
+            "sum": 0.3025337869999021
+          }
+        },
+        "overhead_seconds": {
+          "measured": 64,
+          "unavailable": 0,
+          "p50": 1.2626858200002289,
+          "p95": 2.3969708806998464,
+          "sum": 86.44598006499768
+        },
+        "peak_worker_rss_bytes": 303607808,
+        "peak_family_rss_sampled_bytes": 587235328,
+        "cache_hits": 23
+      }
+    }
+  },
+  "paired_identity_label_split_verified": true,
+  "timing_scope_correction": "Both saved profiles are v2; original canned v1/v2 caveat is incorrect. Definitions match, host load/page cache uncontrolled."
+}

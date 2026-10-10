@@ -189,6 +189,24 @@ retried. Reconstruction does not establish valid revision history or safe PDF
 behavior. Old v5 job/cache fingerprints are invalidated; saved v5 records remain
 readable by their explicit historical schema contract.
 
-This correction is verified on synthetic benign inputs only. A paired same64
-offline console measurement must verify real recovery and model effects;
-there is no measured new real-PDF accuracy or parser coverage gain for v6 yet.
+The completed paired v6 console run recovered partial structure on all14 files,
+with AcroForm/XFA/embedded-file lower bounds. It did not increase observed JS/AST
+file counts or improve the strict pilot's classification/whole-file coverage.
+See [the v6 measurement](cic_static_offline.md#completed-v6-paired-measurement).
+
+The v6 saved-profile study pins its own explicit schema and four input checksums
+in `configs/cic_profile_accuracy_v6.yaml`. It keeps the same three RF variants,
+32/32 Train/development identities, seed42 and threshold0.5 as the v5 study.
+This measures the effect of newly observed structure without reopening PDFs,
+tuning on the exposed Validation rows or silently promoting a fallback.
+
+The additional fixed RF200/depth12/min-leaf2/class-balanced study uses all870
+cached CIC Train rows and the same291 Validation rows as the earlier XGBoost
+study. Run `scripts/17_train_cic_static.py --config configs/cic_static_rf_accuracy.yaml`.
+It reuses the existing40 measured predictors, identity/group checks and baseline
+artifact. Median imputation with missing indicators fits only Train; source
+nulls/sentinels and the saved split stay intact. Common finite Validation
+eligibility retains comparable refusal denominators. Test is removed before
+numeric conversion. Its LAB-only RF artifact has a distinct model identity;
+numeric results do not establish end-to-end PDF coverage or independent Test
+accuracy.

@@ -40,11 +40,11 @@ snapshot and source checksum without fitting. This supplied Protocol G model
 has its own identity; it does not replace the full-RIT deployment manifest.
 See [offline job and measurement limits](reports/analysis/cic_static_offline.md).
 
-On the current Lubuntu VM, double-click **Chạy CIC offline** on the Desktop
-after completing the selected disconnected console LAB procedure, then press
-Enter. The shortcut invokes the locked v6 same-64 job through the existing
-guarded CLI and keeps the terminal open after completion or failure.
-Type `q` to cancel before starting. Its VM-specific desktop entry is versioned
+The completed v6 Lubuntu measurement used **Chạy CIC offline** on the Desktop
+after the selected disconnected console LAB procedure. The shortcut invokes a
+locked job through the existing guarded CLI, accepts Enter to start or `q` to
+cancel, and keeps the terminal open after completion or failure.
+Its VM-specific desktop entry is versioned
 in `configs/cic_offline_launcher.desktop`; the thin entry point is
 `scripts/18_launch_cic_offline.py`. This shortcut does not change network settings.
 
@@ -80,9 +80,13 @@ Code-inspection v6 addresses the specific missing-`startxref` case with one
 fixed, in-memory reconstruction retry through the existing bounded pypdf
 worker. Original bytes/hash/raw counts stay unchanged; strict failure remains
 visible and recovered evidence stays partial, with unknown totals. Existing
-markers and resource failures are not replaced/retried by this path. Benign
-fixtures pass; real-CIC gains require a new locked offline run. Previously
-prepared v5 jobs cannot run with the changed fingerprint.
+markers and resource failures are not replaced/retried by this path. The
+completed same64 v6 run recovered partial structure on14 additional files,
+including AcroForm/XFA/embedded-file evidence. JS/AST file counts stayed25/20;
+whole-file status, strict classifier coverage and recall/FPR were unchanged.
+See [the measured v6 result](reports/analysis/cic_static_offline.md#completed-v6-paired-measurement).
+Completed jobs are historical evidence; later source changes require a newly
+prepared fingerprint before another offline invocation.
 
 The separately locked saved-profile ablation reuses that completed v5 LAB
 evidence without reopening PDFs:
@@ -90,6 +94,12 @@ evidence without reopening PDFs:
 ```bash
 .venv/bin/python scripts/17_train_cic_static.py --config configs/cic_profile_accuracy.yaml
 ```
+
+The matched study of the completed v6 evidence uses
+`--config configs/cic_profile_accuracy_v6.yaml`. A separate fixed RF200 baseline
+on all870 cached CIC Train rows uses `--config configs/cic_static_rf_accuracy.yaml`.
+Both reuse the same entry point, fixed threshold0.5 and saved splits, without
+reopening PDFs or evaluating Test. Their experimental candidates stay in LAB.
 
 Three fixed RF variants share the same eligible 32 Train and 32 development
 rows: canonical RIT41 measurements, additional complete/observed structure and

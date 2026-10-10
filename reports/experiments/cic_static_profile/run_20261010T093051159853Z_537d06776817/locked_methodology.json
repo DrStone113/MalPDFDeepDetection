@@ -1,0 +1,192 @@
+{
+  "protocol": "fixed CIC Train/dev static diagnosis and feature pilot",
+  "configuration": {
+    "seed": 42,
+    "prepared_cohort": "run_20261003T124714720715Z_c96868a21732",
+    "split_manifest": {
+      "path": "data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/split_manifest.csv",
+      "sha256": "e939a676c51c7a98b9dc4bb843e846f546e1ada2bfb576b41416c406415c0643"
+    },
+    "source_manifest": {
+      "path": "data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/source_manifest.csv",
+      "sha256": "d74729236017dc27a71c999bc4d69f84a16fa4148573c3bbc7f4eb03709b150b"
+    },
+    "normalization_manifest": {
+      "path": "data/processed/cic_normalization/run_20261003T104918756555Z_3b68d36a5705/normalization_manifest.csv",
+      "sha256": "c4dc77f00849518ee56dc34d0f0cc7daf0c92b3ce9fd1e93fd63d053caf8570f"
+    },
+    "samples_per_partition": 32,
+    "warm_repeats": 1,
+    "workers": 1,
+    "limits": {
+      "wall_seconds": 20,
+      "cpu_seconds": 12,
+      "memory_bytes": 1073741824,
+      "max_file_bytes": 10485760
+    },
+    "compare_models": true,
+    "rf": {
+      "n_estimators": 200,
+      "max_depth": 12,
+      "min_samples_leaf": 2,
+      "class_weight": "balanced"
+    },
+    "threshold": 0.5
+  },
+  "baseline_run": "run_20261010T064045861512Z_53173f5a5625",
+  "inference_model": {
+    "model_id": "xgb-rit-supplied-g-drop3constant-v1",
+    "artifact_relative_path": "artifacts/cic_static_prepare/run_20261010T084845105719Z_266319ceaeec/frozen_protocol_g.json",
+    "artifact_sha256": "4046925dda2e65cbbdf91f1c1e8b93308b2f062ff206cd15a225419d7f14387a",
+    "feature_schema": "rit-pdfmal-2026/G-drop3constant/38/v1",
+    "feature_order": [
+      "pdfsize",
+      "metadata size",
+      "pages",
+      "xref length",
+      "title length",
+      "isEncrypted",
+      "embedded files",
+      "images",
+      "contains_text",
+      "pdf_ver",
+      "obj",
+      "endobj",
+      "stream",
+      "endstream",
+      "trailer",
+      "xref",
+      "startxref",
+      "page_command",
+      "Encrypt",
+      "ObjStm",
+      "JS",
+      "JavaScript",
+      "AA",
+      "OpenAction",
+      "JBIG2Decode",
+      "RichMedia",
+      "Launch",
+      "EmbeddedFile",
+      "XFA",
+      "URI",
+      "Encoding",
+      "ProcSet",
+      "Registry",
+      "Resources",
+      "www",
+      "server",
+      "Root",
+      "BitsPerComponent"
+    ],
+    "threshold": 0.5,
+    "model_configuration": {
+      "paper_model_name": "eXtreme Gradient Boost (XGB)",
+      "preprocessing": {
+        "name": null,
+        "fit_scope": null,
+        "paper_status": "No scaling is used for this tree model."
+      },
+      "parameters": {
+        "base_score": 0.5,
+        "booster": "gbtree",
+        "colsample_bylevel": 1.0,
+        "colsample_bynode": 1.0,
+        "colsample_bytree": 1.0,
+        "eval_metric": "logloss",
+        "gamma": 0.0,
+        "learning_rate": 0.1,
+        "max_delta_step": 0.0,
+        "max_depth": 6,
+        "min_child_weight": 1.0,
+        "missing": "NaN",
+        "n_estimators": 200,
+        "n_jobs": 1,
+        "objective": "binary:logistic",
+        "random_state": 42,
+        "reg_alpha": 0.0,
+        "reg_lambda": 1.0,
+        "scale_pos_weight": 1.0,
+        "subsample": 1.0,
+        "tree_method": "hist",
+        "verbosity": 0
+      },
+      "missing_value_assumption": "The JSON-safe string 'NaN' is converted to the explicit IEEE NaN missing-value sentinel required by XGBoost 3.2 at runtime. This fixes a library compatibility error; it does not alter feature values or tune the model."
+    },
+    "training_dataset": {
+      "sha256": "2f270ab31fbfe8821fd7f54608cb1aa694a0a8d0bbf2ca000942a68213ef8623",
+      "fit_scope": "user-reported original Protocol G Train; training lineage not independently verified"
+    },
+    "source": {
+      "relative_path": "artifacts/models/xgboost__G-drop3constant.joblib",
+      "sha256": "c602d38aa30340ffeb7229e685c6b330740fc2bc64c814dd22fc0f9cd7b59c2f",
+      "bytes": 408874,
+      "trust": "user supplied original locally trained Windows artifact",
+      "historical_model_checksum_available": false
+    },
+    "conversion": "native XGBoost JSON; no fitting; exact probability parity on two synthetic numeric probe rows"
+  },
+  "prepared_run": "run_20261010T084845105719Z_266319ceaeec",
+  "subset_sha256": "bc0b8e0f65383d96b4f68065b8898563898d18cd2775f789da7141fb691ed209",
+  "fingerprint": {
+    "profile_version": "cic-static-profile-v2",
+    "code_schema": "pdf-code-inspection-v6",
+    "limits": {
+      "max_file_bytes": 10485760,
+      "max_objects": 2000,
+      "max_pdf_depth": 64,
+      "max_scripts": 64,
+      "max_script_bytes": 262144,
+      "max_decoded_bytes": 4194304,
+      "max_ast_nodes": 20000,
+      "max_ast_depth": 100,
+      "wall_seconds": 20,
+      "cpu_seconds": 12,
+      "memory_bytes": 1073741824
+    },
+    "backends": {
+      "pypdf": "5.9.0",
+      "PyMuPDF": "1.26.7",
+      "esprima": "4.0.1"
+    },
+    "sources": {
+      "static/analyzer.py": "c8b2bf84dea5bb744152d02690d9a76a4149a9e8116ca2eabec8462c3f4cfb4c",
+      "static/pdf_parser.py": "54bd8a8bdd2f90835b865161d02499fb91819e26258478dd2bb121bfafb84d25",
+      "static/rit_reference.py": "d83b023d1424ae6e3c0c026d792856c8c2bb4177efd2c064c296fc97e22e9df0",
+      "static/raw_scan.py": "681e32599baa5741cee6a585700525c7c584f0f621cad6c5c7821ef37ac8ca45",
+      "static/code_inspector.py": "72ffcd3ee43444c8fd5d58ac0d80f79385f81fd0cbeb4189f108e424745c880b",
+      "static/js_ast.py": "66c4dd9afe6cf9ef5c06eece9a094bec467f6a89985e815eeb9e03e8fe2ba960",
+      "static/profiling.py": "5d6bc720a550f5830e795fc0ab2178bb194467982cd859ad1d97d9a3d577a458",
+      "static/profile_worker.py": "3ba774d3cd7cfdabbf2ad417d251dac1939fba8f7fcceea630f6538b25d2e753",
+      "static/schema.py": "f3952a013c5890aff201b00b4c72343d7d0766a6a1b9da720e233e05f26c9277",
+      "static/result.py": "b839d737af3c9381b1719f11ae8a500915b59d831c2afba8fd604d33c2521cb9",
+      "static/safety.py": "cc3a86a2ce9ffc2f7abefbdb19376e4e369f7dd24a7ad7bda9f6417b8a49f08d",
+      "static/lab_guard.py": "717ba03e4be7f153fb2ae67bff4c4b03da5aeb8b8412aaf49ff2898a0088b3b8",
+      "static/parser_diagnostics.py": "ea62038cafb5fe95ecffd6ac1ee5def46ba0c001a52fb274b8d6db94f6cb3adc",
+      "experiments/cic_static_benchmark.py": "c810e236125771733353893187fb28db1eccaaaeb3b00408d40542a070737c13",
+      "inference/predictor.py": "cb6a620bbe093038c160ec7307f88b576c5d04deea08db8194239f7e3e71434d",
+      "inference/schema.py": "14f6b144ae8ac586ba0b497510b7b6be533616b2976e587a3498a66b1f85c6c6",
+      "inference/deployment.py": "a90a38c99b2ea5b0e27c63b335f74358483a86941bd65a8f2d48c2547470de35"
+    }
+  },
+  "lab_checks": {
+    "uid": 1000,
+    "connected_interfaces": [],
+    "unknown_interfaces": [],
+    "shared_mounts": [],
+    "ssh_session": false
+  },
+  "cache": "cold=fresh application feature cache; warm=complete-profile reuse after fresh PDF checksum verification; OS page cache uncontrolled",
+  "timing_scope": "exclusive stage timings; inference=predict_proba only, null if not called; inference_gate=compatibility/feature/model checks and response validation; implicit xref/object/content decoding and reference text extraction remain in parse_pdf; stream_decode covers explicit JS streams; residual overhead includes startup/cache/IPC and any unfinished stage",
+  "ablation": "C0 same RIT41 definitions; C1 adds resolved structure/JS AST; RF settings and threshold0.5 locked before development evaluation; same saved partitions and refusals",
+  "dataset_scope": "CIC PDF only; RIT CSV unchanged, no AST fabrication or dataset merging",
+  "test_access": false,
+  "seed": 42,
+  "code_commit": "537d06776817b2ffedfbcdfe01ec3443beb0cfc1",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

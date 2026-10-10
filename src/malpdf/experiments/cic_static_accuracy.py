@@ -165,7 +165,7 @@ def _profile_scores(labels, probabilities, planned):
 
 
 def train_cic_profile(root, cfg):
-    """Fixed Train-only RF ablations over saved v5 evidence, including failures.
+    """Fixed Train-only RF ablations over sealed offline evidence, including failures.
 
     Experimental fallback policies are evaluated here; the production refusal
     gate and original frozen RIT estimator remain unchanged.

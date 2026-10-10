@@ -1,0 +1,8 @@
+{
+  "verified_cold_rows": 64,
+  "source_profile": "run_20261010T093051159853Z_537d06776817",
+  "code_schema": "pdf-code-inspection-v6",
+  "source_test_access": false,
+  "pdf_access": false,
+  "targeted_tests": "7 passed, 75 deselected in 6.63s (prior targeted invocation)"
+}

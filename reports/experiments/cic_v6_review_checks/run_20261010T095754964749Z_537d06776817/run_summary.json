@@ -1,0 +1,44 @@
+{
+  "run_id": "run_20261010T095754964749Z_537d06776817",
+  "study": "cic_v6_review_checks",
+  "status": "completed",
+  "started_at_utc": "2026-10-10T09:57:55.034844+00:00",
+  "code_commit": "537d06776817b2ffedfbcdfe01ec3443beb0cfc1",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_accuracy.md",
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/research_log.md",
+      " M src/malpdf/experiments/cic_static_accuracy.py",
+      " M src/malpdf/experiments/cic_static_benchmark.py",
+      " M tests/test_cic_static_accuracy.py",
+      " M tests/test_cic_static_benchmark.py",
+      "?? configs/cic_profile_accuracy_v6.yaml",
+      "?? reports/experiments/cic_static_profile/run_20261010T093051159853Z_537d06776817/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_accuracy.md",
+      " M reports/analysis/cic_static_offline.md",
+      " M reports/research_log.md",
+      " M src/malpdf/experiments/cic_static_accuracy.py",
+      " M src/malpdf/experiments/cic_static_benchmark.py",
+      " M tests/test_cic_static_accuracy.py",
+      " M tests/test_cic_static_benchmark.py",
+      "?? configs/cic_profile_accuracy_v6.yaml",
+      "?? reports/experiments/cic_static_profile/run_20261010T093051159853Z_537d06776817/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "v6 saved-result review, Git object repair and fixed RF maintenance",
+  "report_path": "reports/experiments/cic_v6_review_checks/run_20261010T095754964749Z_537d06776817/run_summary.json",
+  "artifact_path": "artifacts/cic_v6_review_checks/run_20261010T095754964749Z_537d06776817",
+  "metrics": {},
+  "notes": "Paired v6 metadata confirms14 new partial structure observations but unchanged25/20 JS/AST counts and strict classifier results. Exact-hash Git objects restored; index/HEAD/source files preserved; fsck passes. Full synthetic suite/dependencies/diff/status pass; RF Train-only/imputation/refusal and v1/v2 diagnostic tests pass. No PDF/Test access or fitting.",
+  "finished_at_utc": "2026-10-10T10:02:29.299697+00:00"
+}

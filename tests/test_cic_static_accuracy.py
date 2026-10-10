@@ -114,3 +114,58 @@ def test_train_only_candidate_retains_model_identity_and_rejects_changed_weights
     assert all(model['validation_planned']==model['classified']==8 for model in comparison['models'].values())
     target=tmp_path/manifest['artifact_relative_path']; target.write_bytes(target.read_bytes()+b' ')
     with pytest.raises(ValueError,match='checksum changed'):study.load_cic_candidate(tmp_path,'run_fixture')
+
+
+def test_rf_imputation_fits_train_only_and_retains_missing_validation_denominators(tmp_path,tables,monkeypatch):
+    import joblib
+    from sklearn.ensemble import RandomForestClassifier
+    cfg,values=tables
+    cfg['candidate_model']='random_forest'
+    values[0]['title length']='';values[8]['title length']=''
+    cfg['feature_table']=write_table(tmp_path,'feature_table.csv',values)
+    original=tmp_path/cfg['feature_table']['path'];original_bytes=original.read_bytes()
+    monkeypatch.setattr(study,'clean_code',lambda *args:None)
+    captured=[];real_factory=study.create_model
+    def factory(family,seed):
+        assert family=='random_forest' and seed==42
+        return real_factory(family,seed)
+    monkeypatch.setattr(study,'create_model',factory)
+    original_fit=RandomForestClassifier.fit
+    def fit(model,features,labels,*args,**kwargs):
+        captured.append(features.copy())
+        return original_fit(model,features,labels,*args,**kwargs)
+    monkeypatch.setattr(RandomForestClassifier,'fit',fit)
+    class Baseline:
+        def set_params(self,**kwargs):return self
+        def predict_proba(self,features):return np.tile([0.6,0.4],(len(features),1))
+    monkeypatch.setattr(study,'load_profile_model',lambda *args:(Baseline(),{}))
+    class Run:
+        def __init__(self,root,*args):
+            assert args[0]=='cic_static_rf_accuracy'
+            self.identifier='run_fixture'
+            self.report=root/'reports/experiments/cic_static_rf_accuracy'/self.identifier
+            self.artifacts=root/'artifacts/cic_static_rf_accuracy'/self.identifier
+            self.report.mkdir(parents=True);self.artifacts.mkdir(parents=True)
+            self.state={'status':'completed','metrics':{},'run_id':self.identifier}
+        def __enter__(self):return self
+        def __exit__(self,*args):return False
+    monkeypatch.setattr(study,'ResearchRun',Run)
+    config=tmp_path/'config.yaml';config.write_text(yaml.safe_dump(cfg))
+    state=study.train_cic_static(tmp_path,config)
+    assert len(captured)==1 and set(captured[0][:,0])==set(range(1,9))
+    assert set(state['metrics'])=={'RIT_frozen_to_CIC/cic_validation_numeric','CIC_train_rf_static40/cic_validation_numeric'}
+    report=tmp_path/'reports/experiments/cic_static_rf_accuracy/run_fixture'
+    manifest=json.loads((report/'model_manifest.json').read_text())
+    assert manifest['model_family']=='random_forest' and manifest['model_id']==study.CIC_RF_MODEL_ID
+    assert manifest['training_dataset']['training_rows']==8
+    artifact=tmp_path/manifest['artifact_relative_path']
+    assert hashlib.sha256(artifact.read_bytes()).hexdigest()==manifest['artifact_sha256']
+    # Load only this test's own synthetic model; no supplied binaries or datasets.
+    model=joblib.load(artifact);imputer,forest=model.steps[0][1],model.steps[1][1]
+    assert imputer.statistics_[0]==4.5
+    assert forest.n_estimators==200 and forest.max_depth==12 and forest.min_samples_leaf==2
+    assert forest.class_weight=='balanced' and forest.random_state==42 and forest.n_jobs==1
+    comparison=json.loads((report/'validation_comparison.json').read_text())
+    assert all(m['validation_planned']==8 and m['classified']==7 and m['refusals']==1
+               for m in comparison['models'].values())
+    assert original.read_bytes()==original_bytes

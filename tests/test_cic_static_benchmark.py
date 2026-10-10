@@ -529,15 +529,18 @@ def test_failed_predict_call_is_measured_but_not_a_prediction(tmp_path):
 
 
 @pytest.mark.parametrize("changed", [False, True])
-def test_saved_baseline_pairing_refuses_changed_label_or_partition(tmp_path, monkeypatch, changed):
+@pytest.mark.parametrize("old_version", [None, "cic-static-profile-v1", "cic-static-profile-v2"])
+def test_saved_baseline_pairing_refuses_changed_label_or_partition(tmp_path, monkeypatch, changed, old_version):
     identifier = "run_synthetic_baseline"
     old = [{"sample_id": str(label), "pdf_sha256": str(label) * 64, "Label": str(label), "split": "validation",
         "cache_mode": "cold", "status": "partial", "errors": []} for label in (0, 1)]
     new = [{**row, "status": "complete", "reasons": []} for row in old]
     folder = tmp_path / "artifacts/cic_static_profile" / identifier; folder.mkdir(parents=True)
     (folder / "per_file.jsonl").write_text("\n".join(json.dumps(row) for row in old))
-    lock = {"baseline_run": identifier, "subset_sha256": "fixture", "configuration": {}, "rows": 2}
-    monkeypatch.setattr(study, "baseline_method", lambda *args: lock)
+    lock = {"baseline_run": identifier, "subset_sha256": "fixture", "configuration": {}, "rows": 2,
+            "fingerprint": {"profile_version": "cic-static-profile-v2"}}
+    baseline = {**lock, "fingerprint": {"profile_version": old_version}}
+    monkeypatch.setattr(study, "baseline_method", lambda *args: baseline)
     run = SimpleNamespace(root=tmp_path, report=tmp_path / "report", artifacts=tmp_path / "new_artifacts")
     run.report.mkdir(); run.artifacts.mkdir()
     if changed:
@@ -549,7 +552,9 @@ def test_saved_baseline_pairing_refuses_changed_label_or_partition(tmp_path, mon
         study.compare_saved_baseline(run, new, lock)
         saved = json.loads((run.report / "baseline_comparison.json").read_text())
         assert saved["paired_cold_samples"] == 2 and saved["status_transitions"] == {"partial -> complete": 2}
-        assert saved["inference_time_comparable"] is False
+        assert saved["inference_time_comparable"] is (old_version == "cic-static-profile-v2")
+        if old_version == "cic-static-profile-v2":
+            assert "both v2" in saved["reason"] and "uncontrolled" in saved["timing_comparability_scope"]
 
 
 @pytest.fixture

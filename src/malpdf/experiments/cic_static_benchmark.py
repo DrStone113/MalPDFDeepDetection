@@ -359,12 +359,21 @@ def compare_saved_baseline(run, records, lock):
             (after[key]["pdf_sha256"], after[key]["split"], after[key]["Label"]) for key, old in before.items()):
         raise ValueError("Before/after evidence does not retain the same PDFs, labels and partitions")
     transitions = Counter((before[key]["status"], after[key]["status"]) for key in before)
+    old_version = baseline.get("fingerprint", {}).get("profile_version")
+    new_version = lock.get("fingerprint", {}).get("profile_version")
+    same_v2 = old_version == new_version == "cic-static-profile-v2"
+    timing_reason = ("both v2 profiles separate predict_proba from gate checks" if same_v2 else
+        "profile-v1 inference included refusals; v2 separates predict_proba from gate checks"
+        if {old_version, new_version} == {"cic-static-profile-v1", "cic-static-profile-v2"} else
+        "matching inference measurement definitions have not been verified")
     write_json(run.report / "baseline_comparison.json", {"baseline_run": identifier, "same_subset_sha256": lock["subset_sha256"],
         "paired_cold_samples": len(before), "status_transitions": {" -> ".join(key): count for key, count in transitions.items()},
         "before_status_counts": dict(Counter(row["status"] for row in before.values())),
         "after_status_counts": dict(Counter(row["status"] for row in after.values())),
-        "inference_time_comparable": False, "reason": "profile-v1 inference included refusals; v2 separates predict_proba from gate checks",
-        "memory_scope": "v2 prefers current-process VmHWM; earlier rusage peaks and new peaks are not an extraction-only memory comparison",
+        "inference_time_comparable": same_v2, "reason": timing_reason,
+        "timing_comparability_scope": "measurement definitions only; host load and OS page cache are uncontrolled",
+        "memory_scope": ("both v2 profiles prefer current-process VmHWM; family peaks are sampled; this is not extraction-only RSS"
+                         if same_v2 else "v2 prefers current-process VmHWM; earlier rusage peaks and new peaks are not an extraction-only memory comparison"),
         "model_metrics_scope": "C0/C1 use the same eligible rows within each run; changes in eligibility across runs require coverage/class denominators"})
     with (run.artifacts / "baseline_file_pairs.csv").open("x", newline="") as output:
         fields = ("sample_id", "before_status", "after_status", "before_errors", "after_reasons")

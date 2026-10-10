@@ -1,0 +1,20 @@
+{
+  "head": "537d06776817b2ffedfbcdfe01ec3443beb0cfc1",
+  "index_unchanged_sha256": "d88bdfa3cafad1d963c3a87d7fbd3bfca7dee8e2857932e5669a302c9c3ba91e",
+  "restored_exact_objects": [
+    "17b209bcb9c699b2f0bbcf06571599d8fb8fcca3",
+    "40655b09aabb345f946fe55f496ed58b8dac4d2d",
+    "80dadcf996b8233ac58109f400f535cba0e0cb32",
+    "b381680a2ab1f35a735a92eb362dc61ece7734a8",
+    "dc1bc18746225c333289bf1c3e2366d2d7a8993f",
+    "ec2e7741f554b606a8211ac3cab388b2aa1ef7e8"
+  ],
+  "quarantined_empty_unreachable_objects": [
+    "08b3c8fd337952c95687a374d013fa955fafd1d6"
+  ],
+  "quarantined_empty_tool_refs": [
+    "refs/codex/turn-diffs/checkpoints/51ca2bc1b04243186fa5dd4823d79a0e/802f8fea2dc508862971fcd1171c49da/1791622895034/f8da8b55-9027-4f7c-bf93-f8ad90a5f413"
+  ],
+  "backup_path": "artifacts/git_recovery/run_20261010T095342827121Z",
+  "source_files_modified": false
+}
