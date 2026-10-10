@@ -1,0 +1,21 @@
+{
+  "protocol": "v8 launcher metadata and immutable provenance check",
+  "pdf_access": false,
+  "test_access": false,
+  "prepared_run": "run_20261010T172048450685Z_c3c2eeec64a6",
+  "release": "pending console offline benchmark",
+  "seed": 42,
+  "code_commit": "c3c2eeec64a6a0f4850d45f830ed7d5ba27925ce",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_v8.md",
+      " M reports/research_log.md",
+      " M scripts/18_launch_cic_offline.py",
+      "?? reports/experiments/cic_static_prepare/run_20261010T172048450685Z_c3c2eeec64a6/"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

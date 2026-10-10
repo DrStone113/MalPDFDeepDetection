@@ -1,0 +1,22 @@
+{
+  "launcher_check": {
+    "exit_code": 0,
+    "stdout": "Job \u0111\u00e3 kh\u00f3a h\u1ee3p l\u1ec7: run_20261010T172048450685Z_c3c2eeec64a6; 64 m\u1eabu; pdf-evidence-v8\nCh\u1ec9 ki\u1ec3m tra metadata/model; ch\u01b0a ch\u1ea1y PDF v\u00e0 ch\u01b0a x\u00e1c nh\u1eadn LAB \u0111\u00e3 ng\u1eaft m\u1ea1ng.\n",
+    "stderr": ""
+  },
+  "pip_check": {
+    "exit_code": 0,
+    "stdout": "No broken requirements found.\n",
+    "stderr": ""
+  },
+  "diff_check": {
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "status": {
+    "exit_code": 0,
+    "stdout": " M README.md\n M reports/analysis/cic_static_v8.md\n M reports/research_log.md\n M scripts/18_launch_cic_offline.py\n?? reports/experiments/cic_static_prepare/run_20261010T172048450685Z_c3c2eeec64a6/\n?? reports/experiments/cic_v8_handoff/\n",
+    "stderr": ""
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "run_id": "run_20261010T172255823706Z_c3c2eeec64a6",
+  "study": "cic_v8_handoff",
+  "status": "completed",
+  "started_at_utc": "2026-10-10T17:22:55.891490+00:00",
+  "code_commit": "c3c2eeec64a6a0f4850d45f830ed7d5ba27925ce",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_v8.md",
+      " M reports/research_log.md",
+      " M scripts/18_launch_cic_offline.py",
+      "?? reports/experiments/cic_static_prepare/run_20261010T172048450685Z_c3c2eeec64a6/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_v8.md",
+      " M reports/research_log.md",
+      " M scripts/18_launch_cic_offline.py",
+      "?? reports/experiments/cic_static_prepare/run_20261010T172048450685Z_c3c2eeec64a6/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "v8 launcher metadata and immutable provenance check",
+  "report_path": "reports/experiments/cic_v8_handoff/run_20261010T172255823706Z_c3c2eeec64a6/run_summary.json",
+  "artifact_path": "artifacts/cic_v8_handoff/run_20261010T172255823706Z_c3c2eeec64a6",
+  "metrics": {},
+  "notes": "Desktop launcher checked without PDF access. All64 saved identities/labels/splits, byte-identical native frozen model and final tested extraction sources verified. Full801 tests and two known warnings are linked saved evidence. Preparation/maintenance complete; actual v8 benchmark/release not completed. Current SSH/NIC session remains outside selected offline LAB boundary.",
+  "finished_at_utc": "2026-10-10T17:23:08.344100+00:00"
+}

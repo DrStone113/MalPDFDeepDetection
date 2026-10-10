@@ -9,7 +9,7 @@ for name in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS"):
     os.environ[name] = "1"
 
 ROOT = Path(__file__).resolve().parents[1]
-PREPARED_RUN = "run_20261010T151403329485Z_06a272fc8e36"
+PREPARED_RUN = "run_20261010T172048450685Z_c3c2eeec64a6"
 
 
 def main(argv=None):
@@ -20,11 +20,12 @@ def main(argv=None):
     if args.check:
         from malpdf.experiments.cic_static_benchmark import load_job
         rows, lock, _ = load_job(ROOT, PREPARED_RUN)
-        print(f"Job đã khóa hợp lệ: {PREPARED_RUN}; {len(rows)} mẫu; {lock['fingerprint']['code_schema']}")
+        schema = lock['fingerprint'].get('evidence_schema',lock['fingerprint']['code_schema'])
+        print(f"Job đã khóa hợp lệ: {PREPARED_RUN}; {len(rows)} mẫu; {schema}")
         print("Chỉ kiểm tra metadata/model; chưa chạy PDF và chưa xác nhận LAB đã ngắt mạng.")
         return 0
 
-    print("CHẠY CIC OFFLINE — 64 MẪU TRAIN/DEV", flush=True)
+    print("CHẠY CIC V8 OFFLINE — 64 MẪU TRAIN/DEV", flush=True)
     print("Dùng console VMware, tài khoản thường; ngắt cả NAT và host-only.")
     print("Tắt shared folders, clipboard và drag-drop theo quy trình LAB đã chọn.")
     print(f"Job: {PREPARED_RUN}")

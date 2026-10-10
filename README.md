@@ -64,6 +64,8 @@ The completed v6/v7 Lubuntu measurements used **Chạy CIC offline** on the Desk
 after the selected disconnected console LAB procedure. The shortcut invokes a
 locked job through the existing guarded CLI, accepts Enter to start or `q` to
 cancel, and keeps the terminal open after completion or failure.
+It now targets the [prepared final v8 job](reports/experiments/cic_static_prepare/run_20261010T172048450685Z_c3c2eeec64a6/run_summary.json);
+this metadata-only preparation has not run the final benchmark.
 Its VM-specific desktop entry is versioned
 in `configs/cic_offline_launcher.desktop`; the thin entry point is
 `scripts/18_launch_cic_offline.py`. This shortcut does not change network settings.

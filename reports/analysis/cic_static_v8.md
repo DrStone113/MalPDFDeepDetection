@@ -79,6 +79,15 @@ count as true detections. Unexplained P0/P1/P2 changes block acceptance.
 
 ## Limits and final execution
 
+The prepared final job is
+[`run_20261010T172048450685Z_c3c2eeec64a6`](../experiments/cic_static_prepare/run_20261010T172048450685Z_c3c2eeec64a6/run_summary.json).
+It was prepared from clean committed candidate code `c3c2eeec64a6`, using the
+exact sealed v7 subset/configuration and a byte-identical native frozen model.
+The existing Desktop **Chạy CIC offline** launcher now targets this v8 job.
+After the selected LAB isolation steps, use the VMware console and press Enter.
+`scripts/18_launch_cic_offline.py --check` verifies metadata/model only, with
+no PDF access or execution. No benchmark attempt has been made during preparation.
+
 The [final code validation](../experiments/cic_v8_final_validation/run_20261010T171551960762Z_21161c1eb7f5/validation_report.md)
 passed 801 tests (all760 existing plus41 new), with the two known sklearn
 single-label warnings and no additional warnings. Python3.11.17 uses a fresh
