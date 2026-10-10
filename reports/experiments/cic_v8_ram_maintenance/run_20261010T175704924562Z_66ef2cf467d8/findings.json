@@ -1,0 +1,29 @@
+{
+  "saved_outcome": {
+    "prepared_run": "run_20261010T172048450685Z_c3c2eeec64a6",
+    "status": "failed",
+    "report_path": "reports/experiments/cic_static_profile/run_20261010T172942216671Z_2d744ec19f24/run_summary.json",
+    "recorded": 0,
+    "planned": 64,
+    "error_code": "insufficient_parser_ram"
+  },
+  "before": {
+    "available_bytes": 2597974016,
+    "worker_bytes": 1073741824,
+    "reserve_bytes": 268435456
+  },
+  "after": {
+    "available_bytes": 3422146560,
+    "worker_bytes": 1073741824,
+    "reserve_bytes": 268435456
+  },
+  "pytest_cache_relocated": true,
+  "relocated_bytes": 853173354,
+  "destination_scope": "ignored LAB artifacts; historical experiment evidence unchanged",
+  "targeted_tests": {
+    "passed": 128,
+    "warnings": 0
+  },
+  "pdf_access": false,
+  "benchmark_repeated": false
+}

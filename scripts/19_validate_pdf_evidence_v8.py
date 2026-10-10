@@ -7,6 +7,7 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+import tempfile
 
 from malpdf.provenance.research_runs import ResearchRun, write_json
 
@@ -26,8 +27,16 @@ def main():
             if d.metadata['Name'].lower() != 'malpdf'})) + '\n')
         venv = run.artifacts / 'venv'
         python = venv / 'bin/python'
+        # DataLoader file-descriptor sharing uses Unix sockets below TMPDIR.
+        # Keep that path short as well as on disk, outside RAM-backed /tmp.
+        temporary_root = root / 'artifacts/tmp'
+        temporary_root.mkdir(exist_ok=True)
+        temporary = Path(tempfile.mkdtemp(prefix='v8_', dir=temporary_root))
+        if len(os.fsencode(temporary)) > 64:
+            raise ValueError('Validation TMPDIR too long for multiprocessing Unix sockets')
+        run.state['temporary_path'] = str(temporary.relative_to(root))
         environment = {**os.environ, 'OPENBLAS_NUM_THREADS': '1', 'OMP_NUM_THREADS': '1',
-                       'MKL_NUM_THREADS': '1', 'MPLBACKEND': 'Agg'}
+                       'MKL_NUM_THREADS': '1', 'MPLBACKEND': 'Agg', 'TMPDIR': str(temporary)}
         checks = {}
 
         def check(name, command, timeout=900):
@@ -66,8 +75,8 @@ def main():
                          checks=list(checks), release_status='pending_offline_benchmark')
         run.state['notes'] = ('Fresh CPU install, full dataset-free suite, pip/diff/status/ignore checks saved. '
                               'No CIC PDFs opened; v8 release and accuracy improvement unverified. '
-                              'Internal fixture checks initially exposed host-RAM-dependent test admission; '
-                              'new fixtures now isolate admission while retaining actual worker hard caps.')
+                              'Temporary install/test files use the ignored on-disk run directory, '
+                              'avoiding RAM-backed /tmp pressure; parser budgets and assertions remain intact.')
         (run.report/'validation_report.md').write_text(
             f"# V8 code validation\n\n{run.state['tests_passed']} tests passed; {run.state['warnings']} warnings. "
             'See pytest.json for warning details and effective_environment.json for the fresh runtime. '

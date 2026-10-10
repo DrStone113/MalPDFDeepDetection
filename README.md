@@ -32,7 +32,8 @@ The `development/v8.0` candidate adds a separate `pdf-evidence-v8` LAB view:
 read-only MuPDF recovery, object/action/attachment evidence, backend conflicts,
 primary-result checkpoints, and a fixed C1 model with explicit abstention and
 Train-only missingness handling. V7 remains the baseline. The final same64
-offline benchmark and release acceptance are pending; no improvement is claimed.
+offline benchmark and release acceptance are pending. The first console invocation
+failed RAM admission before reading any PDF (0/64); no accuracy result is available.
 See [implementation, locked evaluation and remaining limits](reports/analysis/cic_static_v8.md).
 
 Static inspection now reads one size-capped, stable byte snapshot.
@@ -64,8 +65,12 @@ The completed v6/v7 Lubuntu measurements used **Chạy CIC offline** on the Desk
 after the selected disconnected console LAB procedure. The shortcut invokes a
 locked job through the existing guarded CLI, accepts Enter to start or `q` to
 cancel, and keeps the terminal open after completion or failure.
-It now targets the [prepared final v8 job](reports/experiments/cic_static_prepare/run_20261010T172048450685Z_c3c2eeec64a6/run_summary.json);
-this metadata-only preparation has not run the final benchmark.
+The [first v8 invocation](reports/experiments/cic_static_profile/run_20261010T172942216671Z_2d744ec19f24/run_summary.json)
+failed before PDF access because available RAM did not meet the isolated parser
+budget. Its claim and reports remain intact. Parser admission now runs before
+claiming and again after model loading; repeated launches display the saved status
+and report instead of starting another attempt. See
+[current launcher status and RAM preparation](reports/analysis/cic_static_v8.md#limits-and-final-execution).
 Its VM-specific desktop entry is versioned
 in `configs/cic_offline_launcher.desktop`; the thin entry point is
 `scripts/18_launch_cic_offline.py`. This shortcut does not change network settings.

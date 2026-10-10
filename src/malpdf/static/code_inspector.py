@@ -515,19 +515,29 @@ def _code_child(connection, path, boundary, limits, expected_sha256):
         connection.close()
 
 
-def _worker_count(requested, limits):
-    from malpdf.data.markov_preparation import effective_cpu_count
-
-    if type(requested) is not int or not 1 <= requested <= 16:
-        raise ValueError("workers must be an integer between 1 and 16")
+def worker_memory_budget(limits):
+    """Report the existing admission budget without opening any sample."""
     available = next(int(line.split()[1]) * 1024 for line in Path("/proc/meminfo").read_text().splitlines()
                      if line.startswith("MemAvailable:"))
     maximum, current = Path("/sys/fs/cgroup/memory.max"), Path("/sys/fs/cgroup/memory.current")
     if maximum.is_file() and current.is_file() and maximum.read_text().strip() != "max":
         available = min(available, max(0, int(maximum.read_text()) - int(current.read_text())))
-    count = min(requested, effective_cpu_count(), max(0, (available - 256 * 1024**2) // limits.memory_bytes))
+    return {"available_bytes": available, "worker_bytes": limits.memory_bytes,
+            "reserve_bytes": 256 * 1024**2}
+
+
+def _worker_count(requested, limits):
+    from malpdf.data.markov_preparation import effective_cpu_count
+
+    if type(requested) is not int or not 1 <= requested <= 16:
+        raise ValueError("workers must be an integer between 1 and 16")
+    memory = worker_memory_budget(limits)
+    count = min(requested, effective_cpu_count(), max(0,
+        (memory["available_bytes"] - memory["reserve_bytes"]) // memory["worker_bytes"]))
     if count < 1:
-        raise ValueError("Insufficient available RAM for the isolated parser budget")
+        raise ValueError("Insufficient available RAM for the isolated parser budget: "
+            f"available={memory['available_bytes']} bytes; "
+            f"required={memory['worker_bytes'] + memory['reserve_bytes']} bytes for one worker")
     return count
 
 

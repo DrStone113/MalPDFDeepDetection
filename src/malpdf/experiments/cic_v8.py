@@ -40,17 +40,80 @@ def baseline_evidence_checksums(root):
     return specifications
 
 
-def claim_v8_attempt(root, prepared_run):
+def _attempt_path(root, prepared_run):
+    import re
+    if not re.fullmatch(r'run_[A-Za-z0-9_-]{1,100}', prepared_run):
+        raise ValueError('Unsafe prepared-run identity')
+    path = root/'artifacts/cic_static_prepare'/prepared_run/'v8_attempt.json'
+    if any(part.is_symlink() for part in (path, *path.parents)):
+        raise ValueError('Unsafe v8 attempt path')
+    return path
+
+
+def v8_attempt_outcome(root, prepared_run):
+    """Read saved aggregate outcome only; never release or replace a claim."""
+    path = _attempt_path(root, prepared_run)
+    if not path.exists():
+        return None
+    marker = _json(root, path.relative_to(root))
+    if marker['prepared_run'] != prepared_run:
+        raise ValueError('V8 attempt identity mismatch')
+    # Older markers predate the explicit profile pointer. Match their locked
+    # methodology rather than picking the most recent or most favorable run.
+    directory = root/'reports/experiments/cic_static_profile'
+    profile_run = marker.get('profile_run')
+    if profile_run is not None:
+        import re
+        if not re.fullmatch(r'run_[A-Za-z0-9_-]{1,100}', profile_run):
+            raise ValueError('Unsafe saved profile-run identity')
+        lock_paths = [directory/profile_run/'locked_methodology.json']
+    else:
+        lock_paths = sorted(directory.glob('run_*/locked_methodology.json'))
+    candidates = []
+    for lock_path in lock_paths:
+        if not lock_path.exists():
+            continue
+        lock = _json(root, lock_path.relative_to(root))
+        if lock.get('prepared_run') == prepared_run:
+            candidates.append(lock_path.parent)
+        elif profile_run is not None:
+            raise ValueError('V8 attempt profile methodology mismatch')
+    if len(candidates) > 1:
+        raise ValueError('Ambiguous saved V8 attempts; inspect immutable reports')
+    result = {'prepared_run': prepared_run, 'status': 'claimed_without_final_outcome',
+              'report_path': None, 'recorded': None, 'planned': None, 'error_code': None}
+    if not candidates:
+        return result
+    report = candidates[0]
+    if marker.get('profile_run') not in (None, report.name):
+        raise ValueError('V8 attempt profile mismatch')
+    summary_path = report/'run_summary.json'
+    if not summary_path.exists():
+        return result
+    summary = _json(root, summary_path.relative_to(root))
+    result.update(status=summary['status'], report_path=str(summary_path.relative_to(root)))
+    pipeline_path = report/'pipeline_summary.json'
+    if pipeline_path.exists():
+        cold = _json(root, pipeline_path.relative_to(root))['cold']
+        result.update(recorded=cold['recorded'], planned=cold['planned'])
+    error_path = Path('artifacts/cic_static_profile')/report.name/'error.json'
+    if (root/error_path).exists():
+        error = _json(root, error_path)
+        if error.get('message', '').startswith('Insufficient available RAM for the isolated parser budget'):
+            result['error_code'] = 'insufficient_parser_ram'
+    return result
+
+
+def claim_v8_attempt(root, prepared_run, *, profile_run=None):
     """Atomic one-attempt claim after offline preflight; interrupted claims stay."""
     import re
     from datetime import datetime, timezone
-    if not re.fullmatch(r'run_[A-Za-z0-9_-]{1,100}',prepared_run):
-        raise ValueError('Unsafe prepared-run identity')
-    path = root/'artifacts/cic_static_prepare'/prepared_run/'v8_attempt.json'
-    if any(part.is_symlink() for part in (path,*path.parents)):
-        raise ValueError('Unsafe v8 attempt path')
+    path = _attempt_path(root, prepared_run)
+    if profile_run is not None and not re.fullmatch(r'run_[A-Za-z0-9_-]{1,100}', profile_run):
+        raise ValueError('Unsafe profile-run identity')
     try:
         write_json(path,{'prepared_run':prepared_run,'claimed_at_utc':datetime.now(timezone.utc).isoformat(),
+                        'profile_run': profile_run,
                         'policy':'one final benchmark attempt; preserve failures/interruptions; no automatic rerun'})
     except FileExistsError as error:
         raise ValueError('V8 benchmark already attempted; inspect saved outcome instead of rerunning') from error

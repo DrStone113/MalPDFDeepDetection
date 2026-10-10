@@ -1,0 +1,42 @@
+{
+  "run_id": "run_20261010T175704924562Z_66ef2cf467d8",
+  "study": "cic_v8_ram_maintenance",
+  "status": "completed",
+  "started_at_utc": "2026-10-10T17:57:04.975195+00:00",
+  "code_commit": "66ef2cf467d88d00feb38db723e21b870a3d37af",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      " M scripts/18_launch_cic_offline.py",
+      " M scripts/19_validate_pdf_evidence_v8.py",
+      " M src/malpdf/experiments/cic_static_benchmark.py",
+      " M src/malpdf/experiments/cic_v8.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M tests/test_cic_offline_launcher.py",
+      " M tests/test_pdf_evidence_v8.py",
+      "?? reports/experiments/cic_static_refused/run_20261010T174030041668Z_66ef2cf467d8/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      " M scripts/18_launch_cic_offline.py",
+      " M scripts/19_validate_pdf_evidence_v8.py",
+      " M src/malpdf/experiments/cic_static_benchmark.py",
+      " M src/malpdf/experiments/cic_v8.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M tests/test_cic_offline_launcher.py",
+      " M tests/test_pdf_evidence_v8.py",
+      "?? reports/experiments/cic_static_refused/run_20261010T174030041668Z_66ef2cf467d8/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "v8 zero-input RAM failure diagnosis and reversible test-cache relocation",
+  "report_path": "reports/experiments/cic_v8_ram_maintenance/run_20261010T175704924562Z_66ef2cf467d8/run_summary.json",
+  "artifact_path": "artifacts/cic_v8_ram_maintenance/run_20261010T175704924562Z_66ef2cf467d8",
+  "metrics": {},
+  "notes": "First v8 invocation failed on RAM admission before any PDF read (0/64 cold and warm). Marker and failed reports preserved. Old benign/synthetic pytest cache moved from RAM-backed /tmp into ignored disk artifacts without deleting it. New parser admission precedes atomic claim and follows model loading. 128 targeted tests passed; full fresh CPU validation pending. No CIC metrics or Test evaluation.",
+  "finished_at_utc": "2026-10-10T17:57:38.177025+00:00"
+}

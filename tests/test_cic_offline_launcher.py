@@ -60,3 +60,22 @@ def test_check_only_validates_metadata_without_attestation_or_subprocess(launche
     assert launcher.main(["--check"]) == 0
     assert checked == [(launcher.ROOT, launcher.PREPARED_RUN)]
     assert "chưa chạy PDF" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize('status,exit_code', [('failed', 1), ('completed', 0)])
+def test_existing_attempt_shows_saved_report_without_starting_again(launcher, monkeypatch, capsys, status, exit_code):
+    from malpdf.experiments import cic_v8
+    outcome = {'status': status, 'recorded': 0 if status == 'failed' else 64, 'planned': 64,
+               'error_code': 'insufficient_parser_ram' if status == 'failed' else None,
+               'report_path': 'reports/experiments/cic_static_profile/run_synthetic/run_summary.json'}
+    monkeypatch.setattr(cic_v8, 'v8_attempt_outcome', lambda *args: outcome)
+    monkeypatch.setattr(launcher.subprocess, 'run', lambda *args, **kwargs: pytest.fail('Existing attempt launched again'))
+    prompts = []
+    monkeypatch.setattr('builtins.input', lambda prompt: prompts.append(prompt) or '')
+    assert launcher.main([]) == exit_code
+    output = capsys.readouterr().out
+    assert f'Trạng thái đã lưu: {status}' in output and 'report_path:' in output
+    assert 'Traceback' not in output
+    assert len(prompts) == 1 and 'đóng cửa sổ' in prompts[0]
+    if status == 'failed':
+        assert '0/64' in output and 'thiếu RAM' in output

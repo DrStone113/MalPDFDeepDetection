@@ -79,20 +79,39 @@ count as true detections. Unexplained P0/P1/P2 changes block acceptance.
 
 ## Limits and final execution
 
-The prepared final job is
-[`run_20261010T172048450685Z_c3c2eeec64a6`](../experiments/cic_static_prepare/run_20261010T172048450685Z_c3c2eeec64a6/run_summary.json).
-It was prepared from clean committed candidate code `c3c2eeec64a6`, using the
-exact sealed v7 subset/configuration and a byte-identical native frozen model.
-The existing Desktop **Chạy CIC offline** launcher now targets this v8 job.
+The [first console invocation](../experiments/cic_static_profile/run_20261010T172942216671Z_2d744ec19f24/run_summary.json)
+failed RAM admission before any PDF access: cold0/64, warm0/64, no predictions
+or CIC metrics. Its atomic claim and failed report are preserved. Pressing the
+same launcher again therefore refused another attempt. The
+[RAM diagnosis](../experiments/cic_v8_ram_maintenance/run_20261010T175704924562Z_66ef2cf467d8/findings.json)
+records the saved failure and reversible relocation of old synthetic/benign pytest
+cache from RAM-backed `/tmp` to ignored disk artifacts. Available RAM increased
+from 2,597,974,016 to 3,422,146,560 bytes during that maintenance; the original
+failed run did not save its exact available-memory value.
+
+The current code checks admission before claiming and again after loading the
+frozen model. The locked parser cap remains 1GiB plus a 256MiB parent reserve:
+at least 1,342,177,280 available bytes at admission, also subject to cgroup
+headroom. Per-file checks and hard caps remain active; later pressure can still
+stop a job and must remain recorded. Fresh validation uses ignored on-disk
+temporary files rather than consuming `/tmp` RAM. Existing claims are displayed
+with their saved status and `report_path`, without launching a new process.
+
+A replacement metadata-only job is prepared from clean committed repaired code
+using the exact sealed v7 subset/configuration and byte-identical native frozen
+model. This replaces a zero-input failed launch, not an evaluated benchmark;
+no validation result or model setting was used to choose a favorable repeat.
+The existing Desktop **Chạy CIC offline** launcher will target that new lock.
 After the selected LAB isolation steps, use the VMware console and press Enter.
 `scripts/18_launch_cic_offline.py --check` verifies metadata/model only, with
-no PDF access or execution. No benchmark attempt has been made during preparation.
+no PDF access or execution. Final CIC evaluation remains pending.
 
-The [final code validation](../experiments/cic_v8_final_validation/run_20261010T171551960762Z_21161c1eb7f5/validation_report.md)
-passed 801 tests (all760 existing plus41 new), with the two known sklearn
+The [final code validation](../experiments/cic_v8_validation/run_20261010T180544719622Z_66ef2cf467d8/validation_report.md)
+passed 810 tests (all760 existing plus50 new), with the two known sklearn
 single-label warnings and no additional warnings. Python3.11.17 uses a fresh
-CPU pyproject installation; dependencies, diff/ignore checks and source/test
-fingerprint stability passed. This verifies the implementation, not CIC accuracy.
+CPU pyproject installation; dependencies, diff/ignore checks and
+[source/test fingerprint stability](../experiments/cic_v8_validation/run_20261010T180544719622Z_66ef2cf467d8/source_integrity.json)
+passed. This verifies the implementation, not CIC accuracy.
 
 All analysis stays in a disposable subprocess with existing CPU, RAM, wall,
 file, traversal, stream-filter, XML and AST limits. Explicit decoded-byte and

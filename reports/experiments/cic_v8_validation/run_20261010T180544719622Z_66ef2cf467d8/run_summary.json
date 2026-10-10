@@ -1,0 +1,66 @@
+{
+  "run_id": "run_20261010T180544719622Z_66ef2cf467d8",
+  "study": "cic_v8_validation",
+  "status": "completed",
+  "started_at_utc": "2026-10-10T18:05:44.753273+00:00",
+  "code_commit": "66ef2cf467d88d00feb38db723e21b870a3d37af",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_v8.md",
+      " M reports/research_log.md",
+      " M scripts/18_launch_cic_offline.py",
+      " M scripts/19_validate_pdf_evidence_v8.py",
+      " M src/malpdf/experiments/cic_static_benchmark.py",
+      " M src/malpdf/experiments/cic_v8.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M tests/test_cic_offline_launcher.py",
+      " M tests/test_pdf_evidence_v8.py",
+      "?? reports/experiments/cic_static_refused/run_20261010T174030041668Z_66ef2cf467d8/",
+      "?? reports/experiments/cic_v8_ram_maintenance/",
+      "?? reports/experiments/cic_v8_validation/run_20261010T175755200157Z_66ef2cf467d8/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_v8.md",
+      " M reports/research_log.md",
+      " M scripts/18_launch_cic_offline.py",
+      " M scripts/19_validate_pdf_evidence_v8.py",
+      " M src/malpdf/experiments/cic_static_benchmark.py",
+      " M src/malpdf/experiments/cic_v8.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M tests/test_cic_offline_launcher.py",
+      " M tests/test_pdf_evidence_v8.py",
+      "?? reports/experiments/cic_static_refused/run_20261010T174030041668Z_66ef2cf467d8/",
+      "?? reports/experiments/cic_v8_ram_maintenance/",
+      "?? reports/experiments/cic_v8_validation/run_20261010T175755200157Z_66ef2cf467d8/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "v8 maintenance, synthetic/benign fixtures only",
+  "report_path": "reports/experiments/cic_v8_validation/run_20261010T180544719622Z_66ef2cf467d8/run_summary.json",
+  "artifact_path": "artifacts/cic_v8_validation/run_20261010T180544719622Z_66ef2cf467d8",
+  "metrics": {},
+  "temporary_path": "artifacts/tmp/v8_uzam9zuv",
+  "tests_passed": 810,
+  "warnings": 2,
+  "checks": [
+    "create_venv",
+    "install",
+    "python_version",
+    "pip_check_before",
+    "pytest",
+    "pip_check",
+    "diff_check",
+    "status",
+    "ignore_check",
+    "effective_environment"
+  ],
+  "release_status": "pending_offline_benchmark",
+  "notes": "Fresh CPU install, full dataset-free suite, pip/diff/status/ignore checks saved. No CIC PDFs opened; v8 release and accuracy improvement unverified. Temporary install/test files use the ignored on-disk run directory, avoiding RAM-backed /tmp pressure; parser budgets and assertions remain intact.",
+  "finished_at_utc": "2026-10-10T18:09:32.420268+00:00"
+}

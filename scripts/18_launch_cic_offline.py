@@ -25,6 +25,24 @@ def main(argv=None):
         print("Chỉ kiểm tra metadata/model; chưa chạy PDF và chưa xác nhận LAB đã ngắt mạng.")
         return 0
 
+    from malpdf.experiments.cic_v8 import v8_attempt_outcome
+    outcome = v8_attempt_outcome(ROOT, PREPARED_RUN)
+    if outcome is not None:
+        print(f"Job đã có lượt chạy: {PREPARED_RUN}")
+        print(f"Trạng thái đã lưu: {outcome['status']}")
+        if outcome['recorded'] is not None:
+            print(f"PDF đã xử lý: {outcome['recorded']}/{outcome['planned']}")
+        if outcome['error_code'] == 'insufficient_parser_ram':
+            print("Lượt trước dừng vì thiếu RAM cho parser; chưa có kết quả CIC v8.")
+        if outcome['report_path']:
+            print(f"report_path: {outcome['report_path']}")
+        print("Giữ nguyên lượt đã lưu. Launcher không chạy lại job này.")
+        try:
+            input("Nhấn Enter để đóng cửa sổ: ")
+        except (KeyboardInterrupt, EOFError):
+            pass
+        return 0 if outcome['status'] == 'completed' else 1
+
     print("CHẠY CIC V8 OFFLINE — 64 MẪU TRAIN/DEV", flush=True)
     print("Dùng console VMware, tài khoản thường; ngắt cả NAT và host-only.")
     print("Tắt shared folders, clipboard và drag-drop theo quy trình LAB đã chọn.")

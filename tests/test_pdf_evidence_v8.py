@@ -242,6 +242,123 @@ def test_final_benchmark_attempt_is_atomic_and_not_reusable(tmp_path):
     with pytest.raises(ValueError,match='Unsafe'): claim_v8_attempt(tmp_path,'../../escape')
 
 
+@pytest.mark.parametrize('after_model', [False, True])
+def test_ram_refusal_never_claims_or_reads_pdf(tmp_path, monkeypatch, after_model):
+    from malpdf.experiments import cic_static_benchmark as study
+    from malpdf.inference import deployment
+    from malpdf.static import profile_worker
+    prepared = 'run_synthetic'
+    directory = tmp_path/'artifacts/cic_static_prepare'/prepared
+    directory.mkdir(parents=True)
+    cfg = {'workers': 1, 'warm_repeats': 1, 'compare_models': False}
+    limits = CodeInspectionLimits()
+    lock = {'configuration': cfg, 'v8_design': {}, 'baseline_evidence_checksums': {},
+            'subset_sha256': 'synthetic', 'fingerprint': {'backends': {}}}
+    monkeypatch.setattr(study, 'require_offline_lab', lambda *args: {})
+    monkeypatch.setattr(study, 'clean_code', lambda *args: None)
+    monkeypatch.setattr(study, 'load_job', lambda *args: ([object()], lock, limits))
+    admissions = []
+    def admission(*args):
+        admissions.append(args)
+        if not after_model or len(admissions) == 2:
+            raise ValueError('Insufficient available RAM for the isolated parser budget')
+        return 1
+    monkeypatch.setattr(study, '_worker_count', admission)
+    loaded = []
+    class Model:
+        def set_params(self, **kwargs): return self
+    def load(*args):
+        loaded.append(True)
+        return Model(), {'model_id': 'fixture', 'artifact_sha256': 'synthetic', 'training_dataset': {}}
+    monkeypatch.setattr(deployment, 'load_verified_deployment_model', load)
+    monkeypatch.setattr(profile_worker, 'profile_pdf', lambda *args, **kwargs: pytest.fail('PDF accessed after RAM refusal'))
+    class Run:
+        def __init__(self, root, study_name, *args):
+            self.identifier = 'run_fixture'
+            self.report = root/'reports/experiments'/study_name/self.identifier
+            self.artifacts = root/'artifacts'/study_name/self.identifier
+            self.report.mkdir(parents=True); self.artifacts.mkdir(parents=True)
+            self.state = {'metrics': {}}
+        def __enter__(self): return self
+        def __exit__(self, *args): return False
+    monkeypatch.setattr(study, 'ResearchRun', Run)
+    with pytest.raises(ValueError, match='Insufficient available RAM'):
+        study.run_cic_profile(tmp_path, prepared, lab_attested=True)
+    assert not (directory/'v8_attempt.json').exists()
+    assert bool(loaded) == after_model
+    assert len(admissions) == (2 if after_model else 1)
+    if after_model:
+        pipeline = json.loads((tmp_path/'reports/experiments/cic_static_profile/run_fixture/pipeline_summary.json').read_text())
+        assert pipeline['cold']['recorded'] == 0 and pipeline['cold']['not_started'] == 1
+
+
+@pytest.mark.parametrize('delta', [-1, 0])
+def test_memory_admission_keeps_full_worker_cap_and_parent_reserve(monkeypatch, delta):
+    from malpdf.static import code_inspector
+    from malpdf.data import markov_preparation
+    limits = CodeInspectionLimits()
+    reserve = 256*1024**2
+    budget = {'available_bytes': limits.memory_bytes + reserve + delta,
+              'worker_bytes': limits.memory_bytes, 'reserve_bytes': reserve}
+    monkeypatch.setattr(code_inspector, 'worker_memory_budget', lambda *args: budget)
+    monkeypatch.setattr(markov_preparation, 'effective_cpu_count', lambda: 1)
+    if delta < 0:
+        with pytest.raises(ValueError, match=f"available={budget['available_bytes']}.*required={limits.memory_bytes + reserve}"):
+            code_inspector._worker_count(1, limits)
+    else:
+        assert code_inspector._worker_count(1, limits) == 1
+
+
+def test_saved_zero_file_failure_is_reported_without_releasing_claim(tmp_path):
+    from malpdf.experiments.cic_v8 import claim_v8_attempt, v8_attempt_outcome
+    prepared = 'run_synthetic'
+    directory = tmp_path/'artifacts/cic_static_prepare'/prepared
+    directory.mkdir(parents=True)
+    claim_v8_attempt(tmp_path, prepared)
+    marker = (directory/'v8_attempt.json').read_bytes()
+    report = tmp_path/'reports/experiments/cic_static_profile/run_failed'
+    report.mkdir(parents=True)
+    (report/'locked_methodology.json').write_text(json.dumps({'prepared_run': prepared}))
+    (report/'run_summary.json').write_text(json.dumps({'status': 'failed'}))
+    (report/'pipeline_summary.json').write_text(json.dumps({'cold': {'recorded': 0, 'planned': 64}}))
+    private = tmp_path/'artifacts/cic_static_profile/run_failed'
+    private.mkdir(parents=True)
+    (private/'error.json').write_text(json.dumps({'message': 'Insufficient available RAM for the isolated parser budget'}))
+    outcome = v8_attempt_outcome(tmp_path, prepared)
+    assert outcome['status'] == 'failed' and outcome['recorded'] == 0 and outcome['planned'] == 64
+    assert outcome['error_code'] == 'insufficient_parser_ram'
+    assert outcome['report_path'].endswith('run_failed/run_summary.json')
+    assert (directory/'v8_attempt.json').read_bytes() == marker
+    with pytest.raises(ValueError, match='already attempted'):
+        claim_v8_attempt(tmp_path, prepared)
+
+
+def test_claim_profile_identity_is_validated_and_preserved(tmp_path):
+    from malpdf.experiments.cic_v8 import claim_v8_attempt, v8_attempt_outcome
+    directory = tmp_path/'artifacts/cic_static_prepare/run_synthetic'
+    directory.mkdir(parents=True)
+    with pytest.raises(ValueError, match='Unsafe profile-run'):
+        claim_v8_attempt(tmp_path, 'run_synthetic', profile_run='../escape')
+    assert not (directory/'v8_attempt.json').exists()
+    claim_v8_attempt(tmp_path, 'run_synthetic', profile_run='run_actual')
+    assert json.loads((directory/'v8_attempt.json').read_text())['profile_run'] == 'run_actual'
+    assert v8_attempt_outcome(tmp_path, 'run_synthetic')['status'] == 'claimed_without_final_outcome'
+
+
+def test_profile_pointer_selects_claimed_run_not_unclaimed_or_more_favorable_report(tmp_path):
+    from malpdf.experiments.cic_v8 import claim_v8_attempt, v8_attempt_outcome
+    directory = tmp_path/'artifacts/cic_static_prepare/run_synthetic'
+    directory.mkdir(parents=True)
+    claim_v8_attempt(tmp_path, 'run_synthetic', profile_run='run_claimed')
+    for name, status in [('run_claimed', 'failed'), ('run_unclaimed', 'completed')]:
+        report = tmp_path/'reports/experiments/cic_static_profile'/name
+        report.mkdir(parents=True)
+        (report/'locked_methodology.json').write_text(json.dumps({'prepared_run': 'run_synthetic'}))
+        (report/'run_summary.json').write_text(json.dumps({'status': status}))
+    outcome = v8_attempt_outcome(tmp_path, 'run_synthetic')
+    assert outcome['status'] == 'failed' and '/run_claimed/' in outcome['report_path']
+
+
 def oversized_backend(connection,*args):
     os.setsid()
     connection.send_bytes(json.dumps({'event':'checkpoint','profile':{'status':'partial','errors':[],

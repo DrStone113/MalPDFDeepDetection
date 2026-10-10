@@ -1,0 +1,6 @@
+{
+  "source_test_files": 197,
+  "before_after_equal": true,
+  "sha256": "27cfd613198fe4c114dd8e23b0cae863f3663a1c7eae7519516e6239027d874d",
+  "scope": "src/scripts/tests stable from before pytest until after full810; no CIC PDF or benchmark access"
+}

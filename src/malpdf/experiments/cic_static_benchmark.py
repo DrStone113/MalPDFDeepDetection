@@ -21,7 +21,7 @@ import yaml
 
 from malpdf.provenance.research_runs import ResearchRun, write_json
 from malpdf.reproducibility import set_random_seed
-from malpdf.static.code_inspector import CodeInspectionLimits, CODE_INSPECTION_SCHEMA_VERSION, SECURITY_NAMES
+from malpdf.static.code_inspector import CodeInspectionLimits, CODE_INSPECTION_SCHEMA_VERSION, SECURITY_NAMES, _worker_count, worker_memory_budget
 from malpdf.static.lab_guard import require_offline_lab
 from malpdf.static.profiling import STAGES, PROFILE_VERSION, StageTimings
 from malpdf.static.safety import read_bounded_bytes
@@ -505,8 +505,13 @@ def run_cic_profile(root, prepared_run, *, lab_attested=False, model_file=None):
         if lock.get("inference_model") is not None and model_file is not None:
             raise ValueError("Prepared inference model is locked; a run cannot override it")
         if lock.get('v8_design') is not None:
-            from malpdf.experiments.cic_v8 import claim_v8_attempt
-            claim_v8_attempt(root, prepared_run)
+            from malpdf.experiments.cic_v8 import v8_attempt_outcome
+            outcome = v8_attempt_outcome(root, prepared_run)
+            if outcome is not None:
+                raise ValueError('V8 benchmark already attempted; '
+                    f"saved status={outcome['status']}; report_path={outcome['report_path']}")
+            # Admission failures cannot consume the sole PDF evaluation claim.
+            _worker_count(lock['configuration']['workers'], limits)
     except Exception:
         with ResearchRun(root, "cic_static_refused", {"protocol": "CIC offline job preflight",
             "prepared_run": prepared_run, "test_access": False, "pdf_access": False}) as refused:
@@ -559,6 +564,13 @@ def run_cic_profile(root, prepared_run, *, lab_attested=False, model_file=None):
 
         session = StaticScanSession(repository_root=root, inspector=lambda key, limits=None: readouts[key], model_loader=loader)
         try:
+            if lock.get('v8_design') is not None:
+                # Loading the frozen model also consumes parent RAM. Recheck
+                # immediately before claiming and before the first PDF access.
+                _worker_count(cfg['workers'], limits)
+                run.state['parser_memory_admission'] = worker_memory_budget(limits)
+                from malpdf.experiments.cic_v8 import claim_v8_attempt
+                claim_v8_attempt(root, prepared_run, profile_run=run.identifier)
             for mode, repeats in (("cold", 1), ("warm", cfg["warm_repeats"])):
                 for repeat in range(repeats):
                     for index, row in enumerate(rows):
