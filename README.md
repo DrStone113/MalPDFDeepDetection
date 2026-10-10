@@ -38,6 +38,18 @@ snapshot and source checksum without fitting. This supplied Protocol G model
 has its own identity; it does not replace the full-RIT deployment manifest.
 See [offline job and measurement limits](reports/analysis/cic_static_offline.md).
 
+The fixed CPU study `scripts/17_train_cic_static.py` compares the supplied frozen
+RIT model against one XGBoost candidate fit on the saved CIC Train partition
+using the controlled cached feature table. Its 40 predictors retain measured
+`script_ratio` and `ObfuscationCount`; dropping them creates cross-partition
+feature-equivalent groups. The three exclusions must be zero constants on
+Train, and all Test identities are discarded before numeric conversion.
+Threshold0.5 and the established XGBoost configuration are fixed before fitting.
+Numeric Validation classification and missing-row denominators are reported
+separately from PDF parser coverage. This does not replace deployment artifacts
+or establish independent Test accuracy. See
+[the accuracy diagnosis](reports/analysis/cic_static_accuracy.md).
+
 ## Retrospective multi-cohort stacking v4
 
 `scripts/13_multi_cohort_stacking_v4.py` adds a separately locked adaptation study.

@@ -1,0 +1,23 @@
+seed: 42
+threshold: 0.5
+audit_stratum_size: 32
+expected_counts:
+  train/0: 390
+  train/1: 480
+  validation/0: 131
+  validation/1: 160
+feature_table:
+  path: data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/dataset.csv
+  sha256: 35670e085c18423b0fbe24fb9b2f2f7bb3102ce0928338658ca753df54c7b636
+split_manifest:
+  path: data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/split_manifest.csv
+  sha256: e939a676c51c7a98b9dc4bb843e846f546e1ada2bfb576b41416c406415c0643
+source_manifest:
+  path: data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/source_manifest.csv
+  sha256: d74729236017dc27a71c999bc4d69f84a16fa4148573c3bbc7f4eb03709b150b
+normalization_manifest:
+  path: data/processed/cic_normalization/run_20261003T104918756555Z_3b68d36a5705/normalization_manifest.csv
+  sha256: c4dc77f00849518ee56dc34d0f0cc7daf0c92b3ce9fd1e93fd63d053caf8570f
+baseline_manifest:
+  path: reports/experiments/cic_static_prepare/run_20261009T171959106244Z_3c64208e275d/inference_model.json
+  sha256: 2b4ae34bda1604bb274abafd9f7207e4891ce26f901e729fce03b05e30d903c6

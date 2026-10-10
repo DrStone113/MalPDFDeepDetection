@@ -1,0 +1,20 @@
+{
+  "protocol": "CIC cached feature Train-only adaptation maintenance",
+  "real_pdf_access": false,
+  "test_partition_evaluation": false,
+  "research_fitting": false,
+  "scope": "synthetic tables/fixtures only; Test poison cells must be discarded before numeric conversion",
+  "seed": 42,
+  "code_commit": "d5c8d48011905e3f60c73678a755e1015139d534",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      "?? configs/cic_static_accuracy.yaml",
+      "?? scripts/17_train_cic_static.py",
+      "?? src/malpdf/experiments/cic_static_accuracy.py",
+      "?? tests/test_cic_static_accuracy.py"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

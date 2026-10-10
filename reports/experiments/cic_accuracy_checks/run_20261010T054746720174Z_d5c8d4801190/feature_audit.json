@@ -1,0 +1,23 @@
+{
+  "information": {
+    "train": {
+      "rows": 870,
+      "unique_vectors": 501,
+      "conflicting_vectors": 71,
+      "label_oracle_correct_ceiling": 716,
+      "interpretation": "diagnostic ceiling on these labeled vectors only; no classifier/generalization claim"
+    },
+    "validation": {
+      "rows": 291,
+      "unique_vectors": 118,
+      "conflicting_vectors": 17,
+      "label_oracle_correct_ceiling": 211,
+      "interpretation": "diagnostic ceiling on these labeled vectors only; no classifier/generalization claim"
+    }
+  },
+  "canonical38_overlap_vectors": 13,
+  "retaining40_overlap_vectors": 0,
+  "pilot_known_canonical41_value_mismatches": 0,
+  "pilot_matched_rows": 64,
+  "scope": "controlled CIC Train/Validation numeric metadata only; no Test/PDF bytes"
+}

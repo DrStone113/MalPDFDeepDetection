@@ -1,0 +1,32 @@
+{
+  "run_id": "run_20261010T054746720174Z_d5c8d4801190",
+  "study": "cic_accuracy_checks",
+  "status": "completed",
+  "started_at_utc": "2026-10-10T05:47:46.757494+00:00",
+  "code_commit": "d5c8d48011905e3f60c73678a755e1015139d534",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      "?? configs/cic_static_accuracy.yaml",
+      "?? scripts/17_train_cic_static.py",
+      "?? src/malpdf/experiments/cic_static_accuracy.py",
+      "?? tests/test_cic_static_accuracy.py"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      "?? configs/cic_static_accuracy.yaml",
+      "?? scripts/17_train_cic_static.py",
+      "?? src/malpdf/experiments/cic_static_accuracy.py",
+      "?? tests/test_cic_static_accuracy.py"
+    ]
+  },
+  "seed": 42,
+  "protocol": "CIC cached feature Train-only adaptation maintenance",
+  "report_path": "reports/experiments/cic_accuracy_checks/run_20261010T054746720174Z_d5c8d4801190/run_summary.json",
+  "artifact_path": "artifacts/cic_accuracy_checks/run_20261010T054746720174Z_d5c8d4801190",
+  "metrics": {},
+  "notes": "Final synthetic validation: 683 passed, 2 warnings in 105.25s (0:01:45); code/dependency/whitespace checks saved. Loader excludes Test before numeric conversion, protects saved group/label boundaries and raw null/-1 semantics, and fits the single fixed candidate only on CIC Train. No real model fitting/PDF/Test evaluation in maintenance.",
+  "finished_at_utc": "2026-10-10T05:49:36.332902+00:00"
+}

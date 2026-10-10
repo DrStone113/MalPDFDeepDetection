@@ -1,0 +1,29 @@
+{
+  "pytest": {
+    "command": [
+      "/home/drstone/MalPDFDeepDetection/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/",
+      "-q",
+      "--basetemp",
+      "/home/drstone/MalPDFDeepDetection/artifacts/cic_accuracy_checks/run_20261010T054746720174Z_d5c8d4801190/pytest_full"
+    ],
+    "exit_code": 0,
+    "summary": "683 passed, 2 warnings in 105.25s (0:01:45)"
+  },
+  "checks": {
+    "pip_check": {
+      "exit_code": 0,
+      "output": "No broken requirements found.\n"
+    },
+    "diff_check": {
+      "exit_code": 0,
+      "output": ""
+    }
+  },
+  "tested_sources_unchanged": true,
+  "real_pdf_access": false,
+  "research_fitting": false,
+  "test_partition_evaluation": false
+}

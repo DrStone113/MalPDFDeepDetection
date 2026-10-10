@@ -1,0 +1,11 @@
+{
+  "fixture": "benign UTF-16BE-BOM JavaScript stream; var fixture=1; never executed",
+  "complete": false,
+  "errors": [
+    "script_decode_error"
+  ],
+  "scripts_found": 1,
+  "scripts_parsed": 0,
+  "javascript_state": "present_unavailable",
+  "active_content_executed": false
+}
