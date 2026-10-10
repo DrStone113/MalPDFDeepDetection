@@ -211,12 +211,52 @@ numeric conversion. Its LAB-only RF artifact has a distinct model identity;
 numeric results do not establish end-to-end PDF coverage or independent Test
 accuracy.
 
-The RF study completed from clean9398934 in
+The RF study completed from clean commit 9398934 in
 `reports/experiments/cic_static_rf_accuracy/run_20261010T100303272932Z_939893441e7f/`.
-Both models classified the same291 numeric Validation rows, with no refusals.
-The frozen RIT baseline remained134/160 TP and112/131 FP. The RF candidate
-detected38/160 malicious rows (recall23.75%) and flagged34/131 benign rows
-(FPR25.95%). Its malicious F1 was0.3276 and MCC-0.0254, compared with baseline
-F10.6601 and MCC-0.0240. Lower false positives came with substantial recall
+Both models classified the same 291 numeric Validation rows, with no refusals.
+The frozen RIT baseline remained 134/160 TP and 112/131 FP. The RF candidate
+detected 38/160 malicious rows (recall 23.75%) and flagged 34/131 benign rows
+(FPR 25.95%). Its malicious F1 was 0.3276 and MCC -0.0254, compared with baseline
+F1 0.6601 and MCC -0.0240. Lower false positives came with substantial recall
 loss. This candidate is retained as negative development evidence and is not
 promoted; the numeric40 features alone did not solve the accuracy problem.
+
+## Completed v6 observed-evidence ablation
+
+`run_20261010T100355572064Z_18f2aa3b29d5` completed from clean commit 18f2aa3 using
+the sealed v6 offline records. The three variants fit exactly the same 32 Train
+rows and score the same 32 exposed development rows (16 per class), retaining
+all 15 parser-error inputs under the previously locked experimental fallback.
+The production gate and original model are unchanged. No PDF or Test is read.
+
+| Variant | TP / malicious | FP / benign | Malicious F1 | MCC |
+| --- | --- | --- | --- | --- |
+| P0 canonical RIT41 fallback | 12/16 | 13/16 | 0.5854 | -0.0756 |
+| P1 additional observed structure/AST | 12/16 | 14/16 | 0.5714 | -0.1601 |
+| P2 additional parser-status flags | 12/16 | 13/16 | 0.5854 | -0.0756 |
+
+The new partial structure did not improve malicious recall; P1 falsely flagged
+one more partial benign file than P0. P2 returned to the baseline hard-label
+counts. All 15 parser-error inputs still receive malicious predictions, despite
+including 7 benign files. Numeric fallback coverage is 32/32; complete analysis
+coverage remains a separate quantity. No candidate is promoted, and no exposed
+development threshold is adjusted to rescue these negative results.
+
+The confirmed remaining extraction gaps include 24 unresolved-reference files,
+18 failed structural parsers and 3 AST-error files on the 64-file cohort.
+All 14 newly recovered missing-marker files share AcroForm/XFA/EmbeddedFile
+counts, across both published labels. The current inspector traverses PDF
+dictionaries but does not parse JavaScript inside XFA XML or inspect embedded
+payload content; `inspect_js_syntax()` also discards its AST on syntax/resource
+failure without separate lexical evidence. These are code-level coverage gaps,
+not proof that any particular CIC file contains missed malicious behavior.
+Future corrections need benign fixtures, bounded decoding/provenance, and a
+new locked offline measurement before claiming recall/FPR improvement.
+
+The review/maintenance suite passed 729 synthetic tests with 2 existing
+single-label metric warnings. `pip check`, `git diff --check` and `git fsck`
+passed. Full outputs and the exact Git-recovery backup remain in ignored LAB
+artifacts; aggregate provenance is recorded in
+`reports/experiments/cic_v6_review_checks/run_20261010T095754964749Z_537d06776817/`.
+Empty Git objects were reconstructed with their original hashes; HEAD, index
+and source files were preserved. This repair is separate from model outcomes.

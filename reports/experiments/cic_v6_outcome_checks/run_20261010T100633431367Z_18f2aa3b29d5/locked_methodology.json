@@ -1,0 +1,25 @@
+{
+  "protocol": "v6 development outcome documentation and handoff checks",
+  "pdf_access": false,
+  "test_access": false,
+  "model_fitting": false,
+  "source_maintenance": "run_20261010T095754964749Z_537d06776817",
+  "source_studies": [
+    "run_20261010T100303272932Z_939893441e7f",
+    "run_20261010T100355572064Z_18f2aa3b29d5"
+  ],
+  "scope": "copy preserved results; no model/threshold selection, no historical report overwrite; no code changes since full suite",
+  "seed": 42,
+  "code_commit": "18f2aa3b29d58ed1cce0d5f095bce8c614a45b85",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_accuracy.md",
+      " M reports/research_log.md",
+      "?? reports/experiments/cic_profile_accuracy/run_20261010T100355572064Z_18f2aa3b29d5/"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

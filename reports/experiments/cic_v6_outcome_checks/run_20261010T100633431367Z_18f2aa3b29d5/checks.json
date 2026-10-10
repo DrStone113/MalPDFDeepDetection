@@ -1,0 +1,27 @@
+{
+  "full_pytest_saved_evidence": {
+    "path": "artifacts/cic_v6_review_checks/run_20261010T095754964749Z_537d06776817/pytest.log",
+    "sha256": "15e2ba3bfc520378e26a8e41ee785c676e8f2f23445245adde4073af2df09195",
+    "passed": 729,
+    "warnings": 2,
+    "pytest_reported_seconds": 257.6
+  },
+  "commands": [
+    {
+      "name": "pip_check",
+      "returncode": 0
+    },
+    {
+      "name": "git_diff_check",
+      "returncode": 0
+    },
+    {
+      "name": "git_fsck",
+      "returncode": 0
+    },
+    {
+      "name": "git_status",
+      "returncode": 0
+    }
+  ]
+}

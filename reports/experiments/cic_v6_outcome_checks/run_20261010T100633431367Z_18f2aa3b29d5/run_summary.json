@@ -1,0 +1,32 @@
+{
+  "run_id": "run_20261010T100633431367Z_18f2aa3b29d5",
+  "study": "cic_v6_outcome_checks",
+  "status": "completed",
+  "started_at_utc": "2026-10-10T10:06:33.467919+00:00",
+  "code_commit": "18f2aa3b29d58ed1cce0d5f095bce8c614a45b85",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_accuracy.md",
+      " M reports/research_log.md",
+      "?? reports/experiments/cic_profile_accuracy/run_20261010T100355572064Z_18f2aa3b29d5/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_accuracy.md",
+      " M reports/research_log.md",
+      "?? reports/experiments/cic_profile_accuracy/run_20261010T100355572064Z_18f2aa3b29d5/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "v6 development outcome documentation and handoff checks",
+  "report_path": "reports/experiments/cic_v6_outcome_checks/run_20261010T100633431367Z_18f2aa3b29d5/run_summary.json",
+  "artifact_path": "artifacts/cic_v6_outcome_checks/run_20261010T100633431367Z_18f2aa3b29d5",
+  "metrics": {},
+  "notes": "Final v6/870-Train RF negative outcomes documented from immutable evidence; no candidate promoted or threshold changed. Full729-pass synthetic suite retained; dependency/diff/fsck/status checks pass. No source/test changes since full suite, PDF access, Test evaluation, or dataset mutation. Goal accuracy improvement remains unproven; explicit XFA/embedded/lexical/reference gaps recorded without claiming missed malicious behavior.",
+  "finished_at_utc": "2026-10-10T10:06:34.813262+00:00"
+}

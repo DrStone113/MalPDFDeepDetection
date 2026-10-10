@@ -100,6 +100,11 @@ The matched study of the completed v6 evidence uses
 on all870 cached CIC Train rows uses `--config configs/cic_static_rf_accuracy.yaml`.
 Both reuse the same entry point, fixed threshold0.5 and saved splits, without
 reopening PDFs or evaluating Test. Their experimental candidates stay in LAB.
+Both studies completed without promotion. The larger RF candidate's recall fell
+to23.75% while reducing FPR to25.95% on291 cached development rows. On32 v6
+development rows, additional observed structure/AST kept12/16 TP but increased
+FP from13/16 to14/16. These exposed development results do not establish a
+full-PDF accuracy gain. See [the preserved outcomes](reports/analysis/cic_static_accuracy.md).
 
 Three fixed RF variants share the same eligible 32 Train and 32 development
 rows: canonical RIT41 measurements, additional complete/observed structure and
