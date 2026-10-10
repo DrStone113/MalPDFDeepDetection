@@ -174,3 +174,32 @@ and aggregate reports may enter the chosen controlled export process. Do not
 transfer payloads or binary model/pickle artifacts to the host for loading.
 Retain needed results, restore the clean VM baseline, then reconnect networking
 according to the previously chosen LAB procedure.
+
+## Current v5 paired job
+
+The metadata-only job `run_20261010T060459185898Z_03bb11cdea2b` was prepared
+from clean committed code. Its subset, configuration and frozen Protocol G
+native model checksums match the previous same-64 job. The new code fingerprint
+uses `pdf-code-inspection-v5`; older prepared jobs do not match this revision.
+No dataset PDF was read during preparation. The full benign fixture suite
+passed 706 tests; the dependency and whitespace checks passed. Preparation
+verification is saved under the matching `reports/experiments/cic_static_prepare/`
+directory.
+
+After using the already selected disconnected non-root VMware console LAB
+procedure (NAT and host-only off; shared folders/clipboard/drag-drop off), run:
+
+```bash
+.venv/bin/python scripts/16_benchmark_cic_static.py run \
+  --prepared-run run_20261010T060459185898Z_03bb11cdea2b \
+  --lab-isolated
+```
+
+This is the next measurement, not a completed new PDF benchmark. Inspect its
+`pipeline_summary.json`, `baseline_comparison.json`, `feature_comparison.json`
+and private failure inventory after the run. Recovered xref or traversal-budget
+AST evidence remains partial. Changes in usable class counts must accompany
+recall/FPR comparisons. The fixed cached-table CIC candidate did not improve
+malicious F1/MCC and is not used by this job; see the
+[accuracy diagnosis](cic_static_accuracy.md). End-to-end accuracy improvement
+has not yet been demonstrated.

@@ -1,0 +1,21 @@
+{
+  "rows": 64,
+  "subset_sha256": "bc0b8e0f65383d96b4f68065b8898563898d18cd2775f789da7141fb691ed209",
+  "same_subset_as_previous_job": true,
+  "same_configuration": true,
+  "same_native_model_sha256": true,
+  "code_schema": "pdf-code-inspection-v5",
+  "sources_match_current_tree": true,
+  "model_id": "xgb-rit-supplied-g-drop3constant-v1",
+  "model_features": 38,
+  "limits": {
+    "workers": 1,
+    "wall_seconds": 20,
+    "cpu_seconds": 12,
+    "address_space_bytes": 1073741824
+  },
+  "new_cic_candidate_used": false,
+  "real_pdf_access": false,
+  "new_accuracy_or_latency_measurement": false,
+  "checks_source": "706-passed fixture suite and pip/diff checks in cic_extractor_checks/run_20261010T060110327042Z_a476b20fd847"
+}
