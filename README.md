@@ -18,11 +18,22 @@ This maintenance uses benign synthetic fixtures and reads dataset metadata only.
 V7 extracts declared JavaScript from bounded XFA XML streams and ordered packet
 arrays through the same inert AST worker. XML encoding/escapes and object/packet
 provenance are retained; FormCalc is counted separately. DTDs, references,
-malformed XML and exhausted budgets remain explicit partial evidence. The next
-locked offline job also records the existing P0/P1/P2 observed-evidence ablation
+malformed XML and exhausted budgets remain explicit partial evidence. The completed
+locked offline job also recorded the existing P0/P1/P2 observed-evidence ablation
 inside its original run, without another PDF pass or source-cleanliness bypass.
 See [scope and verification](reports/analysis/cic_static_xfa.md). Synthetic
-coverage is verified; v7 real-CIC recall/FPR improvement is not yet measured.
+coverage is verified. The v7 console run on the same 64 files completed on October 10:
+recall and parser coverage stayed unchanged; strict C1 false positives fell
+from 3/5 to 2/5 classified benign files. The P0/P1/P2 fallback hard-label counts
+were unchanged. This small development result does not establish a general
+accuracy gain. See [the measured v7 result](reports/analysis/cic_static_offline.md#completed-v7-xfa-paired-measurement).
+
+The `development/v8.0` candidate adds a separate `pdf-evidence-v8` LAB view:
+read-only MuPDF recovery, object/action/attachment evidence, backend conflicts,
+primary-result checkpoints, and a fixed C1 model with explicit abstention and
+Train-only missingness handling. V7 remains the baseline. The final same64
+offline benchmark and release acceptance are pending; no improvement is claimed.
+See [implementation, locked evaluation and remaining limits](reports/analysis/cic_static_v8.md).
 
 Static inspection now reads one size-capped, stable byte snapshot.
 `malpdf.inference.StaticScanSession` reuses a verified frozen XGBoost deployment
@@ -49,7 +60,7 @@ snapshot and source checksum without fitting. This supplied Protocol G model
 has its own identity; it does not replace the full-RIT deployment manifest.
 See [offline job and measurement limits](reports/analysis/cic_static_offline.md).
 
-The completed v6 Lubuntu measurement used **Chạy CIC offline** on the Desktop
+The completed v6/v7 Lubuntu measurements used **Chạy CIC offline** on the Desktop
 after the selected disconnected console LAB procedure. The shortcut invokes a
 locked job through the existing guarded CLI, accepts Enter to start or `q` to
 cancel, and keeps the terminal open after completion or failure.

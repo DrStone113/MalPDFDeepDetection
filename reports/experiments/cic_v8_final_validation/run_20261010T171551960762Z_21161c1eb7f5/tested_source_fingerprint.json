@@ -1,0 +1,50 @@
+{
+  "profile_version": "cic-static-profile-v2",
+  "code_schema": "pdf-code-inspection-v7",
+  "evidence_schema": "pdf-evidence-v8",
+  "limits": {
+    "max_file_bytes": 10485760,
+    "max_objects": 2000,
+    "max_pdf_depth": 64,
+    "max_scripts": 64,
+    "max_script_bytes": 262144,
+    "max_decoded_bytes": 4194304,
+    "max_ast_nodes": 20000,
+    "max_ast_depth": 100,
+    "wall_seconds": 20,
+    "cpu_seconds": 12,
+    "memory_bytes": 1073741824
+  },
+  "backends": {
+    "pypdf": "5.9.0",
+    "PyMuPDF": "1.26.7",
+    "esprima": "4.0.1",
+    "python": "3.11.17",
+    "expat": "expat_2.8.5"
+  },
+  "sources": {
+    "static/analyzer.py": "c8b2bf84dea5bb744152d02690d9a76a4149a9e8116ca2eabec8462c3f4cfb4c",
+    "static/pdf_parser.py": "54bd8a8bdd2f90835b865161d02499fb91819e26258478dd2bb121bfafb84d25",
+    "static/rit_reference.py": "d83b023d1424ae6e3c0c026d792856c8c2bb4177efd2c064c296fc97e22e9df0",
+    "static/raw_scan.py": "681e32599baa5741cee6a585700525c7c584f0f621cad6c5c7821ef37ac8ca45",
+    "static/code_inspector.py": "64852550f7c82e8020f38f9c74ea62de9ce415fdabe3a943d48bbd0720b7c3f3",
+    "static/js_ast.py": "66c4dd9afe6cf9ef5c06eece9a094bec467f6a89985e815eeb9e03e8fe2ba960",
+    "static/xfa_xml.py": "15cea6f2c02edc0582a0d12705521e04d045052722d978e8c9990916fd09fb73",
+    "static/profiling.py": "5d6bc720a550f5830e795fc0ab2178bb194467982cd859ad1d97d9a3d577a458",
+    "static/profile_worker.py": "19e1bf26a07f09ae136720f5104e348c176686903c400e2b5847df488afdfbfb",
+    "static/schema.py": "f3952a013c5890aff201b00b4c72343d7d0766a6a1b9da720e233e05f26c9277",
+    "static/result.py": "b839d737af3c9381b1719f11ae8a500915b59d831c2afba8fd604d33c2521cb9",
+    "static/safety.py": "cc3a86a2ce9ffc2f7abefbdb19376e4e369f7dd24a7ad7bda9f6417b8a49f08d",
+    "static/lab_guard.py": "717ba03e4be7f153fb2ae67bff4c4b03da5aeb8b8412aaf49ff2898a0088b3b8",
+    "static/parser_diagnostics.py": "ea62038cafb5fe95ecffd6ac1ee5def46ba0c001a52fb274b8d6db94f6cb3adc",
+    "experiments/cic_static_benchmark.py": "fbcc79b84dbad2d90bf697b5aa0fee24b9ea7d071ec57a61bccc849a75ffbaed",
+    "experiments/cic_static_accuracy.py": "a23317b108a826ef6bc8ddd848446d7741bc3822604bcd2416a37ca84762bc07",
+    "inference/predictor.py": "cb6a620bbe093038c160ec7307f88b576c5d04deea08db8194239f7e3e71434d",
+    "inference/schema.py": "14f6b144ae8ac586ba0b497510b7b6be533616b2976e587a3498a66b1f85c6c6",
+    "inference/deployment.py": "a90a38c99b2ea5b0e27c63b335f74358483a86941bd65a8f2d48c2547470de35",
+    "static/recovery.py": "bc8fbf73fb2c76a9665daaecbb54fd4d300b7950236ae10d0ca92c47e3331ddd",
+    "static/evidence.py": "67e8cea1bf239fa1f8fe17db52ea546560a737314dadc2065bd56b503b90aab0",
+    "inference/evidence_policy.py": "0a6dd64436dc69df74f8d72b23f39af0c5353bd19dc0a2edf8c69a037442eb60",
+    "experiments/cic_v8.py": "c9616d6cda19eae9f591d3a7d3d7a25c6e0059bcf3e8e4fc15ed5575768300f9"
+  }
+}

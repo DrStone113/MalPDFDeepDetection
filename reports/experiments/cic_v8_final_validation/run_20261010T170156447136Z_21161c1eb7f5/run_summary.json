@@ -1,0 +1,62 @@
+{
+  "run_id": "run_20261010T170156447136Z_21161c1eb7f5",
+  "study": "cic_v8_final_validation",
+  "status": "completed",
+  "started_at_utc": "2026-10-10T17:01:56.520989+00:00",
+  "code_commit": "21161c1eb7f5ddfa536651a0f845053a90003f89",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/research_log.md",
+      " M src/malpdf/experiments/cic_static_benchmark.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M src/malpdf/static/profile_worker.py",
+      "?? reports/analysis/cic_static_v8.md",
+      "?? reports/experiments/cic_v8_validation/run_20261010T165156994918Z_21161c1eb7f5/",
+      "?? scripts/19_validate_pdf_evidence_v8.py",
+      "?? src/malpdf/experiments/cic_v8.py",
+      "?? src/malpdf/inference/evidence_policy.py",
+      "?? src/malpdf/static/evidence.py",
+      "?? src/malpdf/static/recovery.py",
+      "?? tests/test_pdf_evidence_v8.py"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/research_log.md",
+      " M src/malpdf/experiments/cic_static_benchmark.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M src/malpdf/static/profile_worker.py",
+      "?? reports/analysis/cic_static_v8.md",
+      "?? reports/experiments/cic_v8_validation/run_20261010T165156994918Z_21161c1eb7f5/",
+      "?? scripts/19_validate_pdf_evidence_v8.py",
+      "?? src/malpdf/experiments/cic_v8.py",
+      "?? src/malpdf/inference/evidence_policy.py",
+      "?? src/malpdf/static/evidence.py",
+      "?? src/malpdf/static/recovery.py",
+      "?? tests/test_pdf_evidence_v8.py"
+    ]
+  },
+  "seed": 42,
+  "protocol": "final v8 code maintenance validation, synthetic/benign fixtures only",
+  "report_path": "reports/experiments/cic_v8_final_validation/run_20261010T170156447136Z_21161c1eb7f5/run_summary.json",
+  "artifact_path": "artifacts/cic_v8_final_validation/run_20261010T170156447136Z_21161c1eb7f5",
+  "metrics": {},
+  "tests_passed": 794,
+  "warnings": 2,
+  "release_status": "pending_offline_benchmark",
+  "checks": [
+    "python_version",
+    "pytest",
+    "pip_check",
+    "diff_check",
+    "status",
+    "ignore_check"
+  ],
+  "code_fingerprint_sha256": "4979604f2bfa602bf0587e3fe71124afc9dad7cd1e74fe45d9d8e125f305320d",
+  "notes": "Final candidate source unchanged during full suite; fresh CPU environment reused with unchanged pyproject/dependencies. Two known sklearn single-label warnings inspected; any additional warning is visible in pytest.json. No CIC PDFs opened, metrics unavailable; release and improvement unverified.",
+  "finished_at_utc": "2026-10-10T17:06:45.319800+00:00"
+}

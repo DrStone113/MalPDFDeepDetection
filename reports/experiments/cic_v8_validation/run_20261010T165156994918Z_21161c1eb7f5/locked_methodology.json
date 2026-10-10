@@ -1,0 +1,28 @@
+{
+  "protocol": "v8 maintenance, synthetic/benign fixtures only",
+  "pdf_access": false,
+  "test_access": false,
+  "environment": "fresh Python 3.11 venv; CPU wheels; pyproject editable dev install",
+  "constraints": "effective starting package versions pinned for repeatable local checks",
+  "benchmark": "not invoked; final CIC acceptance pending isolated console LAB",
+  "seed": 42,
+  "code_commit": "21161c1eb7f5ddfa536651a0f845053a90003f89",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M src/malpdf/experiments/cic_static_benchmark.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M src/malpdf/static/profile_worker.py",
+      "?? reports/analysis/cic_static_v8.md",
+      "?? scripts/19_validate_pdf_evidence_v8.py",
+      "?? src/malpdf/experiments/cic_v8.py",
+      "?? src/malpdf/inference/evidence_policy.py",
+      "?? src/malpdf/static/evidence.py",
+      "?? src/malpdf/static/recovery.py",
+      "?? tests/test_pdf_evidence_v8.py"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

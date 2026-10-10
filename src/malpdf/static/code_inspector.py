@@ -178,7 +178,7 @@ def _inspect_code_bytes(data, limits, *, timings=None):
         return _inspect_code_bytes_inner(data, limits, timings)
 
 
-def _inspect_code_bytes_inner(data, limits, timings):
+def _inspect_code_bytes_inner(data, limits, timings, *, supplied_reader=None):
     """Internal parser routine: production access must use inspect_pdf_code(s)."""
     from pypdf import PdfReader
     from pypdf.errors import PdfReadError
@@ -191,7 +191,7 @@ def _inspect_code_bytes_inner(data, limits, timings):
     recovered = False
     try:
         with diagnostic.capture_open_notices():
-            reader = PdfReader(io.BytesIO(data), strict=True)
+            reader = supplied_reader if supplied_reader is not None else PdfReader(io.BytesIO(data), strict=True)
     except Exception as error:
         diagnostic.failure(error, "open")
         reason = diagnostic.data["failures"][0]["reason"]
@@ -219,6 +219,10 @@ def _inspect_code_bytes_inner(data, limits, timings):
         diagnostic.data["recovery_attempt"] = retry.data
         recovered = True
     diagnostic.data["open_success"] = not recovered
+    if supplied_reader is not None:
+        recovered = True
+        diagnostic.data["backend"] = "MuPDF"
+        diagnostic.data["recovery_scope"] = "read-only object view; original bytes unchanged; completeness unknown"
     if reader.is_encrypted:
         return _unavailable("encrypted_pdf", diagnostic.data)
     errors, seen, scripts_seen = set(), set(), set()
@@ -471,6 +475,7 @@ def _inspect_code_bytes_inner(data, limits, timings):
             "script_sources": sources, "errors": sorted(errors), "xfa_observed": xfa_info,
             "parser_diagnostics": diagnostic.data,
             "parser_recovered": recovered,
+            "budget_usage": {"decoded_bytes": decoded, "ast_nodes": total_nodes},
             "scope": "catalog-reachable PDF actions and declared XFA JavaScript syntax only", "content_redacted": True,
             "active_content_executed": False}
 

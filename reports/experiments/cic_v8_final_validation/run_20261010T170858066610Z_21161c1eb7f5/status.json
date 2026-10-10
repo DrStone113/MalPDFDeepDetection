@@ -1,0 +1,5 @@
+{
+  "exit_code": 0,
+  "output_tail": " M README.md\n M reports/research_log.md\n M src/malpdf/experiments/cic_static_benchmark.py\n M src/malpdf/static/code_inspector.py\n M src/malpdf/static/profile_worker.py\n?? reports/analysis/cic_static_v8.md\n?? reports/experiments/cic_v8_final_validation/\n?? reports/experiments/cic_v8_validation/run_20261010T165156994918Z_21161c1eb7f5/\n?? scripts/19_validate_pdf_evidence_v8.py\n?? src/malpdf/experiments/cic_v8.py\n?? src/malpdf/inference/evidence_policy.py\n?? src/malpdf/static/evidence.py\n?? src/malpdf/static/recovery.py\n?? tests/test_pdf_evidence_v8.py\n",
+  "full_output_path": "artifacts/cic_v8_final_validation/run_20261010T170858066610Z_21161c1eb7f5/status.txt"
+}

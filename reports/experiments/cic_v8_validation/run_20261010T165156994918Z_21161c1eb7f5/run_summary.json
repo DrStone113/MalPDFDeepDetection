@@ -1,0 +1,61 @@
+{
+  "run_id": "run_20261010T165156994918Z_21161c1eb7f5",
+  "study": "cic_v8_validation",
+  "status": "completed",
+  "started_at_utc": "2026-10-10T16:51:57.079195+00:00",
+  "code_commit": "21161c1eb7f5ddfa536651a0f845053a90003f89",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M src/malpdf/experiments/cic_static_benchmark.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M src/malpdf/static/profile_worker.py",
+      "?? reports/analysis/cic_static_v8.md",
+      "?? scripts/19_validate_pdf_evidence_v8.py",
+      "?? src/malpdf/experiments/cic_v8.py",
+      "?? src/malpdf/inference/evidence_policy.py",
+      "?? src/malpdf/static/evidence.py",
+      "?? src/malpdf/static/recovery.py",
+      "?? tests/test_pdf_evidence_v8.py"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M src/malpdf/experiments/cic_static_benchmark.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M src/malpdf/static/profile_worker.py",
+      "?? reports/analysis/cic_static_v8.md",
+      "?? scripts/19_validate_pdf_evidence_v8.py",
+      "?? src/malpdf/experiments/cic_v8.py",
+      "?? src/malpdf/inference/evidence_policy.py",
+      "?? src/malpdf/static/evidence.py",
+      "?? src/malpdf/static/recovery.py",
+      "?? tests/test_pdf_evidence_v8.py"
+    ]
+  },
+  "seed": 42,
+  "protocol": "v8 maintenance, synthetic/benign fixtures only",
+  "report_path": "reports/experiments/cic_v8_validation/run_20261010T165156994918Z_21161c1eb7f5/run_summary.json",
+  "artifact_path": "artifacts/cic_v8_validation/run_20261010T165156994918Z_21161c1eb7f5",
+  "metrics": {},
+  "tests_passed": 792,
+  "warnings": 2,
+  "checks": [
+    "create_venv",
+    "install",
+    "python_version",
+    "pip_check_before",
+    "pytest",
+    "pip_check",
+    "diff_check",
+    "status",
+    "ignore_check",
+    "effective_environment"
+  ],
+  "release_status": "pending_offline_benchmark",
+  "notes": "Fresh CPU install, full dataset-free suite, pip/diff/status/ignore checks saved. No CIC PDFs opened; v8 release and accuracy improvement unverified. Internal fixture checks initially exposed host-RAM-dependent test admission; new fixtures now isolate admission while retaining actual worker hard caps.",
+  "finished_at_utc": "2026-10-10T17:00:20.893480+00:00"
+}

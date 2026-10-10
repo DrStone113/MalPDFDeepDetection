@@ -1,0 +1,51 @@
+{
+  "python": "3.11.17",
+  "packages": {
+    "numpy": "2.4.6",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.9.1",
+    "PyMuPDF": "1.26.7",
+    "torch": "2.11.0+cpu",
+    "torchvision": "0.26.0+cpu",
+    "xgboost": "3.2.0",
+    "lightgbm": "4.7.0",
+    "catboost": "1.2.10"
+  },
+  "generating_commit": "21161c1eb7f5ddfa536651a0f845053a90003f89",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/research_log.md",
+      " M src/malpdf/experiments/cic_static_benchmark.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M src/malpdf/static/profile_worker.py",
+      "?? reports/analysis/cic_static_v8.md",
+      "?? reports/experiments/cic_v8_validation/run_20261010T165156994918Z_21161c1eb7f5/",
+      "?? scripts/19_validate_pdf_evidence_v8.py",
+      "?? src/malpdf/experiments/cic_v8.py",
+      "?? src/malpdf/inference/evidence_policy.py",
+      "?? src/malpdf/static/evidence.py",
+      "?? src/malpdf/static/recovery.py",
+      "?? tests/test_pdf_evidence_v8.py"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/research_log.md",
+      " M src/malpdf/experiments/cic_static_benchmark.py",
+      " M src/malpdf/static/code_inspector.py",
+      " M src/malpdf/static/profile_worker.py",
+      "?? reports/analysis/cic_static_v8.md",
+      "?? reports/experiments/cic_v8_validation/run_20261010T165156994918Z_21161c1eb7f5/",
+      "?? scripts/19_validate_pdf_evidence_v8.py",
+      "?? src/malpdf/experiments/cic_v8.py",
+      "?? src/malpdf/inference/evidence_policy.py",
+      "?? src/malpdf/static/evidence.py",
+      "?? src/malpdf/static/recovery.py",
+      "?? tests/test_pdf_evidence_v8.py"
+    ]
+  }
+}

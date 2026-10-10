@@ -181,7 +181,9 @@ def source_fingerprint(root, limits):
              "static/schema.py", "static/result.py", "static/safety.py", "static/lab_guard.py", "static/parser_diagnostics.py",
              "experiments/cic_static_benchmark.py", "experiments/cic_static_accuracy.py",
              "inference/predictor.py", "inference/schema.py", "inference/deployment.py")
+    paths += ("static/recovery.py", "static/evidence.py", "inference/evidence_policy.py", "experiments/cic_v8.py")
     return {"profile_version": PROFILE_VERSION, "code_schema": CODE_INSPECTION_SCHEMA_VERSION,
+            "evidence_schema": "pdf-evidence-v8",
             "limits": asdict(limits), "backends": {**{name: importlib.metadata.version(name) for name in ("pypdf", "PyMuPDF", "esprima")},
                                                    "python": platform.python_version(), "expat": expat.EXPAT_VERSION},
             "sources": {path: hashlib.sha256((root / "src/malpdf" / path).read_bytes()).hexdigest() for path in paths}}
@@ -211,6 +213,19 @@ def baseline_method(root, identifier):
     return json.loads(read_bounded_bytes(directory / "locked_methodology.json", boundary=root / "reports/experiments", max_bytes=1024**2))
 
 
+def reuse_baseline_model(root, baseline, destination):
+    """Copy the verified native snapshot byte-for-byte; never unpickle or fit."""
+    spec = baseline.get('inference_model')
+    if spec is None:
+        return None
+    content = profile_model_bytes(root, spec)
+    with destination.open('xb') as output:
+        output.write(content)
+    copied = {**spec, 'artifact_relative_path': str(destination.relative_to(root))}
+    profile_model_bytes(root, copied)
+    return copied
+
+
 def prepare_cic_profile(root, config, *, baseline_run=None, model_file=None):
     root = Path(root).absolute()
     clean_code(root)
@@ -238,13 +253,21 @@ def prepare_cic_profile(root, config, *, baseline_run=None, model_file=None):
             if cfg != baseline["configuration"] or subset_digest != baseline["subset_sha256"]:
                 raise ValueError("Baseline configuration/subset changed: preserve the same64 rows, labels and partitions")
         fingerprint = source_fingerprint(root, limits)
-        inference_model = snapshot_protocol_g_model(root, model_file, run.artifacts / "frozen_protocol_g.json") if model_file else None
+        destination = run.artifacts / 'frozen_protocol_g.json'
+        inference_model = (snapshot_protocol_g_model(root, model_file, destination) if model_file else
+                           reuse_baseline_model(root, baseline, destination) if baseline_run else None)
         if inference_model is not None:
             write_json(run.report / "inference_model.json", inference_model)
         lock = {"configuration": cfg, "subset_path": str(subset.relative_to(root)), "baseline_run": baseline_run,
                 "inference_model": inference_model,
                 "subset_sha256": subset_digest, "rows": len(rows),
                 "fingerprint": fingerprint, "created_at_utc": datetime.now(timezone.utc).isoformat()}
+        from malpdf.experiments.cic_v8 import V7_RUN, baseline_evidence_checksums, locked_v8_design
+        if baseline_run == V7_RUN:
+            if not cfg['compare_models'] or inference_model is None:
+                raise ValueError('V8 acceptance requires fixed model/regression comparisons')
+            lock['v8_design'] = locked_v8_design()
+            lock['baseline_evidence_checksums'] = baseline_evidence_checksums(root)
         write_json(run.artifacts / "job_lock.json", lock)
         counts = Counter((row["split"], row["Label"]) for row in rows)
         write_json(run.report / "subset_summary.json", {"rows": len(rows),
@@ -285,6 +308,10 @@ def load_job(root, identifier):
         raise ValueError("Extractor/config changed: prepare a new job; never reuse the old cache")
     if lock.get("inference_model") is not None:
         profile_model_bytes(root, lock["inference_model"])
+    if lock.get('v8_design') is not None:
+        from malpdf.experiments.cic_v8 import locked_v8_design, baseline_evidence_checksums
+        if lock['v8_design'] != locked_v8_design() or lock['baseline_evidence_checksums'] != baseline_evidence_checksums(root):
+            raise ValueError('Sealed v8 design or baseline evidence changed')
     return rows, lock, limits
 
 
@@ -477,6 +504,9 @@ def run_cic_profile(root, prepared_run, *, lab_attested=False, model_file=None):
         rows, lock, limits = load_job(root, prepared_run)
         if lock.get("inference_model") is not None and model_file is not None:
             raise ValueError("Prepared inference model is locked; a run cannot override it")
+        if lock.get('v8_design') is not None:
+            from malpdf.experiments.cic_v8 import claim_v8_attempt
+            claim_v8_attempt(root, prepared_run)
     except Exception:
         with ResearchRun(root, "cic_static_refused", {"protocol": "CIC offline job preflight",
             "prepared_run": prepared_run, "test_access": False, "pdf_access": False}) as refused:
@@ -496,6 +526,9 @@ def run_cic_profile(root, prepared_run, *, lab_attested=False, model_file=None):
         "ablation": "C0 same RIT41 definitions; C1 adds resolved structure/JS AST; RF settings and threshold0.5 locked before development evaluation; same saved partitions and refusals",
         "observed_evidence_ablation": "Reuse fixed P0 RIT41 fallback / P1 observed structure-AST / P2 parser flags on identical known-input Train/dev rows; original RF budget/seed42/threshold0.5; Train-only median imputation; all failures/refusals retained; no selection/deployment; strict C0/C1 have different eligibility",
         "dataset_scope": "CIC PDF only; RIT CSV unchanged, no AST fabrication or dataset merging", "test_access": False}
+    if lock.get('v8_design') is not None:
+        method.update(v8_design=lock['v8_design'], baseline_evidence_checksums=lock['baseline_evidence_checksums'])
+    method['config_hash'] = hashlib.sha256(json.dumps(cfg,sort_keys=True).encode()).hexdigest()
     with ResearchRun(root, "cic_static_profile", method) as run:
         set_random_seed(42)
         write_json(run.report / "static_package_versions.json", lock["fingerprint"]["backends"])
@@ -534,7 +567,8 @@ def run_cic_profile(root, prepared_run, *, lab_attested=False, model_file=None):
                         key = hashlib.sha256(json.dumps({"pdf_sha256": row["pdf_sha256"], "extractor": lock["fingerprint"]}, sort_keys=True).encode()).hexdigest()
                         cache_path = cache / (key + ".json")
                         profile = profile_pdf(root / row["pdf_relative_path"], boundary=root / "data/raw/cic_pdf",
-                            digest=row["pdf_sha256"], limits=limits, cache_path=cache_path if mode == "warm" else None, cache_key=key)
+                            digest=row["pdf_sha256"], limits=limits, cache_path=cache_path if mode == "warm" else None,
+                            cache_key=key, include_v8=True)
                         result = static_result(profile)
                         if result is not None:
                             readouts[index] = result
@@ -573,6 +607,8 @@ def run_cic_profile(root, prepared_run, *, lab_attested=False, model_file=None):
                             writer.writerow({name: ";".join(profile[name]) if name in {"errors", "reasons"} else profile[name] for name in fields})
                         if mode == "cold" and profile["status"] == "complete" and not cache_path.exists():
                             value = {name: profile[name] for name in ("profile_version", "status", "errors", "reasons", "static", "code")}
+                            if 'analysis_v8' in profile:
+                                value['analysis_v8'] = profile['analysis_v8']
                             checksum = hashlib.sha256(json.dumps(value, sort_keys=True, allow_nan=False).encode()).hexdigest()
                             write_json(cache_path, {"key": key, "profile_sha256": checksum, "profile": value})
                         run.progress("file_completed", cache_mode=mode, processed=len(records), planned=sum(planned.values()), status=profile["status"])
@@ -582,7 +618,11 @@ def run_cic_profile(root, prepared_run, *, lab_attested=False, model_file=None):
                 from malpdf.experiments.cic_static_accuracy import compare_profile_evidence
                 compare_profile_evidence(run, records, cfg)
             compare_saved_baseline(run, records, lock)
+            from malpdf.experiments.cic_v8 import compare_v8_run
+            compare_v8_run(run, records, lock)
             run.state["status"] = "completed"
+            if lock.get('v8_design') is not None:
+                run.state['release_status'] = 'pending_evidence_review'
         finally:
             summary = summarize_profiles(records, planned)
             summary["run_wall_seconds"] = perf_counter() - start_run
@@ -600,5 +640,12 @@ def run_cic_profile(root, prepared_run, *, lab_attested=False, model_file=None):
             summary["os_cache"] = "uncontrolled; cold/warm refer to application cache"
             summary["stage_scope"] = method["timing_scope"]
             write_json(run.report / "pipeline_summary.json", summary)
+            run.state['evidence_paths'] = {'pipeline': str((run.report/'pipeline_summary.json').relative_to(root)),
+                'per_file': str((run.artifacts/'per_file.jsonl').relative_to(root))}
+            if lock.get('v8_design') is not None:
+                run.state['evidence_paths'].update(comparison=str((run.report/'v7_v8_comparison.json').relative_to(root)),
+                    parser_comparison=str((run.report/'parser_comparison.json').relative_to(root)),
+                    c1_error_analysis=str((run.artifacts/'c1_error_analysis.json').relative_to(root)))
+                run.state.update(config_hash=method['config_hash'], dataset_manifest_hash=lock['subset_sha256'])
             run.state["notes"] = "CIC Train/dev only, one worker; all planned samples retained in coverage/refusal denominators. Full per-file identities/errors stay in LAB artifacts. Stage timings distinguish explicit JS decoding from implicit backend decoding. Balanced pilot and previously exposed Validation, no independent Test/improvement claim. RIT CSV unchanged."
     return run.state

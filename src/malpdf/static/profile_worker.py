@@ -52,12 +52,18 @@ def cached_profile(record, key, digest):
     return value
 
 
-def _profile_child(connection, path, boundary, digest, limits, cache_path, cache_key):
+def _profile_child(connection, path, boundary, digest, limits, cache_path, cache_key, include_v8=False):
     def event(kind, name, timings):
         connection.send_bytes(json.dumps({"event": kind, "stage": name, "timings": timings}).encode())
 
     timings = StageTimings(event)
     applied = None
+    def checkpoint(profile):
+        if include_v8:
+            payload = json.dumps({'event': 'checkpoint', 'profile': profile}, allow_nan=False).encode()
+            if len(payload) > 2 * 1024**2:
+                raise MemoryError('worker_output_limit')
+            connection.send_bytes(payload)
     try:
         applied = _apply_code_limits(limits)
         with open(os.devnull, "wb") as output:
@@ -70,12 +76,23 @@ def _profile_child(connection, path, boundary, digest, limits, cache_path, cache
                 raise ValueError("input_checksum_mismatch")
             if not data.startswith(b"%PDF-"):
                 raise ValueError("not_pdf")
+        if include_v8:
+            from malpdf.static.raw_scan import scan_raw_pdf_tokens
+            checkpoint({'status': 'partial', 'errors': ['primary_not_finished'], 'static': None, 'code': None,
+                        'raw_evidence': {'sha256': actual, 'size_bytes': len(data), 'features': scan_raw_pdf_tokens(data)}})
         cached = None
         if cache_path is not None and Path(cache_path).is_file():
             try:
-                content = read_bounded_bytes(Path(cache_path), boundary=Path(cache_path).parent, max_bytes=64 * 1024)
+                content = read_bounded_bytes(Path(cache_path), boundary=Path(cache_path).parent,
+                                            max_bytes=2 * 1024**2 if include_v8 else 64 * 1024)
                 record = json.loads(content)
                 cached = cached_profile(record, cache_key, actual)
+                if include_v8 and cached is not None and cached.get('analysis_v8',{}).get('schema_version') != 'pdf-evidence-v8':
+                    cached = None
+                if include_v8 and cached is not None and (cached['analysis_v8'].get('status') != 'complete'
+                        or cached['analysis_v8'].get('original_bytes_changed') is not False
+                        or cached['analysis_v8'].get('active_content_executed') is not False):
+                    cached = None
             except (OSError, ValueError, KeyError, TypeError):
                 pass  # Incomplete, malformed or obsolete entries are cache misses.
         if cached is not None:
@@ -86,7 +103,6 @@ def _profile_child(connection, path, boundary, digest, limits, cache_path, cache
             static = StaticPDFAnalyzer(StaticInspectionLimits(max_file_size_bytes=limits.max_file_bytes,
                 max_objects=limits.max_objects, max_recursion_depth=limits.max_pdf_depth)).inspect(
                     path, snapshot=data, snapshot_sha256=actual, timings=timings)
-            code = _inspect_code_bytes(data, limits, timings=timings)
             # Parser exception messages can contain input content; keep only
             # fixed issue codes. Complete private object/source evidence stays
             # in ignored LAB artifacts, never in aggregate Git reports.
@@ -95,6 +111,9 @@ def _profile_child(connection, path, boundary, digest, limits, cache_path, cache
                     "reference_parser_repaired": static.diagnostics.get("rit_reference_diagnostics", {}).get("parser_repaired"),
                     "errors": [{"code": item.code, "fatal": item.fatal} for item in static.errors],
                     "warnings": [item.code for item in static.warnings]}
+            checkpoint({'status': 'partial', 'errors': [item.code for item in static.errors] + ['code_not_finished'],
+                        'static': safe, 'code': None})
+            code = _inspect_code_bytes(data, limits, timings=timings)
             missing_reference = (any(static.features.get(name) == -1 for name in ("images", "contains_text"))
                 or static.diagnostics.get("rit_reference_diagnostics", {}).get("page_text_extraction_error_count", 0) > 0)
             good = (static.parser.get("success") and static.parser.get("structural_complete") and not missing_reference
@@ -121,6 +140,13 @@ def _profile_child(connection, path, boundary, digest, limits, cache_path, cache
                 reasons.add("analysis_incomplete")
             result = {"profile_version": PROFILE_VERSION, "status": status, "errors": sorted(issues), "reasons": sorted(reasons),
                       "static": safe, "code": code, "cache_hit": False}
+            if include_v8:
+                # A crash during the independent backend must not erase primary
+                # raw/structure/AST observations already returned by the worker.
+                checkpoint(result)
+                from malpdf.static.evidence import inspect_evidence
+                result['analysis_v8'] = inspect_evidence(data, safe, code, limits, timings=timings,
+                                                        primary_complete=result['status']=='complete')
         if not result["cache_hit"] and result["code"] and result["code"]["complete"] and result["code"]["scripts_found"] == 0:
             timings.seconds["js_ast"] = 0.0
             timings.seconds["stream_decode"] = 0.0
@@ -129,18 +155,23 @@ def _profile_child(connection, path, boundary, digest, limits, cache_path, cache
                       peak_rss_bytes=memory, rss_source=source)
     except BaseException as error:
         name = str(error) if str(error) in {"input_checksum_mismatch", "not_pdf"} else type(error).__name__
-        result = _failure(name, "input_error" if isinstance(error, (OSError, ValueError)) else "worker_error")
+        status = ("resource_limit_or_signal" if include_v8 and isinstance(error,MemoryError) else
+                  "input_error" if isinstance(error,(OSError,ValueError)) else "worker_error")
+        result = _failure(name,status)
         result["timings"] = dict(timings.seconds)
         if applied is not None:
             result["resource_limits"] = applied
             result["peak_rss_bytes"], result["rss_source"] = current_process_peak_rss()
     try:
-        connection.send_bytes(json.dumps({"event": "result", "profile": result}, allow_nan=False).encode())
+        payload = json.dumps({"event": "result", "profile": result}, allow_nan=False).encode()
+        if include_v8 and len(payload) > 2*1024**2:
+            payload = json.dumps({'event':'result','profile':_failure('worker_output_limit','resource_limit_or_signal')}).encode()
+        connection.send_bytes(payload)
     finally:
         connection.close()
 
 
-def profile_pdf(path, *, boundary, digest, limits=None, cache_path=None, cache_key=None):
+def profile_pdf(path, *, boundary, digest, limits=None, cache_path=None, cache_key=None, include_v8=False):
     """Profile one PDF in a fresh process; preserve completed stages on kill."""
     limits = limits or CodeInspectionLimits(wall_seconds=20, cpu_seconds=12)
     for name in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS"):
@@ -149,9 +180,10 @@ def profile_pdf(path, *, boundary, digest, limits=None, cache_path=None, cache_k
     context = multiprocessing.get_context("spawn")
     receiver, sender = context.Pipe(duplex=False)
     process = context.Process(target=_profile_child, args=(sender, str(path), str(boundary), digest, limits,
-        None if cache_path is None else str(cache_path), cache_key))
+        None if cache_path is None else str(cache_path), cache_key, include_v8))
     started = time.monotonic()
     result, last, observed, peak, family_peak = None, None, {name: None for name in STAGES}, 0, 0
+    saved_checkpoint = None
     try:
         process.start()
         sender.close()
@@ -168,9 +200,11 @@ def profile_pdf(path, *, boundary, digest, limits=None, cache_path=None, cache_k
                 ready = receiver.poll()
             if ready:
                 try:
-                    message = json.loads(receiver.recv_bytes(maxlength=64 * 1024))
+                    message = json.loads(receiver.recv_bytes(maxlength=2 * 1024**2 if include_v8 else 64 * 1024))
                     if message.get("event") == "result":
                         result = message["profile"]
+                    elif message.get('event') == 'checkpoint' and include_v8:
+                        saved_checkpoint = {**(saved_checkpoint or {}), **message['profile']}
                     elif message.get("event") in {"started", "finished"} and message.get("stage") in STAGES:
                         last, observed = message["stage"], message["timings"]
                     else:
@@ -188,6 +222,15 @@ def profile_pdf(path, *, boundary, digest, limits=None, cache_path=None, cache_k
                 time.sleep(0.005)
         if result["status"] in {"worker_error", "timeout", "resource_limit_or_signal"}:
             result["timings"] = observed
+            if saved_checkpoint is not None:
+                result.update(static=saved_checkpoint['static'], code=saved_checkpoint['code'],
+                    raw_evidence=saved_checkpoint.get('raw_evidence'),
+                    primary_status=saved_checkpoint['status'], primary_errors=saved_checkpoint['errors'],
+                    analysis_v8={'schema_version': 'pdf-evidence-v8',
+                        'status': 'resource_limited' if result['status'] in {'timeout','resource_limit_or_signal'} else 'unavailable',
+                        'complete': False, 'recovery_success': False, 'errors': result['errors'],
+                        'original_bytes_changed': False,
+                        'content_redacted': True, 'active_content_executed': False})
         result["last_stage"] = last
         result["worker_exit_code"] = process.exitcode
         result["peak_rss_bytes"] = max(peak, result.get("peak_rss_bytes", 0))
