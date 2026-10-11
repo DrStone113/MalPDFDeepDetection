@@ -1,0 +1,28 @@
+{
+  "run_id": "run_20261011T041717302629Z_2dde794fc3ae",
+  "study": "cic_v9_validation_diagnostic",
+  "status": "completed",
+  "started_at_utc": "2026-10-11T04:17:17.339855+00:00",
+  "code_commit": "2dde794fc3aee0af985d174df81ab796e01e1194",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      "?? reports/experiments/cic_v9_validation/run_20261011T041205474225Z_2dde794fc3ae/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      "?? reports/experiments/cic_v9_validation/run_20261011T041205474225Z_2dde794fc3ae/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "V9 CPU validation IPC diagnostic",
+  "report_path": "reports/experiments/cic_v9_validation_diagnostic/run_20261011T041717302629Z_2dde794fc3ae/run_summary.json",
+  "artifact_path": "artifacts/cic_v9_validation_diagnostic/run_20261011T041717302629Z_2dde794fc3ae",
+  "metrics": {},
+  "notes": "Interrupted full validation retained (357 passed, no seal). Existing synthetic DataLoader control passed outside tool sandbox, 1 passed in6.12s. Full CPU validation must complete on unchanged source; no PDF/frozen model/final access.",
+  "finished_at_utc": "2026-10-11T04:17:17.474977+00:00"
+}

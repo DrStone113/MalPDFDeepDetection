@@ -1,0 +1,18 @@
+{
+  "protocol": "V9 CPU validation IPC diagnostic",
+  "pdf_access": false,
+  "test_access": false,
+  "model_fitting": false,
+  "fixtures": "existing synthetic numeric bundle only",
+  "seed": 42,
+  "code_commit": "2dde794fc3aee0af985d174df81ab796e01e1194",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      "?? reports/experiments/cic_v9_validation/run_20261011T041205474225Z_2dde794fc3ae/"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

@@ -1,0 +1,14 @@
+{
+  "full_validation_run": "run_20261011T041205474225Z_2dde794fc3ae",
+  "full_validation_status": "failed; pytest interrupted after 357 passed, no validation seal",
+  "observed_wait": "parent DataLoader selector and idle persistent synthetic worker in tool sandbox",
+  "control_test": "tests/test_kaggle_handoff.py::test_gpu_training_exports_test_probabilities_once_without_test_loss_or_metrics",
+  "control_execution": "outside tool process sandbox, unchanged fresh Python3.11 CPU environment and source",
+  "control_exit_code": 0,
+  "control_output": "1 passed in 6.12s",
+  "control_timeout_seconds": 60,
+  "interpretation": "Control passes; rerun full CPU checks outside tool sandbox to resolve environment-specific IPC wait. No detector result inferred.",
+  "real_pdf_access": false,
+  "frozen_model_loading": false,
+  "final_claim_consumed": false
+}

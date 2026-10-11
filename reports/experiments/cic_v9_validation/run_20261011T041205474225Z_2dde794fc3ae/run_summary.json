@@ -1,0 +1,23 @@
+{
+  "run_id": "run_20261011T041205474225Z_2dde794fc3ae",
+  "study": "cic_v9_validation",
+  "status": "failed",
+  "started_at_utc": "2026-10-11T04:12:05.514252+00:00",
+  "code_commit": "2dde794fc3aee0af985d174df81ab796e01e1194",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "data_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "seed": 42,
+  "protocol": "V9 maintenance, synthetic/benign fixtures only",
+  "report_path": "reports/experiments/cic_v9_validation/run_20261011T041205474225Z_2dde794fc3ae/run_summary.json",
+  "artifact_path": "artifacts/cic_v9_validation/run_20261011T041205474225Z_2dde794fc3ae",
+  "metrics": {},
+  "fresh_environment_preparation": "run_20261011T022403385212Z_8ef6ec1d8bd7",
+  "error_type": "RuntimeError",
+  "finished_at_utc": "2026-10-11T04:16:44.313514+00:00"
+}
