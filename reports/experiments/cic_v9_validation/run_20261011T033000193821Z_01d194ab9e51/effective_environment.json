@@ -1,0 +1,5 @@
+{
+  "exit_code": 0,
+  "output_tail": "{\"python\": \"3.11.17\", \"packages\": {\"numpy\": \"2.4.6\", \"scipy\": \"1.17.1\", \"pandas\": \"2.3.3\", \"scikit-learn\": \"1.9.1\", \"pypdf\": \"6.18.1\", \"PyMuPDF\": \"1.26.7\", \"esprima\": \"4.0.1\", \"joblib\": \"1.6.0\", \"torch\": \"2.11.0+cpu\", \"torchvision\": \"0.26.0+cpu\"}, \"cuda\": null, \"cuda_available\": false}\n",
+  "full_output_path": "artifacts/cic_v9_validation/run_20261011T033000193821Z_01d194ab9e51/effective_environment.txt"
+}
