@@ -1,0 +1,27 @@
+{
+  "protocol": "V9 maintenance, synthetic/benign fixtures only",
+  "pdf_access": false,
+  "test_access": false,
+  "model_fitting": false,
+  "environment": "fresh Python 3.11 virtual environment; CPU wheels; pyproject editable dev install",
+  "purpose": "prepare fresh runtime",
+  "seed": 42,
+  "code_commit": "8ef6ec1d8bd70e767a880c2b7dac4dc65f34ca87",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M pyproject.toml",
+      " M src/malpdf/static/evidence.py",
+      " M src/malpdf/static/profile_worker.py",
+      "?? scripts/21_validate_pdf_evidence_v9.py",
+      "?? src/malpdf/experiments/cic_v9.py",
+      "?? src/malpdf/inference/evidence_policy_v9.py",
+      "?? src/malpdf/static/evidence_ipc.py",
+      "?? src/malpdf/static/evidence_v9.py",
+      "?? tests/test_evidence_ipc_v9.py",
+      "?? tests/test_evidence_policy_v9.py"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

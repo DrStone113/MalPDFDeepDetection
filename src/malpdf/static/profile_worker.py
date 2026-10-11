@@ -52,7 +52,10 @@ def cached_profile(record, key, digest):
     return value
 
 
-def _profile_child(connection, path, boundary, digest, limits, cache_path, cache_key, include_v8=False):
+def _profile_child(connection, path, boundary, digest, limits, cache_path, cache_key, include_v8=False, analysis_version=None):
+    v9 = analysis_version == 'v9'
+    include_v8 = include_v8 or v9
+    output_limit = 6 * 1024**2 if v9 else 2 * 1024**2
     def event(kind, name, timings):
         connection.send_bytes(json.dumps({"event": kind, "stage": name, "timings": timings}).encode())
 
@@ -61,7 +64,7 @@ def _profile_child(connection, path, boundary, digest, limits, cache_path, cache
     def checkpoint(profile):
         if include_v8:
             payload = json.dumps({'event': 'checkpoint', 'profile': profile}, allow_nan=False).encode()
-            if len(payload) > 2 * 1024**2:
+            if len(payload) > output_limit:
                 raise MemoryError('worker_output_limit')
             connection.send_bytes(payload)
     try:
@@ -84,7 +87,7 @@ def _profile_child(connection, path, boundary, digest, limits, cache_path, cache
         if cache_path is not None and Path(cache_path).is_file():
             try:
                 content = read_bounded_bytes(Path(cache_path), boundary=Path(cache_path).parent,
-                                            max_bytes=2 * 1024**2 if include_v8 else 64 * 1024)
+                                            max_bytes=output_limit if include_v8 else 64 * 1024)
                 record = json.loads(content)
                 cached = cached_profile(record, cache_key, actual)
                 if include_v8 and cached is not None and cached.get('analysis_v8',{}).get('schema_version') != 'pdf-evidence-v8':
@@ -92,6 +95,12 @@ def _profile_child(connection, path, boundary, digest, limits, cache_path, cache
                 if include_v8 and cached is not None and (cached['analysis_v8'].get('status') != 'complete'
                         or cached['analysis_v8'].get('original_bytes_changed') is not False
                         or cached['analysis_v8'].get('active_content_executed') is not False):
+                    cached = None
+                if v9 and cached is not None and (cached.get('analysis_v9', {}).get('schema_version') != 'pdf-evidence-v9'
+                        or not cached['analysis_v9'].get('complete')
+                        or cached['analysis_v9'].get('document_sha256') != actual
+                        or cached['analysis_v9'].get('original_bytes_changed') is not False
+                        or cached['analysis_v9'].get('active_content_executed') is not False):
                     cached = None
             except (OSError, ValueError, KeyError, TypeError):
                 pass  # Incomplete, malformed or obsolete entries are cache misses.
@@ -113,7 +122,8 @@ def _profile_child(connection, path, boundary, digest, limits, cache_path, cache
                     "warnings": [item.code for item in static.warnings]}
             checkpoint({'status': 'partial', 'errors': [item.code for item in static.errors] + ['code_not_finished'],
                         'static': safe, 'code': None})
-            code = _inspect_code_bytes(data, limits, timings=timings)
+            code = _inspect_code_bytes(data, limits, timings=timings,
+                                       **({'evidence_metadata': True} if v9 else {}))
             missing_reference = (any(static.features.get(name) == -1 for name in ("images", "contains_text"))
                 or static.diagnostics.get("rit_reference_diagnostics", {}).get("page_text_extraction_error_count", 0) > 0)
             good = (static.parser.get("success") and static.parser.get("structural_complete") and not missing_reference
@@ -145,8 +155,20 @@ def _profile_child(connection, path, boundary, digest, limits, cache_path, cache
                 # raw/structure/AST observations already returned by the worker.
                 checkpoint(result)
                 from malpdf.static.evidence import inspect_evidence
+                def legacy_checkpoint(analysis):
+                    checkpoint({**result, 'analysis_v8': analysis})
                 result['analysis_v8'] = inspect_evidence(data, safe, code, limits, timings=timings,
-                                                        primary_complete=result['status']=='complete')
+                    primary_complete=result['status']=='complete',
+                    **({'checkpoint': legacy_checkpoint} if v9 else {}))
+                if v9:
+                    checkpoint(result)
+                    from malpdf.static.evidence_v9 import inspect_evidence_v9
+                    from malpdf.static.evidence_ipc import WorkerRawSink
+                    def evidence_checkpoint(delta):
+                        connection.send_bytes(json.dumps({'event': 'evidence_delta', 'delta': delta}, allow_nan=False).encode())
+                    result['analysis_v9'] = inspect_evidence_v9(data, safe, code, limits, timings=timings,
+                        primary_complete=result['status']=='complete', legacy_analysis=result['analysis_v8'],
+                        checkpoint=evidence_checkpoint, raw_sink=WorkerRawSink(connection))
         if not result["cache_hit"] and result["code"] and result["code"]["complete"] and result["code"]["scripts_found"] == 0:
             timings.seconds["js_ast"] = 0.0
             timings.seconds["stream_decode"] = 0.0
@@ -164,23 +186,34 @@ def _profile_child(connection, path, boundary, digest, limits, cache_path, cache
             result["peak_rss_bytes"], result["rss_source"] = current_process_peak_rss()
     try:
         payload = json.dumps({"event": "result", "profile": result}, allow_nan=False).encode()
-        if include_v8 and len(payload) > 2*1024**2:
+        if include_v8 and len(payload) > output_limit:
             payload = json.dumps({'event':'result','profile':_failure('worker_output_limit','resource_limit_or_signal')}).encode()
         connection.send_bytes(payload)
     finally:
         connection.close()
 
 
-def profile_pdf(path, *, boundary, digest, limits=None, cache_path=None, cache_key=None, include_v8=False):
+def profile_pdf(path, *, boundary, digest, limits=None, cache_path=None, cache_key=None, include_v8=False,
+                analysis_version=None, raw_artifact_dir=None):
     """Profile one PDF in a fresh process; preserve completed stages on kill."""
     limits = limits or CodeInspectionLimits(wall_seconds=20, cpu_seconds=12)
+    if analysis_version not in (None, 'v8', 'v9'):
+        raise ValueError('Unknown evidence analysis version')
+    v9 = analysis_version == 'v9'
+    include_v8 = include_v8 or analysis_version in {'v8', 'v9'}
+    if raw_artifact_dir is not None and not v9:
+        raise ValueError('Raw evidence storage requires v9 analysis')
+    from malpdf.static.evidence_ipc import EvidenceAccumulator, ParentRawStore
+    accumulator = EvidenceAccumulator(digest) if v9 else None
+    raw_store = ParentRawStore(raw_artifact_dir) if v9 else None
     for name in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS"):
         os.environ[name] = "1"
     _worker_count(1, limits)
     context = multiprocessing.get_context("spawn")
     receiver, sender = context.Pipe(duplex=False)
-    process = context.Process(target=_profile_child, args=(sender, str(path), str(boundary), digest, limits,
-        None if cache_path is None else str(cache_path), cache_key, include_v8))
+    arguments = (sender, str(path), str(boundary), digest, limits,
+        None if cache_path is None else str(cache_path), cache_key, include_v8)
+    process = context.Process(target=_profile_child, args=arguments + ((analysis_version,) if v9 else ()))
     started = time.monotonic()
     result, last, observed, peak, family_peak = None, None, {name: None for name in STAGES}, 0, 0
     saved_checkpoint = None
@@ -188,6 +221,9 @@ def profile_pdf(path, *, boundary, digest, limits=None, cache_path=None, cache_k
         process.start()
         sender.close()
         while result is None:
+            if time.monotonic() - started >= limits.wall_seconds:
+                result = _failure('wall_timeout', 'timeout')
+                break
             try:
                 memory = Path(f"/proc/{process.pid}/status").read_text()
                 peak = max([peak] + [int(line.split()[1]) * 1024 for line in memory.splitlines() if line.startswith(("VmRSS:", "VmHWM:"))])
@@ -200,16 +236,24 @@ def profile_pdf(path, *, boundary, digest, limits=None, cache_path=None, cache_k
                 ready = receiver.poll()
             if ready:
                 try:
-                    message = json.loads(receiver.recv_bytes(maxlength=2 * 1024**2 if include_v8 else 64 * 1024))
+                    message = json.loads(receiver.recv_bytes(maxlength=(6 * 1024**2 if v9 else 2 * 1024**2)
+                                                             if include_v8 else 64 * 1024))
                     if message.get("event") == "result":
                         result = message["profile"]
+                        if v9 and 'analysis_v9' in result:
+                            accumulator.merge(result['analysis_v9'])
+                            result['analysis_v9'] = accumulator.value
                     elif message.get('event') == 'checkpoint' and include_v8:
                         saved_checkpoint = {**(saved_checkpoint or {}), **message['profile']}
+                    elif message.get('event') == 'evidence_delta' and v9:
+                        accumulator.merge(message['delta'])
+                    elif message.get('event') in {'raw_begin', 'raw_chunk', 'raw_end'} and v9:
+                        raw_store.accept(message)
                     elif message.get("event") in {"started", "finished"} and message.get("stage") in STAGES:
                         last, observed = message["stage"], message["timings"]
                     else:
                         raise ValueError("invalid_profile_message")
-                except (ValueError, OSError, EOFError, KeyError):
+                except (ValueError, OSError, EOFError, KeyError, TypeError, RecursionError, MemoryError):
                     result = _failure("invalid_worker_response")
                     process.join(timeout=0.05)
                     if process.exitcode in (-9, -24):
@@ -218,7 +262,7 @@ def profile_pdf(path, *, boundary, digest, limits=None, cache_path=None, cache_k
                 result = _failure("wall_timeout", "timeout")
             elif exited:
                 result = _failure("worker_exit", "worker_error")
-            if result is None:
+            if result is None and not receiver.poll():
                 time.sleep(0.005)
         if result["status"] in {"worker_error", "timeout", "resource_limit_or_signal"}:
             result["timings"] = observed
@@ -226,11 +270,17 @@ def profile_pdf(path, *, boundary, digest, limits=None, cache_path=None, cache_k
                 result.update(static=saved_checkpoint['static'], code=saved_checkpoint['code'],
                     raw_evidence=saved_checkpoint.get('raw_evidence'),
                     primary_status=saved_checkpoint['status'], primary_errors=saved_checkpoint['errors'],
-                    analysis_v8={'schema_version': 'pdf-evidence-v8',
+                    analysis_v8={**saved_checkpoint.get('analysis_v8', {}), 'schema_version': 'pdf-evidence-v8',
                         'status': 'resource_limited' if result['status'] in {'timeout','resource_limit_or_signal'} else 'unavailable',
                         'complete': False, 'recovery_success': False, 'errors': result['errors'],
                         'original_bytes_changed': False,
                         'content_redacted': True, 'active_content_executed': False})
+            if v9:
+                result['analysis_v9'] = accumulator.interrupted(result['errors'])
+        if v9:
+            result.setdefault('analysis_v9', accumulator.value)
+            result['raw_stream_storage'] = {'records': raw_store.records, 'verified_bytes': raw_store.used,
+                                           'unfinished_stream': raw_store.active is not None}
         result["last_stage"] = last
         result["worker_exit_code"] = process.exitcode
         result["peak_rss_bytes"] = max(peak, result.get("peak_rss_bytes", 0))
@@ -241,5 +291,10 @@ def profile_pdf(path, *, boundary, digest, limits=None, cache_path=None, cache_k
     finally:
         if process.pid is not None:
             _stop_code_process(process)
+            if result is not None:
+                result['worker_exit_code'] = process.exitcode
+                result['worker_cleanup_complete'] = not process.is_alive()
+        if raw_store is not None:
+            raw_store.close()
         receiver.close()
         sender.close()

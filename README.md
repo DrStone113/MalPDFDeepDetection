@@ -40,6 +40,27 @@ cohorts, so the P0/P1/P2 changes do not establish a model improvement. The subse
 backend/checkpoint repair passed 817 dataset-free tests; it has no new CIC measurement.
 See [measured results, diagnosis and remaining limits](reports/analysis/cic_static_v8.md).
 
+The `development/v9.0` implementation adds `analysis_v9` (`pdf-evidence-v9`):
+immutable observations, verified action/script/XFA/attachment relationships,
+per-script AST summaries, parent-held raw streams and additive worker checkpoints.
+C1 uses the original v8 RF173 artifact, its saved Train31 preprocessing and
+threshold0.5; P0/P1/P2 use the original v7 artifacts. There is no retraining,
+calibration, feature addition or threshold selection. Partial positives require
+verified model inputs and an eligible linked evidence chain. Incomplete negatives
+remain Inconclusive. Conflicts and caps are checked against model and graph
+dependencies; ambiguous conflicts still abstain.
+
+V9 code validation and real-PDF acceptance are separate. The console launcher
+`scripts/20_launch_cic_v9.py` offers **Integration** (Enter) for exactly the three
+historic AttributeError inputs and **Final** for the sealed same64 diagnostic.
+Integration must pass before final preparation; its aggregate reports must be
+reviewed and committed to restore the clean-worktree requirement. A campaign-wide
+atomic claim permits one final attempt across all prepared jobs. Failed or
+interrupted claims remain intact. The v8 shortcut continues reading its saved
+outcome. Real PDFs remain restricted to the disconnected non-root VMware console
+with the selected shared-folder/clipboard/drag-drop procedure. See
+[V9 contracts, checks and console handoff](reports/analysis/cic_static_v9.md).
+
 Static inspection now reads one size-capped, stable byte snapshot.
 `malpdf.inference.StaticScanSession` reuses a verified frozen XGBoost deployment
 model and predicts compatible rows in bounded batches, with optional TreeSHAP.

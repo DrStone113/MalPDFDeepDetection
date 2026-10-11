@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Chạy CIC v9 offline
+Comment=Integration ba mẫu hoặc final CIC v9 đã khóa qua console VMware
+Exec=/home/drstone/MalPDFDeepDetection/.venv/bin/python /home/drstone/MalPDFDeepDetection/scripts/20_launch_cic_v9.py
+Path=/home/drstone/MalPDFDeepDetection
+Icon=utilities-terminal
+Terminal=true
+StartupNotify=false

@@ -173,12 +173,12 @@ def _script_text(value, limits):
     return text
 
 
-def _inspect_code_bytes(data, limits, *, timings=None):
+def _inspect_code_bytes(data, limits, *, timings=None, evidence_metadata=False):
     with stage(timings, "parse_pdf"):
-        return _inspect_code_bytes_inner(data, limits, timings)
+        return _inspect_code_bytes_inner(data, limits, timings, evidence_metadata=evidence_metadata)
 
 
-def _inspect_code_bytes_inner(data, limits, timings, *, supplied_reader=None):
+def _inspect_code_bytes_inner(data, limits, timings, *, supplied_reader=None, evidence_metadata=False):
     """Internal parser routine: production access must use inspect_pdf_code(s)."""
     from pypdf import PdfReader
     from pypdf.errors import PdfReadError
@@ -272,6 +272,9 @@ def _inspect_code_bytes_inner(data, limits, timings, *, supplied_reader=None):
             traversal_complete = False
             raise CodeInspectionError("decoded_byte_limit")
         source["extraction_status"] = "complete"
+        if evidence_metadata:
+            source["decoded_sha256"] = hashlib.sha256(text.encode("utf-8")).hexdigest()
+            source["decoded_validated"] = True
         try:
             with stage(timings, "js_ast"):
                 ast = inspect_js_syntax(text, max_bytes=limits.max_script_bytes,
@@ -290,6 +293,8 @@ def _inspect_code_bytes_inner(data, limits, timings, *, supplied_reader=None):
         calls.update(ast["named_calls"])
         source["status"] = "parsed"
         source["ast_status"] = "complete"
+        if evidence_metadata:
+            source["ast_summary"] = ast
 
     def xfa_problem(code):
         nonlocal traversal_complete
@@ -433,6 +438,10 @@ def _inspect_code_bytes_inner(data, limits, timings, *, supplied_reader=None):
                         if missing_script:
                             raise CodeInspectionError("javascript_payload_missing")
                         payload = resolve(script)
+                        if evidence_metadata:
+                            raw = payload._data if isinstance(payload, StreamObject) else bytes(payload) if isinstance(payload, ByteStringObject) else None
+                            if raw is not None:
+                                source["raw_sha256"] = hashlib.sha256(raw).hexdigest()
                         if isinstance(payload, StreamObject):
                             with stage(timings, "stream_decode"):
                                 text = _script_text(payload, limits)

@@ -142,7 +142,7 @@ def _graph(reader, backend, limits, decoded_remaining):
             'action_counts': dict(counts), 'scope': 'latest catalog-reachable objects; historical/orphan objects unverified'}
 
 
-def inspect_evidence(data, static, code, limits, *, timings=None, primary_complete=None):
+def inspect_evidence(data, static, code, limits, *, timings=None, primary_complete=None, checkpoint=None):
     """Keep v7 measurements intact and add a separately versioned v8 view."""
     result = {'schema_version': EVIDENCE_SCHEMA, 'status': 'partial', 'primary_errors': list(code['errors']),
               'preflight': {'eof_markers': data.count(b'%%EOF'), 'startxref_markers': data.count(b'startxref'),
@@ -175,6 +175,8 @@ def inspect_evidence(data, static, code, limits, *, timings=None, primary_comple
             remaining = 0
         result['backends'].append({'backend': 'pypdf', 'status': 'partial' if graph['errors'] else 'observed',
                                    'diagnostics': diagnostic.data, 'graph': graph, 'code': code})
+        if checkpoint is not None:
+            checkpoint({**result, 'decoded_bytes_remaining': remaining})
     except (CodeInspectionError, ValueError, TypeError, AttributeError, OSError, KeyError, RecursionError, PyPdfError) as error:
         diagnostic.failure(error, 'object_graph')
         result['backends'].append({'backend': 'pypdf', 'status': 'error', 'error_code':
@@ -198,10 +200,15 @@ def inspect_evidence(data, static, code, limits, *, timings=None, primary_comple
             if 'ast_node_limit' in code['errors']:
                 nodes = 0
             recovered_code = None
+            if checkpoint is not None:
+                checkpoint({**result, 'decoded_bytes_remaining': remaining,
+                    'backends': [*result['backends'], {'backend': 'MuPDF', 'status': 'partial',
+                        'graph': graph, 'code': None, 'code_unavailable_reason': 'ast_not_finished'}]})
             if remaining > 0 and nodes > 0:
                 available = replace(limits, max_decoded_bytes=remaining, max_ast_nodes=nodes)
                 with stage(timings, 'parse_pdf'):
-                    recovered_code = _inspect_code_bytes_inner(data, available, timings, supplied_reader=alternate)
+                    recovered_code = _inspect_code_bytes_inner(data, available, timings, supplied_reader=alternate,
+                        **({'evidence_metadata': True} if checkpoint is not None else {}))
                 remaining = max(0, remaining-recovered_code.get('budget_usage', {}).get('decoded_bytes', 0))
             result['recovery_success'] = bool(graph['objects'])
             result['backends'].append({'backend': 'MuPDF', 'status': 'partial', 'is_repaired': alternate.repaired,
