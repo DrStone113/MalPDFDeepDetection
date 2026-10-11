@@ -1,0 +1,35 @@
+{
+  "integration_run": "run_20261011T044535236209Z_e8f532bac70e",
+  "validation_run": "run_20261011T043858567176Z_f9181d42a6a5",
+  "matching_prerequisites_verified": true,
+  "integration_passed": 3,
+  "integration_planned": 3,
+  "primary_feature_changes": 0,
+  "verified_source_hashes": 3,
+  "verified_worker_cleanup": 3,
+  "profile_status_counts": {
+    "partial": 3
+  },
+  "retained_observation_counts": [
+    1451,
+    1451,
+    1451
+  ],
+  "graph_metadata_bytes": [
+    1459629,
+    1459629,
+    1459629
+  ],
+  "cpu_validation": {
+    "tests_passed": 987,
+    "warnings_retained": 2,
+    "required_checks": "passed"
+  },
+  "dependency_check": "No broken requirements found",
+  "dependency_check_warning": "Tool sandbox cannot write /home/drstone/.cache/pip; cache disabled. Warning retained; no dependency failure.",
+  "quality_metrics": "N/A; extraction integration only",
+  "frozen_model_loading": false,
+  "real_pdf_access": false,
+  "final_campaign_attempt": "unused",
+  "next_step": "seal unchanged source, prerequisites, models, same64 manifest and budgets from clean worktree"
+}

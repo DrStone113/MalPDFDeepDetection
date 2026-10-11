@@ -1,0 +1,24 @@
+{
+  "run_id": "run_20261011T044535236209Z_e8f532bac70e",
+  "study": "cic_v9_integration",
+  "status": "completed",
+  "started_at_utc": "2026-10-11T04:45:35.265924+00:00",
+  "code_commit": "e8f532bac70e9693174128f50271700e23b9fe1f",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "data_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "seed": 42,
+  "protocol": "V9 bounded three-file offline extraction integration",
+  "report_path": "reports/experiments/cic_v9_integration/run_20261011T044535236209Z_e8f532bac70e/run_summary.json",
+  "artifact_path": "artifacts/cic_v9_integration/run_20261011T044535236209Z_e8f532bac70e",
+  "metrics": {},
+  "integration_status": "passed",
+  "recorded": 3,
+  "notes": "Three-file extraction integration; partial evidence remains partial. Detector metrics unavailable by design.",
+  "finished_at_utc": "2026-10-11T04:45:45.068556+00:00"
+}

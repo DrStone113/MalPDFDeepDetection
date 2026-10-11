@@ -203,3 +203,19 @@ fingerprint. The Desktop shortcut selects it for **Integration → Enter** throu
 the isolated non-root VMware console. Per-file progress now includes fixed reason
 codes, and the launcher labels integration acceptance separately from Final's
 detector metrics. No PDFs or frozen pickle were opened during preparation.
+
+## Matching integration accepted
+
+The [corrected console integration](../experiments/cic_v9_integration/run_20261011T044535236209Z_e8f532bac70e/integration_evidence.json)
+completed and passed all 3/3 extraction checks. Original PDF hashes and worker
+cleanup were verified, with zero primary feature changes. Each result retained
+1451 observations and 1459629 bytes of graph metadata, below 2MiB. All three files
+remain partial: supplemental-xref loss and recovery metadata caps retain their
+actual localized evidence; completion is not inferred from integration acceptance.
+No probabilities or quality metrics were evaluated.
+
+Its source/backend/budget fingerprint matches the successful 987-test clean
+Python3.11 CPU validation. The [metadata review](../experiments/cic_v9_integration_review/run_20261011T044743081180Z_e8f532bac70e/review_evidence.json)
+verifies both prerequisites before sealing the same 64 diagnostic Final campaign.
+Model bytes, preprocessing, 173-column ledger, threshold 0.5, original labels and
+Protocol G partitions stay frozen. The earlier blocked reports remain unchanged.

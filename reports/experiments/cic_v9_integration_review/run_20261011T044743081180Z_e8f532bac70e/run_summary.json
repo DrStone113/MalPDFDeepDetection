@@ -1,0 +1,28 @@
+{
+  "run_id": "run_20261011T044743081180Z_e8f532bac70e",
+  "study": "cic_v9_integration_review",
+  "status": "completed",
+  "started_at_utc": "2026-10-11T04:47:43.122985+00:00",
+  "code_commit": "e8f532bac70e9693174128f50271700e23b9fe1f",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      "?? reports/experiments/cic_v9_integration/run_20261011T044535236209Z_e8f532bac70e/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      "?? reports/experiments/cic_v9_integration/run_20261011T044535236209Z_e8f532bac70e/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "V9 matching integration review before metadata-only final seal",
+  "report_path": "reports/experiments/cic_v9_integration_review/run_20261011T044743081180Z_e8f532bac70e/run_summary.json",
+  "artifact_path": "artifacts/cic_v9_integration_review/run_20261011T044743081180Z_e8f532bac70e",
+  "metrics": {},
+  "notes": "Integration passed3/3 with source identity/cleanup and primary features unchanged; partial remains partial. Matches987-test clean CPU validation. Metadata review only, no PDFs/model load/quality evaluation. Final attempt unused; ready for metadata-only seal after committing aggregate reports.",
+  "finished_at_utc": "2026-10-11T04:47:43.250458+00:00"
+}

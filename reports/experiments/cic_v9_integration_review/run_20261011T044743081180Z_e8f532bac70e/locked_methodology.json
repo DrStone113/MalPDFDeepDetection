@@ -1,0 +1,20 @@
+{
+  "protocol": "V9 matching integration review before metadata-only final seal",
+  "integration_run": "run_20261011T044535236209Z_e8f532bac70e",
+  "validation_run": "run_20261011T043858567176Z_f9181d42a6a5",
+  "pdf_access": false,
+  "test_access": false,
+  "frozen_model_loading": false,
+  "fitting": false,
+  "seed": 42,
+  "code_commit": "e8f532bac70e9693174128f50271700e23b9fe1f",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      "?? reports/experiments/cic_v9_integration/run_20261011T044535236209Z_e8f532bac70e/"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}
