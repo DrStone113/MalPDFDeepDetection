@@ -63,8 +63,10 @@ with the selected shared-folder/clipboard/drag-drop procedure. See
 The latest three-file integration retained primary features and verified source
 hashes/worker cleanup, but all three checks were blocked by unlocalized recovery
 metadata caps. The checkpoint repair retains these failures inside the existing
-2MiB metadata budget. Matching full regression and console integration are required
-before final sealing; the final campaign attempt remains unused.
+2MiB metadata budget and passed 987 dataset-free tests in the fresh Python3.11
+CPU environment, with two retained sklearn warnings. Dependency, source-integrity,
+diff and ignore checks passed. A matching console integration is required before
+final sealing; the final campaign attempt remains unused.
 
 Static inspection now reads one size-capped, stable byte snapshot.
 `malpdf.inference.StaticScanSession` reuses a verified frozen XGBoost deployment

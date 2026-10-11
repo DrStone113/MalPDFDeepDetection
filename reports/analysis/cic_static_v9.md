@@ -158,13 +158,11 @@ These CPU checks have no real PDF or frozen-model loading. A new matching
 three-file console integration is still required before the unchanged single
 final attempt; no final claim has been consumed by these maintenance checks.
 
-The metadata-only [corrected integration job](../experiments/cic_v9_prepare/run_20261011T042108432378Z_ecd14db5e113/run_summary.json)
-is prepared for exactly the three historic AttributeError inputs. Its source,
-backends and budgets match the successful validation above. The V9 Desktop
-shortcut selects this matching job for **Integration → Enter** after the chosen
-LAB isolation procedure. This preparation reads saved metadata and verifies
-frozen model bytes; it does not read PDFs, load pickle or grant another final
-attempt. Final sealing remains pending the matching console integration.
+The metadata-only [preceding integration job](../experiments/cic_v9_prepare/run_20261011T042108432378Z_ecd14db5e113/run_summary.json)
+was prepared for exactly the three historic AttributeError inputs and matched
+the 982-test validation above. Its console outcome is recorded below. It cannot
+run the later checkpoint correction; preparation only verifies saved metadata
+and frozen model bytes, without PDF/pickle access or another final attempt.
 
 ## Recovery metadata checkpoint correction
 
@@ -192,6 +190,9 @@ Synthetic regressions reproduce a secondary metadata cap after retained primary
 evidence, interruption after terminal checkpoints, exhausted status reserves and
 oversized completeness checks. Integration still rejects an otherwise identical
 result after its localized failure evidence is removed. The focused V9 suite
-passed 163 tests; a new full fresh CPU validation and matching console integration
-are required for this source. The preceding 982-test fingerprint and prepared job
-cannot seal the changed source; the final campaign attempt remains unused.
+passed 163 tests. The corrected source then passed
+[987 tests in the fresh Python3.11 CPU environment](../experiments/cic_v9_validation/run_20261011T043858567176Z_f9181d42a6a5/run_summary.json)
+in 119.97s, with 2 retained sklearn warnings. Dependency, source-integrity, diff
+and ignore checks passed from clean generating code. A matching console
+integration remains required. The preceding 982-test fingerprint and prepared
+job cannot seal the changed source; the final campaign attempt remains unused.

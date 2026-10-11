@@ -1,0 +1,16 @@
+{
+  "protocol": "V9 maintenance, synthetic/benign fixtures only",
+  "pdf_access": false,
+  "test_access": false,
+  "model_fitting": false,
+  "environment": "fresh Python 3.11 virtual environment; CPU wheels; pyproject editable dev install",
+  "purpose": "mandatory source and regression seal",
+  "seed": 42,
+  "code_commit": "f9181d42a6a5da37490f9a7225c0f2f34cb99f2b",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}
