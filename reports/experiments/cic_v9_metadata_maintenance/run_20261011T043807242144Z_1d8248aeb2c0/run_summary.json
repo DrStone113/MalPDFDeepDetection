@@ -1,0 +1,40 @@
+{
+  "run_id": "run_20261011T043807242144Z_1d8248aeb2c0",
+  "study": "cic_v9_metadata_maintenance",
+  "status": "completed",
+  "started_at_utc": "2026-10-11T04:38:07.279172+00:00",
+  "code_commit": "1d8248aeb2c0f46c52d50843868d6fd4b47ddd36",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_v9.md",
+      " M reports/research_log.md",
+      " M scripts/20_launch_cic_v9.py",
+      " M src/malpdf/experiments/cic_v9.py",
+      " M src/malpdf/static/evidence_v9.py",
+      " M tests/test_pdf_evidence_v9.py",
+      "?? reports/experiments/cic_v9_integration/run_20261011T042829844425Z_1d8248aeb2c0/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_v9.md",
+      " M reports/research_log.md",
+      " M scripts/20_launch_cic_v9.py",
+      " M src/malpdf/experiments/cic_v9.py",
+      " M src/malpdf/static/evidence_v9.py",
+      " M tests/test_pdf_evidence_v9.py",
+      "?? reports/experiments/cic_v9_integration/run_20261011T042829844425Z_1d8248aeb2c0/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "V9 bounded terminal metadata checkpoint repair",
+  "report_path": "reports/experiments/cic_v9_metadata_maintenance/run_20261011T043807242144Z_1d8248aeb2c0/run_summary.json",
+  "artifact_path": "artifacts/cic_v9_metadata_maintenance/run_20261011T043807242144Z_1d8248aeb2c0",
+  "metrics": {},
+  "notes": "Saved integration remains blocked3/3: metadata failure localization missing; primary features/source/cleanup retained. Terminal checkpoint repair passed163 focused tests and51 launcher tests. Full fresh CPU regression and matching console integration pending; no PDF/frozen-model/final access.",
+  "finished_at_utc": "2026-10-11T04:38:07.333553+00:00"
+}

@@ -312,10 +312,126 @@ def test_metadata_cap_preserves_early_graph_and_records_incomplete(monkeypatch):
     pdf._root_object[NameObject("/OpenAction")] = js_action()
     pdf._root_object[NameObject("/Large")]=ArrayObject([TextStringObject(str(i)) for i in range(100)])
     monkeypatch.setattr(evidence_v9, "MAX_METADATA_BYTES", 45000)
-    result = inspect(serialize(pdf))
+    from malpdf.static.evidence_ipc import EvidenceAccumulator
+    data = serialize(pdf)
+    retained = EvidenceAccumulator(hashlib.sha256(data).hexdigest())
+    result = inspect(data, checkpoint=retained.merge)
     assert not result["complete"] and result["observations"]
     assert any("evidence_metadata_limit" in item["reason_codes"] for item in result["capability_checks"])
     assert result["witnesses"]
+    assert any(item["kind"] == "stage_failure" and "evidence_metadata_limit" in item["reason_codes"]
+               and item["affected_ids"] for item in retained.value["observations"])
+    for section in ("observations", "edges", "capability_checks", "backend_results", "conflicts"):
+        assert retained.value[section] == result[section]
+
+
+def recovery_metadata_fixture(monkeypatch):
+    """Leave enough ordinary metadata for primary, then exhaust it in recovery."""
+    from malpdf.static import evidence_v9
+    pdf = writer()
+    pdf._root_object[NameObject("/OpenAction")] = js_action()
+    pdf._root_object[NameObject("/Large")] = ArrayObject([TextStringObject(str(i)) for i in range(100)])
+    data = serialize(pdf)
+    primary = inspect(data)
+    maximum = (primary["budget_usage"]["graph_metadata_bytes"] + 4096) * 3 // 2
+    monkeypatch.setattr(evidence_v9, "MAX_METADATA_BYTES", maximum)
+    return data, primary, maximum
+
+
+def test_recovery_metadata_limit_retains_primary_and_localized_checkpoint_for_integration(monkeypatch):
+    from malpdf.experiments.cic_v9 import assess_integration
+    from malpdf.static.evidence_ipc import EvidenceAccumulator, encoded
+    data, primary, maximum = recovery_metadata_fixture(monkeypatch)
+    digest = hashlib.sha256(data).hexdigest()
+    retained = EvidenceAccumulator(digest)
+    result = inspect(data, complete=False, checkpoint=retained.merge)
+    nodes = {item["id"]: item for item in result["observations"]}
+    failures = [item for item in nodes.values() if item["kind"] == "stage_failure"
+                and item["backend"] == "MuPDF" and "evidence_metadata_limit" in item["reason_codes"]]
+    assert failures and all(item["affected_ids"] for item in failures)
+    assert all(nodes[identifier]["locator"] and nodes[identifier]["document_sha256"] == digest
+               for item in failures for identifier in item["affected_ids"])
+    assert [item for item in result["observations"] if item["backend"] == "pypdf"] == [
+        item for item in primary["observations"] if item["backend"] == "pypdf"]
+    recovery = [item for item in retained.value["capability_checks"] if item["backend"] == "MuPDF"]
+    assert recovery and all(item["status"] == "partial" and item["scope_ids"] for item in recovery)
+    for section in ("observations", "edges", "capability_checks", "backend_results", "conflicts"):
+        assert retained.value[section] == result[section]
+    assert len(encoded(result)) <= maximum
+    profile = {"status": "partial", "errors": [], "worker_cleanup_complete": True,
+               "static": {"input": {"sha256": digest}, "features": {}}, "analysis_v9": result}
+    monkeypatch.setattr("malpdf.experiments.cic_static_accuracy.profile_input_available", lambda *args: True)
+    previous = {"pdf_sha256": digest, "static": profile["static"]}
+    assert assess_integration(profile, previous)["passed"]
+    result["observations"] = [item for item in result["observations"] if item not in failures]
+    assert "backend_failure_stage_unlocalized" in assess_integration(profile, previous)["reason_codes"]
+
+
+@pytest.mark.parametrize("section", ["backend_results", "capability_checks"])
+def test_interrupt_after_recovery_cap_keeps_terminal_checkpoint(monkeypatch, section):
+    from malpdf.static.evidence_ipc import EvidenceAccumulator
+    data, primary, _ = recovery_metadata_fixture(monkeypatch)
+    retained = EvidenceAccumulator(hashlib.sha256(data).hexdigest())
+    def interrupt(delta):
+        retained.merge(delta)
+        if any(item.get("backend") == "MuPDF" for item in delta.get(section, [])):
+            raise KeyboardInterrupt("synthetic interruption after recovery cap")
+    with pytest.raises(KeyboardInterrupt):
+        inspect(data, complete=False, checkpoint=interrupt)
+    assert [item for item in retained.value["observations"] if item["backend"] == "pypdf"] == [
+        item for item in primary["observations"] if item["backend"] == "pypdf"]
+    assert any(item["kind"] == "stage_failure" and "evidence_metadata_limit" in item["reason_codes"]
+               and item["affected_ids"] for item in retained.value["observations"])
+    assert any(item.get("backend") == "MuPDF" for item in retained.value[section])
+
+
+def test_terminal_reserve_is_bounded_and_cannot_restart_ordinary_metadata(monkeypatch):
+    from malpdf.static import evidence_v9
+    from malpdf.static.js_ast import CodeInspectionError
+    monkeypatch.setattr(evidence_v9, "MAX_METADATA_BYTES", 50000)
+    store = evidence_v9._Store("a" * 64, None, None)
+    retained = store.observation("pypdf", "object:1:0", "catalog")
+    for index in range(100):
+        try:
+            store.observation("MuPDF", f"object:{index + 2}:0", "pdf_object", projection={"padding": "x" * 2000})
+        except CodeInspectionError:
+            break
+    else:
+        pytest.fail("ordinary metadata allowance was not enforced")
+    ordinary = deepcopy(store.result["observations"])
+    store.observation("MuPDF", "catalog|metadata_cap", "stage_failure", status="unavailable",
+                      affected_ids=[retained], capability="catalog", reason_codes=["evidence_metadata_limit"])
+    assert store.result["observations"][:-1] == ordinary
+    with pytest.raises(CodeInspectionError, match="evidence_metadata_limit"):
+        store.observation("MuPDF", "ordinary_after_cap", "pdf_object", projection={"padding": "x" * 2000})
+    before = deepcopy(store.result)
+    with pytest.raises(CodeInspectionError, match="evidence_metadata_limit"):
+        store.observation("MuPDF", "oversized_failure", "stage_failure", affected_ids=[retained], padding="x" * 50000)
+    assert store.result == before and store.metadata_bytes < 50000
+
+
+def test_oversized_complete_capability_becomes_localized_checkpointed_partial(monkeypatch):
+    from malpdf.static import evidence_v9
+    from malpdf.static.evidence_ipc import EvidenceAccumulator
+    from malpdf.static.js_ast import CodeInspectionError
+    original = evidence_v9._Store.append
+    refused = []
+    def fail_large_check(self, key, item):
+        if key == "capability_checks" and item["capability"] == "catalog" and item["status"] == "complete":
+            refused.append(True)
+            raise CodeInspectionError("evidence_metadata_limit")
+        return original(self, key, item)
+    monkeypatch.setattr(evidence_v9._Store, "append", fail_large_check)
+    data = serialize(writer())
+    retained = EvidenceAccumulator(hashlib.sha256(data).hexdigest())
+    result = inspect(data, checkpoint=retained.merge)
+    check = next(item for item in result["capability_checks"] if item["capability"] == "catalog")
+    assert refused and not result["complete"] and check["status"] == "partial" and check["scope_ids"]
+    assert check in retained.value["capability_checks"]
+    assert result["backend_results"][0]["status"] == "partial"
+    assert "evidence_metadata_limit" in result["backend_results"][0]["reason_codes"]
+    assert any(item["kind"] == "stage_failure" and item["affected_ids"] == check["scope_ids"]
+               for item in retained.value["observations"])
 
 
 def test_incremental_update_keeps_generations_distinct_and_latest_catalog_context():

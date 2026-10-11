@@ -60,12 +60,11 @@ interrupted claims remain intact. The v8 shortcut continues reading its saved
 outcome. Real PDFs remain restricted to the disconnected non-root VMware console
 with the selected shared-folder/clipboard/drag-drop procedure. See
 [V9 contracts, checks and console handoff](reports/analysis/cic_static_v9.md).
-The saved three-file integration passed, but a later review corrected silently
-discarded supplemental-xref warnings. The corrected source passed 982 dataset-free
-tests in the fresh Python3.11 CPU environment, with two retained sklearn warnings;
-dependency, source-integrity, diff and ignore checks also passed. A matching
-three-file console integration is still required before final sealing; the final
-campaign attempt remains unused.
+The latest three-file integration retained primary features and verified source
+hashes/worker cleanup, but all three checks were blocked by unlocalized recovery
+metadata caps. The checkpoint repair retains these failures inside the existing
+2MiB metadata budget. Matching full regression and console integration are required
+before final sealing; the final campaign attempt remains unused.
 
 Static inspection now reads one size-capped, stable byte snapshot.
 `malpdf.inference.StaticScanSession` reuses a verified frozen XGBoost deployment

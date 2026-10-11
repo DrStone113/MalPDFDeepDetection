@@ -165,3 +165,33 @@ shortcut selects this matching job for **Integration → Enter** after the chose
 LAB isolation procedure. This preparation reads saved metadata and verifies
 frozen model bytes; it does not read PDFs, load pickle or grant another final
 attempt. Final sealing remains pending the matching console integration.
+
+## Recovery metadata checkpoint correction
+
+The [three-file integration on October 11 at 04:28 UTC](../experiments/cic_v9_integration/run_20261011T042829844425Z_1d8248aeb2c0/integration_evidence.json)
+completed all three inputs as partial. Source hashes, primary checkpoints and
+worker cleanup were verified; primary feature changes were zero. All three
+integration checks were blocked by `backend_failure_stage_unlocalized`. The
+supplemental-xref failure had its own verified locator; MuPDF hit the metadata
+allowance without retaining a localized stage-failure checkpoint. These `passed`
+booleans measure integration acceptance, not a C1 prediction or detector metric.
+The blocked report and private evidence remain immutable.
+
+The store previously rejected stage-failure records at the same ordinary-entry
+boundary that stopped object enumeration. Some backend/capability/conflict
+fallbacks also bypassed accounting and checkpoint delivery. The correction allows
+at most 64KiB of terminal records within the existing metadata reserve; ordinary
+objects cannot spend this allowance. Total graph metadata remains capped at2MiB,
+with room for the frozen feature ledger. Localized failures, partial checks and
+backend summaries use the same immutable delta path with byte accounting. If that
+terminal allowance is exhausted, extraction fails with preserved checkpoints.
+Oversized complete checks become localized partial checks, and backend summaries
+include that failure. No gate, model, threshold or worker budget is relaxed.
+
+Synthetic regressions reproduce a secondary metadata cap after retained primary
+evidence, interruption after terminal checkpoints, exhausted status reserves and
+oversized completeness checks. Integration still rejects an otherwise identical
+result after its localized failure evidence is removed. The focused V9 suite
+passed 163 tests; a new full fresh CPU validation and matching console integration
+are required for this source. The preceding 982-test fingerprint and prepared job
+cannot seal the changed source; the final campaign attempt remains unused.

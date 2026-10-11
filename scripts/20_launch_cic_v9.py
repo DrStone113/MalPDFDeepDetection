@@ -82,6 +82,10 @@ def main(argv=None):
                 raise
             runner = workflow.run_v9_integration if action == "integration" else workflow.run_v9_final
             result = runner(ROOT, identifier, lab_attested=args.lab_isolated)
+        if result.get("integration_status") is not None:
+            status = "ĐẠT" if result["integration_status"] == "passed" else "CHƯA ĐẠT"
+            print(f"Kiểm tra integration: {status}.")
+            print("Các giá trị passed là kiểm tra pipeline; recall/FPR được đo ở Final.")
         print(json.dumps(result, ensure_ascii=False, allow_nan=False, indent=2))
         print(f"report_path: {result['report_path']}")
         return 0 if result.get("integration_status") != "blocked" else 1

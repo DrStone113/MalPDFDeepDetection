@@ -118,7 +118,13 @@ class _Store:
         # Reserve room for the complete frozen feature ledger and bounded
         # derived witness paths, which are serialized at final checkpoint.
         reserve = max(16384, min(768 * 1024, MAX_METADATA_BYTES // 3))
-        if self.metadata_bytes + size > MAX_METADATA_BYTES - reserve:
+        # A full object graph must still checkpoint its localized failure and
+        # terminal checks. This small allowance is inside the existing reserve,
+        # not another graph budget; ordinary observations cannot spend it.
+        terminal = (key in {"backend_results", "capability_checks", "conflicts"}
+                    or key == "observations" and item.get("kind") == "stage_failure")
+        ceiling = MAX_METADATA_BYTES - reserve + (min(64 * 1024, reserve // 2) if terminal else 0)
+        if self.metadata_bytes + size > ceiling:
             raise CodeInspectionError("evidence_metadata_limit")
         self.metadata_bytes += size
         self.index[identity] = item
@@ -846,15 +852,6 @@ def inspect_evidence_v9(data, static, code, limits, *, timings=None, primary_com
                 reader.close()
         if graph is not None:
             graphs.append(graph)
-        reasons = sorted(set([failure] if failure else []) | set().union(*(graph.errors.values() if graph else [])))
-        state = {"id": store.identifier(backend, "backend_result", "backend_result"), "backend": backend,
-                 "status": "error" if failure and graph is None else "partial" if reasons or backend == "MuPDF" else "observed",
-                 "reason_codes": reasons, "completed_observations": len(graph.scope) if graph else 0,
-                 "stage": "open" if graph is None else "graph_or_script", "revision_completeness": "unknown"}
-        try:
-            store.append("backend_results", state)
-        except CodeInspectionError:
-            result["backend_results"].append(state)
         for capability in CAPABILITIES:
             errors = set(graph.errors.get(capability, [])) if graph else {failure or "backend_unavailable"}
             # Unfinished catalog enumeration makes absence/completion unknown.
@@ -871,9 +868,23 @@ def inspect_evidence_v9(data, static, code, limits, *, timings=None, primary_com
             try:
                 store.append("capability_checks", check)
             except CodeInspectionError:
-                # A cap is a failure, never a claim that omitted checks passed.
-                check.update(status="partial", scope_ids=[], required_ids=[], reason_codes=["evidence_metadata_limit"])
-                result["capability_checks"].append(check)
+                # Oversized enumeration cannot become a complete check. Keep
+                # its backend/catalog owner and emit the partial check through
+                # the same bounded checkpoint path as every other entry.
+                affected = graph.scope[:1] if graph else []
+                if graph is not None:
+                    graph.problem("catalog", "evidence_metadata_limit", affected)
+                check.update(status="partial", scope_ids=affected, required_ids=[],
+                             reason_codes=["evidence_metadata_limit"])
+                store.append("capability_checks", check)
+        # Capability serialization can itself hit the metadata allowance. Its
+        # localized failure must be included in the immutable backend summary.
+        reasons = sorted(set([failure] if failure else []) | set().union(*(graph.errors.values() if graph else [])))
+        state = {"id": store.identifier(backend, "backend_result", "backend_result"), "backend": backend,
+                 "status": "error" if failure and graph is None else "partial" if reasons or backend == "MuPDF" else "observed",
+                 "reason_codes": reasons, "completed_observations": len(graph.scope) if graph else 0,
+                 "stage": "open" if graph is None else "graph_or_script", "revision_completeness": "unknown"}
+        store.append("backend_results", state)
     if len(graphs) == 2:
         for key in sorted(graphs[0].projections.keys() & graphs[1].projections.keys()):
             left, right = graphs[0].projections[key], graphs[1].projections[key]
@@ -882,10 +893,7 @@ def inspect_evidence_v9(data, static, code, limits, *, timings=None, primary_com
                     "affected_ids": [left[0], right[0]], "fields": ["projection"], "localized": False,
                     "reason_code": "backend_projection_conflict_revision_unverified",
                     "resolution": "separate observations; revision identity unknown"}
-                try:
-                    store.append("conflicts", item)
-                except CodeInspectionError:
-                    result["conflicts"].append(item)
+                store.append("conflicts", item)
     primary_checks = [c for c in result["capability_checks"] if c.get("backend") == "pypdf"]
     result["complete"] = bool(primary_complete and len(primary_checks) == len(CAPABILITIES)
                               and all(c["status"] == "complete" for c in primary_checks) and not result["conflicts"])

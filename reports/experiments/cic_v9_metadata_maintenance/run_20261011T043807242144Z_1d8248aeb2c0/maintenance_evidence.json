@@ -1,0 +1,31 @@
+{
+  "trigger_run": "run_20261011T042829844425Z_1d8248aeb2c0",
+  "saved_integration_status": "blocked",
+  "saved_reason_counts": {
+    "backend_failure_stage_unlocalized": 3
+  },
+  "primary_feature_changes": 0,
+  "source_hash_and_cleanup_verified_files": 3,
+  "diagnosis": "MuPDF metadata cap prevented localized stage-failure checkpoint; terminal fallbacks bypassed accounting and delta delivery.",
+  "repair": "Terminal records use at most64KiB inside the existing reserve; bounded immutable checkpoints retain localized partial failures. No gate relaxation.",
+  "graph_cap_bytes": 2097152,
+  "resource_budget_change": false,
+  "focused_regression": {
+    "tests_passed": 163,
+    "seconds": 8.72,
+    "warnings": 0
+  },
+  "launcher_regression": {
+    "tests_passed": 51,
+    "seconds": 1.99,
+    "warnings": 0
+  },
+  "dependency_check": "No broken requirements found",
+  "dependency_check_warning": "Tool sandbox cannot write /home/drstone/.cache/pip; cache disabled. Warning retained; no dependency failure.",
+  "full_fresh_cpu_validation": "pending",
+  "matching_console_integration": "required",
+  "final_campaign_attempt": "unused",
+  "real_pdf_access": false,
+  "frozen_model_loading": false,
+  "detector_quality_metrics": "N/A; integration only"
+}

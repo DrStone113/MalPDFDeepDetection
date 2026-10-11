@@ -1,0 +1,26 @@
+{
+  "protocol": "V9 bounded terminal metadata checkpoint repair",
+  "trigger_run": "run_20261011T042829844425Z_1d8248aeb2c0",
+  "pdf_access": false,
+  "test_access": false,
+  "frozen_model_fitting": false,
+  "frozen_model_loading": false,
+  "threshold_tuning": false,
+  "seed": 42,
+  "code_commit": "1d8248aeb2c0f46c52d50843868d6fd4b47ddd36",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_v9.md",
+      " M reports/research_log.md",
+      " M scripts/20_launch_cic_v9.py",
+      " M src/malpdf/experiments/cic_v9.py",
+      " M src/malpdf/static/evidence_v9.py",
+      " M tests/test_pdf_evidence_v9.py",
+      "?? reports/experiments/cic_v9_integration/run_20261011T042829844425Z_1d8248aeb2c0/"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

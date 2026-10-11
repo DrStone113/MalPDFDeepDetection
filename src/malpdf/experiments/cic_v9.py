@@ -379,7 +379,8 @@ def run_v9_integration(root, prepared_run, *, lab_attested=False):
                 assessment = assess_integration(profile, previous[row["sample_id"]])
                 assessments.append({"sha256": row["pdf_sha256"], "sample_id": row["sample_id"], **assessment})
                 _append_private(run.artifacts / "integration_assessments.jsonl", assessments[-1])
-                run.progress("integration_file_completed", processed=len(records), planned=3, passed=assessment["passed"])
+                run.progress("integration_file_completed", processed=len(records), planned=3,
+                             passed=assessment["passed"], reason_codes=assessment["reason_codes"])
             if v9_source_fingerprint(root) != lock["fingerprint"]:
                 raise ValueError("Generating source/backend changed during integration")
             result = {"status": "passed" if all(item["passed"] for item in assessments) else "blocked",
