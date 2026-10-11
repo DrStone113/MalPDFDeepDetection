@@ -1,0 +1,20 @@
+{
+  "protocol": "V9 corrected evidence completeness maintenance handoff",
+  "pdf_access": false,
+  "test_access": false,
+  "model_fitting": false,
+  "validation_run": "run_20261011T041749327636Z_c626318a1300",
+  "seed": 42,
+  "code_commit": "c626318a1300096c37b031ea4df86e449e7052a3",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_v9.md",
+      " M reports/research_log.md",
+      "?? reports/experiments/cic_v9_validation/run_20261011T041749327636Z_c626318a1300/"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

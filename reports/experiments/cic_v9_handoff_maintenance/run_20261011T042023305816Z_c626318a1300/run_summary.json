@@ -1,0 +1,32 @@
+{
+  "run_id": "run_20261011T042023305816Z_c626318a1300",
+  "study": "cic_v9_handoff_maintenance",
+  "status": "completed",
+  "started_at_utc": "2026-10-11T04:20:23.344006+00:00",
+  "code_commit": "c626318a1300096c37b031ea4df86e449e7052a3",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_v9.md",
+      " M reports/research_log.md",
+      "?? reports/experiments/cic_v9_validation/run_20261011T041749327636Z_c626318a1300/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_v9.md",
+      " M reports/research_log.md",
+      "?? reports/experiments/cic_v9_validation/run_20261011T041749327636Z_c626318a1300/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "V9 corrected evidence completeness maintenance handoff",
+  "report_path": "reports/experiments/cic_v9_handoff_maintenance/run_20261011T042023305816Z_c626318a1300/run_summary.json",
+  "artifact_path": "artifacts/cic_v9_handoff_maintenance/run_20261011T042023305816Z_c626318a1300",
+  "metrics": {},
+  "notes": "Corrected supplemental-xref regression and fresh CPU suite passed982 tests,2 warnings retained; pip/source/diff/ignore checks passed. V7/v8 reports untouched, frozen models unchanged, final claim unused. Matching three-file console integration remains required.",
+  "finished_at_utc": "2026-10-11T04:20:23.390907+00:00"
+}

@@ -1,0 +1,26 @@
+{
+  "run_id": "run_20261011T041749327636Z_c626318a1300",
+  "study": "cic_v9_validation",
+  "status": "completed",
+  "started_at_utc": "2026-10-11T04:17:49.357532+00:00",
+  "code_commit": "c626318a1300096c37b031ea4df86e449e7052a3",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "data_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "seed": 42,
+  "protocol": "V9 maintenance, synthetic/benign fixtures only",
+  "report_path": "reports/experiments/cic_v9_validation/run_20261011T041749327636Z_c626318a1300/run_summary.json",
+  "artifact_path": "artifacts/cic_v9_validation/run_20261011T041749327636Z_c626318a1300",
+  "metrics": {},
+  "fresh_environment_preparation": "run_20261011T022403385212Z_8ef6ec1d8bd7",
+  "tests_passed": 982,
+  "warnings": 2,
+  "release_status": "requires_three_file_offline_integration_and_one_final_attempt",
+  "notes": "Full dataset-free tests, dependency, source, diff and ignore checks passed in fresh CPU environment. Warnings retained. No real PDF access or model fitting; technical code checks do not establish V9 LAB acceptance.",
+  "finished_at_utc": "2026-10-11T04:19:54.831423+00:00"
+}

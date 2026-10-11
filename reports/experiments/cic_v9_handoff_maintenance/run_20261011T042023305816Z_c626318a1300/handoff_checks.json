@@ -1,0 +1,18 @@
+{
+  "validation_run": "run_20261011T041749327636Z_c626318a1300",
+  "tests_passed": 982,
+  "warnings_retained": 2,
+  "source_integrity": "matches current source/backend/budget fingerprint",
+  "mandatory_checks": {
+    "pytest": 0,
+    "pip_check": 0,
+    "diff_check": 0,
+    "source_integrity": 0,
+    "ignore_check": 0
+  },
+  "historical_v7_v8_reports": "unchanged from8ef6ec1",
+  "final_campaign_attempt": "unused",
+  "real_pdf_access": false,
+  "frozen_model_loading": false,
+  "pending": "metadata preparation and corrected three-file offline console integration before final seal"
+}

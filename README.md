@@ -61,9 +61,11 @@ outcome. Real PDFs remain restricted to the disconnected non-root VMware console
 with the selected shared-folder/clipboard/drag-drop procedure. See
 [V9 contracts, checks and console handoff](reports/analysis/cic_static_v9.md).
 The saved three-file integration passed, but a later review corrected silently
-discarded supplemental-xref warnings. Matching fresh regression evidence and
-console integration are required for the corrected fingerprint before final
-sealing; the final campaign attempt remains unused.
+discarded supplemental-xref warnings. The corrected source passed 982 dataset-free
+tests in the fresh Python3.11 CPU environment, with two retained sklearn warnings;
+dependency, source-integrity, diff and ignore checks also passed. A matching
+three-file console integration is still required before final sealing; the final
+campaign attempt remains unused.
 
 Static inspection now reads one size-capped, stable byte snapshot.
 `malpdf.inference.StaticScanSession` reuses a verified frozen XGBoost deployment

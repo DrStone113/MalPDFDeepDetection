@@ -144,6 +144,16 @@ retained graph evidence and propagated memory/recursion/system failures.
 
 This is a documented legacy-completeness correction, not a model adjustment.
 The previous validation and integration fingerprints cannot seal the changed
-source. Matching CPU regression evidence and a new three-file console integration
-are required before the unchanged single final attempt; no final claim has been
-consumed by these maintenance checks.
+source. The corrected source passed 982 dataset-free tests in 117.32s, with 2 retained
+sklearn single-label warnings, in the saved fresh Python3.11 CPU environment.
+Dependency, source-integrity, diff and ignore checks passed from clean generating
+code. See [the saved validation](../experiments/cic_v9_validation/run_20261011T041749327636Z_c626318a1300/run_summary.json).
+
+An earlier tool-sandbox validation was interrupted while a synthetic DataLoader
+waited, after 357 passing tests. Its failed report remains immutable and grants no
+validation seal. The isolated DataLoader control passed outside that sandbox;
+the subsequent full validation above passed on unchanged source. See
+[the execution diagnostic](../experiments/cic_v9_validation_diagnostic/run_20261011T041717302629Z_2dde794fc3ae/diagnostic_evidence.json).
+These CPU checks have no real PDF or frozen-model loading. A new matching
+three-file console integration is still required before the unchanged single
+final attempt; no final claim has been consumed by these maintenance checks.
