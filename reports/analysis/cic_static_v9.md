@@ -196,3 +196,10 @@ in 119.97s, with 2 retained sklearn warnings. Dependency, source-integrity, diff
 and ignore checks passed from clean generating code. A matching console
 integration remains required. The preceding 982-test fingerprint and prepared
 job cannot seal the changed source; the final campaign attempt remains unused.
+
+The [current integration preparation](../experiments/cic_v9_prepare/run_20261011T044229698570Z_1c8bc06aa8e2/run_summary.json)
+locks the same three historic inputs and matches the 987-test source/backend/budget
+fingerprint. The Desktop shortcut selects it for **Integration → Enter** through
+the isolated non-root VMware console. Per-file progress now includes fixed reason
+codes, and the launcher labels integration acceptance separately from Final's
+detector metrics. No PDFs or frozen pickle were opened during preparation.
