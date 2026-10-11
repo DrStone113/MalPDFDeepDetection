@@ -1,0 +1,196 @@
+{
+  "models": {
+    "P0_rit41_fallback": {
+      "planned": 32,
+      "classified": 32,
+      "inconclusive": 0,
+      "planned_class_counts": {
+        "0": 16,
+        "1": 16
+      },
+      "classified_class_counts": {
+        "0": 16,
+        "1": 16
+      },
+      "coverage": 1.0,
+      "true_positives": 12,
+      "false_positives": 13,
+      "conditional_recall": 0.75,
+      "conditional_fpr": 0.8125,
+      "end_to_end_detected_fraction": 0.75,
+      "end_to_end_false_positive_fraction": 0.8125,
+      "actual_label_metrics": {
+        "positive_label": 1,
+        "accuracy": 0.46875,
+        "precision_malicious": 0.48,
+        "recall_malicious": 0.75,
+        "f1_malicious": 0.5853658536585366,
+        "precision_macro": 0.4542857142857143,
+        "recall_macro": 0.46875,
+        "f1_macro": 0.4231177094379639,
+        "precision": 0.48,
+        "recall": 0.75,
+        "f1": 0.5853658536585366,
+        "mcc": -0.07559289460184544,
+        "confusion_matrix": [
+          [
+            3,
+            13
+          ],
+          [
+            4,
+            12
+          ]
+        ],
+        "confusion_matrix_labels": [
+          0,
+          1
+        ],
+        "roc_auc": null,
+        "pr_auc": null,
+        "score_source": null
+      },
+      "probability_metrics": {
+        "rows": 32,
+        "class_counts": {
+          "0": 16,
+          "1": 16
+        },
+        "ece": 0.30541865643037514,
+        "brier": 0.33096192110596834,
+        "ece_convention": "10 equal-width bins; p=1 in last bin",
+        "scope": "all valid frozen ML probabilities, including abstentions"
+      },
+      "abstention_policy": "unscored; quarantine; never counted as detection or benign"
+    },
+    "P1_observed_static": {
+      "planned": 32,
+      "classified": 32,
+      "inconclusive": 0,
+      "planned_class_counts": {
+        "0": 16,
+        "1": 16
+      },
+      "classified_class_counts": {
+        "0": 16,
+        "1": 16
+      },
+      "coverage": 1.0,
+      "true_positives": 12,
+      "false_positives": 14,
+      "conditional_recall": 0.75,
+      "conditional_fpr": 0.875,
+      "end_to_end_detected_fraction": 0.75,
+      "end_to_end_false_positive_fraction": 0.875,
+      "actual_label_metrics": {
+        "positive_label": 1,
+        "accuracy": 0.4375,
+        "precision_malicious": 0.46153846153846156,
+        "recall_malicious": 0.75,
+        "f1_malicious": 0.5714285714285714,
+        "precision_macro": 0.39743589743589747,
+        "recall_macro": 0.4375,
+        "f1_macro": 0.37662337662337664,
+        "precision": 0.46153846153846156,
+        "recall": 0.75,
+        "f1": 0.5714285714285714,
+        "mcc": -0.16012815380508713,
+        "confusion_matrix": [
+          [
+            2,
+            14
+          ],
+          [
+            4,
+            12
+          ]
+        ],
+        "confusion_matrix_labels": [
+          0,
+          1
+        ],
+        "roc_auc": null,
+        "pr_auc": null,
+        "score_source": null
+      },
+      "probability_metrics": {
+        "rows": 32,
+        "class_counts": {
+          "0": 16,
+          "1": 16
+        },
+        "ece": 0.21203476167929308,
+        "brier": 0.2858275703159233,
+        "ece_convention": "10 equal-width bins; p=1 in last bin",
+        "scope": "all valid frozen ML probabilities, including abstentions"
+      },
+      "abstention_policy": "unscored; quarantine; never counted as detection or benign"
+    },
+    "P2_observed_plus_status": {
+      "planned": 32,
+      "classified": 32,
+      "inconclusive": 0,
+      "planned_class_counts": {
+        "0": 16,
+        "1": 16
+      },
+      "classified_class_counts": {
+        "0": 16,
+        "1": 16
+      },
+      "coverage": 1.0,
+      "true_positives": 12,
+      "false_positives": 13,
+      "conditional_recall": 0.75,
+      "conditional_fpr": 0.8125,
+      "end_to_end_detected_fraction": 0.75,
+      "end_to_end_false_positive_fraction": 0.8125,
+      "actual_label_metrics": {
+        "positive_label": 1,
+        "accuracy": 0.46875,
+        "precision_malicious": 0.48,
+        "recall_malicious": 0.75,
+        "f1_malicious": 0.5853658536585366,
+        "precision_macro": 0.4542857142857143,
+        "recall_macro": 0.46875,
+        "f1_macro": 0.4231177094379639,
+        "precision": 0.48,
+        "recall": 0.75,
+        "f1": 0.5853658536585366,
+        "mcc": -0.07559289460184544,
+        "confusion_matrix": [
+          [
+            3,
+            13
+          ],
+          [
+            4,
+            12
+          ]
+        ],
+        "confusion_matrix_labels": [
+          0,
+          1
+        ],
+        "roc_auc": null,
+        "pr_auc": null,
+        "score_source": null
+      },
+      "probability_metrics": {
+        "rows": 32,
+        "class_counts": {
+          "0": 16,
+          "1": 16
+        },
+        "ece": 0.1976762139004787,
+        "brier": 0.2907292939506685,
+        "ece_convention": "10 equal-width bins; p=1 in last bin",
+        "scope": "all valid frozen ML probabilities, including abstentions"
+      },
+      "abstention_policy": "unscored; quarantine; never counted as detection or benign"
+    }
+  },
+  "source": "v7 original32 Train artifacts, no refitting",
+  "threshold": 0.5,
+  "quality_scope": "exposed Validation only"
+}

@@ -1,0 +1,33 @@
+{
+  "run_id": "run_20261011T050628599657Z_ff3f5b65d376",
+  "study": "cic_v9_final_review",
+  "status": "completed",
+  "started_at_utc": "2026-10-11T05:06:28.636779+00:00",
+  "code_commit": "ff3f5b65d3762bc3ebacaa4ee08653618e3a9a60",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      "?? reports/experiments/cic_v9_final/",
+      "?? reports/experiments/cic_v9_final_review/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      "?? reports/experiments/cic_v9_final/",
+      "?? reports/experiments/cic_v9_final_review/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "V9 saved final metadata acceptance review",
+  "report_path": "reports/experiments/cic_v9_final_review/run_20261011T050628599657Z_ff3f5b65d376/run_summary.json",
+  "artifact_path": "artifacts/cic_v9_final_review/run_20261011T050628599657Z_ff3f5b65d376",
+  "metrics": {},
+  "release_status": "blocked",
+  "recorded_profiles": 128,
+  "reviewed_old_partials": 21,
+  "notes": "Final completed128/128. Saved32 C1 decisions replay identically; coverage9/32, conditionalTP3/6 FP2/3. Six legacy changes explained across three recovered-xref inputs; unchanged-input parity preserved. Graph caps and ambiguous conflict scopes still prevent acceptance; final claim stays consumed. Saved987-test fingerprint unchanged; pip check passed with cache-permission warning retained. No PDFs/model load/rerun/new model evaluation.",
+  "finished_at_utc": "2026-10-11T05:06:32.934745+00:00"
+}

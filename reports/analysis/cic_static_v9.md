@@ -235,3 +235,125 @@ confirm the selected LAB isolation procedure with Enter. The default Enter runs
 Integration. Final recall, FPR, coverage and per-file acceptance explanations
 remain unavailable until the console attempt finishes; integration acceptance
 does not establish detector accuracy.
+
+## Completed Final measurement
+
+The [single Final attempt](../experiments/cic_v9_final/run_20261011T045223500000Z_ff3f5b65d376/run_summary.json)
+completed on October 11 at 11:57:47 Asia/Ho_Chi_Minh, from clean commit `ff3f5b6`.
+All 64 cold and 64 warm profiles were recorded. The locked identities, labels,
+Protocol G assignments, original frozen models, 173 C1 columns, preprocessing and
+threshold 0.5 were preserved; no fitting, calibration, tuning or Test access took
+place. The campaign-wide claim is consumed and remains immutable.
+
+| Measure | v7 | v8 | v9 |
+| --- | --- | --- | --- |
+| Complete analysis | 23/64 | 23/64 | 22/64 |
+| Partial analysis | 23/64 | 38/64 | 42/64 |
+| Parser-error / unavailable analysis | 18/64 parser errors | 3/64 unavailable | 0/64 unavailable |
+| C1 development coverage | 11/32 (34.4%) | 9/32 (28.1%) | 9/32 (28.1%) |
+| Recall among classified malicious files | 2/6 (33.3%) | 3/6 (50.0%) | 3/6 (50.0%) |
+| FPR among classified benign files | 2/5 (40.0%) | 2/3 (66.7%) | 2/3 (66.7%) |
+
+The analysis row counts refer to each version's full evidence view. V9's
+[legacy primary pipeline](../experiments/cic_v9_final/run_20261011T045223500000Z_ff3f5b65d376/pipeline_summary.json)
+separately reports 23 complete, 26 partial and 15 parser-error files in each pass.
+Those primary errors coexist with retained partial overlay evidence and are not
+worker-unavailable results. Relative to v8, three unavailable overlays became
+partial; one complete Train overlay became partial at the graph metadata allowance.
+Its primary features remained complete and numerically unchanged.
+V7 and v8 use different saved C1 estimators; v8 and v9 share the frozen RF173.
+The comparison is descriptive and does not isolate an accuracy gain from the graph.
+
+The [C1 evidence](../experiments/cic_v9_final/run_20261011T045223500000Z_ff3f5b65d376/c1_comparison.json)
+has TP3, FN3, FP2 and TN1 across 9 classified files, with 23 Inconclusive results.
+Conditional malicious F1 is 0.5454545 and MCC is -0.1581139. All 32 decisions match
+v8. Across the planned 16 malicious and 16 benign files, detected and false-positive
+fractions are 3/16 (18.75%) and 2/16 (12.5%); abstentions are neither detections nor
+benign predictions. These fractions do not turn abstention into a hard-label error
+or establish improved generalization on this already exposed diagnostic cohort.
+
+ECE is 0.1472687 and Brier is 0.2697494 on the separate cohort of all 32 valid
+frozen ML probabilities, including abstentions. ECE uses 10 equal-width bins,
+with p=1 in the last bin. This cohort differs from v8's 30 scored rows because
+two development inputs previously lost to worker errors now retain measurements;
+the calibration values cannot be presented as a paired gain over v8.
+
+The [graph summary](../experiments/cic_v9_final/run_20261011T045223500000Z_ff3f5b65d376/graph_coverage.json)
+records 678 verified MuPDF-local object observations, usable script/AST evidence
+in 20/64 files, usable payload evidence in 19/64, and verified witness paths in
+14/64. These are syntax/eligibility counts; they do not prove exploit detection,
+historical revision completeness, or 678 newly recovered objects absent from the
+primary backend. The verified witness families in this run are PDF JavaScript.
+
+## Acceptance review and partial-file explanations
+
+The [metadata acceptance review](../experiments/cic_v9_final_review/run_20261011T050628599657Z_ff3f5b65d376/review_evidence.json)
+verified original source identities, static-only flags and worker cleanup on all
+128 saved profiles. The largest serialized graph is 1477331 bytes, below the
+2MiB hard limit; admission can stop earlier to reserve bounded terminal/check
+metadata. Maximum worker wall time is 6.0822s. The sealed source fingerprint still
+matches the clean fresh Python3.11 CPU validation: 987 tests passed, with two
+retained sklearn warnings. Dependency consistency was checked again and passed;
+its cache-permission warning was saved. This review reopened no PDFs or raw
+streams, loaded no models and generated no new model probabilities.
+
+All 173-column model contracts were rechecked from saved provenance and frozen
+missingness metadata. All 32 decisions replayed identically from their original
+saved scores. Absolute probability parity is exactly zero and hard labels match
+for the comparable unchanged inputs: C1 30, P0 32, P1 30 and P2 30 development
+rows. No unchanged-input numerical regression was found. The remaining legacy
+differences are six changed-input records across the same three historic
+AttributeError files, affecting P1 and P2. Guarded supplemental-xref recovery now
+retains observed AA/EmbeddedFiles and script counters, plus the corresponding P2
+parser/recovery flags, instead of losing the whole primary result. Unverified
+supplemental-xref totals remain unknown and those files remain partial. Two
+development probabilities per P1/P2 change, while their hard labels stay the same;
+the third changed input belongs to Train. The corresponding synthetic regression
+is `tests/test_pypdf_compatibility.py`. The original acceptance report's six
+unexplained records are preserved; their explanations are added in the new review.
+
+Each of the 21 old development partials has an individual private record in
+`artifacts/cic_v9_final_review/run_20261011T050628599657Z_ff3f5b65d376/old_partial_reviews.jsonl`,
+including original identity, retained checkpoints, model dependencies, incomplete
+checks, conflict scopes, usable paths and a per-reason explanation. All remain
+Inconclusive. Eighteen have a positive numeric ML score, but only one has a
+completed legal graph path; that file's aggregate model AST provenance is still
+unverified. A positive score alone does not establish eligibility.
+
+| Blocking reason among the 21 old partials | Files |
+| --- | --- |
+| Resource limit intersects a model/required-path dependency | 13 |
+| Backend conflict lacks verified affected scope | 4 |
+| Resource limit lacks verified affected scope | 3 |
+| Original total input enumeration incomplete | 1 |
+| Aggregate script AST input provenance unverified | 1 |
+| Partial negative | 1 |
+| Mandatory checks incomplete | 1 |
+
+These counts overlap. The 13 dependency-limited cases include MuPDF embedded
+decoded-byte limits under the shared budget. The unlocalized limits/conflicts
+cannot be declared independent of the frozen model inputs. Retaining completed
+objects does not establish that capped source enumeration missed no qualifying
+evidence. The one complete-to-partial Train overlay is separately explained in
+the private `overlay_regression_reviews.jsonl`; primary evidence was retained,
+but graph completeness remains unverified.
+
+Acceptance remains **blocked**. Evidence retention improved for the three historic
+worker failures, but detector accuracy/coverage did not improve and the saved
+capped views cannot certify that every qualifying source item was extracted.
+Further work should first inspect graph metadata duplication and dependency-scope
+precision using synthetic fixtures and saved metadata, preserving current byte
+budgets and frozen feature meanings. This completed campaign is retained as
+diagnostic evidence; a new real-PDF campaign requires a separately locked design.
+
+The initial metadata-review attempt stopped on a Python integer versus serialized
+JSON string key comparison. Its failed run was preserved. Normalizing that
+representation allowed the completed review above; neither review reanalyzed PDFs
+or consumed another Final attempt.
+
+The [runtime evidence](../experiments/cic_v9_final/run_20261011T045223500000Z_ff3f5b65d376/resource_usage.json)
+records a cold median of 2.6112s/file, compared with 1.4899s in v7 and 0.8211s in v8;
+the warm median is 2.1824s/file with 22 complete-profile cache hits. Cold totals
+are 175.6974s and warm totals are 140.8869s. Cold peak worker RSS is 382582784 bytes
+and peak sampled family RSS is 827375616 bytes. Host load/OS cache were not
+controlled, so these are measured costs rather than an isolated speed attribution.

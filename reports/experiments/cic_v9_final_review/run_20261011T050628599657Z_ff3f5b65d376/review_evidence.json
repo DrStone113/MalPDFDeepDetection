@@ -1,0 +1,147 @@
+{
+  "source_run": "run_20261011T045223500000Z_ff3f5b65d376",
+  "status": "completed_metadata_review",
+  "release_status": "blocked",
+  "recorded_profiles": 128,
+  "paired_files": 64,
+  "unchanged_locked_manifest_models_prerequisites": true,
+  "source_identity_verified": 128,
+  "worker_cleanup_verified": 128,
+  "immutable_static_flags_verified": 128,
+  "maximum_graph_metadata_bytes": 1477331,
+  "maximum_worker_wall_seconds": 6.082174498999848,
+  "decision_replays_equal": 32,
+  "c1": {
+    "planned": 32,
+    "classified": 9,
+    "inconclusive": 23,
+    "planned_class_counts": {
+      "0": 16,
+      "1": 16
+    },
+    "classified_class_counts": {
+      "0": 3,
+      "1": 6
+    },
+    "coverage": 0.28125,
+    "true_positives": 3,
+    "false_positives": 2,
+    "conditional_recall": 0.5,
+    "conditional_fpr": 0.6666666666666666,
+    "end_to_end_detected_fraction": 0.1875,
+    "end_to_end_false_positive_fraction": 0.125,
+    "actual_label_metrics": {
+      "positive_label": 1,
+      "accuracy": 0.4444444444444444,
+      "precision_malicious": 0.6,
+      "recall_malicious": 0.5,
+      "f1_malicious": 0.5454545454545454,
+      "precision_macro": 0.425,
+      "recall_macro": 0.41666666666666663,
+      "f1_macro": 0.41558441558441556,
+      "precision": 0.6,
+      "recall": 0.5,
+      "f1": 0.5454545454545454,
+      "mcc": -0.15811388300841897,
+      "confusion_matrix": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "roc_auc": null,
+      "pr_auc": null,
+      "score_source": null
+    },
+    "probability_metrics": {
+      "rows": 32,
+      "class_counts": {
+        "0": 16,
+        "1": 16
+      },
+      "ece": 0.14726865755771992,
+      "brier": 0.26974942454003137,
+      "ece_convention": "10 equal-width bins; p=1 in last bin",
+      "scope": "all valid frozen ML probabilities, including abstentions"
+    },
+    "abstention_policy": "unscored; quarantine; never counted as detection or benign"
+  },
+  "development_decisions_changed_from_v8": 0,
+  "comparable_unchanged_input_probability_parity": {
+    "P0_rit41_fallback": 32,
+    "P1_observed_static": 30,
+    "P2_observed_plus_status": 30,
+    "C1_v8": 30
+  },
+  "parity_absolute_tolerance": 1e-12,
+  "unchanged_input_probability_regressions": 0,
+  "reviewed_legacy_measurement_changes": 6,
+  "affected_files": 3,
+  "legacy_changes_explained": true,
+  "original_acceptance_report_preserved": true,
+  "overlay_complete_to_partial": 1,
+  "overlay_regression_reason": "evidence_metadata_limit; Train; primary unchanged",
+  "old_partial_reviews": 21,
+  "old_partial_decisions": {
+    "Inconclusive": 21
+  },
+  "old_partial_reason_counts_overlapping": {
+    "model_input_completion_unverified": 1,
+    "unlocalized_resource_limit": 3,
+    "unlocalized_backend_conflict": 4,
+    "dependency_resource_limit": 13,
+    "model_script_ast_provenance_unverified": 1,
+    "incomplete_negative": 1,
+    "mandatory_checks_incomplete": 1
+  },
+  "old_partial_limited_capability_counts_overlapping": {
+    "('pypdf', 'catalog', 'evidence_metadata_limit')": 3,
+    "('pypdf', 'actions', 'evidence_metadata_limit')": 3,
+    "('pypdf', 'scripts', 'evidence_metadata_limit')": 3,
+    "('pypdf', 'xfa', 'evidence_metadata_limit')": 3,
+    "('pypdf', 'embedded', 'evidence_metadata_limit')": 3,
+    "('MuPDF', 'catalog', 'evidence_metadata_limit')": 4,
+    "('MuPDF', 'actions', 'evidence_metadata_limit')": 4,
+    "('MuPDF', 'scripts', 'evidence_metadata_limit')": 4,
+    "('MuPDF', 'xfa', 'evidence_metadata_limit')": 4,
+    "('MuPDF', 'embedded', 'evidence_metadata_limit')": 4,
+    "('MuPDF', 'embedded', 'decoded_byte_limit')": 13,
+    "('pypdf', 'scripts', 'ast_node_limit')": 1,
+    "('MuPDF', 'scripts', 'ast_node_limit')": 1
+  },
+  "old_partial_usable_path_files": 1,
+  "old_partial_positive_ml_scores": 18,
+  "witness_and_decision_counts": {
+    "('Inconclusive', False, False)": 22,
+    "('Malicious', False, False)": 3,
+    "('Benign', True, False)": 2,
+    "('Inconclusive', True, False)": 1,
+    "('Malicious', True, False)": 2,
+    "('Benign', False, False)": 2
+  },
+  "blocking_acceptance_reasons": [
+    "graph_enumeration_incomplete_under_caps",
+    "unlocalized_caps_or_backend_conflicts",
+    "all_qualifying_source_evidence_not_certified"
+  ],
+  "regression_validation": {
+    "run_id": "run_20261011T043858567176Z_f9181d42a6a5",
+    "tests_passed": 987,
+    "warnings_retained": 2,
+    "matching_fingerprint": true,
+    "reused_without_code_changes": true
+  },
+  "pip_check": {
+    "exit_code": 0,
+    "warning_retained": true
+  },
+  "scope": "Saved metadata/policy replay only. No PDFs, raw stream reads, model loading, fitting, new probabilities, threshold changes, rerun or Test access."
+}

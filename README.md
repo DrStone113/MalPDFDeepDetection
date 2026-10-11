@@ -65,13 +65,21 @@ unchanged and source hashes/worker cleanup verified. Its partial results retain
 localized failures and checkpoints within the existing 2MiB metadata budget.
 The matching fresh Python3.11 CPU validation passed 987 dataset-free tests with
 two retained sklearn warnings; dependency, source-integrity, diff and ignore
-checks passed. These establish integration readiness; detector-quality metrics
-remain unavailable until the single sealed Final attempt.
-The [Final preparation](reports/experiments/cic_v9_prepare/run_20261011T044846162865Z_a46caece1d06/run_summary.json)
-now seals both matching prerequisites and the original 64-file manifest. The
-campaign attempt is unused. In the isolated VMware console, open **Chạy CIC v9
-offline**, select **2 → Enter** for Final, then press Enter to confirm LAB
-isolation. The default Enter selects Integration.
+checks passed. Detector-quality metrics were measured in the
+[completed Final attempt](reports/experiments/cic_v9_final/run_20261011T045223500000Z_ff3f5b65d376/run_summary.json).
+It recorded all 64 cold and 64 warm profiles, with source identity and worker
+cleanup verified. The v9 overlay has 22 complete and 42 partial results, with no
+worker-unavailable files. C1 still classifies 9/32 development files (28.1%):
+TP3/6 and FP2/3 among classified files, with 23 abstentions. All 32 C1 decisions
+match v8; this does not establish an accuracy or coverage gain.
+The [saved-metadata acceptance review](reports/experiments/cic_v9_final_review/run_20261011T050628599657Z_ff3f5b65d376/review_evidence.json)
+explains the six P1/P2 input changes across the three recovered-xref files and
+preserves probability/hard-label parity on unchanged inputs. It records individual
+private explanations for all 21 old partials. Acceptance remains blocked by graph
+caps and ambiguous dependency scopes; one Train graph became partial while its
+primary measurements stayed complete. The Final campaign claim is consumed;
+reopening the launcher reads the saved outcome. See
+[measured results and remaining limits](reports/analysis/cic_static_v9.md#completed-final-measurement).
 
 Static inspection now reads one size-capped, stable byte snapshot.
 `malpdf.inference.StaticScanSession` reuses a verified frozen XGBoost deployment

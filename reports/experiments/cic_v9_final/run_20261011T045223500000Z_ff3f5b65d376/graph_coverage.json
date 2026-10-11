@@ -1,0 +1,29 @@
+{
+  "paired_files": 64,
+  "verified_recovered_objects": 678,
+  "recovery_identity_scope": "backend-local original snapshot and exact object/generation; no verified historical/cross-backend revision identity claim",
+  "files_with_usable_script_ast": 20,
+  "files_with_usable_payload": 19,
+  "files_with_verified_witness": 14,
+  "witness_family_counts": {
+    "pdf_javascript": 19
+  },
+  "capability_state_counts": {
+    "pypdf/catalog/partial": 35,
+    "pypdf/actions/partial": 35,
+    "pypdf/scripts/partial": 37,
+    "pypdf/xfa/partial": 37,
+    "pypdf/embedded/partial": 37,
+    "MuPDF/catalog/partial": 41,
+    "MuPDF/actions/partial": 41,
+    "MuPDF/scripts/partial": 41,
+    "MuPDF/xfa/partial": 41,
+    "MuPDF/embedded/partial": 41,
+    "pypdf/catalog/complete": 29,
+    "pypdf/actions/complete": 29,
+    "pypdf/scripts/complete": 27,
+    "pypdf/xfa/complete": 27,
+    "pypdf/embedded/complete": 27
+  },
+  "semantics": "usable syntax and model eligibility; no threat-family exploit-detection claim"
+}

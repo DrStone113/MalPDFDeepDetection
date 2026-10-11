@@ -1,0 +1,20 @@
+{
+  "protocol": "V9 saved final metadata acceptance review",
+  "source_run": "run_20261011T045223500000Z_ff3f5b65d376",
+  "pdf_access": false,
+  "model_loading": false,
+  "fitting": false,
+  "test_access": false,
+  "metric_source": "unchanged saved final decisions; classified and probability cohorts remain distinct",
+  "seed": 42,
+  "code_commit": "ff3f5b65d3762bc3ebacaa4ee08653618e3a9a60",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      "?? reports/experiments/cic_v9_final/"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}
