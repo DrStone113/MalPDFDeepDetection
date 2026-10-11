@@ -1,0 +1,41 @@
+{
+  "python": "3.11.17",
+  "packages": {
+    "numpy": "2.4.6",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.9.1",
+    "PyMuPDF": "1.26.7",
+    "torch": "2.11.0+cpu",
+    "torchvision": "0.26.0+cpu",
+    "xgboost": "3.2.0",
+    "lightgbm": "4.7.0",
+    "catboost": "1.2.10"
+  },
+  "generating_commit": "8e273378a85a34281edce89d222d27567a5cdf52",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_v9.md",
+      " M src/malpdf/static/code_inspector.py",
+      " M src/malpdf/static/evidence.py",
+      " M src/malpdf/static/evidence_v9.py",
+      " M src/malpdf/static/parser_diagnostics.py",
+      " M src/malpdf/static/pdf_parser.py",
+      "?? tests/test_pypdf_compatibility.py"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_v9.md",
+      " M src/malpdf/static/code_inspector.py",
+      " M src/malpdf/static/evidence.py",
+      " M src/malpdf/static/evidence_v9.py",
+      " M src/malpdf/static/parser_diagnostics.py",
+      " M src/malpdf/static/pdf_parser.py",
+      "?? tests/test_pypdf_compatibility.py"
+    ]
+  }
+}

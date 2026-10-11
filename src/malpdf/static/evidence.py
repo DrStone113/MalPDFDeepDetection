@@ -51,6 +51,8 @@ def fact(name, value, backend, *, complete=False, applicable=True, evidence_ids=
 def _graph(reader, backend, limits, decoded_remaining):
     """Catalog graph only, with redacted action edges and bounded attachments."""
     seen, objects, actions, edges, attachments, errors = set(), {}, [], [], [], set()
+    if getattr(reader, '_malpdf_xrefstm_failures', []):
+        errors.add('supplemental_xref_unavailable')
     counts, used, visited = Counter(), 0, 0
     def name_value(value):
         nonlocal visited

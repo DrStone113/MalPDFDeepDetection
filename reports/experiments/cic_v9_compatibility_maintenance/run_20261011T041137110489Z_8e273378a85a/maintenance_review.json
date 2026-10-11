@@ -1,0 +1,12 @@
+{
+  "status": "completed",
+  "synthetic_regressions": 7,
+  "prior_integration": "run_20261011T040344406533Z_fd3166d34abb",
+  "prior_source_validation": "run_20261011T033000193821Z_01d194ab9e51",
+  "finding": "supplemental-xref exceptions were discarded without partial evidence",
+  "correction": "retain bounded fixed codes/offsets, restore cursor, propagate resource/system errors, preserve usable primary/graph observations",
+  "legacy_effect": "unverified structural totals become unknown; code/v8/v9 partial state retained; frozen model and feature meanings unchanged",
+  "next_checks": "clean-source fresh CPU full suite, matching three-file offline console integration before final seal",
+  "real_pdf_access": false,
+  "new_detector_metrics": false
+}

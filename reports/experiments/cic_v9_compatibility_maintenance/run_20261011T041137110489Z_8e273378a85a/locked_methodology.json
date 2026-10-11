@@ -1,0 +1,23 @@
+{
+  "protocol": "V9 pinned pypdf supplemental-xref completeness correction",
+  "pdf_access": false,
+  "test_access": false,
+  "model_fitting": false,
+  "seed": 42,
+  "code_commit": "8e273378a85a34281edce89d222d27567a5cdf52",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_v9.md",
+      " M src/malpdf/static/code_inspector.py",
+      " M src/malpdf/static/evidence.py",
+      " M src/malpdf/static/evidence_v9.py",
+      " M src/malpdf/static/parser_diagnostics.py",
+      " M src/malpdf/static/pdf_parser.py",
+      "?? tests/test_pypdf_compatibility.py"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

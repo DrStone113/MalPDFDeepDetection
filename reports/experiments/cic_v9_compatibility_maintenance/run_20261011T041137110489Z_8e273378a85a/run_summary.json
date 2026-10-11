@@ -1,0 +1,40 @@
+{
+  "run_id": "run_20261011T041137110489Z_8e273378a85a",
+  "study": "cic_v9_compatibility_maintenance",
+  "status": "completed",
+  "started_at_utc": "2026-10-11T04:11:37.151555+00:00",
+  "code_commit": "8e273378a85a34281edce89d222d27567a5cdf52",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_v9.md",
+      " M src/malpdf/static/code_inspector.py",
+      " M src/malpdf/static/evidence.py",
+      " M src/malpdf/static/evidence_v9.py",
+      " M src/malpdf/static/parser_diagnostics.py",
+      " M src/malpdf/static/pdf_parser.py",
+      "?? tests/test_pypdf_compatibility.py"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_v9.md",
+      " M src/malpdf/static/code_inspector.py",
+      " M src/malpdf/static/evidence.py",
+      " M src/malpdf/static/evidence_v9.py",
+      " M src/malpdf/static/parser_diagnostics.py",
+      " M src/malpdf/static/pdf_parser.py",
+      "?? tests/test_pypdf_compatibility.py"
+    ]
+  },
+  "seed": 42,
+  "protocol": "V9 pinned pypdf supplemental-xref completeness correction",
+  "report_path": "reports/experiments/cic_v9_compatibility_maintenance/run_20261011T041137110489Z_8e273378a85a/run_summary.json",
+  "artifact_path": "artifacts/cic_v9_compatibility_maintenance/run_20261011T041137110489Z_8e273378a85a",
+  "metrics": {},
+  "notes": "Seven synthetic hybrid-xref regressions passed. Existing integration/validation immutable but fingerprints no longer match corrected source. No real PDF access, model loading/fitting or final claim. Full fresh CPU validation pending.",
+  "finished_at_utc": "2026-10-11T04:11:37.205335+00:00"
+}

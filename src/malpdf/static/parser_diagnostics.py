@@ -12,6 +12,7 @@ _REASONS = (("broken xref table", "xref_invalid"), ("startxref not found", "star
     ("trailer cannot be read", "trailer_unreadable"), ("cannot find root object", "root_missing"),
     ("maximum recursion depth", "recursion_limit"), ("pdf_reference_limit", "reference_limit"))
 _RECOVERY = (("incorrect startxref pointer", "xref_offset_recovery"),
+    ("malpdf xrefstm incomplete", "xrefstm_partial"),
     ("invalid/truncated xref table", "xref_table_rebuild"), ("xref table not zero-indexed", "xref_index_recovery"),
     ("rebuilding xref", "xref_table_rebuild"), ("parsing for object streams", "object_stream_recovery"),
     ("eof marker seems truncated", "eof_recovery"), ("eof marker not found", "eof_recovery"))

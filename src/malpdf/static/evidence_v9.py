@@ -656,6 +656,11 @@ class _Graph:
             raise CodeInspectionError("xfa_xml_parse_error") from None
 
     def run(self, document):
+        for failure in getattr(self.reader, '_malpdf_xrefstm_failures', []):
+            offset = failure.get('offset', 'unknown')
+            identifier = self.store.observation(self.backend, f'xfailure:{offset}', 'xref_check',
+                offset=offset, status='unavailable', reason_codes=['supplemental_xref_unavailable'])
+            self.problem('catalog', 'supplemental_xref_unavailable', [identifier])
         root, value, fresh = self.node(self.reader.trailer.raw_get("/Root"), "/Root", 0)
         if not isinstance(value, DictionaryObject) or self.resolve_name(value.get("/Type")) != "/Catalog":
             raise CodeInspectionError("graph_catalog_invalid")

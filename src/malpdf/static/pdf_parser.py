@@ -9,6 +9,7 @@ RIT string-occurrence features.
 from __future__ import annotations
 
 import io
+import logging
 import re
 import warnings
 from dataclasses import dataclass, field
@@ -24,6 +25,11 @@ from malpdf.static.safety import StaticInspectionLimits
 from malpdf.static.parser_diagnostics import ParserDiagnostics
 
 def _apply_pypdf_patches():
+    """Keep the 6.18.1 initializer usable without hiding supplemental-xref loss.
+
+    Callers still supply a bounded binary snapshot in an isolated worker. This
+    compatibility repair never sanitizes bytes or declares recovery complete.
+    """
     from pypdf._reader import PdfReader
     from pypdf.generic import NameObject
 
@@ -36,20 +42,33 @@ def _apply_pypdf_patches():
         self.stream = stream
         return orig_init(self, stream)
 
-    orig_process = PdfReader._process_xref_stream
-
     def safe_process(self, xrefstream):
         for key in self._XREF_STREAM_TRAILER_KEYS:
             if key in xrefstream and key not in self.trailer:
                 self.trailer[NameObject(key)] = xrefstream.raw_get(key)
         if "/XRefStm" in xrefstream:
+            position = self.stream.tell()
+            pointer = None
             try:
-                p = self.stream.tell()
-                self.stream.seek(int(xrefstream["/XRefStm"]) + 1, 0)
+                pointer = xrefstream["/XRefStm"]
+                if not isinstance(pointer, int) or isinstance(pointer, bool) or pointer < 0:
+                    raise ValueError('invalid_supplemental_xref_pointer')
+                self.stream.seek(0, io.SEEK_END)
+                if pointer >= self.stream.tell():
+                    raise ValueError('supplemental_xref_pointer_out_of_bounds')
+                self.stream.seek(pointer + 1, 0)
                 self._read_pdf15_xref_stream(self.stream)
-                self.stream.seek(p, 0)
-            except Exception:
-                pass
+            except (PdfReadError, ValueError, TypeError, KeyError, AttributeError, EOFError):
+                failures = getattr(self, '_malpdf_xrefstm_failures', None)
+                if failures is None:
+                    failures = self._malpdf_xrefstm_failures = []
+                event = {'offset': pointer if isinstance(pointer, int) and not isinstance(pointer, bool) else 'unknown',
+                         'reason_code': 'supplemental_xref_unavailable'}
+                if event not in failures and len(failures) < 16:
+                    failures.append(event)
+                logging.getLogger('pypdf').warning('malpdf xrefstm incomplete')
+            finally:
+                self.stream.seek(position, 0)
 
     PdfReader._initialize_stream = safe_init
     PdfReader._process_xref_stream = safe_process
@@ -231,9 +250,13 @@ def inspect_pdf_structure(data: bytes, limits: StaticInspectionLimits) -> Parser
         return result
 
     walker = _StructureWalker(limits, diagnostic)
+    xref_incomplete = bool(getattr(reader, '_malpdf_xrefstm_failures', []))
+    if xref_incomplete:
+        result.warnings.append(StructuredExtractionIssue(
+            'supplemental_xref_unavailable', 'Supplemental xref could not be verified; structural totals remain unknown.'))
     try:
         walker.walk(reader.trailer)
-        result.structural_complete = not (walker.limit_reached or walker.failed_references)
+        result.structural_complete = not (walker.limit_reached or walker.failed_references or xref_incomplete)
         if result.structural_complete:
             result.structural_indicator_counts = dict(walker.indicators)
             result.embedded_file_count = walker.embedded_file_count

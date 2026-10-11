@@ -226,6 +226,9 @@ def _inspect_code_bytes_inner(data, limits, timings, *, supplied_reader=None, ev
     if reader.is_encrypted:
         return _unavailable("encrypted_pdf", diagnostic.data)
     errors, seen, scripts_seen = set(), set(), set()
+    if getattr(reader, '_malpdf_xrefstm_failures', []):
+        recovered = True
+        errors.add('supplemental_xref_unavailable')
     if recovered:
         errors.add("pdf_xref_recovered")
     indicators = Counter({name[1:]: 0 for name in sorted(SECURITY_NAMES)})

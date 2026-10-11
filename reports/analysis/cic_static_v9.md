@@ -122,3 +122,28 @@ probabilities, including abstentions; ECE uses10 equal-width bins, p=1 in the la
 Measurement completion leaves technical review required unless acceptance evidence
 has established no loss/refusal of qualified evidence and explained all regressions.
 No target forces the21 old partials to become classified.
+
+## Supplemental-xref compatibility review
+
+The saved initial fresh CPU validation passed975 tests with2 retained sklearn
+warnings. Subsequent console integration
+`run_20261011T040344406533Z_fd3166d34abb` completed three files, verified source
+hashes and worker cleanup, and retained the original primary feature vectors.
+Its recorded `passed` outcome remains immutable.
+
+The later review found that the supplemental `/XRefStm` compatibility wrapper
+discarded exceptions without recording an incomplete check. That made this
+integration insufficient for final sealing after the correction. The wrapper
+now records fixed failure codes and offsets when known, restores the stream
+cursor on every exit, and propagates resource/system failures. Primary structural
+totals remain unknown after supplemental-xref loss; code, v8 and v9 preserve the
+same explicit partial condition while retaining usable objects. The pinned
+initializer repair is retained. Seven synthetic hybrid-xref regressions cover
+valid supplemental references, malformed/out-of-bounds pointers, idempotence,
+retained graph evidence and propagated memory/recursion/system failures.
+
+This is a documented legacy-completeness correction, not a model adjustment.
+The previous validation and integration fingerprints cannot seal the changed
+source. Matching CPU regression evidence and a new three-file console integration
+are required before the unchanged single final attempt; no final claim has been
+consumed by these maintenance checks.
