@@ -67,6 +67,11 @@ The matching fresh Python3.11 CPU validation passed 987 dataset-free tests with
 two retained sklearn warnings; dependency, source-integrity, diff and ignore
 checks passed. These establish integration readiness; detector-quality metrics
 remain unavailable until the single sealed Final attempt.
+The [Final preparation](reports/experiments/cic_v9_prepare/run_20261011T044846162865Z_a46caece1d06/run_summary.json)
+now seals both matching prerequisites and the original 64-file manifest. The
+campaign attempt is unused. In the isolated VMware console, open **Chạy CIC v9
+offline**, select **2 → Enter** for Final, then press Enter to confirm LAB
+isolation. The default Enter selects Integration.
 
 Static inspection now reads one size-capped, stable byte snapshot.
 `malpdf.inference.StaticScanSession` reuses a verified frozen XGBoost deployment

@@ -219,3 +219,19 @@ Python3.11 CPU validation. The [metadata review](../experiments/cic_v9_integrati
 verifies both prerequisites before sealing the same 64 diagnostic Final campaign.
 Model bytes, preprocessing, 173-column ledger, threshold 0.5, original labels and
 Protocol G partitions stay frozen. The earlier blocked reports remain unchanged.
+
+## Final sealed for console execution
+
+The [Final preparation](../experiments/cic_v9_prepare/run_20261011T044846162865Z_a46caece1d06/run_summary.json)
+was sealed from clean commit `a46caec`, pinning the successful three-file integration
+and 987-test validation to the same source/backend/budget fingerprint. Metadata
+checks confirm all 64 locked rows, the original frozen model bytes and
+preprocessing, 173 C1 inputs, threshold 0.5 and one campaign-wide final attempt.
+Preparation read no PDFs, loaded no pickle and consumed no campaign claim.
+
+After committing these aggregate reports, use the disconnected non-root VMware
+console shortcut **Chạy CIC v9 offline**, select **2 → Enter** (Final), then
+confirm the selected LAB isolation procedure with Enter. The default Enter runs
+Integration. Final recall, FPR, coverage and per-file acceptance explanations
+remain unavailable until the console attempt finishes; integration acceptance
+does not establish detector accuracy.

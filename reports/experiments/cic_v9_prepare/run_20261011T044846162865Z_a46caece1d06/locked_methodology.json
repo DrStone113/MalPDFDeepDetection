@@ -1,0 +1,15 @@
+{
+  "protocol": "V9 one-shot final metadata seal",
+  "campaign": "v9-one-shot-evidence-first-v1",
+  "test_access": false,
+  "pdf_access": false,
+  "fitting": false,
+  "seed": 42,
+  "code_commit": "a46caece1d065300db3b731a8b4c261747647ecb",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

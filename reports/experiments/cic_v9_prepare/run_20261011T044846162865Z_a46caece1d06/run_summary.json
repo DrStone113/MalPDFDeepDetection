@@ -1,0 +1,25 @@
+{
+  "run_id": "run_20261011T044846162865Z_a46caece1d06",
+  "study": "cic_v9_prepare",
+  "status": "completed",
+  "started_at_utc": "2026-10-11T04:48:46.202096+00:00",
+  "code_commit": "a46caece1d065300db3b731a8b4c261747647ecb",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "data_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "seed": 42,
+  "protocol": "V9 one-shot final metadata seal",
+  "report_path": "reports/experiments/cic_v9_prepare/run_20261011T044846162865Z_a46caece1d06/run_summary.json",
+  "artifact_path": "artifacts/cic_v9_prepare/run_20261011T044846162865Z_a46caece1d06",
+  "metrics": {},
+  "kind": "final",
+  "rows": 64,
+  "job_lock_sha256": "97be40dcf43a406913666380abea8518b960dc83f79f3a2e5410e913e81cee26",
+  "notes": "Matching integration/regression sealed; original models/threshold/splits immutable. No PDFs or pickle loading during seal.",
+  "finished_at_utc": "2026-10-11T04:48:47.164843+00:00"
+}
