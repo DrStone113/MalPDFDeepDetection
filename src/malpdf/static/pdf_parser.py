@@ -23,6 +23,41 @@ from malpdf.static.result import StructuredExtractionIssue
 from malpdf.static.safety import StaticInspectionLimits
 from malpdf.static.parser_diagnostics import ParserDiagnostics
 
+def _apply_pypdf_patches():
+    from pypdf._reader import PdfReader
+    from pypdf.generic import NameObject
+
+    if getattr(PdfReader, "_malpdf_patched", False):
+        return
+
+    orig_init = PdfReader._initialize_stream
+
+    def safe_init(self, stream):
+        self.stream = stream
+        return orig_init(self, stream)
+
+    orig_process = PdfReader._process_xref_stream
+
+    def safe_process(self, xrefstream):
+        for key in self._XREF_STREAM_TRAILER_KEYS:
+            if key in xrefstream and key not in self.trailer:
+                self.trailer[NameObject(key)] = xrefstream.raw_get(key)
+        if "/XRefStm" in xrefstream:
+            try:
+                p = self.stream.tell()
+                self.stream.seek(int(xrefstream["/XRefStm"]) + 1, 0)
+                self._read_pdf15_xref_stream(self.stream)
+                self.stream.seek(p, 0)
+            except Exception:
+                pass
+
+    PdfReader._initialize_stream = safe_init
+    PdfReader._process_xref_stream = safe_process
+    PdfReader._malpdf_patched = True
+
+
+_apply_pypdf_patches()
+
 _STRUCTURAL_NAMES = frozenset(
     {
         "/JavaScript", "/JS", "/URI", "/AA", "/OpenAction", "/Launch",
