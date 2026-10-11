@@ -1,0 +1,23 @@
+{
+  "run_id": "run_20261011T034154974012Z_45544e120cae",
+  "study": "cic_v9_refused",
+  "status": "failed",
+  "started_at_utc": "2026-10-11T03:41:55.034404+00:00",
+  "code_commit": "45544e120caedad9d59bb2c45515e8fc326a2e1d",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "data_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "seed": 42,
+  "protocol": "V9 zero-input offline preflight",
+  "report_path": "reports/experiments/cic_v9_refused/run_20261011T034154974012Z_45544e120cae/run_summary.json",
+  "artifact_path": "artifacts/cic_v9_refused/run_20261011T034154974012Z_45544e120cae",
+  "metrics": {},
+  "notes": "Preflight refused; no PDF/model load and no final campaign claim consumed.",
+  "error_type": "ValueError",
+  "finished_at_utc": "2026-10-11T03:41:55.126331+00:00"
+}

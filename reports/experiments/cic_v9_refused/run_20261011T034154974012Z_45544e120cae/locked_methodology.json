@@ -1,0 +1,15 @@
+{
+  "protocol": "V9 zero-input offline preflight",
+  "prepared_run": "run_20261011T033242188321Z_2ffcbd48e4b5",
+  "kind": "integration",
+  "test_access": false,
+  "pdf_access": false,
+  "seed": 42,
+  "code_commit": "45544e120caedad9d59bb2c45515e8fc326a2e1d",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}
