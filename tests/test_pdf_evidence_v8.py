@@ -80,6 +80,72 @@ def test_missing_startxref_recovery_stays_partial_with_primary_failure():
     assert next(b for b in result['backends'] if b['backend']=='MuPDF')['code']['scripts_parsed']==1
 
 
+@pytest.mark.parametrize('backend', ['pypdf', 'MuPDF'])
+def test_backend_attribute_error_is_redacted_and_other_view_survives(monkeypatch, backend):
+    from malpdf.static import evidence
+    data = pdf(); limits = CodeInspectionLimits()
+    code = _inspect_code_bytes(data, limits)
+    def fail(*args, **kwargs):
+        raise AttributeError('private synthetic parser detail')
+    monkeypatch.setattr(evidence, 'PdfReader' if backend == 'pypdf' else 'MuPDFObjectReader', fail)
+    result = inspect_evidence(data, static(False), code, limits)
+    failed = next(b for b in result['backends'] if b['backend'] == backend)
+    assert failed['status'] == 'error' and failed['error_code'].endswith('backend_attribute_error')
+    assert not result['complete'] and result['original_bytes_changed'] is False
+    assert 'private synthetic' not in json.dumps(result)
+    other = next(b for b in result['backends'] if b['backend'] != backend)
+    assert other['graph']['actions'] and other['code']['scripts_parsed'] == 1
+
+
+def primary_rows():
+    from malpdf.static.code_inspector import _unavailable
+    from malpdf.static.schema import RIT_FEATURES
+    rows = []
+    for partition in ['train', 'validation']:
+        for i in range(6):
+            digest = hashlib.sha256(f'{partition}{i}'.encode()).hexdigest()
+            features = {name: 0 for name in RIT_FEATURES}
+            features.update(pdfsize=i+1+(1000 if partition == 'validation' else 0), pdf_ver=1.7)
+            rows.append({'sample_id': f'{partition}{i}', 'pdf_sha256': digest, 'split': partition,
+                'Label': i%2, 'cache_mode': 'cold', 'status': 'parser_error',
+                'errors': ['parser_failure'], 'timings': {'read_hash': 0.1, 'raw_scan': 0.1},
+                'static': {'input': {'sha256': digest, 'size_bytes': 1000}, 'features': features,
+                           'parser': {'success': False, 'structural_complete': False}},
+                'code': _unavailable('pdf_parser_failure')})
+    return rows
+
+
+@pytest.mark.parametrize('failure', ['worker_error', 'timeout', 'resource_limit_or_signal'])
+def test_primary_checkpoint_remains_known_input_while_failed_v8_abstains(failure):
+    from copy import deepcopy
+    from malpdf.experiments.cic_static_accuracy import profile_input_available
+    row = primary_rows()[0]
+    row.update(status=failure, primary_status='parser_error', primary_errors=['parser_failure'],
+               analysis_v8={'schema_version': 'pdf-evidence-v8', 'status': 'unavailable'})
+    assert profile_input_available(row, 10000)
+    assert evidence_decision(0.99, row['analysis_v8'], input_available=True)['decision'] == 'Inconclusive'
+    for mutate in (lambda r: r.update(code=None), lambda r: r.update(pdf_sha256='unverified'),
+                   lambda r: r['timings'].update(raw_scan=None)):
+        bad = deepcopy(row); mutate(bad)
+        assert not profile_input_available(bad, 10000)
+
+
+def test_overlay_failure_cannot_change_legacy_fit_cohort_or_predictions():
+    from copy import deepcopy
+    from malpdf.experiments.cic_static_accuracy import fit_profile_ablations
+    rows = primary_rows(); failures = deepcopy(rows)
+    for index in [0, 6]:
+        failures[index].update(status='worker_error', primary_status='parser_error',
+            primary_errors=['parser_failure'], analysis_v8={'schema_version': 'pdf-evidence-v8', 'status': 'unavailable'})
+    config = {'n_estimators': 3, 'max_depth': 3, 'min_samples_leaf': 1, 'class_weight': 'balanced'}
+    before, _, scores_before, ids_before, labels_before = fit_profile_ablations(rows, config, 10000)
+    after, _, scores_after, ids_after, labels_after = fit_profile_ablations(failures, config, 10000)
+    assert scores_before == scores_after and ids_before == ids_after and labels_before == labels_after
+    for variant in before:
+        assert before[variant]['train_available'] == after[variant]['train_available'] == 6
+        assert before[variant]['classified'] == after[variant]['classified'] == 6
+
+
 def test_action_cycles_submitform_and_redaction():
     data=pdf(action_cycle=True); limits=CodeInspectionLimits(); code=_inspect_code_bytes(data,limits)
     result=inspect_evidence(data,static(),code,limits)

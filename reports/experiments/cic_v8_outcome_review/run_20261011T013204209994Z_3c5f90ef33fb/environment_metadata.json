@@ -1,0 +1,43 @@
+{
+  "python": "3.11.17",
+  "packages": {
+    "numpy": "2.4.6",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.9.1",
+    "PyMuPDF": "1.26.7",
+    "torch": "2.11.0+cpu",
+    "torchvision": "0.26.0+cpu",
+    "xgboost": "3.2.0",
+    "lightgbm": "4.7.0",
+    "catboost": "1.2.10"
+  },
+  "generating_commit": "3c5f90ef33fb4ba10d403f8ba24b922372034e05",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      " M scripts/18_launch_cic_offline.py",
+      " M scripts/19_validate_pdf_evidence_v8.py",
+      " M src/malpdf/experiments/cic_static_accuracy.py",
+      " M src/malpdf/static/evidence.py",
+      " M tests/test_cic_offline_launcher.py",
+      " M tests/test_pdf_evidence_v8.py",
+      "?? reports/experiments/cic_static_profile/run_20261010T181946430830Z_3c5f90ef33fb/",
+      "?? reports/experiments/cic_v8_validation/run_20261011T013058581840Z_3c5f90ef33fb/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      " M scripts/18_launch_cic_offline.py",
+      " M scripts/19_validate_pdf_evidence_v8.py",
+      " M src/malpdf/experiments/cic_static_accuracy.py",
+      " M src/malpdf/static/evidence.py",
+      " M tests/test_cic_offline_launcher.py",
+      " M tests/test_pdf_evidence_v8.py",
+      "?? reports/experiments/cic_static_profile/run_20261010T181946430830Z_3c5f90ef33fb/",
+      "?? reports/experiments/cic_v8_validation/run_20261011T013058581840Z_3c5f90ef33fb/"
+    ]
+  }
+}

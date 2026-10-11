@@ -79,3 +79,14 @@ def test_existing_attempt_shows_saved_report_without_starting_again(launcher, mo
     assert len(prompts) == 1 and 'đóng cửa sổ' in prompts[0]
     if status == 'failed':
         assert '0/64' in output and 'thiếu RAM' in output
+
+
+def test_completed_check_reads_saved_outcome_after_source_has_changed(launcher, monkeypatch, capsys):
+    from malpdf.experiments import cic_v8, cic_static_benchmark
+    monkeypatch.setattr(cic_v8, 'v8_attempt_outcome', lambda *args: {
+        'status': 'completed', 'report_path': 'reports/experiments/run_synthetic/run_summary.json'})
+    monkeypatch.setattr(cic_static_benchmark, 'load_job', lambda *args: pytest.fail('Completed result needs no current extractor lock'))
+    monkeypatch.setattr('builtins.input', lambda *args: pytest.fail('Check prompted to rerun'))
+    monkeypatch.setattr(launcher.subprocess, 'run', lambda *args, **kwargs: pytest.fail('Completed result rerun'))
+    assert launcher.main(['--check']) == 0
+    assert 'trạng thái: completed' in capsys.readouterr().out

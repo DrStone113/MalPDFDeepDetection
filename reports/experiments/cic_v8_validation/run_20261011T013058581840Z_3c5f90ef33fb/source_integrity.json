@@ -1,0 +1,10 @@
+{
+  "core_scripts_configs_match_validation_start": true,
+  "core_scripts_configs_files": 176,
+  "python_sources_tests_unchanged_from_completion_snapshot_to_handoff": true,
+  "python_source_test_files": 197,
+  "snapshot_scope": "Generating core/scripts/config snapshot captured by ResearchRun before checks; all Python/test snapshot captured while awaiting validator completion. No subsequent code/test edits.",
+  "full_source_and_test_snapshot_private": "artifacts/cic_v8_validation/run_20261011T013058581840Z_3c5f90ef33fb/source_test_at_handoff.json",
+  "actual_pdf_access": false,
+  "benchmark_repeated": false
+}

@@ -31,10 +31,14 @@ accuracy gain. See [the measured v7 result](reports/analysis/cic_static_offline.
 The `development/v8.0` candidate adds a separate `pdf-evidence-v8` LAB view:
 read-only MuPDF recovery, object/action/attachment evidence, backend conflicts,
 primary-result checkpoints, and a fixed C1 model with explicit abstention and
-Train-only missingness handling. V7 remains the baseline. The final same64
-offline benchmark and release acceptance are pending. The first console invocation
-failed RAM admission before reading any PDF (0/64); no accuracy result is available.
-See [implementation, locked evaluation and remaining limits](reports/analysis/cic_static_v8.md).
+Train-only missingness handling. V7 remains the baseline. The final same64 offline
+measurement completed on October 11 at 01:22:10 Asia/Ho_Chi_Minh, but release
+acceptance is blocked. Complete analysis stayed at 23/64; 15 former parser errors
+became partial results. C1 coverage fell from 11/32 to 9/32, with TP3/6 and FP2/3
+among classified files. Three overlay worker errors changed the legacy fit/evaluation
+cohorts, so the P0/P1/P2 changes do not establish a model improvement. The subsequent
+backend/checkpoint repair passed 817 dataset-free tests; it has no new CIC measurement.
+See [measured results, diagnosis and remaining limits](reports/analysis/cic_static_v8.md).
 
 Static inspection now reads one size-capped, stable byte snapshot.
 `malpdf.inference.StaticScanSession` reuses a verified frozen XGBoost deployment
@@ -69,9 +73,11 @@ The [first v8 invocation](reports/experiments/cic_static_profile/run_20261010T17
 failed before PDF access because available RAM did not meet the isolated parser
 budget. Its claim and reports remain intact. Parser admission now runs before
 claiming and again after model loading; repeated launches display the saved status
-and report instead of starting another attempt. The shortcut now targets the
-[replacement v8 job](reports/experiments/cic_static_prepare/run_20261010T181103978407Z_d5cb3d5309e1/run_summary.json);
-close any old console window before reopening it. See
+and report instead of starting another attempt. The shortcut's
+[replacement v8 job](reports/experiments/cic_static_prepare/run_20261010T181103978407Z_d5cb3d5309e1/run_summary.json)
+has now [completed its measurement](reports/experiments/cic_static_profile/run_20261010T181946430830Z_3c5f90ef33fb/run_summary.json).
+Reopening the shortcut or using `scripts/18_launch_cic_offline.py --check` reads that
+saved outcome without starting another job. See
 [current launcher status and RAM preparation](reports/analysis/cic_static_v8.md#limits-and-final-execution).
 Its VM-specific desktop entry is versioned
 in `configs/cic_offline_launcher.desktop`; the thin entry point is

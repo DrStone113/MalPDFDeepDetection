@@ -1,0 +1,25 @@
+{
+  "measurement_run": "run_20261010T181946430830Z_3c5f90ef33fb",
+  "measurement_status": "completed",
+  "release_acceptance": "blocked",
+  "postfix_cic_measurement_available": false,
+  "benchmark_repeated": false,
+  "pdf_access": false,
+  "model_refitted": false,
+  "tests_passed": 817,
+  "warnings": 2,
+  "full_suite_evidence": "reports/experiments/cic_v8_validation/run_20261011T013058581840Z_3c5f90ef33fb/pytest.json",
+  "code_matches_full_validation_start": true,
+  "documentation_local_links_exist": true,
+  "public_candidate_files": 51,
+  "public_candidates_contain_sample_id_or_pdf_sha256": false,
+  "checked_candidate_extensions": [
+    ".py",
+    ".md",
+    ".json",
+    ".csv"
+  ],
+  "launcher_reads_existing_completed_outcome": true,
+  "baseline_run_unchanged": "run_20261010T154029301301Z_20cf4e14ac84",
+  "notes": "Three overlay AttributeError failures altered Train/dev eligibility despite unchanged primary feature vectors. Containment and checkpoint-aware fallback are repaired, with synthetic parity checks; exact real trigger and repaired CIC behavior unverified. Saved measurement remains immutable and blocked."
+}

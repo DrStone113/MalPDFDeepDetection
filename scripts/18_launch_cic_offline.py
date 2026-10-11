@@ -17,7 +17,14 @@ def main(argv=None):
     parser.add_argument("--check", action="store_true",
                         help="Validate prepared metadata/model only; never read PDFs or launch a job")
     args = parser.parse_args(argv)
+    from malpdf.experiments.cic_v8 import v8_attempt_outcome
+    outcome = v8_attempt_outcome(ROOT, PREPARED_RUN)
     if args.check:
+        if outcome is not None:
+            print(f"Job đã có lượt chạy: {PREPARED_RUN}; trạng thái: {outcome['status']}")
+            print(f"report_path: {outcome['report_path']}")
+            print("Chỉ đọc báo cáo đã lưu; chưa đọc PDF hoặc chạy lại job.")
+            return 0 if outcome['status'] == 'completed' else 1
         from malpdf.experiments.cic_static_benchmark import load_job
         rows, lock, _ = load_job(ROOT, PREPARED_RUN)
         schema = lock['fingerprint'].get('evidence_schema',lock['fingerprint']['code_schema'])
@@ -25,8 +32,6 @@ def main(argv=None):
         print("Chỉ kiểm tra metadata/model; chưa chạy PDF và chưa xác nhận LAB đã ngắt mạng.")
         return 0
 
-    from malpdf.experiments.cic_v8 import v8_attempt_outcome
-    outcome = v8_attempt_outcome(ROOT, PREPARED_RUN)
     if outcome is not None:
         print(f"Job đã có lượt chạy: {PREPARED_RUN}")
         print(f"Trạng thái đã lưu: {outcome['status']}")

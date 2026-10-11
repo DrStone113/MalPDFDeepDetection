@@ -65,7 +65,7 @@ def _graph(reader, backend, limits, decoded_remaining):
                 value=value.get_object()
                 if value is None:
                     raise CodeInspectionError('graph_name_reference_unavailable')
-        except (CodeInspectionError,ValueError,TypeError,KeyError,OSError,RuntimeError,RecursionError,PyPdfError) as error:
+        except (CodeInspectionError,ValueError,TypeError,AttributeError,KeyError,OSError,RuntimeError,RecursionError,PyPdfError) as error:
             errors.add(str(error) if isinstance(error,CodeInspectionError) else 'graph_name_reference_failure')
             return None
         return str(value) if isinstance(value,NameObject) else None
@@ -135,7 +135,7 @@ def _graph(reader, backend, limits, decoded_remaining):
                 stack.append((_children(value, owner), depth+1))
             elif isinstance(value, ArrayObject):
                 stack.append((_children(value, owner), depth+1))
-        except (CodeInspectionError, ValueError, TypeError, KeyError, OSError, RecursionError, PyPdfError) as error:
+        except (CodeInspectionError, ValueError, TypeError, AttributeError, KeyError, OSError, RecursionError, PyPdfError) as error:
             errors.add(str(error) if isinstance(error, CodeInspectionError) else 'graph_reference_failure')
     return {'backend': backend, 'objects': objects, 'actions': actions, 'edges': edges, 'embedded': attachments,
             'errors': sorted(errors), 'complete': not errors, 'decoded_bytes': used,
@@ -175,10 +175,12 @@ def inspect_evidence(data, static, code, limits, *, timings=None, primary_comple
             remaining = 0
         result['backends'].append({'backend': 'pypdf', 'status': 'partial' if graph['errors'] else 'observed',
                                    'diagnostics': diagnostic.data, 'graph': graph, 'code': code})
-    except (CodeInspectionError, ValueError, TypeError, OSError, KeyError, RecursionError, PyPdfError) as error:
+    except (CodeInspectionError, ValueError, TypeError, AttributeError, OSError, KeyError, RecursionError, PyPdfError) as error:
         diagnostic.failure(error, 'object_graph')
         result['backends'].append({'backend': 'pypdf', 'status': 'error', 'error_code':
-            str(error) if isinstance(error, CodeInspectionError) else 'graph_open_failure', 'diagnostics': diagnostic.data})
+            str(error) if isinstance(error, CodeInspectionError) else
+            'graph_backend_attribute_error' if isinstance(error, AttributeError) else 'graph_open_failure',
+            'diagnostics': diagnostic.data})
     primary_ok = bool(static['parser'].get('success') and static['parser'].get('structural_complete')
                       and not static['errors'] and code['complete'] and graphs and graphs[0]['complete']
                       and primary_complete is not False)
@@ -207,9 +209,10 @@ def inspect_evidence(data, static, code, limits, *, timings=None, primary_comple
                 'graph': graph, 'code': recovered_code, 'revision_completeness': 'unknown',
                 'code_unavailable_reason': 'shared_code_budget_exhausted' if recovered_code is None else None,
                 'reason': 'independent read-only recovered view; primary warnings retained'})
-        except (CodeInspectionError, ValueError, TypeError, OSError, KeyError, RecursionError, RuntimeError, PyPdfError) as error:
+        except (CodeInspectionError, ValueError, TypeError, AttributeError, OSError, KeyError, RecursionError, RuntimeError, PyPdfError) as error:
             result['backends'].append({'backend': 'MuPDF', 'status': 'error', 'error_code':
-                str(error) if isinstance(error, CodeInspectionError) else 'recovery_backend_failure',
+                str(error) if isinstance(error, CodeInspectionError) else
+                'recovery_backend_attribute_error' if isinstance(error, AttributeError) else 'recovery_backend_failure',
                 'exception_type': exception_type(error)})
         finally:
             if alternate is not None:

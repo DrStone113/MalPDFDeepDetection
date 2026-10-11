@@ -1,0 +1,67 @@
+{
+  "total_seconds": {
+    "before": {
+      "measured": 64,
+      "unavailable": 0,
+      "p50": 1.4899236789999577,
+      "p95": 4.610393346149883,
+      "sum": 115.90478377000227
+    },
+    "after": {
+      "measured": 64,
+      "unavailable": 0,
+      "p50": 0.8210687900000266,
+      "p95": 2.6040368024498997,
+      "sum": 75.07582236499911
+    }
+  },
+  "worker_seconds": {
+    "before": {
+      "measured": 64,
+      "unavailable": 0,
+      "p50": 1.47253752849997,
+      "p95": 4.587546812299909,
+      "sum": 114.5756736999956
+    },
+    "after": {
+      "measured": 64,
+      "unavailable": 0,
+      "p50": 0.8124615080005242,
+      "p95": 2.589540642050087,
+      "sum": 74.0547481379981
+    }
+  },
+  "peak_rss_bytes": {
+    "before": {
+      "measured": 64,
+      "unavailable": 0,
+      "p50": 156213248.0,
+      "p95": 294832332.8,
+      "sum": 13125832704.0
+    },
+    "after": {
+      "measured": 64,
+      "unavailable": 0,
+      "p50": 156559360.0,
+      "p95": 295250329.6,
+      "sum": 13284802560.0
+    }
+  },
+  "peak_family_rss_sampled_bytes": {
+    "before": {
+      "measured": 64,
+      "unavailable": 0,
+      "p50": 435421184.0,
+      "p95": 574257356.8,
+      "sum": 31003942912.0
+    },
+    "after": {
+      "measured": 64,
+      "unavailable": 0,
+      "p50": 441337856.0,
+      "p95": 575934054.4,
+      "sum": 31371845632.0
+    }
+  },
+  "scope": "cold application passes; OS cache/host load uncontrolled; RSS of whole process, not extractor-only"
+}

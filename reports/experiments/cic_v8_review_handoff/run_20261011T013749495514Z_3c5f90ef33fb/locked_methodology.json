@@ -1,0 +1,33 @@
+{
+  "protocol": "v8 saved-outcome documentation and maintenance handoff",
+  "pdf_access": false,
+  "test_access": false,
+  "benchmark_repeated": false,
+  "model_refitted": false,
+  "measurement_run": "run_20261010T181946430830Z_3c5f90ef33fb",
+  "validation_run": "run_20261011T013058581840Z_3c5f90ef33fb",
+  "review_run": "run_20261011T013204209994Z_3c5f90ef33fb",
+  "baseline_run": "run_20261010T154029301301Z_20cf4e14ac84",
+  "scope": "Immutable completed measurement remains blocked; post-measurement repair has synthetic validation only.",
+  "seed": 42,
+  "code_commit": "3c5f90ef33fb4ba10d403f8ba24b922372034e05",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_v8.md",
+      " M reports/research_log.md",
+      " M scripts/18_launch_cic_offline.py",
+      " M scripts/19_validate_pdf_evidence_v8.py",
+      " M src/malpdf/experiments/cic_static_accuracy.py",
+      " M src/malpdf/static/evidence.py",
+      " M tests/test_cic_offline_launcher.py",
+      " M tests/test_pdf_evidence_v8.py",
+      "?? reports/experiments/cic_static_profile/run_20261010T181946430830Z_3c5f90ef33fb/",
+      "?? reports/experiments/cic_v8_outcome_review/",
+      "?? reports/experiments/cic_v8_validation/run_20261011T013058581840Z_3c5f90ef33fb/"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

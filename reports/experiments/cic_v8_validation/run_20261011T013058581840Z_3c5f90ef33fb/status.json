@@ -1,0 +1,5 @@
+{
+  "exit_code": 0,
+  "output_tail": " M reports/research_log.md\n M scripts/18_launch_cic_offline.py\n M scripts/19_validate_pdf_evidence_v8.py\n M src/malpdf/experiments/cic_static_accuracy.py\n M src/malpdf/static/evidence.py\n M tests/test_cic_offline_launcher.py\n M tests/test_pdf_evidence_v8.py\n?? reports/experiments/cic_static_profile/run_20261010T181946430830Z_3c5f90ef33fb/\n?? reports/experiments/cic_v8_outcome_review/\n?? reports/experiments/cic_v8_validation/run_20261011T013058581840Z_3c5f90ef33fb/\n",
+  "full_output_path": "artifacts/cic_v8_validation/run_20261011T013058581840Z_3c5f90ef33fb/status.txt"
+}

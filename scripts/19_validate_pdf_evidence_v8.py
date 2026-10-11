@@ -17,7 +17,7 @@ def main():
     method = {'protocol': 'v8 maintenance, synthetic/benign fixtures only', 'pdf_access': False,
               'test_access': False, 'environment': 'fresh Python 3.11 venv; CPU wheels; pyproject editable dev install',
               'constraints': 'effective starting package versions pinned for repeatable local checks',
-              'benchmark': 'not invoked; final CIC acceptance pending isolated console LAB'}
+              'benchmark': 'not invoked by this validator; assess release from separately saved experiment evidence'}
     with ResearchRun(root, 'cic_v8_validation', method) as run:
         if sys.version_info[:2] != (3, 11):
             raise ValueError('Local validation requires Python 3.11')
@@ -72,7 +72,7 @@ def main():
         warnings = re.search(r'(\d+) warnings',output)
         run.state.update(status='completed',tests_passed=int(passed.group(1)) if passed else None,
                          warnings=int(warnings.group(1)) if warnings else 0,
-                         checks=list(checks), release_status='pending_offline_benchmark')
+                         checks=list(checks), release_status='requires_saved_benchmark_review')
         run.state['notes'] = ('Fresh CPU install, full dataset-free suite, pip/diff/status/ignore checks saved. '
                               'No CIC PDFs opened; v8 release and accuracy improvement unverified. '
                               'Temporary install/test files use the ignored on-disk run directory, '
@@ -81,7 +81,7 @@ def main():
             f"# V8 code validation\n\n{run.state['tests_passed']} tests passed; {run.state['warnings']} warnings. "
             'See pytest.json for warning details and effective_environment.json for the fresh runtime. '
             'All mandatory maintenance commands passed. This is code validation with synthetic/benign fixtures; '
-            'the final same64 CIC offline measurement and release acceptance remain pending.\n')
+            'CIC measurement and release acceptance are assessed separately from saved experiment evidence.\n')
     print(json.dumps({key:run.state[key] for key in ('run_id','status','report_path')},indent=2))
 
 

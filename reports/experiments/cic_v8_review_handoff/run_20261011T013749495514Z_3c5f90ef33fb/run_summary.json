@@ -1,0 +1,49 @@
+{
+  "run_id": "run_20261011T013749495514Z_3c5f90ef33fb",
+  "study": "cic_v8_review_handoff",
+  "status": "completed",
+  "started_at_utc": "2026-10-11T01:37:49.533819+00:00",
+  "code_commit": "3c5f90ef33fb4ba10d403f8ba24b922372034e05",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_v8.md",
+      " M reports/research_log.md",
+      " M scripts/18_launch_cic_offline.py",
+      " M scripts/19_validate_pdf_evidence_v8.py",
+      " M src/malpdf/experiments/cic_static_accuracy.py",
+      " M src/malpdf/static/evidence.py",
+      " M tests/test_cic_offline_launcher.py",
+      " M tests/test_pdf_evidence_v8.py",
+      "?? reports/experiments/cic_static_profile/run_20261010T181946430830Z_3c5f90ef33fb/",
+      "?? reports/experiments/cic_v8_outcome_review/",
+      "?? reports/experiments/cic_v8_validation/run_20261011T013058581840Z_3c5f90ef33fb/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M README.md",
+      " M reports/analysis/cic_static_v8.md",
+      " M reports/research_log.md",
+      " M scripts/18_launch_cic_offline.py",
+      " M scripts/19_validate_pdf_evidence_v8.py",
+      " M src/malpdf/experiments/cic_static_accuracy.py",
+      " M src/malpdf/static/evidence.py",
+      " M tests/test_cic_offline_launcher.py",
+      " M tests/test_pdf_evidence_v8.py",
+      "?? reports/experiments/cic_static_profile/run_20261010T181946430830Z_3c5f90ef33fb/",
+      "?? reports/experiments/cic_v8_outcome_review/",
+      "?? reports/experiments/cic_v8_validation/run_20261011T013058581840Z_3c5f90ef33fb/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "v8 saved-outcome documentation and maintenance handoff",
+  "report_path": "reports/experiments/cic_v8_review_handoff/run_20261011T013749495514Z_3c5f90ef33fb/run_summary.json",
+  "artifact_path": "artifacts/cic_v8_review_handoff/run_20261011T013749495514Z_3c5f90ef33fb",
+  "metrics": {},
+  "release_status": "blocked",
+  "notes": "Saved final64 outcome and paired audit documented; no raw PDF access, ML refit, tuning or benchmark rerun. Post-measurement repair passed817 dataset-free tests with2 existing sklearn warnings in fresh Python3.11 CPU environment; exact real trigger/CIC repair validation unavailable. Source matches validation snapshot, dependencies/diff/ignore/docs/privacy checks pass. Completed shortcut reads saved report. V7 baseline preserved; v8 acceptance remains blocked.",
+  "finished_at_utc": "2026-10-11T01:37:53.277144+00:00"
+}

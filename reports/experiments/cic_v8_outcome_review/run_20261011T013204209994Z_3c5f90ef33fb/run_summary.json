@@ -1,0 +1,43 @@
+{
+  "run_id": "run_20261011T013204209994Z_3c5f90ef33fb",
+  "study": "cic_v8_outcome_review",
+  "status": "completed",
+  "started_at_utc": "2026-10-11T01:32:04.245620+00:00",
+  "code_commit": "3c5f90ef33fb4ba10d403f8ba24b922372034e05",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      " M scripts/18_launch_cic_offline.py",
+      " M scripts/19_validate_pdf_evidence_v8.py",
+      " M src/malpdf/experiments/cic_static_accuracy.py",
+      " M src/malpdf/static/evidence.py",
+      " M tests/test_cic_offline_launcher.py",
+      " M tests/test_pdf_evidence_v8.py",
+      "?? reports/experiments/cic_static_profile/run_20261010T181946430830Z_3c5f90ef33fb/",
+      "?? reports/experiments/cic_v8_validation/run_20261011T013058581840Z_3c5f90ef33fb/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      " M scripts/18_launch_cic_offline.py",
+      " M scripts/19_validate_pdf_evidence_v8.py",
+      " M src/malpdf/experiments/cic_static_accuracy.py",
+      " M src/malpdf/static/evidence.py",
+      " M tests/test_cic_offline_launcher.py",
+      " M tests/test_pdf_evidence_v8.py",
+      "?? reports/experiments/cic_static_profile/run_20261010T181946430830Z_3c5f90ef33fb/",
+      "?? reports/experiments/cic_v8_validation/run_20261011T013058581840Z_3c5f90ef33fb/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "saved final CIC v8 outcome, immutable paired review and synthetic reliability repair",
+  "report_path": "reports/experiments/cic_v8_outcome_review/run_20261011T013204209994Z_3c5f90ef33fb/run_summary.json",
+  "artifact_path": "artifacts/cic_v8_outcome_review/run_20261011T013204209994Z_3c5f90ef33fb",
+  "metrics": {},
+  "release_status": "blocked",
+  "notes": "Actual64 cold/64 warm completed from clean offline console on11Oct2026 at01:22:10 Asia/Saigon. Same identities/labels/splits/config/baseline checksums and generating source verified. Complete23;partial38;unavailable3. C1 classified9/32,TP3/6,FP2/3;two old TN abstain on retained structure limits. P0/P1/P2 review found3 eligibility changes and6 hard-label changes after Train32->31/dev32->30;all primary feature vectors match v7. Post-benchmark containment/checkpoint repair restores numeric eligibility in saved evidence; no real PDF access, ML refit, threshold tuning or benchmark rerun. Measurement remains immutable and acceptance blocked. Maintenance tests are logged separately; no metrics evaluated here.",
+  "finished_at_utc": "2026-10-11T01:32:04.349009+00:00"
+}

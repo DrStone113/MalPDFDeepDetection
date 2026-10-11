@@ -1,0 +1,5 @@
+{
+  "exit_code": 0,
+  "output_tail": "data/raw/guard.pdf\nartifacts/guard.json\nguard.pdf\nguard.npy\n",
+  "full_output_path": "artifacts/cic_v8_validation/run_20261011T013058581840Z_3c5f90ef33fb/ignore_check.txt"
+}

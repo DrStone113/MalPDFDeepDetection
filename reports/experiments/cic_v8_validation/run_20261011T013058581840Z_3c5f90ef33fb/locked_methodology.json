@@ -1,0 +1,25 @@
+{
+  "protocol": "v8 maintenance, synthetic/benign fixtures only",
+  "pdf_access": false,
+  "test_access": false,
+  "environment": "fresh Python 3.11 venv; CPU wheels; pyproject editable dev install",
+  "constraints": "effective starting package versions pinned for repeatable local checks",
+  "benchmark": "not invoked by this validator; assess release from separately saved experiment evidence",
+  "seed": 42,
+  "code_commit": "3c5f90ef33fb4ba10d403f8ba24b922372034e05",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      " M scripts/18_launch_cic_offline.py",
+      " M scripts/19_validate_pdf_evidence_v8.py",
+      " M src/malpdf/experiments/cic_static_accuracy.py",
+      " M src/malpdf/static/evidence.py",
+      " M tests/test_cic_offline_launcher.py",
+      " M tests/test_pdf_evidence_v8.py",
+      "?? reports/experiments/cic_static_profile/run_20261010T181946430830Z_3c5f90ef33fb/"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

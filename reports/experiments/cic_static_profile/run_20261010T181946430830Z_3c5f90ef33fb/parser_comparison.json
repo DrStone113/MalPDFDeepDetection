@@ -1,0 +1,23 @@
+{
+  "samples": 64,
+  "before": {
+    "parser_error": 18,
+    "partial": 23,
+    "complete": 23
+  },
+  "after": {
+    "partial": 38,
+    "complete": 23,
+    "unavailable": 3
+  },
+  "transitions": {
+    "parser_error -> partial": 15,
+    "partial -> partial": 23,
+    "complete -> complete": 23,
+    "parser_error -> unavailable": 3
+  },
+  "recovery_attempted": 38,
+  "recovery_success_partial": 37,
+  "backend_disagreement_files": 12,
+  "scope": "reopened/recovered remains partial; never redefine old complete to meet targets"
+}

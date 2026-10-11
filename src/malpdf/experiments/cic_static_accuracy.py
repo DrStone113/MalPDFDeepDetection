@@ -143,7 +143,20 @@ def profile_input_available(row, max_bytes):
     static = row.get("static") or {}
     size = static.get("input", {}).get("size_bytes")
     raw = static.get("features") or {}
-    return bool(row["status"] in {"complete", "partial", "parser_error"}
+    status = row['status']
+    code = row.get('code') or {}
+    if (status in {'worker_error', 'timeout', 'resource_limit_or_signal'}
+            and row.get('primary_status') in {'complete', 'partial', 'parser_error'}
+            and (row.get('analysis_v8') or {}).get('schema_version') == 'pdf-evidence-v8'
+            and code.get('schema_version') == 'pdf-code-inspection-v7'
+            and code.get('content_redacted') is True and code.get('active_content_executed') is False
+            and static.get('input', {}).get('sha256') == row.get('pdf_sha256')
+            and type(row.get('pdf_sha256')) is str):
+        # A completed primary checkpoint remains measured input for the fixed
+        # experimental fallback. The failed v8 view still makes C1 abstain;
+        # deployment and complete-analysis checks keep their own strict gates.
+        status = row['primary_status']
+    return bool(status in {"complete", "partial", "parser_error"}
         and type(size) is int and 0 < size <= max_bytes
         and row.get("timings", {}).get("read_hash") is not None
         and row.get("timings", {}).get("raw_scan") is not None

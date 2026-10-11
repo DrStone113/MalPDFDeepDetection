@@ -1,0 +1,26 @@
+{
+  "python_version": {
+    "exit_code": 0,
+    "output": "Python 3.11.17\n"
+  },
+  "pip_check": {
+    "exit_code": 0,
+    "output": "No broken requirements found.\n"
+  },
+  "diff_check": {
+    "exit_code": 0,
+    "output": ""
+  },
+  "status": {
+    "exit_code": 0,
+    "output": " M README.md\n M reports/analysis/cic_static_v8.md\n M reports/research_log.md\n M scripts/18_launch_cic_offline.py\n M scripts/19_validate_pdf_evidence_v8.py\n M src/malpdf/experiments/cic_static_accuracy.py\n M src/malpdf/static/evidence.py\n M tests/test_cic_offline_launcher.py\n M tests/test_pdf_evidence_v8.py\n?? reports/experiments/cic_static_profile/run_20261010T181946430830Z_3c5f90ef33fb/\n?? reports/experiments/cic_v8_outcome_review/\n?? reports/experiments/cic_v8_review_handoff/\n?? reports/experiments/cic_v8_validation/run_20261011T013058581840Z_3c5f90ef33fb/\n"
+  },
+  "ignore_check": {
+    "exit_code": 0,
+    "output": "data/raw/guard.pdf\nartifacts/guard.json\nguard.pdf\nguard.npy\n"
+  },
+  "launcher_check": {
+    "exit_code": 0,
+    "output": "Job \u0111\u00e3 c\u00f3 l\u01b0\u1ee3t ch\u1ea1y: run_20261010T181103978407Z_d5cb3d5309e1; tr\u1ea1ng th\u00e1i: completed\nreport_path: reports/experiments/cic_static_profile/run_20261010T181946430830Z_3c5f90ef33fb/run_summary.json\nCh\u1ec9 \u0111\u1ecdc b\u00e1o c\u00e1o \u0111\u00e3 l\u01b0u; ch\u01b0a \u0111\u1ecdc PDF ho\u1eb7c ch\u1ea1y l\u1ea1i job.\n"
+  }
+}

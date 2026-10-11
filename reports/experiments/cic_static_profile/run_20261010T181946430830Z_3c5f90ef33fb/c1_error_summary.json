@@ -1,0 +1,27 @@
+{
+  "before": {
+    "Inconclusive": 21,
+    "TN": 3,
+    "FP": 2,
+    "FN": 4,
+    "TP": 2
+  },
+  "after": {
+    "Inconclusive": 23,
+    "FP": 2,
+    "TN": 1,
+    "TP": 3,
+    "FN": 3
+  },
+  "transitions": {
+    "Inconclusive -> Inconclusive": 21,
+    "TN -> Inconclusive": 2,
+    "FP -> FP": 2,
+    "TN -> TN": 1,
+    "FN -> TP": 1,
+    "TP -> TP": 2,
+    "FN -> FN": 3
+  },
+  "private_analysis_path": "artifacts/cic_static_profile/run_20261010T181946430830Z_3c5f90ef33fb/c1_error_analysis.json",
+  "retuning": false
+}

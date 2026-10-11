@@ -1,0 +1,56 @@
+{
+  "run_id": "run_20261011T013058581840Z_3c5f90ef33fb",
+  "study": "cic_v8_validation",
+  "status": "completed",
+  "started_at_utc": "2026-10-11T01:30:58.611407+00:00",
+  "code_commit": "3c5f90ef33fb4ba10d403f8ba24b922372034e05",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      " M scripts/18_launch_cic_offline.py",
+      " M scripts/19_validate_pdf_evidence_v8.py",
+      " M src/malpdf/experiments/cic_static_accuracy.py",
+      " M src/malpdf/static/evidence.py",
+      " M tests/test_cic_offline_launcher.py",
+      " M tests/test_pdf_evidence_v8.py",
+      "?? reports/experiments/cic_static_profile/run_20261010T181946430830Z_3c5f90ef33fb/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      " M scripts/18_launch_cic_offline.py",
+      " M scripts/19_validate_pdf_evidence_v8.py",
+      " M src/malpdf/experiments/cic_static_accuracy.py",
+      " M src/malpdf/static/evidence.py",
+      " M tests/test_cic_offline_launcher.py",
+      " M tests/test_pdf_evidence_v8.py",
+      "?? reports/experiments/cic_static_profile/run_20261010T181946430830Z_3c5f90ef33fb/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "v8 maintenance, synthetic/benign fixtures only",
+  "report_path": "reports/experiments/cic_v8_validation/run_20261011T013058581840Z_3c5f90ef33fb/run_summary.json",
+  "artifact_path": "artifacts/cic_v8_validation/run_20261011T013058581840Z_3c5f90ef33fb",
+  "metrics": {},
+  "temporary_path": "artifacts/tmp/v8_e_r3hu5z",
+  "tests_passed": 817,
+  "warnings": 2,
+  "checks": [
+    "create_venv",
+    "install",
+    "python_version",
+    "pip_check_before",
+    "pytest",
+    "pip_check",
+    "diff_check",
+    "status",
+    "ignore_check",
+    "effective_environment"
+  ],
+  "release_status": "requires_saved_benchmark_review",
+  "notes": "Fresh CPU install, full dataset-free suite, pip/diff/status/ignore checks saved. No CIC PDFs opened; v8 release and accuracy improvement unverified. Temporary install/test files use the ignored on-disk run directory, avoiding RAM-backed /tmp pressure; parser budgets and assertions remain intact.",
+  "finished_at_utc": "2026-10-11T01:34:30.839730+00:00"
+}
