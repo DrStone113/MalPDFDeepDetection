@@ -1,0 +1,25 @@
+{
+  "run_id": "run_20261011T042108432378Z_ecd14db5e113",
+  "study": "cic_v9_prepare",
+  "status": "completed",
+  "started_at_utc": "2026-10-11T04:21:08.472309+00:00",
+  "code_commit": "ecd14db5e11322472f9b18e94abc5f6e9a585b81",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "data_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "seed": 42,
+  "protocol": "V9 metadata-only locked LAB integration preparation",
+  "report_path": "reports/experiments/cic_v9_prepare/run_20261011T042108432378Z_ecd14db5e113/run_summary.json",
+  "artifact_path": "artifacts/cic_v9_prepare/run_20261011T042108432378Z_ecd14db5e113",
+  "metrics": {},
+  "kind": "integration",
+  "rows": 3,
+  "job_lock_sha256": "77aefc559333cadf01827bebb98ebc3c0dde31e494b947c370fb6deaff9300dc",
+  "notes": "Metadata only; three historic AttributeError rows. Model bytes copied and checksum verified, never loaded; no PDF/Test/fitting access.",
+  "finished_at_utc": "2026-10-11T04:21:09.388332+00:00"
+}

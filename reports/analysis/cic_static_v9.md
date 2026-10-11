@@ -157,3 +157,11 @@ the subsequent full validation above passed on unchanged source. See
 These CPU checks have no real PDF or frozen-model loading. A new matching
 three-file console integration is still required before the unchanged single
 final attempt; no final claim has been consumed by these maintenance checks.
+
+The metadata-only [corrected integration job](../experiments/cic_v9_prepare/run_20261011T042108432378Z_ecd14db5e113/run_summary.json)
+is prepared for exactly the three historic AttributeError inputs. Its source,
+backends and budgets match the successful validation above. The V9 Desktop
+shortcut selects this matching job for **Integration → Enter** after the chosen
+LAB isolation procedure. This preparation reads saved metadata and verifies
+frozen model bytes; it does not read PDFs, load pickle or grant another final
+attempt. Final sealing remains pending the matching console integration.

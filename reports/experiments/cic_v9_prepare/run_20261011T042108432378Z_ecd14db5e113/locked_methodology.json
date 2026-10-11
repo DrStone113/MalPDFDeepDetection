@@ -1,0 +1,15 @@
+{
+  "protocol": "V9 metadata-only locked LAB integration preparation",
+  "campaign": "v9-one-shot-evidence-first-v1",
+  "test_access": false,
+  "pdf_access": false,
+  "fitting": false,
+  "seed": 42,
+  "code_commit": "ecd14db5e11322472f9b18e94abc5f6e9a585b81",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}
