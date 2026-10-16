@@ -1,0 +1,171 @@
+{
+  "source_run": "run_20261016T142851774386Z_ba64a514ae5a",
+  "source_generating_commit": "ba64a514ae5afe86b06e054f527cc066133d8afd",
+  "elapsed_seconds": 664.82779,
+  "rows": 64,
+  "same_locked_subset": true,
+  "partitions": {
+    "train": {
+      "partial": 2,
+      "decode_error": 3,
+      "resource_limit": 24,
+      "unsupported": 1,
+      "encrypted": 1,
+      "observed": 1
+    },
+    "validation": {
+      "resource_limit": 32
+    }
+  },
+  "statuses": {
+    "partial": 2,
+    "decode_error": 3,
+    "resource_limit": 56,
+    "unsupported": 1,
+    "encrypted": 1,
+    "observed": 1
+  },
+  "worker_statuses": {
+    "parser_error": 13,
+    "partial": 16,
+    "complete": 14,
+    "resource_limit_or_signal": 21
+  },
+  "reason_code_rows": {
+    "inventory_parser_notices": 28,
+    "inventory_view_incomplete": 32,
+    "xref_selection_unverified": 20,
+    "pdf_parser_failure": 1,
+    "parser_failure": 13,
+    "inventory_parser_unavailable": 28,
+    "forensic_xref_size_invalid": 1,
+    "forensic_selected_object_unavailable": 3,
+    "structural_reference_unavailable": 13,
+    "forensic_stream_eol_invalid": 14,
+    "byte_image_source_unavailable": 5,
+    "forensic_xref_target_not_top_level_confirmed": 3,
+    "trailing_flate_data": 10,
+    "artifact_format_analysis_unsupported": 19,
+    "arlington_metadata_limit": 13,
+    "unsupported_stream_filter": 14,
+    "arlington_worker_pass_not_reached": 21,
+    "worker_signal_9": 21,
+    "trailing_lzw_data": 1,
+    "unsupported_script_filter": 1,
+    "forensic_encrypted_pdf": 1,
+    "inventory_encrypted_pdf": 1,
+    "forensic_projection_incomplete": 6,
+    "pdf_reference_unavailable": 21,
+    "forensic_xref_offset_or_count_limit": 7,
+    "invalid_flate_stream": 21,
+    "ast_node_limit": 4,
+    "raw_ir_interrupted_before_arlington": 8,
+    "truncated_flate_stream": 9,
+    "pdf_xref_recovered": 23,
+    "forensic_string_byte_limit": 1,
+    "xfa_xml_node_limit": 1,
+    "artifact_analysis_partial": 3,
+    "inventory_projection_incomplete": 2,
+    "invalid_asciihex_stream": 1,
+    "forensic_invalid_object_value": 1,
+    "missing_asciihex_end": 1,
+    "forensic_object_header_invalid": 4,
+    "reference_feature_partial": 1,
+    "forensic_scan_stopped_at_uncertain_stream": 5,
+    "forensic_stream_length_unavailable": 1,
+    "forensic_terminal_startxref_unavailable": 13,
+    "decoded_byte_or_expansion_limit": 17,
+    "forensic_stream_length_out_of_bounds": 2,
+    "forensic_stream_endpoint_mismatch": 2,
+    "artifact_analysis_failed": 3
+  },
+  "backend_statuses": {
+    "raw_forensic": {
+      "partial": 36,
+      "observed": 28
+    },
+    "pypdf": {
+      "partial": 33,
+      "observed": 29,
+      "encrypted": 2
+    },
+    "MuPDF": {
+      "partial": 35,
+      "observed": 22,
+      "resource_limit": 7
+    },
+    "qpdf": {
+      "partial": 31,
+      "observed": 26,
+      "encrypted": 2,
+      "not_run": 5
+    },
+    "arlington": {
+      "partial": 35,
+      "not_run": 29
+    },
+    "script_semantics": {
+      "partial": 43,
+      "not_run": 21
+    },
+    "byte_images": {
+      "partial": 43,
+      "not_run": 21
+    }
+  },
+  "safety_counts": {
+    "active_content_executed/False": 64,
+    "rendering_performed/False": 64,
+    "external_uri_followed/False": 64,
+    "original_bytes_changed/False": 64
+  },
+  "root_primary_checkpoints": 64,
+  "separate_child_primary_checkpoints": 7,
+  "historical_parity": {
+    "baseline_v9": "run_20261011T045223500000Z_ff3f5b65d376",
+    "same64_identities_hashes_labels_partitions": true,
+    "raw_primary_equal_rows": 64,
+    "projected173_equal_rows": 64,
+    "raw_changed_fields_rows": {},
+    "projected173_changed_fields_rows": {},
+    "original_validation_partial_targets": 21,
+    "target_raw_equal_rows": 21,
+    "target_projected173_equal_rows": 21,
+    "target_raw_changed_fields_rows": {},
+    "target_projected173_changed_fields_rows": {},
+    "interpretation": "cross-environment equality is separate from retaining current worker checkpoints; changed fields require source-specific review, not imputation"
+  },
+  "worker_seconds_median": 12.125102421499832,
+  "worker_seconds_p99": 15.360845771870244,
+  "peak_worker_rss_bytes": 396140544,
+  "timed_rows": 64,
+  "source_report_checksums": {
+    "model_comparison.csv": "d5f4fd211433aad2c2d42e925fb255d857132353d5be2829e4c08a6777699dd9",
+    "locked_methodology.json": "1e827478e88c88f79ee1f1618a3ba47909cf95e450fcbd61cf2091f89d7fda50",
+    "coverage_summary.json": "b16aeb2bcb7bd385960518cf79fb6ec0503b467a4ab37790915712d46a186573",
+    "lab_checks.json": "7b9ffabf5c392f56788919786ddef712f366a5ac3ea3ddb80d22b8a6f7ec4f67",
+    "run_summary.json": "f1664202f34caecc6c88c42126f646fd10f0e63281a3bcc36aa69da7b9c9b00a",
+    "environment_metadata.json": "54246d1dc2cdac5b8656902bbb7f99b3bb47707dd896f4f83d88deacc16fc763"
+  },
+  "manifest_provenance": {
+    "split_manifest": {
+      "path": "data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/split_manifest.csv",
+      "sha256": "e939a676c51c7a98b9dc4bb843e846f546e1ada2bfb576b41416c406415c0643"
+    },
+    "source_manifest": {
+      "path": "data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/source_manifest.csv",
+      "sha256": "d74729236017dc27a71c999bc4d69f84a16fa4148573c3bbc7f4eb03709b150b"
+    },
+    "normalization_manifest": {
+      "path": "data/processed/cic_normalization/run_20261003T104918756555Z_3b68d36a5705/normalization_manifest.csv",
+      "sha256": "c4dc77f00849518ee56dc34d0f0cc7daf0c92b3ce9fd1e93fd63d053caf8570f"
+    }
+  },
+  "metadata_bytes_read_current_bundles": 203994681,
+  "pdf_bytes_read": false,
+  "raw_blobs_read": false,
+  "test_access": false,
+  "model_evaluation": false,
+  "whole_document_coverage_claimed": false,
+  "quality_acceptance": "incomplete; no budget increase or PDF rerun"
+}

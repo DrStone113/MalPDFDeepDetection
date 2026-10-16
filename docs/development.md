@@ -24,6 +24,14 @@ credentials and prohibit cleanup before Enter/isolation or in check-only.
 
 Use Python 3.11 for local and Codespace checks. Python 3.13 support applies to the authorized Kaggle GPU runtime; record effective package and CUDA versions for each run. The dependency declaration is [pyproject.toml](../pyproject.toml). Tests use synthetic or benign fixtures and require no external datasets.
 
+`tests/test_arlington.py` checks the document-local dictionary index against an
+uncached reference using generated IR/PDFs. It verifies one index construction
+across repeated queries, duplicate/encoded/non-UTF8 keys, distinct same-span
+nodes/owners, older trailer lookup, unknown syntax and exact rule-output parity.
+The model smoke command still exercises the four generated fixtures against
+the actual locked610-TSV catalog; neither fixture timing nor a green suite
+establishes a new corpus runtime or coverage result.
+
 - [Windows local setup](#windows-local-setup)
 - [GitHub Codespaces](#github-codespaces)
 - [Handoff checks](#handoff-checks)

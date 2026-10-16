@@ -8,11 +8,29 @@ This page preserves the research updates previously published in the project REA
 
 ## Current research status
 
+The first offline `extract-pdf` run completed on 2026-10-16 with all64 locked
+Train/Validation records at commit `ba64a514ae5afe86b06e054f527cc066133d8afd`.
+Its statuses are56 resource_limit,3 decode_error,2 partial,1 unsupported,
+1 encrypted and1 observed; Test and model evaluation were excluded. A saved-JSON
+audit verifies all64 original identities/labels/partitions and root checkpoints,
+including **21/21 historical Validation partials**: original primary values and
+the173-field projection exactly match the saved v9 baseline, including nulls.
+Seven child checkpoints are kept separate. This satisfies preservation for
+that locked cohort, while broader extraction coverage remains incomplete.
+See [the post-run review](../reports/progress/extract_pdf_postrun_2026-10-16.md)
+for the immutable source run, audit, reason counts and remaining limits.
+
+The next Arlington code increment indexes cached raw dictionaries once per
+document and retains duplicate values, context/source ownership and unknown
+results. It changes no rule/model/resource limit and has synthetic/reference
+verification only; the completed real run used the preceding code. The consumed
+job/claim stays immutable, and the updated code has not been run on real PDFs.
+
 On 2026-10-15, the first [extract-pdf implementation increment](pdf_extraction.md)
 adds linked evidence/feature/coverage stores, bounded lexical profiling, inert
 event planning and metadata-only preparation of the existing CIC Train/Validation
 diagnostic. Synthetic validation and preparation are separate from real-PDF
-acceptance: the historic 21 partial files have not been rerun, and no new detector
+acceptance: at that increment the historic21 partial files had not been rerun; no new detector
 quality or whole-format extraction coverage is established. The broader QPDF,
 Arlington, native-media, visual and dynamic roadmap remains open.
 The next code increment adds bounded general stream filters and predictors,

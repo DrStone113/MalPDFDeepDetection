@@ -1,0 +1,45 @@
+{
+  "protocol": "read-only saved extraction audit and original primary parity",
+  "seed": 42,
+  "source_run": "run_20261016T142851774386Z_ba64a514ae5a",
+  "prepared_run": "run_20261016T141614750605Z_08911504a237",
+  "historical_v9_run": "run_20261011T045223500000Z_ff3f5b65d376",
+  "test_access": false,
+  "fitting": false,
+  "pdf_bytes_read": false,
+  "blob_reads": false,
+  "caps_changed": false,
+  "manifest_provenance": {
+    "split_manifest": {
+      "path": "data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/split_manifest.csv",
+      "sha256": "e939a676c51c7a98b9dc4bb843e846f546e1ada2bfb576b41416c406415c0643"
+    },
+    "source_manifest": {
+      "path": "data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/source_manifest.csv",
+      "sha256": "d74729236017dc27a71c999bc4d69f84a16fa4148573c3bbc7f4eb03709b150b"
+    },
+    "normalization_manifest": {
+      "path": "data/processed/cic_normalization/run_20261003T104918756555Z_3b68d36a5705/normalization_manifest.csv",
+      "sha256": "c4dc77f00849518ee56dc34d0f0cc7daf0c92b3ce9fd1e93fd63d053caf8570f"
+    }
+  },
+  "root_checkpoint_selector": "exact primary:<original document SHA256> evidence ID; namespaced child checkpoints remain separate",
+  "historical_partial_scope": "21 original Validation flags from saved v9 paired evidence; compare raw primary and projected173 without model inference",
+  "prior_failed_audit": "run_20261016T151203162254Z_ba64a514ae5a",
+  "correction": "first audit assumed a single kind=primary_checkpoint; child checkpoints also have that kind. Preserve failed attempt; select root by exact evidence ID, never discard children. No PDF rerun.",
+  "interpretation": "status reasons overlap; SIGKILL does not prove OOM/CPU cause; cross-environment equality does not prove whole-format coverage",
+  "code_commit": "ba64a514ae5afe86b06e054f527cc066133d8afd",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      " M src/malpdf/extraction/arlington_validate.py",
+      " M tests/test_arlington.py",
+      "?? reports/experiments/arlington_model_verify/run_20261016T151024828542Z_ba64a514ae5a/",
+      "?? reports/experiments/pdf_extraction/",
+      "?? reports/experiments/pdf_extraction_postrun_review/"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

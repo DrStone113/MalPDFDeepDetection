@@ -817,6 +817,14 @@ F1/MCC/ECE/Brier are N/A because this runner performs no model evaluation.
 
 ## Verification boundary
 
+The Arlington evaluator builds one index per immutable raw-IR dictionary in a
+document-local engine. The index preserves all duplicate values and original
+node identity; reference resolution, revision/trailer rules, source ownership,
+candidate paths, predicates and every existing check/metadata/process cap are
+unchanged. It avoids rescanning dictionaries on each lookup and the quadratic
+wildcard duplicate test. Exact cached/uncached rule parity is fixture-tested.
+No real-PDF speed or completeness improvement is established for this increment.
+
 Tests use generated benign PDFs, synthetic byte buffers/manifests and injected
 worker failures. They cover byte conservation, truncation, immutable primary
 checkpoints, recursive PDF/ZIP lineage, CRC/data-descriptor failures, AST reuse,
@@ -824,7 +832,10 @@ XML/ObjStm limits, reference integrity, zero/unknown distinction, generation/rec
 identity, AST references, inert action-cycle plans, locked selection, conflicting
 manifests, input drift, execution guards and persistent claims.
 
-Real CIC PDFs, the historic 21 partial Validation files, new model metrics and
-the dynamic/visual branches have not been verified by these fixture tests.
+These fixture tests do not verify real CIC PDFs, model metrics or dynamic/visual
+branches. Separately, the first offline64-file run and saved-metadata audit
+verify primary preservation for21/21 historical Validation partials and all64
+root checkpoints. They retain56 resource-limit statuses and make no whole-PDF
+coverage claim. See [the post-run review](../reports/progress/extract_pdf_postrun_2026-10-16.md).
 Use the appended research log and immutable preparation report for the actual
 checks performed in this maintenance task.

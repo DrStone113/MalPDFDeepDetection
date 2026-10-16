@@ -1,0 +1,25 @@
+{
+  "run_id": "run_20261016T142851774386Z_ba64a514ae5a",
+  "study": "pdf_extraction",
+  "status": "completed",
+  "started_at_utc": "2026-10-16T14:28:51.807886+00:00",
+  "code_commit": "ba64a514ae5afe86b06e054f527cc066133d8afd",
+  "code_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "data_worktree": {
+    "status": "clean",
+    "porcelain_entries": []
+  },
+  "seed": 42,
+  "protocol": "CIC saved Protocol G Train/Validation extraction development",
+  "report_path": "reports/experiments/pdf_extraction/run_20261016T142851774386Z_ba64a514ae5a/run_summary.json",
+  "artifact_path": "artifacts/tmp/maintenance/pdf_extraction/run_20261016T142851774386Z_ba64a514ae5a",
+  "metrics": {},
+  "rows": 64,
+  "planned": 64,
+  "output_path": "data/processed/pdf_extraction/run_20261016T142851774386Z_ba64a514ae5a",
+  "notes": "Static-only extraction; every planned row remains in coverage denominator. No classifier or Test evaluation; metrics N/A.",
+  "finished_at_utc": "2026-10-16T14:39:56.635676+00:00"
+}

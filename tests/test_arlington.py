@@ -7,17 +7,19 @@ import hashlib
 import json
 from pathlib import Path
 import subprocess
+from types import SimpleNamespace
 
 import pytest
 
 from malpdf.extraction.arlington_expression import (Unknown,Symbol,SKIP,EvaluationBudget,
     ExpressionError,evaluate,parse,split_top,truth,version)
 from malpdf.extraction.arlington_model import Catalog,HEADER,ModelUnavailable,load_model,seal_model
-from malpdf.extraction.arlington_validate import RuleLimits,validate_document
+from malpdf.extraction.arlington_validate import RuleLimits,validate_document,Context,Value,_Engine
 from malpdf.extraction.contracts import validate_bundle
 from malpdf.extraction.normalize import normalize_profile
 from malpdf.extraction.raw import inspect_raw_layout
 from malpdf.extraction.raw_forensic import _Document,ForensicLimits,inspect_raw_forensic
+from malpdf.extraction.raw_syntax import Node
 from malpdf.static.code_inspector import CodeInspectionLimits
 
 
@@ -76,6 +78,68 @@ class ExprContext:
 ])
 def test_expression_truth_and_typed_values(expression,expected):
     assert evaluate(expression,ExprContext())==expected
+
+
+def test_dictionary_lookup_indexes_once_and_preserves_duplicates_and_node_identity():
+    class CountPairs(list):
+        iterations=0
+        def __iter__(self):
+            self.iterations+=1
+            return super().__iter__()
+    pairs=CountPairs((Node('name',b'/Key'+str(i).encode(),i,i+1),Node('number',i,i+1,i+2)) for i in range(128))
+    duplicate=Node('number',999,200,201)
+    pairs.append((Node('name',b'/Key7',201,202),duplicate))
+    node=Node('dictionary',pairs,0,300)
+    doc=SimpleNamespace(sha='a'*64)
+    engine=_Engine(doc,catalog(),RuleLimits(),None)
+    context=Context(engine,Value(node,'original-owner'),0,(1,7))
+    for _ in range(4):
+        for i in range(128):
+            value=context.entry('Key'+str(i))
+            if i==7:assert isinstance(value,Unknown) and value.reasons==('duplicate_dictionary_key',)
+            else:assert value.node is pairs[i][1] and value.owner=='original-owner'
+        assert context.entry('Missing') is None
+    assert pairs.iterations==1
+    assert engine.dictionary_entries(node)[b'/Key7']==[pairs[7][1],duplicate]
+    # Same spans in a different node/context must not share an index or owner.
+    other=Node('dictionary',[(Node('name',b'/Key7',0,1),Node('number',42,1,2))],0,300)
+    ctx=Context(engine,Value(other,'older-owner'),1,(1,4))
+    assert ctx.entry('Key7').node.value==42 and ctx.entry('Key7').owner=='older-owner'
+    assert len(engine._dictionary_indexes)==2
+
+
+def test_indexed_trailer_lookup_keeps_missing_and_duplicate_inheritance_rules():
+    first=Node('dictionary',[],0,10)
+    parent=Node('dictionary',[(Node('name',b'/Info',11,12),Node('number',7,12,13))],10,20)
+    doc=SimpleNamespace(sha='a'*64,chain=[{'offset':0},{'offset':10,'id':'older','source_object_id':None}],xref_nodes={10:parent})
+    engine=_Engine(doc,catalog(),RuleLimits(),None)
+    ctx=Context(engine,Value(first,'newest'),0,(1,7),trailer=True)
+    assert ctx.entry('Info').node.value==7 and ctx.entry('Info').owner=='older'
+    assert ctx.entry('Private') is None
+    assert ctx.entry('Root') is None
+    ambiguous=Node('dictionary',[],0,10,issues=('forensic_unclosed_dictionary',))
+    assert isinstance(Context(engine,Value(ambiguous,'bad'),0,(1,7)).entry('Info'),Unknown)
+
+
+@pytest.mark.parametrize('body,rows',[
+    (b'<< /N 8 >>',[row('N',PossibleValues='[fn:Eval(@N>0)]')]),
+    (b'<< /N 1 /N 2 >>',[row('N',Required='TRUE')]),
+    (b'<< /#4e 1 /N 2 >>',[row('*')]),
+    (b'<< /PrivateCanary 8 /#ff 9 >>',[row('*')]),
+    (b'<< /N null /A [1 2] >>',[row('N',Required='TRUE'),row('A','array')]),
+    (b'<< /N 99 0 R >>',[row('N',Required='TRUE')]),
+])
+def test_indexed_rules_match_uncached_reference_without_modifying_ir(monkeypatch,body,rows):
+    data=pdf(body);doc=_Document(data,CodeInspectionLimits(),1024**2,ForensicLimits(),None,None,None)
+    raw=deepcopy(doc.run(None));model=catalog(rows)
+    result=validate_document(doc,model)
+    def uncached(self,node):
+        entries={}
+        for name,child in node.value:entries.setdefault(name.value,[]).append(child)
+        return entries
+    monkeypatch.setattr(_Engine,'dictionary_entries',uncached)
+    assert validate_document(doc,model)==result
+    assert doc.value==raw
 
 
 @pytest.mark.parametrize('expression',[

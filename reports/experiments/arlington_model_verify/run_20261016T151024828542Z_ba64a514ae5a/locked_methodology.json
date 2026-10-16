@@ -1,0 +1,22 @@
+{
+  "protocol": "Arlington dependency verification and benign synthetic static fixtures",
+  "seed": 42,
+  "lock": "configs/arlington.lock.json",
+  "test_access": false,
+  "dataset_access": false,
+  "pdf_content_executed": false,
+  "rendering_performed": false,
+  "fitting": false,
+  "code_commit": "ba64a514ae5afe86b06e054f527cc066133d8afd",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      " M src/malpdf/extraction/arlington_validate.py",
+      " M tests/test_arlington.py",
+      "?? reports/experiments/pdf_extraction/"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

@@ -16,8 +16,18 @@ Danh sách nghiệm thu đầy đủ được theo dõi tại [acceptance.md](ac
 - [x] Chuẩn bị job chỉ dùng metadata: manifest đã khóa, Train/Validation, kiểm
   tra nhóm trùng/liên quan, hash code/môi trường và điều kiện offline trước claim.
 - [x] Bổ sung kiểm thử tổng hợp và tài liệu; ghi kết quả kiểm tra vào research log.
-- [ ] Chạy job PDF thật sau xác nhận cô lập tại console VMware.
-- [ ] Nghiệm thu lại 21 mẫu partial lịch sử; chưa có bằng chứng 21/21.
+- [x] Chạy job PDF thật tại console VMware:64/64 records, commit `ba64a514ae5a`,
+  run `run_20261016T142851774386Z_ba64a514ae5a`; không Test/model evaluation.
+- [x] Đối chiếu21/21 Validation partial lịch sử: cùng identity/hash/label/split,
+  checkpoint gốc và vector173 trường khớp v9 đã lưu, giữ nguyên nulls; không
+  đọc lại PDF. Đây là bảo toàn primary, không phải nghiệm thu toàn bộ extraction.
+
+Chi tiết lượt thật và audit nằm tại
+[post-run review](../../reports/progress/extract_pdf_postrun_2026-10-16.md).
+Lượt thật vẫn có56 resource_limit; nhiều nhóm forensic/decoder/Arlington còn
+partial hoặc not_run. Mã mới chỉ mục dictionary Arlington giữ nguyên kết quả,
+nguồn và trần tài nguyên; đã có kiểm thử tổng hợp/model thật nhưng chưa có lượt
+PDF thật cho mã mới. Job/claim cũ được giữ nguyên, không tự chạy lại.
 
 ## Phần kế hoạch tổng thể còn lại
 

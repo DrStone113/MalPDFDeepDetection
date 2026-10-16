@@ -2,13 +2,23 @@
 
 ## Console launcher
 
-Current job: `run_20261016T141614750605Z_08911504a237`. The installed entry is
+Completed job: `run_20261016T141614750605Z_08911504a237`. The installed entry is
 `/home/drstone/Desktop/Extract PDF Offline.desktop`; the new package is recorded
 in [handoff summary](../reports/deployment/pdf_extraction_offline/run_20261016T141713997359Z_08911504a237/handoff_summary.json).
 See [stale-agent verification](../reports/progress/extract_pdf_stale_agent_2026-10-16.md),
 [wait-flow verification](../reports/progress/extract_pdf_launcher_wait_2026-10-16.md),
 [agent-step verification](../reports/progress/extract_pdf_agent_launcher_2026-10-16.md)
 and the [original launcher verification](../reports/progress/extract_pdf_launcher_2026-10-16.md).
+
+This job was consumed by
+`run_20261016T142851774386Z_ba64a514ae5a`:64 records saved, with all root
+primary checkpoints retained; extraction coverage remains partial/limited.
+The [post-run review](../reports/progress/extract_pdf_postrun_2026-10-16.md)
+verifies the21 historical partials against saved v9 primary measurements.
+Preserve this claim and the package. Do not launch it again, delete/reset its
+claim or reuse it after source changes. The Arlington index increment requires
+a future separately sealed job and console run; no new real-PDF job is launched
+by this metadata review. The existing Desktop pin remains a historical entry.
 
 The interactive launcher is `scripts/launch_pdf_extraction.sh`, using the repo's
 `.venv/bin/python -I` and `scripts/24_launch_pdf_extraction.py`. A generated
@@ -82,11 +92,11 @@ approved credential-free LAB. No credential file is read, removed or moved.
 
 The 2026-10-16 console diagnosis confirmed an absent agent PID/socket but stale
 desktop variables, plus a separate existing `~/.codex/auth.json` in that console
-user's HOME. The agent fix does not remove this login store. The operator must
-resolve that credential store or use the approved credential-free analysis
-account before actual extraction; NAT/host-only isolation alone does not resolve
-credential presence. See the stale-agent verification linked above for the
-redacted diagnosis and remaining handoff boundary.
+user's HOME. The agent fix does not remove this login store. The completed run
+subsequently recorded no known credentials, agent forwarding, SSH, connected
+interfaces or shared mounts at admission. Those saved checks describe that
+invocation; future runs still require current credential and hypervisor checks.
+See the stale-agent verification linked above for the earlier redacted diagnosis.
 
 The original package below predates this launcher. Preserve it as historical
 evidence; source changes require a newly sealed job/package with the same split.
@@ -107,7 +117,7 @@ verification and the clean-code gate after that commit. See the
 for checks and the separate Git checkpoint integrity findings. The archive's
 saved dirty preflight describes its preparation time; always check current Git
 state again at the console. Receipt/docs/log commits do not change the sealed
-source/config fingerprint. No real PDF has been run for this extractor.
+source/config fingerprint. The original handoff preceded the real run recorded above.
 
 The original handoff is recorded in
 [`handoff_summary.json`](../reports/deployment/pdf_extraction_offline/run_20261016T104455061938Z_7d02abdb85da/handoff_summary.json).

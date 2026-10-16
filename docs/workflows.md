@@ -82,6 +82,10 @@ synthetic checks with `.venv/bin/python -m pytest tests/test_trigger_planner.py`
 
 For the next real-PDF static diagnostic, use the private
 [offline LAB handoff](extraction_lab_handoff.md) for the existing Lubuntu repo.
+Its first locked job has now completed once at `ba64a514ae5a`; preserve its
+claim and read the [post-run review](../reports/progress/extract_pdf_postrun_2026-10-16.md)
+instead of rerunning the pinned Desktop job. Future extraction changes require
+a new source seal with the same locked subset and another isolated-console run.
 The package records the exact prepared job and environment without including
 samples or executing a launcher. The console launcher is now available through
 `scripts/launch_pdf_extraction.sh` and a job-pinned desktop entry; see the handoff

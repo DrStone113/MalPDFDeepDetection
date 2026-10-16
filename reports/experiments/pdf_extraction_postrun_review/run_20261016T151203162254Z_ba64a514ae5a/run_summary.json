@@ -1,0 +1,34 @@
+{
+  "run_id": "run_20261016T151203162254Z_ba64a514ae5a",
+  "study": "pdf_extraction_postrun_review",
+  "status": "failed",
+  "started_at_utc": "2026-10-16T15:12:03.233540+00:00",
+  "code_commit": "ba64a514ae5afe86b06e054f527cc066133d8afd",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      " M src/malpdf/extraction/arlington_validate.py",
+      " M tests/test_arlington.py",
+      "?? reports/experiments/arlington_model_verify/run_20261016T151024828542Z_ba64a514ae5a/",
+      "?? reports/experiments/pdf_extraction/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      " M src/malpdf/extraction/arlington_validate.py",
+      " M tests/test_arlington.py",
+      "?? reports/experiments/arlington_model_verify/run_20261016T151024828542Z_ba64a514ae5a/",
+      "?? reports/experiments/pdf_extraction/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "read-only audit of saved CIC extraction and historical primary parity",
+  "report_path": "reports/experiments/pdf_extraction_postrun_review/run_20261016T151203162254Z_ba64a514ae5a/run_summary.json",
+  "artifact_path": "artifacts/tmp/maintenance/pdf_extraction_postrun_review/run_20261016T151203162254Z_ba64a514ae5a",
+  "metrics": {},
+  "error_type": "AssertionError",
+  "finished_at_utc": "2026-10-16T15:12:04.078613+00:00"
+}

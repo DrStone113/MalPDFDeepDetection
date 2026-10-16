@@ -1,0 +1,21 @@
+{
+  "completed": 64,
+  "planned": 64,
+  "not_completed": 0,
+  "statuses": {
+    "partial": 2,
+    "decode_error": 3,
+    "resource_limit": 56,
+    "unsupported": 1,
+    "encrypted": 1,
+    "observed": 1
+  },
+  "worker_seconds_median": 12.125102421499832,
+  "worker_seconds_p99": 15.360845771870244,
+  "timed_rows": 64,
+  "peak_worker_rss_bytes": 396140544,
+  "pdf_evidence_directory": "data/processed/pdf_extraction/run_20261016T142851774386Z_ba64a514ae5a",
+  "test_access": false,
+  "model_evaluation": false,
+  "interpretation": "status counts describe requested module scopes; comprehensive extraction coverage unverified"
+}

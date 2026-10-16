@@ -1,0 +1,10 @@
+{
+  "uid": 1000,
+  "connected_interfaces": [],
+  "unknown_interfaces": [],
+  "shared_mounts": [],
+  "ssh_session": false,
+  "agent_forwarding_present": false,
+  "known_credentials_present": false,
+  "credential_check_scope": "known paths including Codex auth, SSH id_* keys and credential environment names; console attestation required"
+}

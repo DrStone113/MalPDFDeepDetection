@@ -64,14 +64,14 @@ class Context:
         node=resolved.node
         if set(node.issues)-{'forensic_duplicate_dictionary_key'}: return Unknown(('raw_syntax_ambiguous',))
         if node.kind=='dictionary':
-            matches=[child for name,child in node.value if name.value==b'/'+key.encode()]
+            matches=self.engine.dictionary_entries(node).get(b'/'+key.encode(),())
             if len(matches)>1: return Unknown(('duplicate_dictionary_key',))
             if matches: return Value(matches[0],resolved.owner,resolved.item)
             if self.trailer and key in {'Root','Info','Encrypt','ID'}:
                 for block in self.engine.doc.chain[self.revision+1:]:
                     older=self.engine.doc.xref_nodes.get(block['offset'])
                     if older is None: return Unknown(('older_trailer_unavailable',))
-                    matches=[child for name,child in older.value if name.value==b'/'+key.encode()]
+                    matches=self.engine.dictionary_entries(older).get(b'/'+key.encode(),())
                     if len(matches)>1: return Unknown(('duplicate_dictionary_key',))
                     if matches:
                         return Value(matches[0],block['source_object_id'] or block['id'])
@@ -112,6 +112,7 @@ class _Engine:
         self.doc,self.catalog,self.limits,self.checkpoint=doc,catalog,limits,checkpoint
         self.budget=EvaluationBudget(limits.max_steps)
         self.active=set(); self.bindings=0; self.metadata=0
+        self._dictionary_indexes={}
         self.last_emit=-32
         self.value={'schema_version':'arlington-analysis-v1','document_sha256':doc.sha,
             'model':{key:value for key,value in catalog.provenance.items() if key!='files'},
@@ -119,6 +120,24 @@ class _Engine:
             'reason_codes':[],'limits':asdict(limits),'root_schema_candidate_outcomes':[],
             'scope':'bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance',
             'original_ir_modified':False,'pdf_content_executed':False}
+
+    def dictionary_entries(self,node):
+        """Index immutable cached IR once, retaining every duplicate value.
+
+        This engine is document-local and only runs after raw-IR collection.
+        Keep the node alive with its index so Python identity cannot be reused;
+        source owners, revisions and schema contexts remain on each Value.
+        The existing raw node/check/binding and process limits still apply.
+        """
+        identity=id(node)
+        cached=self._dictionary_indexes.get(identity)
+        if cached is None:
+            entries={}
+            for name,child in node.value:
+                entries.setdefault(name.value,[]).append(child)
+            cached=(node,entries)
+            self._dictionary_indexes[identity]=cached
+        return cached[1]
 
     def source(self,ref):
         node=ref.node
@@ -393,7 +412,7 @@ class _Engine:
                             try: actual=name.value[1:].decode('utf-8')
                             except UnicodeError: actual='opaque:'+hashlib.sha256(name.value).hexdigest()
                             if actual not in explicit:
-                                duplicate=sum(other.value==name.value for other,_ in node.value)>1
+                                duplicate=len(self.dictionary_entries(node)[name.value])>1
                                 keys.append((actual,Unknown(('duplicate_dictionary_key',)) if duplicate else Value(child,target.owner,target.item)))
                     else: keys=[(str(index),ctx.entry(str(index))) for index in range(len(node.value)) if str(index) not in explicit and not repeat]
                 elif key.endswith('*'):

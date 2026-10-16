@@ -1,0 +1,40 @@
+{
+  "run_id": "run_20261016T151444703769Z_ba64a514ae5a",
+  "study": "pdf_extraction_postrun_review",
+  "status": "completed",
+  "started_at_utc": "2026-10-16T15:14:44.777983+00:00",
+  "code_commit": "ba64a514ae5afe86b06e054f527cc066133d8afd",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      " M src/malpdf/extraction/arlington_validate.py",
+      " M tests/test_arlington.py",
+      "?? reports/experiments/arlington_model_verify/run_20261016T151024828542Z_ba64a514ae5a/",
+      "?? reports/experiments/pdf_extraction/",
+      "?? reports/experiments/pdf_extraction_postrun_review/"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M reports/research_log.md",
+      " M src/malpdf/extraction/arlington_validate.py",
+      " M tests/test_arlington.py",
+      "?? reports/experiments/arlington_model_verify/run_20261016T151024828542Z_ba64a514ae5a/",
+      "?? reports/experiments/pdf_extraction/",
+      "?? reports/experiments/pdf_extraction_postrun_review/"
+    ]
+  },
+  "seed": 42,
+  "protocol": "read-only saved extraction audit and original primary parity",
+  "report_path": "reports/experiments/pdf_extraction_postrun_review/run_20261016T151444703769Z_ba64a514ae5a/run_summary.json",
+  "artifact_path": "artifacts/tmp/maintenance/pdf_extraction_postrun_review/run_20261016T151444703769Z_ba64a514ae5a",
+  "metrics": {},
+  "source_run": "run_20261016T142851774386Z_ba64a514ae5a",
+  "rows": 64,
+  "root_primary_checkpoints": 64,
+  "historical_partial_targets": 21,
+  "notes": "Read-only saved metadata audit; locked64 and root checkpoints verified separately from children. Original21 raw/173 parity and changed fields explicitly reported; no PDF/blob reads,rerun or model/Test evaluation; metrics N/A. Earlier failed audit preserved.",
+  "finished_at_utc": "2026-10-16T15:14:47.869072+00:00"
+}
