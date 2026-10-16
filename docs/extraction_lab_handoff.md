@@ -7,6 +7,15 @@ summary, preflight state and a Vietnamese console runbook. It contains no PDF,
 source-tree copy, wheels, checkpoint/model weights or automatic launcher.
 It is not a standalone installer.
 
+The user-approved210-file source snapshot was committed as
+`aa27c0a28dcb6482179afed6da5c76ad727a2a6d`. The sealed job passed metadata-only
+verification and the clean-code gate after that commit. See the
+[source-commit receipt](../reports/progress/extract_pdf_source_commit_2026-10-16.md)
+for checks and the separate Git checkpoint integrity findings. The archive's
+saved dirty preflight describes its preparation time; always check current Git
+state again at the console. Receipt/docs/log commits do not change the sealed
+source/config fingerprint. No real PDF has been run for this extractor.
+
 The current handoff is recorded in
 [`handoff_summary.json`](../reports/deployment/pdf_extraction_offline/run_20261016T104455061938Z_7d02abdb85da/handoff_summary.json).
 The private archive and unpacked `RUNBOOK.vi.md` are under
