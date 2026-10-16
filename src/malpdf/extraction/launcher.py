@@ -104,7 +104,7 @@ def main(argv=None, *, root=None):
             agent_only = {"SSH agent socket present", "Credential presence blocks analysis"}
             if ("SSH agent socket present" in report["blocking_reasons"]
                     and set(report["blocking_reasons"]) <= agent_only):
-                from malpdf.extraction.local_agent import probe_local_agent
+                from malpdf.extraction.local_agent import probe_local_agent, clear_stale_agent
                 agent = probe_local_agent()
                 if agent is not None:
                     try:
@@ -116,8 +116,14 @@ def main(argv=None, *, root=None):
                     if any(reason not in LAB_ISSUES for reason in report["blocking_reasons"]):
                         print(json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False), flush=True)
                         return 2
+                elif clear_stale_agent():
+                    print("Agent đã thoát và socket không còn; đã bỏ hai biến agent cũ của launcher.")
+                    report = inspect_launch(root, args.prepared_run)
+                    if any(reason not in LAB_ISSUES for reason in report["blocking_reasons"]):
+                        print(json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False), flush=True)
+                        return 2
                 else:
-                    print("Chưa xác minh được agent cục bộ; giữ nguyên môi trường và chờ xử lý.")
+                    print("Agent chưa xác minh được và chưa chứng minh được PID/socket đều đã mất; giữ chặn.")
             if not report["blocking_reasons"]:
                 break
             print("CHƯA CHẠY: bạn có thể xử lý rồi nhấn Enter ngay trong cửa sổ này.")

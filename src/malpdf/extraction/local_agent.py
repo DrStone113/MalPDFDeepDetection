@@ -87,3 +87,54 @@ def probe_local_agent(*, proc=Path("/proc")):
         if fd >= 0:
             os.close(fd)
         return None
+
+
+def clear_stale_agent():
+    """Clear two stale variables only when both the PID and socket are absent.
+
+    Requires offline console attestation. An inaccessible PID/path, live or
+    reused PID, existing/dangling socket, or changed selection stays blocked.
+    No signals, protocol messages, key reads or credential-file changes.
+    """
+    if not hasattr(os, "pidfd_open"):
+        return False
+    pid = os.environ.get("SSH_AGENT_PID", "")
+    name = os.environ.get("SSH_AUTH_SOCK", "")
+    if not pid.isascii() or not pid.isdecimal() or len(pid) > 10 or int(pid) <= 1:
+        return False
+    if not name or len(name) > 4096 or "\n" in name or "\r" in name or not Path(name).is_absolute():
+        return False
+    require_offline_lab(True)
+    endpoint = Path(name)
+    try:
+        if any(parent.is_symlink() for parent in endpoint.parents):
+            return False
+        endpoint.lstat()
+    except FileNotFoundError:
+        pass
+    except OSError:
+        return False
+    else:
+        return False
+    try:
+        fd = os.pidfd_open(int(pid))
+    except ProcessLookupError:
+        pass  # ESRCH proves the selected PID is absent, not merely unreadable.
+    except OSError:
+        return False
+    else:
+        os.close(fd)
+        return False
+    try:
+        endpoint.lstat()
+    except FileNotFoundError:
+        pass
+    except OSError:
+        return False
+    else:
+        return False
+    if os.environ.get("SSH_AGENT_PID") != pid or os.environ.get("SSH_AUTH_SOCK") != name:
+        return False
+    os.environ.pop("SSH_AUTH_SOCK", None)
+    os.environ.pop("SSH_AGENT_PID", None)
+    return True

@@ -15,6 +15,7 @@ from malpdf.extraction import jobs, launcher
 
 @pytest.fixture
 def ready(tmp_path, monkeypatch):
+    from malpdf.extraction import local_agent
     home = tmp_path / "home"
     home.mkdir()
     monkeypatch.setattr(Path, "home", lambda: home)
@@ -29,6 +30,7 @@ def ready(tmp_path, monkeypatch):
     monkeypatch.setattr(jobs, "load_job", lambda *a: (lock, object()))
     monkeypatch.setattr(jobs, "extract_pdf", lambda *a, **k: pytest.fail("No PDF access in launcher preflight"))
     monkeypatch.setattr(jobs, "run_job", lambda *a, **k: pytest.fail("No job without confirmation"))
+    monkeypatch.setattr(local_agent, "clear_stale_agent", lambda: False)
     terminal = SimpleNamespace(isatty=lambda: True)
     monkeypatch.setattr(launcher, "sys", SimpleNamespace(version_info=(3, 11), stdin=terminal, stdout=terminal))
     return tmp_path, home, state
@@ -295,3 +297,44 @@ def test_dirty_code_detected_after_enter_never_runs(ready, monkeypatch):
     monkeypatch.setattr("builtins.input", confirm)
     assert launcher.main(["--prepared-run", "run_fixture"], root=root) == 2
     assert not (root / "data").exists()
+
+
+@pytest.mark.parametrize("other_credential", [False, True])
+def test_confirmed_stale_agent_cleanup_rechecks_all_credentials(ready, monkeypatch, capsys, other_credential):
+    from malpdf.extraction import local_agent
+    root, _, _ = ready
+    jobs.os.environ.update(SSH_AGENT_PID="12345", SSH_AUTH_SOCK="synthetic_missing_socket")
+    if other_credential: jobs.os.environ['GH_TOKEN'] = 'synthetic_keep'
+    monkeypatch.setattr(local_agent, "probe_local_agent", lambda: None)
+    calls = []
+    def clear():
+        calls.append("clear")
+        jobs.os.environ.pop('SSH_AGENT_PID'); jobs.os.environ.pop('SSH_AUTH_SOCK')
+        return True
+    monkeypatch.setattr(local_agent, "clear_stale_agent", clear)
+    answers=iter(["", "q"])
+    monkeypatch.setattr('builtins.input', lambda *a: next(answers))
+    def run(*a, **k):
+        calls.append('run'); assert k == {'lab_attested': True}
+        return {'status':'completed'}
+    monkeypatch.setattr(jobs, "run_job", run)
+    assert launcher.main(['--prepared-run','run_fixture'],root=root)==0
+    assert calls == (['clear'] if other_credential else ['clear','run'])
+    assert 'Agent đã thoát và socket không còn' in capsys.readouterr().out
+    if other_credential: assert jobs.os.environ['GH_TOKEN']=='synthetic_keep'
+
+
+@pytest.mark.parametrize('mode', ['check_only','noninteractive','cancel','network'])
+def test_stale_cleanup_never_runs_before_confirmation_and_isolation(ready, monkeypatch, mode):
+    from malpdf.extraction import local_agent
+    root, _, state = ready
+    jobs.os.environ.update(SSH_AGENT_PID='12345', SSH_AUTH_SOCK='synthetic_missing_socket')
+    monkeypatch.setattr(local_agent,'clear_stale_agent',lambda:pytest.fail('No premature environment clearing'))
+    monkeypatch.setattr(local_agent,'probe_local_agent',lambda:None)
+    if mode=='network':state['connected_interfaces']=['synthetic']
+    if mode=='noninteractive':monkeypatch.setattr(launcher.sys,'stdin',SimpleNamespace(isatty=lambda:False))
+    answers=iter(['','q'] if mode=='network' else ['q'])
+    monkeypatch.setattr('builtins.input',lambda *a:next(answers))
+    args=['--prepared-run','run_fixture']+(['--check-only'] if mode=='check_only' else [])
+    assert launcher.main(args,root=root)==(2 if mode in {'check_only','noninteractive'} else 0)
+    assert jobs.os.environ['SSH_AGENT_PID']=='12345' and jobs.os.environ['SSH_AUTH_SOCK']=='synthetic_missing_socket'

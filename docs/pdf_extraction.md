@@ -801,7 +801,10 @@ changes NICs. It can open while connected, wait for manual VMware isolation,
 and recheck on Enter without exiting or invoking a blocked job. The same Enter
 permits stopping a verified local agent after isolation and clears
 only the two stale agent variables after confirmed exit/socket removal; all other
-credentials and PDF attestation remain guarded. Python and shell
+credentials and PDF attestation remain guarded. The interactive launcher also
+handles an already exited agent only after proving PID absence
+(ESRCH), socket absence and unchanged selection; it sends no signal in that case.
+Live/reused/inaccessible PIDs and surviving/dangling sockets remain blocked. Python and shell
 launcher source are sealed, so earlier source locks refuse
 drift and must be replaced by a new preparation preserving the saved split.
 

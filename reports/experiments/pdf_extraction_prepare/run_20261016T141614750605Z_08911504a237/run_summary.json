@@ -1,0 +1,44 @@
+{
+  "run_id": "run_20261016T141614750605Z_08911504a237",
+  "study": "pdf_extraction_prepare",
+  "status": "completed",
+  "started_at_utc": "2026-10-16T14:16:14.807174+00:00",
+  "code_commit": "08911504a237fffd39f255075674673a86b685a6",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M docs/development.md",
+      " M docs/extraction_lab_handoff.md",
+      " M docs/pdf_extraction.md",
+      " M docs/workflows.md",
+      " M plans/extract-pdf/implementation.md",
+      " M src/malpdf/extraction/launcher.py",
+      " M src/malpdf/extraction/local_agent.py",
+      " M tests/test_extraction_launcher.py",
+      " M tests/test_local_agent.py"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M docs/development.md",
+      " M docs/extraction_lab_handoff.md",
+      " M docs/pdf_extraction.md",
+      " M docs/workflows.md",
+      " M plans/extract-pdf/implementation.md",
+      " M src/malpdf/extraction/launcher.py",
+      " M src/malpdf/extraction/local_agent.py",
+      " M tests/test_extraction_launcher.py",
+      " M tests/test_local_agent.py"
+    ]
+  },
+  "seed": 42,
+  "protocol": "CIC saved Protocol G Train/Validation extraction development",
+  "report_path": "reports/experiments/pdf_extraction_prepare/run_20261016T141614750605Z_08911504a237/run_summary.json",
+  "artifact_path": "artifacts/tmp/maintenance/pdf_extraction_prepare/run_20261016T141614750605Z_08911504a237",
+  "metrics": {},
+  "rows": 64,
+  "job_lock_sha256": "246b257284bf30f2a9f9a52af36885d712024a9df5f57cc5eba02ae67b67cc45",
+  "notes": "Metadata-only preparation; 32 Train/32 exposed Validation. PDF bytes not read. Execution not run; no metrics applicable.",
+  "finished_at_utc": "2026-10-16T14:16:15.953056+00:00"
+}

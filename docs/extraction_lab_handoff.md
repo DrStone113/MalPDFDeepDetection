@@ -2,10 +2,11 @@
 
 ## Console launcher
 
-Current job: `run_20261016T134919360105Z_b979e7832732`. The installed entry is
+Current job: `run_20261016T141614750605Z_08911504a237`. The installed entry is
 `/home/drstone/Desktop/Extract PDF Offline.desktop`; the new package is recorded
-in [handoff summary](../reports/deployment/pdf_extraction_offline/run_20261016T134953300090Z_b979e7832732/handoff_summary.json).
-See [wait-flow verification](../reports/progress/extract_pdf_launcher_wait_2026-10-16.md),
+in [handoff summary](../reports/deployment/pdf_extraction_offline/run_20261016T141713997359Z_08911504a237/handoff_summary.json).
+See [stale-agent verification](../reports/progress/extract_pdf_stale_agent_2026-10-16.md),
+[wait-flow verification](../reports/progress/extract_pdf_launcher_wait_2026-10-16.md),
 [agent-step verification](../reports/progress/extract_pdf_agent_launcher_2026-10-16.md)
 and the [original launcher verification](../reports/progress/extract_pdf_launcher_2026-10-16.md).
 
@@ -53,8 +54,19 @@ requires process exit plus socket disappearance within3s. Only then does it
 remove the two stale agent variables from its own process environment and rerun
 all admission checks. It does not change the parent desktop environment.
 
+An already exited agent can leave `SSH_AGENT_PID`/`SSH_AUTH_SOCK` in the desktop
+environment. After the same Enter and isolation checks, the launcher also handles
+this case without signalling anything: require a valid selection, no socket
+entry (including dangling symlinks), and `pidfd_open` returning ESRCH for the
+selected PID. Recheck socket absence and unchanged selection before clearing
+only those two stale variables in the launcher and repeating all admission
+checks. A live/reused or inaccessible PID, existing socket, symlinked parent,
+permission error or changed selection remains blocked. Other credentials remain
+visible to guards. Merely disconnecting NAT/host-only does not clear desktop
+environment variables; it already satisfies the network gate when rechecked.
+
 The Enter prompt explicitly includes permission for this process action.
-Other tokens/keys/stores still block. Unknown/forwarded/stale agents, unsupported
+Other tokens/keys/stores still block. Unknown/forwarded agents or unproven stale selections, unsupported
 pidfd, cancellation or failed shutdown preserve the environment and keep PDFs
 blocked. `--check-only` and noninteractive invocations never offer or stop an
 agent. Network/SSH/dirty-code/admission blockers must be resolved first. All
@@ -67,6 +79,14 @@ Credential presence now also blocks home/repo `.codex/auth.json`, including
 broken symlinks, in both the launcher and direct runner. This checks names/presence
 only. Closing an app or unsetting a variable is not a credential audit; use the
 approved credential-free LAB. No credential file is read, removed or moved.
+
+The 2026-10-16 console diagnosis confirmed an absent agent PID/socket but stale
+desktop variables, plus a separate existing `~/.codex/auth.json` in that console
+user's HOME. The agent fix does not remove this login store. The operator must
+resolve that credential store or use the approved credential-free analysis
+account before actual extraction; NAT/host-only isolation alone does not resolve
+credential presence. See the stale-agent verification linked above for the
+redacted diagnosis and remaining handoff boundary.
 
 The original package below predates this launcher. Preserve it as historical
 evidence; source changes require a newly sealed job/package with the same split.

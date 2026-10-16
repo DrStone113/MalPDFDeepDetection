@@ -16,6 +16,11 @@ owned disposable Python process/socket with tracing disabled, never a real user
 agent or key store. Cases verify PID/user/name/socket checks, immutable pidfd
 targeting, isolation recheck, cancellation/timeout/socket survival and retention
 of all unrelated credential variables. No credential contents are read.
+Stale-selection tests separately cover an exited/reaped process with no socket,
+live/reused PIDs, surviving/dangling sockets, permission errors, selection/socket
+changes and console-guard refusal. Only confirmed absent PID plus absent socket
+permits clearing the two launcher-local variables. UI tests preserve other
+credentials and prohibit cleanup before Enter/isolation or in check-only.
 
 Use Python 3.11 for local and Codespace checks. Python 3.13 support applies to the authorized Kaggle GPU runtime; record effective package and CUDA versions for each run. The dependency declaration is [pyproject.toml](../pyproject.toml). Tests use synthetic or benign fixtures and require no external datasets.
 

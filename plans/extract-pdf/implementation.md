@@ -33,6 +33,9 @@ mở lại hoặc gõ hai câu xác nhận. Enter xác nhận cô lập và cho 
 cục bộ đã xác minh; chỉ dọn hai biến sau khi tiến trình thoát/socket biến mất,
 rồi kiểm lại mọi gate. Không xóa key/token hoặc tự ngắt mạng. PDF thật chỉ chạy
 khi đủ điều kiện; việc chờ không tạo claim hoặc gọi job bị chặn.
+Đã bổ sung trường hợp agent thoát từ trước nhưng desktop giữ biến cũ: chỉ bỏ
+hai biến của launcher khi PID được xác nhận không còn (ESRCH), socket cũng
+không có và selection không đổi; không signal hoặc dọn credential khác.
 
 Nghiệm thu forensic trên PDF thật, giải mã native media/archive ngoài ZIP,
 catalog reachability/conformance đầy đủ và predicate Arlington còn thiếu, suy luận JS

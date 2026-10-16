@@ -158,3 +158,53 @@ def test_surviving_socket_keeps_environment_blocked(agent_process):
         assert os.environ.get("SSH_AUTH_SOCK")
     finally:
         agent.close()
+
+
+def test_exited_process_and_missing_socket_clear_only_stale_variables(agent_process):
+    process, path = agent_process
+    process.terminate(); assert process.wait(timeout=3)==0
+    assert not path.exists()
+    assert local_agent.probe_local_agent() is None
+    assert local_agent.clear_stale_agent() is True
+    assert 'SSH_AUTH_SOCK' not in os.environ and 'SSH_AGENT_PID' not in os.environ
+    assert os.environ['GH_TOKEN']=='synthetic_fixture_keep'
+
+
+@pytest.mark.parametrize('case',['live','live_missing_socket','existing_socket','dangling_socket','permission','selection_change','socket_appears','offline_guard'])
+def test_stale_cleanup_preserves_unknown_live_or_changed_state(agent_process,monkeypatch,case):
+    process,path=agent_process
+    if case not in {'live','live_missing_socket'}:
+        process.terminate();process.wait(timeout=3)
+    if case=='live_missing_socket':path.unlink()
+    if case=='existing_socket':path.write_text('synthetic placeholder')
+    if case=='dangling_socket':path.symlink_to(path.with_name('missing_target'))
+    if case=='permission':
+        def denied(*a):raise PermissionError('synthetic')
+        monkeypatch.setattr(local_agent.os,'pidfd_open',denied)
+    if case=='selection_change':
+        def changed(*a):
+            monkeypatch.setenv('SSH_AUTH_SOCK',str(path.with_name('changed')))
+            raise ProcessLookupError('synthetic ESRCH')
+        monkeypatch.setattr(local_agent.os,'pidfd_open',changed)
+    if case=='socket_appears':
+        def appeared(*a):
+            path.write_text('synthetic appeared')
+            raise ProcessLookupError('synthetic ESRCH')
+        monkeypatch.setattr(local_agent.os,'pidfd_open',appeared)
+    if case=='offline_guard':
+        def blocked(*a):raise ValueError('Offline LAB required')
+        monkeypatch.setattr(local_agent,'require_offline_lab',blocked)
+        with pytest.raises(ValueError,match='Offline LAB'):local_agent.clear_stale_agent()
+    else:
+        assert local_agent.clear_stale_agent() is False
+    assert os.environ.get('SSH_AUTH_SOCK') and os.environ['SSH_AGENT_PID']==str(process.pid)
+    assert os.environ['GH_TOKEN']=='synthetic_fixture_keep'
+    if case in {'live','live_missing_socket'}:assert process.poll() is None
+
+
+@pytest.mark.parametrize('pid',['','0','1','-2','not_a_pid','123456789012345'])
+def test_stale_cleanup_invalid_selection_never_checks_pid_or_clears(monkeypatch,pid):
+    monkeypatch.setenv('SSH_AGENT_PID',pid);monkeypatch.setenv('SSH_AUTH_SOCK','/tmp/synthetic_missing_agent')
+    monkeypatch.setattr(local_agent.os,'pidfd_open',lambda *a:pytest.fail('Invalid selection'))
+    assert local_agent.clear_stale_agent() is False
+    assert os.environ['SSH_AUTH_SOCK']=='/tmp/synthetic_missing_agent' and os.environ['SSH_AGENT_PID']==pid
