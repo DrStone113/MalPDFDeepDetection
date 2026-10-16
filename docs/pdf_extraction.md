@@ -796,8 +796,11 @@ attestation covers the hypervisor controls and remaining credential audit.
 For a terminal/desktop launcher with the same runner, see
 [offline handoff](extraction_lab_handoff.md). Its read-only precheck writes no
 official refusal/report/claim. Actual launch needs a named sealed job, interactive
-console and exact operator confirmation; it never clears credentials or changes
-NICs. Python and shell launcher source are sealed, so earlier source locks refuse
+console and exact operator confirmation; it never removes stored credentials or
+changes NICs. Its optional `DUNG AGENT` operation stops a verified local agent and clears
+only the two stale agent variables after confirmed exit/socket removal; all other
+credentials and the final PDF attestation remain guarded. Python and shell
+launcher source are sealed, so earlier source locks refuse
 drift and must be replaced by a new preparation preserving the saved split.
 
 Each sealed job has an exclusive persistent claim. Failures/interruption retain

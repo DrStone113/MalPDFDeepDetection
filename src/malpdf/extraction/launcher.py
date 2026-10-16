@@ -10,6 +10,7 @@ from malpdf.extraction import jobs
 from malpdf.experiments.cic_static_benchmark import clean_code
 
 CONFIRMATION = "CHAY TINH"
+AGENT_CONFIRMATION = "DUNG AGENT"
 
 
 def inspect_launch(root, prepared_run):
@@ -63,6 +64,27 @@ def main(argv=None, *, root=None):
     root = Path(root) if root is not None else Path(__file__).resolve().parents[3]
     try:
         report = inspect_launch(root, args.prepared_run)
+        agent_only = {"SSH agent socket present", "Credential presence blocks analysis"}
+        if (not args.check_only and sys.stdin.isatty() and sys.stdout.isatty()
+                and "SSH agent socket present" in report["blocking_reasons"]
+                and set(report["blocking_reasons"]) <= agent_only):
+            from malpdf.extraction.local_agent import probe_local_agent
+            agent = probe_local_agent()
+            if agent is not None:
+                try:
+                    print("Đã xác minh ssh-agent cục bộ của tài khoản hiện tại.")
+                    print("Có thể dừng agent này rồi kiểm tra lại. Không xóa file khóa/token.")
+                    if input(f"Gõ {AGENT_CONFIRMATION} rồi Enter để dừng; nhập khác để hủy: ") != AGENT_CONFIRMATION:
+                        print("Đã hủy; chưa dừng agent hoặc chạy PDF.")
+                        return 0
+                    agent.stop()
+                finally:
+                    agent.close()
+                print("Đã xác nhận agent thoát/socket được gỡ; kiểm tra lại toàn bộ điều kiện.")
+                report = inspect_launch(root, args.prepared_run)
+                report["agent_cleanup"] = "verified_local_agent_stopped"
+            else:
+                print("Chưa xác minh được agent cục bộ; giữ nguyên môi trường và chặn chạy.")
         print(json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False), flush=True)
         if report["blocking_reasons"]:
             print("CHƯA CHẠY: xử lý các mục chặn; launcher không đổi mạng, xóa credentials hoặc tạo claim.")

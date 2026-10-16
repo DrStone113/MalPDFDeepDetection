@@ -85,8 +85,10 @@ For the next real-PDF static diagnostic, use the private
 The package records the exact prepared job and environment without including
 samples or executing a launcher. The console launcher is now available through
 `scripts/launch_pdf_extraction.sh` and a job-pinned desktop entry; see the handoff
-guide for check-only and exact operator confirmation. Metadata checking can happen while connected;
-actual execution still requires clean committed code and verified isolation at
+guide for check-only and exact operator confirmation. Metadata checking can happen
+while connected. An optional `DUNG AGENT` step can stop a verified same-user local
+agent from the isolated interactive console, then repeats preflight without
+clearing other credentials. Actual execution still requires clean committed code and verified isolation at
 VMware console. Do not disconnect the active SSH NIC remotely.
 
 - [Retrospective multi-cohort stacking v4](#retrospective-multi-cohort-stacking-v4)

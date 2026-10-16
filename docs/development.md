@@ -6,6 +6,12 @@ They use synthetic state only. The full suite also checks that shell launcher
 source is sealed and source drift is refused; see
 [LAB handoff](extraction_lab_handoff.md) for operator use.
 
+Optional local-agent shutdown is tested in `tests/test_local_agent.py` using an
+owned disposable Python process/socket with tracing disabled, never a real user
+agent or key store. Cases verify PID/user/name/socket checks, immutable pidfd
+targeting, isolation recheck, cancellation/timeout/socket survival and retention
+of all unrelated credential variables. No credential contents are read.
+
 Use Python 3.11 for local and Codespace checks. Python 3.13 support applies to the authorized Kaggle GPU runtime; record effective package and CUDA versions for each run. The dependency declaration is [pyproject.toml](../pyproject.toml). Tests use synthetic or benign fixtures and require no external datasets.
 
 - [Windows local setup](#windows-local-setup)

@@ -187,3 +187,43 @@ def test_shell_wrapper_missing_environment_refuses_without_downloading(tmp_path)
     result = subprocess.run(["/bin/sh", str(wrapper), "--prepared-run", "run_fixture"], capture_output=True, text=True)
     assert result.returncode == 1 and "thieu .venv" in result.stdout
     assert not (tmp_path / ".venv").exists()
+
+
+@pytest.mark.parametrize("case", ["success", "cancel", "unknown", "failure", "other_credential", "network", "check_only", "noninteractive"])
+def test_optional_agent_cleanup_never_bypasses_remaining_guards(ready, monkeypatch, case):
+    from malpdf.extraction import local_agent
+    root, _, state = ready
+    jobs.os.environ.update(SSH_AUTH_SOCK="synthetic_socket", SSH_AGENT_PID="12345")
+    if case == "other_credential":
+        jobs.os.environ["GH_TOKEN"] = "synthetic_other_credential"
+    if case == "network":
+        state["connected_interfaces"] = ["synthetic"]
+    if case == "noninteractive":
+        monkeypatch.setattr(launcher.sys, "stdin", SimpleNamespace(isatty=lambda: False))
+    calls = []
+    class Agent:
+        def stop(self):
+            calls.append("stop")
+            if case == "failure": raise ValueError("synthetic stop failure")
+            jobs.os.environ.pop("SSH_AUTH_SOCK"); jobs.os.environ.pop("SSH_AGENT_PID")
+        def close(self): calls.append("close")
+    def probe():
+        calls.append("probe")
+        return None if case == "unknown" else Agent()
+    monkeypatch.setattr(local_agent, "probe_local_agent", probe)
+    answers = iter(["q"] if case == "cancel" else [launcher.AGENT_CONFIRMATION, launcher.CONFIRMATION])
+    monkeypatch.setattr("builtins.input", lambda *a: next(answers))
+    def run(*a, **k):
+        calls.append("run")
+        assert k == {"lab_attested": True}
+        return {"status": "completed"}
+    monkeypatch.setattr(jobs, "run_job", run)
+    args = ["--prepared-run", "run_fixture"] + (["--check-only"] if case == "check_only" else [])
+    expected = 0 if case in {"success", "cancel"} else (1 if case == "failure" else 2)
+    assert launcher.main(args, root=root) == expected
+    assert ("run" in calls) == (case == "success")
+    assert ("stop" in calls) == (case in {"success", "failure", "other_credential"})
+    if case in {"network", "check_only", "noninteractive"}: assert not calls
+    if case not in {"success", "other_credential"}: assert jobs.os.environ.get("SSH_AUTH_SOCK")
+    if case == "other_credential": assert jobs.os.environ.get("GH_TOKEN") == "synthetic_other_credential"
+    if "stop" in calls: assert "close" in calls

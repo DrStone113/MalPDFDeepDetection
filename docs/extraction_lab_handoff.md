@@ -2,16 +2,17 @@
 
 ## Console launcher
 
-Current job: `run_20261016T130402057603Z_19de287ea30a`. The installed entry is
+Current job: `run_20261016T132849869208Z_7c69699dab3a`. The installed entry is
 `/home/drstone/Desktop/Extract PDF Offline.desktop`; the new package is recorded
-in [handoff summary](../reports/deployment/pdf_extraction_offline/run_20261016T130519507883Z_19de287ea30a/handoff_summary.json).
-See [launcher verification](../reports/progress/extract_pdf_launcher_2026-10-16.md).
+in [handoff summary](../reports/deployment/pdf_extraction_offline/run_20261016T132953367901Z_7c69699dab3a/handoff_summary.json).
+See [agent-step verification](../reports/progress/extract_pdf_agent_launcher_2026-10-16.md)
+and the [original launcher verification](../reports/progress/extract_pdf_launcher_2026-10-16.md).
 
 The interactive launcher is `scripts/launch_pdf_extraction.sh`, using the repo's
 `.venv/bin/python -I` and `scripts/24_launch_pdf_extraction.py`. A generated
 `Extract PDF Offline.desktop` opens it in a terminal with an **explicit sealed
 job ID**. It does not discover a newest job, prepare/retry a job, install packages,
-disconnect NICs, clear environment credentials or delete claims. The shell source
+disconnect NICs, delete credential files or delete claims. The shell source
 is included in the job fingerprint alongside Python/config source.
 
 The entry uses the standard
@@ -38,10 +39,29 @@ all gates after confirmation and preserves its one-attempt claim. Interruptions
 keep evidence; there is no automatic restart. Only aggregate run status/paths are
 printed; private exception text and sample identities are not echoed.
 
+If the only blocking categories are agent/credential presence, the interactive
+launcher can offer **`DUNG AGENT`** before the PDF confirmation. It requires a
+local `SSH_AGENT_PID`, same-user process credentials, the exact `ssh-agent` name,
+and a same-user Unix socket with stable identity. It holds a Linux pidfd to avoid
+signalling a reused PID, rechecks console isolation/identity, sends SIGTERM and
+requires process exit plus socket disappearance within3s. Only then does it
+remove the two stale agent variables from its own process environment and rerun
+all admission checks. It does not change the parent desktop environment.
+
+This is an explicit optional process action, not credential-file removal.
+Other tokens/keys/stores still block. Unknown/forwarded/stale agents, unsupported
+pidfd, cancellation or failed shutdown preserve the environment and keep PDFs
+blocked. `--check-only` and noninteractive invocations never offer or stop an
+agent. Network/SSH/dirty-code/admission blockers must be resolved first. The
+later `CHAY TINH` prompt and runner gates remain separate and mandatory.
+
+Implementation uses Python's [pidfd API](https://docs.python.org/3.11/library/os.html#os.pidfd_open)
+and [pidfd signalling](https://docs.python.org/3.11/library/signal.html#signal.pidfd_send_signal).
+
 Credential presence now also blocks home/repo `.codex/auth.json`, including
 broken symlinks, in both the launcher and direct runner. This checks names/presence
 only. Closing an app or unsetting a variable is not a credential audit; use the
-approved credential-free LAB. No credential is read, removed or moved by launcher.
+approved credential-free LAB. No credential file is read, removed or moved.
 
 The original package below predates this launcher. Preserve it as historical
 evidence; source changes require a newly sealed job/package with the same split.
