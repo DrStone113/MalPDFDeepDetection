@@ -1,0 +1,41 @@
+{
+  "python": "3.11.17",
+  "packages": {
+    "numpy": "2.4.6",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.9.1",
+    "PyMuPDF": "1.26.7",
+    "torch": "2.11.0+cpu",
+    "torchvision": "0.26.0+cpu",
+    "xgboost": "3.2.0",
+    "lightgbm": "4.7.0",
+    "catboost": "1.2.10"
+  },
+  "generating_commit": "b979e7832732ddb3a8a8404a20cb30848ede1fe2",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M docs/development.md",
+      " M docs/extraction_lab_handoff.md",
+      " M docs/pdf_extraction.md",
+      " M docs/workflows.md",
+      " M plans/extract-pdf/implementation.md",
+      " M src/malpdf/extraction/launcher.py",
+      " M tests/test_extraction_jobs.py",
+      " M tests/test_extraction_launcher.py"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M docs/development.md",
+      " M docs/extraction_lab_handoff.md",
+      " M docs/pdf_extraction.md",
+      " M docs/workflows.md",
+      " M plans/extract-pdf/implementation.md",
+      " M src/malpdf/extraction/launcher.py",
+      " M tests/test_extraction_jobs.py",
+      " M tests/test_extraction_launcher.py"
+    ]
+  }
+}

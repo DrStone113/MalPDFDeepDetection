@@ -5,6 +5,11 @@ shell quoting and exit-status tests are in `tests/test_extraction_launcher.py`.
 They use synthetic state only. The full suite also checks that shell launcher
 source is sealed and source drift is refused; see
 [LAB handoff](extraction_lab_handoff.md) for operator use.
+The interactive flow waits for manual VMware isolation and one Enter, then
+rechecks admission before any agent action or job. Tests cover opening while
+connected, manual disconnect during the prompt, repeated Enter while still
+connected, reconnect/code drift after confirmation and cancellation. Check-only
+and noninteractive calls never stop an agent or attest readiness.
 
 Optional local-agent shutdown is tested in `tests/test_local_agent.py` using an
 owned disposable Python process/socket with tracing disabled, never a real user

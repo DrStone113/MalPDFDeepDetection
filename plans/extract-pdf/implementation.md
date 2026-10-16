@@ -27,10 +27,12 @@ xác nhận tương tác trước khi gọi lại runner có đủ guard. Source
 và shell được khóa; Codex auth store được chặn theo sự hiện diện. Đây là chuẩn
 bị thao tác offline, không phải bằng chứng đã chạy hoặc nghiệm thu PDF thật.
 
-Theo yêu cầu bổ sung, launcher cho phép `DUNG AGENT` với agent cục bộ đã xác
-minh ở console cô lập. Chỉ dọn hai biến agent sau khi xác nhận tiến trình thoát
-và socket biến mất, rồi kiểm lại mọi gate; không xóa key/token hoặc tự ngắt mạng.
-Đây là thao tác môi trường có xác nhận riêng, không phải thực thi PDF/JS.
+Theo yêu cầu đơn giản hóa, mở launcher tại console khi còn mạng, tự ngắt NIC
+trong VMware rồi nhấn Enter. Cửa sổ chờ nếu còn mục chặn môi trường, không bắt
+mở lại hoặc gõ hai câu xác nhận. Enter xác nhận cô lập và cho phép dừng agent
+cục bộ đã xác minh; chỉ dọn hai biến sau khi tiến trình thoát/socket biến mất,
+rồi kiểm lại mọi gate. Không xóa key/token hoặc tự ngắt mạng. PDF thật chỉ chạy
+khi đủ điều kiện; việc chờ không tạo claim hoặc gọi job bị chặn.
 
 Nghiệm thu forensic trên PDF thật, giải mã native media/archive ngoài ZIP,
 catalog reachability/conformance đầy đủ và predicate Arlington còn thiếu, suy luận JS

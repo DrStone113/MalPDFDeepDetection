@@ -48,11 +48,11 @@ def test_check_only_never_prompts_claims_or_runs(ready, monkeypatch, capsys):
     ("uid", 0), ("ssh_session", True), ("connected_interfaces", ["fixture"]),
     ("unknown_interfaces", ["fixture"]), ("shared_mounts", ["fixture"]),
 ])
-def test_bad_lab_state_refuses_before_prompt(ready, monkeypatch, key, value):
+def test_bad_lab_state_check_only_refuses_without_prompt(ready, monkeypatch, key, value):
     root, _, state = ready
     state[key] = value
     monkeypatch.setattr("builtins.input", lambda *a: pytest.fail("Blocked launch must not prompt"))
-    assert launcher.main(["--prepared-run", "run_fixture"], root=root) == 2
+    assert launcher.main(["--prepared-run", "run_fixture", "--check-only"], root=root) == 2
     assert not (root / "data").exists()
 
 
@@ -72,7 +72,7 @@ def test_credentials_refuse_without_reading_or_echoing_values(ready, monkeypatch
             p.write_text("SYNTHETIC_PRIVATE_SENTINEL")
     monkeypatch.setattr(Path, "read_bytes", lambda *a, **k: pytest.fail("No credential content reads"))
     monkeypatch.setattr(Path, "read_text", lambda *a, **k: pytest.fail("No credential content reads"))
-    assert launcher.main(["--prepared-run", "run_fixture"], root=root) == 2
+    assert launcher.main(["--prepared-run", "run_fixture", "--check-only"], root=root) == 2
     assert "SYNTHETIC_PRIVATE_SENTINEL" not in capsys.readouterr().out
     with pytest.raises(ValueError, match="Credential presence"):
         jobs.require_extraction_lab(True, repository_root=root)
@@ -105,8 +105,8 @@ def test_admission_and_single_attempt_blocks(ready, monkeypatch, problem):
     assert launcher.main(["--prepared-run", "run_fixture"], root=root) == 2
 
 
-@pytest.mark.parametrize("answer", ["", "q", "chay tinh", "CHAY TINH "])
-def test_cancel_requires_exact_confirmation(ready, monkeypatch, answer):
+@pytest.mark.parametrize("answer", ["q", "CHAY TINH", "chay tinh", " "])
+def test_nonempty_input_cancels_before_agent_or_job(ready, monkeypatch, answer):
     root, _, _ = ready
     monkeypatch.setattr("builtins.input", lambda *a: answer)
     assert launcher.main(["--prepared-run", "run_fixture"], root=root) == 0
@@ -123,7 +123,7 @@ def test_noninteractive_invocation_cannot_attest(ready, monkeypatch, stream):
 
 def test_confirmed_launch_calls_runner_once_and_preserves_outcome(ready, monkeypatch, capsys):
     root, _, _ = ready
-    monkeypatch.setattr("builtins.input", lambda *a: launcher.CONFIRMATION)
+    monkeypatch.setattr("builtins.input", lambda *a: "")
     calls = []
     def run(path, identifier, **kwargs):
         calls.append((path, identifier, kwargs))
@@ -137,7 +137,7 @@ def test_confirmed_launch_calls_runner_once_and_preserves_outcome(ready, monkeyp
 @pytest.mark.parametrize("error", [ValueError, OSError, RuntimeError, KeyboardInterrupt, EOFError])
 def test_failure_or_interrupt_never_retries_or_echoes_private_error(ready, monkeypatch, capsys, error):
     root, _, _ = ready
-    monkeypatch.setattr("builtins.input", lambda *a: launcher.CONFIRMATION)
+    monkeypatch.setattr("builtins.input", lambda *a: "")
     calls = []
     def run(*a, **k):
         calls.append(True)
@@ -211,7 +211,7 @@ def test_optional_agent_cleanup_never_bypasses_remaining_guards(ready, monkeypat
         calls.append("probe")
         return None if case == "unknown" else Agent()
     monkeypatch.setattr(local_agent, "probe_local_agent", probe)
-    answers = iter(["q"] if case == "cancel" else [launcher.AGENT_CONFIRMATION, launcher.CONFIRMATION])
+    answers = iter(["q"] if case == "cancel" else ["", "q"])
     monkeypatch.setattr("builtins.input", lambda *a: next(answers))
     def run(*a, **k):
         calls.append("run")
@@ -219,7 +219,7 @@ def test_optional_agent_cleanup_never_bypasses_remaining_guards(ready, monkeypat
         return {"status": "completed"}
     monkeypatch.setattr(jobs, "run_job", run)
     args = ["--prepared-run", "run_fixture"] + (["--check-only"] if case == "check_only" else [])
-    expected = 0 if case in {"success", "cancel"} else (1 if case == "failure" else 2)
+    expected = 2 if case in {"check_only", "noninteractive"} else (1 if case == "failure" else 0)
     assert launcher.main(args, root=root) == expected
     assert ("run" in calls) == (case == "success")
     assert ("stop" in calls) == (case in {"success", "failure", "other_credential"})
@@ -227,3 +227,71 @@ def test_optional_agent_cleanup_never_bypasses_remaining_guards(ready, monkeypat
     if case not in {"success", "other_credential"}: assert jobs.os.environ.get("SSH_AUTH_SOCK")
     if case == "other_credential": assert jobs.os.environ.get("GH_TOKEN") == "synthetic_other_credential"
     if "stop" in calls: assert "close" in calls
+
+
+def test_connected_launcher_waits_for_manual_disconnect_then_one_enter_runs(ready, monkeypatch, capsys):
+    from malpdf.extraction import local_agent
+    root, _, state = ready
+    state["connected_interfaces"] = ["synthetic"]
+    jobs.os.environ.update(SSH_AUTH_SOCK="synthetic_socket", SSH_AGENT_PID="12345")
+    calls = []
+    class Agent:
+        def stop(self):
+            assert not state["connected_interfaces"]
+            calls.append("stop")
+            jobs.os.environ.pop("SSH_AUTH_SOCK"); jobs.os.environ.pop("SSH_AGENT_PID")
+        def close(self): calls.append("close")
+    monkeypatch.setattr(local_agent, "probe_local_agent", lambda: Agent())
+    def confirm(*a):
+        assert not calls  # No agent stop or job before operator's Enter.
+        state["connected_interfaces"] = []
+        return ""
+    monkeypatch.setattr("builtins.input", confirm)
+    def run(*a, **k):
+        calls.append("run")
+        assert k == {"lab_attested": True}
+        return {"status": "completed"}
+    monkeypatch.setattr(jobs, "run_job", run)
+    assert launcher.main(["--prepared-run", "run_fixture"], root=root) == 0
+    assert calls == ["stop", "close", "run"]
+    out = capsys.readouterr().out
+    assert "Tự ngắt" in out and "CHAY TINH" not in out and "DUNG AGENT" not in out
+
+
+@pytest.mark.parametrize("key,value", [
+    ("ssh_session", True), ("connected_interfaces", ["synthetic"]),
+    ("unknown_interfaces", ["synthetic"]), ("shared_mounts", ["synthetic"]),
+])
+def test_enter_while_still_blocked_waits_without_agent_or_job(ready, monkeypatch, key, value):
+    from malpdf.extraction import local_agent
+    root, _, state = ready
+    state[key] = value
+    jobs.os.environ.update(SSH_AUTH_SOCK="synthetic_socket", SSH_AGENT_PID="12345")
+    monkeypatch.setattr(local_agent, "probe_local_agent", lambda: pytest.fail("No agent action before isolation"))
+    answers = iter(["", "", "q"])
+    monkeypatch.setattr("builtins.input", lambda *a: next(answers))
+    assert launcher.main(["--prepared-run", "run_fixture"], root=root) == 0
+    assert jobs.os.environ["SSH_AUTH_SOCK"] == "synthetic_socket"
+    assert not (root / "data").exists()
+
+
+def test_network_reconnect_during_confirmation_waits_instead_of_running(ready, monkeypatch):
+    root, _, state = ready
+    answers = iter(["", "q"])
+    def confirm(*a):
+        state["connected_interfaces"] = ["synthetic_reconnected"]
+        return next(answers)
+    monkeypatch.setattr("builtins.input", confirm)
+    assert launcher.main(["--prepared-run", "run_fixture"], root=root) == 0
+    assert not (root / "data").exists()
+
+
+def test_dirty_code_detected_after_enter_never_runs(ready, monkeypatch):
+    root, _, _ = ready
+    def confirm(*a):
+        def dirty(*a): raise ValueError("synthetic dirty code")
+        monkeypatch.setattr(launcher, "clean_code", dirty)
+        return ""
+    monkeypatch.setattr("builtins.input", confirm)
+    assert launcher.main(["--prepared-run", "run_fixture"], root=root) == 2
+    assert not (root / "data").exists()

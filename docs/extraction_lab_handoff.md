@@ -2,10 +2,11 @@
 
 ## Console launcher
 
-Current job: `run_20261016T132849869208Z_7c69699dab3a`. The installed entry is
+Current job: `run_20261016T134919360105Z_b979e7832732`. The installed entry is
 `/home/drstone/Desktop/Extract PDF Offline.desktop`; the new package is recorded
-in [handoff summary](../reports/deployment/pdf_extraction_offline/run_20261016T132953367901Z_7c69699dab3a/handoff_summary.json).
-See [agent-step verification](../reports/progress/extract_pdf_agent_launcher_2026-10-16.md)
+in [handoff summary](../reports/deployment/pdf_extraction_offline/run_20261016T134953300090Z_b979e7832732/handoff_summary.json).
+See [wait-flow verification](../reports/progress/extract_pdf_launcher_wait_2026-10-16.md),
+[agent-step verification](../reports/progress/extract_pdf_agent_launcher_2026-10-16.md)
 and the [original launcher verification](../reports/progress/extract_pdf_launcher_2026-10-16.md).
 
 The interactive launcher is `scripts/launch_pdf_extraction.sh`, using the repo's
@@ -31,16 +32,20 @@ dirty code). It writes no official invocation/report/claim, so an unsuccessful
 precheck does not dirty the clean source needed by the real run. A bad job/model
 or unreadable state returns1. Ready precheck returns0; it is **not** attestation.
 
-Default launch requires an interactive terminal, all software checks passing,
-then the exact phrase `CHAY TINH`. The operator must first verify VMware
-NIC/sharing/clipboard/drag-drop controls, snapshot and the remaining credential
-audit. Anything else cancels without running. The established runner rechecks
-all gates after confirmation and preserves its one-attempt claim. Interruptions
+Open the launcher at VMware console **before disconnecting the network**. It
+keeps the terminal open while the operator disables the VMware NICs, shared
+folders, clipboard and drag/drop and verifies the snapshot/credential audit.
+Press **Enter** to confirm readiness, allow verified local-agent shutdown and
+start the static job if all checks pass. Nonempty input (such as `q`) cancels.
+If environmental blockers remain, it waits for another Enter in the same
+window; it neither polls nor invokes the job while waiting. Metadata/code/RAM/
+claim failures still refuse. The established runner rechecks all gates after
+confirmation and preserves its one-attempt claim. Interruptions
 keep evidence; there is no automatic restart. Only aggregate run status/paths are
 printed; private exception text and sample identities are not echoed.
 
-If the only blocking categories are agent/credential presence, the interactive
-launcher can offer **`DUNG AGENT`** before the PDF confirmation. It requires a
+After Enter, if the only blocking categories are agent/credential presence, the
+interactive launcher stops a verified local agent without a second phrase. It requires a
 local `SSH_AGENT_PID`, same-user process credentials, the exact `ssh-agent` name,
 and a same-user Unix socket with stable identity. It holds a Linux pidfd to avoid
 signalling a reused PID, rechecks console isolation/identity, sends SIGTERM and
@@ -48,12 +53,12 @@ requires process exit plus socket disappearance within3s. Only then does it
 remove the two stale agent variables from its own process environment and rerun
 all admission checks. It does not change the parent desktop environment.
 
-This is an explicit optional process action, not credential-file removal.
+The Enter prompt explicitly includes permission for this process action.
 Other tokens/keys/stores still block. Unknown/forwarded/stale agents, unsupported
 pidfd, cancellation or failed shutdown preserve the environment and keep PDFs
 blocked. `--check-only` and noninteractive invocations never offer or stop an
-agent. Network/SSH/dirty-code/admission blockers must be resolved first. The
-later `CHAY TINH` prompt and runner gates remain separate and mandatory.
+agent. Network/SSH/dirty-code/admission blockers must be resolved first. All
+runner gates remain mandatory; Enter is never an isolation bypass.
 
 Implementation uses Python's [pidfd API](https://docs.python.org/3.11/library/os.html#os.pidfd_open)
 and [pidfd signalling](https://docs.python.org/3.11/library/signal.html#signal.pidfd_send_signal).

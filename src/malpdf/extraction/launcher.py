@@ -9,8 +9,15 @@ import sys
 from malpdf.extraction import jobs
 from malpdf.experiments.cic_static_benchmark import clean_code
 
-CONFIRMATION = "CHAY TINH"
-AGENT_CONFIRMATION = "DUNG AGENT"
+LAB_ISSUES = {
+    "Use a non-root analysis account": "Dùng tài khoản thường tại VMware console.",
+    "Use VMware console; SSH session present": "Mở launcher từ VMware console, ngoài phiên SSH.",
+    "Disconnect all host/Internet network adapters": "Tự ngắt mọi NIC tới host/Internet trong VMware.",
+    "Network isolation state is unknown": "Chưa xác định được trạng thái mạng; kiểm tra cấu hình LAB.",
+    "Shared filesystem mounts present": "Tắt shared folders và unmount thư mục chia sẻ.",
+    "SSH agent socket present": "Agent cục bộ hợp lệ sẽ được dừng sau khi bạn nhấn Enter và mạng đã ngắt.",
+    "Credential presence blocks analysis": "Nếu còn key/token/kho đăng nhập ngoài agent, cần LAB không chứa chúng.",
+}
 
 
 def inspect_launch(root, prepared_run):
@@ -64,43 +71,56 @@ def main(argv=None, *, root=None):
     root = Path(root) if root is not None else Path(__file__).resolve().parents[3]
     try:
         report = inspect_launch(root, args.prepared_run)
-        agent_only = {"SSH agent socket present", "Credential presence blocks analysis"}
-        if (not args.check_only and sys.stdin.isatty() and sys.stdout.isatty()
-                and "SSH agent socket present" in report["blocking_reasons"]
-                and set(report["blocking_reasons"]) <= agent_only):
-            from malpdf.extraction.local_agent import probe_local_agent
-            agent = probe_local_agent()
-            if agent is not None:
-                try:
-                    print("Đã xác minh ssh-agent cục bộ của tài khoản hiện tại.")
-                    print("Có thể dừng agent này rồi kiểm tra lại. Không xóa file khóa/token.")
-                    if input(f"Gõ {AGENT_CONFIRMATION} rồi Enter để dừng; nhập khác để hủy: ") != AGENT_CONFIRMATION:
-                        print("Đã hủy; chưa dừng agent hoặc chạy PDF.")
-                        return 0
-                    agent.stop()
-                finally:
-                    agent.close()
-                print("Đã xác nhận agent thoát/socket được gỡ; kiểm tra lại toàn bộ điều kiện.")
-                report = inspect_launch(root, args.prepared_run)
-                report["agent_cleanup"] = "verified_local_agent_stopped"
-            else:
-                print("Chưa xác minh được agent cục bộ; giữ nguyên môi trường và chặn chạy.")
-        print(json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False), flush=True)
-        if report["blocking_reasons"]:
-            print("CHƯA CHẠY: xử lý các mục chặn; launcher không đổi mạng, xóa credentials hoặc tạo claim.")
-            return 2
         if args.check_only:
-            return 0
+            print(json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False), flush=True)
+            return 2 if report["blocking_reasons"] else 0
+        if any(reason not in LAB_ISSUES for reason in report["blocking_reasons"]):
+            print(json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False), flush=True)
+            print("CHƯA CHẠY: cần xử lý code/job/tài nguyên trước khi cô lập LAB.")
+            return 2
         if not (sys.stdin.isatty() and sys.stdout.isatty()):
             print("CHƯA CHẠY: cần terminal tương tác tại VMware console.")
             return 2
         print("CHẠY EXTRACTOR TĨNH — TRAIN/VALIDATION; TEST NGOÀI PHẠM VI.")
+        print(f"Job: {args.prepared_run}; {report['rows']} PDF; {report['profile']}.")
+        print("Cửa sổ sẽ chờ để bạn tự tắt mạng trong VMware.")
         print("Xác nhận tại VMware: mọi NIC tới host/Internet đã ngắt; shared folders,")
-        print("clipboard và drag/drop đã tắt; LAB không chứa credentials hoặc SSH/agent.")
+        print("clipboard và drag/drop đã tắt; LAB không chứa key/token/kho đăng nhập hoặc SSH.")
         print("Đã có snapshot trước phân tích. Không render, chạy JS, Reader hoặc CAPE.")
-        if input(f"Gõ {CONFIRMATION} rồi Enter để chạy một lần; nhập khác để hủy: ") != CONFIRMATION:
-            print("Đã hủy; chưa chạy PDF.")
-            return 0
+        print("Enter xác nhận các điều kiện trên, cho phép dừng agent cục bộ đã xác minh và chạy tĩnh một lần.")
+        while True:
+            for reason in report["blocking_reasons"]:
+                print("Đang chờ: " + LAB_ISSUES[reason])
+            if input("Chuẩn bị xong: nhấn Enter để kiểm tra và chạy; nhập q để đóng: ") != "":
+                print("Đã đóng; chưa chạy PDF.")
+                return 0
+            # Operator changes are observed only after Enter. Waiting never
+            # claims/runs a job, polls or changes NICs/credential files.
+            report = inspect_launch(root, args.prepared_run)
+            if any(reason not in LAB_ISSUES for reason in report["blocking_reasons"]):
+                print(json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False), flush=True)
+                print("CHƯA CHẠY: code/job/tài nguyên thay đổi; giữ nguyên evidence/claim.")
+                return 2
+            agent_only = {"SSH agent socket present", "Credential presence blocks analysis"}
+            if ("SSH agent socket present" in report["blocking_reasons"]
+                    and set(report["blocking_reasons"]) <= agent_only):
+                from malpdf.extraction.local_agent import probe_local_agent
+                agent = probe_local_agent()
+                if agent is not None:
+                    try:
+                        agent.stop()
+                    finally:
+                        agent.close()
+                    print("Đã dừng agent cục bộ; kiểm tra lại điều kiện LAB.")
+                    report = inspect_launch(root, args.prepared_run)
+                    if any(reason not in LAB_ISSUES for reason in report["blocking_reasons"]):
+                        print(json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False), flush=True)
+                        return 2
+                else:
+                    print("Chưa xác minh được agent cục bộ; giữ nguyên môi trường và chờ xử lý.")
+            if not report["blocking_reasons"]:
+                break
+            print("CHƯA CHẠY: bạn có thể xử lý rồi nhấn Enter ngay trong cửa sổ này.")
         # The runner rechecks all gates after the operator confirmation, before
         # its exclusive claim/PDF access. No retries or environment sanitizing.
         result = jobs.run_job(root, args.prepared_run, lab_attested=True)

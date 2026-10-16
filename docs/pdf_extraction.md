@@ -796,10 +796,12 @@ attestation covers the hypervisor controls and remaining credential audit.
 For a terminal/desktop launcher with the same runner, see
 [offline handoff](extraction_lab_handoff.md). Its read-only precheck writes no
 official refusal/report/claim. Actual launch needs a named sealed job, interactive
-console and exact operator confirmation; it never removes stored credentials or
-changes NICs. Its optional `DUNG AGENT` operation stops a verified local agent and clears
+console and operator Enter confirmation; it never removes stored credentials or
+changes NICs. It can open while connected, wait for manual VMware isolation,
+and recheck on Enter without exiting or invoking a blocked job. The same Enter
+permits stopping a verified local agent after isolation and clears
 only the two stale agent variables after confirmed exit/socket removal; all other
-credentials and the final PDF attestation remain guarded. Python and shell
+credentials and PDF attestation remain guarded. Python and shell
 launcher source are sealed, so earlier source locks refuse
 drift and must be replaced by a new preparation preserving the saved split.
 

@@ -199,10 +199,12 @@ def test_launcher_rechecks_isolation_after_confirmation_before_real_runner_claim
     monkeypatch.setattr(jobs, "extract_pdf", lambda *a, **k: pytest.fail("No PDF before second LAB check"))
     terminal = SimpleNamespace(isatty=lambda: True)
     monkeypatch.setattr(launcher, "sys", SimpleNamespace(version_info=(3, 11), stdin=terminal, stdout=terminal))
-    def confirm(*a):
+    real_run = jobs.run_job
+    def reconnect_before_runner(*args, **kwargs):
         state["connected_interfaces"] = ["synthetic_reconnected"]
-        return launcher.CONFIRMATION
-    monkeypatch.setattr("builtins.input", confirm)
+        return real_run(*args, **kwargs)
+    monkeypatch.setattr(jobs, "run_job", reconnect_before_runner)
+    monkeypatch.setattr("builtins.input", lambda *a: "")
     assert launcher.main(["--prepared-run", prepared["run_id"]], root=root) == 1
     assert not (root / "data/processed/pdf_extraction").exists()
     report = next((root / "reports/experiments/pdf_extraction_refused").glob("*/run_summary.json"))
