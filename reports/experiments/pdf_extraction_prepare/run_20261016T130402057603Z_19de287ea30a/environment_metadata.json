@@ -1,0 +1,47 @@
+{
+  "python": "3.11.17",
+  "packages": {
+    "numpy": "2.4.6",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.9.1",
+    "PyMuPDF": "1.26.7",
+    "torch": "2.11.0+cpu",
+    "torchvision": "0.26.0+cpu",
+    "xgboost": "3.2.0",
+    "lightgbm": "4.7.0",
+    "catboost": "1.2.10"
+  },
+  "generating_commit": "19de287ea30a4672658907ccf046b5e5ce89a925",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M docs/development.md",
+      " M docs/extraction_lab_handoff.md",
+      " M docs/pdf_extraction.md",
+      " M docs/workflows.md",
+      " M plans/extract-pdf/implementation.md",
+      " M src/malpdf/extraction/jobs.py",
+      " M tests/test_extraction_jobs.py",
+      "?? scripts/24_launch_pdf_extraction.py",
+      "?? scripts/launch_pdf_extraction.sh",
+      "?? src/malpdf/extraction/launcher.py",
+      "?? tests/test_extraction_launcher.py"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M docs/development.md",
+      " M docs/extraction_lab_handoff.md",
+      " M docs/pdf_extraction.md",
+      " M docs/workflows.md",
+      " M plans/extract-pdf/implementation.md",
+      " M src/malpdf/extraction/jobs.py",
+      " M tests/test_extraction_jobs.py",
+      "?? scripts/24_launch_pdf_extraction.py",
+      "?? scripts/launch_pdf_extraction.sh",
+      "?? src/malpdf/extraction/launcher.py",
+      "?? tests/test_extraction_launcher.py"
+    ]
+  }
+}

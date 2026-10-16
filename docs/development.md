@@ -1,5 +1,11 @@
 # Development environment and verification
 
+For the offline extractor launcher, admission/cancellation, credential-presence,
+shell quoting and exit-status tests are in `tests/test_extraction_launcher.py`.
+They use synthetic state only. The full suite also checks that shell launcher
+source is sealed and source drift is refused; see
+[LAB handoff](extraction_lab_handoff.md) for operator use.
+
 Use Python 3.11 for local and Codespace checks. Python 3.13 support applies to the authorized Kaggle GPU runtime; record effective package and CUDA versions for each run. The dependency declaration is [pyproject.toml](../pyproject.toml). Tests use synthetic or benign fixtures and require no external datasets.
 
 - [Windows local setup](#windows-local-setup)

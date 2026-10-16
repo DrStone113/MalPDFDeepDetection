@@ -83,7 +83,9 @@ synthetic checks with `.venv/bin/python -m pytest tests/test_trigger_planner.py`
 For the next real-PDF static diagnostic, use the private
 [offline LAB handoff](extraction_lab_handoff.md) for the existing Lubuntu repo.
 The package records the exact prepared job and environment without including
-samples or executing a launcher. Metadata checking can happen while connected;
+samples or executing a launcher. The console launcher is now available through
+`scripts/launch_pdf_extraction.sh` and a job-pinned desktop entry; see the handoff
+guide for check-only and exact operator confirmation. Metadata checking can happen while connected;
 actual execution still requires clean committed code and verified isolation at
 VMware console. Do not disconnect the active SSH NIC remotely.
 

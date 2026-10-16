@@ -24,7 +24,7 @@ from malpdf.extraction.orchestrator import extract_pdf
 from malpdf.provenance.research_runs import ResearchRun, write_json
 from malpdf.reproducibility import set_random_seed
 from malpdf.static.code_inspector import CodeInspectionLimits, _worker_count
-from malpdf.static.lab_guard import require_offline_lab
+from malpdf.static.lab_guard import lab_state, require_offline_lab
 from malpdf.static.safety import read_bounded_bytes
 
 MANIFESTS = ("split_manifest", "source_manifest", "normalization_manifest")
@@ -49,7 +49,7 @@ def fingerprint(root, limits, arlington_lock=None):
     sources = {}
     for directory in ("src/malpdf", "scripts", "configs"):
         for path in sorted((root / directory).rglob("*")):
-            if path.is_file() and path.suffix in {".py", ".yaml", ".toml", ".json"}:
+            if path.is_file() and path.suffix in {".py", ".yaml", ".toml", ".json", ".sh"}:
                 relative = str(path.relative_to(root))
                 sources[relative] = _hash(_read(root, relative))
     sources["pyproject.toml"] = _hash(_read(root, "pyproject.toml"))
@@ -175,28 +175,37 @@ def load_job(root, prepared_run):
     return lock, limits
 
 
-def require_extraction_lab(attested, *, repository_root=None):
-    """Add credential checks to the established offline/non-root/console guard.
+def extraction_lab_state(*, repository_root=None):
+    """Read bounded presence checks without attesting isolation or reading secrets.
 
     Check names/presence only; never read credential files or print their contents.
     The human console attestation still covers hypervisor controls we cannot see.
     """
-    state = require_offline_lab(attested)
+    state = lab_state()
     home = Path.home()
     sensitive = [home / ".aws/credentials", home / ".kaggle/kaggle.json", home / ".git-credentials",
-                 home / ".netrc", home / ".config/gcloud/application_default_credentials.json"]
+                 home / ".netrc", home / ".config/gcloud/application_default_credentials.json",
+                 home / ".codex/auth.json"]
     if repository_root is not None:
         root = Path(repository_root)
-        sensitive.extend(root / name for name in (".aws/credentials", ".kaggle/kaggle.json", ".netrc", ".env"))
+        sensitive.extend(root / name for name in (".aws/credentials", ".kaggle/kaggle.json", ".netrc", ".env", ".codex/auth.json"))
     ssh = home / ".ssh"
     private_keys = ssh.is_dir() and any(path.name.startswith("id_") and path.suffix != ".pub" for path in ssh.iterdir())
     credential_env = any(value and (name in {"SSH_AUTH_SOCK", "GITHUB_TOKEN", "GH_TOKEN", "OPENAI_API_KEY", "KAGGLE_KEY",
         "KAGGLE_API_TOKEN", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN", "GOOGLE_APPLICATION_CREDENTIALS"}
         or name.endswith(("_TOKEN", "_API_KEY", "_PASSWORD", "_SECRET"))) for name, value in os.environ.items())
-    if credential_env or private_keys or any(path.exists() or path.is_symlink() for path in sensitive):
+    return {**state, "agent_forwarding_present": bool(os.environ.get("SSH_AUTH_SOCK")),
+            "known_credentials_present": bool(credential_env or private_keys or any(
+                path.exists() or path.is_symlink() for path in sensitive)),
+            "credential_check_scope": "known paths including Codex auth, SSH id_* keys and credential environment names; console attestation required"}
+
+
+def require_extraction_lab(attested, *, repository_root=None):
+    state = extraction_lab_state(repository_root=repository_root)
+    require_offline_lab(attested, state=state)
+    if state["known_credentials_present"] or state["agent_forwarding_present"]:
         raise ValueError("Credential presence blocks PDF analysis; use the approved credential-free console LAB")
-    return {**state, "agent_forwarding_present": False, "known_credentials_present": False,
-            "credential_check_scope": "known paths, SSH id_* keys and credential environment names; console attestation required"}
+    return state
 
 
 def run_job(root, prepared_run, *, lab_attested=False):

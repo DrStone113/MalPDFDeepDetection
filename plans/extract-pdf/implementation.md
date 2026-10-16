@@ -21,6 +21,12 @@ Danh sách nghiệm thu đầy đủ được theo dõi tại [acceptance.md](ac
 
 ## Phần kế hoạch tổng thể còn lại
 
+Theo yêu cầu tiếp theo của người dùng, bổ sung launcher console/desktop cho job
+tĩnh đã khóa: precheck không ghi claim/report, không tự đổi NIC/xóa credentials,
+xác nhận tương tác trước khi gọi lại runner có đủ guard. Source launcher Python
+và shell được khóa; Codex auth store được chặn theo sự hiện diện. Đây là chuẩn
+bị thao tác offline, không phải bằng chứng đã chạy hoặc nghiệm thu PDF thật.
+
 Nghiệm thu forensic trên PDF thật, giải mã native media/archive ngoài ZIP,
 catalog reachability/conformance đầy đủ và predicate Arlington còn thiếu, suy luận JS
 liên thủ tục/heap đầy đủ, bộ phân tích font/media/hiển thị, emulator/Reader/CAPE, tái nhập hiện vật,

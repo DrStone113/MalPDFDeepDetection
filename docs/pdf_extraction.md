@@ -787,11 +787,18 @@ From that approved console only:
 ```
 
 The runner checks offline state, known credential paths/environment names,
-`SSH_AUTH_SOCK`, SSH `id_*` private keys, clean code, exact source/environment
+`SSH_AUTH_SOCK`, SSH `id_*` private keys, home/repo `.codex/auth.json`, clean code, exact source/environment
 fingerprint, manifest checksums and RAM admission **before** claiming the job or
 opening a PDF. Credential presence checks never read/print credential contents;
 they are bounded checks, not proof that no credential exists anywhere. Console
 attestation covers the hypervisor controls and remaining credential audit.
+
+For a terminal/desktop launcher with the same runner, see
+[offline handoff](extraction_lab_handoff.md). Its read-only precheck writes no
+official refusal/report/claim. Actual launch needs a named sealed job, interactive
+console and exact operator confirmation; it never clears credentials or changes
+NICs. Python and shell launcher source are sealed, so earlier source locks refuse
+drift and must be replaced by a new preparation preserving the saved split.
 
 Each sealed job has an exclusive persistent claim. Failures/interruption retain
 it; no retry is performed automatically. Per-sample bundles/metadata go to ignored

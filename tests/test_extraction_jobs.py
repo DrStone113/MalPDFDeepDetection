@@ -79,6 +79,19 @@ def test_manifest_hash_drift_fails_and_retains_failed_invocation(root):
     assert "failed" in (root / "reports/research_log.md").read_text()
 
 
+def test_shell_launcher_source_is_sealed_and_refuses_drift(root):
+    scripts = root / "scripts"
+    scripts.mkdir()
+    shell = scripts / "launcher.sh"
+    shell.write_text("#!/bin/sh\nexit 0\n")
+    state = prepare(root)
+    lock, _ = jobs.load_job(root, state["run_id"])
+    assert "scripts/launcher.sh" in lock["fingerprint"]["sources"]
+    shell.write_text("#!/bin/sh\nexit 1\n")
+    with pytest.raises(ValueError, match="Generating code/environment changed"):
+        jobs.load_job(root, state["run_id"])
+
+
 def test_conflicting_manifest_candidates_are_reported_without_selection(root):
     cfg = yaml.safe_load((root / "configs/cic_synthetic.yaml").read_text())
     cfg["split_manifest"]["sha256"] = "0" * 64
@@ -132,7 +145,8 @@ def test_offline_job_refuses_before_pdf_or_claim_when_lab_not_attested(root, mon
 
 
 def test_offline_guard_checks_agent_credentials_and_keys_without_reading_contents(tmp_path, monkeypatch):
-    monkeypatch.setattr(jobs, "require_offline_lab", lambda attested: {"uid": 1000, "ssh_session": False})
+    monkeypatch.setattr(jobs, "lab_state", lambda: {"uid": 1000, "ssh_session": False,
+        "connected_interfaces": [], "unknown_interfaces": [], "shared_mounts": []})
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
     monkeypatch.setattr(jobs.os, "environ", {})
     assert jobs.require_extraction_lab(True)["known_credentials_present"] is False
@@ -166,3 +180,30 @@ def test_offline_partial_rows_remain_in_denominators_and_claim_is_single_use(roo
     with pytest.raises(FileExistsError):
         jobs.run_job(root, state["run_id"], lab_attested=True)
     assert len(calls) == 64
+
+
+def test_launcher_rechecks_isolation_after_confirmation_before_real_runner_claim(root, monkeypatch):
+    from types import SimpleNamespace
+    from malpdf.experiments import cic_static_benchmark
+    from malpdf.extraction import launcher
+
+    prepared = prepare(root)
+    state = {"uid": 1000, "ssh_session": False, "connected_interfaces": [],
+             "unknown_interfaces": [], "shared_mounts": []}
+    monkeypatch.setattr(jobs, "lab_state", lambda: dict(state))
+    monkeypatch.setattr(Path, "home", lambda: root)
+    monkeypatch.setattr(jobs.os, "environ", {})
+    monkeypatch.setattr(launcher, "clean_code", lambda root: None)
+    monkeypatch.setattr(cic_static_benchmark, "clean_code", lambda root: None)
+    monkeypatch.setattr(jobs, "_worker_count", lambda *a: 1)
+    monkeypatch.setattr(jobs, "extract_pdf", lambda *a, **k: pytest.fail("No PDF before second LAB check"))
+    terminal = SimpleNamespace(isatty=lambda: True)
+    monkeypatch.setattr(launcher, "sys", SimpleNamespace(version_info=(3, 11), stdin=terminal, stdout=terminal))
+    def confirm(*a):
+        state["connected_interfaces"] = ["synthetic_reconnected"]
+        return launcher.CONFIRMATION
+    monkeypatch.setattr("builtins.input", confirm)
+    assert launcher.main(["--prepared-run", prepared["run_id"]], root=root) == 1
+    assert not (root / "data/processed/pdf_extraction").exists()
+    report = next((root / "reports/experiments/pdf_extraction_refused").glob("*/run_summary.json"))
+    assert json.loads(report.read_text())["status"] == "refused"
