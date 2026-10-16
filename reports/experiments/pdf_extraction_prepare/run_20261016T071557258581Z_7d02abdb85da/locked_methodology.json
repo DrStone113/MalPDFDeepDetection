@@ -1,0 +1,110 @@
+{
+  "protocol": "CIC saved Protocol G Train/Validation extraction development",
+  "configuration": {
+    "cohort_config": "configs/cic_static_benchmark.yaml",
+    "profile": "deep-static",
+    "seed": 42,
+    "workers": 1,
+    "samples_per_partition": 32,
+    "arlington_lock": "configs/arlington.lock.json",
+    "limits": {
+      "wall_seconds": 20,
+      "cpu_seconds": 12,
+      "memory_bytes": 1073741824,
+      "max_file_bytes": 10485760
+    }
+  },
+  "manifest_provenance": {
+    "split_manifest": {
+      "path": "data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/split_manifest.csv",
+      "sha256": "e939a676c51c7a98b9dc4bb843e846f546e1ada2bfb576b41416c406415c0643"
+    },
+    "source_manifest": {
+      "path": "data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/source_manifest.csv",
+      "sha256": "d74729236017dc27a71c999bc4d69f84a16fa4148573c3bbc7f4eb03709b150b"
+    },
+    "normalization_manifest": {
+      "path": "data/processed/cic_normalization/run_20261003T104918756555Z_3b68d36a5705/normalization_manifest.csv",
+      "sha256": "c4dc77f00849518ee56dc34d0f0cc7daf0c92b3ce9fd1e93fd63d053caf8570f"
+    }
+  },
+  "manifest_candidates": {
+    "configs/cic_static_benchmark.yaml": {
+      "split_manifest": {
+        "path": "data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/split_manifest.csv",
+        "sha256": "e939a676c51c7a98b9dc4bb843e846f546e1ada2bfb576b41416c406415c0643"
+      },
+      "source_manifest": {
+        "path": "data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/source_manifest.csv",
+        "sha256": "d74729236017dc27a71c999bc4d69f84a16fa4148573c3bbc7f4eb03709b150b"
+      },
+      "normalization_manifest": {
+        "path": "data/processed/cic_normalization/run_20261003T104918756555Z_3b68d36a5705/normalization_manifest.csv",
+        "sha256": "c4dc77f00849518ee56dc34d0f0cc7daf0c92b3ce9fd1e93fd63d053caf8570f"
+      }
+    }
+  },
+  "test_access": false,
+  "fitting": false,
+  "selection": "existing seed42 class/partition SHA rank; 32 Train and 32 exposed Validation; no split regeneration",
+  "interpretation": "extraction-only diagnostic; no classifier accuracy/coverage gain claimed",
+  "execution": "offline non-root console after clean commit; no rendering, JS execution or CAPE",
+  "seed": 42,
+  "code_commit": "7d02abdb85da108b64c92b51dfe10ddb02858cd3",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M .gitignore",
+      " M AGENTS.md",
+      " M README.md",
+      " M pyproject.toml",
+      " M reports/research_log.md",
+      " M scripts/19_validate_pdf_evidence_v8.py",
+      " M scripts/21_validate_pdf_evidence_v9.py",
+      " M src/malpdf/cli.py",
+      " M src/malpdf/data/kaggle_export.py",
+      " M src/malpdf/data/kaggle_notebook.py",
+      " M src/malpdf/experiments/multi_cohort_v4.py",
+      " M src/malpdf/provenance/research_runs.py",
+      " M src/malpdf/static/analyzer.py",
+      " M src/malpdf/static/evidence_v9.py",
+      " M src/malpdf/static/js_ast.py",
+      " M src/malpdf/static/profile_worker.py",
+      " M src/malpdf/static/recovery.py",
+      "?? configs/arlington.lock.json",
+      "?? configs/extraction_profiles.yaml",
+      "?? docs/README.md",
+      "?? docs/contributing_plugins.md",
+      "?? docs/development.md",
+      "?? docs/pdf_extraction.md",
+      "?? docs/research_status.md",
+      "?? docs/workflows.md",
+      "?? docs/workspace_layout.md",
+      "?? plans/",
+      "?? reports/experiments/arlington_model_verify/",
+      "?? reports/experiments/pdf_extraction_prepare/",
+      "?? reports/progress/",
+      "?? scripts/22_extract_pdf.py",
+      "?? scripts/23_arlington_model.py",
+      "?? src/malpdf/extraction/",
+      "?? src/malpdf/static/js_abstract.py",
+      "?? src/malpdf/static/js_semantics.py",
+      "?? tests/test_arlington.py",
+      "?? tests/test_byte_images.py",
+      "?? tests/test_extraction.py",
+      "?? tests/test_extraction_contracts.py",
+      "?? tests/test_extraction_exports.py",
+      "?? tests/test_extraction_jobs.py",
+      "?? tests/test_extraction_plugins.py",
+      "?? tests/test_js_semantics.py",
+      "?? tests/test_parser_inventory.py",
+      "?? tests/test_raw_forensic.py",
+      "?? tests/test_recursive_carving.py",
+      "?? tests/test_stream_extraction.py",
+      "?? tests/test_stream_filters.py",
+      "?? tests/test_workspace_layout.py"
+    ]
+  },
+  "label_convention": "Label=1 malicious",
+  "ece_convention": "10 equal-width probability bins; p=1 in last bin"
+}

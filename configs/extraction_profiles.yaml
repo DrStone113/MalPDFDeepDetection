@@ -1,0 +1,12 @@
+# Additive extraction development; historical models/campaigns stay locked.
+cohort_config: configs/cic_static_benchmark.yaml
+profile: deep-static
+seed: 42
+workers: 1
+samples_per_partition: 32
+arlington_lock: configs/arlington.lock.json
+limits:
+  wall_seconds: 20
+  cpu_seconds: 12
+  memory_bytes: 1073741824
+  max_file_bytes: 10485760

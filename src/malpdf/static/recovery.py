@@ -15,11 +15,12 @@ from malpdf.static.js_ast import CodeInspectionError
 class MuPDFObjectReader:
     strict = False
 
-    def __init__(self, data, limits):
+    def __init__(self, data, limits, *, raw_stream_allowance=None):
         import pymupdf
         if not isinstance(data, bytes) or not data.startswith(b"%PDF-") or len(data) > limits.max_file_bytes:
             raise CodeInspectionError("recovery_input_invalid")
         self.limits, self.objects = limits, {}
+        self.raw_stream_allowance = raw_stream_allowance
         pymupdf.TOOLS.mupdf_warnings(reset=True)
         self.document = pymupdf.open(stream=data, filetype="pdf")
         try:
@@ -59,8 +60,14 @@ class MuPDFObjectReader:
         if self.document.xref_is_stream(number):
             if not isinstance(value, DictionaryObject):
                 raise CodeInspectionError("recovery_stream_dictionary_invalid")
+            cap = self.limits.max_file_bytes
+            if self.raw_stream_allowance is not None:
+                cap = min(cap,self.raw_stream_allowance())
+                declared = value.get('/Length')
+                if (cap == 0 and declared != 0) or isinstance(declared,int) and declared > cap:
+                    raise CodeInspectionError('recovery_stream_byte_limit')
             raw = self.document.xref_stream_raw(number)
-            if not isinstance(raw, bytes) or len(raw) > self.limits.max_file_bytes:
+            if not isinstance(raw, bytes) or len(raw) > cap:
                 raise CodeInspectionError("recovery_stream_byte_limit")
             stream = EncodedStreamObject()
             stream.update(value)
@@ -73,7 +80,7 @@ class MuPDFObjectReader:
         self.document.close()
 
 
-def projected_object(value):
+def projected_object(value, *, include_fields=False):
     """A bounded comparison of selected fields, never object content export."""
     import hashlib
     import json
@@ -81,8 +88,9 @@ def projected_object(value):
     from pypdf.generic import ArrayObject, FloatObject, NumberObject, StreamObject
     visited = 0
     complete = True
+    fields, fields_complete = [], True
     def project(item, depth=0):
-        nonlocal visited, complete
+        nonlocal visited, complete, fields_complete
         visited += 1
         if visited > 1024 or depth > 8:
             complete = False
@@ -100,7 +108,18 @@ def projected_object(value):
                 if visited >= 1024:
                     complete = False
                     break
-                result.append([hashlib.sha256(str(key).encode()).hexdigest(), project(child, depth+1)])
+                key_hash = hashlib.sha256(str(key).encode()).hexdigest()
+                projected = project(child, depth+1)
+                result.append([key_hash, projected])
+                if include_fields and depth == 0:
+                    if len(fields) < 64:
+                        def verified(tree):
+                            return not (isinstance(tree, list) and (tree == ['unverified'] or any(not verified(x) for x in tree)))
+                        fields.append({'key_sha256': key_hash, 'value_type': projected[0],
+                            'value_sha256': hashlib.sha256(json.dumps(projected,sort_keys=True).encode()).hexdigest(),
+                            'complete': verified(projected)})
+                    else:
+                        fields_complete = False
             return ['dictionary', result]
         if isinstance(item, ArrayObject):
             result = []
@@ -112,7 +131,7 @@ def projected_object(value):
             return ['array', result]
         if isinstance(item, bytes):
             return ['bytes', hashlib.sha256(item).hexdigest()]
-        if isinstance(item,(NumberObject,FloatObject)):
+        if isinstance(item,(NumberObject,FloatObject,Decimal)):
             # MuPDF canonicalizes 0.0 to 0; preserve exact decimal identity
             # without lossy float conversion of large integer PDF values.
             decimal=Decimal(str(item))
@@ -127,8 +146,11 @@ def projected_object(value):
     projection = hashlib.sha256(json.dumps(project(value), sort_keys=True).encode()).hexdigest()
     action = value.get("/S") if isinstance(value, DictionaryObject) else None
     known = {"/JavaScript", "/Launch", "/URI", "/SubmitForm", "/GoToR", "/GoToE", "/ImportData"}
-    return {"type": 'StreamObject' if isinstance(value,StreamObject) else type(value).__name__, "action": str(action) if str(action) in known else None,
+    result = {"type": 'StreamObject' if isinstance(value,StreamObject) else type(value).__name__, "action": str(action) if str(action) in known else None,
             "projected_values_sha256": projection, "projection_complete": complete,
             "stream_sha256": hashlib.sha256(value._data).hexdigest() if isinstance(value, StreamObject) else None,
             "security_keys": sorted(str(k) for k in value if str(k) in known | {"/JS", "/AA", "/OpenAction", "/XFA", "/EF"})
                 if isinstance(value, DictionaryObject) else []}
+    if include_fields:
+        result.update(key_projections=fields, key_enumeration_complete=bool(complete and fields_complete), projection_nodes=visited)
+    return result

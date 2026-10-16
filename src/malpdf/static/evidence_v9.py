@@ -96,8 +96,9 @@ def merge_evidence_delta(target, delta):
 
 
 class _Store:
-    def __init__(self, digest, checkpoint, raw_sink):
+    def __init__(self, digest, checkpoint, raw_sink, stream_sink=None):
         self.digest, self.checkpoint, self.raw_sink = digest, checkpoint, raw_sink
+        self.stream_sink = stream_sink
         self.result = {"schema_version": EVIDENCE_SCHEMA, "document_sha256": digest,
                        "observations": [], "edges": [], "capability_checks": [],
                        "conflicts": [], "backend_results": [], "status": "partial",
@@ -394,6 +395,9 @@ class _Graph:
                 fields["raw_bytes"] = len(raw)
         identity = self.store.observation(self.backend, locator, kind, number=number, generation=generation,
                                           offset=offset, **fields)
+        if isinstance(value, StreamObject) and self.store.stream_sink is not None:
+            self.store.stream_sink(value, backend=self.backend, source_id=identity,
+                object_number=number, generation=generation, offset=offset)
         if reference:
             self.seen[(number, generation)] = identity
             self.projections[(number, generation)] = (identity, projection)
@@ -805,7 +809,7 @@ def _witnesses(result):
 
 
 def inspect_evidence_v9(data, static, code, limits, *, timings=None, primary_complete=False,
-                        checkpoint=None, raw_sink=None, legacy_analysis=None):
+                        checkpoint=None, raw_sink=None, legacy_analysis=None, stream_sink=None):
     """Inspect immutable bytes inside the existing capped worker and emit deltas.
 
     Legacy v8 is measured first; remaining decoded-byte and AST budgets are
@@ -814,7 +818,7 @@ def inspect_evidence_v9(data, static, code, limits, *, timings=None, primary_com
     """
     if not isinstance(data, bytes) or not data.startswith(b"%PDF-") or len(data) > limits.max_file_bytes:
         raise CodeInspectionError("not_pdf_or_byte_limit")
-    store = _Store(_digest(data), checkpoint, raw_sink)
+    store = _Store(_digest(data), checkpoint, raw_sink, stream_sink)
     result = store.result
     result["primary_profile_complete"] = bool(primary_complete)
     result["recovery_attempted"] = not primary_complete

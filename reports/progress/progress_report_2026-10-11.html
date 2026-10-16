@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Báo cáo tiến độ ngày 11/10/2026: dữ liệu RIT và CIC, nhóm PDF thu thập thêm, các lần huấn luyện Kaggle và cải tiến bộ đọc PDF.">
+  <meta name="color-scheme" content="light">
+  <title>Báo cáo tiến độ · MalPDFDeepDetection · 11/10/2026</title>
+  <style>
+    :root {
+      --paper: #f4f5f1; --white: #fff; --ink: #172c35; --muted: #52636a;
+      --line: #dce3df; --teal: #00675b; --teal-soft: #e9f4ef;
+      --amber: #815313; --amber-soft: #fff3df; --red: #a43c37; --red-soft: #fbeeea;
+      --blue: #315e91; --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 90px; }
+    body { margin: 0; color: var(--ink); background: var(--paper); font-family: "Segoe UI", Arial, sans-serif; font-size: 16px; line-height: 1.65; }
+    a { color: var(--teal); text-underline-offset: 4px; }
+    a:hover { text-decoration-thickness: 2px; }
+    button { font: inherit; cursor: pointer; }
+    button:disabled { opacity: .45; cursor: default; }
+    :focus-visible { outline: 3px solid var(--blue); outline-offset: 4px; }
+    .skip { position: absolute; top: -100px; left: 20px; z-index: 20; padding: 10px 16px; background: var(--white); }
+    .skip:focus { top: 10px; }
+    .topbar { position: sticky; top: 0; z-index: 10; background: #fffffff5; border-bottom: 1px solid var(--line); }
+    .topbar-inner { max-width: 1240px; margin: auto; padding: 14px 28px; display: flex; gap: 20px; align-items: center; justify-content: space-between; }
+    .brand { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; letter-spacing: .02em; }
+    .brand-mark { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: var(--ink); color: #fff; font-size: 12px; }
+    .actions { display: flex; gap: 8px; }
+    .btn { border: 1px solid var(--line); border-radius: 9px; padding: 7px 14px; background: #fff; color: var(--ink); font-size: 13px; font-weight: 600; }
+    .btn.primary { border-color: var(--teal); background: var(--teal); color: #fff; }
+    .btn:hover:not(:disabled) { box-shadow: 0 2px 8px #172c3514; }
+    .shell { max-width: 1240px; margin: auto; display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 38px; padding: 38px 28px 80px; }
+    .sidebar { align-self: start; position: sticky; top: 96px; }
+    .eyebrow { margin: 0 0 12px; text-transform: uppercase; letter-spacing: .15em; font-size: 11px; font-weight: 800; color: var(--muted); }
+    .sidebar nav { display: grid; gap: 4px; }
+    .sidebar a { color: var(--muted); text-decoration: none; padding: 8px 10px; border-radius: 8px; font-size: 13px; }
+    .sidebar a:hover { background: #e7eeea; color: var(--teal); }
+    .sidebar .footnote { padding: 16px 10px 0; border-top: 1px solid var(--line); margin-top: 24px; font-size: 12px; }
+    main { min-width: 0; }
+    .slide { scroll-margin-top: 90px; margin-bottom: 28px; }
+    .hero { position: relative; background: var(--ink); color: #fff; padding: 42px; border-radius: 22px; overflow: hidden; }
+    .hero::after { content: ""; position: absolute; width: 260px; height: 260px; border: 1px solid #ffffff13; border-radius: 50%; right: -90px; top: -80px; pointer-events: none; }
+    .hero .eyebrow { color: #b9d2ce; }
+    .hero h1 { margin: 8px 0 18px; font-size: clamp(30px, 4vw, 46px); line-height: 1.2; letter-spacing: -.035em; max-width: 650px; overflow-wrap: anywhere; }
+    .hero p { max-width: 670px; color: #d9e5e6; }
+    .hero .lede { font-size: 18px; }
+    .meta { display: flex; flex-wrap: wrap; gap: 10px 22px; color: #bdd1d3; font-size: 12px; margin-top: 26px; }
+    .hero .badge { background: #ffffff0d; color: #ffdfa5; border: 1px solid #ffdfa536; }
+    .hero-bottom { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 25px; }
+    .hero-bottom span:last-child { color: #bdd1d3; font-size: 13px; }
+    .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
+    .stat { padding: 21px; background: var(--white); border: 1px solid var(--line); border-radius: 14px; }
+    .stat strong { display: block; font-size: 34px; line-height: 1.15; letter-spacing: -.04em; }
+    .stat .label { display: block; margin-top: 9px; font-size: 13px; font-weight: 700; }
+    .stat p { margin: 5px 0 0; font-size: 12px; color: var(--muted); }
+    .section-card { background: var(--white); border: 1px solid var(--line); border-radius: var(--radius); padding: 30px; }
+    .section-head { display: flex; gap: 15px; align-items: flex-start; margin-bottom: 22px; }
+    .number { flex: 0 0 36px; height: 36px; display: grid; place-items: center; background: var(--teal-soft); color: var(--teal); border-radius: 10px; font-size: 12px; font-weight: 800; }
+    h2 { font-size: 25px; line-height: 1.35; margin: 0 0 7px; letter-spacing: -.025em; }
+    h3 { font-size: 17px; margin: 0 0 10px; line-height: 1.4; }
+    p { margin: 0 0 14px; }
+    .section-head p { margin: 0; font-size: 14px; color: var(--muted); }
+    .muted, .footnote { color: var(--muted); }
+    .footnote { font-size: 12px; line-height: 1.65; margin: 12px 0 0; }
+    .badge { display: inline-block; border-radius: 6px; padding: 4px 9px; font-size: 11px; font-weight: 800; line-height: 1.5; }
+    .badge.green { background: var(--teal-soft); color: var(--teal); }
+    .badge.amber { background: var(--amber-soft); color: var(--amber); }
+    .badge.red { background: var(--red-soft); color: var(--red); }
+    .grid-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .panel { border: 1px solid var(--line); border-radius: 12px; padding: 20px; min-width: 0; }
+    .panel.soft { background: #f7f9f7; }
+    .attempts { display: grid; gap: 16px; margin-top: 20px; }
+    .attempt-heading { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; margin-bottom: 12px; }
+    .attempt-heading h3 { margin: 0; }
+    .attempt-heading small { color: var(--muted); font-size: 12px; }
+    .attempts p { font-size: 14px; }
+    .panel p:last-child { margin-bottom: 0; }
+    .panel .big { font-size: 30px; font-weight: 750; line-height: 1.2; display: block; margin: 12px 0; }
+    .callout { border-left: 3px solid var(--teal); background: var(--teal-soft); border-radius: 0 10px 10px 0; padding: 15px 18px; margin-top: 18px; font-size: 14px; }
+    .callout.amber { border-color: var(--amber); background: var(--amber-soft); }
+    .callout.red { border-color: var(--red); background: var(--red-soft); }
+    .callout p:last-child { margin: 0; }
+    .table-wrap { overflow-x: auto; margin: 18px 0 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+    caption { text-align: left; font-weight: 700; color: var(--muted); margin-bottom: 10px; font-size: 12px; }
+    th, td { padding: 12px 13px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    thead th { background: #f1f5f2; font-size: 12px; }
+    tbody th { font-weight: 600; }
+    tr.highlight { background: #f3f8f5; }
+    td.numeric, th.numeric { text-align: right; white-space: nowrap; }
+    .good { color: var(--teal); font-weight: 700; }
+    .caution { color: var(--amber); font-weight: 700; }
+    .bad { color: var(--red); font-weight: 700; }
+    .flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 20px 0; }
+    .flow-item { background: #f4f7f4; border: 1px solid var(--line); border-radius: 10px; padding: 15px; }
+    .flow-item strong { display: block; margin-bottom: 6px; font-size: 13px; }
+    .flow-item span { font-size: 12px; color: var(--muted); display: block; }
+    .legend { display: flex; flex-wrap: wrap; gap: 15px; font-size: 12px; margin: 16px 0; }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .dot { height: 9px; width: 9px; border-radius: 3px; display: inline-block; }
+    .complete { background: var(--teal); color: #fff; }
+    .partial { background: #d9a958; color: #172c35; }
+    .unavailable { background: #bd625a; color: #fff; }
+    .bar-row { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 12px; align-items: center; margin: 12px 0; font-size: 13px; font-weight: 700; }
+    .stack { height: 34px; display: flex; overflow: hidden; border-radius: 7px; }
+    .stack span { display: grid; place-items: center; min-width: 0; font-size: 12px; }
+    .metric-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 18px 0; }
+    .metric-item { padding: 14px; border-radius: 10px; background: #f5f7f5; }
+    .metric-item strong { display: block; font-size: 25px; line-height: 1.3; }
+    .metric-item span { font-size: 12px; color: var(--muted); }
+    .confusion td { font-size: 23px; font-weight: 750; text-align: center; }
+    .confusion td small { display: block; font-size: 11px; font-weight: 400; }
+    .confusion th { font-size: 11px; vertical-align: middle; }
+    .confusion .correct { background: var(--teal-soft); }
+    .confusion .wrong { background: var(--red-soft); }
+    .reason { display: flex; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+    .reason:last-child { border-bottom: 0; }
+    .reason .count { font-size: 28px; min-width: 42px; color: var(--amber); line-height: 1.3; font-weight: 750; }
+    .reason strong { display: block; font-size: 13px; }
+    .reason p { font-size: 12px; margin: 4px 0 0; color: var(--muted); }
+    .roadmap { display: grid; gap: 14px; }
+    .roadmap-item { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 15px; border: 1px solid var(--line); border-radius: 12px; padding: 19px; }
+    .roadmap-item .step { font-size: 22px; color: var(--teal); font-weight: 800; }
+    .roadmap-item p { font-size: 14px; margin: 0 0 8px; }
+    .roadmap-item .deliverable { font-size: 12px; color: var(--muted); margin: 0; }
+    ul { padding-left: 21px; margin: 10px 0 0; }
+    li { padding-left: 3px; margin: 7px 0; font-size: 14px; }
+    details { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 15px; }
+    summary { cursor: pointer; font-weight: 650; font-size: 14px; }
+    details[open] summary { margin-bottom: 15px; }
+    .sources { list-style: none; padding: 0; display: grid; gap: 12px; }
+    .sources li { margin: 0; padding: 0 0 12px; border-bottom: 1px solid var(--line); }
+    .sources a { font-size: 13px; font-weight: 650; overflow-wrap: anywhere; }
+    .sources small { display: block; font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .formula { font-size: 26px; font-family: Georgia, serif; text-align: center; padding: 12px 0; }
+    code { font-family: Consolas, monospace; font-size: .9em; overflow-wrap: anywhere; }
+    footer { font-size: 12px; color: var(--muted); padding: 0 5px; }
+    [hidden] { display: none !important; }
+    .presenter-controls { display: flex; align-items: center; gap: 12px; }
+    #slide-counter { font-size: 12px; color: var(--muted); min-width: 40px; text-align: center; }
+    body.presenting .shell { display: block; max-width: 1220px; padding-top: 28px; }
+    body.presenting .sidebar, body.presenting footer { display: none; }
+    body.presenting .slide { display: none; }
+    body.presenting .slide.active { display: block; }
+    body.presenting .section-card { padding: 36px; min-height: calc(100vh - 135px); }
+    body.presenting h2 { font-size: 32px; }
+    body.presenting .hero { padding: 55px; }
+    @media (max-width: 1000px) {
+      .shell { grid-template-columns: 155px minmax(0, 1fr); gap: 22px; padding: 26px 20px 60px; }
+      .hero { padding: 30px; }
+      .section-card { padding: 23px; }
+      .flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 760px) {
+      html { scroll-padding-top: 120px; }
+      .shell { display: block; padding: 20px 14px 45px; }
+      .sidebar { position: static; margin-bottom: 20px; }
+      .sidebar > .eyebrow, .sidebar .footnote { display: none; }
+      .sidebar nav { display: flex; gap: 5px; flex-wrap: wrap; }
+      .sidebar a { background: #e9eeea; font-size: 12px; padding: 6px 9px; }
+      .topbar-inner { padding: 10px 14px; gap: 10px; flex-wrap: wrap; }
+      .brand { font-size: 12px; }
+      .btn { padding: 6px 10px; font-size: 12px; }
+      .hero { padding: 26px; }
+      .hero .lede { font-size: 16px; }
+      .stats { gap: 9px; }
+      .stat { padding: 14px 11px; }
+      .stat strong { font-size: 27px; }
+      .stat .label { font-size: 12px; }
+      .grid-two { grid-template-columns: 1fr; }
+      .section-card { padding: 21px 18px; }
+      h2 { font-size: 22px; }
+      body.presenting .shell { padding: 20px 14px 45px; }
+      body.presenting .hero, body.presenting .section-card { padding: 24px; }
+      body.presenting h2 { font-size: 25px; }
+    }
+    @media (max-width: 430px) { .stats { grid-template-columns: 1fr; } .stat strong { font-size: 30px; } .flow { grid-template-columns: 1fr; } }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+    @page { size: A4; margin: 16mm; }
+    @media print {
+      body { background: #fff; font-size: 10pt; line-height: 1.5; }
+      .topbar, .sidebar, .skip, .presenter-controls { display: none !important; }
+      .shell, body.presenting .shell { display: block; padding: 0; max-width: none; }
+      .slide, body.presenting .slide { display: block !important; margin: 0 0 8mm; }
+      .hero, body.presenting .hero { background: #fff; color: #172c35; border: 1px solid #aab7b0; padding: 8mm; }
+      .hero p, .hero .eyebrow, .hero .meta, .hero-bottom span:last-child { color: #384c54; }
+      .hero h1 { font-size: 25pt; }
+      .hero::after { display: none; }
+      .hero .badge { color: #815313; border-color: #c9b087; }
+      .section-card, body.presenting .section-card { min-height: 0; padding: 6mm; border-radius: 8px; }
+      h2, body.presenting h2 { font-size: 17pt; }
+      h2, h3, .section-head { break-after: avoid; }
+      .stats, .panel, .callout, .roadmap-item, tr, .bar-row { break-inside: avoid; }
+      .table-wrap { overflow: visible; }
+      table { font-size: 9pt; }
+      th, td { padding: 7px 9px; }
+      thead { display: table-header-group; }
+      .stack, .dot, .correct, .wrong, .badge { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+      .sources a { font-size: 9pt; }
+      footer, body.presenting footer { display: block; }
+    }
+  </style>
+</head>
+<body>
+  <a href="#report" class="skip">Đến nội dung báo cáo</a>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">MP</span> MalPDFDeepDetection</div>
+      <div class="presenter-controls" id="presenter-controls" hidden>
+        <button class="btn" id="previous-slide" type="button" aria-label="Trang trước">← Trước</button>
+        <span id="slide-counter" aria-live="polite"></span>
+        <button class="btn" id="next-slide" type="button" aria-label="Trang tiếp theo">Sau →</button>
+      </div>
+      <div class="actions" id="actions" hidden>
+        <button class="btn" id="print-report" type="button">In báo cáo</button>
+        <button class="btn primary" id="presentation-toggle" type="button" aria-pressed="false">Trình chiếu</button>
+      </div>
+    </div>
+  </header>
+  <div class="shell">
+    <aside class="sidebar" aria-label="Mục lục">
+      <p class="eyebrow">Báo cáo tiến độ</p>
+      <nav>
+        <a href="#overview">00 · Em đã làm được gì?</a>
+        <a href="#datasets">01 · Dữ liệu đang sử dụng</a>
+        <a href="#rit-training">02 · Huấn luyện trên RIT</a>
+        <a href="#kaggle">03 · Các lần chạy Kaggle</a>
+        <a href="#vision">04 · Vision hoạt động thế nào?</a>
+        <a href="#optimization">05 · Cách tối ưu huấn luyện</a>
+        <a href="#ensemble">06 · Kết hợp các mô hình</a>
+        <a href="#results">07 · Kết quả và điều rút ra</a>
+        <a href="#static">08 · Các lần sửa bộ đọc PDF</a>
+        <a href="#static-recovery">09 · Giữ kết quả khi đọc lỗi</a>
+        <a href="#next">10 · Việc cần làm tiếp</a>
+      </nav>
+      <p class="footnote"><strong>11 tháng 10, 2026</strong><br>Đề tài: phát hiện PDF độc hại<br><br>Số liệu trong báo cáo được lấy từ các kết quả đã lưu của dự án.</p>
+    </aside>
+    <main id="report">
+      <section class="slide" id="overview" aria-labelledby="overview-title">
+        <div class="hero">
+          <p class="eyebrow">Báo cáo tiến độ · 11/10/2026</p>
+          <h1 id="overview-title">Phát hiện file PDF độc hại<br>bằng học máy</h1>
+          <p class="lede">Em đã huấn luyện các mô hình, thử kết hợp chúng và cải thiện chương trình đọc PDF. Kết quả trên RIT khá tốt, nhưng khi thử với dữ liệu CIC thì mô hình vẫn báo nhầm nhiều file lành.</p>
+          <div class="hero-bottom"><span class="badge">ĐÃ HOÀN THÀNH NHIỀU LẦN THỬ</span><span>RIT · Huấn luyện GPU trên Kaggle · Kiểm tra PDF của CIC</span></div>
+          <div class="meta"><span>Đã có kết quả để so sánh</span><span>Đã xác định một số nguyên nhân đọc PDF bị lỗi</span><span>Cần cải thiện khả năng nhận biết dữ liệu khác</span></div>
+        </div>
+        <div class="stats">
+          <article class="stat"><strong>97,72%</strong><span class="label">F1 của FT-Transformer trên RIT</span><p>Cao hơn XGBoost một chút trong lần so sánh đã lưu; chưa đủ để kết luận luôn tốt hơn.</p></article>
+          <article class="stat"><strong>4 đợt</strong><span class="label">Huấn luyện và so sánh trên Kaggle</span><p>Đã thử Vision, thêm dữ liệu CIC, đổi trọng số và thêm thông tin về byte.</p></article>
+          <article class="stat"><strong>5 lần</strong><span class="label">Cải tiến bộ đọc PDF</span><p>Đọc được thêm thông tin và giữ kết quả khi lỗi; số file đủ căn cứ để phân loại còn ít.</p></article>
+        </div>
+      </section>
+
+      <section class="slide section-card" id="datasets" aria-labelledby="datasets-title">
+        <div class="section-head"><span class="number">01</span><div><h2 id="datasets-title">Em đang sử dụng những dữ liệu nào?</h2><p>Hai bộ dữ liệu chính là RIT và CIC. Ngoài ra, dự án có nhóm PDF thu thập thêm để huấn luyện từ file gốc.</p></div></div>
+        <div class="table-wrap"><table><caption>Dữ liệu thực tế được dùng trong các phần nghiên cứu</caption><thead><tr><th scope="col">Dữ liệu</th><th scope="col">Hiện có gì?</th><th scope="col">Dùng để làm gì?</th></tr></thead><tbody>
+          <tr><th scope="row">RIT-PDFMal-2026<br><small>24.337 dòng</small></th><td>Bảng CSV có 41 đặc trưng và nhãn lành/độc. Mỗi đặc trưng là một thông tin về PDF, như số trang hoặc số lần xuất hiện JavaScript.</td><td>Huấn luyện và so sánh các mô hình đọc dữ liệu dạng bảng.</td></tr>
+          <tr><th scope="row">CIC<br><small>1.452 dòng trong phần thử nghiệm kết hợp</small></th><td>Nhóm dữ liệu CIC đã xác minh cho lần thử này. Phần kiểm tra bộ đọc PDF dùng riêng 64 file được chọn cố định.</td><td>Kiểm tra mô hình trên dữ liệu khác và tìm nguyên nhân đọc PDF bị lỗi.</td></tr>
+          <tr><th scope="row">PDF thu thập thêm<br><small>19.958 file có nhãn + 4 file chưa có nhãn</small></th><td>File gốc từ các nguồn Zenodo, Contagio và CVE-T4PDF. Đây là nhóm được tổng hợp riêng trong dự án.</td><td>Đọc trực tiếp dữ liệu trong file để tạo đặc trưng và huấn luyện nhánh Vision trên Kaggle.</td></tr>
+        </tbody></table></div>
+        <div class="callout"><strong>Làm rõ tên gọi:</strong> trong báo cáo này, “PDF thu thập thêm” chỉ nhóm file vừa nêu. Nhóm này có danh sách file và cách chia tập riêng, không được gộp vào bảng RIT 24.337 dòng hay xem là dữ liệu CIC.</div>
+        <p style="margin-top:18px">RIT hiện có ở dạng bảng CSV, chưa có cách nối từng dòng với file PDF gốc. Vì vậy, <strong>kết quả Vision trên Kaggle thuộc nhóm PDF thu thập thêm</strong>. Em chưa có kết quả Vision trên cùng 24.337 dòng RIT.</p>
+        <h3>Cách chia dữ liệu để đánh giá</h3>
+        <div class="flow" aria-label="Ba phần dữ liệu"><div class="flow-item"><strong>Train · Tập học</strong><span>Mô hình học từ phần này.</span></div><div class="flow-item"><strong>Validation · Tập chọn</strong><span>Dùng để chọn mô hình và thời điểm dừng học.</span></div><div class="flow-item"><strong>Test · Tập kiểm tra cuối</strong><span>Chỉ đo kết quả sau khi đã chốt cách làm.</span></div><div class="flow-item"><strong>Protocol G</strong><span>Giữ các dòng có bộ đặc trưng giống nhau trong cùng một phần, tránh lặp thông tin qua các tập.</span></div></div>
+        <p class="footnote">Giống bộ đặc trưng chưa chứng minh là cùng một file PDF. Các lần thử thêm CIC được thực hiện sau khi đã xem kết quả trước đó, nên kết quả này còn mang tính thăm dò.</p>
+        <details><summary>Số dòng trong từng phần và nguồn dữ liệu</summary>
+          <div class="table-wrap"><table><caption>Cách chia đã lưu · seed 42, tức giá trị cố định để lặp lại cách chia</caption><thead><tr><th scope="col">Dữ liệu</th><th scope="col" class="numeric">Train</th><th scope="col" class="numeric">Validation</th><th scope="col" class="numeric">Test</th></tr></thead><tbody><tr><th scope="row">RIT</th><td class="numeric">14.602</td><td class="numeric">4.868</td><td class="numeric">4.867</td></tr><tr><th scope="row">PDF thu thập thêm · có nhãn</th><td class="numeric">11.931</td><td class="numeric">3.977</td><td class="numeric">4.050</td></tr><tr><th scope="row">CIC · phần thử nghiệm kết hợp</th><td class="numeric">870</td><td class="numeric">291</td><td class="numeric">291</td></tr></tbody></table></div>
+          <p>RIT có 13.235 dòng lành, 11.102 dòng độc và 15.371 nhóm có bộ đặc trưng giống nhau. Ngoài Protocol G, em đã có phép so sánh với cách chia 75/25 để đối chiếu bài báo, gọi là Protocol P.</p>
+          <p>Nhóm PDF thu thập thêm gồm 10.967 file độc và 8.986 file lành từ hai kho trên Zenodo; thêm 5 file CVE-T4PDF được gán nhãn độc theo chỉ định của người dùng. Bốn file từ Contagio S3 chưa có nhãn nên không dùng làm dữ liệu có nhãn để huấn luyện.</p>
+          <p class="footnote"><a href="../thesis/results_summary.md">Thông tin RIT</a> · <a href="../experiments/raw_downloads/run_20261002T133145838160Z_3b68d36a5705/acquisition_outcome.json">Thống kê PDF thu thập thêm</a> · <a href="../../README.md#explicitly-authorized-public-pdf-acquisition">Nguồn tải và quá trình thu thập</a> · <a href="../experiments/raw_pdf_cohort/run_20261002T142323844991Z_3b68d36a5705/data_provenance.json">Hồ sơ nhóm PDF</a> · <a href="../experiments/multi_cohort_v4_summary/run_20261003T141326724334Z_b6e45a7dafff/summary.md">Phần CIC dùng trong thử nghiệm</a>.</p>
+        </details>
+      </section>
+
+      <section class="slide section-card" id="rit-training" aria-labelledby="rit-title">
+        <div class="section-head"><span class="number">02</span><div><h2 id="rit-title">Em đã huấn luyện trên RIT như thế nào?</h2><p>Mục tiêu là so sánh các mô hình trên cùng dữ liệu và cùng cách chia tập.</p></div></div>
+        <p>Em dùng 14.602 dòng để huấn luyện, 4.868 dòng để chọn mô hình và 4.867 dòng để kiểm tra cuối. Ba cột luôn bằng 0 trong tập học được bỏ, nên mô hình nhận <strong>38 đặc trưng</strong>. Với mạng nơ-ron, em đưa các cột số về thang đo tương đương bằng thông số tính từ tập học.</p>
+        <div class="grid-two"><article class="panel"><h3>Nhóm mô hình truyền thống</h3><p>Đã có kết quả của Logistic Regression, Random Forest, Decision Tree, Naive Bayes và XGBoost. Em dùng chúng làm mốc để biết mạng nơ-ron có giúp ích không.</p></article><article class="panel"><h3>Hai mạng nơ-ron đã thử</h3><p><strong>MLP:</strong> mạng gồm các lớp nối tiếp để học từ 38 con số đầu vào.</p><p><strong>FT-Transformer:</strong> học mối liên hệ giữa các đặc trưng, chẳng hạn một đặc trưng có ý nghĩa khác khi đi cùng đặc trưng khác.</p></article></div>
+        <p style="margin-top:18px">Mỗi lượt đi qua toàn bộ tập học gọi là một <strong>epoch</strong>. Em cho mô hình học tối đa 150 epoch, mỗi nhóm xử lý 256 dòng. Nếu lỗi trên tập Validation không giảm trong 20 epoch liên tiếp thì dừng, rồi dùng lại bản mô hình có lỗi thấp nhất.</p>
+        <div class="panel soft"><h3>Ba chỉ số trong bảng được hiểu thế nào?</h3><ul><li><strong>Accuracy:</strong> tỷ lệ dự đoán đúng trên tất cả các dòng.</li><li><strong>F1 mã độc:</strong> gộp khả năng tìm được file độc và độ chính xác của những lần báo độc. F1 không phải tỷ lệ dự đoán đúng chung.</li><li><strong>MCC:</strong> giúp xem mô hình có phân biệt được cả hai lớp lành và độc không. Gần 1 là tốt; gần 0 là ít có khả năng phân biệt; giá trị âm là dấu hiệu kết quả còn kém.</li></ul></div>
+        <div class="table-wrap"><table><caption>Kết quả trên tập Test RIT · 4.867 dòng</caption><thead><tr><th scope="col">Mô hình</th><th scope="col" class="numeric">Accuracy</th><th scope="col" class="numeric">F1 mã độc</th><th scope="col" class="numeric">MCC</th></tr></thead><tbody>
+          <tr><th scope="row">Logistic Regression</th><td class="numeric">90,32%</td><td class="numeric">88,69%</td><td class="numeric">0,8083</td></tr><tr><th scope="row">Random Forest</th><td class="numeric">97,47%</td><td class="numeric">97,16%</td><td class="numeric">0,9499</td></tr><tr><th scope="row">Decision Tree</th><td class="numeric">96,59%</td><td class="numeric">96,18%</td><td class="numeric">0,9317</td></tr><tr><th scope="row">Gaussian Naive Bayes</th><td class="numeric">70,74%</td><td class="numeric">74,76%</td><td class="numeric">0,4949</td></tr><tr><th scope="row">XGBoost · kết quả đã có</th><td class="numeric">97,70%</td><td class="numeric">97,42%</td><td class="numeric">0,9542</td></tr><tr><th scope="row">MLP</th><td class="numeric">97,10%</td><td class="numeric">96,74%</td><td class="numeric">0,9425</td></tr><tr class="highlight"><th scope="row">FT-Transformer</th><td class="numeric">97,95%</td><td class="numeric good">97,72%</td><td class="numeric good">0,9588</td></tr>
+        </tbody></table></div>
+        <div class="callout"><strong>Điều em rút ra:</strong> FT-Transformer có F1 cao hơn XGBoost khoảng 0,29 điểm phần trăm trong lần so sánh này. Chênh lệch nhỏ, và mới dựa trên một cách chia tập, nên chưa đủ kết luận mạng nơ-ron luôn tốt hơn.</div>
+        <details><summary>Cấu hình và thời gian huấn luyện RIT</summary>
+          <p>Hai mạng dùng AdamW, tức thuật toán điều chỉnh trọng số khi học; learning rate 0,001 và weight decay 0,0001. Hàm lỗi là BCEWithLogitsLoss, phù hợp với bài toán hai lớp. Ngưỡng báo độc cố định ở 0,5.</p>
+          <p>MLP: 38 → 128 → 64 → 32 → 1; ReLU; LayerNorm sau lớp ẩn đầu; dropout 0,2 / 0,1 / 0. Có 15.617 tham số; bản tốt nhất ở epoch 45; thời gian học 34,986 giây.</p>
+          <p>FT-Transformer: token 32, hai khối attention, bốn head, lớp giữa 128, GELU và dropout 0,1. Có 27.969 tham số; bản tốt nhất ở epoch 96; thời gian học 118,711 giây. Dropout bỏ ngẫu nhiên một phần tín hiệu lúc học để hạn chế việc nhớ quá sát dữ liệu.</p>
+          <p>Ba cột bỏ là Acroform, Colors và BaseEncoding. Các giá trị đặc biệt đã có trong dữ liệu, như <code>contains_text=-1</code>, được giữ nguyên. Lần chạy RIT dùng GPU RTX 5060 Ti, PyTorch 2.7.1+cu128 và CUDA 12.8, khác môi trường Kaggle. Có cảnh báo về tính lặp lại chính xác của tính toán GPU. FT có ROC-AUC và PR-AUC thấp hơn XGBoost, nên cũng chưa tốt hơn ở mọi chỉ số.</p>
+          <p class="footnote"><a href="../analysis/deep_learning_protocol_g_comparison.md">Phân tích RIT</a> · <a href="../../configs/deep_learning_protocol_g.yaml">Cấu hình</a> · <a href="../experiments/deep_learning/protocol_g_seed42/ft_transformer/provenance.json">Thông tin lần chạy</a>.</p>
+        </details>
+      </section>
+
+      <section class="slide section-card" id="kaggle" aria-labelledby="kaggle-title">
+        <div class="section-head"><span class="number">03</span><div><h2 id="kaggle-title">Em đã chạy những gì trên Kaggle?</h2><p>Kaggle cung cấp GPU để huấn luyện mạng nơ-ron. Các đợt dưới đây đã hoàn thành ngày 03–04/10.</p></div></div>
+        <div class="attempts">
+          <article class="panel"><div class="attempt-heading"><span class="badge green">ĐỢT 1</span><h3>Huấn luyện Vision từ dữ liệu bên trong file PDF</h3></div><p>Em dùng nhóm PDF thu thập thêm, biến dữ liệu của mỗi file thành một bảng số rồi huấn luyện ResNet-18. Mục đích là thử học thêm thông tin mà các đặc trưng dạng bảng chưa thể hiện.</p><p>Đã chạy 20 epoch; bản tốt nhất ở epoch 19; thời gian học khoảng <strong>366 giây</strong>. Phần tiếp theo giải thích cách tạo đầu vào cho Vision.</p></article>
+          <article class="panel"><div class="attempt-heading"><span class="badge green">ĐỢT 2</span><h3>Cho mô hình học thêm dữ liệu CIC</h3></div><p>Em thêm 870 dòng CIC của tập học vào 11.931 dòng PDF thu thập thêm, tổng cộng <strong>12.801 dòng</strong>. Sau đó huấn luyện lại FT-Transformer và Vision để thử cải thiện kết quả trên CIC.</p><p>Đã hoàn thành 5 mô hình FT-Transformer, tổng thời gian học khoảng <strong>40 giây</strong>. Vision học khoảng <strong>162 giây</strong>; bản tốt nhất ở epoch 3 trong 8 epoch đã chạy.</p></article>
+          <article class="panel"><div class="attempt-heading"><span class="badge green">ĐỢT 3</span><h3>Đổi mức đóng góp của từng nhóm dữ liệu khi học</h3></div><p>Dữ liệu thu thập thêm nhiều hơn CIC. Em thử tăng mức đóng góp tương đối của CIC, cân bằng hai nhãn và giảm ảnh hưởng của những nhóm có nhiều dòng lặp.</p><p>Đã làm <strong>50 lượt huấn luyện</strong> để so sánh cách tính trọng số như nhau với cách cân bằng. Thời gian chạy phép so sánh khoảng 136 giây; Vision giữ nguyên.</p></article>
+          <article class="panel"><div class="attempt-heading"><span class="badge green">ĐỢT 4</span><h3>Thêm 33 đặc trưng mô tả dữ liệu byte</h3></div><p>Em thử bổ sung thông tin như mức độ tập trung và sự thay đổi giữa các byte vào 40 đặc trưng cấu trúc PDF. Mục đích là xem các thông tin này có giúp phân biệt lành/độc tốt hơn không.</p><p>Đã làm thêm <strong>50 lượt huấn luyện</strong>, thời gian chạy phép so sánh khoảng 227 giây. Kết quả của cả hai phép so sánh được đánh giá trên Validation.</p></article>
+        </div>
+        <p class="footnote">FT-Transformer và Vision dùng GPU Tesla T4. Các mô hình cây dùng CPU; ở đợt 1–2, phần cây được huấn luyện trên máy local. Thời gian trên là thời gian học hoặc chạy phép so sánh, chưa bao gồm toàn bộ thời gian chờ Kaggle và chuyển kết quả.</p>
+        <details><summary>Thông tin kỹ thuật và kết quả gốc trên Kaggle</summary><p>Hai phép so sánh 50 lượt đều gồm 5 nhóm mô hình × 5 phần chia tập học × 2 cách làm. Các mô hình gồm XGBoost, LightGBM, CatBoost, Random Forest và FT-Transformer.</p><p>Môi trường GPU đã ghi: Python 3.13.15, PyTorch 2.11.0+cu128, torchvision 0.26.0+cu128, CUDA 12.8, Tesla T4. Đây là môi trường riêng, không giống lần huấn luyện RIT.</p><p class="footnote"><a href="../experiments/kaggle_vision_import/run_20261003T085018069647Z_3b68d36a5705/run_summary.json">Đợt Vision</a> · <a href="../experiments/multi_cohort_v4_summary/run_20261003T141326724334Z_b6e45a7dafff/summary.md">Đợt thêm CIC</a> · <a href="../experiments/static_development_summary/run_20261004T154256846017Z_e9ae2aee5365/summary.md">Đợt cân bằng</a> · <a href="../experiments/static_markov_development_summary/run_20261004T174737533805Z_7b3fc6194800/summary.md">Đợt thêm đặc trưng byte</a>.</p></details>
+      </section>
+
+      <section class="slide section-card" id="vision" aria-labelledby="vision-title">
+        <div class="section-head"><span class="number">04</span><div><h2 id="vision-title">Vision “nhìn” file PDF như thế nào?</h2><p>Em tạo một bảng số từ dữ liệu của file để mạng học.</p></div></div>
+        <p>Mỗi file gồm nhiều <strong>byte</strong>, là các đơn vị dữ liệu nhỏ có giá trị từ 0 đến 255. Em đếm những cặp byte đứng cạnh nhau, rồi tính: với byte hiện tại là <em>i</em>, byte tiếp theo có thể là <em>j</em> với tỷ lệ bao nhiêu.</p>
+        <div class="flow" aria-label="Cách tạo đầu vào Vision"><div class="flow-item"><strong>1 · Đọc dữ liệu file</strong><span>Đọc byte trong PDF mà không chạy mã trong file.</span></div><div class="flow-item"><strong>2 · Đếm các cặp byte</strong><span>Ghi nhận những cặp giá trị xuất hiện liền nhau.</span></div><div class="flow-item"><strong>3 · Tạo bảng 256 × 256</strong><span>Mỗi ô chứa tỷ lệ chuyển từ một giá trị byte sang giá trị khác.</span></div><div class="flow-item"><strong>4 · Cho ResNet-18 học</strong><span>Mạng dự đoán khả năng file thuộc lớp mã độc.</span></div></div>
+        <p>Bảng này gọi là <strong>ma trận Markov</strong>. “Vision” ở đây là dùng mạng xử lý ảnh để học trên bảng số đó, chứ không phải ảnh chụp các trang PDF. Em dùng <strong>ResNet-18</strong>, một mạng có các đường nối giữa lớp giúp truyền thông tin khi học, và huấn luyện từ đầu.</p>
+        <div class="callout"><strong>Kết quả đã có:</strong> trên 4.050 file Test của nhóm PDF thu thập thêm, Vision đạt Accuracy <strong>99,9753%</strong>. Có 1 file lành bị báo nhầm và không bỏ sót file độc nào trong tập này. Kết quả cao trên nhóm này chưa chứng minh mô hình sẽ làm tốt trên RIT hoặc CIC.</div>
+        <details><summary>Đầu vào và cấu hình Vision</summary><p>Ma trận có kích thước 256 × 256, một kênh, lưu ở dạng float32. Giá trị mỗi ô là số lần xuất hiện cặp <em>i → j</em> chia cho tổng số cặp bắt đầu bằng <em>i</em>. Hàng chưa quan sát được giữ bằng 0; xác suất gốc được giữ nguyên.</p><p>ResNet-18 không dùng trọng số đã học sẵn. Lớp đầu nhận một kênh; bốn nhóm lớp có 64 / 128 / 256 / 512 kênh, cuối cùng cho ra một giá trị dự đoán. Dùng BCEWithLogitsLoss và AdamW; learning rate 0,0003, weight decay 0,0001, batch 256, tối đa 20 epoch, dừng khi lỗi chọn mô hình không giảm trong 5 epoch.</p><p>Đợt đầu chọn epoch 19 trên 1.525 dòng Validation dành cho chọn bản mô hình; đợt thêm CIC chọn epoch 3 trên 1.613 dòng. Vision ở đợt đầu đạt F1 mã độc 99,9778%, MCC 0,999500; đúng 2.253 file độc và 1.796 file lành.</p><p class="footnote"><a href="../../src/malpdf/models/vision_resnet.py">Mã mô hình</a> · <a href="../../configs/kaggle_vision.yaml">Cấu hình huấn luyện</a> · <a href="../experiments/raw_tri_modal_v3_resume/run_20261003T085417853973Z_4b4478ca98a8/model_comparison.csv">Kết quả đã lưu</a>.</p></details>
+      </section>
+
+      <section class="slide section-card" id="optimization" aria-labelledby="optimization-title">
+        <div class="section-head"><span class="number">05</span><div><h2 id="optimization-title">Em đã tối ưu quá trình huấn luyện ra sao?</h2><p>Em thử cải thiện cách học của mô hình và giảm thời gian chờ dữ liệu trên GPU.</p></div></div>
+        <div class="table-wrap"><table><caption>Các cách đã áp dụng</caption><thead><tr><th scope="col">Cách làm</th><th scope="col">Hiểu đơn giản</th><th scope="col">Mục đích</th></tr></thead><tbody>
+          <tr><th scope="row">AdamW</th><td>Điều chỉnh trọng số mạng sau mỗi nhóm dữ liệu được học.</td><td>Giảm lỗi dự đoán khi huấn luyện.</td></tr>
+          <tr><th scope="row">Dừng sớm</th><td>Dừng khi kết quả trên Validation không còn tốt lên; lấy lại bản tốt nhất.</td><td>Hạn chế học quá sát tập Train.</td></tr>
+          <tr><th scope="row">Cân bằng trọng số</th><td>Điều chỉnh mức đóng góp của từng nguồn dữ liệu, nhãn và nhóm dòng lặp.</td><td>Thử giảm việc dữ liệu lớn lấn át dữ liệu nhỏ.</td></tr>
+          <tr><th scope="row">Nạp dữ liệu vào RAM</th><td>Chuẩn bị bảng số sẵn trong bộ nhớ trước khi học.</td><td>Giảm việc phải đọc nhiều file nhỏ liên tục.</td></tr>
+          <tr><th scope="row">Chuẩn bị dữ liệu song song</th><td>Trong lúc GPU đang học, các tiến trình hỗ trợ chuẩn bị nhóm dữ liệu tiếp theo.</td><td>Giảm thời gian GPU chờ.</td></tr>
+          <tr><th scope="row">Tính toán hỗn hợp FP16/FP32</th><td>Một số phép tính dùng số 16-bit; phần cần thiết giữ 32-bit.</td><td>Giảm bộ nhớ và chi phí tính toán trên GPU.</td></tr>
+        </tbody></table></div>
+        <p style="margin-top:18px">Đợt thêm CIC đã nạp <strong>21.414 ma trận</strong>, khoảng <strong>5,228 GiB</strong>, vào RAM. Em có lưu thời gian từng epoch để theo dõi. Tuy nhiên, chưa có phép so sánh riêng để nói từng kỹ thuật giúp nhanh hơn bao nhiêu.</p>
+        <details><summary>Cấu hình tối ưu chi tiết</summary><p>Vision dùng 2 tiến trình chuẩn bị dữ liệu, FT dùng 1; giữ các tiến trình qua nhiều epoch. Dữ liệu trong RAM được dùng chung để đọc. Dùng pinned memory, chuyển dữ liệu CUDA không chặn và định dạng channels-last cho Vision.</p><p>AMP dùng <code>torch.autocast</code> và <code>torch.amp.GradScaler</code>. Bộ nhớ ma trận gốc vẫn là float32. Giới hạn phần ma trận là 6 GiB và dành thêm 2 GiB RAM dự trữ; kiểm tra bộ nhớ trước khi chạy.</p><p>FT trong đợt thêm CIC và hai phép so sánh dùng batch 256, AdamW learning rate 0,001, weight decay 0,0001, tối đa 20 epoch và dừng sau 4 epoch không cải thiện. Dữ liệu thiếu được xử lý bằng thông số chỉ tính từ phần Train đang học; cờ báo thiếu vẫn được giữ lại.</p><p class="footnote"><a href="../../src/malpdf/deep_learning/training.py">Cách cập nhật mạng và dừng sớm</a> · <a href="../../src/malpdf/experiments/kaggle_vision_runner.py">Cách cấp dữ liệu cho Vision</a> · <a href="../../src/malpdf/experiments/static_development.py">Cách tính trọng số dữ liệu</a>.</p></details>
+      </section>
+
+      <section class="slide section-card" id="ensemble" aria-labelledby="ensemble-title">
+        <div class="section-head"><span class="number">06</span><div><h2 id="ensemble-title">Em kết hợp các mô hình bằng cách nào?</h2><p>Mục tiêu là tận dụng thông tin từ nhiều cách nhìn dữ liệu.</p></div></div>
+        <p>Em kết hợp <strong>sáu đầu ra</strong>: XGBoost, LightGBM, CatBoost, Random Forest, FT-Transformer và Vision. Mỗi mô hình cho một xác suất file thuộc lớp mã độc. Một mô hình nhỏ khác học cách kết hợp sáu xác suất đó; phương pháp này gọi là <strong>stacking</strong>.</p>
+        <div class="flow" aria-label="Cách kết hợp dự đoán"><div class="flow-item"><strong>6 mô hình dự đoán</strong><span>Mỗi mô hình đưa ra một xác suất mã độc.</span></div><div class="flow-item"><strong>Học cách kết hợp</strong><span>Logistic Regression dùng sáu xác suất làm đầu vào.</span></div><div class="flow-item"><strong>Chỉnh xác suất</strong><span>Thử điều chỉnh để mức tự tin phù hợp hơn với kết quả thực tế.</span></div><div class="flow-item"><strong>Chọn ngưỡng báo độc</strong><span>Chọn mốc xác suất để đưa ra nhãn lành/độc.</span></div></div>
+        <p>Các bước kết hợp, chỉnh xác suất và chọn ngưỡng dùng <strong>những phần Validation tách riêng</strong>. Sau khi chốt cách làm mới tính kết quả Test. Trong kết quả đã lưu, kết hợp nhiều mô hình chưa tốt hơn từng mô hình ở mọi trường hợp.</p>
+        <p>Em còn thử tách những file mô hình không chắc chắn để kiểm tra tiếp. Đây mới là việc đánh dấu cần xem xét; chưa có kết quả chạy phân tích động để xác nhận các file đó.</p>
+        <details><summary>Chi tiết cách kết hợp và cách chọn</summary><p>Mỗi nhóm mô hình dạng bảng học 5 lần trên các phần chia của Train, tổng cộng 25 mô hình. Lấy trung bình dự đoán trong từng nhóm rồi ghép với Vision. Vision học trên toàn bộ tập Train.</p><p>Đợt thêm CIC dùng 40 đặc trưng và 10 cờ báo thiếu thông tin. Random Forest và FT tính giá trị thay thế từ phần Train của từng lần học; FT chuẩn hóa cũng từ phần Train đó.</p><div class="table-wrap"><table><caption>Số dòng Validation dành riêng cho từng bước</caption><thead><tr><th scope="col">Bước</th><th scope="col" class="numeric">PDF thu thập thêm</th><th scope="col" class="numeric">Thêm CIC</th></tr></thead><tbody><tr><th scope="row">Chọn bản mạng tốt nhất</th><td class="numeric">1.525</td><td class="numeric">1.613</td></tr><tr><th scope="row">Học cách kết hợp</th><td class="numeric">818</td><td class="numeric">884</td></tr><tr><th scope="row">Chỉnh xác suất</th><td class="numeric">817</td><td class="numeric">890</td></tr><tr><th scope="row">Chọn cách kết hợp và ngưỡng</th><td class="numeric">817</td><td class="numeric">881</td></tr></tbody></table></div><p>Chọn mô hình kết hợp theo MCC, sau đó F1 và thứ tự đã định nếu bằng điểm. Dùng Platt để chỉnh xác suất. Ngưỡng chọn theo Youden J, một chỉ số cân đối khả năng nhận đúng hai lớp; các quy tắc xử lý bằng điểm đã được lưu trước. Ngưỡng kết hợp lần đầu là 0,0378031, lần thêm CIC là 0,0625252.</p><p>Trên 4.050 file Test của nhóm PDF thu thập thêm, 405 file được đánh dấu cần xem xét thêm theo mức không chắc chắn. Việc đánh dấu không tự sửa dự đoán.</p><p>Lần kết hợp riêng trên RIT chọn XGBoost đã chỉnh xác suất, trọng số XGB/FT là 1/0; F1 Test 97,5195%, MCC 0,955745, thấp hơn FT đơn lẻ. Vision không tham gia lần RIT này.</p><p class="footnote"><a href="../experiments/raw_tri_modal_v3_resume/run_20261003T085417853973Z_4b4478ca98a8/run_summary.json">Lần kết hợp đầu</a> · <a href="../experiments/multi_cohort_v4_summary/run_20261003T141326724334Z_b6e45a7dafff/summary.md">Lần thêm CIC</a> · <a href="../experiments/late_fusion_v2/run_20261002T100717843417Z_3b68d36a5705/evaluation_notes.md">Lần kết hợp trên RIT</a>.</p></details>
+      </section>
+
+      <section class="slide section-card" id="results" aria-labelledby="results-title">
+        <div class="section-head"><span class="number">07</span><div><h2 id="results-title">Các lần thử cho thấy điều gì?</h2><p>Kết quả tốt trên dữ liệu đã dùng ban đầu chưa đảm bảo kết quả tốt trên dữ liệu khác.</p></div></div>
+        <h3>1. Trên nhóm PDF thu thập thêm: kết quả rất cao</h3>
+        <p>Trên 4.050 file Test, bốn nhóm mô hình cây đều đạt Accuracy 100%. FT-Transformer và Vision đạt 99,9753%; mô hình kết hợp đạt 99,9259%. Như vậy, trong lần này việc kết hợp chưa vượt các mô hình riêng.</p>
+        <h3>2. Thêm CIC: vẫn còn báo nhầm nhiều</h3>
+        <div class="table-wrap"><table><caption>Cùng 291 dòng Test CIC trong phép so sánh đã lưu</caption><thead><tr><th scope="col">Cách huấn luyện mô hình kết hợp</th><th scope="col" class="numeric">Accuracy</th><th scope="col" class="numeric">F1 mã độc</th><th scope="col" class="numeric">MCC</th></tr></thead><tbody><tr><th scope="row">Học trên PDF thu thập thêm</th><td class="numeric">54,98%</td><td class="numeric">68,88%</td><td class="numeric">0,0340</td></tr><tr><th scope="row">Học thêm dữ liệu CIC</th><td class="numeric">54,64%</td><td class="numeric">70,54%</td><td class="numeric bad">−0,0240</td></tr></tbody></table></div>
+        <div class="callout amber"><strong>Vấn đề chính:</strong> sau khi học thêm CIC, mô hình báo độc cho 288/291 dòng, trong đó có <strong>130/131 dòng lành</strong>. F1 tăng nhưng mô hình vẫn chưa phân biệt tốt hai lớp. Em cần xem cả số báo nhầm và MCC để đánh giá.</div>
+        <h3 style="margin-top:22px">3. Đổi trọng số: kết quả phân loại chưa cải thiện rõ</h3>
+        <p>Trên 64 dòng CIC thuộc phần Validation dùng để so sánh, Accuracy vẫn là <strong>53,125%</strong> với cả hai cách. MCC tăng từ 0,016169 lên 0,023669 nhưng vẫn gần 0. Cách cân bằng chưa giải quyết được vấn đề phân biệt lành/độc.</p>
+        <h3>4. Thêm đặc trưng byte: chưa giúp trong phép thử này</h3>
+        <p>Trên 48 dòng CIC của một phần Validation khác, mô hình dùng đặc trưng cấu trúc đạt Accuracy <strong>56,25%</strong>, MCC 0,130551. Khi thêm 33 đặc trưng byte, Accuracy còn <strong>52,0833%</strong>, MCC 0,008696. Cách thêm đặc trưng này chưa cho kết quả tốt hơn.</p>
+        <p class="footnote">Hai phép so sánh 64 và 48 dòng dùng hai nhóm khác nhau, nên không xem 56,25% là mức cải thiện so với 53,125%. Kết quả Test CIC trước đó đã được xem trước khi thiết kế lần học thêm CIC; lần này mang tính thăm dò, chưa phải một phép kiểm tra mới độc lập.</p>
+        <details><summary>Bảng số liệu đầy đủ và độ tin cậy của xác suất</summary>
+          <p>Brier đo sai số của xác suất dự đoán so với nhãn thực tế; càng thấp càng tốt. Chỉ số này khác với việc phân loại đúng bao nhiêu file. AUROC đo khả năng xếp file độc cao hơn file lành khi thay đổi ngưỡng.</p>
+          <div class="table-wrap"><table><caption>Test PDF thu thập thêm · 4.050 file</caption><thead><tr><th scope="col">Mô hình</th><th scope="col" class="numeric">F1 mã độc</th><th scope="col" class="numeric">MCC</th><th scope="col" class="numeric">Brier</th></tr></thead><tbody><tr><th scope="row">FT-Transformer</th><td class="numeric">99,9778%</td><td class="numeric">0,999500</td><td class="numeric">0,000128</td></tr><tr><th scope="row">Vision</th><td class="numeric">99,9778%</td><td class="numeric">0,999500</td><td class="numeric">0,000241</td></tr><tr><th scope="row">Kết hợp sáu mô hình</th><td class="numeric">99,9335%</td><td class="numeric">0,998500</td><td class="numeric">0,000507</td></tr></tbody></table></div>
+          <p>Trên CIC Test, Brier của mô hình kết hợp giảm từ 0,4273 xuống 0,3606 sau khi học thêm CIC, nhưng Accuracy và MCC giảm. Trên Test PDF thu thập thêm, chỉ số phân loại của mô hình kết hợp giữ nguyên, còn xác suất kém chính xác hơn.</p>
+          <div class="table-wrap"><table><caption>Phép so sánh trọng số · 64 dòng Validation CIC, 48 nhóm</caption><thead><tr><th scope="col">Cách tính trọng số</th><th scope="col" class="numeric">F1 mã độc</th><th scope="col" class="numeric">MCC</th><th scope="col" class="numeric">Brier</th></tr></thead><tbody><tr><th scope="row">Như nhau</th><td class="numeric">68,0851%</td><td class="numeric">0,016169</td><td class="numeric">0,384947</td></tr><tr><th scope="row">Cân bằng</th><td class="numeric">66,6667%</td><td class="numeric">0,023669</td><td class="numeric">0,354826</td></tr></tbody></table></div>
+          <div class="table-wrap"><table><caption>Phép so sánh đặc trưng · 48 dòng Validation CIC, 29 nhóm</caption><thead><tr><th scope="col">Đặc trưng</th><th scope="col" class="numeric">F1 mã độc</th><th scope="col" class="numeric">MCC</th><th scope="col" class="numeric">AUROC</th></tr></thead><tbody><tr><th scope="row">Cấu trúc PDF và cờ báo thiếu</th><td class="numeric">67,6923%</td><td class="numeric">0,130551</td><td class="numeric">0,547826</td></tr><tr><th scope="row">Thêm 33 đặc trưng byte</th><td class="numeric">67,6056%</td><td class="numeric">0,008696</td><td class="numeric">0,382609</td></tr></tbody></table></div>
+          <p>CIC Test có 31 nhóm trong 291 dòng. Ở phép so sánh trọng số, phần CIC dùng để chọn thời điểm dừng chỉ có một nhóm với nhãn lẫn nhau, nên kết quả còn hạn chế. Các mô hình thử nghiệm này chưa thay mô hình đang dùng.</p>
+          <p class="footnote"><a href="../experiments/raw_tri_modal_v3_resume/run_20261003T085417853973Z_4b4478ca98a8/model_comparison.csv">Kết quả PDF thu thập thêm</a> · <a href="../experiments/multi_cohort_v4_summary/run_20261003T141326724334Z_b6e45a7dafff/summary.md">Kết quả thêm CIC</a> · <a href="../experiments/static_development_summary/run_20261004T154256846017Z_e9ae2aee5365/summary.md">So sánh trọng số</a> · <a href="../experiments/static_markov_development_summary/run_20261004T174737533805Z_7b3fc6194800/summary.md">So sánh đặc trưng byte</a>.</p>
+        </details>
+      </section>
+
+      <section class="slide section-card" id="static" aria-labelledby="static-title">
+        <div class="section-head"><span class="number">08</span><div><h2 id="static-title">Em đã sửa bộ đọc PDF qua những lần nào?</h2><p>Muốn mô hình dự đoán được thì trước hết phải đọc được thông tin từ file.</p></div></div>
+        <p>Em kiểm tra trên cùng <strong>64 file CIC</strong>: 32 file dùng để học mô hình thử nghiệm và 32 file để kiểm tra trong quá trình phát triển. Mỗi phần có 16 file lành và 16 file độc. Ban đầu, chương trình đọc đầy đủ được 23 file, đọc một phần 23 file và gặp lỗi cấu trúc ở 18 file.</p>
+        <p>Bộ phận đọc cấu trúc file gọi là <strong>parser</strong>. Em dùng một mô hình Random Forest thử nghiệm, ký hiệu <strong>C1</strong> trong kết quả gốc. Khi thông tin đọc được chưa đủ, chương trình giữ trạng thái <strong>“chưa đủ căn cứ”</strong> để tránh kết luận sai.</p>
+        <div class="attempts">
+          <article class="panel" id="static-attempt-1"><div class="attempt-heading"><span class="badge green">LẦN THỬ 1</span><h3>Đọc đúng đoạn mã trong PDF</h3><small>10/10</small></div><p><strong>Vì sao sửa:</strong> một số đoạn JavaScript dùng cách mã hóa khác nên chương trình đọc sai. Có file chứa nhiều đối tượng khiến chương trình hết giới hạn kiểm tra trước khi đọc tới lệnh tự chạy khi mở file.</p><p><strong>Em thay đổi:</strong> nhận biết cách mã hóa rõ ràng hơn, ưu tiên kiểm tra các vị trí chứa lệnh và thử đọc lại phần chỉ mục bị lỗi trong giới hạn cho phép.</p><p><strong>Kết quả:</strong> số file đọc thấy JavaScript tăng từ <strong>13 lên 25</strong>; số file có thông tin về cấu trúc mã tăng từ <strong>11 lên 20</strong>. Tuy nhiên, số file đọc đầy đủ vẫn là 23/64. Mô hình lúc này chưa sử dụng được phần mã chỉ đọc một phần, nên kết quả phân loại chưa đổi.</p></article>
+          <article class="panel" id="static-attempt-2"><div class="attempt-heading"><span class="badge green">LẦN THỬ 2</span><h3>Thử đọc file thiếu vị trí chỉ mục</h3><small>10/10</small></div><p><strong>Vì sao sửa:</strong> 14 file thiếu dấu <code>startxref</code>, là thông tin giúp bộ đọc tìm phần chỉ mục của PDF. Dữ liệu vẫn có trong file nhưng bộ đọc chưa truy cập được.</p><p><strong>Em thay đổi:</strong> tạo thêm thông tin hỗ trợ trong bộ nhớ để bộ đọc thử dựng lại chỉ mục. File gốc được giữ nguyên.</p><p><strong>Kết quả:</strong> cả <strong>14 file</strong> đọc được thêm một phần cấu trúc, như biểu mẫu hoặc dấu hiệu file đính kèm. Nhưng vẫn chưa đọc hết file, nên số file đầy đủ và kết quả phân loại chưa tăng.</p></article>
+          <article class="panel" id="static-attempt-3"><div class="attempt-heading"><span class="badge green">LẦN THỬ 3</span><h3>Tìm mã trong phần biểu mẫu</h3><small>10/10</small></div><p><strong>Vì sao sửa:</strong> mã JavaScript có thể nằm trong biểu mẫu XFA, một dạng biểu mẫu của PDF. Cách đọc trước đó chưa kiểm tra nội dung này.</p><p><strong>Em thay đổi:</strong> đọc nội dung biểu mẫu, tìm JavaScript được khai báo rồi phân tích cấu trúc của đoạn mã đó.</p><p><strong>Kết quả:</strong> chưa tăng số file đọc đầy đủ. Trên 11 file mà mô hình đủ thông tin để phân loại, vẫn nhận đúng 2/6 file độc; số file lành bị báo nhầm giảm từ <strong>3/5 xuống 2/5</strong>. Chênh lệch chỉ là một file trên nhóm nhỏ, nên chưa thể nói đã cải thiện chung.</p></article>
+        </div>
+        <p class="footnote">Phân tích cấu trúc mã gọi là AST: tách đoạn mã thành các lệnh và mối liên hệ để kiểm tra. Đọc thấy mã chưa chứng minh mã đã chạy hay khai thác thành công. Đây là nhóm file dùng để tìm lỗi, chưa phải tập kiểm tra độc lập.</p>
+        <details><summary>Số liệu và phạm vi của ba lần thử đầu</summary><p>Ba lần vẫn có 23 file đầy đủ, 23 một phần và 18 lỗi parser cấu trúc. Lần 1–2: mô hình phân loại 11/32 file kiểm tra phát triển, nhận đúng 2/6 file độc và báo nhầm 3/5 file lành được phân loại. Lần 3: báo nhầm còn 2/5. Các file chưa đủ thông tin vẫn tính trong tổng số dự kiến.</p><p>Lần 2 giảm số file không đọc được nhánh kiểm tra mã từ 20 xuống 6, nhưng phần đọc thêm chưa có tổng thông tin toàn file. Ở lần 3, một nguồn JavaScript trong XFA được ghi nhận nhưng việc phân tích mã chạm giới hạn. Mã FormCalc của biểu mẫu được ghi riêng, không coi là JavaScript.</p><p class="footnote"><a href="../analysis/cic_static_accuracy.md">Nguyên nhân và cách sửa</a> · <a href="../analysis/cic_static_offline.md">Kết quả ba lần thử</a> · <a href="../analysis/cic_static_xfa.md">Phạm vi kiểm tra biểu mẫu</a>.</p></details>
+      </section>
+
+      <section class="slide section-card" id="static-recovery" aria-labelledby="static-recovery-title">
+        <div class="section-head"><span class="number">09</span><div><h2 id="static-recovery-title">Hai lần tiếp theo: đọc thêm và giữ kết quả khi lỗi</h2><p>Em tiếp tục dùng cùng 64 file CIC để kiểm tra.</p></div></div>
+        <div class="attempts">
+          <article class="panel" id="static-attempt-4"><div class="attempt-heading"><span class="badge green">LẦN THỬ 4</span><h3>Thêm một bộ đọc PDF khác để đối chiếu</h3><small>11/10</small></div><p><strong>Vì sao sửa:</strong> bộ đọc chính vẫn gặp lỗi ở một số file. Em muốn kiểm tra xem thư viện MuPDF có đọc được thêm thông tin từ những file đó không.</p><p><strong>Em thay đổi:</strong> giữ phần MuPDF đọc được thành kết quả riêng, rồi đối chiếu với bộ đọc chính. Đồng thời dùng mô hình Random Forest thử nghiệm với 173 đầu vào, học từ 31 file đủ điều kiện.</p><p><strong>Kết quả:</strong> 15 trường hợp lỗi trước đó có thêm kết quả một phần. Khi tổng hợp, có <strong>23 file đầy đủ, 38 file một phần và 3 file chưa có kết quả bổ sung</strong>. Mô hình đưa ra nhãn được cho 9/32 file kiểm tra phát triển.</p><p>Mô hình nhận đúng 3/6 file độc và báo nhầm 2/3 file lành được phân loại. Hai file lành trước đó phân loại đúng chuyển sang “chưa đủ căn cứ”. Mô hình và dữ liệu học cũng đổi, nên chưa thể kết luận bộ đọc mới là nguyên nhân làm tăng số phát hiện.</p></article>
+          <article class="panel" id="static-attempt-5"><div class="attempt-heading"><span class="badge green">LẦN THỬ 5</span><h3>Lưu phần đã đọc được trước khi chương trình lỗi</h3><small>11/10</small></div><p><strong>Vì sao sửa:</strong> ở lần trước, ba lỗi tiến trình làm mất phần thông tin bổ sung. Khi kết quả thiếu, cũng khó biết thiếu sót nào ảnh hưởng đến dự đoán.</p><p><strong>Em thay đổi:</strong> lưu kết quả sau từng bước và ghi thông tin đó được đọc từ vị trí nào. Chương trình kiểm tra thêm mối liên hệ giữa lệnh trong PDF với đoạn mã hoặc file đính kèm. Mô hình và ngưỡng báo độc giữ nguyên như lần 4.</p><p><strong>Kết quả:</strong> cả ba trường hợp lỗi cũ giữ được kết quả một phần. Có <strong>22 file đầy đủ và 42 file một phần</strong>; một file trước đó đầy đủ bị chuyển thành một phần vì chạm giới hạn thông tin được lưu. Các quyết định phân loại của 32 file vẫn giống lần trước.</p></article>
+        </div>
+        <div class="table-wrap"><table><caption>So sánh hai lần cuối</caption><thead><tr><th scope="col">Kết quả</th><th scope="col" class="numeric">Lần 4</th><th scope="col" class="numeric">Lần 5</th></tr></thead><tbody><tr><th scope="row">File có kết quả tổng hợp đầy đủ</th><td class="numeric">23/64</td><td class="numeric">22/64</td></tr><tr><th scope="row">File có kết quả một phần</th><td class="numeric">38/64</td><td class="numeric">42/64</td></tr><tr><th scope="row">File thiếu kết quả bổ sung do lỗi tiến trình</th><td class="numeric">3/64</td><td class="numeric">0/64</td></tr><tr><th scope="row">File đủ căn cứ để mô hình đưa ra nhãn</th><td class="numeric">9/32</td><td class="numeric">9/32</td></tr></tbody></table></div>
+        <div class="callout amber"><strong>Tiến bộ hiện tại:</strong> chương trình giữ lại được thông tin khi lỗi và giải thích được rõ hơn. Tuy nhiên, <strong>23/32 file vẫn chưa đủ căn cứ để kết luận</strong>, nên phần này chưa đạt tiêu chí chấp nhận của dự án.</div>
+        <p style="margin-top:18px">Trong 9 file được phân loại có 6 file độc và 3 file lành. Mô hình nhận đúng 3 file độc, bỏ sót 3 file độc và báo nhầm 2 file lành. Nếu tính cả 16 file độc dự kiến trong nhóm kiểm tra, số phát hiện là <strong>3/16</strong>. Không thể dùng tỷ lệ 3/6 để nói đã phát hiện một nửa toàn bộ nhóm.</p>
+        <details><summary>Chi tiết kiểm tra và những điểm còn vướng</summary><p>Hai lần cuối giữ cùng mô hình C1, 173 cột, cách xử lý đầu vào và ngưỡng 0,5. Khả năng đưa ra nhãn là 9/32 = 28,1%. Trong nhóm được phân loại, nhận đúng mã độc 3/6 = 50%, báo nhầm file lành 2/3 = 66,7%; trên cả nhóm dự kiến, phát hiện 3/16 = 18,75%.</p><p>Lần cuối bổ sung việc ghi nguồn thông tin và lưu kết quả trung gian. Khi sửa, em ghi rõ lỗi chỉ mục phụ và dành tối đa 64 KiB trong giới hạn thông tin 2 MiB đã có để lưu kết quả cuối. Kiểm tra tích hợp ba file sau sửa đạt 3/3; kiểm tra này xác nhận giữ được thông tin, không đo độ chính xác của mô hình.</p><p>Bộ đọc chính vẫn có 15 lỗi parser, dù phần tổng hợp có thông tin cho cả 64 file. Một số mối liên hệ trong PDF quá lớn hoặc hai bộ đọc cho kết quả khác nhau mà chưa xác định được ảnh hưởng. Vì vậy, có thêm thông tin không đồng nghĩa với đọc đầy đủ hoặc phân loại tốt hơn.</p><p class="footnote"><a href="../analysis/cic_static_v8.md">Kết quả thêm bộ đọc</a> · <a href="../analysis/cic_static_v9.md">Kết quả giữ thông tin khi lỗi</a> · <a href="../experiments/cic_v9_final_review/run_20261011T050628599657Z_ff3f5b65d376/review_evidence.json">Đối chiếu các quyết định</a>.</p></details>
+      </section>
+
+      <section class="slide section-card" id="next" aria-labelledby="next-title">
+        <div class="section-head"><span class="number">10</span><div><h2 id="next-title">Em sẽ làm gì tiếp theo?</h2><p>Hai việc cần ưu tiên là giảm báo nhầm trên CIC và đọc PDF ổn định hơn.</p></div></div>
+        <div class="roadmap"><article class="roadmap-item"><span class="step">1</span><div><h3>Tìm nguyên nhân mô hình làm kém trên CIC</h3><p>Em sẽ xem lại các kết quả đã lưu để tìm khác biệt giữa CIC và nhóm PDF dùng để huấn luyện. Cần kiểm tra cả đặc trưng, cách chia nhóm và nguồn nhãn trước khi đề xuất lần thử tiếp theo.</p></div></article><article class="roadmap-item"><span class="step">2</span><div><h3>Giảm số file “chưa đủ căn cứ”</h3><p>Em sẽ kiểm tra thông tin bị ghi lặp và những trường hợp hai bộ đọc không thống nhất. Trước mắt dùng kết quả đã lưu và file kiểm thử tự tạo để làm rõ nguyên nhân.</p></div></article><article class="roadmap-item"><span class="step">3</span><div><h3>Chuẩn bị một phép kiểm tra độc lập</h3><p>Sau khi có hướng cải tiến, em sẽ chốt cách chia dữ liệu, cách huấn luyện và tiêu chí đánh giá trước khi chạy. Cần xem đồng thời số phát hiện, số báo nhầm và số file chưa thể kết luận.</p></div></article></div>
+      </section>
+      <footer>
+        <p>MalPDFDeepDetection · Tiến độ đến 11/10/2026 · Nhãn 1 là mã độc, nhãn 0 là file lành. Số liệu lấy từ hồ sơ đã lưu tại mã phiên bản <code>7d02abdb85da</code>.</p>
+        <details><summary>Tài liệu và thông tin để đối chiếu</summary><ul class="sources"><li><a href="../thesis/tables/protocol_g_models.csv">Bảng kết quả mô hình truyền thống trên RIT</a><small>Số liệu chính xác trước khi làm tròn.</small></li><li><a href="../thesis/tables/deep_learning_comparison.csv">Bảng kết quả mạng nơ-ron trên RIT</a><small>Kết quả, số tham số, thời gian học và epoch được chọn.</small></li><li><a href="../../checkpoints/import_run_20261003T085018069647Z_3b68d36a5705/run_summary.json">Kết quả Vision đã nhập từ Kaggle</a><small>Thời gian học 365,90367761 giây; bản được chọn ở epoch 19.</small></li><li><a href="../../checkpoints/import_run_20261003T085018069647Z_3b68d36a5705/locked_methodology.json">Cấu hình Vision đã chạy</a><small>Cách chia dữ liệu, cấu hình GPU và cách lưu dự đoán.</small></li><li><a href="../../checkpoints/import_run_20261003T085018069647Z_3b68d36a5705/environment_metadata.json">Môi trường GPU Kaggle</a><small>Phiên bản Python, thư viện và tên GPU.</small></li><li><a href="../../src/malpdf/experiments/multi_cohort_gpu.py">Mã huấn luyện FT-Transformer và Vision khi thêm CIC</a><small>Cách học trên từng phần Train và chọn bản mạng tốt nhất.</small></li></ul><p>ECE là chỉ số so mức tự tin của dự đoán với tỷ lệ đúng thực tế. Các báo cáo gốc dùng 10 khoảng xác suất rộng bằng nhau, xác suất bằng 1 thuộc khoảng cuối.</p></details>
+        <p class="footnote">Báo cáo đọc được khi không có Internet. Các liên kết mở tài liệu trong repository. Trình chiếu: ←/→, Home/End, Esc. In: Ctrl/Cmd+P.</p>
+      </footer>
+    </main>
+  </div>
+  <noscript><p style="padding:0 28px 28px">Báo cáo vẫn đọc được đầy đủ. Dùng Ctrl/Cmd+P để in.</p></noscript>
+  <script>
+    (() => {
+      const slides = Array.from(document.querySelectorAll('main > .slide'));
+      const toggle = document.getElementById('presentation-toggle');
+      const controls = document.getElementById('presenter-controls');
+      const previous = document.getElementById('previous-slide');
+      const next = document.getElementById('next-slide');
+      const counter = document.getElementById('slide-counter');
+      let presenting = false;
+      let index = 0;
+
+      function showSlide(position) {
+        index = Math.max(0, Math.min(slides.length - 1, position));
+        slides.forEach((slide, i) => {
+          const active = i === index;
+          slide.classList.toggle('active', active);
+          slide.toggleAttribute('inert', presenting && !active);
+        });
+        counter.textContent = `${index + 1} / ${slides.length}`;
+        previous.disabled = index === 0;
+        next.disabled = index === slides.length - 1;
+        if (presenting) window.scrollTo({ top: 0, behavior: 'instant' });
+      }
+
+      function setPresentation(enabled) {
+        if (enabled) {
+          const nearest = slides.findIndex(slide => slide.getBoundingClientRect().bottom > 110);
+          if (nearest >= 0) index = nearest;
+        }
+        presenting = enabled;
+        document.body.classList.toggle('presenting', enabled);
+        toggle.setAttribute('aria-pressed', String(enabled));
+        toggle.textContent = enabled ? 'Thoát trình chiếu' : 'Trình chiếu';
+        controls.hidden = !enabled;
+        showSlide(index);
+        if (!enabled) slides[index].scrollIntoView({ block: 'start' });
+      }
+
+      toggle.addEventListener('click', () => setPresentation(!presenting));
+      previous.addEventListener('click', () => showSlide(index - 1));
+      next.addEventListener('click', () => showSlide(index + 1));
+      document.getElementById('print-report').addEventListener('click', () => window.print());
+      document.addEventListener('keydown', event => {
+        if (!presenting || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+        if (event.target instanceof Element && event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+        const commands = {
+          ArrowRight: () => showSlide(index + 1),
+          ArrowLeft: () => showSlide(index - 1),
+          Home: () => showSlide(0),
+          End: () => showSlide(slides.length - 1),
+          Escape: () => { setPresentation(false); toggle.focus(); }
+        };
+        if (commands[event.key]) { event.preventDefault(); commands[event.key](); }
+      });
+      let inertBeforePrint = [];
+      window.addEventListener('beforeprint', () => {
+        inertBeforePrint = slides.map(slide => slide.hasAttribute('inert'));
+        slides.forEach(slide => slide.removeAttribute('inert'));
+      });
+      window.addEventListener('afterprint', () => {
+        slides.forEach((slide, i) => slide.toggleAttribute('inert', Boolean(inertBeforePrint[i])));
+      });
+      showSlide(0);
+      document.getElementById('actions').hidden = false;
+    })();
+  </script>
+</body>
+</html>

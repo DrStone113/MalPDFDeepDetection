@@ -3,6 +3,23 @@
 import inspect
 import json
 from pathlib import Path
+import re
+
+
+def save_generated_notebook(root, study, run_id, filename, notebook):
+    """Write a local per-run notebook under notebooks/generated, refusing overwrite."""
+    if (not re.fullmatch(r"[a-z0-9_]+", study)
+            or not re.fullmatch(r"run_[A-Za-z0-9_-]{1,100}", run_id)
+            or not re.fullmatch(r"[A-Za-z0-9_-]+\.ipynb", filename)):
+        raise ValueError("Unsafe generated notebook destination")
+    output = Path(root).absolute() / "notebooks/generated" / study / run_id / filename
+    if any(path.is_symlink() for path in (output, *output.parents)):
+        raise ValueError("Generated notebook destination contains a symbolic link")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with output.open("x", encoding="utf-8") as handle:
+        json.dump(notebook, handle, indent=2, allow_nan=False)
+        handle.write("\n")
+    return output
 
 
 def find_kaggle_bundle(input_root, expected_metadata_sha256):

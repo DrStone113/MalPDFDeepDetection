@@ -9,7 +9,7 @@ import zipfile
 
 import pandas as pd
 
-from malpdf.data.kaggle_notebook import render_kaggle_notebook
+from malpdf.data.kaggle_notebook import render_kaggle_notebook, save_generated_notebook
 from malpdf.experiments.raw_tri_modal_v3 import load_locked_cohort, validate_configuration
 from malpdf.provenance.research_runs import ResearchRun, write_json
 from malpdf.static.cache_manager import load_cached_markov_pdf
@@ -62,8 +62,8 @@ def export_performance_notebook(root, code_root, prior_export_run, *, run_id=Non
                       'file_sha256': {name: item['sha256'] for name, item in overrides.items()}}
         template = code_root / 'notebooks/kaggle_vision_resnet18.ipynb'
         notebook = render_kaggle_notebook(template, inventory['metadata_sha256'], overrides=overrides, code_provenance=provenance)
-        output = run.artifacts / 'kaggle_vision_resnet18_performance.ipynb'
-        write_json(output, notebook)
+        output = save_generated_notebook(root, run.state['study'], run.identifier,
+            'kaggle_vision_resnet18_performance.ipynb', notebook)
         write_json(run.report / 'optimized_code_provenance.json', provenance)
         run.state.update(notebook=str(output.relative_to(root)), notebook_sha256=hashlib.sha256(output.read_bytes()).hexdigest(),
             template_sha256=hashlib.sha256(template.read_bytes()).hexdigest(), prior_export_run=prior_export_run,
@@ -182,10 +182,11 @@ def export_kaggle_bundle(root, code_root, config, vision_config, tabular_run, *,
             for block in iter(lambda: handle.read(1024 * 1024), b""): digest.update(block)
         expected_metadata = hashlib.sha256(metadata_bytes).hexdigest()
         notebook = render_kaggle_notebook(code_root / "notebooks/kaggle_vision_resnet18.ipynb", expected_metadata)
-        write_json(run.artifacts / "kaggle_vision_resnet18.ipynb", notebook)
+        notebook_path = save_generated_notebook(root, run.state["study"], run.identifier,
+            "kaggle_vision_resnet18.ipynb", notebook)
         run.state.update(archive=str(archive.relative_to(root)), archive_bytes=archive.stat().st_size,
             archive_sha256=digest.hexdigest(), uncompressed_bytes=uncompressed, samples=len(portable),
-            metadata_sha256=expected_metadata, notebook=str((run.artifacts / "kaggle_vision_resnet18.ipynb").relative_to(root)),
+            metadata_sha256=expected_metadata, notebook=str(notebook_path.relative_to(root)),
             private_mapping=str((run.artifacts / "private_id_map.csv").relative_to(root)), prior_tabular_run=tabular_run,
             tabular_checkpoints_verified=len(checkpoints), upload_performed=False,
             notes="Local Kaggle handoff prepared; no PDF/raw hash upload. All split membership and disjoint validation roles retained. Vision GPU training and final Test stacking metrics pending external results.")

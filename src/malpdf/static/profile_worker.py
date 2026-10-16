@@ -52,7 +52,8 @@ def cached_profile(record, key, digest):
     return value
 
 
-def _profile_child(connection, path, boundary, digest, limits, cache_path, cache_key, include_v8=False, analysis_version=None):
+def _profile_child(connection, path, boundary, digest, limits, cache_path, cache_key, include_v8=False, analysis_version=None,
+                   extraction_profile=None, arlington_catalog=None,plugins=None):
     v9 = analysis_version == 'v9'
     include_v8 = include_v8 or v9
     output_limit = 6 * 1024**2 if v9 else 2 * 1024**2
@@ -61,8 +62,13 @@ def _profile_child(connection, path, boundary, digest, limits, cache_path, cache
 
     timings = StageTimings(event)
     applied = None
+    raw_details = {}
+    tree_token=None
+    semantic_collector=None
+    plugin_buffers={}
     def checkpoint(profile):
         if include_v8:
+            profile = {**raw_details, 'resource_limits': applied, **profile}
             payload = json.dumps({'event': 'checkpoint', 'profile': profile}, allow_nan=False).encode()
             if len(payload) > output_limit:
                 raise MemoryError('worker_output_limit')
@@ -72,17 +78,33 @@ def _profile_child(connection, path, boundary, digest, limits, cache_path, cache
         with open(os.devnull, "wb") as output:
             os.dup2(output.fileno(), 1)
             os.dup2(output.fileno(), 2)
+        if plugins is not None:
+            from malpdf.extraction.plugins import from_wire
+            from malpdf.reproducibility import set_random_seed
+            plugins=from_wire(plugins)
+            set_random_seed(plugins.seed)
         with timings.stage("read_hash"):
             data = read_bounded_bytes(Path(path), boundary=Path(boundary), max_bytes=limits.max_file_bytes)
             actual = hashlib.sha256(data).hexdigest()
             if actual != digest:
                 raise ValueError("input_checksum_mismatch")
-            if not data.startswith(b"%PDF-"):
+            if extraction_profile is None and not data.startswith(b"%PDF-"):
                 raise ValueError("not_pdf")
+        if extraction_profile is not None:
+            from malpdf.extraction.raw import inspect_raw_layout
+            with timings.stage("raw_scan"):
+                raw_details['raw_layout'] = inspect_raw_layout(data)
+            raw_details['raw_evidence'] = {'sha256': actual, 'size_bytes': len(data),
+                                           'features': raw_details['raw_layout']['token_counts']}
         if include_v8:
             from malpdf.static.raw_scan import scan_raw_pdf_tokens
             checkpoint({'status': 'partial', 'errors': ['primary_not_finished'], 'static': None, 'code': None,
                         'raw_evidence': {'sha256': actual, 'size_bytes': len(data), 'features': scan_raw_pdf_tokens(data)}})
+        if extraction_profile=='deep-static' and data.startswith(b'%PDF-'):
+            from malpdf.extraction.script_semantics import ScriptSemantics
+            from malpdf.static.js_ast import set_tree_observer
+            semantic_collector=ScriptSemantics(actual,limits)
+            tree_token=set_tree_observer(semantic_collector)
         cached = None
         if cache_path is not None and Path(cache_path).is_file():
             try:
@@ -104,7 +126,12 @@ def _profile_child(connection, path, boundary, digest, limits, cache_path, cache
                     cached = None
             except (OSError, ValueError, KeyError, TypeError):
                 pass  # Incomplete, malformed or obsolete entries are cache misses.
-        if cached is not None:
+        if extraction_profile == 'fast-static' or extraction_profile is not None and not data.startswith(b'%PDF-'):
+            result = {'profile_version': PROFILE_VERSION, 'status': 'complete', 'errors': [],
+                      'reasons': [], 'static': None, 'code': None, 'cache_hit': False}
+            if not data.startswith(b'%PDF-'):
+                result.update(status='input_error', errors=['not_pdf'], reasons=['not_pdf'])
+        elif cached is not None:
             result = {**cached, "cache_hit": True}
         else:
             from malpdf.static.analyzer import StaticPDFAnalyzer
@@ -164,14 +191,102 @@ def _profile_child(connection, path, boundary, digest, limits, cache_path, cache
                     checkpoint(result)
                     from malpdf.static.evidence_v9 import inspect_evidence_v9
                     from malpdf.static.evidence_ipc import WorkerRawSink
+                    base_raw_sink = WorkerRawSink(connection)
+                    raw_sink=base_raw_sink
+                    byte_images=None
+                    if extraction_profile=='deep-static':
+                        from malpdf.extraction.byte_images import ByteImages
+                        byte_images=ByteImages(actual,limits,retain=base_raw_sink)
+                        def raw_sink(raw):
+                            state=base_raw_sink(raw)
+                            byte_images.capture(raw,state)
+                            return state
+                    collector = None
+                    if extraction_profile == 'deep-static':
+                        from malpdf.extraction.streams import StreamCollector
+                        def stream_checkpoint(value):
+                            connection.send_bytes(json.dumps({'event': 'checkpoint', 'profile': {
+                                'stream_analysis': value}}, allow_nan=False).encode())
+                        collector = StreamCollector(actual, limits, retain=raw_sink, checkpoint=stream_checkpoint,plugins=plugins)
                     def evidence_checkpoint(delta):
                         connection.send_bytes(json.dumps({'event': 'evidence_delta', 'delta': delta}, allow_nan=False).encode())
                     result['analysis_v9'] = inspect_evidence_v9(data, safe, code, limits, timings=timings,
                         primary_complete=result['status']=='complete', legacy_analysis=result['analysis_v8'],
-                        checkpoint=evidence_checkpoint, raw_sink=WorkerRawSink(connection))
+                        checkpoint=evidence_checkpoint, raw_sink=raw_sink,
+                        **({'stream_sink': collector.observe} if collector is not None else {}))
+                    if collector is not None:
+                        from malpdf.extraction.carving import RecursiveCarver
+                        def carving_checkpoint(value):
+                            connection.send_bytes(json.dumps({'event': 'checkpoint', 'profile': {
+                                'carving': value}}, allow_nan=False).encode())
+                        carver = RecursiveCarver(actual, limits, retain=raw_sink, checkpoint=carving_checkpoint,plugins=plugins)
+                        carver.register_context(result['analysis_v9'])
+                        collector.artifact_sink = carver.stream_sink()
+                        checkpoint(result)
+                        with timings.stage('stream_decode'):
+                            result['stream_analysis'] = collector.finish(result['analysis_v9']['budget_usage']['decoded_bytes_remaining'])
+                        checkpoint(result)
+                        with timings.stage('parse_pdf'):
+                            result['carving'] = carver.finish(result['stream_analysis']['decoded_bytes_remaining'],
+                                root_analysis=result['analysis_v9'], prior_code=[code] + [view.get('code') or {}
+                                    for view in result['analysis_v8'].get('backends', [])], timings=timings)
+                        checkpoint(result)
+                        from malpdf.extraction.parser_views import inspect_parser_views
+                        def parser_checkpoint(value):
+                            connection.send_bytes(json.dumps({'event':'checkpoint','profile':{
+                                'parser_analysis':value}},allow_nan=False).encode())
+                        with timings.stage('parse_pdf'):
+                            result['parser_analysis'] = inspect_parser_views(data,limits,retain=raw_sink,checkpoint=parser_checkpoint,plugins=plugins)
+                        checkpoint(result)
+                        from malpdf.extraction.raw_forensic import inspect_raw_forensic
+                        def forensic_checkpoint(value):
+                            connection.send_bytes(json.dumps({'event':'checkpoint','profile':{
+                                'raw_forensic':value}},allow_nan=False).encode())
+                        def arlington_checkpoint(value):
+                            result['arlington_analysis']=value
+                            connection.send_bytes(json.dumps({'event':'checkpoint','profile':{
+                                'arlington_analysis':value}},allow_nan=False).encode())
+                        carving_remaining = result['carving'].get('decoded_bytes_remaining')
+                        if type(carving_remaining) is not int or 'artifact_metadata_limit' in result['carving'].get('reason_codes',[]):
+                            carving_remaining = 0
+                        with timings.stage('parse_pdf'):
+                            result['raw_forensic'] = inspect_raw_forensic(data,limits,remaining=carving_remaining,
+                                native_analysis=result['parser_analysis'],retain=raw_sink,checkpoint=forensic_checkpoint,timings=timings,plugins=plugins,
+                                **({'arlington_catalog':arlington_catalog,'arlington_checkpoint':arlington_checkpoint}
+                                   if arlington_catalog is not None else {}))
+                        checkpoint(result)
+                        if semantic_collector is not None:
+                            def semantic_checkpoint(value):
+                                connection.send_bytes(json.dumps({'event':'checkpoint','profile':{
+                                    'script_semantics':value}},allow_nan=False).encode())
+                            semantic_collector.checkpoint=semantic_checkpoint
+                            with timings.stage('js_ast'):
+                                result['script_semantics']=semantic_collector.finish()
+                        checkpoint(result)
+                        if byte_images is not None:
+                            if plugins is not None and plugins.select('feature'):plugin_buffers=dict(byte_images.cache)
+                            def byte_image_checkpoint(value):
+                                connection.send_bytes(json.dumps({'event':'checkpoint','profile':{
+                                    'byte_images':value}},allow_nan=False).encode())
+                            byte_images.checkpoint=byte_image_checkpoint
+                            with timings.stage('raw_scan'):
+                                result['byte_images']=byte_images.finish(data,result)
+        result.update(raw_details)
+        if plugins is not None:
+            checkpoint(result)
+            result['plugin_registry']=plugins.describe()
+            if plugins.select('feature') and data.startswith(b'%PDF-'):
+                from malpdf.extraction.plugin_features import run_feature_plugins
+                def plugin_checkpoint(value):
+                    connection.send_bytes(json.dumps({'event':'checkpoint','profile':{'plugin_features':value}},allow_nan=False).encode())
+                with timings.stage('raw_scan'):
+                    result['plugin_features']=run_feature_plugins(data,result,actual,limits,plugins,buffers=plugin_buffers,
+                        checkpoint=plugin_checkpoint)
         if not result["cache_hit"] and result["code"] and result["code"]["complete"] and result["code"]["scripts_found"] == 0:
-            timings.seconds["js_ast"] = 0.0
-            timings.seconds["stream_decode"] = 0.0
+            if extraction_profile != 'deep-static' or timings.seconds['js_ast'] is None:
+                timings.seconds["js_ast"] = 0.0
+            if extraction_profile != 'deep-static':
+                timings.seconds["stream_decode"] = 0.0
         memory, source = current_process_peak_rss()
         result.update(timings=dict(timings.seconds), resource_limits=applied,
                       peak_rss_bytes=memory, rss_source=source)
@@ -179,11 +294,15 @@ def _profile_child(connection, path, boundary, digest, limits, cache_path, cache
         name = str(error) if str(error) in {"input_checksum_mismatch", "not_pdf"} else type(error).__name__
         status = ("resource_limit_or_signal" if include_v8 and isinstance(error,MemoryError) else
                   "input_error" if isinstance(error,(OSError,ValueError)) else "worker_error")
-        result = _failure(name,status)
+        result = {**_failure(name,status), **raw_details}
         result["timings"] = dict(timings.seconds)
         if applied is not None:
             result["resource_limits"] = applied
             result["peak_rss_bytes"], result["rss_source"] = current_process_peak_rss()
+    finally:
+        if tree_token is not None:
+            from malpdf.static.js_ast import reset_tree_observer
+            reset_tree_observer(tree_token)
     try:
         payload = json.dumps({"event": "result", "profile": result}, allow_nan=False).encode()
         if include_v8 and len(payload) > output_limit:
@@ -194,11 +313,23 @@ def _profile_child(connection, path, boundary, digest, limits, cache_path, cache
 
 
 def profile_pdf(path, *, boundary, digest, limits=None, cache_path=None, cache_key=None, include_v8=False,
-                analysis_version=None, raw_artifact_dir=None):
+                analysis_version=None, raw_artifact_dir=None, extraction_profile=None, arlington_catalog=None,plugins=None):
     """Profile one PDF in a fresh process; preserve completed stages on kill."""
     limits = limits or CodeInspectionLimits(wall_seconds=20, cpu_seconds=12)
     if analysis_version not in (None, 'v8', 'v9'):
         raise ValueError('Unknown evidence analysis version')
+    if extraction_profile not in (None, 'fast-static', 'deep-static'):
+        raise ValueError('Unknown extraction profile')
+    if extraction_profile is not None and (analysis_version != 'v9' or cache_path is not None):
+        raise ValueError('Extraction requires uncached v9 checkpoints')
+    if arlington_catalog is not None and extraction_profile!='deep-static':
+        raise ValueError('Arlington requires the uncached deep-static raw IR')
+    from malpdf.extraction.plugins import registry
+    plugins=registry(plugins)
+    if plugins is not None:
+        if extraction_profile!='deep-static':raise ValueError('Plugins require the uncached deep-static worker')
+        from malpdf.reproducibility import set_random_seed
+        set_random_seed(plugins.seed)
     v9 = analysis_version == 'v9'
     include_v8 = include_v8 or analysis_version in {'v8', 'v9'}
     if raw_artifact_dir is not None and not v9:
@@ -213,7 +344,12 @@ def profile_pdf(path, *, boundary, digest, limits=None, cache_path=None, cache_k
     receiver, sender = context.Pipe(duplex=False)
     arguments = (sender, str(path), str(boundary), digest, limits,
         None if cache_path is None else str(cache_path), cache_key, include_v8)
-    process = context.Process(target=_profile_child, args=arguments + ((analysis_version,) if v9 else ()))
+    extra = (analysis_version, extraction_profile) if extraction_profile is not None else ((analysis_version,) if v9 else ())
+    if plugins is not None:
+        extra=(analysis_version,extraction_profile,arlington_catalog,plugins.wire())
+    elif arlington_catalog is not None:
+        extra=extra+(arlington_catalog,)
+    process = context.Process(target=_profile_child, args=arguments + extra)
     started = time.monotonic()
     result, last, observed, peak, family_peak = None, None, {name: None for name in STAGES}, 0, 0
     saved_checkpoint = None
@@ -264,7 +400,8 @@ def profile_pdf(path, *, boundary, digest, limits=None, cache_path=None, cache_k
                 result = _failure("worker_exit", "worker_error")
             if result is None and not receiver.poll():
                 time.sleep(0.005)
-        if result["status"] in {"worker_error", "timeout", "resource_limit_or_signal"}:
+        if (result["status"] in {"worker_error", "timeout", "resource_limit_or_signal"}
+                or extraction_profile is not None and result["status"] == "input_error" and saved_checkpoint is not None):
             result["timings"] = observed
             if saved_checkpoint is not None:
                 result.update(static=saved_checkpoint['static'], code=saved_checkpoint['code'],
@@ -275,17 +412,47 @@ def profile_pdf(path, *, boundary, digest, limits=None, cache_path=None, cache_k
                         'complete': False, 'recovery_success': False, 'errors': result['errors'],
                         'original_bytes_changed': False,
                         'content_redacted': True, 'active_content_executed': False})
+                if 'raw_layout' in saved_checkpoint:
+                    result['raw_layout'] = saved_checkpoint['raw_layout']
+                if 'stream_analysis' in saved_checkpoint:
+                    result['stream_analysis'] = {**saved_checkpoint['stream_analysis'], 'complete': False,
+                        'status': 'partial', 'worker_failure_codes': result['errors']}
+                if 'carving' in saved_checkpoint:
+                    result['carving'] = {**saved_checkpoint['carving'], 'complete': False,
+                        'status': 'partial', 'worker_failure_codes': result['errors']}
+                if 'parser_analysis' in saved_checkpoint:
+                    result['parser_analysis'] = {**saved_checkpoint['parser_analysis'],'complete':False,
+                        'status':'partial','worker_failure_codes':result['errors']}
+                if 'raw_forensic' in saved_checkpoint:
+                    result['raw_forensic'] = {**saved_checkpoint['raw_forensic'],'complete':False,
+                        'status':'partial','worker_failure_codes':result['errors']}
+                if 'arlington_analysis' in saved_checkpoint:
+                    result['arlington_analysis']={**saved_checkpoint['arlington_analysis'],'complete':False,
+                        'status':'partial','worker_failure_codes':result['errors']}
+                if 'script_semantics' in saved_checkpoint:
+                    result['script_semantics']={**saved_checkpoint['script_semantics'],'complete':False,
+                        'status':'partial','worker_failure_codes':result['errors']}
+                if 'byte_images' in saved_checkpoint:
+                    result['byte_images']={**saved_checkpoint['byte_images'],'complete':False,
+                        'status':'partial','worker_failure_codes':result['errors']}
+                if 'plugin_features' in saved_checkpoint:
+                    result['plugin_features']={**saved_checkpoint['plugin_features'],'complete':False,
+                        'status':'partial','worker_failure_codes':result['errors']}
+                if saved_checkpoint.get('resource_limits') is not None:
+                    result.setdefault('resource_limits', saved_checkpoint['resource_limits'])
             if v9:
                 result['analysis_v9'] = accumulator.interrupted(result['errors'])
         if v9:
             result.setdefault('analysis_v9', accumulator.value)
             result['raw_stream_storage'] = {'records': raw_store.records, 'verified_bytes': raw_store.used,
                                            'unfinished_stream': raw_store.active is not None}
+        if plugins is not None:result['plugin_registry']=plugins.describe()
         result["last_stage"] = last
         result["worker_exit_code"] = process.exitcode
+        reported_hwm = 'peak_rss_bytes' in result and 'resource_limits' in result
         result["peak_rss_bytes"] = max(peak, result.get("peak_rss_bytes", 0))
         result["peak_family_rss_sampled_bytes"] = family_peak
-        result["rss_quality"] = "kernel_worker_hwm" if "resource_limits" in result else "sampled_lower_bound"
+        result["rss_quality"] = "kernel_worker_hwm" if reported_hwm else "sampled_lower_bound"
         result["worker_seconds"] = time.monotonic() - started
         return result
     finally:

@@ -93,7 +93,11 @@ reports/*.md
 reports/*.json
 !reports/research_log.md
 .ipynb_checkpoints/
+# Per-run generated notebooks stay local; reusable templates remain versioned.
+notebooks/generated/
 
 # OS files
 .DS_Store
 Thumbs.db
+# Human-authorized, checksum-locked Arlington reference snapshot.
+/third_party/arlington-pdf-model/

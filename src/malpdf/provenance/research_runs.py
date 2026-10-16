@@ -26,14 +26,15 @@ def git_revision(root: Path) -> str:
 class ResearchRun:
     """Keep partial results on exceptions; never rewrite a previous run."""
 
-    def __init__(self, root: Path, study: str, methodology: dict, *, code_root: Path | None = None, run_id=None):
+    def __init__(self, root: Path, study: str, methodology: dict, *, code_root: Path | None = None, run_id=None, maintenance=False):
         self.root, self.code_root = root.absolute(), (code_root or root).absolute()
         self.commit = git_revision(self.code_root)
         self.identifier = run_id or "run_" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ_") + self.commit[:12]
         if not re.fullmatch(r"[a-z0-9_]+", study) or not re.fullmatch(r"run_[A-Za-z0-9_-]{1,100}", self.identifier):
             raise ValueError("Unsafe study/run identifier")
         self.report = self.root / "reports/experiments" / study / self.identifier
-        self.artifacts = self.root / "artifacts" / study / self.identifier
+        runtime_root = self.root / ("artifacts/tmp/maintenance" if maintenance else "artifacts")
+        self.artifacts = runtime_root / study / self.identifier
         for path in (self.report, self.artifacts):
             if path.exists() or any(p.is_symlink() for p in (path, *path.parents)):
                 raise ValueError("Immutable run collision or symbolic link")
@@ -58,18 +59,14 @@ class ResearchRun:
                    "packages": {name: importlib.metadata.version(name) for name in packages},
                    "generating_commit": self.commit, "code_worktree": self.state["code_worktree"],
                    "data_worktree": self.state["data_worktree"]})
-        # Dirty maintenance/preparation is reproducible without claiming HEAD
-        # contains uncommitted code; identities remain under ignored artifacts.
-        snapshot = self.artifacts / "generating_code"
+        # Record source identity and dirty state without duplicating source trees.
+        # An official experiment still requires committed generating code.
         hashes = {}
         for folder in ("src/malpdf", "scripts", "configs"):
             for source in (self.code_root / folder).rglob("*"):
                 if source.is_file() and source.suffix in {".py", ".yaml"} and not source.is_symlink():
                     relative = source.relative_to(self.code_root)
-                    target = snapshot / relative
-                    target.parent.mkdir(parents=True, exist_ok=True)
                     content = source.read_bytes()
-                    target.write_bytes(content)
                     hashes[str(relative)] = hashlib.sha256(content).hexdigest()
         write_json(self.artifacts / "generating_code_sha256.json", hashes)
         self.append("N/A", "N/A", {}, "started; metrics unavailable until evaluation")

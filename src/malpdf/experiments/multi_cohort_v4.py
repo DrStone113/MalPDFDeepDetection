@@ -13,7 +13,7 @@ import pandas as pd
 import torch
 
 from malpdf.data.kaggle_export import CODE_FILES, anonymize_rows
-from malpdf.data.kaggle_notebook import attach_existing_numeric_bundle, render_kaggle_notebook, writable_numeric_bundle
+from malpdf.data.kaggle_notebook import attach_existing_numeric_bundle, render_kaggle_notebook, save_generated_notebook, writable_numeric_bundle
 from malpdf.data.multi_cohort import load_v4_cohort, preparation_state, read_spec
 from malpdf.data.rit_pdfmal import sha256_file
 from malpdf.evaluation.selective import calibration_metrics
@@ -215,7 +215,8 @@ def export_v4_gpu(root, code_root, prepared_run, tree_run):
         notebook["cells"][1]["source"] = bootstrap.splitlines(keepends=True)
         source = "from malpdf.experiments.multi_cohort_gpu import train_v4_gpu\nOUTPUT_DIR = train_v4_gpu(BUNDLE_ROOT, Path('/kaggle/working/v4_outputs'))\nprint(OUTPUT_DIR)\n"
         notebook["cells"].append({"cell_type": "code", "metadata": {}, "execution_count": None, "outputs": [], "source": source.splitlines(keepends=True)})
-        write_json(run.artifacts / "kaggle_multi_cohort_v4.ipynb", notebook)
+        notebook_path = save_generated_notebook(root, run.state["study"], run.identifier,
+            "kaggle_multi_cohort_v4.ipynb", notebook)
         for key, value in (("prepared_summary", preparation), ("tree_summary", prior)):
             write_json(run.artifacts / (key + ".json"), value)
         run.state.update(prepared_run=prepared_run, tree_run=tree_run, samples=len(portable),
@@ -223,7 +224,7 @@ def export_v4_gpu(root, code_root, prepared_run, tree_run):
             tree_summary_sha256=sha256_file(root / prior["report_path"]),
             archive=str(archive.relative_to(root)), archive_bytes=archive.stat().st_size, archive_sha256=sha256_file(archive),
             metadata_sha256=hashlib.sha256(content).hexdigest(), inventory=inventory,
-            notebook=str((run.artifacts / "kaggle_multi_cohort_v4.ipynb").relative_to(root)),
+            notebook=str(notebook_path.relative_to(root)),
             private_mapping=str((run.artifacts / "private_id_map.csv").relative_to(root)),
             reused_source_matrices=len(reuse_rows), new_cic_matrices=new_matrix_count,
             elapsed_seconds=time.monotonic() - started, upload_performed=False, test_evaluation_count=0,

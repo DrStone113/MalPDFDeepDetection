@@ -16,6 +16,7 @@ dependencies = [
     "matplotlib>=3.7,<4",
     "numpy>=1.24,<3",
     "pandas>=2.0,<3",
+    "pikepdf==10.17.0",
     "pyarrow>=14,<20",
     "PyMuPDF==1.26.7",
     "pypdf==6.18.1",
@@ -27,7 +28,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=7.4,<9"]
+dev = ["pytest>=7.4,<9", "jsonschema==4.26.0"]
 
 [project.scripts]
 malpdf = "malpdf.cli:main"

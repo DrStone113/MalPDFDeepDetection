@@ -1,6 +1,18 @@
 """Bounded JavaScript syntax evidence, without evaluation or source export."""
 
 from collections import Counter
+from contextvars import ContextVar
+
+_TREE_OBSERVER=ContextVar('malpdf_js_tree_observer',default=None)
+
+
+def set_tree_observer(observer):
+    """Private worker hook; default syntax callers retain their old contract."""
+    return _TREE_OBSERVER.set(observer)
+
+
+def reset_tree_observer(token):
+    _TREE_OBSERVER.reset(token)
 
 CALL_NAMES = frozenset({"eval", "unescape", "atob", "Function", "String.fromCharCode",
                        "util.printf", "Collab.collectEmailInfo", "app.launchURL"})
@@ -49,7 +61,8 @@ def inspect_js_syntax(source, *, max_bytes=256 * 1024, max_nodes=20_000, max_dep
     if not isinstance(source, str) or len(source.encode("utf-8")) > max_bytes:
         raise CodeInspectionError("script_byte_limit")
     try:
-        tree = esprima.parseScript(source, options={"tolerant": False}).toDict()
+        observer=_TREE_OBSERVER.get()
+        tree = esprima.parseScript(source, options={"tolerant": False,**({'range':True} if observer is not None else {})}).toDict()
     except Exception:
         raise CodeInspectionError("javascript_parse_error") from None
     histogram, calls = Counter(), Counter({name: 0 for name in sorted(CALL_NAMES)})
@@ -78,7 +91,10 @@ def inspect_js_syntax(source, *, max_bytes=256 * 1024, max_nodes=20_000, max_dep
                 pending.append((value, depth + 1))
             elif isinstance(value, list):
                 pending.extend((item, depth + 1) for item in value if isinstance(item, dict))
-    return {"node_count": count, "max_depth": deepest,
+    summary={"node_count": count, "max_depth": deepest,
             "node_types": dict(sorted(histogram.items())), "named_calls": dict(calls),
             "computed_members": computed,
             "loops": sum(histogram[name] for name in ("ForStatement", "WhileStatement", "DoWhileStatement", "ForInStatement", "ForOfStatement"))}
+    if observer is not None:
+        observer.capture(source,tree,summary)
+    return summary

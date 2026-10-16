@@ -26,7 +26,7 @@ def main():
               'test_access': False, 'model_fitting': False,
               'environment': 'fresh Python 3.11 virtual environment; CPU wheels; pyproject editable dev install',
               'purpose': 'prepare fresh runtime' if args.prepare_environment else 'mandatory source and regression seal'}
-    with ResearchRun(root, 'cic_v9_validation', method) as run:
+    with ResearchRun(root, 'cic_v9_validation', method, maintenance=True) as run:
         temporary_root = root/'artifacts/tmp'
         temporary_root.mkdir(exist_ok=True)
         temporary = Path(tempfile.mkdtemp(prefix='v9_', dir=temporary_root))
@@ -57,9 +57,10 @@ def main():
             prior = root/'reports/experiments/cic_v9_validation'/args.environment_run
             manifest = json.loads((prior/'environment_prepared.json').read_text())
             venv = root/manifest['venv_path']
-            if (not venv.is_relative_to(root/'artifacts/cic_v9_validation')
+            if (venv != root/'.venv'
+                    or manifest.get('python_major_minor') != '3.11'
                     or manifest['pyproject_sha256'] != hashlib.sha256((root/'pyproject.toml').read_bytes()).hexdigest()
-                    or any(p.is_symlink() for p in venv.parents)):
+                    or any(p.is_symlink() for p in (venv, *venv.parents))):
                 raise ValueError('Fresh environment preparation mismatch')
             run.state['fresh_environment_preparation'] = args.environment_run
         else:
@@ -67,7 +68,9 @@ def main():
             constraints.write_text('\n'.join(sorted({f"{d.metadata['Name']}=={d.version}"
                 for d in importlib.metadata.distributions()
                 if d.metadata['Name'].lower() not in {'malpdf','pypdf'}})) + '\npypdf==6.18.1\n')
-            venv = run.artifacts/'venv'
+            venv = root/'.venv'
+            if venv.exists() or venv.is_symlink():
+                raise ValueError('Fresh validation requires an absent root .venv; existing environment preserved')
             check('create_venv', [sys.executable, '-m', 'venv', venv])
             # Wheels are transient: keep them off the almost-full project disk.
             # The fresh installed environment and test TMPDIR stay on disk.

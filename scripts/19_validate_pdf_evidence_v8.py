@@ -18,14 +18,16 @@ def main():
               'test_access': False, 'environment': 'fresh Python 3.11 venv; CPU wheels; pyproject editable dev install',
               'constraints': 'effective starting package versions pinned for repeatable local checks',
               'benchmark': 'not invoked by this validator; assess release from separately saved experiment evidence'}
-    with ResearchRun(root, 'cic_v8_validation', method) as run:
+    with ResearchRun(root, 'cic_v8_validation', method, maintenance=True) as run:
         if sys.version_info[:2] != (3, 11):
             raise ValueError('Local validation requires Python 3.11')
         constraints = run.artifacts / 'constraints.txt'
         constraints.write_text('\n'.join(sorted({
             f"{d.metadata['Name']}=={d.version}" for d in importlib.metadata.distributions()
             if d.metadata['Name'].lower() != 'malpdf'})) + '\n')
-        venv = run.artifacts / 'venv'
+        venv = root / '.venv'
+        if venv.exists() or venv.is_symlink():
+            raise ValueError('Fresh validation requires an absent root .venv; existing environment preserved')
         python = venv / 'bin/python'
         # DataLoader file-descriptor sharing uses Unix sockets below TMPDIR.
         # Keep that path short as well as on disk, outside RAM-backed /tmp.

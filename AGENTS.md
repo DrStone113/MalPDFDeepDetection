@@ -4,26 +4,40 @@
 
 This repository is a Python research project for malicious PDF detection. Python 3.11 is the Codespace/test baseline; Python 3.13 is supported for the authorized Kaggle GPU runtime.
 
-- Before changing code, run `git status`, read `pyproject.toml` and `README.md`, and inspect the relevant package, scripts, configs, tests, and existing experiment reports. Preserve unrelated local changes.
-- Check Python and declared dependencies with `python --version` and `python -m pip check`. Use Python 3.11 for Codespace/local checks and install the project from `pyproject.toml` in a fresh virtual environment. On Codespace, select CPU wheels to avoid unused CUDA downloads: `python -m pip install --extra-index-url https://download.pytorch.org/whl/cpu -e '.[dev]'`. Authorized Kaggle GPU runs may use Python 3.13 with the declared PyTorch/torchvision versions; record the effective Python, library and CUDA versions and do not claim identical environments across runs.
+- Before changing code, run `git status`, read `pyproject.toml`, `README.md`, and the relevant files in `docs/` and `plans/`, and inspect the target modules in `src/malpdf/`, `scripts/`, `configs/`, `tests/`, and `reports/`. Preserve unrelated local changes.
+- Check Python and declared dependencies with `python --version` and `python -m pip check`. Use Python 3.11 for Codespace/local checks and install the project from `pyproject.toml` in a fresh virtual environment (`.venv/`). On Codespace, select CPU wheels to avoid unused CUDA downloads: `python -m pip install --extra-index-url https://download.pytorch.org/whl/cpu -e '.[dev]'`. Authorized Kaggle GPU runs may use Python 3.13 with the declared PyTorch/torchvision versions; record the effective Python, library, and CUDA versions and do not claim identical environments across runs.
 
-## Modular Boundaries
+## Modular Boundaries & Workspace Organization
 
-- Keep reusable loading, validation, static inspection, models, evaluation, and experiment logic inside `src/malpdf/`.
-- Put small repeatable entry points in `scripts/` and versioned configuration without secrets in `configs/`. Never create standalone scripts at the project root. Keep notebooks exploratory and thin.
-- Tests belong in `tests/` and use synthetic bytes, synthetic tables, or clearly benign fixtures only; they must not depend on network access, external datasets, execution order, or local machine state.
+Respect the established roles of the repository's top-level directories instead of mixing outputs or creating parallel structures:
 
-## Fail-Closed Safety
+- `src/malpdf/`: Reusable loading, validation, static inspection, feature extraction, models, evaluation, reproducibility, and experiment logic.
+- `scripts/` & `configs/`: Repeatable CLI entry points in `scripts/` and versioned configuration without secrets in `configs/`. Never create standalone scripts at the project root.
+- `tests/`: Deterministic tests using synthetic bytes, synthetic tables, or clearly benign fixtures only; they must not depend on network access, external datasets, execution order, or local machine state.
+- `docs/` & `plans/`: Maintain technical documentation, development guides, workflow specs, migration notes, and project status in `docs/`, and design/feature plans in `plans/`. Keep the root `README.md` as a concise, stable overview; record ongoing technical changes and Codespace progress in `docs/` rather than modifying `README.md`.
+- `notebooks/`: Exploratory and cloud GPU notebooks (kept thin, delegating reusable logic to `src/malpdf/`).
+- `data/` & `checkpoints/`: Ignored storage for datasets (`data/raw/`, `data/processed/`, `data/external/`) and model checkpoints/weights (`checkpoints/`).
+- `reports/`: Structured research outputs (`experiments/`, `analysis/`, `tables/`, `figures/`, `progress/`, `deployment/`, `thesis/`, `checklists/`) and the append-only run register `reports/research_log.md`.
+- `artifacts/`: Ignored local runtime storage for reusable binary/matrix caches (such as `markov_cache`) and temporary scratch data (`tmp/`).
+  - Route notebooks, checkpoints, processed datasets, documentation, and formal experiment/evaluation outputs to their dedicated top-level directories (`notebooks/`, `checkpoints/`, `data/`, `docs/`, `reports/`) rather than duplicating them into `artifacts/`.
+  - When local runtime outputs in `artifacts/` are needed, group them cleanly under stable domain subdirectories or configured cache paths instead of spawning new top-level `artifacts/` folders for every precheck, retry, launch, audit, handoff, or maintenance check. Never create virtual environments or full source-tree copies inside `artifacts/`.
 
-- Treat every unknown PDF as malicious. Inspect only untrusted bytes through binary reads such as `open(path, "rb")`, with resource limits and explicit validation failures. Never open a viewer, browser, office tool, or preview pane; never render PDFs or execute embedded files, JavaScript, macros, commands, URLs, or actions.
-- **Never `git add`, force-add, or commit raw PDFs, datasets, matrix caches (`*.npy`), secrets, checkpoints, or binary model/generated artifacts.** Keep them under ignored `data/` or `artifacts/`; ensure `.gitignore` blocks `data/raw/`, `artifacts/`, `*.pdf`, and `*.npy` (empty `.gitkeep` placeholders are allowed). Check ignore coverage before staging.
-- Never silently modify source data; write derived outputs under `data/processed/` or `artifacts/`. Dataset acquisition must be an explicit, documented human action; never download datasets automatically.
-- Never upload samples, sample hashes, extracted content, or metadata to third-party services without explicit authorization.
-- Dynamic analysis requires explicit approval of an isolated disposable sandbox with no shared folders, credentials, clipboard, or unrestricted network access. Referral recommendations do not authorize execution.
+## Codespace Synchronization
+
+- Track active Codespace changes continuously via `git status` and `git diff`.
+- Keep code (`src/malpdf/`, `scripts/`, `configs/`), tests (`tests/`), and technical documentation (`docs/`) synchronized with Codespace progress: whenever implementation or workflow behavior changes, update the corresponding tests in `tests/` and documentation in `docs/` in the same task.
 
 ## YAGNI Decision Ladder
 
 Before writing new code, apply this order: (1) YAGNI: establish that the task needs it; (2) reuse code in `src/malpdf/`; (3) use the standard library, scikit-learn, or the already declared PyTorch stack; (4) write only the minimum necessary code. Do not add frameworks without an explicit task requirement. Never remove validation, security checks, or error handling to simplify an implementation.
+
+## Fail-Closed Safety
+
+- Treat every unknown PDF as malicious. Inspect only untrusted bytes through binary reads such as `open(path, "rb")`, with resource limits and explicit validation failures. Never open a viewer, browser, office tool, or preview pane; never render PDFs or execute embedded files, JavaScript, macros, commands, URLs, or actions.
+- **Never `git add`, force-add, or commit raw PDFs, datasets, matrix caches (`*.npy`), secrets, checkpoints, or binary model/generated artifacts.** Keep them under ignored `data/`, `checkpoints/`, or `artifacts/`; ensure `.gitignore` blocks `data/raw/`, `artifacts/`, `checkpoints/`, `*.pdf`, and `*.npy` (empty `.gitkeep` placeholders are allowed). Check ignore coverage before staging.
+- Never silently modify source data; write derived outputs under `data/processed/` or `artifacts/`. Dataset acquisition must be an explicit, documented human action; never download datasets automatically.
+- Never upload samples, sample hashes, extracted content, or metadata to third-party services without explicit authorization.
+- Dynamic analysis requires explicit approval of an isolated disposable sandbox with no shared folders, credentials, clipboard, or unrestricted network access. Referral recommendations do not authorize execution.
 
 ## Protocol G & Validation Lock
 
@@ -34,25 +48,26 @@ Before writing new code, apply this order: (1) YAGNI: establish that the task ne
 
 ## Immutable Provenance
 
-- Never overwrite previous reports or run directories, especially `reports/experiments/selective_ensemble/`. New experiment invocations must automatically create a unique `reports/experiments/<study>/run_<UTC timestamp>_<commit hash>/` directory and refuse collisions.
-- Every new run must contain `locked_methodology.json` and `model_comparison.csv`, plus config, package/environment versions, authorized dataset/split provenance and checksums, seeds, generating code commit, metrics, status/errors, and output paths. For a failed or interrupted run, preserve partial evidence and mark unavailable results explicitly.
-- Official experiments start from a clean committed worktree. Record `git rev-parse HEAD`; maintenance checks on uncommitted changes must also record the dirty state. A commit cannot contain its own final hash; record the generating revision and use Git history for the later results commit.
+- Never overwrite previous reports or run directories, especially `reports/experiments/selective_ensemble/`. Official experiment invocations must automatically create a unique `reports/experiments/<study>/run_<UTC timestamp>_<commit hash>/` directory and refuse collisions.
+- Every official experiment run must contain `locked_methodology.json` and `model_comparison.csv`, plus config, package/environment versions, authorized dataset/split provenance and checksums, seeds, generating code commit, metrics, status/errors, and output paths. For a failed or interrupted run, preserve partial evidence and mark unavailable results explicitly.
+- Official experiments start from a clean committed worktree. Record `git rev-parse HEAD`; maintenance checks on uncommitted changes must also record the dirty state without creating redundant snapshot directories in `artifacts/`. A commit cannot contain its own final hash; record the generating revision and use Git history for the later results commit.
 
 ## Living Docs (Definition of Done)
 
 - Before handing off a task, run `pytest tests/`, `python -m pip check`, `git diff --check`, and `git status`. All tests must pass and dependencies must be consistent; report failures or blockers truthfully.
+- Verify that `tests/` and `docs/` are updated to match the current Codespace changes (keeping `README.md` stable) and that `artifacts/` remains clean of ad-hoc check or handoff directories.
 - Automatically append to `reports/research_log.md` after every experiment invocation, including completed, failed, and interrupted attempts, and after each maintenance task. Use its run-register schema: UTC timestamp, run ID, kind/status, protocol/seed, model, partition, malicious F1, MCC, ECE, Brier score, generating commit/worktree state, evidence paths, and checks/notes.
 - Append one row per model and evaluated partition. Copy metrics only from saved evidence; use `N/A` with a reason for unavailable or inapplicable values. Define Label=1 as malicious and record the ECE binning convention. Never invent metrics, replace historical entries, or rerun experiments just to populate the log.
-- Keep code, tests, relevant documentation, and the appended research log consistent. Inspect changed and staged paths for unsafe artifacts before any authorized commit; `git status` must show only intended task changes before handoff.
+- Keep code, tests, `docs/`, and the appended research log consistent. Inspect changed and staged paths for unsafe artifacts before any authorized commit; `git status` must show only intended task changes before handoff.
 
 ## Execution Budgets and Threat Coverage
 
-- Use Codespace/local for code, tests, tabular processing and lightweight stacking; use explicitly authorized cloud GPUs for new deep-learning runs. Keep established experiment designs locked.
-- Parallelize new static extraction/cache jobs with bounded processes using CPU affinity/quota and memory limits. Set BLAS/OpenMP threads per process explicitly; preserve parser isolation, deadlines and all byte caps. Never promise 100% utilization or a fixed runtime without measurement.
-- For new Kaggle Vision runs, preload verified float32 matrices into a single RAM tensor shared read-only with persistent Linux fork workers. Use `num_workers > 0`, pinned batches, nonblocking CUDA transfers and FP16 AMP with gradient scaling. Check RAM, loader shared memory and batch budgets first; CPU unit/smoke tests remain explicit and bounded. Use the current PyTorch AMP API and record requested/effective precision and epoch timings.
+- Use Codespace/local for code, tests, tabular processing, and lightweight stacking; use explicitly authorized cloud GPUs for new deep-learning runs. Keep established experiment designs locked.
+- Parallelize new static extraction/cache jobs with bounded processes using CPU affinity/quota and memory limits. Set BLAS/OpenMP threads per process explicitly; preserve parser isolation, deadlines, and all byte caps. Never promise 100% utilization or a fixed runtime without measurement.
+- For new Kaggle Vision runs, preload verified float32 matrices into a single RAM tensor shared read-only with persistent Linux fork workers. Use `num_workers > 0`, pinned batches, nonblocking CUDA transfers, and FP16 AMP with gradient scaling. Check RAM, loader shared memory, and batch budgets first; CPU unit/smoke tests remain explicit and bounded. Use the current PyTorch AMP API and record requested/effective precision and epoch timings.
 - Preserve original Markov probabilities; do not normalize again or cast them to uint8. Fit no transform on validation or Test while preparing RAM data.
 - Retain measured security features regardless of SHAP importance. Document train-only constant exclusions; do not inspect Test to choose features. Raw nulls and parser flags remain intact.
-- Track evidence for JavaScript, embedded payloads, launch/actions, forms, font/image decoders, RichMedia, URI phishing and steganography separately. Token presence is not proof of exploit detection; claim coverage only with labeled evidence. Cross-dataset/evasion work requires a separately locked design, duplicate/source checks and preserved independent Test cohorts.
+- Track evidence for JavaScript, embedded payloads, launch/actions, forms, font/image decoders, RichMedia, URI phishing, and steganography separately. Token presence is not proof of exploit detection; claim coverage only with labeled evidence. Cross-dataset/evasion work requires a separately locked design, duplicate/source checks, and preserved independent Test cohorts.
 
 ## GitHub Codespaces Boundary
 

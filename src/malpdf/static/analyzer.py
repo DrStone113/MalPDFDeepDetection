@@ -29,15 +29,12 @@ class StaticPDFAnalyzer:
     def __init__(self, limits: StaticInspectionLimits | None = None) -> None:
         self.limits = StaticInspectionLimits() if limits is None else limits
 
-    def inspect(self, path: str | Path, *, snapshot: bytes | None = None,
-                snapshot_sha256: str | None = None, timings=None) -> StaticInspectionResult:
-        """Return partial structured data even for malformed or non-PDF files."""
-        input_path = Path(path)
+    def _empty_result(self, input_path=None):
         statuses = dict(implementation_statuses())
         features: dict[str, int | float | None] = {feature: None for feature in RIT_FEATURES}
         input_info = {
-            "path": str(input_path),
-            "extension": input_path.suffix.lower(),
+            "path": None if input_path is None else str(input_path),
+            "extension": None if input_path is None else input_path.suffix.lower(),
             "size_bytes": None,
             "sha256": None,
         }
@@ -57,6 +54,14 @@ class StaticPDFAnalyzer:
             diagnostics=diagnostics,
             errors=errors,
         )
+        return result
+
+    def inspect(self, path: str | Path, *, snapshot: bytes | None = None,
+                snapshot_sha256: str | None = None, timings=None) -> StaticInspectionResult:
+        """Return partial structured data even for malformed or non-PDF files."""
+        input_path = Path(path)
+        result = self._empty_result(input_path)
+        errors, input_info = result.errors, result.input
         if not input_path.is_file():
             errors.append(StructuredExtractionIssue("file_not_found", "Input path is not a regular file.", fatal=True))
             return result
@@ -95,6 +100,32 @@ class StaticPDFAnalyzer:
         size = len(data)
         input_info["size_bytes"] = size
         input_info["sha256"] = digest
+        return self._inspect_verified_bytes(data, result, timings)
+
+    def inspect_snapshot(self, data: bytes, *, expected_sha256=None, timings=None) -> StaticInspectionResult:
+        """Inspect an in-memory child artifact without creating a temporary PDF.
+
+        Production callers must use a disposable resource-limited worker. This
+        entry point verifies its own input; path entry-point checks stay intact.
+        """
+        result = self._empty_result()
+        if not isinstance(data, bytes):
+            result.errors.append(StructuredExtractionIssue('invalid_snapshot', 'Snapshot must be bytes.', fatal=True))
+            return result
+        if len(data) > self.limits.max_file_size_bytes:
+            result.errors.append(StructuredExtractionIssue('file_size_limit', 'Snapshot exceeds the byte cap.', fatal=True))
+            return result
+        digest = hashlib.sha256(data).hexdigest()
+        result.input.update(size_bytes=len(data), sha256=digest)
+        if expected_sha256 is not None and digest != expected_sha256:
+            result.errors.append(StructuredExtractionIssue('snapshot_checksum_mismatch', 'Snapshot checksum mismatch.', fatal=True))
+            return result
+        return self._inspect_verified_bytes(data, result, timings)
+
+    def _inspect_verified_bytes(self, data, result, timings):
+        size = len(data)
+        input_info, features, parser = result.input, result.features, result.parser
+        diagnostics, errors = result.diagnostics, result.errors
 
         header = parse_pdf_header(data)
         diagnostics["file_header"] = header
