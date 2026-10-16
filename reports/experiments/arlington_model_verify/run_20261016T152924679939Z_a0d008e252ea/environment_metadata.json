@@ -1,0 +1,33 @@
+{
+  "python": "3.11.17",
+  "packages": {
+    "numpy": "2.4.6",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.9.1",
+    "PyMuPDF": "1.26.7",
+    "torch": "2.11.0+cpu",
+    "torchvision": "0.26.0+cpu",
+    "xgboost": "3.2.0",
+    "lightgbm": "4.7.0",
+    "catboost": "1.2.10"
+  },
+  "generating_commit": "a0d008e252ea8ec9d470453316583a1a8e9f6d4b",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M scripts/23_arlington_model.py",
+      " M src/malpdf/extraction/arlington_expression.py",
+      " M src/malpdf/extraction/arlington_validate.py",
+      " M tests/test_arlington.py"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M scripts/23_arlington_model.py",
+      " M src/malpdf/extraction/arlington_expression.py",
+      " M src/malpdf/extraction/arlington_validate.py",
+      " M tests/test_arlington.py"
+    ]
+  }
+}

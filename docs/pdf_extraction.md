@@ -555,8 +555,8 @@ git -C third_party/arlington-pdf-model checkout --detach b7d880b7a3d3c8f505c025f
 Git tree; missing, extra, changed, symlinked, malformed or differently checked-out
 models raise `ModelUnavailable`. A manually updated checksum cannot disguise a
 file from a different Git tree. There is no fixture or network fallback.
-`smoke` also generates four benign static fixtures (blank page, wrong catalog
-type, direct Pages and unknown key), uses the actual locked catalog in disposable
+`smoke` also generates six benign static fixtures (blank page, wrong catalog
+type, direct Pages, unknown key and valid/invalid AcroForm signature flags), uses the actual locked catalog in disposable
 workers, and retains partial/final evidence in unique maintenance runs. Neither
 command reads datasets. Unit tests use synthetic TSV/Git fixtures exclusively;
 the separate smoke report proves real-reference integration, not real-PDF coverage.
@@ -570,6 +570,20 @@ Nested Boolean reduction of inapplicable version-conditioned values also stays
 unknown when its semantics are not implemented; it never becomes a false violation.
 The interpreter never reads files or executes PDF scripts. Large numeric
 operands and nonterminating division remain unknown rather than rounded.
+
+`BitClear`, `BitSet`, `BitsClear` and `BitsSet` evaluate bits1–32 of the current
+original integer in a `bitmask` type branch. Their row/type context is scoped
+separately for each key; duplicate/unresolved references and missing/wrong
+context remain unknown. Signed32-bit two's-complement and unsigned32-bit
+representations are admitted; larger values fail the32-bit assertion, and real
+numbers are never rounded or truncated into a bitmask. Bit positions/ranges
+outside the model grammar stay unknown, including under NOT. Source values and
+primary features are unchanged. `Contains` accepts a typed basic value or an
+array, keeps unknown members conservative and charges each array element to the
+existing expression budget. Names, strings, numbers and Booleans remain distinct.
+Semantics follow the [locked Arlington grammar](https://github.com/pdf-association/arlington-pdf-model/blob/b7d880b7a3d3c8f505c025f17763397475e90503/INTERNAL_GRAMMAR.md),
+verified locally against its pinned Git tree. Extension/context-dependent
+predicates remain unsupported; these additions are not a conformance claim.
 
 `arlington_validate.py` reads only private raw trees and cached xref-selected
 objects after the raw forensic checkpoint. It cannot parse/decode additional

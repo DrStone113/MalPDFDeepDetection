@@ -28,9 +28,16 @@ Use Python 3.11 for local and Codespace checks. Python 3.13 support applies to t
 uncached reference using generated IR/PDFs. It verifies one index construction
 across repeated queries, duplicate/encoded/non-UTF8 keys, distinct same-span
 nodes/owners, older trailer lookup, unknown syntax and exact rule-output parity.
-The model smoke command still exercises the four generated fixtures against
+The model smoke command exercises six generated fixtures against
 the actual locked610-TSV catalog; neither fixture timing nor a green suite
 establishes a new corpus runtime or coverage result.
+
+The same test module checks current-field bit predicates over all32 positions,
+signed/unsigned boundaries, invalid arguments, missing/recovered references,
+inherited keys and distinct type alternatives. A string-based bit reference
+guards bit numbering. `Contains` tests distinguish typed scalars and arrays,
+unknown members and exhaustion of the shared expression budget. The real-model
+smoke adds valid/invalid AcroForm SigFlags; no PDF scripts are executed.
 
 - [Windows local setup](#windows-local-setup)
 - [GitHub Codespaces](#github-codespaces)

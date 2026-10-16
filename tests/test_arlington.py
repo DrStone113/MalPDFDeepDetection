@@ -67,6 +67,133 @@ class ExprContext:
     def present(self,path): return path=='N'
 
 
+class BitContext(ExprContext):
+    def __init__(self,value): self.bits=value
+    def current_bitmask(self): return self.bits
+
+
+@pytest.mark.parametrize('expression,value,expected',[
+    ('fn:BitClear(1)',0,True),('fn:BitClear(1)',1,False),
+    ('fn:BitSet(1)',1,True),('fn:BitSet(1)',2,False),
+    ('fn:BitSet(32)',-(1<<31),True),('fn:BitSet(32)',1<<31,True),
+    ('fn:BitSet(32)',0,False),('fn:BitsClear(1,2)',-4,True),
+    ('fn:BitsClear(1,2)',-1,False),('fn:BitsSet(3,5)',28,True),
+    ('fn:BitsSet(3,5)',20,False),('fn:BitsClear(31,32)',(1<<30)-1,True),
+    ('fn:BitsClear(31,32)',1<<31,False),('fn:BitsSet(1,32)',-1,True),
+    ('fn:BitsSet(1,32)',(1<<32)-1,True),('fn:BitsSet(1,32)',1<<32,False),
+    ('fn:BitsClear(1,32)',0,True),('fn:BitsClear(1,32)',-(1<<31)-1,False),
+    ('fn:BitSet(1)',True,False),('fn:BitSet(1)',Decimal(1),False),
+])
+def test_bitmask_predicates_use_current_integer_and_exact_32_bit_width(expression,value,expected):
+    assert evaluate(expression,BitContext(value)) is expected
+
+
+@pytest.mark.parametrize('expression',[
+    'fn:BitSet(0)','fn:BitSet(33)','fn:BitSet(-1)','fn:BitSet(1.5)',
+    'fn:BitSet(TRUE)','fn:BitSet()','fn:BitSet(1,2)',
+    'fn:BitsClear(2,2)','fn:BitsSet(32,1)','fn:BitsSet(1,33)',
+    'fn:BitsSet(1)','fn:BitSet(fn:Unknown())',
+])
+def test_invalid_bit_arguments_stay_unknown_including_under_not(expression):
+    for formula in (expression,'fn:Not('+expression+')'):
+        result=evaluate(formula,BitContext(0));assert isinstance(result,Unknown)
+        with pytest.raises(TypeError):bool(result)
+
+
+def test_bitmask_reference_bits_and_budget_unknowns_are_preserved():
+    for value in (-(1<<31),-4,-1,0,1,2,3,(1<<31)-1,1<<31,(1<<32)-1):
+        bits=format(value%(1<<32),'032b')[::-1]
+        for position in range(1,33):
+            assert evaluate(f'fn:BitSet({position})',BitContext(value)) is (bits[position-1]=='1')
+            assert evaluate(f'fn:BitClear({position})',BitContext(value)) is (bits[position-1]=='0')
+        for low,high in ((1,2),(1,32),(7,8),(31,32)):
+            selected=bits[low-1:high]
+            assert evaluate(f'fn:BitsSet({low},{high})',BitContext(value)) is all(b=='1' for b in selected)
+            assert evaluate(f'fn:BitsClear({low},{high})',BitContext(value)) is all(b=='0' for b in selected)
+    assert isinstance(evaluate('fn:Not(fn:BitSet(1))',ExprContext()),Unknown)
+    unknown=Unknown(('xref_selection_unverified',))
+    assert evaluate('fn:BitSet(1)',BitContext(unknown))==unknown
+    budget=EvaluationBudget(2)
+    assert isinstance(evaluate('fn:BitsSet(1,32)',BitContext(0),budget=budget),Unknown)
+    assert budget.exhausted and budget.used==2
+
+
+@pytest.mark.parametrize('value,expected',[
+    (Symbol('FlateDecode'),True),(Symbol('DCTDecode'),False),
+    ((Symbol('FlateDecode'),Symbol('DCTDecode')),True),
+    ((Symbol('DCTDecode'),),False),
+    ((Unknown(('missing_target',)),Symbol('FlateDecode')),True),
+    ((Unknown(('missing_target',)),Symbol('DCTDecode')),None),
+])
+def test_contains_name_or_array_preserves_unknown_elements(value,expected):
+    ctx=SimpleNamespace(value=lambda path:value)
+    result=evaluate('fn:Contains(@Filter,FlateDecode)',ctx)
+    assert isinstance(result,Unknown) if expected is None else result is expected
+
+
+@pytest.mark.parametrize('expression,expected',[
+    ("fn:Contains('abc','abc')",True),("fn:Contains('abc',abc)",False),
+    ('fn:Contains(1,1)',True),('fn:Contains(1,TRUE)',False),
+    ('fn:Contains([TRUE,1],FALSE)',False),('fn:Contains([1],TRUE)',False),
+])
+def test_contains_never_coerces_names_strings_booleans_or_numbers(expression,expected):
+    assert evaluate(expression,ExprContext()) is expected
+
+
+def test_contains_charges_each_array_element_and_keeps_unknown_operand_unknown():
+    ctx=SimpleNamespace(value=lambda path:(Symbol('DCTDecode'),)*10)
+    budget=EvaluationBudget(4)
+    assert isinstance(evaluate('fn:Contains(@Filter,FlateDecode)',ctx,budget=budget),Unknown)
+    assert budget.exhausted and budget.used==4
+    assert isinstance(evaluate('fn:Not(fn:Contains([],fn:Unknown()))',ctx),Unknown)
+
+
+@pytest.mark.parametrize('value,formula,expected',[
+    (b'1','fn:BitSet(1)','pass'),(b'0','fn:BitSet(1)','fail'),
+    (b'-4','fn:BitsClear(1,2)','pass'),(b'-1','fn:BitsClear(1,2)','fail'),
+    (b'-2147483648','fn:BitSet(32)','pass'),
+    (b'4294967296','fn:BitSet(1)','fail'),
+])
+def test_current_field_bitmask_rules_keep_raw_values_and_source_ids(value,formula,expected):
+    data=pdf(b'<< /Flags '+value+b' >>')
+    raw,result=inspect(data,catalog([row('Flags','bitmask',SpecialCase='['+formula+']')]))
+    assert checks(result,'special_case','Flags')[0]['outcome']==expected
+    assert raw==inspect_raw_forensic(data,CodeInspectionLimits(),remaining=1024**2)
+    bundle=normalize_profile({'status':'complete','raw_layout':inspect_raw_layout(data),
+        'raw_forensic':raw,'arlington_analysis':result},hashlib.sha256(data).hexdigest(),'deep-static')
+    validate_bundle(bundle)
+
+
+def test_current_bitmask_context_does_not_leak_between_keys_or_type_branches():
+    model=catalog([row('A','bitmask',SpecialCase='[fn:BitSet(1)]'),
+                   row('B','bitmask',SpecialCase='[fn:BitClear(1)]')])
+    _,result=inspect(pdf(b'<< /A 1 /B 2 >>'),model)
+    assert checks(result,'special_case','A')[0]['outcome']=='pass'
+    assert checks(result,'special_case','B')[0]['outcome']=='pass'
+    _,changed=inspect(pdf(b'<< /A 1 /B 1 >>'),model)
+    assert checks(changed,'special_case','A')[0]['outcome']=='pass'
+    assert checks(changed,'special_case','B')[0]['outcome']=='fail'
+    _,named=inspect(pdf(b'<< /A /Known >>'),catalog([row('A','bitmask;name',
+        PossibleValues='[];[Known]',SpecialCase='[fn:BitSet(1)];[]')]))
+    assert checks(named,'row','A')[0]['outcome']=='pass'
+    _,integer=inspect(pdf(b'<< /A 1 >>'),catalog([row('A','integer',SpecialCase='[fn:Not(fn:BitSet(1))]')]))
+    assert checks(integer,'special_case','A')[0]['outcome']=='indeterminate'
+
+
+def test_current_bitmask_reference_inheritance_and_unknowns_stay_scoped():
+    model=catalog([row('Flags','bitmask',SpecialCase='[fn:BitSet(1)]')])
+    _,result=inspect(pdf(b'<< /Flags 2 0 R >>',[(2,b'1')]),model)
+    assert checks(result,'special_case','Flags')[0]['outcome']=='pass'
+    _,missing=inspect(pdf(b'<< /Flags 99 0 R >>'),model)
+    assert checks(missing,'special_case','Flags')[0]['outcome']=='indeterminate'
+    assert 'reference_target_unavailable' in checks(missing,'special_case','Flags')[0]['reason_codes']
+    _,duplicate=inspect(pdf(b'<< /Flags 1 /Flags 2 >>'),model)
+    assert checks(duplicate,'presence')[0]['outcome']=='indeterminate'
+    _,inherited=inspect(pdf(b'<< /Parent 2 0 R >>',[(2,b'<< /Flags 1 >>')]),
+        catalog([row('Flags','bitmask',Inheritable='TRUE',SpecialCase='[fn:BitSet(1)]')]))
+    assert checks(inherited,'special_case','Flags')[0]['outcome']=='pass'
+
+
 @pytest.mark.parametrize(('expression','expected'),[
     ('fn:Eval((@N>=0) && (@N<9))',True),('fn:IsRequired(fn:IsPresent(N))',True),
     ('fn:Not(fn:IsPresent(Missing))',True),('fn:ArrayLength(Items)',Decimal(2)),

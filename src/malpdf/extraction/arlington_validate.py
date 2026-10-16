@@ -54,8 +54,22 @@ def disjunction(values):
 
 
 class Context:
-    def __init__(self,engine,value,revision,pdf_version,parent=None,trailer=False):
+    def __init__(self,engine,value,revision,pdf_version,parent=None,trailer=False,*,field=None,type_name=None):
         self.engine,self.ref,self.revision,self.version,self.parent,self.trailer=engine,value,revision,pdf_version,parent,trailer
+        self.field,self.type_name=field,type_name
+
+    def for_field(self,ref,type_name):
+        return Context(self.engine,self.ref,self.revision,self.version,self.parent,self.trailer,
+                       field=ref,type_name=type_name)
+
+    def current_bitmask(self):
+        if self.field is None or self.type_name!='bitmask':
+            return Unknown(('bitmask_context_unsupported',))
+        resolved=self.engine.resolve(self.field,self.revision)
+        if isinstance(resolved,Unknown): return resolved
+        if resolved.node.issues: return Unknown(('raw_syntax_ambiguous',))
+        node=resolved.node
+        return node.value if node.kind=='number' and type(node.value) is int else None
 
     def entry(self,key):
         if not isinstance(key,str): return Unknown(('key_path_unsupported',))
@@ -367,6 +381,7 @@ class _Engine:
             matched=kind if isinstance(kind,Unknown) else self.type_check(ref,kind.value,ctx) if isinstance(kind,Symbol) else Unknown(('type_expression_unsupported',))
             self.check(binding,row,'type_candidate',matched,refs,type_expression,model_table=model,key=key,type_branch=index)
             if matched is False: results.append(False); continue
+            rule_ctx=ctx.for_field(ref,kind.value if isinstance(kind,Symbol) else None)
             checks=[matched]
             for column,category,fn in (
                 ('IndirectReference','indirect',self.directness),
@@ -374,7 +389,7 @@ class _Engine:
                 ('SpecialCase','special_case',self.list_rule),
                 ('Link','link',lambda text,value,context:self.links(text,value,context,depth,path+'/'+model+':'+key))):
                 expression=self.field(row,column,index,len(alternatives))
-                result=fn(expression,ref,ctx)
+                result=fn(expression,ref,rule_ctx)
                 checks.append(result)
                 self.check(binding,row,category,result,refs,expression,model_table=model,key=key,type_branch=index)
             results.append(conjunction(checks))

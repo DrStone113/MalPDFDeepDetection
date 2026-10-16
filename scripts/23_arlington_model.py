@@ -40,12 +40,17 @@ def main():
         write_json(run.artifacts/'reference_verification_initial.json',verification)
         if args.action=='smoke':
             from pypdf import PdfWriter
-            from pypdf.generic import NameObject,NumberObject
-            for name in ('blank_page','wrong_catalog_type','direct_pages','unknown_key'):
+            from pypdf.generic import NameObject,NumberObject,DictionaryObject,ArrayObject
+            for name in ('blank_page','wrong_catalog_type','direct_pages','unknown_key',
+                         'valid_signature_flags','invalid_signature_flags'):
                 writer=PdfWriter(); writer.add_blank_page(width=100,height=100)
                 if name=='wrong_catalog_type': writer.root_object[NameObject('/Type')]=NameObject('/BenignWrongType')
                 if name=='direct_pages': writer.root_object[NameObject('/Pages')]=writer.root_object['/Pages']
                 if name=='unknown_key': writer.root_object[NameObject('/ArlingtonBenignCanary')]=NumberObject(7)
+                if name in {'valid_signature_flags','invalid_signature_flags'}:
+                    writer.root_object[NameObject('/AcroForm')]=DictionaryObject({
+                        NameObject('/Fields'):ArrayObject([]),
+                        NameObject('/SigFlags'):NumberObject(3 if name=='valid_signature_flags' else 4)})
                 stream=BytesIO(); writer.write(stream)
                 path=run.artifacts/(name+'.pdf'); path.write_bytes(stream.getvalue())
                 bundle=extract_pdf(path,boundary=run.artifacts,limits=limits,arlington_lock=args.lock,repository_root=root)
@@ -65,6 +70,9 @@ def main():
                 if name=='wrong_catalog_type': assertions['wrong_type_detected']=found('Catalog','Type','possible_values','fail')
                 if name=='direct_pages': assertions['required_indirect_detected']=found('Catalog','Pages','indirect','fail')
                 if name=='unknown_key': assertions['unknown_key_preserved']=any(c['category']=='unknown_key' for c in checks)
+                if name in {'valid_signature_flags','invalid_signature_flags'}:
+                    expected='pass' if name=='valid_signature_flags' else 'fail'
+                    assertions['signature_bitmask_rule']=found('InteractiveForm','SigFlags','special_case',expected)
                 row={'fixture':name,'assertions':assertions,'checks':len(checks),
                      'outcomes':dict(Counter(c['outcome'] for c in checks)),
                      'analysis_status':analysis.get('status'),'analysis_complete':analysis.get('complete')}

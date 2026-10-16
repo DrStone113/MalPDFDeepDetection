@@ -232,6 +232,28 @@ def _evaluate(ast,ctx,budget,since=False):
         path=atom_text(args[0])
         present=ctx.present(path) if path is not None and '@' not in path else truth(ev(args[0]))
         return present if len(args)==1 else combine(negate(present),ev(args[1]),'||')
+    if name in ('BitClear','BitSet','BitsClear','BitsSet'):
+        count=2 if name.startswith('Bits') else 1
+        if len(args)!=count: return Unknown(('bitmask_argument_unsupported',))
+        positions=[ev(arg) for arg in args]
+        for position in positions:
+            if isinstance(position,Unknown): return position
+            if (not isinstance(position,Decimal) or not position.is_finite()
+                    or not 1<=position<=32 or position!=position.to_integral_value()):
+                return Unknown(('bitmask_argument_unsupported',))
+        low,high=(int(positions[0]),int(positions[-1]))
+        if count==2 and low>=high: return Unknown(('bitmask_argument_unsupported',))
+        getter=getattr(ctx,'current_bitmask',None)
+        if getter is None: return Unknown(('bitmask_context_unsupported',))
+        value=getter()
+        if isinstance(value,Unknown): return value
+        # Retain integer syntax and admit signed two's-complement or unsigned
+        # 32-bit representations. Never truncate a larger PDF integer or round
+        # a real number into a valid bitmask.
+        if type(value) is not int or not -(1<<31)<=value<(1<<32): return False
+        mask=((1<<(high-low+1))-1)<<(low-1)
+        bits=(value & 0xffffffff) & mask
+        return bits==mask if name.endswith('Set') else bits==0
     if name in ('ArrayLength','StringLength','RectWidth','RectHeight') and len(args)==1:
         path=atom_text(args[0])
         value=ctx.value(path) if path is not None else ev(args[0])
@@ -243,11 +265,18 @@ def _evaluate(ast,ctx,budget,since=False):
         return Unknown(('predicate_operand_type_unavailable',))
     if name=='Contains' and len(args)==2:
         a,b=ev(args[0]),ev(args[1])
+        if isinstance(a,Unknown): return a
+        if isinstance(b,Unknown): return b
+        if a==SKIP or b==SKIP: return Unknown(('conditional_operand_unavailable',))
+        primitive=lambda value: value is None or type(value) in (bool,Decimal,bytes,Symbol)
+        if not primitive(b): return Unknown(('contains_operand_unsupported',))
         if isinstance(a,tuple):
             result=False
             for item in a:
-                result=combine(result,Unknown() if isinstance(item,Unknown) or isinstance(b,Unknown) else type(item)==type(b) and item==b,'||')
+                budget.take()
+                result=combine(result,item if isinstance(item,Unknown) else type(item)==type(b) and item==b,'||')
             return result
+        if primitive(a): return type(a)==type(b) and a==b
         return Unknown(('contains_operand_unsupported',))
     # Directness is evaluated by the rule engine with the original reference.
     return Unknown(('unsupported_predicate:'+name,))

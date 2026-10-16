@@ -29,6 +29,12 @@ partial hoặc not_run. Mã mới chỉ mục dictionary Arlington giữ nguyên
 nguồn và trần tài nguyên; đã có kiểm thử tổng hợp/model thật nhưng chưa có lượt
 PDF thật cho mã mới. Job/claim cũ được giữ nguyên, không tự chạy lại.
 
+Lượt predicate tĩnh tiếp theo bổ sung BitClear/BitSet/BitsClear/BitsSet cho
+trường hiện tại và sửa Contains cho scalar/mảng với kiểu dữ liệu riêng biệt.
+Giữ nguyên số nguyên/nguồn, context từng key/type branch, unknown và mọi caps;
+fixture đối chiếu bit1–32, signed/unsigned bounds, reference/inheritance và
+AcroForm SigFlags với model thật. Chưa có lượt PDF thật cho thay đổi predicate.
+
 ## Phần kế hoạch tổng thể còn lại
 
 Theo yêu cầu tiếp theo của người dùng, bổ sung launcher console/desktop cho job

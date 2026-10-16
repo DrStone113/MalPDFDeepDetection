@@ -1,0 +1,35 @@
+{
+  "run_id": "run_20261016T152924679939Z_a0d008e252ea",
+  "study": "arlington_model_verify",
+  "status": "completed",
+  "started_at_utc": "2026-10-16T15:29:24.715296+00:00",
+  "code_commit": "a0d008e252ea8ec9d470453316583a1a8e9f6d4b",
+  "code_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M scripts/23_arlington_model.py",
+      " M src/malpdf/extraction/arlington_expression.py",
+      " M src/malpdf/extraction/arlington_validate.py",
+      " M tests/test_arlington.py"
+    ]
+  },
+  "data_worktree": {
+    "status": "dirty",
+    "porcelain_entries": [
+      " M scripts/23_arlington_model.py",
+      " M src/malpdf/extraction/arlington_expression.py",
+      " M src/malpdf/extraction/arlington_validate.py",
+      " M tests/test_arlington.py"
+    ]
+  },
+  "seed": 42,
+  "protocol": "Arlington dependency verification and benign synthetic static fixtures",
+  "report_path": "reports/experiments/arlington_model_verify/run_20261016T152924679939Z_a0d008e252ea/run_summary.json",
+  "artifact_path": "artifacts/tmp/maintenance/arlington_model_verify/run_20261016T152924679939Z_a0d008e252ea",
+  "metrics": {},
+  "tsv_count": 610,
+  "arlington_commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+  "fixtures": 6,
+  "notes": "Locked public Arlington model verified; only generated benign fixtures, no real PDFs/Test. Metrics N/A; no classifier evaluated.",
+  "finished_at_utc": "2026-10-16T15:29:41.567618+00:00"
+}

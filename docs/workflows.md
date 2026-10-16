@@ -19,6 +19,10 @@ TSV against the exact selected Git revision. Run
 or `smoke` for generated benign fixtures against that model. These commands
 write unique maintenance reports and do not process real samples. See the
 [offline dependency preparation and rule limits](pdf_extraction.md#locked-arlington-catalog-and-static-rules).
+The smoke now includes valid/invalid signature flags to check actual locked
+bitmask rules. Static bit predicates retain current-field/type context and
+unchanged caps; unknown contexts remain unknown. No old corpus claim is reused
+as evidence for these new predicate semantics.
 `deep-static` now also reuses already parsed JS/XFA trees for the
 [bounded static script supplement](pdf_extraction.md#static-script-semantics-from-existing-asts).
 Run `.venv/bin/python -m pytest tests/test_js_semantics.py` to reproduce its

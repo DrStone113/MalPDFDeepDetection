@@ -26,6 +26,13 @@ results. It changes no rule/model/resource limit and has synthetic/reference
 verification only; the completed real run used the preceding code. The consumed
 job/claim stays immutable, and the updated code has not been run on real PDFs.
 
+The next predicate increment adds current-field BitClear/BitSet/BitsClear/
+BitsSet under a32-bit bound and corrects Contains for typed scalar or array
+operands. All four bit functions occur in the locked model (174 call sites,
+not174 newly validated rules). Missing reference/type context, unsupported
+predicates and invalid model arguments remain unknown. Synthetic verification
+and six real-model fixtures are separate from future real-PDF acceptance.
+
 On 2026-10-15, the first [extract-pdf implementation increment](pdf_extraction.md)
 adds linked evidence/feature/coverage stores, bounded lexical profiling, inert
 event planning and metadata-only preparation of the existing CIC Train/Validation
