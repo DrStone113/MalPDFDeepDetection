@@ -11,10 +11,14 @@ import platform
 import subprocess
 
 from malpdf.extraction.normalize import normalize_profile
-from malpdf.static.code_inspector import VMInspectionLimits
+from malpdf.static.code_inspector import CodeInspectionLimits
 from malpdf.static.execution import is_vm
-from malpdf.static.profile_worker import profile_pdf
 from malpdf.static.safety import read_bounded_bytes
+
+
+def profile_pdf(*args, **kwargs):
+    from malpdf.static.profile_worker import profile_pdf as worker_profile
+    return worker_profile(*args, **kwargs)
 
 
 def extract_pdf(path, *, boundary=None, profile="deep-static", limits=None, expected_sha256=None, raw_artifact_dir=None,
@@ -23,14 +27,14 @@ def extract_pdf(path, *, boundary=None, profile="deep-static", limits=None, expe
 
     An explicitly configured Arlington reference may be loaded locally. No
     classifier is loaded, no partition is selected, and no sample is uploaded.
-    VM execution preserves checkpoints without CPU, RAM or wall-clock quotas.
-    Explicit CodeInspectionLimits select the historical bounded policy.
+    Bounded Linux workers are the default. The legacy unbounded VM policy
+    requires explicit limits and separately approved LAB execution.
     """
     if profile not in {"fast-static", "deep-static"}:
         raise ValueError("Unknown extraction profile; full-hybrid requires a separate approved environment")
     from malpdf.extraction.lab import require_live_path_isolation
     require_live_path_isolation(Path(path))
-    limits = limits or VMInspectionLimits()
+    limits = limits or CodeInspectionLimits()
     from malpdf.extraction.plugins import registry
     plugins=registry(plugins)
     if plugins is not None and profile!='deep-static':raise ValueError('Plugins require deep-static')

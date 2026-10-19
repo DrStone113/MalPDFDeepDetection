@@ -17,9 +17,10 @@ from pypdf import PdfReader
 from pypdf.generic import IndirectObject, StreamObject
 
 from malpdf.extraction.qpdf_adapter import QPDFReader
+from malpdf.extraction.mupdf_adapter import MuPDFReader as _MuPDFView
 from malpdf.static.js_ast import CodeInspectionError
 from malpdf.static.parser_diagnostics import ParserDiagnostics
-from malpdf.static.recovery import MuPDFObjectReader, projected_object
+from malpdf.static.recovery import projected_object
 from malpdf.static.execution import capacity, UNLIMITED
 from malpdf.extraction.checkpointing import CheckpointScheduler
 
@@ -95,37 +96,6 @@ class _PyPDFView:
 
     def close(self):
         self.document.close()
-
-
-class _MuPDFView:
-    def __init__(self, data, limits):
-        import pymupdf
-        self.reader = MuPDFObjectReader(data, limits)
-        self.repaired = self.reader.repaired
-        self.version = {'PyMuPDF':pymupdf.VersionBind,'MuPDF':pymupdf.VersionFitz}
-
-    def candidates(self):
-        for number in range(1,self.reader.document.xref_length()):
-
-
-            yield {'number':number,'generation':None,'offset':None}
-
-    def object(self, candidate, raw_budget):
-        self.reader.raw_stream_allowance = lambda:raw_budget.remaining
-        value = self.reader.get_object(IndirectObject(candidate['number'],0,self.reader))
-        if isinstance(value,StreamObject):
-            if len(value._data) > raw_budget.remaining:
-                return value, False, ['inventory_raw_byte_limit']
-            raw_budget.remaining -= len(value._data)
-        return value, True, []
-
-    def warnings(self):
-        import pymupdf
-        count = self.reader.warning_count + len(pymupdf.TOOLS.mupdf_warnings(reset=True).splitlines())
-        return {'count':count,'codes':['mupdf_parser_warning'] if count else []}
-
-    def close(self):
-        self.reader.close()
 
 
 def _failure(error):
@@ -276,7 +246,7 @@ def inspect_parser_views(data, limits, *, retain=None, checkpoint=None, max_meta
                         projection = projected_object(value,include_fields=True,limits=limits)
                         if not complete:
                             projection['projection_complete'] = False
-                            if 'inventory_projection_limit' in reasons:
+                            if set(reasons) & {'inventory_projection_limit', 'inventory_scalar_encoding_unavailable'}:
                                 projection['key_enumeration_complete'] = False
                                 for key in projection['key_projections']:
                                     key['complete'] = False

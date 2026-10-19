@@ -1,7 +1,11 @@
 # Static extraction on the dedicated VM
 
-The 2026-10-18 rules make VM execution the default for `extract_pdf()` and
-`malpdf extract`. The implementation reuses the existing raw profiler, three
+The 2026-10-19 safety review makes bounded execution the default for
+`extract_pdf()` and `malpdf extract`, with one worker by default for batch API
+calls. Windows path-based extraction is refused before input access. This
+document describes the explicit legacy VM policy introduced on 2026-10-18;
+it requires separately approved LAB work and does not enforce resource quotas.
+The implementation reuses the existing raw profiler, three
 native inventories, independent raw grammar, filter matrix, recursive carver,
 Arlington rules, script AST/semantics, evidence graph and three-store exports.
 PDFs remain immutable binary inputs. No page rendering, JavaScript execution,
@@ -51,7 +55,9 @@ python -m malpdf extract data/raw/cic_pdf/example.pdf --execution-mode vm \
 ```
 
 For library callers, `malpdf.extraction.extract_pdfs(paths, boundary=...,
-workers=None)` yields `(input_index, bundle)` in completion order. Repeated
+workers=None)` now selects one bounded worker and yields `(input_index, bundle)`
+in completion order. VM jobs pass explicit `VMInspectionLimits` and their
+configured worker count; the old policy is not selected implicitly. Repeated
 inputs keep distinct occurrences. Thread coordinators supervise separate spawned
 parser processes; parsing runs in those disposable processes. Only the active
 worker count is submitted at once. Closing the iterator cancels and reaps active
@@ -79,8 +85,9 @@ VM mode does not imply whole-document conformance or complete threat coverage.
 Workers retain the no-core-dump and no-child-file-write policies; the parent
 persists verified blobs. Process separation is failure isolation, not containment.
 
-Pass `CodeInspectionLimits(...)` to the library, or `--execution-mode bounded`
-to the single-file CLI, to reproduce the historical bounded policy. The old
+`CodeInspectionLimits(...)` and `--execution-mode bounded` are now the default
+policy. Pass `VMInspectionLimits(...)` or `--execution-mode vm` explicitly only
+for separately reviewed legacy LAB runs with agreed resource controls. The old
 `prepare/check/run` actions, pinned launcher and consumed claims remain historical
 compatibility paths. Their clean-commit, credential and console-isolation gates
 do not apply to the new `vm` action. No existing benchmark lock, claim or output

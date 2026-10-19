@@ -138,7 +138,7 @@ def test_vm_worker_reads_input_above_ten_megabytes_without_thread_or_os_quotas(t
     path.write_bytes(data)
     cpu_before = resource.getrlimit(resource.RLIMIT_CPU)
     memory_before = resource.getrlimit(resource.RLIMIT_AS)
-    bundle = extract_pdf(path, boundary=tmp_path, profile="fast-static")
+    bundle = extract_pdf(path, boundary=tmp_path, profile="fast-static", limits=VMInspectionLimits())
     validate_bundle(bundle)
     assert bundle["sample_sha256"] == hashlib.sha256(data).hexdigest()
     applied = bundle["coverage_report"]["worker"]["resource_limits"]
@@ -164,7 +164,7 @@ def test_batch_runs_concurrently_and_retains_failed_occurrence(monkeypatch, tmp_
     monkeypatch.setattr(batch, "extract_pdf", extract)
     monkeypatch.setattr(batch, "available_cpus", lambda: 2)
     outcomes = dict(batch.extract_pdfs([Path("benign.pdf"), Path("failure.pdf")],
-        boundary=tmp_path, workers=2))
+        boundary=tmp_path, workers=2, limits=VMInspectionLimits()))
     assert set(outcomes) == {0, 1}
     assert outcomes[1]["sample_sha256"] is None
     assert outcomes[1]["status"] != "observed"

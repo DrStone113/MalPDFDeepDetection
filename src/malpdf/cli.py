@@ -33,7 +33,7 @@ def build_parser() -> argparse.ArgumentParser:
     extract_parser = subparsers.add_parser("extract", help="export evidence, features and coverage using an isolated static worker")
     extract_parser.add_argument("path", help="explicit authorized local PDF path; inert bytes only")
     extract_parser.add_argument("--profile", choices=("fast-static", "deep-static"), default="deep-static")
-    extract_parser.add_argument("--execution-mode", choices=("vm", "bounded"), default="vm")
+    extract_parser.add_argument("--execution-mode", choices=("vm", "bounded"), default="bounded")
     extract_parser.add_argument("--output-root", type=Path, default=Path("data/processed/pdf_extraction"))
     extract_parser.add_argument('--arlington-lock',help='explicit local checksum-locked reference; deep-static only')
     extract_parser.add_argument('--raw-artifact-dir',type=Path,

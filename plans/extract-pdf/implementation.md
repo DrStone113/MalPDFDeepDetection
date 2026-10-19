@@ -1,5 +1,34 @@
 # Tiến độ thực thi kế hoạch extract-pdf
 
+## Kiểm tra an toàn Windows và tính đầy đủ 2026-10-19
+
+- [x] API theo đường dẫn, batch và CLI job từ chối Windows trước khi đọc PDF
+  hoặc khởi động worker; biến xác nhận LAB không vượt qua chốt nền tảng.
+- [x] Khôi phục mặc định hữu hạn cho API/CLI và một worker cho batch; chế độ
+  VM cũ chỉ còn khi chọn rõ, không được biến môi trường tự cấp quyền chạy.
+- [x] Trường chứa container bị cắt không còn được xác nhận đầy đủ; QPDF giữ
+  đồng thời lỗi projection/raw budget, tránh merger báo sai khác từ phần thiếu.
+- [x] Lệnh kiểm tra không nhận PDF đầu vào, sinh52 fixture và so hai adapter với
+  oracle scalar khai báo trước; báo cáo mới bất biến, có hash mã và timeout.
+- [ ] Chưa kết luận vượt trội trên corpus. Cần cùng manifest Train/Validation,
+  code baseline/candidate đã khóa, primary parity, coverage gain, failure rate,
+  median/P99/RSS và giới hạn chạy LAB được duyệt. Giữ lỗi trong mẫu số, không Test.
+  Xem [bằng chứng Windows](../../reports/progress/extract_pdf_windows_safety_2026-10-19.md).
+
+## Inventory MuPDF native trên Windows DEV 2026-10-19
+
+- [x] Inventory đọc object/dictionary/array/reference trực tiếp bằng MuPDF;
+  bỏ bước parse lại toàn dictionary bằng pypdf, giữ container/codec so sánh chung.
+- [x] Giữ int64, decimal do MuPDF chọn, raw byte của string có NUL/Unicode,
+  generation của reference và ngân sách stream dùng chung; không suy âm tính
+  từ placeholder, trường không biểu diễn được hay stream chưa quan sát.
+- [x] API import lazy worker Linux, test native chạy trên Windows với fixture
+  tổng hợp. Kiểm tra107 passed,2 skipped và3 test worker Linux không chọn;
+  không coi đây là kiểm chứng process containment hoặc PDF thật.
+- [ ] Adapter recovery v8 lịch sử vẫn dùng cú pháp pypdf; routing object chỉ
+  có ở inventory, worker/corpus LAB và nghiệm thu đầy đủ còn mở. Xem
+  [phạm vi kiểm chứng](../../reports/progress/extract_pdf_mupdf_native_2026-10-19.md).
+
 ## Cải thiện từ JSON của lượt đang dở 2026-10-18
 
 - Đọc 44 bản ghi đã lưu, journal và metadata; không đọc lại PDF hoặc blob.
@@ -24,7 +53,10 @@
   hoàn thành ở lượt VM trước, không Test hoặc model evaluation. Bằng chứng tại
   [báo cáo hiệu năng](../../reports/progress/extract_pdf_performance_2026-10-18.md).
 
-## Cập nhật theo quy tắc VM 2026-10-18
+## Cập nhật lịch sử theo quy tắc VM 2026-10-18
+
+Mặc định không giới hạn bên dưới đã được thay thế bởi cập nhật an toàn
+2026-10-19 ở đầu trang. Các số đo/lượt cũ giữ nguyên; không cấp quyền chạy mới.
 
 - Chế độ mặc định của API/CLI trích xuất tĩnh là VM, không áp trần CPU, RAM,
   thời gian từng file hoặc khóa BLAS về một luồng.
@@ -141,8 +173,10 @@ Chi tiết giới hạn và các kiểm thử ở
   tạo venv Python3.11 mới từ pyproject thay vì suy từ venv được giữ trước đây.
 - [x] Grammar byte độc lập, xref table/stream/hybrid, trailer/Prev, membership và
   tham chiếu theo context; ordinal chỉ khi có bằng chứng footer/prefix.
-- [ ] Loại phụ thuộc parser cú pháp pypdf của adapter canonical-text MuPDF;
-  định tuyến object chỉ mới thấy ở inventory sang graph/filter/carver.
+- [x] Inventory MuPDF chuyển sang native object API, không parse dictionary
+  bằng pypdf; nhánh recovery v8 lịch sử giữ nguyên cho đối chiếu primary.
+- [ ] Loại phụ thuộc cú pháp ở recovery v8 nếu được yêu cầu riêng; định tuyến
+  object chỉ mới thấy ở inventory sang graph/filter/carver.
 - [ ] Nghiệm thu PDF thật và bộ ba QPDF/MuPDF/raw theo toàn bộ kế hoạch.
 
 ## Bước tiếp theo đã triển khai: RawForensicParser và IR

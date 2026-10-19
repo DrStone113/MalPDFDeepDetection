@@ -88,14 +88,16 @@ def projected_object(value, *, include_fields=False, limits=None):
     from decimal import Decimal
     from pypdf.generic import ArrayObject, FloatObject, NumberObject, StreamObject
     visited = 0
+    truncations = 0
     complete = True
     fields, fields_complete = [], True
     node_limit, field_limit = capacity(limits, 1024), capacity(limits, 64)
     def project(item, depth=0):
-        nonlocal visited, complete, fields_complete
+        nonlocal visited, complete, fields_complete, truncations
         visited += 1
         if visited > node_limit or depth > 8:
             complete = False
+            truncations += 1
             return ['unverified']
         if isinstance(item, IndirectObject):
             return ['reference', item.idnum, item.generation]
@@ -109,17 +111,17 @@ def projected_object(value, *, include_fields=False, limits=None):
                     continue
                 if visited >= node_limit:
                     complete = False
+                    truncations += 1
                     break
                 key_hash = hashlib.sha256(str(key).encode()).hexdigest()
+                before = truncations
                 projected = project(child, depth+1)
                 result.append([key_hash, projected])
                 if include_fields and depth == 0:
                     if len(fields) < field_limit:
-                        def verified(tree):
-                            return not (isinstance(tree, list) and (tree == ['unverified'] or any(not verified(x) for x in tree)))
                         fields.append({'key_sha256': key_hash, 'value_type': projected[0],
                             'value_sha256': hashlib.sha256(json.dumps(projected,sort_keys=True).encode()).hexdigest(),
-                            'complete': verified(projected)})
+                            'complete': truncations == before})
                     else:
                         fields_complete = False
             return ['dictionary', result]
@@ -128,6 +130,7 @@ def projected_object(value, *, include_fields=False, limits=None):
             for child in item:
                 if visited >= node_limit:
                     complete = False
+                    truncations += 1
                     break
                 result.append(project(child, depth+1))
             return ['array', result]

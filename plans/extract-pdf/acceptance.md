@@ -1,10 +1,12 @@
 # Kiểm kê nghiệm thu toàn bộ kế hoạch extract-pdf
 
-Quy tắc VM 2026-10-18 thay thế yêu cầu trần CPU/RAM/byte/thời gian, commit sạch
-và console offline của đường chạy mới. Chế độ `vm` chạy song song trên mọi CPU
-khả dụng, giữ partition/provenance và dùng test tổng hợp; xem
-[hợp đồng VM](../../docs/extraction_vm.md). Các hàng về lượt cũ bên dưới được
-giữ theo phạm vi bằng chứng lịch sử, không chặn phát triển hoặc chạy VM mới.
+Review an toàn2026-10-19 thay thế mặc định VM không giới hạn: API/CLI mặc định
+hữu hạn, batch một worker và đường chạy PDF theo đường dẫn bị chặn trên Windows.
+Thử local chỉ dùng fixture được rà soát. Chế độ `vm` lịch sử vẫn tồn tại khi
+chọn rõ; mọi lượt LAB cần quyền, kiểm tra isolation và ngân sách đã thỏa thuận
+theo AGENTS.md. Xem [hợp đồng VM](../../docs/extraction_vm.md) và
+[bằng chứng Windows](../../reports/progress/extract_pdf_windows_safety_2026-10-19.md).
+Các hàng bên dưới giữ nguyên phạm vi bằng chứng lịch sử, không cấp quyền chạy mới.
 
 Bản tối ưu VM cùng ngày bổ sung checkpoint coalescing, refill worker và resume
 có kiểm hash. Lượt 8 PDF tổng hợp đo 44,2914 giây với 1 worker và 21,4817 giây
@@ -23,7 +25,7 @@ này giữ nguyên phạm vi sáu giai đoạn khi triển khai qua nhiều lư�
 | Ba store, JSON Schema, trạng thái quan sát và nguồn evidence_id | Independent offline Draft2020-12 checks và runtime semantic guards; schema khai báo đúng backend metadata, core shapes đóng, counts/refs/JSON safety;12 store instances từ4 bundle tổng hợp hợp lệ | Có bằng chứng fixture; vẫn cần runtime checks ngoài JSON Schema, chưa đủ bằng chứng cho toàn bộ nhóm đặc trưng/đồ thị và corpus thật |
 | Worker giới hạn CPU/RAM/byte/deadline; giữ checkpoint khi nhánh phụ lỗi | `static/profile_worker.py`; fixture IPC/stream và lượt64 thật giữ64 root checkpoints;21 worker bị signal và mọi lỗi vẫn trong mẫu số | Có bằng chứng bảo toàn primary trên cohort khóa; nguyên nhân SIGKILL chưa phân biệt CPU/OOM/khác; process caps không chứng minh containment |
 | 21/21 PDF Validation partial: không mất đặc trưng chính | Lượt64 thật `run_20261016T142851774386Z_ba64a514ae5a`; saved audit `run_20261016T151444703769Z_ba64a514ae5a`:21/21 cùng identity/hash/label/split, raw primary và projection173 khớp v9, nulls giữ nguyên; root checkpoints tách7 child checkpoints | Đạt tiêu chí bảo toàn primary cho cohort/code ba64a514ae5a; không suy thành complete extraction hoặc detector gain; mã chỉ mục Arlington mới chưa chạy PDF thật |
-| Ba nhánh QPDF, MuPDF, raw forensic độc lập trên byte gốc | Native inventories và `raw_syntax.py`/`raw_forensic.py` không gọi native parser; mock guards + fixtures chứng minh đường đọc raw riêng | Canonical-text MuPDF vẫn dùng cú pháp pypdf; không coi caps/process là containment; chưa nghiệm thu corpus thật |
+| Ba nhánh QPDF, MuPDF, raw forensic độc lập trên byte gốc | Inventory MuPDF dùng native object API, QPDF giữ native object view; raw forensic đọc grammar byte gốc. Fixture chặn pypdf object parser/QPDF/canonical dictionary text trong nhánh MuPDF mới; container/codec và lexer scalar-string vẫn dùng chung | Recovery v8 lịch sử vẫn dùng canonical-text pypdf;2 test worker Linux skipped/3 không chọn trên Windows, không coi caps/process là containment; chưa nghiệm thu corpus thật |
 | DifferentialMerger giữ bất đồng object/stream/key/revision | Native/raw selected views, generation/key/value/raw stream, xref context và unresolved scope giữ riêng | Có fixture; revision chỉ gán khi footer/prefix chứng minh; toàn bộ bất đồng chưa có nghiệm thu PDF thật |
 | FilterMatrix nhiều tầng và trạng thái mỗi filter | `extraction/filters.py`, `streams.py`; hai bộ test stream | Có năm general filters, predictor, Identity Crypt; media codecs và các context Crypt khác còn thiếu |
 | Giữ byte raw/trung gian/prefix, chống bom giải nén | Parent v9 raw transport; decode/output/ratio/metadata caps | Có fixture cho giới hạn và blob identity; retention có trần, chưa đo trên corpus thật |

@@ -15,6 +15,12 @@ def main():
     parser.add_argument("--lab-isolated", action="store_true",
         help="VMware console: disconnected NICs, no shared folders/clipboard/drag-drop or credentials")
     args = parser.parse_args()
+    if args.action in {'vm', 'run'}:
+        from malpdf.extraction.lab import require_extraction_platform
+        try:
+            require_extraction_platform()
+        except PermissionError as error:
+            parser.exit(2, str(error) + '\n')
     from malpdf.extraction.jobs import load_job, prepare_job, run_job
     root = Path(__file__).resolve().parents[1]
     if args.action == "vm":

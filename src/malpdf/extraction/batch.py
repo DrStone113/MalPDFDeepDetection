@@ -10,15 +10,17 @@ from typing import Any
 
 from malpdf.extraction.normalize import normalize_profile
 from malpdf.extraction.orchestrator import extract_pdf
-from malpdf.static.code_inspector import VMInspectionLimits
-from malpdf.static.execution import available_cpus
+from malpdf.static.code_inspector import CodeInspectionLimits
+from malpdf.static.execution import available_cpus, is_vm
 
 
 def extract_pdfs(paths: Iterable[Path], *, boundary: Path, workers: int | None = None,
                  expected_hashes: Mapping[int, str] | None = None,
                  raw_artifact_root: Path | None = None, progress: Callable[[dict], None] | None = None,
                  input_indices: Iterable[int] | None = None, **options: Any) -> Iterator[tuple[int, dict]]:
-    count = available_cpus() if workers is None else workers
+    from malpdf.extraction.lab import require_extraction_platform
+    require_extraction_platform()
+    count = 1 if workers is None else workers
     if type(count) is not int or count < 1:
         raise ValueError("workers must be a positive integer or auto")
     count = min(count, available_cpus())
@@ -28,7 +30,7 @@ def extract_pdfs(paths: Iterable[Path], *, boundary: Path, workers: int | None =
             any(type(index) is not int or index < 0 or not isinstance(digest, str) or
                 re.fullmatch(r"[a-f0-9]{64}", digest) is None for index, digest in expected_hashes.items())):
         raise ValueError("Expected hashes must map input positions to SHA-256 identities")
-    options.setdefault("limits", VMInspectionLimits())
+    options.setdefault("limits", CodeInspectionLimits())
     if options.get("arlington_lock") is not None:
         from malpdf.extraction.arlington_model import load_model, ModelUnavailable
         if options.get("repository_root") is None or options.get("profile", "deep-static") != "deep-static":
@@ -85,7 +87,7 @@ def extract_pdfs(paths: Iterable[Path], *, boundary: Path, workers: int | None =
                     bundle = normalize_profile({"status": "worker_error", "errors": [
                         "sample_extraction_failed", type(error).__name__]}, None,
                         options.get("profile", "deep-static"), provenance={"seed": 42,
-                            "execution_mode": "vm", "input_index": index})
+                            "execution_mode": "vm" if is_vm(options['limits']) else "bounded", "input_index": index})
                 submission_error = None
                 try:
                     submit()

@@ -301,6 +301,7 @@ def _inventory_checkpoint_then_stall(connection,path,boundary,digest,limits,*arg
     time.sleep(30)
 
 
+@pytest.mark.skipif(os.name != 'posix', reason='Requires Linux fork, process groups and resource limits')
 def test_worker_timeout_keeps_native_inventory_and_primary_checkpoint(tmp_path,monkeypatch):
     import multiprocessing
     from malpdf.static import profile_worker
@@ -325,6 +326,7 @@ def test_worker_timeout_keeps_native_inventory_and_primary_checkpoint(tmp_path,m
     assert any(record['kind'] == 'parser_object' for record in bundle['evidence_store']['records'])
 
 
+@pytest.mark.skipif(os.name != 'posix', reason='Requires the Linux disposable parser worker and resource limits')
 def test_isolated_inventory_preserves_primary_and_parent_verified_raw_streams(tmp_path):
     from malpdf.static.profile_worker import profile_pdf
     data = fixture_pdf()

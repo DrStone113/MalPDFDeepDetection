@@ -1,6 +1,33 @@
 # Development environment and verification
 
-The current static extractor uses the [dedicated VM workflow](extraction_vm.md).
+The native MuPDF inventory now has generated-input tests in
+`tests/test_mupdf_adapter.py`. With the dedicated Windows environment:
+
+```powershell
+.venv-windows-dev/Scripts/python.exe -m pytest tests/test_extraction_admission.py tests/test_parser_projection_limits.py tests/test_mupdf_adapter.py tests/test_parser_inventory.py -q
+.venv-windows-dev/Scripts/python.exe scripts/25_validate_extractor_synthetic.py --save
+```
+
+These direct tests use benign in-memory PDFs and no dataset. Two inventory
+tests require Linux fork/resource/process-group support and explicitly skip on
+Windows. Lazy worker import permits metadata/parser API imports on DEV; actual
+disposable-worker execution remains a separate approved LAB check. The
+[native inventory report](../reports/progress/extract_pdf_mupdf_native_2026-10-19.md)
+records the additional raw-grammar and legacy-v8 checks and their limits.
+
+The path-based extraction API, batch API and `22_extract_pdf.py vm/run` refuse
+Windows before PDF access or worker startup, including when the attestation
+variable is set. This is an application guard, not an OS sandbox. The synthetic
+validator accepts no input paths: it generates 52 scalar fixtures, compares
+native inventory and historical recovery against declared expected values in a
+serial child process, and applies a 60-second parent timeout. It provides no
+Windows OS memory containment. Optional reports contain only fixed descriptors,
+hashes, versions and diagnostic timings under ignored maintenance artifacts.
+See the [Windows safety validation](../reports/progress/extract_pdf_windows_safety_2026-10-19.md).
+
+The static extractor requires an approved Linux LAB. API/CLI defaults are
+bounded; batch defaults to one worker. The explicit legacy `vm` workflow is
+documented separately in the [dedicated VM workflow](extraction_vm.md).
 `tests/test_extraction_performance.py` adds snapshot/final-output parity, eager
 refill and checksum-verified resume tests with generated benign inputs. Its
 mock-clock checks do not depend on wall-time speed assertions. Performance

@@ -55,6 +55,7 @@ class QPDFReader:
             nodes += 1
             if nodes > node_limit or depth > 8:
                 complete = False
+                reasons.add('inventory_projection_limit')
                 return NullObject()
             if isinstance(value, lib.Object) and value.is_indirect and not root:
                 return IndirectObject(*value.objgen, None)
@@ -76,6 +77,7 @@ class QPDFReader:
                 for item in value:
                     if nodes >= node_limit:
                         complete = False
+                        reasons.add('inventory_projection_limit')
                         break
                     output.append(convert(item, depth + 1))
                 return output
@@ -85,6 +87,7 @@ class QPDFReader:
                 for key, item in items:
                     if nodes >= node_limit:
                         complete = False
+                        reasons.add('inventory_projection_limit')
                         break
                     output[NameObject(key)] = convert(item, depth + 1)
                 if kind == lib.ObjectType.stream:
@@ -108,6 +111,7 @@ class QPDFReader:
                         output._data = body
                 return output
             complete = False
+            reasons.add('inventory_scalar_encoding_unavailable')
             return NullObject()
         value = convert(self.document.get_object((candidate['number'],candidate['generation'])), root=True)
         if not complete and not reasons:

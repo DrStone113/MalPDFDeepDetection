@@ -17,7 +17,7 @@ from malpdf.extraction.orchestrator import extract_pdf, write_bundle
 from malpdf.extraction.raw import inspect_raw_layout, MAX_MARKERS, MAX_NAMES, MAX_WINDOWS, WINDOW_BYTES
 from malpdf.extraction.schemas import schemas
 from malpdf.extraction.triggers import plan_triggers
-from malpdf.static.code_inspector import CodeInspectionLimits
+from malpdf.static.code_inspector import CodeInspectionLimits, VMInspectionLimits
 
 
 def benign_pdf():
@@ -189,7 +189,7 @@ def test_isolated_extraction_of_benign_fixture_preserves_original_bytes(tmp_path
     data = benign_pdf()
     path = tmp_path / "fixture.pdf"
     path.write_bytes(data)
-    result = extract_pdf(path, boundary=tmp_path, profile=profile)
+    result = extract_pdf(path, boundary=tmp_path, profile=profile, limits=VMInspectionLimits())
     assert result["sample_sha256"] == hashlib.sha256(data).hexdigest()
     assert path.read_bytes() == data
     assert result["coverage_report"]["worker"]["worker_cleanup_complete"] is True
