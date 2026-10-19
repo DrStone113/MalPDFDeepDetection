@@ -1,0 +1,5510 @@
+{
+  "source_run": "run_20261018T151430292575Z_9f5d9357bf0c",
+  "samples": [
+    {
+      "index": 0,
+      "partition": "train",
+      "Label": 1,
+      "status": "observed",
+      "worker": {
+        "status": "complete",
+        "worker_seconds": 5.2716531839996605,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 386383872,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.0004043430003548565,
+          "raw_scan": 0.0682782569997471,
+          "parse_pdf": 0.31187015599971346,
+          "stream_decode": 0.009409141000105592,
+          "js_ast": 1.0116652239998984,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 2667316,
+      "features": 634,
+      "records": 1464,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "observed",
+          "limitations": [],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "observed",
+          "graph_limitations": []
+        },
+        "MuPDF": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "profile_does_not_run_this_backend"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pikepdf": "10.17.0",
+            "qpdf": "12.4.2"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "whole_document_conformance_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [
+            "assignment_target_or_heap_unsupported",
+            "free_assignment_unsupported",
+            "free_identifier_read_effects_unmodeled",
+            "loop_state_widened",
+            "object_coercion_unsupported",
+            "opaque_call_effects_unmodeled",
+            "property_getter_effects_unmodeled",
+            "unsupported_statement:TryStatement",
+            "whole_program_runtime_behavior_unverified"
+          ],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 1,
+      "partition": "train",
+      "Label": 1,
+      "status": "unsupported",
+      "worker": {
+        "status": "complete",
+        "worker_seconds": 6.32364632000008,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 267452416,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.0011003640001945314,
+          "raw_scan": 1.693696540000019,
+          "parse_pdf": 0.5936756110004353,
+          "stream_decode": 0.026593279999815422,
+          "js_ast": 0.00031181400026980555,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 2884982,
+      "features": 1035,
+      "records": 1510,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [
+            "forensic_unrecognized_top_level_syntax"
+          ],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "observed",
+          "graph_limitations": []
+        },
+        "MuPDF": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "profile_does_not_run_this_backend"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pikepdf": "10.17.0",
+            "qpdf": "12.4.2"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "xref_selection_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 2,
+      "partition": "train",
+      "Label": 1,
+      "status": "resource_limit",
+      "worker": {
+        "status": "complete",
+        "worker_seconds": 29.992762161999963,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 436944896,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.018092907999744057,
+          "raw_scan": 16.18965618400034,
+          "parse_pdf": 5.846182962000512,
+          "stream_decode": 0.053116281000257004,
+          "js_ast": 1.3883355889997802,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 8692421,
+      "features": 1905,
+      "records": 4850,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [
+            "forensic_selected_object_unavailable",
+            "forensic_stream_eol_invalid",
+            "forensic_xref_target_not_top_level_confirmed"
+          ],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "observed",
+          "graph_limitations": []
+        },
+        "MuPDF": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "profile_does_not_run_this_backend"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "pikepdf": "10.17.0",
+            "qpdf": "12.4.2"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "xref_selection_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [
+            "opaque_call_effects_unmodeled",
+            "property_getter_effects_unmodeled",
+            "whole_program_runtime_behavior_unverified"
+          ],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [
+            "byte_image_pixel_limit",
+            "byte_image_source_limit",
+            "byte_image_source_unavailable",
+            "byte_image_tile_limit"
+          ],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 3,
+      "partition": "train",
+      "Label": 1,
+      "status": "resource_limit",
+      "worker": {
+        "status": "resource_limit_or_signal",
+        "worker_seconds": 172.07403615199974,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 3310014464,
+        "rss_quality": "sampled_lower_bound",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "stream_decode",
+        "timings": {
+          "read_hash": 0.0003521359999467677,
+          "raw_scan": 0.00894959499964898,
+          "parse_pdf": 0.9603326999999808,
+          "stream_decode": 0.04738888800056884,
+          "js_ast": 0.7595457219999844,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": false
+      },
+      "bytes_json": 497532299,
+      "features": 561,
+      "records": 293049,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "observed",
+          "graph_limitations": []
+        },
+        "MuPDF": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable"
+          ],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "profile_does_not_run_this_backend"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pikepdf": "10.17.0",
+            "qpdf": "12.4.2"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "not_run",
+          "limitations": [
+            "static_script_semantics_not_run"
+          ],
+          "scope": "captured script ASTs only; no runtime behavior proof"
+        },
+        "byte_images": {
+          "observation_status": "not_run",
+          "limitations": [
+            "byte_images_not_run"
+          ],
+          "scope": "raw bytes only; no page rendering"
+        }
+      }
+    },
+    {
+      "index": 4,
+      "partition": "train",
+      "Label": 1,
+      "status": "observed",
+      "worker": {
+        "status": "complete",
+        "worker_seconds": 4.944918891999805,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 383340544,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.0003289530000074592,
+          "raw_scan": 0.05094421500007229,
+          "parse_pdf": 0.20360184799983472,
+          "stream_decode": 0.009757237999565405,
+          "js_ast": 0.7630903149997721,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 1553270,
+      "features": 596,
+      "records": 823,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "observed",
+          "limitations": [],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "observed",
+          "graph_limitations": []
+        },
+        "MuPDF": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "profile_does_not_run_this_backend"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pikepdf": "10.17.0",
+            "qpdf": "12.4.2"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "whole_document_conformance_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [
+            "ambient_root_read_effects_unmodeled",
+            "assignment_target_or_heap_unsupported",
+            "free_assignment_unsupported",
+            "free_identifier_read_effects_unmodeled",
+            "loop_state_widened",
+            "object_coercion_unsupported",
+            "opaque_call_effects_unmodeled",
+            "property_getter_effects_unmodeled",
+            "whole_program_runtime_behavior_unverified"
+          ],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 5,
+      "partition": "train",
+      "Label": 1,
+      "status": "resource_limit",
+      "worker": {
+        "status": "resource_limit_or_signal",
+        "worker_seconds": 111.58271611300006,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 2239012864,
+        "rss_quality": "sampled_lower_bound",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "parse_pdf",
+        "timings": {
+          "read_hash": 0.000403193999773066,
+          "raw_scan": 0.0065165619998879265,
+          "parse_pdf": 0.5247742560000006,
+          "stream_decode": 0.02807231199949456,
+          "js_ast": 2.0899282629998197,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": false
+      },
+      "bytes_json": 263077842,
+      "features": 538,
+      "records": 165337,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "observed",
+          "graph_limitations": []
+        },
+        "MuPDF": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "profile_does_not_run_this_backend"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pikepdf": "10.17.0",
+            "qpdf": "12.4.2"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "not_run",
+          "limitations": [
+            "static_script_semantics_not_run"
+          ],
+          "scope": "captured script ASTs only; no runtime behavior proof"
+        },
+        "byte_images": {
+          "observation_status": "not_run",
+          "limitations": [
+            "byte_images_not_run"
+          ],
+          "scope": "raw bytes only; no page rendering"
+        }
+      }
+    },
+    {
+      "index": 6,
+      "partition": "train",
+      "Label": 1,
+      "status": "unsupported",
+      "worker": {
+        "status": "complete",
+        "worker_seconds": 15.081467055000303,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 333389824,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.0012305740001465892,
+          "raw_scan": 1.6386487299996588,
+          "parse_pdf": 4.788113664999855,
+          "stream_decode": 0.07970779100014624,
+          "js_ast": 0.00031854399958319846,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 47479800,
+      "features": 948,
+      "records": 27179,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "observed",
+          "limitations": [],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "observed",
+          "graph_limitations": []
+        },
+        "MuPDF": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "profile_does_not_run_this_backend"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pikepdf": "10.17.0",
+            "qpdf": "12.4.2"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "whole_document_conformance_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 7,
+      "partition": "validation",
+      "Label": 1,
+      "status": "unsupported",
+      "worker": {
+        "status": "complete",
+        "worker_seconds": 29.571406967999792,
+        "worker_exit_code": 0,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 335126528,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.0007662450002499099,
+          "raw_scan": 0.8813356360001308,
+          "parse_pdf": 20.595611426999767,
+          "stream_decode": 0.433632143000068,
+          "js_ast": 0.00024704099996597506,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 23796803,
+      "features": 807,
+      "records": 20003,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [
+            "forensic_invalid_hex_string",
+            "forensic_terminal_startxref_unavailable"
+          ],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "resource_limit",
+          "graph_limitations": [
+            "object_projection_limit"
+          ]
+        },
+        "MuPDF": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "profile_does_not_run_this_backend"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable"
+          ],
+          "version": {},
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "xref_selection_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 8,
+      "partition": "validation",
+      "Label": 1,
+      "status": "decode_error",
+      "worker": {
+        "status": "partial",
+        "worker_seconds": 7.82238104399994,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 383475712,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.00042538100024103187,
+          "raw_scan": 0.09314702699975896,
+          "parse_pdf": 0.7178286580005988,
+          "stream_decode": 0.008531278000191378,
+          "js_ast": 0.5513473960004376,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 976963,
+      "features": 630,
+      "records": 457,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [
+            "forensic_selected_object_unavailable",
+            "forensic_stream_eol_invalid",
+            "forensic_xref_target_not_top_level_confirmed"
+          ],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "observed",
+          "graph_limitations": []
+        },
+        "MuPDF": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": []
+        },
+        "qpdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "pikepdf": "10.17.0",
+            "qpdf": "12.4.2"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "xref_selection_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [
+            "opaque_call_effects_unmodeled",
+            "property_getter_effects_unmodeled",
+            "whole_program_runtime_behavior_unverified"
+          ],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [
+            "byte_image_source_unavailable"
+          ],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 9,
+      "partition": "train",
+      "Label": 1,
+      "status": "resource_limit",
+      "worker": {
+        "status": "complete",
+        "worker_seconds": 8.301048742000148,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 397279232,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.000558628999897337,
+          "raw_scan": 1.902373138999792,
+          "parse_pdf": 2.369808758000545,
+          "stream_decode": 0.10246918300026664,
+          "js_ast": 0.5950093250003192,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 5923487,
+      "features": 1248,
+      "records": 3397,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [
+            "forensic_selected_object_unavailable",
+            "forensic_stream_eol_invalid",
+            "forensic_xref_target_not_top_level_confirmed"
+          ],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "observed",
+          "graph_limitations": []
+        },
+        "MuPDF": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "profile_does_not_run_this_backend"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "pikepdf": "10.17.0",
+            "qpdf": "12.4.2"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "xref_selection_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [
+            "opaque_call_effects_unmodeled",
+            "property_getter_effects_unmodeled",
+            "whole_program_runtime_behavior_unverified"
+          ],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [
+            "byte_image_source_unavailable"
+          ],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 10,
+      "partition": "train",
+      "Label": 1,
+      "status": "resource_limit",
+      "worker": {
+        "status": "partial",
+        "worker_seconds": 179.4545060569999,
+        "worker_exit_code": 0,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 484036608,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.006675292999716476,
+          "raw_scan": 40.35687658100005,
+          "parse_pdf": 92.58823120000125,
+          "stream_decode": 5.292812290999336,
+          "js_ast": 0.0002364920001127757,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 114199843,
+      "features": 1827,
+      "records": 70073,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [
+            "forensic_terminal_startxref_unavailable",
+            "forensic_unrecognized_top_level_syntax"
+          ],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "observed",
+          "graph_limitations": []
+        },
+        "MuPDF": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": []
+        },
+        "qpdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable"
+          ],
+          "version": {},
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "xref_selection_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [
+            "byte_image_source_limit"
+          ],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 11,
+      "partition": "train",
+      "Label": 1,
+      "status": "partial",
+      "worker": {
+        "status": "partial",
+        "worker_seconds": 9.678746005999983,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 385499136,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.0004632289997061889,
+          "raw_scan": 0.21934645999999702,
+          "parse_pdf": 0.7932571279998228,
+          "stream_decode": 0.00116396099974736,
+          "js_ast": 1.2429527700001017,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 1325313,
+      "features": 693,
+      "records": 653,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [
+            "forensic_object_header_invalid",
+            "forensic_projection_incomplete",
+            "forensic_scan_stopped_at_uncertain_stream",
+            "forensic_stream_endpoint_mismatch",
+            "forensic_xref_entry_invalid"
+          ],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "observed",
+          "graph_limitations": []
+        },
+        "MuPDF": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable",
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": []
+        },
+        "qpdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable"
+          ],
+          "version": {},
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "xref_selection_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [
+            "free_assignment_unsupported",
+            "free_identifier_read_effects_unmodeled",
+            "object_coercion_unsupported",
+            "opaque_call_effects_unmodeled",
+            "property_getter_effects_unmodeled",
+            "unsupported_statement:TryStatement",
+            "whole_program_runtime_behavior_unverified"
+          ],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 12,
+      "partition": "train",
+      "Label": 1,
+      "status": "unsupported",
+      "worker": {
+        "status": "complete",
+        "worker_seconds": 33.02496831999997,
+        "worker_exit_code": 0,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 474718208,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.0009373319999212981,
+          "raw_scan": 4.123325354999906,
+          "parse_pdf": 13.71683411100048,
+          "stream_decode": 0.1036996229995566,
+          "js_ast": 0.0012651950000872603,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 142055558,
+      "features": 1456,
+      "records": 82400,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "observed",
+          "limitations": [],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "observed",
+          "graph_limitations": []
+        },
+        "MuPDF": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "profile_does_not_run_this_backend"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pikepdf": "10.17.0",
+            "qpdf": "12.4.2"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "whole_document_conformance_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 13,
+      "partition": "train",
+      "Label": 1,
+      "status": "resource_limit",
+      "worker": {
+        "status": "resource_limit_or_signal",
+        "worker_seconds": 109.31848969800012,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 3428507648,
+        "rss_quality": "sampled_lower_bound",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "parse_pdf",
+        "timings": {
+          "read_hash": 0.0005164929998500156,
+          "raw_scan": 0.008174670000244078,
+          "parse_pdf": 2.392143393000424,
+          "stream_decode": 5.132869139999457,
+          "js_ast": 0.7041019369999049,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": false
+      },
+      "bytes_json": 303301810,
+      "features": 542,
+      "records": 191169,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "observed",
+          "graph_limitations": []
+        },
+        "MuPDF": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "profile_does_not_run_this_backend"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pikepdf": "10.17.0",
+            "qpdf": "12.4.2"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "not_run",
+          "limitations": [
+            "static_script_semantics_not_run"
+          ],
+          "scope": "captured script ASTs only; no runtime behavior proof"
+        },
+        "byte_images": {
+          "observation_status": "not_run",
+          "limitations": [
+            "byte_images_not_run"
+          ],
+          "scope": "raw bytes only; no page rendering"
+        }
+      }
+    },
+    {
+      "index": 14,
+      "partition": "train",
+      "Label": 1,
+      "status": "unsupported",
+      "worker": {
+        "status": "complete",
+        "worker_seconds": 136.4673181180001,
+        "worker_exit_code": 0,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 592019456,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.009465872999953717,
+          "raw_scan": 4.870692338000026,
+          "parse_pdf": 96.59158520500068,
+          "stream_decode": 0.28338299099914366,
+          "js_ast": 0.0002839240000866994,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 301190195,
+      "features": 1138,
+      "records": 167791,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "observed",
+          "limitations": [],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "resource_limit",
+          "graph_limitations": [
+            "object_projection_limit"
+          ]
+        },
+        "MuPDF": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable"
+          ],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "profile_does_not_run_this_backend"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pikepdf": "10.17.0",
+            "qpdf": "12.4.2"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "whole_document_conformance_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 15,
+      "partition": "train",
+      "Label": 1,
+      "status": "resource_limit",
+      "worker": {
+        "status": "resource_limit_or_signal",
+        "worker_seconds": 176.44525279699974,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 4490055680,
+        "rss_quality": "sampled_lower_bound",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "parse_pdf",
+        "timings": {
+          "read_hash": 0.0010088280000672967,
+          "raw_scan": 0.011837656000352581,
+          "parse_pdf": 0.42801404300053036,
+          "stream_decode": 0.023312197999985074,
+          "js_ast": 0.7274117990000377,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": false
+      },
+      "bytes_json": 200389256,
+      "features": 538,
+      "records": 125986,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "observed",
+          "graph_limitations": []
+        },
+        "MuPDF": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "profile_does_not_run_this_backend"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pikepdf": "10.17.0",
+            "qpdf": "12.4.2"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "not_run",
+          "limitations": [
+            "static_script_semantics_not_run"
+          ],
+          "scope": "captured script ASTs only; no runtime behavior proof"
+        },
+        "byte_images": {
+          "observation_status": "not_run",
+          "limitations": [
+            "byte_images_not_run"
+          ],
+          "scope": "raw bytes only; no page rendering"
+        }
+      }
+    },
+    {
+      "index": 16,
+      "partition": "train",
+      "Label": 1,
+      "status": "resource_limit",
+      "worker": {
+        "status": "partial",
+        "worker_seconds": 16.663583388000006,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 402927616,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.00041781900017667795,
+          "raw_scan": 0.003977147999648878,
+          "parse_pdf": 4.399669231000189,
+          "stream_decode": 0.000809054000001197,
+          "js_ast": 2.2420700660004513,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 2220077,
+      "features": 550,
+      "records": 496,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [
+            "forensic_xref_offset_or_count_limit"
+          ],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": [
+            "graph_reference_unavailable"
+          ]
+        },
+        "MuPDF": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable",
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": [
+            "recovery_reference_unavailable"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable"
+          ],
+          "version": {},
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "not_run",
+          "limitations": [
+            "raw_ir_interrupted_before_arlington"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "configured local TSV rules only"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [
+            "free_assignment_unsupported",
+            "free_identifier_read_effects_unmodeled",
+            "object_coercion_unsupported",
+            "opaque_call_effects_unmodeled",
+            "unsupported_statement:TryStatement",
+            "whole_program_runtime_behavior_unverified"
+          ],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 17,
+      "partition": "train",
+      "Label": 1,
+      "status": "resource_limit",
+      "worker": {
+        "status": "partial",
+        "worker_seconds": 16.33829896499992,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 382222336,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.0003587550004340301,
+          "raw_scan": 0.004707719000634825,
+          "parse_pdf": 1.5832107249993896,
+          "stream_decode": 0.0007636680002178764,
+          "js_ast": 0.6751571770000737,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 942509,
+      "features": 550,
+      "records": 442,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [
+            "forensic_xref_offset_or_count_limit"
+          ],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": [
+            "graph_reference_unavailable"
+          ]
+        },
+        "MuPDF": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable",
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": [
+            "recovery_reference_unavailable"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable"
+          ],
+          "version": {},
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "not_run",
+          "limitations": [
+            "raw_ir_interrupted_before_arlington"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "configured local TSV rules only"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [
+            "assignment_target_or_heap_unsupported",
+            "free_assignment_unsupported",
+            "free_identifier_read_effects_unmodeled",
+            "loop_state_widened",
+            "object_coercion_unsupported",
+            "opaque_call_effects_unmodeled",
+            "property_getter_effects_unmodeled",
+            "whole_program_runtime_behavior_unverified"
+          ],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 18,
+      "partition": "train",
+      "Label": 1,
+      "status": "partial",
+      "worker": {
+        "status": "parser_error",
+        "worker_seconds": 7.166628772999957,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 379994112,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.0004455270000107703,
+          "raw_scan": 0.048423199000353634,
+          "parse_pdf": 0.1520750469999257,
+          "stream_decode": 0.00028895099967485294,
+          "js_ast": 0.8588635240002986,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 388048,
+      "features": 555,
+      "records": 118,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [
+            "forensic_xref_size_invalid"
+          ],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable"
+          ],
+          "version": {},
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": [
+            "graph_backend_failure"
+          ]
+        },
+        "MuPDF": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": [
+            "graph_catalog_invalid"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable"
+          ],
+          "version": {},
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "xref_selection_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [
+            "free_assignment_unsupported",
+            "free_identifier_read_effects_unmodeled",
+            "loop_state_widened",
+            "object_coercion_unsupported",
+            "opaque_call_effects_unmodeled",
+            "property_getter_effects_unmodeled",
+            "whole_program_runtime_behavior_unverified"
+          ],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 19,
+      "partition": "train",
+      "Label": 1,
+      "status": "unsupported",
+      "worker": {
+        "status": "complete",
+        "worker_seconds": 8.781339832999947,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 295989248,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.0008037569996304228,
+          "raw_scan": 0.6311301880000428,
+          "parse_pdf": 1.6507448740003383,
+          "stream_decode": 0.01861023900028158,
+          "js_ast": 0.00030547400001523783,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 23140492,
+      "features": 795,
+      "records": 13969,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "observed",
+          "limitations": [],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "observed",
+          "graph_limitations": []
+        },
+        "MuPDF": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "profile_does_not_run_this_backend"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pikepdf": "10.17.0",
+            "qpdf": "12.4.2"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "whole_document_conformance_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 20,
+      "partition": "train",
+      "Label": 1,
+      "status": "resource_limit",
+      "worker": {
+        "status": "partial",
+        "worker_seconds": 7.73896267300006,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 265609216,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.0009673889999248786,
+          "raw_scan": 1.2927766099996916,
+          "parse_pdf": 0.5842287030004627,
+          "stream_decode": 0.003064010999878519,
+          "js_ast": 0.000228688000333932,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 1643555,
+      "features": 682,
+      "records": 835,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [
+            "decoded_byte_or_expansion_limit",
+            "forensic_projection_incomplete",
+            "forensic_scan_stopped_at_uncertain_stream",
+            "forensic_stream_endpoint_mismatch",
+            "forensic_xref_stream_unavailable",
+            "forensic_xref_target_not_top_level_confirmed"
+          ],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "decode_error",
+          "graph_limitations": [
+            "invalid_flate_stream"
+          ]
+        },
+        "MuPDF": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "resource_limit",
+          "graph_limitations": [
+            "decoded_byte_limit"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "pikepdf": "10.17.0",
+            "qpdf": "12.4.2"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "xref_selection_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [
+            "byte_image_source_unavailable"
+          ],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 21,
+      "partition": "train",
+      "Label": 1,
+      "status": "resource_limit",
+      "worker": {
+        "status": "partial",
+        "worker_seconds": 32.814234367000154,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 387731456,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.0003206390001651016,
+          "raw_scan": 0.6138787170007163,
+          "parse_pdf": 17.05468194099967,
+          "stream_decode": 9.209938416999648,
+          "js_ast": 0.5167211379998662,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 1809532,
+      "features": 628,
+      "records": 881,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [
+            "forensic_object_header_invalid",
+            "forensic_projection_incomplete",
+            "forensic_scan_stopped_at_uncertain_stream",
+            "forensic_stream_endpoint_mismatch"
+          ],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "observed",
+          "graph_limitations": []
+        },
+        "MuPDF": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": []
+        },
+        "qpdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable"
+          ],
+          "version": {},
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "xref_selection_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [
+            "free_identifier_read_effects_unmodeled",
+            "opaque_call_effects_unmodeled",
+            "property_getter_effects_unmodeled",
+            "whole_program_runtime_behavior_unverified"
+          ],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 22,
+      "partition": "validation",
+      "Label": 1,
+      "status": "resource_limit",
+      "worker": {
+        "status": "parser_error",
+        "worker_seconds": 12.970799155999885,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 265056256,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.0004448899994713429,
+          "raw_scan": 0.008821308999813482,
+          "parse_pdf": 7.226386414000899,
+          "stream_decode": 0.0023531880005975836,
+          "js_ast": 0.0004324579999774869,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 2041364,
+      "features": 553,
+      "records": 1107,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [
+            "forensic_stream_eol_invalid",
+            "forensic_terminal_startxref_unavailable"
+          ],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable"
+          ],
+          "version": {},
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": [
+            "graph_backend_failure"
+          ]
+        },
+        "MuPDF": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable",
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "resource_limit",
+          "graph_limitations": [
+            "decoded_byte_limit",
+            "invalid_flate_stream",
+            "recovery_reference_unavailable"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable"
+          ],
+          "version": {},
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "xref_selection_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 23,
+      "partition": "validation",
+      "Label": 1,
+      "status": "unsupported",
+      "worker": {
+        "status": "parser_error",
+        "worker_seconds": 14.327944725999714,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 260894720,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.0003245150001021102,
+          "raw_scan": 0.06495470800018666,
+          "parse_pdf": 1.7218064929998036,
+          "stream_decode": 0.12663562699981412,
+          "js_ast": 0.0002961810000670084,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 681554,
+      "features": 592,
+      "records": 295,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [
+            "forensic_projection_incomplete",
+            "forensic_scan_stopped_at_uncertain_stream",
+            "forensic_stream_endpoint_mismatch",
+            "forensic_terminal_startxref_unavailable"
+          ],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable"
+          ],
+          "version": {},
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": [
+            "graph_backend_failure"
+          ]
+        },
+        "MuPDF": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable",
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "unsupported",
+          "graph_limitations": [
+            "xfa_object_unsupported"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable"
+          ],
+          "version": {},
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "xref_selection_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 24,
+      "partition": "train",
+      "Label": 1,
+      "status": "partial",
+      "worker": {
+        "status": "complete",
+        "worker_seconds": 5.24233014299989,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 395546624,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.0003790079999816953,
+          "raw_scan": 0.19228872099984073,
+          "parse_pdf": 0.5519411919995036,
+          "stream_decode": 0.0012477829995987122,
+          "js_ast": 0.8768186940001215,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 4877554,
+      "features": 1167,
+      "records": 2839,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "observed",
+          "limitations": [],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "observed",
+          "graph_limitations": []
+        },
+        "MuPDF": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "profile_does_not_run_this_backend"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "pikepdf": "10.17.0",
+            "qpdf": "12.4.2"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "whole_document_conformance_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [
+            "ambient_root_read_effects_unmodeled",
+            "assignment_target_or_heap_unsupported",
+            "free_assignment_unsupported",
+            "free_identifier_read_effects_unmodeled",
+            "loop_state_widened",
+            "object_coercion_unsupported",
+            "opaque_call_effects_unmodeled",
+            "property_getter_effects_unmodeled",
+            "whole_program_runtime_behavior_unverified"
+          ],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 25,
+      "partition": "train",
+      "Label": 1,
+      "status": "partial",
+      "worker": {
+        "status": "partial",
+        "worker_seconds": 4.854998930999955,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 380526592,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.0004515040000114823,
+          "raw_scan": 0.019318824999572826,
+          "parse_pdf": 0.17053433599903656,
+          "stream_decode": 0.00015637300020898692,
+          "js_ast": 0.7706925509996836,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 554324,
+      "features": 559,
+      "records": 203,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [
+            "forensic_object_header_invalid",
+            "forensic_xref_size_invalid"
+          ],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": [
+            "graph_catalog_invalid"
+          ]
+        },
+        "MuPDF": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable",
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": [
+            "graph_catalog_invalid"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable"
+          ],
+          "version": {},
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "xref_selection_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [
+            "free_assignment_unsupported",
+            "free_identifier_read_effects_unmodeled",
+            "loop_state_widened",
+            "object_coercion_unsupported",
+            "opaque_call_effects_unmodeled",
+            "property_getter_effects_unmodeled",
+            "whole_program_runtime_behavior_unverified"
+          ],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 26,
+      "partition": "train",
+      "Label": 1,
+      "status": "decode_error",
+      "worker": {
+        "status": "partial",
+        "worker_seconds": 35.39694437600019,
+        "worker_exit_code": 0,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 593006592,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.0004727630002889782,
+          "raw_scan": 1.128487264999876,
+          "parse_pdf": 0.8647686360004627,
+          "stream_decode": 0.0008196620001399424,
+          "js_ast": 27.079817596999874,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 58900724,
+      "features": 599,
+      "records": 31516,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [
+            "forensic_object_header_invalid",
+            "forensic_projection_incomplete",
+            "forensic_scan_stopped_at_uncertain_stream",
+            "forensic_stream_endpoint_mismatch"
+          ],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": [
+            "graph_reference_unavailable"
+          ]
+        },
+        "MuPDF": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable",
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": [
+            "recovery_reference_unavailable"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable"
+          ],
+          "version": {},
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "xref_selection_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [
+            "free_assignment_unsupported",
+            "free_identifier_read_effects_unmodeled",
+            "object_coercion_unsupported",
+            "opaque_call_effects_unmodeled",
+            "property_getter_effects_unmodeled",
+            "whole_program_runtime_behavior_unverified"
+          ],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 27,
+      "partition": "train",
+      "Label": 1,
+      "status": "unsupported",
+      "worker": {
+        "status": "partial",
+        "worker_seconds": 12.504285450000225,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 330276864,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.0004757459996653779,
+          "raw_scan": 2.5276533730002484,
+          "parse_pdf": 4.456907182998293,
+          "stream_decode": 0.06931718099986028,
+          "js_ast": 0.00023641999996470986,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 46278870,
+      "features": 1220,
+      "records": 27431,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [
+            "forensic_duplicate_dictionary_key",
+            "forensic_projection_incomplete"
+          ],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices",
+            "inventory_projection_incomplete",
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "observed",
+          "graph_limitations": []
+        },
+        "MuPDF": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": []
+        },
+        "qpdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "pikepdf": "10.17.0",
+            "qpdf": "12.4.2"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "whole_document_conformance_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 28,
+      "partition": "validation",
+      "Label": 1,
+      "status": "partial",
+      "worker": {
+        "status": "partial",
+        "worker_seconds": 4.248894087999815,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 379875328,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.0002946300000985502,
+          "raw_scan": 0.013963126999897213,
+          "parse_pdf": 0.09530741100115847,
+          "stream_decode": 0.0001735380001264275,
+          "js_ast": 0.717567766999764,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 512279,
+      "features": 559,
+      "records": 187,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [
+            "forensic_invalid_hex_string",
+            "forensic_xref_size_invalid"
+          ],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": [
+            "graph_catalog_invalid"
+          ]
+        },
+        "MuPDF": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable",
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": [
+            "graph_catalog_invalid"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable"
+          ],
+          "version": {},
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "xref_selection_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [
+            "free_assignment_unsupported",
+            "free_identifier_read_effects_unmodeled",
+            "loop_state_widened",
+            "object_coercion_unsupported",
+            "opaque_call_effects_unmodeled",
+            "property_getter_effects_unmodeled",
+            "whole_program_runtime_behavior_unverified"
+          ],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 29,
+      "partition": "train",
+      "Label": 1,
+      "status": "resource_limit",
+      "worker": {
+        "status": "parser_error",
+        "worker_seconds": 4.608833821000189,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 264568832,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.00033803800033638254,
+          "raw_scan": 0.005944128000010096,
+          "parse_pdf": 0.5994622729995172,
+          "stream_decode": 0.0060374499998943065,
+          "js_ast": 0.00023962200020832825,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 1617954,
+      "features": 555,
+      "records": 854,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [
+            "forensic_stream_eol_invalid",
+            "forensic_terminal_startxref_unavailable"
+          ],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable"
+          ],
+          "version": {},
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": [
+            "graph_backend_failure"
+          ]
+        },
+        "MuPDF": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable",
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "resource_limit",
+          "graph_limitations": [
+            "decoded_byte_limit",
+            "invalid_flate_stream",
+            "recovery_reference_unavailable"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable"
+          ],
+          "version": {},
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "xref_selection_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 30,
+      "partition": "train",
+      "Label": 1,
+      "status": "resource_limit",
+      "worker": {
+        "status": "parser_error",
+        "worker_seconds": 4.143332451000333,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 260161536,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.000299847999940539,
+          "raw_scan": 0.17306071999973938,
+          "parse_pdf": 0.1587966240008427,
+          "stream_decode": 0.0008894020002117031,
+          "js_ast": 0.0003553910000846372,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 530073,
+      "features": 585,
+      "records": 204,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [
+            "forensic_projection_incomplete",
+            "forensic_scan_stopped_at_uncertain_stream",
+            "forensic_stream_length_unavailable",
+            "forensic_terminal_startxref_unavailable"
+          ],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable"
+          ],
+          "version": {},
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": [
+            "graph_backend_failure"
+          ]
+        },
+        "MuPDF": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "resource_limit",
+          "graph_limitations": [
+            "decoded_byte_limit",
+            "invalid_flate_stream"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable"
+          ],
+          "version": {},
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "xref_selection_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 31,
+      "partition": "train",
+      "Label": 1,
+      "status": "unsupported",
+      "worker": {
+        "status": "partial",
+        "worker_seconds": 4.716566196999793,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 261820416,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.000371303000520129,
+          "raw_scan": 0.038053281000429706,
+          "parse_pdf": 0.9879403680006362,
+          "stream_decode": 0.004902416000277299,
+          "js_ast": 0.00023615999998582993,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 823065,
+      "features": 605,
+      "records": 374,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [
+            "forensic_projection_incomplete",
+            "forensic_scan_stopped_at_uncertain_stream",
+            "forensic_selected_object_unavailable",
+            "forensic_stream_endpoint_mismatch",
+            "forensic_xref_target_not_top_level_confirmed"
+          ],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices",
+            "inventory_projection_incomplete",
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "unsupported",
+          "graph_limitations": [
+            "xfa_reference_unsupported"
+          ]
+        },
+        "MuPDF": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable",
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "unsupported",
+          "graph_limitations": [
+            "graph_reference_failure",
+            "xfa_reference_unsupported"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "pikepdf": "10.17.0",
+            "qpdf": "12.4.2"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "xref_selection_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [
+            "byte_image_source_unavailable"
+          ],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 32,
+      "partition": "train",
+      "Label": 1,
+      "status": "unsupported",
+      "worker": {
+        "status": "complete",
+        "worker_seconds": 7.984744926000076,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 296308736,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.001160169999820937,
+          "raw_scan": 0.7888276490007229,
+          "parse_pdf": 2.5188710990005347,
+          "stream_decode": 0.029433478000100877,
+          "js_ast": 0.0002541699996072566,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 23611394,
+      "features": 907,
+      "records": 13992,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "observed",
+          "limitations": [],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "observed",
+          "graph_limitations": []
+        },
+        "MuPDF": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "profile_does_not_run_this_backend"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pikepdf": "10.17.0",
+            "qpdf": "12.4.2"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "whole_document_conformance_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 33,
+      "partition": "train",
+      "Label": 1,
+      "status": "resource_limit",
+      "worker": {
+        "status": "partial",
+        "worker_seconds": 25.001794115999928,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 435159040,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.0013644840000779368,
+          "raw_scan": 4.442741306999324,
+          "parse_pdf": 11.97095064000041,
+          "stream_decode": 0.0003904900004272349,
+          "js_ast": 0.6627432799996313,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 17628538,
+      "features": 1561,
+      "records": 12018,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "observed",
+          "limitations": [],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": [
+            "graph_catalog_invalid"
+          ]
+        },
+        "MuPDF": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": [
+            "graph_catalog_invalid"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "pikepdf": "10.17.0",
+            "qpdf": "12.4.2"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "whole_document_conformance_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [
+            "free_assignment_unsupported",
+            "free_identifier_read_effects_unmodeled",
+            "object_coercion_unsupported",
+            "opaque_call_effects_unmodeled",
+            "property_getter_effects_unmodeled",
+            "whole_program_runtime_behavior_unverified"
+          ],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [
+            "byte_image_source_limit"
+          ],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 34,
+      "partition": "train",
+      "Label": 1,
+      "status": "resource_limit",
+      "worker": {
+        "status": "partial",
+        "worker_seconds": 5.76419630700002,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 382042112,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.00034154999957536347,
+          "raw_scan": 0.004650400000173249,
+          "parse_pdf": 0.3097900530001425,
+          "stream_decode": 0.0008942559998104116,
+          "js_ast": 0.7155036050003218,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 942457,
+      "features": 550,
+      "records": 442,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [
+            "forensic_xref_offset_or_count_limit"
+          ],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": [
+            "graph_reference_unavailable"
+          ]
+        },
+        "MuPDF": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable",
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": [
+            "recovery_reference_unavailable"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable"
+          ],
+          "version": {},
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "not_run",
+          "limitations": [
+            "raw_ir_interrupted_before_arlington"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "configured local TSV rules only"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [
+            "assignment_target_or_heap_unsupported",
+            "free_assignment_unsupported",
+            "free_identifier_read_effects_unmodeled",
+            "loop_state_widened",
+            "object_coercion_unsupported",
+            "opaque_call_effects_unmodeled",
+            "property_getter_effects_unmodeled",
+            "whole_program_runtime_behavior_unverified"
+          ],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 35,
+      "partition": "train",
+      "Label": 1,
+      "status": "resource_limit",
+      "worker": {
+        "status": "partial",
+        "worker_seconds": 9.278478879999966,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 387117056,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.00040035499978330336,
+          "raw_scan": 0.01736688699975275,
+          "parse_pdf": 3.339721520999319,
+          "stream_decode": 0.0014322520000860095,
+          "js_ast": 0.7724094079999304,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 1843338,
+      "features": 550,
+      "records": 1102,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [
+            "forensic_xref_offset_or_count_limit"
+          ],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": [
+            "graph_reference_unavailable"
+          ]
+        },
+        "MuPDF": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable",
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": [
+            "recovery_reference_unavailable"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable"
+          ],
+          "version": {},
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "not_run",
+          "limitations": [
+            "raw_ir_interrupted_before_arlington"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "configured local TSV rules only"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [
+            "free_assignment_unsupported",
+            "free_identifier_read_effects_unmodeled",
+            "loop_state_widened",
+            "object_coercion_unsupported",
+            "opaque_call_effects_unmodeled",
+            "property_getter_effects_unmodeled",
+            "whole_program_runtime_behavior_unverified"
+          ],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 36,
+      "partition": "validation",
+      "Label": 1,
+      "status": "resource_limit",
+      "worker": {
+        "status": "parser_error",
+        "worker_seconds": 3.9566598870001144,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 264962048,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.004601061000357731,
+          "raw_scan": 0.005149766000613454,
+          "parse_pdf": 0.5519193310001356,
+          "stream_decode": 0.004029309000543435,
+          "js_ast": 0.00033949799990296015,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 2041367,
+      "features": 553,
+      "records": 1107,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [
+            "forensic_stream_eol_invalid",
+            "forensic_terminal_startxref_unavailable"
+          ],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable"
+          ],
+          "version": {},
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": [
+            "graph_backend_failure"
+          ]
+        },
+        "MuPDF": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable",
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "resource_limit",
+          "graph_limitations": [
+            "decoded_byte_limit",
+            "invalid_flate_stream",
+            "recovery_reference_unavailable"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable"
+          ],
+          "version": {},
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "xref_selection_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 38,
+      "partition": "train",
+      "Label": 1,
+      "status": "partial",
+      "worker": {
+        "status": "parser_error",
+        "worker_seconds": 4.785983445000056,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 379805696,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.0005036600000494218,
+          "raw_scan": 0.023728859999209817,
+          "parse_pdf": 0.08819380300019475,
+          "stream_decode": 0.0001839430001382425,
+          "js_ast": 0.7193897869997272,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 423675,
+      "features": 555,
+      "records": 137,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [
+            "forensic_xref_size_invalid"
+          ],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable"
+          ],
+          "version": {},
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": [
+            "graph_backend_failure"
+          ]
+        },
+        "MuPDF": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable",
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": [
+            "graph_catalog_invalid"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable"
+          ],
+          "version": {},
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "xref_selection_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [
+            "free_assignment_unsupported",
+            "free_identifier_read_effects_unmodeled",
+            "loop_state_widened",
+            "object_coercion_unsupported",
+            "opaque_call_effects_unmodeled",
+            "property_getter_effects_unmodeled",
+            "whole_program_runtime_behavior_unverified"
+          ],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 40,
+      "partition": "validation",
+      "Label": 1,
+      "status": "unsupported",
+      "worker": {
+        "status": "complete",
+        "worker_seconds": 9.597292166999978,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 321593344,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.0009035409998432442,
+          "raw_scan": 1.383664645000863,
+          "parse_pdf": 3.5628344189999552,
+          "stream_decode": 0.028599133000170696,
+          "js_ast": 0.0002622309998514538,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 42925384,
+      "features": 811,
+      "records": 24846,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "observed",
+          "limitations": [],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "observed",
+          "graph_limitations": []
+        },
+        "MuPDF": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "profile_does_not_run_this_backend"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pikepdf": "10.17.0",
+            "qpdf": "12.4.2"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "whole_document_conformance_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 41,
+      "partition": "train",
+      "Label": 1,
+      "status": "unsupported",
+      "worker": {
+        "status": "complete",
+        "worker_seconds": 10.534467719000077,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 263524352,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.00043459700009407243,
+          "raw_scan": 1.2071247399994718,
+          "parse_pdf": 3.9112548830007654,
+          "stream_decode": 0.0021831659996678354,
+          "js_ast": 0.00024007599995456985,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 1331501,
+      "features": 678,
+      "records": 674,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [
+            "forensic_object_header_invalid",
+            "forensic_terminal_startxref_unavailable"
+          ],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "observed",
+          "graph_limitations": []
+        },
+        "MuPDF": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "profile_does_not_run_this_backend"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pikepdf": "10.17.0",
+            "qpdf": "12.4.2"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "xref_selection_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 42,
+      "partition": "train",
+      "Label": 1,
+      "status": "unsupported",
+      "worker": {
+        "status": "partial",
+        "worker_seconds": 9.877973042000121,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 388730880,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.0005857539999851724,
+          "raw_scan": 0.31882211300035124,
+          "parse_pdf": 0.7781823369996346,
+          "stream_decode": 0.11303719599982287,
+          "js_ast": 0.6086747149997791,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 1950899,
+      "features": 780,
+      "records": 1053,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [
+            "forensic_duplicate_dictionary_key",
+            "forensic_projection_incomplete",
+            "forensic_selected_object_unavailable",
+            "forensic_stream_eol_invalid",
+            "forensic_xref_target_not_top_level_confirmed"
+          ],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices",
+            "inventory_projection_incomplete",
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "observed",
+          "graph_limitations": []
+        },
+        "MuPDF": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": []
+        },
+        "qpdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "pikepdf": "10.17.0",
+            "qpdf": "12.4.2"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "xref_selection_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [
+            "opaque_call_effects_unmodeled",
+            "property_getter_effects_unmodeled",
+            "whole_program_runtime_behavior_unverified"
+          ],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [
+            "byte_image_source_unavailable"
+          ],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 43,
+      "partition": "train",
+      "Label": 1,
+      "status": "unsupported",
+      "worker": {
+        "status": "complete",
+        "worker_seconds": 11.227731795999716,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 299896832,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.0010412090005047503,
+          "raw_scan": 1.9751272680000511,
+          "parse_pdf": 3.631695738999497,
+          "stream_decode": 0.06373262000079194,
+          "js_ast": 0.00018435100037095253,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 25665883,
+      "features": 909,
+      "records": 15533,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "observed",
+          "limitations": [],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "observed",
+          "graph_limitations": []
+        },
+        "MuPDF": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "profile_does_not_run_this_backend"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pikepdf": "10.17.0",
+            "qpdf": "12.4.2"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "whole_document_conformance_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 44,
+      "partition": "train",
+      "Label": 1,
+      "status": "resource_limit",
+      "worker": {
+        "status": "partial",
+        "worker_seconds": 5.589029815999766,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 261476352,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.00034894300006271806,
+          "raw_scan": 0.9093013010001414,
+          "parse_pdf": 0.34689967799931765,
+          "stream_decode": 0.005424665000191453,
+          "js_ast": 0.00023134100001698243,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 779409,
+      "features": 649,
+      "records": 293,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "partial",
+          "limitations": [
+            "forensic_xref_offset_or_count_limit"
+          ],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": [
+            "script_analysis_failure"
+          ]
+        },
+        "MuPDF": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_notices"
+          ],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "partial",
+          "graph_limitations": [
+            "script_analysis_failure"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "partial",
+          "limitations": [
+            "inventory_parser_unavailable"
+          ],
+          "version": {},
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "not_run",
+          "limitations": [
+            "raw_ir_interrupted_before_arlington"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "configured local TSV rules only"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    },
+    {
+      "index": 45,
+      "partition": "validation",
+      "Label": 1,
+      "status": "observed",
+      "worker": {
+        "status": "complete",
+        "worker_seconds": 8.782734834000166,
+        "worker_exit_code": -9,
+        "worker_cleanup_complete": true,
+        "peak_rss_bytes": 395300864,
+        "rss_quality": "kernel_worker_hwm",
+        "resource_limits": {
+          "address_space_bytes": [
+            -1,
+            -1
+          ],
+          "cpu_seconds": [
+            -1,
+            -1
+          ],
+          "wall_seconds": null,
+          "disposable_process_group": true
+        },
+        "last_stage": "raw_scan",
+        "timings": {
+          "read_hash": 0.0003089120000367984,
+          "raw_scan": 0.5635271050000483,
+          "parse_pdf": 2.987081193999984,
+          "stream_decode": 0.001030888000059349,
+          "js_ast": 1.7652140979998876,
+          "inference_gate": null,
+          "inference": null
+        },
+        "worker_result_received": true
+      },
+      "bytes_json": 4667309,
+      "features": 1136,
+      "records": 2698,
+      "backends": {
+        "raw_forensic": {
+          "observation_status": "observed",
+          "limitations": [],
+          "scope": "byte declarations and explicitly checked xref/Prev views; graph is static, never execution flow",
+          "lexical_observation_status": "observed"
+        },
+        "pypdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pypdf": "6.18.1"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "observed",
+          "graph_limitations": []
+        },
+        "MuPDF": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "PyMuPDF": "1.26.7",
+            "MuPDF": "1.26.12"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "profile_does_not_run_this_backend"
+          ]
+        },
+        "qpdf": {
+          "observation_status": "observed",
+          "limitations": [],
+          "version": {
+            "pikepdf": "10.17.0",
+            "qpdf": "12.4.2"
+          },
+          "scope": "current native object inventory; graph/revisions remain separate",
+          "graph_observation_status": "not_run",
+          "graph_limitations": [
+            "native_inventory_not_run"
+          ]
+        },
+        "arlington": {
+          "observation_status": "partial",
+          "limitations": [
+            "whole_document_conformance_unverified"
+          ],
+          "model": {
+            "source": "https://github.com/pdf-association/arlington-pdf-model",
+            "commit": "b7d880b7a3d3c8f505c025f17763397475e90503",
+            "snapshot": "third_party/arlington-pdf-model",
+            "tsv_directory": "third_party/arlington-pdf-model/tsv/latest",
+            "status": "available",
+            "tsv_count": 610,
+            "row_count": 3976,
+            "verified_bytes": 497394,
+            "lock_content_sha256": "f6b607a9bb6c8b33b1ca264366448c2ee85e5938b1ab9864da36cccfe0ffa391"
+          },
+          "scope": "bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance"
+        },
+        "script_semantics": {
+          "observation_status": "partial",
+          "limitations": [
+            "ambient_root_read_effects_unmodeled",
+            "annex_b_block_function_hoisting_unsupported",
+            "assignment_target_or_heap_unsupported",
+            "enumeration_protocol_unmodeled",
+            "free_assignment_unsupported",
+            "free_identifier_read_effects_unmodeled",
+            "loop_state_widened",
+            "object_coercion_unsupported",
+            "opaque_call_effects_unmodeled",
+            "property_getter_effects_unmodeled",
+            "whole_program_runtime_behavior_unverified"
+          ],
+          "scope": "successfully captured existing syntax trees only; independent per-script entry contexts"
+        },
+        "byte_images": {
+          "observation_status": "partial",
+          "limitations": [],
+          "scope": "admitted raw/decoded byte spans only; no page appearance or whole-format coverage"
+        }
+      }
+    }
+  ],
+  "statuses": {
+    "observed": 3,
+    "unsupported": 14,
+    "resource_limit": 19,
+    "decode_error": 2,
+    "partial": 6
+  },
+  "worker_statuses": {
+    "complete": 16,
+    "resource_limit_or_signal": 4,
+    "partial": 17,
+    "parser_error": 7
+  },
+  "limitations": {
+    "artifact_format_analysis_unsupported": 17,
+    "forensic_unrecognized_top_level_syntax": 2,
+    "xref_selection_unverified": 22,
+    "byte_image_pixel_limit": 1,
+    "byte_image_source_limit": 3,
+    "byte_image_source_unavailable": 6,
+    "byte_image_tile_limit": 1,
+    "forensic_selected_object_unavailable": 5,
+    "forensic_stream_eol_invalid": 7,
+    "forensic_xref_target_not_top_level_confirmed": 6,
+    "inventory_parser_notices": 28,
+    "inventory_view_incomplete": 30,
+    "trailing_flate_data": 5,
+    "unsupported_stream_filter": 9,
+    "inventory_parser_unavailable": 22,
+    "worker_signal_9": 4,
+    "forensic_invalid_hex_string": 2,
+    "forensic_terminal_startxref_unavailable": 8,
+    "structural_reference_unavailable": 6,
+    "decoded_byte_or_expansion_limit": 8,
+    "pdf_xref_recovered": 15,
+    "forensic_object_header_invalid": 5,
+    "forensic_projection_incomplete": 9,
+    "forensic_scan_stopped_at_uncertain_stream": 7,
+    "forensic_stream_endpoint_mismatch": 6,
+    "forensic_xref_entry_invalid": 1,
+    "forensic_xref_offset_or_count_limit": 5,
+    "invalid_flate_stream": 9,
+    "pdf_reference_unavailable": 12,
+    "raw_ir_interrupted_before_arlington": 5,
+    "truncated_flate_stream": 5,
+    "forensic_xref_size_invalid": 4,
+    "parser_failure": 7,
+    "pdf_parser_failure": 3,
+    "forensic_xref_stream_unavailable": 1,
+    "script_read_error": 1,
+    "reference_feature_partial": 2,
+    "xfa_object_unsupported": 1,
+    "forensic_duplicate_dictionary_key": 2,
+    "inventory_projection_incomplete": 3,
+    "forensic_stream_length_unavailable": 1,
+    "artifact_analysis_partial": 1,
+    "xfa_reference_unsupported": 1,
+    "unsupported_decode_parameter": 1,
+    "script_decode_error": 1
+  },
+  "backends": {
+    "raw_forensic": {
+      "observed": 12,
+      "partial": 32
+    },
+    "pypdf": {
+      "observed": 23,
+      "partial": 21
+    },
+    "MuPDF": {
+      "observed": 17,
+      "partial": 27
+    },
+    "qpdf": {
+      "observed": 16,
+      "partial": 28
+    },
+    "arlington": {
+      "partial": 39,
+      "not_run": 5
+    },
+    "script_semantics": {
+      "partial": 40,
+      "not_run": 4
+    },
+    "byte_images": {
+      "partial": 40,
+      "not_run": 4
+    }
+  },
+  "evidence_kinds": {
+    "document": 92,
+    "primary_checkpoint": 46,
+    "primary_model_inputs": 46,
+    "catalog": 55,
+    "action": 63,
+    "stream": 375,
+    "script_extraction": 29,
+    "script": 34,
+    "pdf_object": 34998,
+    "page": 133,
+    "array": 7720,
+    "pages": 57,
+    "capability_check": 350,
+    "raw_layout": 46,
+    "stream_analysis": 46,
+    "stream_decode": 397,
+    "stream_filter_stage": 330,
+    "artifact_analysis": 44,
+    "artifact": 95,
+    "parser_inventory": 44,
+    "parser_view": 132,
+    "parser_object": 8536,
+    "parser_comparison": 11686,
+    "raw_forensic_analysis": 44,
+    "forensic_object_declaration": 3141,
+    "forensic_syntax_dictionary": 3728,
+    "forensic_syntax_name": 23479,
+    "forensic_syntax_array": 5957,
+    "forensic_syntax_string": 467,
+    "forensic_syntax_number": 17895,
+    "forensic_syntax_reference": 9041,
+    "forensic_xref": 53,
+    "forensic_xref_entry": 3345,
+    "forensic_revision_context": 36,
+    "forensic_startxref": 38,
+    "forensic_eof": 38,
+    "forensic_reference_resolution": 1782,
+    "forensic_parser_comparison": 8161,
+    "arlington_analysis": 44,
+    "arlington_schema_candidate": 24582,
+    "arlington_rule_check": 1108390,
+    "script_semantic_analysis": 40,
+    "script_static_semantics": 27,
+    "script_lexical_scope": 182,
+    "script_normalized_binding": 224,
+    "script_function_candidate": 22,
+    "script_abstract_fact": 16360,
+    "script_static_call": 15805,
+    "byte_image_analysis": 40,
+    "byte_image_source": 1301,
+    "byte_image_tile": 1627,
+    "annotation": 21,
+    "filespec": 9,
+    "forensic_syntax_boolean": 80,
+    "forensic_synthetic_reference": 26,
+    "forensic_structural_decode": 35,
+    "forensic_object_candidate": 34,
+    "forensic_partial_declaration": 8,
+    "form": 17,
+    "embedded_stream": 22,
+    "xfa_packet": 15,
+    "xfa_event": 14,
+    "payload": 22,
+    "field": 12,
+    "script_api_candidate": 8,
+    "stage_failure": 147,
+    "forensic_syntax_null": 2,
+    "xfa_script_source": 2,
+    "artifact_xml_script": 2,
+    "unresolved_reference": 106,
+    "artifact_pdf_coverage": 2
+  }
+}

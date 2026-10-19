@@ -1,5 +1,18 @@
 # Research workflows and CLI reference
 
+VM extraction uses all available CPUs by default. `scripts/22_extract_pdf.py vm
+--workers 4` selects a worker count; `--resume-from <pdf_extraction_vm_run_id>`
+reuses verified finished occurrences in a new run. The
+[VM guide](extraction_vm.md#resume-a-finished-or-interrupted-invocation) covers
+completion journals, blob retention and source/configuration drift.
+
+Under the 2026-10-18 repository rules, run
+`python scripts/22_extract_pdf.py vm` in `.venv/` for concurrent static extraction
+over every configured saved Protocol G row. The [VM workflow](extraction_vm.md)
+documents full-performance resources, existing partitions and dirty-worktree
+provenance. Earlier offline/pinned-job instructions below remain historical
+compatibility workflows.
+
 Run command examples from the repository root after following the [development setup](development.md). Each workflow retains its own saved cohort, configuration and validation/Test lock; historical commands are not instructions to rerun completed evaluations. Dataset acquisition, sample handling and external uploads require the authorization specified in [AGENTS.md](../AGENTS.md). See [research status](research_status.md) for saved outcomes and limitations.
 
 New generated Kaggle notebooks are written to

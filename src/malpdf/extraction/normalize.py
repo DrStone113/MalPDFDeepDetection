@@ -79,6 +79,9 @@ def normalize_profile(profile, digest, extraction_profile, *, provenance=None):
         if identity is not None and identity != digest:
             raise ValueError("extraction_checkpoint_identity_mismatch")
     records, features, edges = [], [], []
+    for index, failure in enumerate(profile.get('stage_failures', [])):
+        records.append(_record('pipeline-failure:' + str(digest) + ':' + str(index),
+            'pipeline_stage_failure', 'static_pipeline', failure['status'], details=failure))
     original_id = "original:" + str(digest)
     original_available = bool(layout or raw or static)
     if original_available:
@@ -98,7 +101,7 @@ def normalize_profile(profile, digest, extraction_profile, *, provenance=None):
         records.append(_record(item["id"], item["kind"], item["backend"], status, details=item,
             object_number=item.get("object_number"), generation=item.get("generation"),
             byte_offset_start=offset if type(offset) is int and offset >= 0 else None,
-            # MuPDF supplies a recovered interpretation, never original identity.
+
             is_synthetic_repaired=item["backend"] == "MuPDF"))
     edges.extend(analysis.get("edges", []))
     for check in analysis.get("capability_checks", []):
@@ -124,7 +127,7 @@ def normalize_profile(profile, digest, extraction_profile, *, provenance=None):
     raw_values = layout.get("token_counts", raw.get("features", {}))
     canonical = static.get("features", {})
     lexical = set(RAW_DIRECT_TOKENS) | {"obj", "endobj", "stream", "endstream", "xref", "startxref", "page_command"}
-    # The adapter never fills model inputs: raw observations have their own names.
+
     for name, value in raw_values.items():
         features.append(feature("lexical_" + name, _group(name), value,
             "observed" if value else "absent_within_scope", [original_id],
@@ -149,14 +152,14 @@ def normalize_profile(profile, digest, extraction_profile, *, provenance=None):
             continue
         refs = [ref for ref in entry.get("source_ids", []) if ref in ids]
         value, complete = entry.get("value"), entry.get("completion_status") == "complete"
-        # The primary provenance ledger verifies the entire saved measurement.
+
         if value is not None and not refs:
             value = None
         status = "partial" if value is None or not complete else "absent_within_scope" if value == 0 else "observed"
         features.append(feature("legacy_" + name, _group(name), value, status, refs,
             "v9 dependency ledger over the original primary/checkpoint measurements",
             entry.get("reason_codes", []), complete=complete))
-    # Per-script AST counts retain a direct link to each immutable script node.
+
     for item in analysis.get("observations", []):
         if item.get("kind") != "script" or item.get("ast_status") != "complete":
             continue
@@ -196,6 +199,7 @@ def normalize_profile(profile, digest, extraction_profile, *, provenance=None):
             retention = [decode.get("raw_retention")]
             for step in decode.get("steps", []):
                 retention.extend([step.get("retention"), step.get("predictor_input_retention")])
+                retention.append((step.get('trailing_data') or {}).get('retention'))
             for item in retention:
                 if isinstance(item, dict) and item.get("sha256"):
                     parent = storage_index.get(item["sha256"])
@@ -214,8 +218,9 @@ def normalize_profile(profile, digest, extraction_profile, *, provenance=None):
             edges.append({"id": entry["id"] + ":source", "source": source_id, "target": entry["id"],
                           "kind": "stream_decode_source", "status": "verified"})
             complete = decode.get("complete") is True
+            output_complete = complete or decode.get('output_complete') is True
             features.append(feature(entry["id"] + ":decoded_bytes", "streams_filters",
-                decode.get("decoded_bytes") if complete else None, "observed" if complete else entry["status"],
+                decode.get("decoded_bytes") if output_complete else None, "observed" if complete else entry["status"],
                 [entry["id"]], "one v9-discovered stream; all declared supported filters completed only when observed",
                 entry["reason_codes"], complete=complete))
             previous = entry["id"]
@@ -297,6 +302,9 @@ def normalize_profile(profile, digest, extraction_profile, *, provenance=None):
         'limitations':byte_images.get('reason_codes',['byte_images_not_run']),
         'scope':byte_images.get('scope','raw bytes only; no page rendering')}
     backends.update(plugin_backends(profile))
+    for failure in profile.get('stage_failures', []):
+        backends['pipeline:' + failure['stage']] = {'observation_status': failure['status'],
+            'limitations': [failure['reason_code']], 'scope': 'failed VM supplement; sibling/primary evidence retained'}
     if byte_images:
         groups['raw_layout']['observation_status']='partial'
         groups['raw_layout']['limitations'].extend(['byte_rasters_have_separate_scopes_and_optional_persistence']+byte_images.get('reason_codes',[]))
@@ -346,4 +354,6 @@ def normalize_profile(profile, digest, extraction_profile, *, provenance=None):
             "worker": {name: profile.get(name) for name in ("status", "worker_seconds", "worker_exit_code", "worker_cleanup_complete",
                 "peak_rss_bytes", "rss_quality", "resource_limits", "last_stage", "timings")},
             "provenance": provenance or {}}}
+    if "worker_result_received" in profile:
+        output["coverage_report"]["worker"]["worker_result_received"] = profile["worker_result_received"]
     return validate_bundle(output)

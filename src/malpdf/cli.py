@@ -33,6 +33,7 @@ def build_parser() -> argparse.ArgumentParser:
     extract_parser = subparsers.add_parser("extract", help="export evidence, features and coverage using an isolated static worker")
     extract_parser.add_argument("path", help="explicit authorized local PDF path; inert bytes only")
     extract_parser.add_argument("--profile", choices=("fast-static", "deep-static"), default="deep-static")
+    extract_parser.add_argument("--execution-mode", choices=("vm", "bounded"), default="vm")
     extract_parser.add_argument("--output-root", type=Path, default=Path("data/processed/pdf_extraction"))
     extract_parser.add_argument('--arlington-lock',help='explicit local checksum-locked reference; deep-static only')
     extract_parser.add_argument('--raw-artifact-dir',type=Path,
@@ -106,12 +107,16 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.command == "extract":
         from malpdf.extraction.orchestrator import extract_pdf, write_bundle,private_artifact_directory
+        from malpdf.static.code_inspector import CodeInspectionLimits, VMInspectionLimits
         try:
+            from malpdf.extraction.lab import require_lab_isolation
+            require_lab_isolation()
             if args.raw_artifact_dir is not None and args.profile!='deep-static':
                 raise ValueError('Raw artifact retention requires deep-static')
             root=Path(__file__).resolve().parents[2]
             storage=private_artifact_directory(root,args.raw_artifact_dir) if args.raw_artifact_dir is not None else None
             result = extract_pdf(args.path, profile=args.profile,
+                limits=VMInspectionLimits() if args.execution_mode == "vm" else CodeInspectionLimits(wall_seconds=20, cpu_seconds=12),
                 **({'raw_artifact_dir':storage} if storage is not None else {}),
                 **({'arlington_lock':args.arlington_lock,'repository_root':Path(__file__).resolve().parents[2]}
                    if args.arlington_lock is not None else {}))

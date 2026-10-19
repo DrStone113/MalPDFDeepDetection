@@ -22,18 +22,18 @@ def _entropy(data):
                 for count in Counter(data).values())
 
 
-def _offsets(data, token):
+def _offsets(data, token, maximum=MAX_MARKERS):
     values, start = [], 0
-    while len(values) <= MAX_MARKERS:
+    while maximum is None or len(values) <= maximum:
         position = data.find(token, start)
         if position < 0:
             return values, True
         values.append(position)
         start = position + len(token)
-    return values[:MAX_MARKERS], False
+    return values[:maximum], False
 
 
-def inspect_raw_layout(data):
+def inspect_raw_layout(data, *, full_scan=False):
     """Inspect already size-verified bytes inside a resource-limited worker.
 
     Markers/names can occur in comments, strings and streams. No object,
@@ -46,15 +46,15 @@ def inspect_raw_layout(data):
     last_eof = data.rfind(b"%%EOF")
     markers = {}
     for name, token in (("header", b"%PDF-"), ("eof", b"%%EOF"), ("startxref", b"startxref")):
-        offsets, complete = _offsets(data, token)
+        offsets, complete = _offsets(data, token, None if full_scan else MAX_MARKERS)
         markers[name] = {"offsets": offsets, "complete": complete}
     windows = []
-    for start in range(0, min(len(data), WINDOW_BYTES * MAX_WINDOWS), WINDOW_BYTES):
+    for start in range(0, len(data) if full_scan else min(len(data), WINDOW_BYTES * MAX_WINDOWS), WINDOW_BYTES):
         end = min(len(data), start + WINDOW_BYTES)
         windows.append({"start": start, "end": end, "entropy": _entropy(data[start:end])})
     name_hints, names_seen, escaped, complete = [], 0, 0, True
     for match in _NAME.finditer(data):
-        if names_seen == MAX_NAMES:
+        if not full_scan and names_seen == MAX_NAMES:
             complete = False
             break
         raw = match.group()
@@ -62,7 +62,7 @@ def inspect_raw_layout(data):
         names_seen += 1
         if raw != normalized:
             escaped += 1
-            # Retain positions and identities without exporting arbitrary names.
+
             name_hints.append({"start": match.start(), "end": match.end(),
                 "raw_sha256": hashlib.sha256(raw).hexdigest(),
                 "normalized_sha256": hashlib.sha256(normalized).hexdigest()})
@@ -81,7 +81,7 @@ def inspect_raw_layout(data):
             "suffix_bytes": len(suffix) if suffix is not None else None,
             "suffix_entropy": _entropy(suffix) if suffix is not None else None,
             "entropy_windows": windows, "window_bytes": WINDOW_BYTES,
-            "entropy_windows_complete": len(data) <= WINDOW_BYTES * MAX_WINDOWS,
+            "entropy_windows_complete": full_scan or len(data) <= WINDOW_BYTES * MAX_WINDOWS,
             "name_candidates_seen": names_seen, "escaped_name_candidates": escaped,
             "name_scan_complete": complete, "escaped_name_hints": name_hints,
             "token_counts": scan_raw_pdf_tokens(data)}

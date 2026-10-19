@@ -1,5 +1,10 @@
 # Offline extractor handoff
 
+The new static VM workflow is documented in [extraction_vm.md](extraction_vm.md).
+Its `vm` action runs from an active worktree and does not use the pinned Desktop
+job or the offline/credential gates below. This handoff remains available for
+the earlier sealed diagnostic; its consumed claims and saved outputs are retained.
+
 ## Console launcher
 
 Completed job: `run_20261016T141614750605Z_08911504a237`. The installed entry is

@@ -1,0 +1,63 @@
+{
+  "before": [
+    {
+      "kind": "native",
+      "extra_objects": 64,
+      "input_sha256": "49a501f00bd254cc75618fa0f66028a0ebc6e6ee04e60ccd84fb6e4167c5124b",
+      "seconds": 4.119843621000086,
+      "checkpoints": 413
+    },
+    {
+      "kind": "raw",
+      "extra_objects": 64,
+      "input_sha256": "49a501f00bd254cc75618fa0f66028a0ebc6e6ee04e60ccd84fb6e4167c5124b",
+      "seconds": 3.4484542929999407,
+      "checkpoints": 342
+    },
+    {
+      "kind": "native",
+      "extra_objects": 192,
+      "input_sha256": "c4e0fd9e73bc2e95fab57e9ed6f0162ced4e49279e91ea55775b8a9c472dc567",
+      "seconds": 39.478584271000045,
+      "checkpoints": 1181
+    },
+    {
+      "kind": "raw",
+      "extra_objects": 192,
+      "input_sha256": "c4e0fd9e73bc2e95fab57e9ed6f0162ced4e49279e91ea55775b8a9c472dc567",
+      "seconds": 31.989837134000027,
+      "checkpoints": 982
+    }
+  ],
+  "after": [
+    {
+      "kind": "native",
+      "extra_objects": 64,
+      "seconds": 0.22247512100000222,
+      "checkpoints": 5,
+      "exact_output_parity": true
+    },
+    {
+      "kind": "raw",
+      "extra_objects": 64,
+      "seconds": 0.058886432000008426,
+      "checkpoints": 4,
+      "exact_output_parity": true
+    },
+    {
+      "kind": "native",
+      "extra_objects": 192,
+      "seconds": 0.20277609500010385,
+      "checkpoints": 5,
+      "exact_output_parity": true
+    },
+    {
+      "kind": "raw",
+      "extra_objects": 192,
+      "seconds": 0.1632309259999829,
+      "checkpoints": 4,
+      "exact_output_parity": true
+    }
+  ],
+  "scope": "single measurements on generated benign fixtures; not whole-corpus speedups"
+}

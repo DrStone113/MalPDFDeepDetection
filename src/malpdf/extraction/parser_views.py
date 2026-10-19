@@ -20,6 +20,8 @@ from malpdf.extraction.qpdf_adapter import QPDFReader
 from malpdf.static.js_ast import CodeInspectionError
 from malpdf.static.parser_diagnostics import ParserDiagnostics
 from malpdf.static.recovery import MuPDFObjectReader, projected_object
+from malpdf.static.execution import capacity, UNLIMITED
+from malpdf.extraction.checkpointing import CheckpointScheduler
 
 
 def _hash(value):
@@ -104,8 +106,8 @@ class _MuPDFView:
 
     def candidates(self):
         for number in range(1,self.reader.document.xref_length()):
-            # Public MuPDF xref APIs select by number. Generation remains
-            # unknown even when the canonical object text contains references.
+
+
             yield {'number':number,'generation':None,'offset':None}
 
     def object(self, candidate, raw_budget):
@@ -157,8 +159,8 @@ def merge_views(views, *, max_comparisons=2048):
                 lnodes,rnodes = left_nodes.get(number,[]),right_nodes.get(number,[])
                 pairs = []
                 remaining = list(rnodes)
-                # Exact known generation matches take priority. Unknown
-                # generations are paired only when the number is unambiguous.
+
+
                 for ln in lnodes:
                     match = next((rn for rn in remaining if ln['generation'] is not None and ln['generation'] == rn['generation']),None)
                     if match is None and len(lnodes) == len(rnodes) == 1:
@@ -210,7 +212,8 @@ def inspect_parser_views(data, limits, *, retain=None, checkpoint=None, max_meta
     """Run all three native views on original bytes, after prior checkpoints."""
     if not isinstance(data,bytes) or not data.startswith(b'%PDF-') or len(data) > limits.max_file_bytes:
         raise ValueError('inventory_input_invalid')
-    if not 2048 <= max_metadata_bytes <= 2*1024**2:
+    max_metadata_bytes = capacity(limits, max_metadata_bytes)
+    if not 2048 <= max_metadata_bytes <= 2*1024**2 and max_metadata_bytes != UNLIMITED:
         raise ValueError('inventory_metadata_cap_invalid')
     if plugins is not None:
         from malpdf.extraction.plugins import PluginRegistry
@@ -219,18 +222,23 @@ def inspect_parser_views(data, limits, *, retain=None, checkpoint=None, max_meta
     result = {'schema_version':'pdf-parser-inventory-v1','document_sha256':digest,'status':'partial','complete':False,
         'views':[],'comparisons':[],'comparisons_complete':False,'reason_codes':[],
         'limits':{'objects_per_view':limits.max_objects,'raw_bytes_total':limits.max_file_bytes,'metadata_bytes':max_metadata_bytes,
-                  'projection_nodes_per_object':1024,'projection_depth':8,'key_details_per_object':64},
+                  'projection_nodes_per_object':capacity(limits,1024),'projection_depth':8,
+                  'key_details_per_object':capacity(limits,64)},
         'raw_bytes_used':0,'scope':'native xref interpretations; raw forensic/history/orphan proof remains unverified'}
     raw_budget = _RawBudget(limits.max_file_bytes)
     saved = deepcopy(result)
-    def emit():
+    snapshots = CheckpointScheduler(limits)
+    def emit(*, force=False):
         nonlocal saved
         result['raw_bytes_used'] = limits.max_file_bytes - raw_budget.remaining
-        if len(json.dumps(result,allow_nan=False,separators=(',',':')).encode()) > max_metadata_bytes - 512:
+        if max_metadata_bytes != UNLIMITED and len(json.dumps(result,allow_nan=False,separators=(',',':')).encode()) > max_metadata_bytes - 512:
             raise CodeInspectionError('inventory_metadata_limit')
+        if not snapshots.due(force=force):
+            return
         if checkpoint:
             checkpoint(deepcopy(result))
         saved = deepcopy(result)
+        snapshots.completed()
     try:
         emit()
         factories=[('pypdf',_PyPDFView,None),('QPDF',QPDFReader,None),('MuPDF',_MuPDFView,None)]
@@ -265,7 +273,7 @@ def inspect_parser_views(data, limits, *, retain=None, checkpoint=None, max_meta
                         'raw_retention':None,'is_synthetic_repaired':backend == 'MuPDF' or reader.repaired}
                     try:
                         value,complete,reasons = reader.object(candidate,raw_budget)
-                        projection = projected_object(value,include_fields=True)
+                        projection = projected_object(value,include_fields=True,limits=limits)
                         if not complete:
                             projection['projection_complete'] = False
                             if 'inventory_projection_limit' in reasons:
@@ -308,16 +316,15 @@ def inspect_parser_views(data, limits, *, retain=None, checkpoint=None, max_meta
                 view['reason_codes'].append(reason)
             finally:
                 if reader is not None:
-                    if spec is None:reader.close()
-                    else:
-                        try:reader.close()
-                        except Exception:
-                            view.update(status='partial',complete=False)
-                            view['reason_codes'].append('plugin_parser_close_failed')
-            emit()
-        comparisons, complete = merge_views(result['views'])
-        # Append comparison checkpoints independently: an oversized final union
-        # cannot erase completed inventories or prior localized conflicts.
+                    try:
+                        reader.close()
+                    except Exception:
+                        view.update(status='partial',complete=False)
+                        view['reason_codes'].append('inventory_parser_close_failed' if spec is None else 'plugin_parser_close_failed')
+            emit(force=True)
+        comparisons, complete = merge_views(result['views'], max_comparisons=capacity(limits,2048))
+
+
         for comparison in comparisons:
             comparison['id'] += ':'+digest
             result['comparisons'].append(comparison)
@@ -329,7 +336,7 @@ def inspect_parser_views(data, limits, *, retain=None, checkpoint=None, max_meta
         if not complete:
             reasons.add('inventory_comparison_limit')
         result.update(complete=not reasons,status='observed' if not reasons else 'partial',reason_codes=sorted(reasons))
-        emit()
+        emit(force=True)
     except CodeInspectionError as error:
         if str(error) != 'inventory_metadata_limit':
             raise

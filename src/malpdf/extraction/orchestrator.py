@@ -1,4 +1,4 @@
-"""One sample, disposable v9 worker, immutable three-store output."""
+"""Static VM extraction with disposable workers and linked evidence stores."""
 
 from datetime import datetime, timezone
 from dataclasses import asdict
@@ -11,28 +11,37 @@ import platform
 import subprocess
 
 from malpdf.extraction.normalize import normalize_profile
-from malpdf.static.code_inspector import CodeInspectionLimits
+from malpdf.static.code_inspector import VMInspectionLimits
+from malpdf.static.execution import is_vm
 from malpdf.static.profile_worker import profile_pdf
 from malpdf.static.safety import read_bounded_bytes
 
 
 def extract_pdf(path, *, boundary=None, profile="deep-static", limits=None, expected_sha256=None, raw_artifact_dir=None,
-                arlington_lock=None, repository_root=None,plugins=None):
+                arlington_lock=None, repository_root=None,plugins=None,cancellation_event=None,arlington_catalog=None):
     """Inspect inert bytes only; admission/input failures remain explicit.
 
     An explicitly configured Arlington reference may be loaded locally. No
     classifier is loaded, no partition is selected, and no sample is uploaded.
-    Resource limits, checkpoints, BLAS budgets and child cleanup are the existing
-    v9 implementation. This is process resource isolation, not malware containment.
+    VM execution preserves checkpoints without CPU, RAM or wall-clock quotas.
+    Explicit CodeInspectionLimits select the historical bounded policy.
     """
     if profile not in {"fast-static", "deep-static"}:
         raise ValueError("Unknown extraction profile; full-hybrid requires a separate approved environment")
-    limits = limits or CodeInspectionLimits(wall_seconds=20, cpu_seconds=12)
+    from malpdf.extraction.lab import require_live_path_isolation
+    require_live_path_isolation(Path(path))
+    limits = limits or VMInspectionLimits()
     from malpdf.extraction.plugins import registry
     plugins=registry(plugins)
     if plugins is not None and profile!='deep-static':raise ValueError('Plugins require deep-static')
-    catalog=None
+    catalog=arlington_catalog
     arlington=None
+    if catalog is not None:
+        from malpdf.extraction.arlington_model import Catalog
+        if not isinstance(catalog,Catalog) or arlington_lock is not None or profile!='deep-static':
+            raise ValueError('A cached Arlington catalog requires deep-static and no second reference')
+        arlington={'status':'not_run','complete':False,'reason_codes':['arlington_worker_pass_not_reached'],
+            'model':{key:value for key,value in catalog.provenance.items() if key!='files'}}
     if arlington_lock is not None:
         from malpdf.extraction.arlington_model import load_model,ModelUnavailable
         if repository_root is None or profile!='deep-static':
@@ -60,10 +69,10 @@ def extract_pdf(path, *, boundary=None, profile="deep-static", limits=None, expe
         try:
             result = profile_pdf(path, boundary=boundary, digest=digest, limits=limits,
                 analysis_version="v9", extraction_profile=profile, raw_artifact_dir=raw_artifact_dir,
+                **({'cancellation_event':cancellation_event} if cancellation_event is not None else {}),
                 **({'plugins':plugins} if plugins is not None else {}),
                 **({'arlington_catalog':catalog} if catalog is not None else {}))
         except (OSError, ValueError) as error:
-            # Admission errors contain available/required counts, not sample data.
             result = {"status": "worker_error", "errors": ["worker_admission_failed"],
                       "worker_cleanup_complete": True}
     if arlington is not None:
@@ -72,10 +81,23 @@ def extract_pdf(path, *, boundary=None, profile="deep-static", limits=None, expe
     provenance = {"python": platform.python_version(),
                   "packages": {name: importlib.metadata.version(name) for name in ("pypdf", "PyMuPDF", "pikepdf", "esprima")},
                   "seed": 42, "requested_limits": asdict(limits),
+                  "execution_mode": "vm" if is_vm(limits) else "bounded",
                   "raw_artifact_directory":str(Path(raw_artifact_dir).absolute()) if raw_artifact_dir is not None else None,
                   "fitting_performed": False, "test_evaluation_performed": False}
     if plugins is not None:
         provenance.update(seed=plugins.seed,plugins=plugins.describe())
+    if is_vm(limits):
+        from malpdf.extraction.environment import environment_metadata
+        from malpdf.experiments.protocol_p import repository_git_state
+        source_root = Path(repository_root) if repository_root is not None else Path(__file__).resolve().parents[3]
+        commit = None
+        for candidate in dict.fromkeys((source_root, Path(__file__).resolve().parents[3])):
+            state = subprocess.run(["git", "-C", str(candidate), "rev-parse", "HEAD"], text=True, capture_output=True)
+            if state.returncode == 0:
+                source_root, commit = candidate, state.stdout.strip()
+                break
+        provenance.update(environment=environment_metadata(), worktree=repository_git_state(source_root),
+                          generating_commit=commit)
     bundle = normalize_profile(result, digest, profile, provenance=provenance)
     from malpdf.extraction.triggers import plan_triggers
     bundle["trigger_plan"] = plan_triggers(bundle)

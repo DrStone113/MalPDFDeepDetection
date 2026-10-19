@@ -61,7 +61,7 @@ def test_raw_layout_limits_never_claim_complete_scans():
     assert not result["name_scan_complete"] and result["name_candidates_seen"] == MAX_NAMES
     assert len(result["entropy_windows"]) == MAX_WINDOWS
     assert not result["entropy_windows_complete"]
-    assert result["last_eof_offset"] is not None  # Independently measured rfind, not the capped marker list.
+    assert result["last_eof_offset"] is not None
 
 
 def test_raw_empty_input_does_not_invent_header_or_eof():
@@ -167,7 +167,7 @@ def test_export_uses_fresh_ignored_processed_storage(repository):
     assert saved["evidence_store"] == result["evidence_store"]
     assert saved["feature_store"] == result["feature_store"]
     assert saved["coverage_report"]["provenance"]["generating_commit"]
-    assert result["coverage_report"]["provenance"] == {}  # Writer does not mutate caller evidence.
+    assert result["coverage_report"]["provenance"] == {}
     assert len(list(output.glob("*.json"))) == 7
     with pytest.raises(ValueError, match="data/processed"):
         write_bundle(result, repository / "reports/leak", repository_root=repository)
@@ -193,7 +193,8 @@ def test_isolated_extraction_of_benign_fixture_preserves_original_bytes(tmp_path
     assert result["sample_sha256"] == hashlib.sha256(data).hexdigest()
     assert path.read_bytes() == data
     assert result["coverage_report"]["worker"]["worker_cleanup_complete"] is True
-    assert result["coverage_report"]["worker"]["resource_limits"]["cpu_seconds"][0] == 12
+    assert result["coverage_report"]["provenance"]["execution_mode"] == "vm"
+    assert result["coverage_report"]["worker"]["resource_limits"]["wall_seconds"] is None
     nodes = result["evidence_store"]["records"]
     if profile == "deep-static":
         scripts = [node for node in nodes if node["kind"] == "script"]
@@ -247,7 +248,7 @@ def test_static_trigger_plan_follows_legal_owner_paths_and_keeps_next_cycles():
     first[NameObject("/Next")] = second_ref
     second[NameObject("/Next")] = first_ref
     writer._root_object[NameObject("/OpenAction")] = first_ref
-    # A forged annotation outside page Annots has no legal activation path.
+
     writer._root_object[NameObject("/Private")] = DictionaryObject({NameObject("/Type"): NameObject("/Annot"), NameObject("/A"): second_ref})
     output = io.BytesIO()
     writer.write(output)
@@ -266,6 +267,7 @@ def test_static_trigger_plan_follows_legal_owner_paths_and_keeps_next_cycles():
 
 
 def test_extract_cli_returns_output_location_without_dumping_sample_metadata(monkeypatch, capsys, tmp_path):
+    monkeypatch.setenv('MALPDF_LAB_ISOLATED', '1')
     from malpdf.cli import main
     from malpdf.extraction import orchestrator
     monkeypatch.setattr(orchestrator, "extract_pdf", lambda *args, **kwargs: bundle())

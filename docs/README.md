@@ -9,6 +9,7 @@ The [project README](../README.md) provides the overview and navigation.
 | [Workspace layout](workspace_layout.md) | Directory ownership, generated notebooks, maintenance storage, and legacy path contracts |
 | [Research workflows](workflows.md) | Cohort preparation, Markov caches, Vision, fusion/stacking, Protocol P/G, static inspection, and offline report parsing |
 | [PDF extraction implementation](pdf_extraction.md) | Evidence/feature/coverage contracts, static profiles, plan progress and guarded offline CIC jobs |
+| [Static VM extraction](extraction_vm.md) | Concurrent full-partition extraction, VM resource policy and active-worktree provenance |
 | [Static plugin SDK](contributing_plugins.md) | Explicit source-pinned parser/decoder/feature contracts, bounded worker integration and synthetic verification |
 | [Static event plans](trigger_plans.md) | Document/page/form/XFA/bookmark candidates from exported graph/raw IR, provenance, quotas and runtime uncertainty |
 | [Offline LAB handoff](extraction_lab_handoff.md) | Private metadata/runbook package, clean-code gate and VMware-console transition for the locked static PDF job |

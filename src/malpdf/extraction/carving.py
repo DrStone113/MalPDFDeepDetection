@@ -21,6 +21,9 @@ from malpdf.extraction.filters import DecodeBudget, _Stopped, _flate
 from malpdf.static.code_inspector import _decode_script_bytes
 from malpdf.static.js_ast import CodeInspectionError, inspect_js_syntax
 from malpdf.static.profiling import stage
+from malpdf.static.execution import capacity, expand_limits, valid_capacity, is_vm
+from malpdf.static.execution import UNLIMITED
+from malpdf.extraction.checkpointing import CheckpointScheduler
 
 
 @dataclass(frozen=True)
@@ -38,10 +41,8 @@ class CarvingLimits:
     def __post_init__(self):
         if any(type(value) is not int or value <= 0 for value in asdict(self).values()):
             raise ValueError('Carving limits must be positive integers')
-        if (self.max_depth > 8 or self.max_artifacts > 128 or self.max_archive_members > 128
-                or self.max_artifact_bytes > 8 * 1024**2 or self.max_queued_bytes > 8 * 1024**2
-                or self.max_expansion_ratio > 1000 or self.max_pdf_children > 16
-                or self.max_child_streams > 256 or self.max_metadata_bytes > 2 * 1024**2):
+        if any(not valid_capacity(value, ceiling) for value, ceiling in zip(asdict(self).values(),
+                (8, 128, 8 * 1024**2, 8 * 1024**2, 128, 1000, 16, 256, 2 * 1024**2))):
             raise ValueError('Carving limits exceed the static resource budget')
         if self.max_metadata_bytes < 2048:
             raise ValueError('Carving metadata needs terminal status space')
@@ -60,9 +61,11 @@ def artifact_kind(data, hint=None):
     """Classify magic/context, without asserting validity or exploit coverage."""
     signatures = ((b'%PDF-', 'pdf'), (b'PK\x03\x04', 'zip'), (b'PK\x05\x06', 'zip'),
         (b'\x89PNG\r\n\x1a\n', 'png'), (b'\xff\xd8\xff', 'jpeg'),
-        (b'\x00\x01\x00\x00', 'sfnt_font'), (b'OTTO', 'sfnt_font'),
+        (b'\x00\x00\x00\x0cjP  \r\n\x87\n', 'jpx'), (b'\xff\x4f\xff\x51', 'jpx'),
+        (b'\x00\x01\x00\x00', 'sfnt_font'), (b'OTTO', 'sfnt_font'), (b'true', 'sfnt_font'), (b'typ1', 'sfnt_font'),
         (b'wOFF', 'woff_font'), (b'wOF2', 'woff_font'),
-        (b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1', 'ole'), (b'FWS', 'flash'), (b'CWS', 'flash'),
+        (b'%!PS-AdobeFont', 'font_data'), (b'%!FontType1', 'font_data'), (b'\x80\x01', 'font_data'),
+        (b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1', 'ole'), (b'FWS', 'flash'), (b'CWS', 'flash'), (b'ZWS', 'flash'),
         (b'Rar!\x1a\x07', 'rar'), (b'7z\xbc\xaf\x27\x1c', '7z'), (b'MZ', 'pe_candidate'), (b'\x7fELF', 'elf_candidate'))
     for signature, kind in signatures:
         if data.startswith(signature):
@@ -73,9 +76,11 @@ def artifact_kind(data, hint=None):
 
 class RecursiveCarver:
     def __init__(self, root_sha256, code_limits, *, limits=None, retain=None, checkpoint=None, plugins=None):
-        self.limits = limits or CarvingLimits(max_artifact_bytes=min(1024**2, code_limits.max_file_bytes),
-                                             max_queued_bytes=min(4 * 1024**2, code_limits.max_decoded_bytes))
+        self.limits = limits or expand_limits(CarvingLimits(
+            max_artifact_bytes=min(1024**2, code_limits.max_file_bytes),
+            max_queued_bytes=min(4 * 1024**2, code_limits.max_decoded_bytes)), code_limits)
         self.code_limits, self.retain, self.checkpoint = code_limits, retain, checkpoint
+        self.checkpoints = CheckpointScheduler(code_limits)
         self.plugins=plugins
         self.queue, self.seen, self.index, self.contexts, self.script_cache = deque(), {}, {}, {}, {}
         self.queued_bytes = self.pdf_children = self.child_streams = 0
@@ -112,18 +117,21 @@ class RecursiveCarver:
                 raise ValueError('artifact_retention_identity_mismatch')
         return result
 
-    def _emit(self):
+    def _emit(self, *, force=False):
         if self.budget is not None:
             self.value.update(decoded_bytes_used=self.value['decoded_bytes_available'] - self.budget.remaining,
                               decoded_bytes_remaining=self.budget.remaining)
         self.value.update(ast_nodes_remaining=self.ast_remaining, scripts_remaining=self.scripts_remaining,
             per_pass_object_allowance_remaining=self.object_allowance, xml_nodes_remaining=self.xml_remaining)
-        # Reserve terminal reasons and omitted-record accounting after overflow.
-        if len(json.dumps(self.value, allow_nan=False, separators=(',', ':')).encode()) > self.limits.max_metadata_bytes - 256:
+
+        if self.limits.max_metadata_bytes != UNLIMITED and len(json.dumps(self.value, allow_nan=False, separators=(',', ':')).encode()) > self.limits.max_metadata_bytes - 256:
             raise _CarveIssue('resource_limit', 'artifact_metadata_limit')
+        if not self.checkpoints.due(force=force):
+            return
         if self.checkpoint:
             self.checkpoint(deepcopy(self.value))
         self._saved = deepcopy(self.value)
+        self.checkpoints.completed()
 
     def add(self, data, *, parent_id, decoded_sha256, source_document_sha256=None,
             slot='stream', container_id=None, hint=None, metadata=None, repaired=False, force=False):
@@ -182,7 +190,9 @@ class RecursiveCarver:
             context = entry.get('artifact_context') or {}
             return self.add(data, parent_id=entry['id'], decoded_sha256=entry['decode']['decoded_sha256'],
                 source_document_sha256=document_sha256 or self.value['document_sha256'], container_id=container_id,
-                hint=context.get('hint'), metadata={**context, 'source_id': entry['source_id']},
+                hint=context.get('hint'), metadata={**context, 'source_id': entry['source_id'],
+                    'source_decode_complete': entry['decode']['complete'],
+                    'source_decode_reason_codes': entry['decode']['reason_codes']},
                 repaired=entry['backend'] == 'MuPDF')
         return accept
 
@@ -308,7 +318,7 @@ class RecursiveCarver:
                 'scope': 'compressed-object syntax/projections; references are opaque; no execution graph inferred'}
 
     def _zip_directory(self, data):
-        # Bound central-directory allocation before constructing ZipInfo objects.
+
         end, position = len(data), -1
         for attempt in range(16):
             candidate = data.rfind(b'PK\x05\x06', max(0, len(data) - 65557), end)
@@ -447,14 +457,15 @@ class RecursiveCarver:
         if self.pdf_children >= self.limits.max_pdf_children or not min(self.object_allowance, self.xml_remaining, self.budget.remaining):
             raise _CarveIssue('resource_limit', 'child_pdf_budget_limit')
         self.pdf_children += 1
-        quota = min(256, self.object_allowance, self.xml_remaining)
-        self.object_allowance -= quota  # Reserved per parser pass, never refunded after failure.
+        quota = min(capacity(self.code_limits, 256), self.object_allowance, self.xml_remaining)
+        if not is_vm(self.code_limits):
+            self.object_allowance -= quota
         self._pdf_budget_pending = True
         allocated_bytes, allocated_ast, allocated_scripts = self.budget.remaining, self.ast_remaining, self.scripts_remaining
         limits = replace(self.code_limits, max_file_bytes=self.limits.max_artifact_bytes, max_objects=quota,
             max_decoded_bytes=allocated_bytes, max_ast_nodes=max(1, allocated_ast), max_scripts=max(1, allocated_scripts))
         static = StaticPDFAnalyzer(StaticInspectionLimits(max_file_size_bytes=limits.max_file_bytes,
-            max_objects=quota, max_pages=min(100, quota), max_recursion_depth=limits.max_pdf_depth)).inspect_snapshot(
+            max_objects=quota, max_pages=min(capacity(limits, 100), quota), max_recursion_depth=limits.max_pdf_depth)).inspect_snapshot(
                 data, expected_sha256=entry['sha256'], timings=timings)
         result['static'] = {'input': {key: static.input[key] for key in ('size_bytes', 'sha256')},
             'features': static.features, 'parser': static.parser,
@@ -501,7 +512,7 @@ class RecursiveCarver:
             self._pdf_budget_pending = False
             return result
         except BaseException:
-            # Failed decoder accounting must not free a budget for a sibling.
+
             self.budget.remaining = self.ast_remaining = self.scripts_remaining = 0
             raise
 
@@ -530,6 +541,7 @@ class RecursiveCarver:
             identity, data = self.queue.popleft()
             entry = self.index[identity]
             self.value['active_artifact_id'] = identity
+            media_issues = None
             try:
                 self._emit()
             except _CarveIssue:
@@ -551,10 +563,36 @@ class RecursiveCarver:
                     issues = [item for item in analysis['members'] if item['status'] != 'observed' or item.get('script', {}).get('status', 'observed') != 'observed'] or analysis['duplicate_object_numbers']
                 elif entry['kind'] == 'empty':
                     analysis, issues = {'empty_artifact': True}, []
+                elif is_vm(self.code_limits) and entry['kind'] in {'jpeg', 'png', 'jpx', 'image_data', 'sfnt_font', 'woff_font', 'font_data', 'flash'}:
+                    from malpdf.extraction.media import MediaIssue, inspect_image, inspect_font, inspect_flash
+                    try:
+                        if entry['kind'] in {'jpeg', 'png', 'jpx', 'image_data'}:
+                            analysis = inspect_image(data, entry['source_metadata'])
+                        elif entry['kind'] in {'sfnt_font', 'font_data'}:
+                            if data.startswith((b'%!PS-AdobeFont', b'%!FontType1', b'\x80\x01')):
+                                from malpdf.extraction.font_containers import inspect_type1
+                                analysis = inspect_type1(data)
+                            elif entry['kind'] == 'font_data' and data[:1] == b'\x01':
+                                from malpdf.extraction.font_containers import inspect_cff
+                                analysis = inspect_cff(data)
+                            else:
+                                analysis = inspect_font(data)
+                        elif entry['kind'] == 'woff_font':
+                            from malpdf.extraction.font_containers import inspect_woff
+                            analysis = inspect_woff(data, budget=self.budget, max_expansion_ratio=self.limits.max_expansion_ratio)
+                        else:
+                            analysis = inspect_flash(data, budget=self.budget,
+                                max_expansion_ratio=self.limits.max_expansion_ratio, retain=self.retain)
+                    except MediaIssue as error:
+                        self.value['analyses'][identity] = error.details
+                        raise _CarveIssue(error.status, error.code) from None
+                    issues = analysis['reason_codes']
+                    media_issues = issues
                 else:
                     raise _CarveIssue('unsupported', 'artifact_format_analysis_unsupported')
                 self.value['analyses'][identity] = analysis
-                entry.update(status='partial' if issues else 'observed', reason_codes=['artifact_analysis_partial'] if issues else [])
+                entry.update(status='partial' if issues else 'observed', reason_codes=list(media_issues)
+                    if media_issues is not None else ['artifact_analysis_partial'] if issues else [])
             except _CarveIssue as error:
                 if error.code == 'artifact_metadata_limit':
                     return self._metadata_limited()
@@ -589,7 +627,7 @@ class RecursiveCarver:
         self.value.update(status='observed' if not reasons and not self.queue else 'partial', complete=not reasons and not self.queue,
                           reason_codes=sorted(reasons))
         try:
-            self._emit()
+            self._emit(force=True)
         except _CarveIssue:
             return self._metadata_limited()
         return self.value
@@ -602,8 +640,8 @@ class RecursiveCarver:
         self.value.update(status='partial', complete=False,
             omitted_artifacts_lower_bound=max(0, omitted),
             reason_codes=sorted(set(self.value['reason_codes']) | {'artifact_metadata_limit'}))
-        # The saved snapshot predates the overflow; resource counters are lower
-        # bounds on interrupted work and must never be reused to resume parsing.
+
+
         if self.checkpoint:
             self.checkpoint(deepcopy(self.value))
         return self.value

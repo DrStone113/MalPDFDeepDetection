@@ -9,6 +9,7 @@ from dataclasses import asdict, dataclass
 from copy import deepcopy
 import hashlib
 import zlib
+from malpdf.static.execution import UNLIMITED, valid_capacity
 
 
 ALIASES = {"/Fl": "/FlateDecode", "/LZW": "/LZWDecode", "/AHx": "/ASCIIHexDecode",
@@ -29,9 +30,8 @@ class FilterLimits:
     def __post_init__(self):
         if any(type(value) is not int or value <= 0 for value in asdict(self).values()):
             raise ValueError("Filter limits must be positive integers")
-        if (self.max_input_bytes > 50 * 1024**2 or self.max_stage_bytes > 8 * 1024**2
-                or self.max_total_bytes > 8 * 1024**2 or self.max_filters > 16
-                or self.max_expansion_ratio > 1000):
+        if self.max_input_bytes != UNLIMITED and any(not valid_capacity(value, ceiling) for value, ceiling in zip(asdict(self).values(),
+                (50 * 1024**2, 8 * 1024**2, 8 * 1024**2, 16, 1000))):
             raise ValueError("Filter limits exceed the static resource budget")
 
 
@@ -40,7 +40,7 @@ class DecodeBudget:
     remaining: int
 
     def __post_init__(self):
-        if type(self.remaining) is not int or not 0 <= self.remaining <= 8 * 1024**2:
+        if type(self.remaining) is not int or not 0 <= self.remaining <= UNLIMITED:
             raise ValueError("Invalid shared decoded-byte budget")
 
 
@@ -49,6 +49,7 @@ class DecodedStream:
     data: bytes | None
     partial_data: bytes | None
     metadata: dict
+    trailing_spans: tuple[tuple[int, bytes], ...] = ()
 
 
 class _Stopped(Exception):
@@ -64,10 +65,10 @@ def _append(output, chunk, cap):
         raise _Stopped("resource_limit", "decoded_byte_or_expansion_limit", output)
 
 
-def _flate(data, cap, *, wbits=zlib.MAX_WBITS):
+def _flate(data, cap, *, wbits=zlib.MAX_WBITS, trailing=None):
     decoder, output = zlib.decompressobj(wbits), bytearray()
-    # Snapshot at bounded chunk boundaries. If a chunk corrupts the checksum,
-    # replay only that chunk bytewise to preserve its observed decoded prefix.
+
+
     for start in range(0, len(data), 16 * 1024):
         chunk, before = data[start:start + 16 * 1024], decoder.copy()
         try:
@@ -87,6 +88,10 @@ def _flate(data, cap, *, wbits=zlib.MAX_WBITS):
         if decoder.unconsumed_tail:
             raise _Stopped("resource_limit", "decoded_byte_or_expansion_limit", output)
         if decoder.unused_data:
+            if trailing is not None and decoder.eof:
+                suffix = decoder.unused_data + data[start + len(chunk):]
+                trailing.update(offset=start + len(chunk) - len(decoder.unused_data), data=suffix)
+                return bytes(output)
             raise _Stopped("decode_error", "trailing_flate_data", output)
     if not decoder.eof:
         raise _Stopped("decode_error", "truncated_flate_stream", output)
@@ -119,8 +124,8 @@ def _asciihex(data, cap):
 
 
 def _ascii85(data, cap):
-    # PDF ASCII85 begins with data and ends with ~>. Accept the optional Adobe
-    # <~ wrapper without treating '<' as part of a five-character tuple.
+
+
     data = data.lstrip(bytes(_WHITESPACE))
     if data.startswith(b"<~"):
         data = data[2:]
@@ -199,8 +204,8 @@ def _lzw(data, cap, early_change):
     table, previous = [bytes([value]) for value in range(256)] + [None, None], None
     clear_seen = False
     while bit + width <= len(data) * 8:
-        # At most three bytes contain one code. Avoid constructing an integer
-        # spanning the entire stream or an unbounded dictionary of sequences.
+
+
         start, shift = bit // 8, bit % 8
         count = (shift + width + 7) // 8
         code = (int.from_bytes(data[start:start + count], "big") >> (count * 8 - shift - width)) & ((1 << width) - 1)
@@ -212,8 +217,8 @@ def _lzw(data, cap, early_change):
         if not clear_seen:
             raise _Stopped("decode_error", "missing_lzw_clear", output)
         if code == 257:
-            # A byte may contain padding bits; further whole bytes are not part
-            # of this encoded stream and must not silently disappear.
+
+
             if (bit + 7) // 8 != len(data):
                 raise _Stopped("decode_error", "trailing_lzw_data", output)
             return bytes(output)
@@ -270,8 +275,8 @@ def _predict(data, parameters, cap):
         if len(row) != encoded_row:
             raise _Stopped("decode_error", "truncated_predictor_row", output)
         if predictor == 2:
-            # TIFF horizontal differences operate on samples, including packed
-            # 1/2/4-bit and big-endian 16-bit samples, rather than on bytes.
+
+
             decoded_row, previous_values = bytearray(row_bytes), [0] * colors
             for index in range(samples):
                 position = index * bits
@@ -313,11 +318,12 @@ def _predict(data, parameters, cap):
     return bytes(output)
 
 
-def decode_filters(raw, filters=(), *, decode_parms=None, limits=None, budget=None, retain=None, checkpoint=None, plugins=None):
+def decode_filters(raw, filters=(), *, decode_parms=None, limits=None, budget=None, retain=None, checkpoint=None, plugins=None,
+                   recover_trailing=False, media_codecs=False, image_context=None):
     """Decode ordered filters, recording every completed/failed/unrun layer.
 
-    Crypt without an approved decryption context is encrypted. Image codecs
-    remain unsupported instead of being mistaken for decoded empty streams.
+    Crypt without an approved decryption context is encrypted. Native image
+    samples and verified Flate-member recovery require explicit opt-in.
     Retention is optional and returns metadata, never arbitrary output paths.
     """
     limits = limits or FilterLimits()
@@ -377,6 +383,8 @@ def decode_filters(raw, filters=(), *, decode_parms=None, limits=None, budget=No
         emit()
         return DecodedStream(None, None, metadata)
     data, partial, failed = raw, None, False
+    anomalous = False
+    trailing_spans = []
     chain_cap = min(limits.max_stage_bytes, len(raw) * limits.max_expansion_ratio)
     for index, (name, parms) in enumerate(zip(names, parameters)):
         step = {"index": index, "filter": name, "input_sha256": hashlib.sha256(data).hexdigest() if not failed else None,
@@ -394,7 +402,8 @@ def decode_filters(raw, filters=(), *, decode_parms=None, limits=None, budget=No
             identity_crypt = name == "/Crypt" and isinstance(parms, dict) and parms.get("/Name") == "/Identity"
             if name == "/Crypt" and not identity_crypt:
                 raise _Stopped("encrypted", "crypt_context_unavailable")
-            if name not in SUPPORTED and not identity_crypt and custom is None:
+            native_image = media_codecs and name in {"/DCTDecode", "/JPXDecode", "/CCITTFaxDecode"}
+            if name not in SUPPORTED and not identity_crypt and custom is None and not native_image:
                 raise _Stopped("unsupported", "unsupported_stream_filter")
             if custom is not None:
                 from malpdf.extraction.plugins import BoundedOutput,PluginDecodeFailure
@@ -425,13 +434,35 @@ def decode_filters(raw, filters=(), *, decode_parms=None, limits=None, budget=No
                 identity = bytearray()
                 _append(identity, data, cap)
                 decoded = bytes(identity)
+            elif native_image:
+                from malpdf.extraction.image_codecs import decode_image
+                from malpdf.extraction.media import MediaIssue
+                try:
+                    decoded, image = decode_image(data, name, parms, cap, image_context)
+                except MediaIssue as error:
+                    step['image_codec'] = error.details
+                    raise _Stopped(error.status, error.code) from None
+                step['image_codec'] = image
+                if image.get('reason_codes'):
+                    anomalous = True
+                    metadata.update(status='partial', reason_codes=sorted(set(metadata['reason_codes']) | set(image['reason_codes'])))
+                parms = {}
             else:
                 parms = _parameters(name, parms)
             step["decode_parameters"] = parms
-            if identity_crypt or custom is not None:
+            if identity_crypt or custom is not None or native_image:
                 pass
             elif name == "/FlateDecode":
-                decoded = _flate(data, cap)
+                trailing = {} if recover_trailing else None
+                decoded = _flate(data, cap) if trailing is None else _flate(data, cap, trailing=trailing)
+                if trailing:
+                    suffix = trailing['data']
+                    step['trailing_data'] = {'offset': trailing['offset'], 'size_bytes': len(suffix),
+                                             'sha256': hashlib.sha256(suffix).hexdigest(), 'retention': retained(suffix),
+                                             'reason_code': 'trailing_flate_data', 'compressed_member_verified': True}
+                    anomalous = True
+                    trailing_spans.append((index, suffix))
+                    metadata.update(status='partial', reason_codes=['filter_trailing_data_preserved'])
             elif name == "/ASCIIHexDecode":
                 decoded = _asciihex(data, cap)
             elif name == "/ASCII85Decode":
@@ -447,6 +478,12 @@ def decode_filters(raw, filters=(), *, decode_parms=None, limits=None, budget=No
             data = decoded if custom is not None else _predict(decoded, parms, cap)
             step.update(status="observed", complete=True, output_sha256=hashlib.sha256(data).hexdigest(),
                         output_bytes=len(data), retention=retained(data))
+            if step.get('trailing_data'):
+                step.update(status='partial', complete=False, output_complete=True,
+                            reason_codes=['filter_trailing_data_preserved'])
+            if (step.get('image_codec') or {}).get('reason_codes'):
+                step.update(status='partial', complete=False, output_complete=True,
+                            reason_codes=step['image_codec']['reason_codes'])
         except _Stopped as error:
             partial, failed = error.prefix, True
             debit = max(debit, len(partial) if partial is not None else 0)
@@ -454,7 +491,7 @@ def decode_filters(raw, filters=(), *, decode_parms=None, limits=None, budget=No
                         output_sha256=hashlib.sha256(partial).hexdigest() if partial is not None else None,
                         output_bytes=len(partial) if partial is not None else None,
                         retention=retained(partial) if partial is not None else None)
-            metadata.update(status=error.status, reason_codes=[error.code])
+            metadata.update(status=error.status, reason_codes=sorted(set(metadata['reason_codes']) | {error.code}))
         finally:
             budget.remaining -= debit
         emit()
@@ -466,6 +503,8 @@ def decode_filters(raw, filters=(), *, decode_parms=None, limits=None, budget=No
         budget.remaining -= len(raw)
     metadata["decoded_byte_debit"] = initial - budget.remaining
     if not failed:
-        metadata.update(complete=True, decoded_sha256=hashlib.sha256(data).hexdigest(), decoded_bytes=len(data))
+        metadata.update(complete=not anomalous, decoded_sha256=hashlib.sha256(data).hexdigest(), decoded_bytes=len(data))
+    if recover_trailing or media_codecs:
+        metadata['output_complete'] = not failed
     emit()
-    return DecodedStream(data if not failed else None, partial, metadata)
+    return DecodedStream(data if not failed else None, partial, metadata, tuple(trailing_spans))

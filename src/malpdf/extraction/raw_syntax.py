@@ -10,6 +10,7 @@ from decimal import Decimal
 import hashlib
 import json
 import re
+from malpdf.static.execution import capacity
 
 WS = frozenset(b'\x00\t\n\f\r ')
 DELIMITERS = WS | frozenset(b'()<>[]{}/%')
@@ -53,6 +54,7 @@ class Node:
     start: int
     end: int
     issues: tuple = ()
+    string_form: str | None = None
 
 
 @dataclass
@@ -267,7 +269,11 @@ def parse_value(lexer, depth=0):
         value = None if kind == 'null' else value == b'true'
     elif kind not in {'number','name','string'}:
         raise SyntaxIssue('forensic_invalid_object_value',token.start)
-    return Node(kind,value,token.start,end,issues)
+    form=None
+    if kind=='string':
+        marker=lexer.data[token.start:token.start+1]
+        form='hex' if marker==b'<' else 'literal' if marker==b'(' else None
+    return Node(kind,value,token.start,end,issues,string_form=form)
 
 
 def dictionary_get(node, name):
@@ -293,10 +299,11 @@ def projection(node, *, stream_sha256=None, is_stream=False, code_limits=None, e
         from malpdf.static.code_inspector import CodeInspectionLimits
         code_limits = CodeInspectionLimits()
     visited,complete,keys,fields_complete = 0,True,[],True
+    node_limit, key_limit = capacity(code_limits, 1024), capacity(code_limits, 64)
     def project(item, depth=0):
         nonlocal visited,complete,fields_complete
         visited += 1
-        if visited > 1024 or depth > 8 or item.issues:
+        if visited > node_limit or depth > 8 or item.issues:
             complete = False
             return ['unverified']
         if item.kind == 'reference':
@@ -306,7 +313,7 @@ def projection(node, *, stream_sha256=None, is_stream=False, code_limits=None, e
             for key,value in sorted(item.value,key=lambda pair:pair[0].value):
                 if is_stream and depth==0 and key.value == b'/Length':
                     continue
-                if visited >= 1024:
+                if visited >= node_limit:
                     complete = fields_complete = False
                     break
                 try:
@@ -319,7 +326,7 @@ def projection(node, *, stream_sha256=None, is_stream=False, code_limits=None, e
                 tree = project(value,depth+1)
                 output.append([key_hash,tree])
                 if depth == 0:
-                    if len(keys)<64:
+                    if len(keys)<key_limit:
                         def verified(value):
                             return not (isinstance(value,list) and (value==['unverified'] or any(not verified(x) for x in value)))
                         keys.append({'key_sha256':key_hash,'value_type':tree[0],
@@ -330,7 +337,7 @@ def projection(node, *, stream_sha256=None, is_stream=False, code_limits=None, e
         if item.kind == 'array':
             output = []
             for child in item.value:
-                if visited >= 1024:
+                if visited >= node_limit:
                     complete = False
                     break
                 output.append(project(child,depth+1))

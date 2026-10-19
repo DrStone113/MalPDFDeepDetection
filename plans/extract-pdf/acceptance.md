@@ -1,5 +1,17 @@
 # Kiểm kê nghiệm thu toàn bộ kế hoạch extract-pdf
 
+Quy tắc VM 2026-10-18 thay thế yêu cầu trần CPU/RAM/byte/thời gian, commit sạch
+và console offline của đường chạy mới. Chế độ `vm` chạy song song trên mọi CPU
+khả dụng, giữ partition/provenance và dùng test tổng hợp; xem
+[hợp đồng VM](../../docs/extraction_vm.md). Các hàng về lượt cũ bên dưới được
+giữ theo phạm vi bằng chứng lịch sử, không chặn phát triển hoặc chạy VM mới.
+
+Bản tối ưu VM cùng ngày bổ sung checkpoint coalescing, refill worker và resume
+có kiểm hash. Lượt 8 PDF tổng hợp đo 44,2914 giây với 1 worker và 21,4817 giây
+với 4 worker; evidence/feature giữ nguyên. Ba mẫu Train/Validation thật đối
+chiếu bản cũ cũng khớp evidence/feature; không có lượt hoàn tất toàn corpus hay
+đánh giá mô hình. Xem [số đo và kiểm chứng](../../reports/progress/extract_pdf_performance_2026-10-18.md).
+
 Đây là danh sách yêu cầu của [kế hoạch gốc](plan.md), không phải tuyên bố hoàn
 thành. Test fixture chỉ chứng minh hành vi trên dữ liệu tổng hợp; mọi tiêu chí
 PDF thật, telemetry động hay cải thiện mô hình cần bằng chứng riêng. Danh sách

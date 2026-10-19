@@ -1,0 +1,89 @@
+{
+  "pytest": {
+    "passed": 1874,
+    "warnings": 2,
+    "seconds": 213.8,
+    "warning_scope": "single-label confusion-matrix warnings in existing synthetic vision smoke test"
+  },
+  "new_regressions": {
+    "passed": 14,
+    "seconds": 4.07
+  },
+  "structural": {
+    "source_run": "run_20261018T151430292575Z_9f5d9357bf0c",
+    "source_reads": "saved JSON/report metadata only; no corpus PDFs, retained blobs, URI or script execution",
+    "completed": 44,
+    "planned": 1161,
+    "partitions": {
+      "train": 36,
+      "validation": 8
+    },
+    "labels": {
+      "1": 44
+    },
+    "journal_record_hashes_match": true,
+    "missing_coverage_summary": true,
+    "synthetic_schema_bundles": 2,
+    "synthetic_schema_instances": 6,
+    "external_references": "denied",
+    "modified_code_files": [
+      "scripts/22_extract_pdf.py",
+      "src/malpdf/cli.py",
+      "src/malpdf/extraction/__init__.py",
+      "src/malpdf/extraction/arlington_exports.py",
+      "src/malpdf/extraction/arlington_expression.py",
+      "src/malpdf/extraction/arlington_memo.py",
+      "src/malpdf/extraction/arlington_validate.py",
+      "src/malpdf/extraction/batch.py",
+      "src/malpdf/extraction/carving.py",
+      "src/malpdf/extraction/checkpointing.py",
+      "src/malpdf/extraction/environment.py",
+      "src/malpdf/extraction/filters.py",
+      "src/malpdf/extraction/normalize.py",
+      "src/malpdf/extraction/orchestrator.py",
+      "src/malpdf/extraction/parser_views.py",
+      "src/malpdf/extraction/qpdf_adapter.py",
+      "src/malpdf/extraction/raw.py",
+      "src/malpdf/extraction/raw_forensic.py",
+      "src/malpdf/extraction/raw_syntax.py",
+      "src/malpdf/extraction/resume.py",
+      "src/malpdf/extraction/script_semantics.py",
+      "src/malpdf/extraction/streams.py",
+      "src/malpdf/extraction/vm_jobs.py",
+      "src/malpdf/static/code_inspector.py",
+      "src/malpdf/static/evidence_v9.py",
+      "src/malpdf/static/execution.py",
+      "src/malpdf/static/js_semantics.py",
+      "src/malpdf/static/profile_worker.py",
+      "src/malpdf/static/recovery.py",
+      "tests/test_extraction.py",
+      "tests/test_extraction_performance.py",
+      "tests/test_extraction_result_fixes.py",
+      "tests/test_extraction_vm.py"
+    ],
+    "code_comments": {}
+  },
+  "pip_check": {
+    "exit_code": 0,
+    "output": "No broken requirements found."
+  },
+  "git_diff_check": {
+    "exit_code": 0,
+    "output": ""
+  },
+  "untracked_binary_artifacts": [],
+  "logs": {
+    "full_suite.log": {
+      "path": "artifacts/tmp/maintenance/extraction_saved_review/run_20261018T153856478383Z_9f5d9357bf0c/full_suite.log",
+      "sha256": "9257ceecdff48d6b9dcbf8d5c4081468a72fe79fcc056bd66ccad2e2b3e0a84f"
+    },
+    "fix_checks_final.log": {
+      "path": "artifacts/tmp/maintenance/extraction_saved_review/run_20261018T153856478383Z_9f5d9357bf0c/fix_checks_final.log",
+      "sha256": "6e9ba3626a1bda4b3fd3e0ca45a791d76b33f96f6f9ad6e729de06f98773ae43"
+    },
+    "synthetic_rule_performance.log": {
+      "path": "artifacts/tmp/maintenance/extraction_saved_review/run_20261018T153856478383Z_9f5d9357bf0c/synthetic_rule_performance.log",
+      "sha256": "cdb2934b09b6507a621acf8507cf5cdce53ec3a00c4cc3342d7772de366792ba"
+    }
+  }
+}

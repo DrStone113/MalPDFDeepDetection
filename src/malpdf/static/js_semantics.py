@@ -7,6 +7,7 @@ Abstract transfers cover a small scalar subset; opaque effects widen state.
 from dataclasses import dataclass,field,asdict
 import json
 import re
+from malpdf.static.execution import valid_capacity
 
 from malpdf.static.js_abstract import (Value,top,one,join,literal,boolean,unary,
     binary,describe,digest,units,canonical_string)
@@ -31,7 +32,7 @@ class SemanticLimits:
 
     def __post_init__(self):
         ceilings=(100000,200,512,2048,4096,200000,8192,1024**2)
-        if any(type(v) is not int or not 0<v<=c for v,c in zip(asdict(self).values(),ceilings)) or self.max_metadata_bytes<4096:
+        if any(not valid_capacity(v,c) for v,c in zip(asdict(self).values(),ceilings)) or self.max_metadata_bytes<4096:
             raise ValueError('invalid_js_semantic_limit')
 
 
@@ -125,7 +126,7 @@ class _Analysis:
         return scope
 
     def store(self,collection,record):
-        # Reserve room for final counters/reasons even at an exact cap.
+
         size=len(json.dumps(record,ensure_ascii=True,separators=(',',':')).encode())
         if self.budget.used['metadata_bytes']+size>self.limits.max_metadata_bytes-2048:
             raise SemanticLimit('js_semantic_metadata_bytes_limit')
@@ -401,8 +402,8 @@ class _Analysis:
                     ev(child['value'])
                 elif child.get('type')!='TemplateElement': ev(child)
             return top('aggregate_or_template_value_unmodeled')
-        # Keep syntax calls in the inventory, without pretending to understand
-        # unsupported control/evaluation order or executing any function body.
+
+
         self.havoc(state,'unsupported_expression:'+str(kind))
         return top('unsupported_expression:'+str(kind))
 
@@ -452,7 +453,7 @@ class _Analysis:
             if condition is False and kind!='DoWhileStatement':
                 self.excluded(node['body'],'constant_false_loop_test');self.excluded(node.get('update'),'constant_false_loop_test')
             else:
-                # One abstract body visit after widening, never concrete looping.
+
                 self.havoc(state,'loop_state_widened')
                 branch=state.copy();self.statement(node['body'],branch,flow,depth+1)
                 if node.get('update'):

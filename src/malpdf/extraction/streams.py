@@ -6,6 +6,8 @@ import hashlib
 import json
 
 from malpdf.extraction.filters import DecodeBudget, FilterLimits, decode_filters
+from malpdf.static.execution import capacity, UNLIMITED, is_vm
+from malpdf.extraction.checkpointing import CheckpointScheduler
 
 MAX_STREAMS = 128
 MAX_METADATA_BYTES = 512 * 1024
@@ -24,9 +26,13 @@ class StreamCollector:
         self.sources, self.retain, self.checkpoint = [], retain, checkpoint
         self.artifact_sink = artifact_sink
         self.plugins=plugins
-        self.limit = min(MAX_STREAMS, limits.max_objects)
+        self.enhanced = is_vm(limits)
+        self.limit = min(capacity(limits, MAX_STREAMS), limits.max_objects)
+        self.metadata_limit = capacity(limits, MAX_METADATA_BYTES)
+        self.checkpoints = CheckpointScheduler(limits)
         self.limits = FilterLimits(max_input_bytes=limits.max_file_bytes,
-            max_stage_bytes=min(1024**2, limits.max_decoded_bytes), max_total_bytes=limits.max_decoded_bytes)
+            max_stage_bytes=min(capacity(limits, 1024**2), limits.max_decoded_bytes),
+            max_total_bytes=limits.max_decoded_bytes, max_filters=capacity(limits, 8))
         self.resolution_limit = limits.max_objects
         self.value = {"schema_version": "pdf-stream-analysis-v1", "document_sha256": digest,
             "status": "not_run", "complete": False, "scope": "v9 catalog-discovered streams; orphan/history coverage unverified",
@@ -51,13 +57,20 @@ class StreamCollector:
                 context[name] = int(item) if isinstance(item, NumberObject) else None
         elif isinstance(subtype, NameObject) and str(subtype) == '/Image':
             context['hint'] = 'image_data'
+            for key, name in (('/Width', 'width'), ('/Height', 'height'), ('/BitsPerComponent', 'bits_per_component')):
+                item = value.raw_get(key) if key in value else None
+                if isinstance(item, NumberObject):
+                    context[name] = int(item)
+            color = value.raw_get('/ColorSpace') if '/ColorSpace' in value else None
+            if isinstance(color, NameObject) and str(color) in {'/DeviceGray', '/DeviceRGB', '/DeviceCMYK'}:
+                context['components'] = {'/DeviceGray': 1, '/DeviceRGB': 3, '/DeviceCMYK': 4}[str(color)]
         self.sources.append((value, {"source_id": source_id, "backend": backend,
             "object_number": object_number, "generation": generation, "offset": offset, 'artifact_context': context}))
         self.value["retained_sources"] = len(self.sources)
 
     def _metadata(self, stream):
         from pypdf.errors import LimitReachedError
-        from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject, NameObject, NullObject, NumberObject
+        from pypdf.generic import ArrayObject, BooleanObject, DictionaryObject, IndirectObject, NameObject, NullObject, NumberObject
         from malpdf.static.js_ast import CodeInspectionError
 
         def resolve(value):
@@ -103,11 +116,14 @@ class StreamCollector:
             output = {}
             for key, item in value.items():
                 extra={key for spec in self.plugins.select('decoder') for key in spec.parameter_keys} if self.plugins is not None else set()
-                if str(key) not in {"/Predictor", "/Columns", "/Colors", "/BitsPerComponent", "/EarlyChange", "/Name", "/Type"}|extra:
+                if str(key) not in {"/Predictor", "/Columns", "/Colors", "/BitsPerComponent", "/EarlyChange", "/Name", "/Type", "/ColorTransform",
+                    '/K', '/Rows', '/EndOfLine', '/EncodedByteAlign', '/EndOfBlock', '/BlackIs1', '/DamagedRowsBeforeError'}|extra:
                     raise ValueError("unsupported_decode_parameter")
                 item = resolve(item)
                 if isinstance(item, NumberObject):
                     output[str(key)] = int(item)
+                elif isinstance(item, BooleanObject):
+                    output[str(key)] = item.value
                 elif isinstance(item, NameObject) and str(key) in {"/Name", "/Type"}:
                     output[str(key)] = str(item)
                 else:
@@ -121,11 +137,14 @@ class StreamCollector:
             parameters = project(parameters)
         return names, parameters
 
-    def _emit(self):
-        if len(json.dumps(self.value, allow_nan=False, separators=(",", ":")).encode()) > MAX_METADATA_BYTES:
+    def _emit(self, *, force=False):
+        if self.metadata_limit != UNLIMITED and len(json.dumps(self.value, allow_nan=False, separators=(",", ":")).encode()) > self.metadata_limit:
             raise ValueError("stream_metadata_limit")
+        if not self.checkpoints.due(force=force):
+            return
         if self.checkpoint:
             self.checkpoint(deepcopy(self.value))
+        self.checkpoints.completed()
 
     def finish(self, remaining):
         if type(remaining) is not int or not 0 <= remaining <= self.limits.max_total_bytes:
@@ -137,6 +156,7 @@ class StreamCollector:
         if self.value["source_limit_reached"]:
             reasons.add("stream_source_limit")
         for stream, source in self.sources:
+            decoded = None
             raw = getattr(stream, "_data", None)
             entry = {**source, "id": "stream:" + hashlib.sha256(source["source_id"].encode()).hexdigest(),
                 "filters": None, "decode": None, "status": "partial", "reason_codes": [],
@@ -158,12 +178,13 @@ class StreamCollector:
                         self.value['active_stream'] = previous
                         raise
                 decoded = decode_filters(raw, names, decode_parms=parameters,
-                    limits=self.limits, budget=budget, retain=self.retain, checkpoint=filter_checkpoint,plugins=self.plugins)
+                    limits=self.limits, budget=budget, retain=self.retain, checkpoint=filter_checkpoint,plugins=self.plugins,
+                    recover_trailing=self.enhanced, media_codecs=self.enhanced, image_context=source['artifact_context'])
                 entry.update(decode=decoded.metadata, status=decoded.metadata["status"],
                              reason_codes=decoded.metadata["reason_codes"])
             except Exception as error:
-                # Parser messages can include input text. Export fixed internal
-                # codes only; an unexpected sibling failure never erases entries.
+
+
                 internal = str(error) if isinstance(error, ValueError) else ""
                 code = internal if internal in {"stream_parameter_reference_limit", "stream_filter_count_limit", "stream_parameter_reference_unavailable", "stream_parameter_reference_unsupported", "stream_metadata_limit",
                     "invalid_stream_filter_metadata", "invalid_stream_decode_parameters", "unsupported_decode_parameter",
@@ -178,26 +199,37 @@ class StreamCollector:
                     entry['decode'] = deepcopy(active['decode'])
                 entry.update(status=status, reason_codes=[code])
             reasons.update(entry["reason_codes"])
-            proposed = {**self.value, "records": self.value["records"] + [entry], 'active_stream': None}
-            # Keep room for one bounded in-flight stream and terminal reasons.
-            reserve = max(4096, min(128 * 1024, MAX_METADATA_BYTES // 4))
-            if len(json.dumps(proposed, allow_nan=False, separators=(",", ":")).encode()) > MAX_METADATA_BYTES - reserve:
-                reasons.add("stream_metadata_limit")
-                break
+            if self.metadata_limit != UNLIMITED:
+                proposed = {**self.value, "records": self.value["records"] + [entry], 'active_stream': None}
+                reserve = max(4096, min(128 * 1024, self.metadata_limit // 4))
+                if len(json.dumps(proposed, allow_nan=False, separators=(",", ":")).encode()) > self.metadata_limit - reserve:
+                    reasons.add("stream_metadata_limit")
+                    break
             self.value["records"].append(entry)
             self.value['active_stream'] = None
             self.value.update(decoded_bytes_used=remaining - budget.remaining, decoded_bytes_remaining=budget.remaining,
                               reason_codes=sorted(reasons))
             self._emit()
-            if (entry.get('decode') or {}).get('complete') and self.artifact_sink is not None:
+            if decoded is not None and ((entry.get('decode') or {}).get('output_complete') or (entry.get('decode') or {}).get('complete')) and self.artifact_sink is not None:
                 try:
                     self.artifact_sink(decoded.data, entry)
                 except Exception:
-                    # Routing is a separate stage. Its failure must not erase a
-                    # completed filter's values, blobs or source relationships.
+
+
                     reasons.add('artifact_routing_failed')
                     self.value.setdefault('artifact_routing_failures', []).append(entry['id'])
+            if decoded is not None and self.artifact_sink is not None:
+                for filter_index, suffix in decoded.trailing_spans:
+                    suffix_entry = {**entry, 'id': entry['id'] + ':filter:' + str(filter_index),
+                        'artifact_context': {'origin': 'encoded_filter_trailing_bytes'},
+                        'decode': {'decoded_sha256': hashlib.sha256(suffix).hexdigest(), 'complete': False,
+                                   'reason_codes': ['filter_trailing_data_preserved']}}
+                    try:
+                        self.artifact_sink(suffix, suffix_entry)
+                    except Exception:
+                        reasons.add('artifact_routing_failed')
+                        self.value.setdefault('artifact_routing_failures', []).append(suffix_entry['id'])
         self.value.update(status="observed" if not reasons else "partial", complete=not reasons,
             decoded_bytes_used=remaining - budget.remaining, decoded_bytes_remaining=budget.remaining, reason_codes=sorted(reasons))
-        self._emit()
+        self._emit(force=True)
         return self.value

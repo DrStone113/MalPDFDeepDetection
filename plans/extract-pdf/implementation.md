@@ -1,5 +1,42 @@
 # Tiến độ thực thi kế hoạch extract-pdf
 
+## Cải thiện từ JSON của lượt đang dở 2026-10-18
+
+- Đọc 44 bản ghi đã lưu, journal và metadata; không đọc lại PDF hoặc blob.
+- Arlington tái dùng kết quả hoàn tất theo document/version/xref/stream và
+  điều kiện tổ tiên/độ sâu; giữ từng liên kết vào qua evidence reuse riêng.
+  Chu trình/unsupported vẫn unknown; per-path bounded giữ hành vi lịch sử.
+- Offset xref ngoài file có mã lỗi riêng thay cho gộp với giới hạn số xref.
+- Ghi summary/output path ngay cả khi dọn iterator bị ngắt. Không sửa run cũ.
+- Kiểm chứng trên fixture DAG/chu trình và ngắt cleanup tổng hợp; xem
+  [review và phạm vi bằng chứng](../../reports/progress/extract_pdf_saved_review_2026-10-18.md).
+
+## Tối ưu VMware 2026-10-18
+
+- Gộp snapshot trung gian theo chi phí copy/IPC, flush ở ranh giới giai đoạn;
+  giữ cadence cũ cho policy bounded và giữ nguyên kết quả cuối ở fixture parity.
+- Nạp mẫu tiếp theo trước khi ghi output của mẫu vừa xong, giữ mọi CPU khả dụng
+  và hiển thị heartbeat khi các worker còn chạy.
+- Ghi completion journal theo SHA-256; `--resume-from` xác minh code/môi trường,
+  manifest, input, bundle, worker và blob trước khi tái dùng. Mẫu lỗi/ngắt/chưa
+  hoàn thành được chạy lại; khác fingerprint không chặn lượt mới.
+- Đã đo serial/4-worker trên8 PDF tổng hợp và đối chiếu3 mẫu Train/Validation
+  hoàn thành ở lượt VM trước, không Test hoặc model evaluation. Bằng chứng tại
+  [báo cáo hiệu năng](../../reports/progress/extract_pdf_performance_2026-10-18.md).
+
+## Cập nhật theo quy tắc VM 2026-10-18
+
+- Chế độ mặc định của API/CLI trích xuất tĩnh là VM, không áp trần CPU, RAM,
+  thời gian từng file hoặc khóa BLAS về một luồng.
+- Batch dùng mọi CPU khả dụng, mỗi PDF có tiến trình parser riêng, giữ mẫu lỗi,
+  checkpoint, chỉ mục lần xuất và dọn worker khi hủy.
+- Cấu hình VM dùng toàn bộ partition đã lưu, không giới hạn 32 mẫu hay yêu cầu
+  commit sạch/offline launcher; ghi HEAD, dirty flag, phiên bản và phần cứng.
+- Byte, decoder, IR, graph và metadata dùng sức chứa biểu diễn của Python;
+  giữ kiểm tra vòng lặp, độ sâu và tỷ lệ giải nén theo kế hoạch.
+- Lệnh, đầu ra và kiểm thử tại [extraction_vm](../../docs/extraction_vm.md).
+  Chưa chạy benchmark corpus mới; các ghi nhận trần/offline bên dưới là lịch sử.
+
 Kế hoạch tổng thể trong [plan.md](plan.md) được giữ nguyên. Chi tiết mã, hợp đồng
 đầu ra và lệnh chạy nằm trong [docs/pdf_extraction.md](../../docs/pdf_extraction.md).
 Danh sách nghiệm thu đầy đủ được theo dõi tại [acceptance.md](acceptance.md).

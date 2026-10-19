@@ -15,6 +15,9 @@ from malpdf.extraction.filters import DecodeBudget, FilterLimits, decode_filters
 from malpdf.extraction.raw_syntax import (Lexer, Node, SyntaxBudget, SyntaxIssue, WS,
     children, dictionary_get, digest, integer, parse_value, projection)
 from malpdf.static.profiling import stage
+from malpdf.static.execution import capacity, expand_limits, valid_capacity
+from malpdf.static.execution import UNLIMITED, is_vm
+from malpdf.extraction.checkpointing import CheckpointScheduler
 
 
 @dataclass(frozen=True)
@@ -31,7 +34,7 @@ class ForensicLimits:
     def __post_init__(self):
         ceilings = (10000,200000,200000,16384,65536,64,128,2*1024**2)
         for value,ceiling in zip(asdict(self).values(),ceilings):
-            if type(value) is not int or not 0 < value <= ceiling:
+            if not valid_capacity(value, ceiling):
                 raise ValueError('Invalid forensic resource limit')
         if self.max_metadata_bytes < 2048:
             raise ValueError('Forensic metadata requires terminal reserve')
@@ -45,11 +48,12 @@ class _Document:
         self.data,self.code,self.limits,self.retain,self.checkpoint = data,code_limits,limits,retain,checkpoint
         self.sha = digest(data)
         self.timings=timings
+        self.checkpoints=CheckpointScheduler(code_limits)
         self.plugins=plugins
         self.syntax = SyntaxBudget(limits.max_tokens,limits.max_nodes,code_limits.max_pdf_depth,code_limits.max_script_bytes)
         self.decode_budget = DecodeBudget(remaining)
-        self.filter_limits = FilterLimits(max_input_bytes=code_limits.max_file_bytes,
-            max_stage_bytes=min(1024**2,code_limits.max_decoded_bytes),max_total_bytes=code_limits.max_decoded_bytes)
+        self.filter_limits = expand_limits(FilterLimits(max_input_bytes=code_limits.max_file_bytes,
+            max_stage_bytes=min(1024**2,code_limits.max_decoded_bytes),max_total_bytes=code_limits.max_decoded_bytes), code_limits)
         self.objects,self.xrefs,self.decoded,self.members,self.xref_nodes = {},{},{},{},{}
         self.chain,self.local_entries,self.ir_seen = [],{},set()
         self.failed_offsets=set()
@@ -69,15 +73,18 @@ class _Document:
     def identity(self, kind, locator):
         return 'forensic-'+kind+':'+digest((self.sha+'|'+str(locator)).encode())
 
-    def emit(self):
+    def emit(self, *, force=False):
         self.value.update(decoded_bytes_remaining=self.decode_budget.remaining,
             decoded_bytes_used=self.value['decoded_bytes_available']-self.decode_budget.remaining,
             syntax_tokens_used=self.syntax.tokens,syntax_nodes_used=self.syntax.nodes)
-        if len(json.dumps(self.value,allow_nan=False,separators=(',',':')).encode()) > self.limits.max_metadata_bytes-1024:
+        if self.limits.max_metadata_bytes != UNLIMITED and len(json.dumps(self.value,allow_nan=False,separators=(',',':')).encode()) > self.limits.max_metadata_bytes-1024:
             raise SyntaxIssue('forensic_metadata_limit',0,'resource_limit')
+        if not self.checkpoints.due(force=force):
+            return
         if self.checkpoint:
             self.checkpoint(deepcopy(self.value))
         self.saved = deepcopy(self.value)
+        self.checkpoints.completed()
 
     def problem(self, code):
         self.value['reason_codes'] = sorted(set(self.value['reason_codes'])|{code})
@@ -100,6 +107,8 @@ class _Document:
             'status':'partial' if node.issues else 'observed','reason_codes':list(node.issues),'is_synthetic':False}
         if node.kind in {'name','string'}:
             item.update(decoded_bytes_sha256=digest(node.value),decoded_size_bytes=len(node.value))
+        if node.kind=='string':
+            item['string_form']=node.string_form
         if node.kind == 'name':
             item['known_name'] = node.value.decode() if node.value in _VOCABULARY else None
         if node.kind == 'reference':
@@ -345,8 +354,10 @@ class _Document:
     def xref_at(self, offset):
         if offset in self.xrefs:
             return self.xrefs[offset]
-        if not 0<=offset<len(self.data) or len(self.xrefs)>=self.limits.max_revisions*2:
-            raise SyntaxIssue('forensic_xref_offset_or_count_limit',max(0,offset),'resource_limit')
+        if not 0<=offset<len(self.data):
+            raise SyntaxIssue('forensic_xref_offset_invalid',max(0,offset))
+        if len(self.xrefs)>=self.limits.max_revisions*2:
+            raise SyntaxIssue('forensic_xref_count_limit',offset,'resource_limit')
         block = {'id':self.identity('xref',offset),'offset':offset,'end':None,'kind':None,'source_object_id':None,
             'entries':[],'trailer_node_id':None,'prev':None,'supplement':None,'top_level_confirmed':False,
             'status':'partial','reason_codes':[]}
@@ -427,8 +438,8 @@ class _Document:
         return block
 
     def discover_chain(self):
-        # This tail anchor is a candidate until the sequential lexer confirms
-        # both markers outside strings/comments/opaque stream data.
+
+
         tail_start=max(0,len(self.data)-65536)
         matches=list(re.finditer(rb'startxref[\x00\t\n\f\r ]+(\d{1,12})[\x00\t\n\f\r ]+%%EOF[\x00\t\n\f\r ]*\Z',self.data[tail_start:]))
         if not matches:
@@ -656,7 +667,8 @@ class _Document:
               'scope':'checked latest xref/Prev interpretation; byte occurrences stay separate'}
         self.value['current_view']={key:value for key,value in view.items() if key!='records'}
         self.value['current_view']['selected_ids']=[record['id'] for record in selected]
-        comparisons,comparison_complete=merge_views([view]+(native or {}).get('views',[]))
+        comparisons,comparison_complete=merge_views([view]+(native or {}).get('views',[]),
+            max_comparisons=capacity(self.code,2048))
         for comparison in comparisons:
             if comparison['left_backend']!='raw_forensic':
                 continue
@@ -668,8 +680,8 @@ class _Document:
             self.problem('forensic_comparison_limit')
 
     def reference_graph(self):
-        # Resolve each occurrence against every examined revision that actually
-        # selects it. Missing targets get separate synthetic evidence nodes.
+
+
         all_items=list(self.objects.values())+[member for group in self.members.values() for member in group]
         for item in all_items:
             record=item['record']
@@ -700,8 +712,8 @@ class _Document:
                         'resolved':target is not None,'scope':'static reference under examined xref interpretation; no execution edge'})
                 self.emit()
         for revision,context in enumerate(self.value['revisions']):
-            # Trailer keys may be inherited in an incremental update. Preserve
-            # which older dictionary supplied Root; do not rewrite the trailer.
+
+
             for source_revision in range(revision,len(self.chain)):
                 block=self.chain[source_revision]
                 root=dictionary_get(self.xref_nodes.get(block['offset']),b'/Root')
@@ -742,6 +754,8 @@ class _Document:
             if 'limit' in error.code:
                 raise
             self.problem(error.code)
+        if is_vm(self.code):
+            self.emit(force=True)
         for item in list(self.objects.values()):
             kind=dictionary_get(item['node'],b'/Type')
             if kind is not None and kind.kind=='name' and kind.value==b'/ObjStm':
@@ -753,9 +767,11 @@ class _Document:
                         raise
                     self.problem(error.code)
         self.finish_views(native)
+        if is_vm(self.code):
+            self.emit(force=True)
         self.reference_graph()
         self.prove_chronology()
-        # Private parse trees are worker-only and never serialized/exported.
+
         for block in self.value['xref_blocks']:
             block.pop('_node',None)
         for record in self.value['objects']:
@@ -767,7 +783,7 @@ class _Document:
         complete=bool(self.value['sequential_scan_complete'] and self.value['xref_chain_complete'] and self.value['selection_context_verified']
             and self.value['comparisons_complete'] and not self.value['reason_codes'])
         self.value.update(status='observed' if complete else 'partial',complete=complete)
-        self.emit()
+        self.emit(force=True)
         return self.value
 
 
@@ -780,9 +796,9 @@ def inspect_raw_forensic(data, code_limits, *, remaining, native_analysis=None, 
         raise ValueError('forensic_remaining_budget_invalid')
     if native_analysis and native_analysis.get('document_sha256')!=digest(data):
         raise ValueError('forensic_native_document_mismatch')
-    limits=limits or ForensicLimits(max_objects=code_limits.max_objects,
+    limits=limits or expand_limits(ForensicLimits(max_objects=code_limits.max_objects,
         max_tokens=min(200000,max(1024,code_limits.max_objects*64)),max_nodes=min(200000,max(1024,code_limits.max_objects*64)),
-        max_xref_entries=min(65536,code_limits.max_objects*8))
+        max_xref_entries=min(65536,code_limits.max_objects*8)), code_limits, preserve=('max_objects',))
     if limits.max_objects>code_limits.max_objects:
         raise ValueError('forensic_object_allowance_exceeds_worker_limit')
     document=_Document(data,code_limits,remaining,limits,retain,checkpoint,timings,plugins=plugins)
@@ -802,8 +818,8 @@ def inspect_raw_forensic(data, code_limits, *, remaining, native_analysis=None, 
                 'model':{key:value for key,value in arlington_catalog.provenance.items() if key!='files'},
                 'status':'not_run','complete':False,'reason_codes':['raw_ir_interrupted_before_arlington']})
         return result
-    # Keep the final raw checkpoint intact even if the optional rule pass fails.
-    # The rule engine reads only cached trees; it cannot parse/decode more bytes.
+
+
     if arlington_catalog is not None:
         from malpdf.extraction.arlington_validate import validate_document
         validate_document(document,arlington_catalog,checkpoint=arlington_checkpoint)

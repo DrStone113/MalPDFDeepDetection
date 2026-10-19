@@ -6,15 +6,19 @@ import hashlib
 import json
 
 from malpdf.static.js_semantics import SemanticLimits,SemanticBudget,SemanticLimit,analyze_js_tree
+from malpdf.extraction.checkpointing import CheckpointScheduler
+from malpdf.static.execution import UNLIMITED, is_vm
 
 
 class ScriptSemantics:
     def __init__(self,digest,code_limits,*,limits=None,checkpoint=None):
-        self.code=code_limits;self.limits=limits or SemanticLimits(
-            max_nodes=code_limits.max_ast_nodes,max_depth=code_limits.max_ast_depth)
+        from malpdf.static.execution import expand_limits
+        self.code=code_limits;self.limits=limits or expand_limits(SemanticLimits(
+            max_nodes=code_limits.max_ast_nodes,max_depth=code_limits.max_ast_depth), code_limits, preserve=('max_nodes',))
         if self.limits.max_nodes>code_limits.max_ast_nodes or self.limits.max_depth>code_limits.max_ast_depth:
             raise ValueError('js_semantics_exceeds_worker_ast_allowance')
         self.budget=SemanticBudget(self.limits);self.checkpoint=checkpoint
+        self.checkpoints=CheckpointScheduler(code_limits)
         self.trees={};self.captured_nodes=0;self.source_bytes=0;self.capture_failures=0;self.duplicates=0
         self.captured_unique=0
         self.saved=None;self.output_halted=False;self.finished=False
@@ -42,23 +46,26 @@ class ScriptSemantics:
         except Exception:
             self.capture_failures+=1
 
-    def emit(self):
+    def emit(self, *, force=False):
         self.value.update(capture_failures=self.capture_failures,captured_unique_sources=self.captured_unique,
             capture_duplicate_observations=self.duplicates,captured_ast_nodes=self.captured_nodes,
             captured_utf8_source_bytes=self.source_bytes,budget_usage=dict(self.budget.used))
         if self.capture_failures:
             self.value['reason_codes']=sorted(set(self.value['reason_codes'])|{'js_tree_capture_unavailable'})
         encoded=lambda value:len(json.dumps(value,ensure_ascii=True,separators=(',',':')).encode())
-        if not self.output_halted and encoded(self.value)>self.limits.max_metadata_bytes-1024:
+        if self.limits.max_metadata_bytes != UNLIMITED and not self.output_halted and encoded(self.value)>self.limits.max_metadata_bytes-1024:
             self.value=deepcopy(self.saved) if self.saved is not None else {
                 **self.value,'scripts':[],'reason_codes':[]}
             self.output_halted=True
             self.value.update(complete=False,counters_are_interrupted_lower_bounds=True)
             self.value['reason_codes']=sorted(set(self.value['reason_codes'])|{'js_semantic_output_limit'})
-        if encoded(self.value)>self.limits.max_metadata_bytes:
+        if self.limits.max_metadata_bytes != UNLIMITED and encoded(self.value)>self.limits.max_metadata_bytes:
             raise SemanticLimit('js_semantic_output_limit')
+        if not self.checkpoints.due(force=force):
+            return
         self.saved=deepcopy(self.value)
         if self.checkpoint: self.checkpoint(deepcopy(self.value))
+        self.checkpoints.completed()
 
     def finish(self):
         if self.finished: return self.value
@@ -66,13 +73,14 @@ class ScriptSemantics:
         self.emit()
         if self.output_halted:
             self.trees.clear();return self.value
+        all_complete=True
         try:
             for digest,(tree,characters) in self.trees.items():
                 analysis=analyze_js_tree(tree,digest,budget=self.budget)
                 analysis['decoded_source_codepoints']=characters
-                size=len(json.dumps(analysis,ensure_ascii=True,separators=(',',':')).encode())
-                current=len(json.dumps(self.value,ensure_ascii=True,separators=(',',':')).encode())
-                if current+size>self.limits.max_metadata_bytes-2048:
+                size=0 if self.limits.max_metadata_bytes == UNLIMITED else len(json.dumps(analysis,ensure_ascii=True,separators=(',',':')).encode())
+                current=0 if self.limits.max_metadata_bytes == UNLIMITED else len(json.dumps(self.value,ensure_ascii=True,separators=(',',':')).encode())
+                if self.limits.max_metadata_bytes != UNLIMITED and current+size>self.limits.max_metadata_bytes-2048:
                     dropped=0
                     for collection in ('facts','calls','bindings','functions','scopes'):
                         while analysis[collection] and current+len(json.dumps(analysis,ensure_ascii=True,separators=(',',':')).encode())>self.limits.max_metadata_bytes-2048:
@@ -87,15 +95,17 @@ class ScriptSemantics:
                 self.emit()
                 if self.output_halted: raise SemanticLimit('js_semantic_output_limit')
                 if not analysis['complete']:
-                    raise SemanticLimit('js_semantic_script_interrupted')
-            self.value['complete']=self.capture_failures==0
+                    all_complete=False
+                    if not is_vm(self.code):
+                        raise SemanticLimit('js_semantic_script_interrupted')
+            self.value['complete']=all_complete and self.capture_failures==0
         except (SemanticLimit,MemoryError,RecursionError) as error:
             code=str(error) if isinstance(error,SemanticLimit) else 'js_semantic_memory_or_recursion_limit'
             self.value.update(complete=False,counters_are_interrupted_lower_bounds=True)
             self.value['reason_codes']=sorted(set(self.value['reason_codes'])|{code})
         finally:
             self.trees.clear()
-        self.emit()
+        self.emit(force=True)
         return self.value
 
 
@@ -142,7 +152,7 @@ def append_script_semantics(profile,digest,records,features,edges):
     total_calls=0;candidate_calls=0;unknown_calls=0
     for script in analysis.get('scripts',[]):
         sha=script['decoded_script_sha256'];refs=sorted(sources.get(sha,{}))
-        if not refs: continue  # Never publish an AST fact without a retained source.
+        if not refs: continue
         prefix=identity+':'+sha
         root=prefix+':script'
         recovered=any(True in origin for origin in sources[sha].values())

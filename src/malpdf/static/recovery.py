@@ -10,6 +10,7 @@ import io
 from pypdf.generic import DictionaryObject, EncodedStreamObject, IndirectObject, NameObject, read_object
 
 from malpdf.static.js_ast import CodeInspectionError
+from malpdf.static.execution import capacity
 
 
 class MuPDFObjectReader:
@@ -40,8 +41,8 @@ class MuPDFObjectReader:
 
     def get_object(self, reference):
         number, generation = reference.idnum, reference.generation
-        # MuPDF's public xref API addresses current objects by number only.
-        # Never silently alias a nonzero generation to a different object.
+
+
         if generation != 0:
             raise CodeInspectionError("recovery_generation_unsupported")
         if number in self.objects:
@@ -80,7 +81,7 @@ class MuPDFObjectReader:
         self.document.close()
 
 
-def projected_object(value, *, include_fields=False):
+def projected_object(value, *, include_fields=False, limits=None):
     """A bounded comparison of selected fields, never object content export."""
     import hashlib
     import json
@@ -89,10 +90,11 @@ def projected_object(value, *, include_fields=False):
     visited = 0
     complete = True
     fields, fields_complete = [], True
+    node_limit, field_limit = capacity(limits, 1024), capacity(limits, 64)
     def project(item, depth=0):
         nonlocal visited, complete, fields_complete
         visited += 1
-        if visited > 1024 or depth > 8:
+        if visited > node_limit or depth > 8:
             complete = False
             return ['unverified']
         if isinstance(item, IndirectObject):
@@ -100,19 +102,19 @@ def projected_object(value, *, include_fields=False):
         if isinstance(item, DictionaryObject):
             result = []
             for key, child in sorted(item.items(), key=lambda pair: str(pair[0])):
-                # pypdf removes /Length while reading streams; the raw digest
-                # separately checks the actual bytes. Avoid representation-only
-                # conflicts with MuPDF retaining this derived field.
+
+
+
                 if isinstance(item, StreamObject) and key == '/Length':
                     continue
-                if visited >= 1024:
+                if visited >= node_limit:
                     complete = False
                     break
                 key_hash = hashlib.sha256(str(key).encode()).hexdigest()
                 projected = project(child, depth+1)
                 result.append([key_hash, projected])
                 if include_fields and depth == 0:
-                    if len(fields) < 64:
+                    if len(fields) < field_limit:
                         def verified(tree):
                             return not (isinstance(tree, list) and (tree == ['unverified'] or any(not verified(x) for x in tree)))
                         fields.append({'key_sha256': key_hash, 'value_type': projected[0],
@@ -124,7 +126,7 @@ def projected_object(value, *, include_fields=False):
         if isinstance(item, ArrayObject):
             result = []
             for child in item:
-                if visited >= 1024:
+                if visited >= node_limit:
                     complete = False
                     break
                 result.append(project(child, depth+1))
@@ -132,8 +134,8 @@ def projected_object(value, *, include_fields=False):
         if isinstance(item, bytes):
             return ['bytes', hashlib.sha256(item).hexdigest()]
         if isinstance(item,(NumberObject,FloatObject,Decimal)):
-            # MuPDF canonicalizes 0.0 to 0; preserve exact decimal identity
-            # without lossy float conversion of large integer PDF values.
+
+
             decimal=Decimal(str(item))
             if not decimal.is_finite():
                 raise CodeInspectionError('object_nonfinite_number')

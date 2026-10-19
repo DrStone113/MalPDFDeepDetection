@@ -30,8 +30,6 @@ def append_artifacts(profile, digest, records, features, edges):
                 if isinstance(item, (dict, list)):
                     verified_retention(item)
     imported = set()
-    # A child profile has its own immutable document hash and original model
-    # measurements. Its feature names are namespaced; root model inputs stay put.
     for identifier, analysis in carving.get('analyses', {}).items():
         artifact = artifacts.get(identifier)
         if artifact is None:
@@ -97,9 +95,11 @@ def append_artifacts(profile, digest, records, features, edges):
             edges.append({'id': entry['id'] + ':coverage', 'source': entry['id'], 'target': 'child-coverage:' + entry['sha256'],
                           'kind': 'artifact_pdf_coverage', 'status': 'verified'})
         features.append(feature(entry['id'] + ':size_bytes', 'embedded_artifacts', entry['size_bytes'],
-            'observed', [entry['id']], 'complete decoded artifact bytes; does not prove format validity or maliciousness', complete=True))
+            'observed', [entry['id']], 'complete admitted artifact byte span; does not prove format validity or maliciousness', complete=True))
     for identifier, analysis in carving.get('analyses', {}).items():
         artifact = artifacts[identifier]
+        if analysis.get('format'):
+            _media_features(identifier, analysis, artifact, features)
         if analysis.get('ast'):
             _ast_features(identifier, analysis, records, features, edges, ids)
         for row in analysis.get('zip_members', []):
@@ -150,3 +150,18 @@ def _ast_features(source, analysis, records, features, edges, ids):
     if reuse and reuse != source:
         edges.append({'id': source + ':syntax-reuse', 'source': reuse, 'target': source,
                       'kind': 'same_decoded_script_syntax', 'status': 'verified'})
+
+
+def _media_features(source: str, analysis: dict, artifact: dict, features: list) -> None:
+    complete = analysis.get('complete') is True
+    limitations = sorted(set(analysis.get('reason_codes', [])) | set(artifact['reason_codes']))
+    group = 'embedded_artifacts' if analysis['format'] == 'swf' else 'fonts_images_multimedia'
+    for name in ('width', 'height', 'components', 'bits_per_component', 'table_count', 'glyph_count',
+                 'units_per_em', 'script_tag_count', 'declared_frames', 'instruction_tables_present',
+                 'svg_table_present', 'cff_table_present', 'trailing_bytes', 'scan_count'):
+        value = analysis.get(name)
+        if type(value) not in (int, bool):
+            continue
+        status = ('absent_within_scope' if value == 0 else 'observed') if complete else 'partial'
+        features.append(feature(source + ':media:' + name, group, value, status, [source],
+            analysis.get('scope', 'static media metadata only; no execution or rendering'), limitations, complete=complete))

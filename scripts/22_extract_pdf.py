@@ -1,26 +1,28 @@
-"""Prepare metadata-only CIC extraction jobs and run them from offline console."""
+"""Run full static VM extraction or inspect historical offline jobs."""
 
 import argparse
 import json
-import os
 from pathlib import Path
-
-for name in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS"):
-    os.environ[name] = "1"
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=("prepare", "check", "run"))
-    parser.add_argument("--config", type=Path, default=Path("configs/extraction_profiles.yaml"))
+    parser.add_argument("action", choices=("vm", "prepare", "check", "run"))
+    parser.add_argument("--config", type=Path)
     parser.add_argument("--prepared-run")
+    parser.add_argument("--resume-from", help="VM: reuse verified completed records from this run")
+    parser.add_argument("--workers", type=int, help="VM: worker count; default uses all available CPUs")
     parser.add_argument("--lab-isolated", action="store_true",
         help="VMware console: disconnected NICs, no shared folders/clipboard/drag-drop or credentials")
     args = parser.parse_args()
     from malpdf.extraction.jobs import load_job, prepare_job, run_job
     root = Path(__file__).resolve().parents[1]
-    if args.action == "prepare":
-        result = prepare_job(root, root / args.config)
+    if args.action == "vm":
+        from malpdf.extraction.vm_jobs import run_vm_job
+        result = run_vm_job(root, root / (args.config or Path("configs/extraction_vm.yaml")),
+                            resume_from=args.resume_from, workers=args.workers)
+    elif args.action == "prepare":
+        result = prepare_job(root, root / (args.config or Path("configs/extraction_profiles.yaml")))
     elif not args.prepared_run:
         parser.error("--prepared-run is required")
     elif args.action == "check":

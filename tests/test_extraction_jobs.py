@@ -13,7 +13,8 @@ from malpdf.extraction import jobs
 
 
 @pytest.fixture
-def root(tmp_path):
+def root(tmp_path, monkeypatch):
+    monkeypatch.setenv('MALPDF_LAB_ISOLATED', '1')
     (tmp_path / "configs").mkdir()
     (tmp_path / "reports").mkdir()
     (tmp_path / "reports/research_log.md").write_text("# Synthetic run register\n")

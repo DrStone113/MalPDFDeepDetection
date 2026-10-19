@@ -1,0 +1,17 @@
+{
+  "completed": 3,
+  "planned": 1161,
+  "not_completed": 1158,
+  "statuses": {
+    "observed": 2,
+    "unsupported": 1
+  },
+  "worker_seconds_median": 9.30709949100003,
+  "worker_seconds_p99": 37.21161967523991,
+  "peak_worker_rss_bytes": 386277376,
+  "timed_rows": 3,
+  "effective_workers": 4,
+  "test_access": false,
+  "model_evaluation": false,
+  "pdf_evidence_directory": "data/processed/pdf_extraction/run_20261018T142549597067Z_9f5d9357bf0c"
+}

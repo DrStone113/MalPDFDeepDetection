@@ -122,9 +122,9 @@ def negate(value):
 
 
 def combine(a,b,operator):
-    # List/type/link callers exclude inapplicable conditional literals. Their
-    # reduction inside nested Boolean formulae needs additional context; never
-    # invent FALSE and report a spurious SpecialCase violation.
+
+
+
     if a==SKIP: a=Unknown(('conditional_boolean_context_unsupported',))
     if b==SKIP: b=Unknown(('conditional_boolean_context_unsupported',))
     a,b=truth(a),truth(b)
@@ -199,14 +199,14 @@ def _evaluate(ast,ctx,budget,since=False):
             return Unknown(tuple(sorted(set((a.reasons if isinstance(a,Unknown) else ())+(b.reasons if isinstance(b,Unknown) else ())))))
         if a==SKIP or b==SKIP: return Unknown(('conditional_operand_unavailable',))
         if op in ('==','!='):
-            # Keep model names, byte strings, booleans and numbers distinct.
+
             equal=type(a)==type(b) and a==b
             return equal if op=='==' else not equal
         if not isinstance(a,Decimal) or not isinstance(b,Decimal): return Unknown(('non_numeric_operand',))
         if op in ('>','<','>=','<='): return {'>':a>b,'<':a<b,'>=':a>=b,'<=':a<=b}[op]
         if max(len(a.as_tuple().digits),len(b.as_tuple().digits))>128 or max(abs(a.as_tuple().exponent),abs(b.as_tuple().exponent))>256:
             return Unknown(('numeric_operand_limit',))
-        # Avoid Decimal's process-global precision silently rounding a rule.
+
         x,y=Fraction(a),Fraction(b)
         result=x+y if op=='+' else x-y if op=='-' else x*y if op=='*' else x/y if op=='/' else x%y
         denominator=result.denominator
@@ -247,13 +247,44 @@ def _evaluate(ast,ctx,budget,since=False):
         if getter is None: return Unknown(('bitmask_context_unsupported',))
         value=getter()
         if isinstance(value,Unknown): return value
-        # Retain integer syntax and admit signed two's-complement or unsigned
-        # 32-bit representations. Never truncate a larger PDF integer or round
-        # a real number into a valid bitmask.
+
+
+
         if type(value) is not int or not -(1<<31)<=value<(1<<32): return False
         mask=((1<<(high-low+1))-1)<<(low-1)
         bits=(value & 0xffffffff) & mask
         return bits==mask if name.endswith('Set') else bits==0
+    if name=='IsHexString':
+        if args: return Unknown(('hex_string_argument_unsupported',))
+        getter=getattr(ctx,'current_is_hex_string',None)
+        return getter() if getter is not None else Unknown(('current_field_context_unsupported',))
+    if name=='ArraySortAscending':
+        if len(args)!=2: return Unknown(('array_sort_argument_unsupported',))
+        path=atom_text(args[0])
+        value=ctx.value(path) if path is not None else ev(args[0])
+        stride=ev(args[1])
+        if isinstance(stride,Unknown): return stride
+        if (not isinstance(stride,Decimal) or not stride.is_finite() or stride<1
+                or stride!=stride.to_integral_value()):
+            return Unknown(('array_sort_argument_unsupported',))
+        if isinstance(value,Unknown):
+            present=getattr(ctx,'present',None)
+            return False if path is not None and present is not None and present(path) is False else value
+        if not isinstance(value,tuple): return False
+
+
+        step=int(min(stride,Decimal(len(value)+1)))
+        previous=None; unknown=None
+        for index in range(0,len(value),step):
+            budget.take()
+            item=value[index]
+            if isinstance(item,Unknown):
+                unknown=item if unknown is None else combine(unknown,item,'&&')
+                continue
+            if not isinstance(item,Decimal) or not item.is_finite(): return False
+            if previous is not None and previous>item: return False
+            previous=item
+        return unknown if unknown is not None else True
     if name in ('ArrayLength','StringLength','RectWidth','RectHeight') and len(args)==1:
         path=atom_text(args[0])
         value=ctx.value(path) if path is not None else ev(args[0])
@@ -278,5 +309,5 @@ def _evaluate(ast,ctx,budget,since=False):
             return result
         if primitive(a): return type(a)==type(b) and a==b
         return Unknown(('contains_operand_unsupported',))
-    # Directness is evaluated by the rule engine with the original reference.
+
     return Unknown(('unsupported_predicate:'+name,))

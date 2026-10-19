@@ -12,6 +12,7 @@ from pypdf.generic import (ArrayObject, BooleanObject, DictionaryObject, Encoded
     IndirectObject, NameObject, NullObject, NumberObject, PdfObject, create_string_object)
 
 from malpdf.static.js_ast import CodeInspectionError
+from malpdf.static.execution import capacity
 
 
 class _ExactReal(Decimal, PdfObject):
@@ -47,11 +48,12 @@ class QPDFReader:
 
     def object(self, candidate, raw_budget):
         lib, nodes, complete = self.library, 0, True
+        node_limit = capacity(self.limits, 1024)
         reasons = set()
         def convert(value, depth=0, root=False):
             nonlocal nodes, complete
             nodes += 1
-            if nodes > 1024 or depth > 8:
+            if nodes > node_limit or depth > 8:
                 complete = False
                 return NullObject()
             if isinstance(value, lib.Object) and value.is_indirect and not root:
@@ -72,7 +74,7 @@ class QPDFReader:
             if kind == lib.ObjectType.array:
                 output = ArrayObject()
                 for item in value:
-                    if nodes >= 1024:
+                    if nodes >= node_limit:
                         complete = False
                         break
                     output.append(convert(item, depth + 1))
@@ -81,13 +83,13 @@ class QPDFReader:
                 output = EncodedStreamObject() if kind == lib.ObjectType.stream else DictionaryObject()
                 items = value.stream_dict.items() if kind == lib.ObjectType.stream else value.items()
                 for key, item in items:
-                    if nodes >= 1024:
+                    if nodes >= node_limit:
                         complete = False
                         break
                     output[NameObject(key)] = convert(item, depth + 1)
                 if kind == lib.ObjectType.stream:
-                    # This is compressed/raw data, never read_bytes() or a
-                    # syntax-check API that implicitly decompresses every stream.
+
+
                     declared = value.stream_dict.get('/Length')
                     if declared is not None and int(declared) > raw_budget.remaining:
                         body = None
@@ -113,7 +115,7 @@ class QPDFReader:
         return value, complete, sorted(reasons)
 
     def warnings(self):
-        # Messages may contain sample content. Export categories/counts only.
+
         messages = self.document.get_warnings()
         return {'count': len(messages), 'codes': ['qpdf_parser_warning'] if messages else []}
 

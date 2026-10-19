@@ -1,5 +1,21 @@
 # Development environment and verification
 
+The current static extractor uses the [dedicated VM workflow](extraction_vm.md).
+`tests/test_extraction_performance.py` adds snapshot/final-output parity, eager
+refill and checksum-verified resume tests with generated benign inputs. Its
+mock-clock checks do not depend on wall-time speed assertions. Performance
+measurements are recorded separately from deterministic correctness tests.
+`tests/test_extraction_result_fixes.py` compares memoized Arlington evaluation
+against per-path evaluation on generated shared and cyclic graphs, preserving
+unique rule semantics, root outcomes and raw IR. It checks version/xref/stream
+separation, ancestor/depth requirements, unfinished results, reuse export
+references, invalid-xref classification and interrupted cleanup/resume.
+No corpus or retained payload is accessed to reproduce these regressions.
+`tests/test_extraction_vm.py` covers uncapped VM resources, larger synthetic byte
+inputs, concurrent disposable workers, cancellation, saved partition integrity
+and dirty-worktree provenance. The console-launcher tests below preserve the
+historical offline path; they are not admission requirements for VM extraction.
+
 For the offline extractor launcher, admission/cancellation, credential-presence,
 shell quoting and exit-status tests are in `tests/test_extraction_launcher.py`.
 They use synthetic state only. The full suite also checks that shell launcher

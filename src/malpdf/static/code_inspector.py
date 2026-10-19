@@ -25,11 +25,12 @@ from malpdf.static.js_ast import CALL_NAMES, CodeInspectionError, inspect_js_syn
 from malpdf.static.safety import read_bounded_bytes
 from malpdf.static.profiling import stage
 from malpdf.static.parser_diagnostics import ParserDiagnostics
+from malpdf.static.execution import UNLIMITED, is_vm
 
 SECURITY_NAMES = frozenset({"/JS", "/JavaScript", "/OpenAction", "/AA", "/Launch",
     "/EmbeddedFile", "/EmbeddedFiles", "/XFA", "/AcroForm", "/JBIG2Decode", "/RichMedia", "/URI"})
 CODE_INSPECTION_SCHEMA_VERSION = "pdf-code-inspection-v7"
-# Only fixed PDF vocabulary is exported in paths; untrusted keys remain redacted.
+
 _PATH_NAMES = SECURITY_NAMES | frozenset({"/Root", "/Pages", "/Kids", "/Annots", "/A",
     "/Next", "/Names", "/Fields", "/O", "/C", "/E", "/X", "/D", "/U", "/Fo",
     "/Bl", "/PO", "/PC", "/PV", "/PI", "/K", "/F", "/V"})
@@ -61,6 +62,28 @@ class CodeInspectionLimits:
                 or not self.cpu_seconds <= self.wall_seconds <= 60
                 or not 512 * 1024**2 <= self.memory_bytes <= 2 * 1024**3):
             raise ValueError("Code inspection exceeds the allowed resource budget")
+
+
+@dataclass(frozen=True)
+class VMInspectionLimits(CodeInspectionLimits):
+    max_file_bytes: int = UNLIMITED
+    max_objects: int = UNLIMITED
+    max_scripts: int = UNLIMITED
+    max_script_bytes: int = UNLIMITED
+    max_decoded_bytes: int = UNLIMITED
+    max_ast_nodes: int = UNLIMITED
+    wall_seconds: int | None = None
+    cpu_seconds: int | None = None
+    memory_bytes: int | None = None
+    execution_mode = "vm"
+
+    def __post_init__(self) -> None:
+        for name, value in asdict(self).items():
+            if name in {"wall_seconds", "cpu_seconds", "memory_bytes"}:
+                if value is not None:
+                    raise ValueError("VM execution does not impose CPU, memory or time quotas")
+            elif type(value) is not int or not 0 < value <= UNLIMITED:
+                raise ValueError("VM parser capacities must be positive integers")
 
 
 def _unavailable(code, parser_diagnostics=None):
@@ -195,15 +218,15 @@ def _inspect_code_bytes_inner(data, limits, timings, *, supplied_reader=None, ev
     except Exception as error:
         diagnostic.failure(error, "open")
         reason = diagnostic.data["failures"][0]["reason"]
-        # One bounded retry for known xref failures, in the same capped worker.
-        # Reconstructed evidence is partial even when traversal/AST succeeds.
+
+
         missing_marker = reason == "startxref_missing" and b"startxref" not in data
         if not isinstance(error, PdfReadError) or (not missing_marker and reason not in {"xref_invalid", "xref_read_failed", "xref_missing"}):
             return _unavailable("pdf_parser_failure", diagnostic.data)
         retry = ParserDiagnostics(strict=False)
-        # A fixed in-memory zero-offset marker asks pypdf to rebuild its xref.
-        # Original bytes/hash/raw features are untouched. This is reconstructed
-        # catalog evidence, never a valid repaired PDF or complete revision view.
+
+
+
         suffix = b"\nstartxref\n0\n%%EOF\n" if missing_marker else b""
         if missing_marker:
             retry.data["reconstruction"] = {"kind": "missing_startxref_marker", "source_bytes_changed": False,
@@ -366,8 +389,8 @@ def _inspect_code_bytes_inner(data, limits, timings, *, supplied_reader=None, ev
         return _unavailable("pdf_root_unavailable", diagnostic.data)
 
     def dictionary_children(items, parent_path, parent_owner):
-        # Two lazy passes prioritize action routes before large page/resource
-        # branches, without copying an untrusted dictionary or raising caps.
+
+
         for preferred in (True, False):
             for name, child in items:
                 if (str(name) in _ACTION_PATH_NAMES) == preferred:
@@ -377,7 +400,7 @@ def _inspect_code_bytes_inner(data, limits, timings, *, supplied_reader=None, ev
         for index, child in enumerate(items):
             yield child, parent_path + (f"[{index}]",), parent_owner
 
-    # Iterator frames bound breadth without constructing an untrusted big stack.
+
     frames = [(iter([(root, ("/Root",), None)]), 0)]
     while frames:
         iterator, depth = frames[-1]
@@ -464,7 +487,7 @@ def _inspect_code_bytes_inner(data, limits, timings, *, supplied_reader=None, ev
                     except Exception:
                         errors.add("script_read_error")
                         source["error"] = "script_read_error"
-            # Iterators capture each frame's path/owner without copying children.
+
             frames.append((dictionary_children(value.items(), path, owner), depth + 1))
         elif isinstance(value, ArrayObject):
             frames.append((array_children(value, path, owner), depth + 1))
@@ -499,8 +522,9 @@ def _apply_code_limits(limits):
     os.setsid()
     resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
     resource.setrlimit(resource.RLIMIT_FSIZE, (0, 0))
-    resource.setrlimit(resource.RLIMIT_AS, (limits.memory_bytes, limits.memory_bytes))
-    resource.setrlimit(resource.RLIMIT_CPU, (limits.cpu_seconds, limits.cpu_seconds))
+    if not is_vm(limits):
+        resource.setrlimit(resource.RLIMIT_AS, (limits.memory_bytes, limits.memory_bytes))
+        resource.setrlimit(resource.RLIMIT_CPU, (limits.cpu_seconds, limits.cpu_seconds))
     return {"address_space_bytes": list(resource.getrlimit(resource.RLIMIT_AS)),
             "cpu_seconds": list(resource.getrlimit(resource.RLIMIT_CPU)),
             "wall_seconds": limits.wall_seconds, "disposable_process_group": os.getpgrp() == os.getpid()}
@@ -541,6 +565,11 @@ def worker_memory_budget(limits):
 def _worker_count(requested, limits):
     from malpdf.data.markov_preparation import effective_cpu_count
 
+    if is_vm(limits):
+        from malpdf.static.execution import available_cpus
+        if type(requested) is not int or requested < 1:
+            raise ValueError("workers must be a positive integer")
+        return min(requested, available_cpus())
     if type(requested) is not int or not 1 <= requested <= 16:
         raise ValueError("workers must be an integer between 1 and 16")
     memory = worker_memory_budget(limits)
@@ -556,7 +585,7 @@ def _worker_count(requested, limits):
 def _stop_code_process(process):
     """Kill the disposable session, including descendants, then reap its worker."""
     try:
-        # setsid() makes the worker PID its group ID. Never signal our own group.
+
         os.killpg(process.pid, signal.SIGKILL)
     except ProcessLookupError:
         if process.is_alive():
@@ -613,8 +642,8 @@ def inspect_pdf_codes(paths, *, boundary, limits=None, workers=1, expected_hashe
                 ready = receiver.poll()
                 exited = not process.is_alive() if not ready else False
                 if exited:
-                    # The worker can send and exit between poll() and the
-                    # liveness check. Drain its final reply before declaring loss.
+
+
                     ready = receiver.poll()
                 if ready:
                     try:

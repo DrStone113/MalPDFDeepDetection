@@ -1,0 +1,16 @@
+[
+  {
+    "workers": 1,
+    "samples": 8,
+    "wall_seconds": 44.29143089399986,
+    "samples_per_second": 0.18062184577296544,
+    "serial_parallel_parity": true
+  },
+  {
+    "workers": 4,
+    "samples": 8,
+    "wall_seconds": 21.481651475999797,
+    "samples_per_second": 0.3724108460160959,
+    "serial_parallel_parity": true
+  }
+]

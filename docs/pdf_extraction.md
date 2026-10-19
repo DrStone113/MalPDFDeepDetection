@@ -1,5 +1,23 @@
 # Coverage-aware PDF extraction implementation
 
+The VM path now coalesces intermediate snapshots, refills CPU work before output
+writing, writes checksummed completion journals and supports `--resume-from`.
+See [VM checkpoint and resume semantics](extraction_vm.md) for the flushed-prefix
+contract, cache verification and diagnostic performance evidence.
+
+The follow-up saved-result review adds context-checked Arlington binding reuse
+with explicit incoming-link evidence, distinguishes invalid xref offsets from
+traversal limits, and preserves summary metadata when cleanup is interrupted.
+The [VM workflow](extraction_vm.md) describes the revised rule-count scope and
+the requirement to wait for user-confirmed LAB isolation before corpus runs.
+
+As of the 2026-10-18 VM rules, `extract_pdf()` and `malpdf extract` default to
+the full-performance static VM policy. Use `python scripts/22_extract_pdf.py vm`
+for concurrent extraction of all configured saved Train/Validation rows from
+an active worktree. See [VM execution and provenance](extraction_vm.md) for the
+current resource policy, commands and remaining safeguards. The offline job,
+authorization and resource-cap descriptions below document the historical path.
+
 The [extract-pdf plan](../plans/extract-pdf/plan.md) is a six-stage research
 roadmap. This implementation starts with its evidence/export foundation and
 metadata-only offline-job preparation. It does **not** complete the 16-week

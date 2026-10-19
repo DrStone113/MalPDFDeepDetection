@@ -1,5 +1,27 @@
 # Research status and development evidence
 
+The 2026-10-18 [static VM extractor update](../reports/progress/extract_pdf_vm_2026-10-18.md)
+adds concurrent full-partition execution from dirty worktrees without CPU/RAM/
+per-file time quotas. Validation passed 1,839 tests; no new real-corpus run or
+detector metric is claimed. Use the [VM workflow](extraction_vm.md) for current
+commands; the saved offline results below retain their historical scope.
+
+The subsequent [VM performance increment](../reports/progress/extract_pdf_performance_2026-10-18.md)
+coalesces expensive checkpoints, refills worker slots before output writing and
+adds checksum-verified resume. Eight benign synthetic PDFs took 44.2914 seconds
+with one worker and 21.4817 seconds with four, with identical evidence/features.
+Three paired historical Train/Validation samples also retained their evidence
+and features. Release verification passed 1,860 tests. These diagnostics do not
+establish full-cohort throughput or a detector-quality gain.
+
+A [saved-result review](../reports/progress/extract_pdf_saved_review_2026-10-18.md)
+inspects the subsequent interrupted VM run's 44 completed JSON records only.
+It motivates context-checked Arlington result reuse, distinct invalid-xref
+diagnostics and interruption-safe summary finalization. The saved records
+include four SIGKILL workers and repeated schema paths; the signal alone does
+not establish OOM. New behavior is checked with generated benign inputs,
+without reopening corpus PDFs or claiming a new corpus/accuracy result.
+
 This page preserves the research updates previously published in the project README. Results and test counts below describe their recorded historical revisions; they are not new measurements. See the [documentation index](README.md) for workflows and the [append-only research log](../reports/research_log.md) for dated provenance.
 
 - [Current research status](#current-research-status)

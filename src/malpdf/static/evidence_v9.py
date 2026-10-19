@@ -24,6 +24,7 @@ from malpdf.static.js_ast import CodeInspectionError, inspect_js_syntax
 from malpdf.static.parser_diagnostics import ParserDiagnostics
 from malpdf.static.profiling import stage
 from malpdf.static.recovery import MuPDFObjectReader, projected_object
+from malpdf.static.execution import capacity
 
 EVIDENCE_SCHEMA = "pdf-evidence-v9"
 MAX_METADATA_BYTES = 2 * 1024**2
@@ -96,9 +97,11 @@ def merge_evidence_delta(target, delta):
 
 
 class _Store:
-    def __init__(self, digest, checkpoint, raw_sink, stream_sink=None):
+    def __init__(self, digest, checkpoint, raw_sink, stream_sink=None, limits=None):
         self.digest, self.checkpoint, self.raw_sink = digest, checkpoint, raw_sink
         self.stream_sink = stream_sink
+        self.metadata_limit = capacity(limits, MAX_METADATA_BYTES)
+        self.raw_limit = capacity(limits, MAX_RETAINED_RAW_BYTES)
         self.result = {"schema_version": EVIDENCE_SCHEMA, "document_sha256": digest,
                        "observations": [], "edges": [], "capability_checks": [],
                        "conflicts": [], "backend_results": [], "status": "partial",
@@ -116,15 +119,15 @@ class _Store:
                 raise CodeInspectionError("evidence_identity_collision")
             return item["id"]
         size = len(_json_bytes(item)) + 2
-        # Reserve room for the complete frozen feature ledger and bounded
-        # derived witness paths, which are serialized at final checkpoint.
-        reserve = max(16384, min(768 * 1024, MAX_METADATA_BYTES // 3))
-        # A full object graph must still checkpoint its localized failure and
-        # terminal checks. This small allowance is inside the existing reserve,
-        # not another graph budget; ordinary observations cannot spend it.
+
+
+        reserve = max(16384, min(768 * 1024, self.metadata_limit // 3))
+
+
+
         terminal = (key in {"backend_results", "capability_checks", "conflicts"}
                     or key == "observations" and item.get("kind") == "stage_failure")
-        ceiling = MAX_METADATA_BYTES - reserve + (min(64 * 1024, reserve // 2) if terminal else 0)
+        ceiling = self.metadata_limit - reserve + (min(64 * 1024, reserve // 2) if terminal else 0)
         if self.metadata_bytes + size > ceiling:
             raise CodeInspectionError("evidence_metadata_limit")
         self.metadata_bytes += size
@@ -155,7 +158,7 @@ class _Store:
         digest = _digest(content)
         if digest in self.raw_hashes:
             return digest, self.raw_hashes[digest]
-        if self.raw_bytes + len(content) > MAX_RETAINED_RAW_BYTES:
+        if self.raw_bytes + len(content) > self.raw_limit:
             state = {"status": "unavailable", "reason_code": "raw_retention_byte_limit"}
         elif self.raw_sink is None:
             state = {"status": "not_retained", "reason_code": "raw_sink_unavailable"}
@@ -205,8 +208,8 @@ class _Budget:
                     and isinstance(digest, str) and re.fullmatch(r"[a-f0-9]{64}", digest)
                     and isinstance(summary, dict) and type(summary.get("node_count")) is int
                     and 0 <= summary["node_count"] <= limits.max_ast_nodes):
-                # Only exact decoded identities with completed per-script AST
-                # metadata can reuse earlier work. File-level sums cannot.
+
+
                 previous = self.ast_cache.get(digest)
                 if previous is None or previous == summary:
                     self.ast_cache[digest] = summary
@@ -228,9 +231,9 @@ class _Budget:
                     self.failed_decode_debit += self.decoded_remaining
                     self.decoded_remaining = 0
                 elif str(error) == "invalid_flate_stream":
-                    # The strict helper deliberately discards unverified
-                    # decoded prefixes. Charge its bounded upper allowance;
-                    # failed streams never obtain a fresh budget on fallback.
+
+
+
                     self.decoded_remaining -= maximum
                     self.failed_decode_debit += maximum
                 raise
@@ -621,7 +624,7 @@ class _Graph:
                 event = self.store.observation(self.backend, container + f"|event:{parser.CurrentByteIndex}", "xfa_event",
                     event_activity=attributes["activity"], xml_byte_offset=parser.CurrentByteIndex)
                 self.store.edge(packet, event, "XFA_event")
-                # Container edge proves the complete ordered packet context.
+
                 self.store.edge(container, event, "XFA_event")
             stack.append((local, event, inherited_bad))
             if local == "script" and attributes.get("contentType") == "application/x-javascript":
@@ -760,8 +763,8 @@ def _witnesses(result):
         if edge["status"] == "verified":
             adjacency[edge["source"]].append(edge)
     witnesses = []
-    # Object reachability is verified only through actual graph edges. Semantic
-    # owner/action edges separately constrain executable PDF action placement.
+
+
     for document in (item for item in nodes.values() if item["kind"] == "document"):
         pending, reachable = [(document["id"], [document["id"]])], {}
         while pending:
@@ -818,7 +821,7 @@ def inspect_evidence_v9(data, static, code, limits, *, timings=None, primary_com
     """
     if not isinstance(data, bytes) or not data.startswith(b"%PDF-") or len(data) > limits.max_file_bytes:
         raise CodeInspectionError("not_pdf_or_byte_limit")
-    store = _Store(_digest(data), checkpoint, raw_sink, stream_sink)
+    store = _Store(_digest(data), checkpoint, raw_sink, stream_sink, limits)
     result = store.result
     result["primary_profile_complete"] = bool(primary_complete)
     result["recovery_attempted"] = not primary_complete
@@ -858,7 +861,7 @@ def inspect_evidence_v9(data, static, code, limits, *, timings=None, primary_com
             graphs.append(graph)
         for capability in CAPABILITIES:
             errors = set(graph.errors.get(capability, [])) if graph else {failure or "backend_unavailable"}
-            # Unfinished catalog enumeration makes absence/completion unknown.
+
             if failure or (graph and graph.errors.get("catalog")):
                 errors.add(failure or "catalog_enumeration_incomplete")
             if backend == "MuPDF":
@@ -872,17 +875,17 @@ def inspect_evidence_v9(data, static, code, limits, *, timings=None, primary_com
             try:
                 store.append("capability_checks", check)
             except CodeInspectionError:
-                # Oversized enumeration cannot become a complete check. Keep
-                # its backend/catalog owner and emit the partial check through
-                # the same bounded checkpoint path as every other entry.
+
+
+
                 affected = graph.scope[:1] if graph else []
                 if graph is not None:
                     graph.problem("catalog", "evidence_metadata_limit", affected)
                 check.update(status="partial", scope_ids=affected, required_ids=[],
                              reason_codes=["evidence_metadata_limit"])
                 store.append("capability_checks", check)
-        # Capability serialization can itself hit the metadata allowance. Its
-        # localized failure must be included in the immutable backend summary.
+
+
         reasons = sorted(set([failure] if failure else []) | set().union(*(graph.errors.values() if graph else [])))
         state = {"id": store.identifier(backend, "backend_result", "backend_result"), "backend": backend,
                  "status": "error" if failure and graph is None else "partial" if reasons or backend == "MuPDF" else "observed",

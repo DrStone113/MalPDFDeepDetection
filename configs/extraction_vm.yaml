@@ -1,0 +1,13 @@
+execution_mode: vm
+cohort_config: configs/cic_static_benchmark.yaml
+cohort: cic
+raw_boundary: data/raw/cic_pdf
+output_root: data/processed/pdf_extraction
+profile: deep-static
+seed: 42
+workers: auto
+partitions:
+  - train
+  - validation
+arlington_lock: configs/arlington.lock.json
+limits: {}

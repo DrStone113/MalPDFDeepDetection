@@ -1,0 +1,77 @@
+{
+  "scope": "single measurements of rule evaluation on generated benign raw IR; no corpus, worker, pipeline or RSS benchmark",
+  "rows": [
+    {
+      "fixture": "shared_dag",
+      "memo": false,
+      "seconds": 0.9867233680001846,
+      "peak_traced_python_allocation_bytes": 4901810,
+      "bindings": 512,
+      "checks": 5376,
+      "reuses": 0,
+      "serialized_analysis_bytes": 3604392,
+      "semantic_checks_sha256": "8cc49875ac3aa8deb36fa7ea8643df72650e06e659f18786d00a9170704ce9ab",
+      "root_outcomes": [
+        {
+          "xref_context_distance": 0,
+          "outcome": "pass"
+        }
+      ],
+      "semantic_parity": true
+    },
+    {
+      "fixture": "shared_dag",
+      "memo": true,
+      "seconds": 0.025704637999751867,
+      "peak_traced_python_allocation_bytes": 159507,
+      "bindings": 10,
+      "checks": 133,
+      "reuses": 8,
+      "serialized_analysis_bytes": 94312,
+      "semantic_checks_sha256": "8cc49875ac3aa8deb36fa7ea8643df72650e06e659f18786d00a9170704ce9ab",
+      "root_outcomes": [
+        {
+          "xref_context_distance": 0,
+          "outcome": "pass"
+        }
+      ],
+      "semantic_parity": true
+    },
+    {
+      "fixture": "cyclic_schema_alternatives",
+      "memo": false,
+      "seconds": 0.21455135899987,
+      "peak_traced_python_allocation_bytes": 1017499,
+      "bindings": 123,
+      "checks": 1031,
+      "reuses": 0,
+      "serialized_analysis_bytes": 712938,
+      "semantic_checks_sha256": "c89827f0a60b34665f651244578939c89358b363da7244a2d2026f84186d355a",
+      "root_outcomes": [
+        {
+          "xref_context_distance": 0,
+          "outcome": "indeterminate"
+        }
+      ],
+      "semantic_parity": true
+    },
+    {
+      "fixture": "cyclic_schema_alternatives",
+      "memo": true,
+      "seconds": 0.06369724900014262,
+      "peak_traced_python_allocation_bytes": 386561,
+      "bindings": 36,
+      "checks": 317,
+      "reuses": 12,
+      "serialized_analysis_bytes": 229398,
+      "semantic_checks_sha256": "c89827f0a60b34665f651244578939c89358b363da7244a2d2026f84186d355a",
+      "root_outcomes": [
+        {
+          "xref_context_distance": 0,
+          "outcome": "indeterminate"
+        }
+      ],
+      "semantic_parity": true
+    }
+  ]
+}

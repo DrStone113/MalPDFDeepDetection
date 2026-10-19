@@ -1,0 +1,33 @@
+{
+  "rows": [
+    {
+      "input_index": 0,
+      "baseline_worker_seconds": 9.30709949100003,
+      "optimized_worker_seconds": 4.234803311000178,
+      "features_equal": true,
+      "evidence_equal": true,
+      "baseline_status": "observed",
+      "optimized_status": "observed"
+    },
+    {
+      "input_index": 4,
+      "baseline_worker_seconds": 4.775902008999992,
+      "optimized_worker_seconds": 4.680231743000149,
+      "features_equal": true,
+      "evidence_equal": true,
+      "baseline_status": "observed",
+      "optimized_status": "observed"
+    },
+    {
+      "input_index": 1,
+      "baseline_worker_seconds": 37.78109967899991,
+      "optimized_worker_seconds": 5.347566616999984,
+      "features_equal": true,
+      "evidence_equal": true,
+      "baseline_status": "unsupported",
+      "optimized_status": "unsupported"
+    }
+  ],
+  "wall_seconds": 5.86917385400011,
+  "interpretation": "Three completed historical samples only; later VM session and cache state differ; not a full-cohort benchmark"
+}

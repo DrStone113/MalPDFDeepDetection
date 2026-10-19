@@ -1,0 +1,1115 @@
+{
+  "source_run": "run_20261018T151430292575Z_9f5d9357bf0c",
+  "source_scope": "saved JSON only; no PDF or retained blob read",
+  "rows": [
+    {
+      "index": 0,
+      "record_sha256": "7f234492ac8b606cd6f97d30089730c3b84d19ef759b246f52630d0bf951f639",
+      "bytes": 2667316,
+      "bindings": 30,
+      "unique_binding_contexts": 30,
+      "repeated_binding_occurrences": 0,
+      "max_context_repetitions": 1,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [
+        [
+          "FileTrailer",
+          1
+        ],
+        [
+          "Catalog",
+          1
+        ],
+        [
+          "PageTreeNodeRoot",
+          1
+        ],
+        [
+          "Resource",
+          1
+        ],
+        [
+          "XObjectMap",
+          1
+        ]
+      ],
+      "check_categories": {
+        "version": 85,
+        "type_candidate": 91,
+        "indirect": 84,
+        "possible_values": 83,
+        "special_case": 83,
+        "link": 83,
+        "row": 84,
+        "required": 142,
+        "deprecation_notice": 17,
+        "unknown_key": 21,
+        "unsupported_rule": 1,
+        "virtual_default": 18
+      }
+    },
+    {
+      "index": 1,
+      "record_sha256": "28971b5101b9cf17fe6f14997bad82b677b3cadbb10706a076fdadd88902189f",
+      "bytes": 2884982,
+      "bindings": 0,
+      "unique_binding_contexts": 0,
+      "repeated_binding_occurrences": 0,
+      "max_context_repetitions": 0,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [],
+      "check_categories": {}
+    },
+    {
+      "index": 2,
+      "record_sha256": "571191cac9a68b967fcf9e09d26f3089608b123c444b58139a3f2414b1836225",
+      "bytes": 8692421,
+      "bindings": 0,
+      "unique_binding_contexts": 0,
+      "repeated_binding_occurrences": 0,
+      "max_context_repetitions": 0,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [],
+      "check_categories": {}
+    },
+    {
+      "index": 3,
+      "record_sha256": "e8c7b231d924a02cf331b6b55b0168768844d9452c3d6f4c9f7085df60cbf7cc",
+      "bytes": 497532299,
+      "bindings": 4844,
+      "unique_binding_contexts": 178,
+      "repeated_binding_occurrences": 4666,
+      "max_context_repetitions": 596,
+      "repeated_contexts_with_different_outcomes": 5,
+      "most_repeated_models": [
+        [
+          "Field",
+          715
+        ],
+        [
+          "FieldBtnPush",
+          704
+        ],
+        [
+          "FieldBtnCheckbox",
+          702
+        ],
+        [
+          "FieldBtnRadio",
+          701
+        ],
+        [
+          "FieldChoice",
+          701
+        ]
+      ],
+      "check_categories": {
+        "version": 34543,
+        "type_candidate": 35383,
+        "indirect": 31723,
+        "possible_values": 31708,
+        "special_case": 31708,
+        "link": 31692,
+        "row": 34512,
+        "required": 46810,
+        "virtual_default": 5073,
+        "unknown_key": 2118,
+        "deprecation_notice": 198,
+        "inherited_value": 524,
+        "unsupported_rule": 15
+      }
+    },
+    {
+      "index": 4,
+      "record_sha256": "4570c7e2b3cf9e4839135da7fd40983a5a18fde279f8675280c7fd5f2c5f5c87",
+      "bytes": 1553270,
+      "bindings": 30,
+      "unique_binding_contexts": 27,
+      "repeated_binding_occurrences": 3,
+      "max_context_repetitions": 2,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [
+        [
+          "PageTreeNode",
+          3
+        ],
+        [
+          "Stream",
+          2
+        ],
+        [
+          "ArrayOfFilterNames",
+          2
+        ],
+        [
+          "FileTrailer",
+          1
+        ],
+        [
+          "Catalog",
+          1
+        ]
+      ],
+      "check_categories": {
+        "version": 49,
+        "type_candidate": 53,
+        "indirect": 49,
+        "possible_values": 49,
+        "special_case": 49,
+        "link": 49,
+        "row": 49,
+        "required": 169,
+        "virtual_default": 28,
+        "unknown_key": 15,
+        "deprecation_notice": 2
+      }
+    },
+    {
+      "index": 5,
+      "record_sha256": "b1bc8dc547808863be3abcc5dc9f4adf19a0140167876e6398ba3b0c5a0dd893",
+      "bytes": 263077842,
+      "bindings": 4847,
+      "unique_binding_contexts": 114,
+      "repeated_binding_occurrences": 4733,
+      "max_context_repetitions": 707,
+      "repeated_contexts_with_different_outcomes": 5,
+      "most_repeated_models": [
+        [
+          "Field",
+          881
+        ],
+        [
+          "FieldBtnCheckbox",
+          860
+        ],
+        [
+          "FieldBtnRadio",
+          859
+        ],
+        [
+          "FieldChoice",
+          858
+        ],
+        [
+          "FieldBtnPush",
+          855
+        ]
+      ],
+      "check_categories": {
+        "version": 14604,
+        "type_candidate": 14689,
+        "indirect": 14604,
+        "possible_values": 14604,
+        "special_case": 14604,
+        "link": 14588,
+        "row": 14588,
+        "required": 50048,
+        "virtual_default": 5604,
+        "unknown_key": 1729,
+        "deprecation_notice": 212
+      }
+    },
+    {
+      "index": 6,
+      "record_sha256": "fdcfff142eb68ad682fee650ff6fac7a1f9487d04fd11be1131159662e90b4ef",
+      "bytes": 47479800,
+      "bindings": 290,
+      "unique_binding_contexts": 136,
+      "repeated_binding_occurrences": 154,
+      "max_context_repetitions": 9,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [
+        [
+          "ArrayOfNumbersGeneral",
+          26
+        ],
+        [
+          "FontDescriptorType1",
+          12
+        ],
+        [
+          "FontFile2",
+          12
+        ],
+        [
+          "BorderStyle",
+          9
+        ],
+        [
+          "XObjectFormType1",
+          8
+        ]
+      ],
+      "check_categories": {
+        "version": 3158,
+        "type_candidate": 3252,
+        "indirect": 3138,
+        "possible_values": 3132,
+        "special_case": 3132,
+        "link": 3132,
+        "row": 3152,
+        "required": 2276,
+        "virtual_default": 415,
+        "unknown_key": 338,
+        "deprecation_notice": 119,
+        "unmodeled_array_element": 20,
+        "unsupported_rule": 6
+      }
+    },
+    {
+      "index": 7,
+      "record_sha256": "bb362d5f4b40a96db96ab69e5d4b5cc9a3aec8e69b4935eecc3483cc1b3e0be4",
+      "bytes": 23796803,
+      "bindings": 0,
+      "unique_binding_contexts": 0,
+      "repeated_binding_occurrences": 0,
+      "max_context_repetitions": 0,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [],
+      "check_categories": {}
+    },
+    {
+      "index": 8,
+      "record_sha256": "61fe6d7d80bd98716f4bdd9c774ed905c1a8a0450ad22a256dd91062c54a6c89",
+      "bytes": 976963,
+      "bindings": 0,
+      "unique_binding_contexts": 0,
+      "repeated_binding_occurrences": 0,
+      "max_context_repetitions": 0,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [],
+      "check_categories": {}
+    },
+    {
+      "index": 9,
+      "record_sha256": "33ecc5af41c49c1caba85b52731c3a06e3e5813b2c06c442150772327ae790f6",
+      "bytes": 5923487,
+      "bindings": 0,
+      "unique_binding_contexts": 0,
+      "repeated_binding_occurrences": 0,
+      "max_context_repetitions": 0,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [],
+      "check_categories": {}
+    },
+    {
+      "index": 10,
+      "record_sha256": "d4a4319b7d7fbc8d02b053d675143fcf8d1ab78466f5701672bcfd8d915a74e1",
+      "bytes": 114199843,
+      "bindings": 0,
+      "unique_binding_contexts": 0,
+      "repeated_binding_occurrences": 0,
+      "max_context_repetitions": 0,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [],
+      "check_categories": {}
+    },
+    {
+      "index": 11,
+      "record_sha256": "13c61e8d448f5dc322af26f8e068c96b814fa9e4baf065025717e76ac09b6e43",
+      "bytes": 1325313,
+      "bindings": 0,
+      "unique_binding_contexts": 0,
+      "repeated_binding_occurrences": 0,
+      "max_context_repetitions": 0,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [],
+      "check_categories": {}
+    },
+    {
+      "index": 12,
+      "record_sha256": "80c5e3cb358885e06f229525bf1c6b72ce0b43d1908479567da1993e81d9bba0",
+      "bytes": 142055558,
+      "bindings": 1444,
+      "unique_binding_contexts": 588,
+      "repeated_binding_occurrences": 856,
+      "max_context_repetitions": 14,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [
+        [
+          "ArrayOfNumbersGeneral",
+          436
+        ],
+        [
+          "BorderStyle",
+          54
+        ],
+        [
+          "FontDescriptorType1",
+          40
+        ],
+        [
+          "FontFile2",
+          36
+        ],
+        [
+          "FontCIDType0",
+          28
+        ]
+      ],
+      "check_categories": {
+        "version": 8946,
+        "type_candidate": 10542,
+        "indirect": 9274,
+        "possible_values": 9244,
+        "special_case": 9244,
+        "link": 9244,
+        "row": 8916,
+        "required": 8304,
+        "virtual_default": 1834,
+        "unknown_key": 1082,
+        "deprecation_notice": 272,
+        "unsupported_rule": 30
+      }
+    },
+    {
+      "index": 13,
+      "record_sha256": "73134207dc26a13aac13a94483da890d2d07d835197ec9aece3c9fa37d618798",
+      "bytes": 303301810,
+      "bindings": 5560,
+      "unique_binding_contexts": 131,
+      "repeated_binding_occurrences": 5429,
+      "max_context_repetitions": 722,
+      "repeated_contexts_with_different_outcomes": 4,
+      "most_repeated_models": [
+        [
+          "Field",
+          868
+        ],
+        [
+          "FieldBtnCheckbox",
+          853
+        ],
+        [
+          "FieldBtnRadio",
+          850
+        ],
+        [
+          "FieldChoice",
+          850
+        ],
+        [
+          "FieldSig",
+          850
+        ]
+      ],
+      "check_categories": {
+        "version": 16717,
+        "type_candidate": 16800,
+        "indirect": 16717,
+        "possible_values": 16717,
+        "special_case": 16717,
+        "link": 16701,
+        "row": 16701,
+        "required": 59786,
+        "virtual_default": 6340,
+        "unknown_key": 1576,
+        "deprecation_notice": 154
+      }
+    },
+    {
+      "index": 14,
+      "record_sha256": "86d164c1e43e76df0a5eb02789d44cc9dbf3756160fe8b3697733c9c24cd2b1d",
+      "bytes": 301190195,
+      "bindings": 1793,
+      "unique_binding_contexts": 572,
+      "repeated_binding_occurrences": 1221,
+      "max_context_repetitions": 25,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [
+        [
+          "ArrayOfNumbersGeneral",
+          1032
+        ],
+        [
+          "ArrayOf_4AnnotBorderCharacteristics",
+          75
+        ],
+        [
+          "ArrayOf_4NumbersColorAnnotation",
+          75
+        ],
+        [
+          "ToUnicodeCMapStream",
+          42
+        ],
+        [
+          "FontCIDType0",
+          18
+        ]
+      ],
+      "check_categories": {
+        "version": 17721,
+        "type_candidate": 29421,
+        "indirect": 22461,
+        "possible_values": 22446,
+        "special_case": 22423,
+        "link": 22423,
+        "row": 17683,
+        "unsupported_rule": 38,
+        "required": 5189,
+        "virtual_default": 876,
+        "unknown_key": 570,
+        "deprecation_notice": 177
+      }
+    },
+    {
+      "index": 15,
+      "record_sha256": "432e32186db860aafcdf5f0ceacaee5165efa147067150ec50f6ada4a1c53c5b",
+      "bytes": 200389256,
+      "bindings": 3696,
+      "unique_binding_contexts": 114,
+      "repeated_binding_occurrences": 3582,
+      "max_context_repetitions": 535,
+      "repeated_contexts_with_different_outcomes": 4,
+      "most_repeated_models": [
+        [
+          "Field",
+          669
+        ],
+        [
+          "FieldBtnRadio",
+          652
+        ],
+        [
+          "FieldChoice",
+          652
+        ],
+        [
+          "FieldBtnCheckbox",
+          648
+        ],
+        [
+          "FieldBtnPush",
+          646
+        ]
+      ],
+      "check_categories": {
+        "version": 11119,
+        "type_candidate": 11186,
+        "indirect": 11119,
+        "possible_values": 11119,
+        "special_case": 11119,
+        "link": 11103,
+        "row": 11103,
+        "required": 38053,
+        "virtual_default": 4275,
+        "unknown_key": 1314,
+        "deprecation_notice": 164
+      }
+    },
+    {
+      "index": 16,
+      "record_sha256": "0e95ecdd46b8001e521237a92c81cf560ed6816d5b5c965709e609969fa734fb",
+      "bytes": 2220077,
+      "bindings": 0,
+      "unique_binding_contexts": 0,
+      "repeated_binding_occurrences": 0,
+      "max_context_repetitions": 0,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [],
+      "check_categories": {}
+    },
+    {
+      "index": 17,
+      "record_sha256": "e8ef3bf321121975da90efb816bcb8bd55a8288737761e888d898340a37c2825",
+      "bytes": 942509,
+      "bindings": 0,
+      "unique_binding_contexts": 0,
+      "repeated_binding_occurrences": 0,
+      "max_context_repetitions": 0,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [],
+      "check_categories": {}
+    },
+    {
+      "index": 18,
+      "record_sha256": "ce4f7fc6438bd6692dd94aec882057d49efb7f0b59dc65e230ab6962736ee1fa",
+      "bytes": 388048,
+      "bindings": 0,
+      "unique_binding_contexts": 0,
+      "repeated_binding_occurrences": 0,
+      "max_context_repetitions": 0,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [],
+      "check_categories": {}
+    },
+    {
+      "index": 19,
+      "record_sha256": "6dd117718f172761acd0e888a9ef66a17048c6d764e293c284506804a8bf0192",
+      "bytes": 23140492,
+      "bindings": 314,
+      "unique_binding_contexts": 160,
+      "repeated_binding_occurrences": 154,
+      "max_context_repetitions": 9,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [
+        [
+          "BorderStyle",
+          18
+        ],
+        [
+          "ArrayOfNumbersGeneral",
+          16
+        ],
+        [
+          "XObjectFormType1",
+          8
+        ],
+        [
+          "XObjectImage",
+          8
+        ],
+        [
+          "XObjectFormPS",
+          8
+        ]
+      ],
+      "check_categories": {
+        "version": 1274,
+        "type_candidate": 1342,
+        "indirect": 1270,
+        "possible_values": 1266,
+        "special_case": 1266,
+        "link": 1266,
+        "row": 1270,
+        "required": 2652,
+        "virtual_default": 536,
+        "unknown_key": 378,
+        "deprecation_notice": 156,
+        "unsupported_rule": 4
+      }
+    },
+    {
+      "index": 20,
+      "record_sha256": "937d4c96f945c55b2407d1953cc98bbf5666c4bd0390211360f7b5166e7cdf7a",
+      "bytes": 1643555,
+      "bindings": 0,
+      "unique_binding_contexts": 0,
+      "repeated_binding_occurrences": 0,
+      "max_context_repetitions": 0,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [],
+      "check_categories": {}
+    },
+    {
+      "index": 21,
+      "record_sha256": "14d5143feadf6b680c7e01d3ebc4d3ff32eecc705339a1f39f65948cfdc15191",
+      "bytes": 1809532,
+      "bindings": 0,
+      "unique_binding_contexts": 0,
+      "repeated_binding_occurrences": 0,
+      "max_context_repetitions": 0,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [],
+      "check_categories": {}
+    },
+    {
+      "index": 22,
+      "record_sha256": "696e8cd083008af2029d35799689614076cfc53663d1664edfcf89da7c40d5b5",
+      "bytes": 2041364,
+      "bindings": 0,
+      "unique_binding_contexts": 0,
+      "repeated_binding_occurrences": 0,
+      "max_context_repetitions": 0,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [],
+      "check_categories": {}
+    },
+    {
+      "index": 23,
+      "record_sha256": "6e8683524bb676b636862256ba905fb7594c4beca4f2b0997ca54fd8720452cd",
+      "bytes": 681554,
+      "bindings": 0,
+      "unique_binding_contexts": 0,
+      "repeated_binding_occurrences": 0,
+      "max_context_repetitions": 0,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [],
+      "check_categories": {}
+    },
+    {
+      "index": 24,
+      "record_sha256": "d3e2ed565d606a8773b5de245060d208b41cb476d7b34dfd90f62a3886f58c74",
+      "bytes": 4877554,
+      "bindings": 78,
+      "unique_binding_contexts": 64,
+      "repeated_binding_occurrences": 14,
+      "max_context_repetitions": 2,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [
+        [
+          "PageTreeNode",
+          3
+        ],
+        [
+          "Resource",
+          2
+        ],
+        [
+          "FontMap",
+          2
+        ],
+        [
+          "FontType1",
+          2
+        ],
+        [
+          "FontTrueType",
+          2
+        ]
+      ],
+      "check_categories": {
+        "version": 118,
+        "type_candidate": 134,
+        "indirect": 116,
+        "possible_values": 116,
+        "special_case": 114,
+        "link": 114,
+        "row": 116,
+        "unsupported_rule": 2,
+        "required": 988,
+        "virtual_default": 190,
+        "unknown_key": 91,
+        "deprecation_notice": 3
+      }
+    },
+    {
+      "index": 25,
+      "record_sha256": "c13ef1e32928d113af55ca97be70f39d7d0f0e3bd26156559ac434a482eede85",
+      "bytes": 554324,
+      "bindings": 0,
+      "unique_binding_contexts": 0,
+      "repeated_binding_occurrences": 0,
+      "max_context_repetitions": 0,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [],
+      "check_categories": {}
+    },
+    {
+      "index": 26,
+      "record_sha256": "e36eb9ac6831803af9534517b80f5442cc67bc034f13b1fb7ffcf3cc1c706356",
+      "bytes": 58900724,
+      "bindings": 0,
+      "unique_binding_contexts": 0,
+      "repeated_binding_occurrences": 0,
+      "max_context_repetitions": 0,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [],
+      "check_categories": {}
+    },
+    {
+      "index": 27,
+      "record_sha256": "99bf4ab15dae062ed2d96e571ae4485b4cc8b3f725623afe55ac692cd3069aed",
+      "bytes": 46278870,
+      "bindings": 602,
+      "unique_binding_contexts": 241,
+      "repeated_binding_occurrences": 361,
+      "max_context_repetitions": 19,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [
+        [
+          "ToUnicodeCMapStream",
+          98
+        ],
+        [
+          "ArrayOf_4AnnotBorderCharacteristics",
+          57
+        ],
+        [
+          "ArrayOfNumbersGeneral",
+          52
+        ],
+        [
+          "FontCIDType0",
+          28
+        ],
+        [
+          "CIDSystemInfo",
+          28
+        ]
+      ],
+      "check_categories": {
+        "version": 2560,
+        "type_candidate": 3245,
+        "indirect": 2706,
+        "possible_values": 2692,
+        "special_case": 2692,
+        "link": 2692,
+        "row": 2546,
+        "required": 4013,
+        "virtual_default": 721,
+        "presence": 2,
+        "unknown_key": 279,
+        "unsupported_rule": 14,
+        "deprecation_notice": 75
+      }
+    },
+    {
+      "index": 28,
+      "record_sha256": "f0d2e256b84532b95a64b71314fa0b9d8f5fc6deedb4e01e1e19c1baec24cf5f",
+      "bytes": 512279,
+      "bindings": 0,
+      "unique_binding_contexts": 0,
+      "repeated_binding_occurrences": 0,
+      "max_context_repetitions": 0,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [],
+      "check_categories": {}
+    },
+    {
+      "index": 29,
+      "record_sha256": "1f13ed1912ea288793525782d181aa4643977e44d6b464b2468431a3e7a9eefd",
+      "bytes": 1617954,
+      "bindings": 0,
+      "unique_binding_contexts": 0,
+      "repeated_binding_occurrences": 0,
+      "max_context_repetitions": 0,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [],
+      "check_categories": {}
+    },
+    {
+      "index": 30,
+      "record_sha256": "6e0aef9f83dc3e8c7c837f53cbce0d9987a1bc29bdfa9b83fc8ea7f7382feac6",
+      "bytes": 530073,
+      "bindings": 0,
+      "unique_binding_contexts": 0,
+      "repeated_binding_occurrences": 0,
+      "max_context_repetitions": 0,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [],
+      "check_categories": {}
+    },
+    {
+      "index": 31,
+      "record_sha256": "eb85d1117ca83385dca377c2eccc1aa638b76b664df68b6fcb8b0cd4d8a72363",
+      "bytes": 823065,
+      "bindings": 0,
+      "unique_binding_contexts": 0,
+      "repeated_binding_occurrences": 0,
+      "max_context_repetitions": 0,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [],
+      "check_categories": {}
+    },
+    {
+      "index": 32,
+      "record_sha256": "366c29f3d8d425aa65b65a4edd73b65fdee66d20c92eaaeec9e485505555e114",
+      "bytes": 23611394,
+      "bindings": 295,
+      "unique_binding_contexts": 137,
+      "repeated_binding_occurrences": 158,
+      "max_context_repetitions": 19,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [
+        [
+          "ArrayOf_4AnnotBorderCharacteristics",
+          38
+        ],
+        [
+          "ToUnicodeCMapStream",
+          28
+        ],
+        [
+          "FontCIDType0",
+          8
+        ],
+        [
+          "CIDSystemInfo",
+          8
+        ],
+        [
+          "ArrayOfCIDGlyphMetricsW",
+          8
+        ]
+      ],
+      "check_categories": {
+        "version": 1333,
+        "type_candidate": 1429,
+        "indirect": 1327,
+        "possible_values": 1323,
+        "special_case": 1323,
+        "link": 1323,
+        "row": 1329,
+        "required": 2323,
+        "virtual_default": 433,
+        "unknown_key": 195,
+        "deprecation_notice": 77,
+        "unsupported_rule": 4
+      }
+    },
+    {
+      "index": 33,
+      "record_sha256": "c81ef5b6bfde671e8c7cdc113c640b657fc7c0187d3f10f9cde05d8ac52f0f78",
+      "bytes": 17628538,
+      "bindings": 20,
+      "unique_binding_contexts": 20,
+      "repeated_binding_occurrences": 0,
+      "max_context_repetitions": 1,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [
+        [
+          "FileTrailer",
+          1
+        ],
+        [
+          "Catalog",
+          1
+        ],
+        [
+          "PageTreeNodeRoot",
+          1
+        ],
+        [
+          "ViewerPreferences",
+          1
+        ],
+        [
+          "ActionGoTo",
+          1
+        ]
+      ],
+      "check_categories": {
+        "version": 46,
+        "type_candidate": 49,
+        "indirect": 41,
+        "possible_values": 41,
+        "special_case": 41,
+        "link": 41,
+        "row": 46,
+        "required": 115,
+        "virtual_default": 32,
+        "unknown_key": 57,
+        "deprecation_notice": 6
+      }
+    },
+    {
+      "index": 34,
+      "record_sha256": "37a1974f9e62523804cf1d00a6b79b6dcf94d1c2b7af2a82ea3c35b36aad4644",
+      "bytes": 942457,
+      "bindings": 0,
+      "unique_binding_contexts": 0,
+      "repeated_binding_occurrences": 0,
+      "max_context_repetitions": 0,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [],
+      "check_categories": {}
+    },
+    {
+      "index": 35,
+      "record_sha256": "4406e4f25c3a60d834203e9b8a853e954ed4f49abf4e87862346dd99fd41ead1",
+      "bytes": 1843338,
+      "bindings": 0,
+      "unique_binding_contexts": 0,
+      "repeated_binding_occurrences": 0,
+      "max_context_repetitions": 0,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [],
+      "check_categories": {}
+    },
+    {
+      "index": 36,
+      "record_sha256": "61829ca696085830debbd2f821a3a4809e9183a309e686b7344035ec461e0a5f",
+      "bytes": 2041367,
+      "bindings": 0,
+      "unique_binding_contexts": 0,
+      "repeated_binding_occurrences": 0,
+      "max_context_repetitions": 0,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [],
+      "check_categories": {}
+    },
+    {
+      "index": 38,
+      "record_sha256": "b15f48004d601c63e793cb6bfc7115c6cb7d4ecacc9a0244b39ba44070fd5b49",
+      "bytes": 423675,
+      "bindings": 0,
+      "unique_binding_contexts": 0,
+      "repeated_binding_occurrences": 0,
+      "max_context_repetitions": 0,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [],
+      "check_categories": {}
+    },
+    {
+      "index": 40,
+      "record_sha256": "a759b1b8af2bac3d07ee160c5f87c2a1f5848fd7f1da63f1931d708954344389",
+      "bytes": 42925384,
+      "bindings": 321,
+      "unique_binding_contexts": 155,
+      "repeated_binding_occurrences": 166,
+      "max_context_repetitions": 9,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [
+        [
+          "ArrayOfNumbersGeneral",
+          24
+        ],
+        [
+          "BorderStyle",
+          18
+        ],
+        [
+          "FontDescriptorType1",
+          12
+        ],
+        [
+          "FontFile2",
+          8
+        ],
+        [
+          "FontType1",
+          6
+        ]
+      ],
+      "check_categories": {
+        "version": 2788,
+        "type_candidate": 2843,
+        "indirect": 2782,
+        "possible_values": 2776,
+        "special_case": 2776,
+        "link": 2776,
+        "row": 2782,
+        "required": 2633,
+        "virtual_default": 560,
+        "unknown_key": 348,
+        "deprecation_notice": 109,
+        "unsupported_rule": 6
+      }
+    },
+    {
+      "index": 41,
+      "record_sha256": "095de68c5d485bbe05f49b494c3a972d52438cab3db385a5fb2bbea24e9a7590",
+      "bytes": 1331501,
+      "bindings": 0,
+      "unique_binding_contexts": 0,
+      "repeated_binding_occurrences": 0,
+      "max_context_repetitions": 0,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [],
+      "check_categories": {}
+    },
+    {
+      "index": 42,
+      "record_sha256": "e22cc6dbfa3befb3be353f0dbabeb0b5599a806c91e9c4235d5a020a69717be1",
+      "bytes": 1950899,
+      "bindings": 0,
+      "unique_binding_contexts": 0,
+      "repeated_binding_occurrences": 0,
+      "max_context_repetitions": 0,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [],
+      "check_categories": {}
+    },
+    {
+      "index": 43,
+      "record_sha256": "b57b054727e401ef882b930e1ab420d0962ea70cf79e6aa4524ca90ae6953b92",
+      "bytes": 25665883,
+      "bindings": 348,
+      "unique_binding_contexts": 180,
+      "repeated_binding_occurrences": 168,
+      "max_context_repetitions": 9,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [
+        [
+          "BorderStyle",
+          18
+        ],
+        [
+          "ArrayOfNumbersGeneral",
+          16
+        ],
+        [
+          "GraphicsStateParameter",
+          8
+        ],
+        [
+          "XObjectFormType1",
+          8
+        ],
+        [
+          "XObjectImage",
+          8
+        ]
+      ],
+      "check_categories": {
+        "version": 1370,
+        "type_candidate": 1446,
+        "indirect": 1366,
+        "possible_values": 1360,
+        "special_case": 1360,
+        "link": 1360,
+        "row": 1364,
+        "required": 3108,
+        "virtual_default": 638,
+        "unknown_key": 402,
+        "deprecation_notice": 156,
+        "unsupported_rule": 6
+      }
+    },
+    {
+      "index": 44,
+      "record_sha256": "8ae2b69e54f53f4d5031c44147b10bc355fa3e9c87c87f473d9ccf84b4a6ff5b",
+      "bytes": 779409,
+      "bindings": 0,
+      "unique_binding_contexts": 0,
+      "repeated_binding_occurrences": 0,
+      "max_context_repetitions": 0,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [],
+      "check_categories": {}
+    },
+    {
+      "index": 45,
+      "record_sha256": "546d1db39359560d6f0fe896c5335047d23e32cefd4041c04b2b33ff9710dfa1",
+      "bytes": 4667309,
+      "bindings": 70,
+      "unique_binding_contexts": 56,
+      "repeated_binding_occurrences": 14,
+      "max_context_repetitions": 2,
+      "repeated_contexts_with_different_outcomes": 0,
+      "most_repeated_models": [
+        [
+          "PageTreeNode",
+          3
+        ],
+        [
+          "Resource",
+          2
+        ],
+        [
+          "FontMap",
+          2
+        ],
+        [
+          "FontType1",
+          2
+        ],
+        [
+          "FontTrueType",
+          2
+        ]
+      ],
+      "check_categories": {
+        "version": 108,
+        "type_candidate": 125,
+        "indirect": 106,
+        "possible_values": 106,
+        "special_case": 106,
+        "link": 106,
+        "row": 108,
+        "required": 852,
+        "virtual_default": 163,
+        "unknown_key": 75,
+        "deprecation_notice": 3
+      }
+    }
+  ],
+  "completed": 44,
+  "bytes": 2187820286,
+  "bindings": 24582,
+  "unique_binding_contexts": 2903,
+  "repeated_binding_occurrences": 21679,
+  "max_context_repetitions": 722
+}

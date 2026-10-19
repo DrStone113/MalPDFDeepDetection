@@ -5,6 +5,10 @@ from decimal import Decimal
 import hashlib
 import json
 import re
+from malpdf.static.execution import capacity, expand_limits, valid_capacity
+from malpdf.static.execution import UNLIMITED, is_vm
+from malpdf.extraction.checkpointing import CheckpointScheduler
+from malpdf.extraction.arlington_memo import BindingMemo, CompletedBinding
 
 from malpdf.extraction.arlington_expression import (Unknown,Symbol,SKIP,EvaluationBudget,
     ExpressionError,evaluate,parse,atom_text,split_top,truth,combine,version)
@@ -20,7 +24,7 @@ class RuleLimits:
 
     def __post_init__(self):
         for value,ceiling in zip(asdict(self).values(),(1024,8192,32,100000,1024**2)):
-            if type(value) is not int or not 0<value<=ceiling:
+            if not valid_capacity(value, ceiling):
                 raise ValueError('arlington_invalid_rule_limit')
         if self.max_metadata_bytes<4096:
             raise ValueError('arlington_metadata_requires_terminal_reserve')
@@ -54,13 +58,14 @@ def disjunction(values):
 
 
 class Context:
-    def __init__(self,engine,value,revision,pdf_version,parent=None,trailer=False,*,field=None,type_name=None):
+    def __init__(self,engine,value,revision,pdf_version,parent=None,trailer=False,*,field=None,type_name=None,binding_id=None):
         self.engine,self.ref,self.revision,self.version,self.parent,self.trailer=engine,value,revision,pdf_version,parent,trailer
         self.field,self.type_name=field,type_name
+        self.binding_id=binding_id
 
     def for_field(self,ref,type_name):
         return Context(self.engine,self.ref,self.revision,self.version,self.parent,self.trailer,
-                       field=ref,type_name=type_name)
+                       field=ref,type_name=type_name,binding_id=self.binding_id)
 
     def current_bitmask(self):
         if self.field is None or self.type_name!='bitmask':
@@ -70,6 +75,17 @@ class Context:
         if resolved.node.issues: return Unknown(('raw_syntax_ambiguous',))
         node=resolved.node
         return node.value if node.kind=='number' and type(node.value) is int else None
+
+    def current_is_hex_string(self):
+        if self.field is None: return Unknown(('current_field_context_unsupported',))
+        resolved=self.engine.resolve(self.field,self.revision)
+        if isinstance(resolved,Unknown): return resolved
+        node=resolved.node
+        if node.issues: return Unknown(('raw_syntax_ambiguous',))
+        if node.kind!='string': return False
+        form=getattr(node,'string_form',None)
+        if form not in {'hex','literal'}: return Unknown(('string_syntax_unavailable',))
+        return form=='hex'
 
     def entry(self,key):
         if not isinstance(key,str): return Unknown(('key_path_unsupported',))
@@ -124,8 +140,10 @@ class Context:
 class _Engine:
     def __init__(self,doc,catalog,limits,checkpoint):
         self.doc,self.catalog,self.limits,self.checkpoint=doc,catalog,limits,checkpoint
+        self.checkpoints=CheckpointScheduler(getattr(doc,'code',None))
         self.budget=EvaluationBudget(limits.max_steps)
         self.active=set(); self.bindings=0; self.metadata=0
+        self.memo=BindingMemo(is_vm(getattr(doc,'code',None)))
         self._dictionary_indexes={}
         self.last_emit=-32
         self.value={'schema_version':'arlington-analysis-v1','document_sha256':doc.sha,
@@ -134,6 +152,24 @@ class _Engine:
             'reason_codes':[],'limits':asdict(limits),'root_schema_candidate_outcomes':[],
             'scope':'bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance',
             'original_ir_modified':False,'pdf_content_executed':False}
+        if self.memo.enabled:
+            self.value.update(binding_reuses=[],evaluation_strategy='completed bindings shared within document/version/xref context; cyclic results require identical active ancestors and depth')
+
+    def reuse(self,cached: CompletedBinding,ref: Value,target: Value,parent: Context | None,path: str) -> object:
+        if self.bindings+len(self.value['binding_reuses'])>=self.limits.max_bindings:
+            raise ExpressionError('arlington_binding_limit')
+        refs={self.source(ref),self.source(target)}
+        if parent is not None and parent.binding_id is not None:
+            refs.add(parent.binding_id)
+        record={'id':'arlington-reuse:'+self.doc.sha+':'+str(len(self.value['binding_reuses'])),
+                'target_binding_id':cached.binding_id,'source_refs':sorted(refs),
+                'outcome':outcome(cached.result),'link_path_sha256':sha(path),
+                'cache_scope':'identical_active_ancestors_and_depth' if cached.context_specific else 'acyclic_subtree'}
+        self.metadata+=len(json.dumps(record,separators=(',',':')).encode())
+        if self.metadata>self.limits.max_metadata_bytes-8192:
+            raise ExpressionError('arlington_metadata_limit')
+        self.value['binding_reuses'].append(record)
+        return cached.result
 
     def dictionary_entries(self,node):
         """Index immutable cached IR once, retaining every duplicate value.
@@ -198,17 +234,20 @@ class _Engine:
         if node.kind=='string':
             return Unknown(('encrypted_string_unavailable',)) if self.doc.value['encrypted'] else node.value
         if node.kind in {'boolean','null'}: return node.value
-        if node.kind=='array' and len(node.value)<=1024:
+        if node.kind=='array' and len(node.value)<=capacity(getattr(self.doc,'code',None),1024):
             return tuple(self.scalar(Value(child,resolved.owner,resolved.item),revision,depth+1) for child in node.value)
         return Unknown(('scalar_projection_unsupported',))
 
     def emit(self,force=False):
         self.value['expression_steps_used']=self.budget.used
         if force or len(self.value['checks'])-self.last_emit>=32:
-            if len(json.dumps(self.value,separators=(',',':')).encode())>self.limits.max_metadata_bytes:
+            if self.limits.max_metadata_bytes != UNLIMITED and len(json.dumps(self.value,separators=(',',':')).encode())>self.limits.max_metadata_bytes:
                 raise ExpressionError('arlington_metadata_limit')
+            if not self.checkpoints.due(force=force):
+                return
             if self.checkpoint: self.checkpoint(self.value)
             self.last_emit=len(self.value['checks'])
+            self.checkpoints.completed()
 
     def check(self,binding,row,category,result,refs,expression='',**details):
         if len(self.value['checks'])>=self.limits.max_checks:
@@ -291,7 +330,7 @@ class _Engine:
     def directness(self,text,ref,ctx):
         indirect=ref.node.kind=='reference'
         if text=='TRUE': return indirect
-        if text=='FALSE': return True  # FALSE permits either representation.
+        if text=='FALSE': return True
         try: ast=parse(text)
         except ExpressionError: return Unknown(('unsupported_indirect_rule',))
         if ast[0]=='call' and ast[1] in {'MustBeDirect','MustBeIndirect'} and len(ast[2])<=1:
@@ -313,7 +352,7 @@ class _Engine:
             if result==SKIP: continue
             ast=parse(entry)
             predicate=ast[0]=='call' and ast[1] not in {'SinceVersion','BeforeVersion','IsPDFVersion','Deprecated','Extension'}
-            # Conditional literals may wrap predicates; preserve their AST role.
+
             while ast[0]=='call' and ast[1] in {'SinceVersion','BeforeVersion','IsPDFVersion','Deprecated','Extension'} and len(ast[2])==2:
                 ast=ast[2][1]
                 predicate=ast[0]=='call'
@@ -401,8 +440,15 @@ class _Engine:
         target=self.resolve(ref,revision)
         if isinstance(target,Unknown): return target
         identity=(target.owner,target.node.start,target.node.end,model,revision)
-        if identity in self.active: return Unknown(('schema_link_cycle',))
-        if depth>self.limits.max_depth or self.bindings>=self.limits.max_bindings:
+        if identity in self.active:
+            self.memo.note_cycle()
+            return Unknown(('schema_link_cycle',))
+        stream=bool(target.item and target.item['node'] is target.node and target.item['record'].get('stream'))
+        memo_key=(identity,pdf_version,stream)
+        cached=self.memo.find(memo_key,self.active,depth,self.limits.max_depth)
+        if cached is not None:
+            return self.reuse(cached,ref,target,parent,path)
+        if depth>self.limits.max_depth or self.bindings+len(self.value.get('binding_reuses',()))>=self.limits.max_bindings:
             raise ExpressionError('arlington_binding_limit')
         self.bindings+=1
         binding='arlington-binding:'+sha(self.doc.sha+'|'+str(identity)+'|'+path)
@@ -410,12 +456,13 @@ class _Engine:
                 'source_refs':[self.source(target)],'outcome':'indeterminate','candidate_only':True}
         self.value['bindings'].append(record); self.metadata+=len(json.dumps(record).encode())
         self.active.add(identity)
-        ctx=Context(self,target,revision,pdf_version,parent,trailer=model in {'FileTrailer','XRefStream'})
+        self.memo.begin(identity,depth)
+        ctx=Context(self,target,revision,pdf_version,parent,trailer=model in {'FileTrailer','XRefStream'},binding_id=binding)
         rows=self.catalog.tables[model]; node=target.node
-        results=[]; covered=set()
+        results=[]; covered=set(); completed_result=None
         try:
             if node.kind not in {'dictionary','array'}:
-                record['outcome']='fail'; return False
+                record['outcome']='fail'; completed_result=False; return False
             explicit={row['Key'] for row in rows if row['Key']!='*' and not row['Key'].endswith('*')}
             repeat=[int(row['Key'][:-1]) for row in rows if row['Key'].endswith('*') and row['Key'][:-1].isdecimal()]
             for row in rows:
@@ -453,8 +500,11 @@ class _Engine:
                     if str(index) not in covered:
                         results.append(self.check(binding,{},'unmodeled_array_element',Unknown(('array_element_unmodeled',)),[self.source(Value(child,target.owner,target.item))],model_table=model,index=index))
             result=conjunction(results); record['outcome']=outcome(result)
+            completed_result=result
             return result
-        finally: self.active.remove(identity)
+        finally:
+            self.active.remove(identity)
+            self.memo.finish(memo_key,binding,completed_result)
 
     def run(self):
         self.emit()
@@ -481,7 +531,7 @@ class _Engine:
             self.value['root_schema_candidate_outcomes'].append({'xref_context_distance':revision,'outcome':outcome(result)})
         if not self.value['bindings']: self.value['reason_codes'].append('no_usable_xref_context')
         self.value['complete']=True
-        # Unknown coverage and candidate failures remain explicit. No validity flag.
+
         self.value['reason_codes'].append('whole_document_conformance_unverified')
         self.emit(force=True)
         return self.value
@@ -493,7 +543,7 @@ def negation(value):
 
 
 def validate_document(document,catalog,*,limits=None,checkpoint=None):
-    engine=_Engine(document,catalog,limits or RuleLimits(),checkpoint)
+    engine=_Engine(document,catalog,limits or expand_limits(RuleLimits(), getattr(document,'code',None)),checkpoint)
     try:
         result=engine.run()
     except (ExpressionError,MemoryError,RecursionError) as error:

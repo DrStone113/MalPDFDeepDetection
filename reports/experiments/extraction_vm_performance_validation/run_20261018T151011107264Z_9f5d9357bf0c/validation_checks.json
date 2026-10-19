@@ -1,0 +1,115 @@
+{
+  "pytest": {
+    "passed": 1860,
+    "warnings": 2,
+    "seconds": 236.0,
+    "warning_scope": "single-label confusion-matrix warnings from existing vision smoke test"
+  },
+  "targeted": {
+    "passed": 51,
+    "seconds": 12.57
+  },
+  "structural": {
+    "bundle_count": 12,
+    "schema_instances": 36,
+    "external_schema_references": "denied",
+    "modified_code_files": [
+      "scripts/22_extract_pdf.py",
+      "src/malpdf/cli.py",
+      "src/malpdf/extraction/__init__.py",
+      "src/malpdf/extraction/arlington_expression.py",
+      "src/malpdf/extraction/arlington_validate.py",
+      "src/malpdf/extraction/batch.py",
+      "src/malpdf/extraction/carving.py",
+      "src/malpdf/extraction/checkpointing.py",
+      "src/malpdf/extraction/environment.py",
+      "src/malpdf/extraction/filters.py",
+      "src/malpdf/extraction/normalize.py",
+      "src/malpdf/extraction/orchestrator.py",
+      "src/malpdf/extraction/parser_views.py",
+      "src/malpdf/extraction/qpdf_adapter.py",
+      "src/malpdf/extraction/raw.py",
+      "src/malpdf/extraction/raw_forensic.py",
+      "src/malpdf/extraction/raw_syntax.py",
+      "src/malpdf/extraction/resume.py",
+      "src/malpdf/extraction/script_semantics.py",
+      "src/malpdf/extraction/streams.py",
+      "src/malpdf/extraction/vm_jobs.py",
+      "src/malpdf/static/code_inspector.py",
+      "src/malpdf/static/evidence_v9.py",
+      "src/malpdf/static/execution.py",
+      "src/malpdf/static/js_semantics.py",
+      "src/malpdf/static/profile_worker.py",
+      "src/malpdf/static/recovery.py",
+      "tests/test_extraction.py",
+      "tests/test_extraction_performance.py",
+      "tests/test_extraction_vm.py"
+    ],
+    "code_comments": {}
+  },
+  "real_worker_synthetic_resume": {
+    "synthetic_samples": 3,
+    "profile": "deep-static",
+    "actual_spawned_workers": true,
+    "runs": [
+      {
+        "run_id": "run_20261018T150900282757Z_0fe6093978c6",
+        "rows": 3,
+        "reused": 0,
+        "wall_seconds": 5.652136226000039,
+        "statuses": {
+          "observed": 3
+        },
+        "output_path": "data/processed/pdf_extraction/run_20261018T150900282757Z_0fe6093978c6",
+        "test_access": false
+      },
+      {
+        "run_id": "run_20261018T150905820887Z_0fe6093978c6",
+        "rows": 3,
+        "reused": 3,
+        "wall_seconds": 0.12386792600000263,
+        "statuses": {
+          "observed": 3
+        },
+        "output_path": "data/processed/pdf_extraction/run_20261018T150905820887Z_0fe6093978c6",
+        "test_access": false
+      },
+      {
+        "run_id": "run_20261018T150905944770Z_0fe6093978c6",
+        "rows": 3,
+        "reused": 3,
+        "wall_seconds": 0.1221822909999446,
+        "statuses": {
+          "observed": 3
+        },
+        "output_path": "data/processed/pdf_extraction/run_20261018T150905944770Z_0fe6093978c6",
+        "test_access": false
+      }
+    ]
+  },
+  "pip_check": {
+    "exit_code": 0,
+    "output": "No broken requirements found."
+  },
+  "git_diff_check": {
+    "exit_code": 0,
+    "output": ""
+  },
+  "logs": {
+    "full_suite.log": {
+      "path": "artifacts/tmp/maintenance/extraction_vm_performance_validation/run_20261018T151011107264Z_9f5d9357bf0c/full_suite.log",
+      "sha256": "49b22bb33373271cbbccea138430ffd7e763af549f6fa8f894178e157df926cc"
+    },
+    "new_checks.log": {
+      "path": "artifacts/tmp/maintenance/extraction_vm_performance_validation/run_20261018T151011107264Z_9f5d9357bf0c/new_checks.log",
+      "sha256": "8f538da488fbae4c99ba77bca34319c9cca6e512079fb8e3e7115a1557be31bf"
+    },
+    "manual_resume.log": {
+      "path": "artifacts/tmp/maintenance/extraction_vm_performance_validation/run_20261018T151011107264Z_9f5d9357bf0c/manual_resume.log",
+      "sha256": "12263bc75768c615f40960db14d2df79c207acbe1021e55878a3b815d714d790"
+    }
+  },
+  "fitting": false,
+  "model_evaluation": false,
+  "test_access": false
+}
