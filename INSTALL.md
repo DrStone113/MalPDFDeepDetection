@@ -1,11 +1,70 @@
-# Security patch installation (Windows local workspace)
+# Windows DEV and REMnux LAB workflow
 
-These files are a **proposal** to copy into `C:\Project\MalPDFDeepDetection`. Nothing has been applied to the Windows host, GitHub or REMnux.
+Run development from `C:\Project\MalPDFDeepDetection` on Windows. Read
+[AGENTS.md](AGENTS.md) and the [operating and rollback guide](docs/windows_lab_workflow.md)
+before using any LAB command.
 
-1. Inspect/merge `AGENTS.md` and three new files into the repository paths shown in this bundle. If those paths already exist, compare before replacing.
-2. From Windows PowerShell in the repository, run `python scripts/security/check_repo_content.py`. It checks **all staged/tracked indexed blobs**, so it may identify pre-existing files that need review, rather than silently passing. It intentionally rejects any tracked `.npy`, `.parquet`, `.safetensors` and many binary formats: those belong outside Git.
-3. Once the script is reviewed and passing, opt in to the local Git hook with `git config --local core.hooksPath .githooks`. Git for Windows can execute the shell hook using its bundled shell; ensure `python` is available on PATH.
-4. Review the workflow and branch ruleset before pushing. In GitHub, configure the `repository-content-guard` job as a required check for `main` (where supported) and disable force pushes / unauthorized bypasses.
-5. Do not grant Codex unrestricted SSH access: the Git hook and CI cannot stop an agent from executing `ssh` or `scp`. Use restricted REMnux SSH credentials and appropriate firewall rules separately.
+## Windows checks
 
-The gate does not guarantee that Python code, Git history, secrets, images or user-supplied content is safe. It checks current indexed content, not historical objects, untracked files, actual SSH operations, or off-repository data.
+The dedicated `.venv-windows-dev` environment follows `pyproject.toml`; the older
+`.venv` is preserved. Source packaging and security self-tests also work with
+Python 3.11+ and the standard library alone.
+
+```powershell
+.venv-windows-dev/Scripts/python.exe scripts/lab/check_local.py --save
+python scripts/security/check_repo_content.py --worktree
+python -B scripts/lab/selftest.py
+python scripts/lab/labctl.py --help
+```
+
+`check_local` checks the index and edited/untracked nonignored files, source AST,
+synthetic security regressions, project metadata, dependency consistency and
+reviewed imports. It never discovers datasets or opens corpus PDFs. CI uses
+`--stdlib-only`, so its source checks do not assert ML dependency readiness.
+
+The hook is stored in `.githooks/pre-commit`. Inspect it before opting in:
+
+```powershell
+git config --local core.hooksPath .githooks
+```
+
+The repository guard preserves unchanged baseline identities for the two
+historical Parquet outputs and four nonempty legacy `.gitkeep` files. New
+placeholders must be empty. Reviewed figure PNGs must have the expected header.
+Other PDFs, datasets, archives, private keys, unsupported binary content,
+symlinks and submodules remain rejected. The guard is a content policy, not a
+malware scanner or a complete secret scanner.
+
+## Prepare and inspect
+
+```powershell
+python scripts/lab/labctl.py prepare
+python scripts/lab/labctl.py status
+python scripts/lab/labctl.py audit-check
+```
+
+Default `prepare` requires a clean committed checkout. For an explicit existing
+commit, `prepare --commit FULL_40_HEX_SHA` checks that immutable Git tree and
+excludes every working change. It does not approve the commit for deployment.
+Packages and manifests are written under `%TEMP%/malpdf-lab-packages`, with
+SHA-256 checksums and no overwrite of differing existing packages.
+
+`status` and `audit-check` require authorized read-only inspection and an already
+verified host key. They use only the approved audit identity and fixed endpoint.
+They never accept a new host key automatically. `audit-check` probes status,
+nonallowlisted `id`, and an empty shell request; forwarding and server privilege
+checks remain separate operator checks.
+
+## Permission boundaries
+
+Commit/push, source upload, bootstrap installation, SSHD updates, LAB test
+execution, and report retrieval require the applicable explicit approvals.
+`labctl.py deploy` remains operator-only in a supervised terminal, with a full
+commit confirmation and a separate administrator password. Codex must not call
+it or provide its input under the current [AGENTS.md](AGENTS.md) rules.
+
+The default deployed check parses Python AST only. The separately approved
+synthetic check runs only the reviewed offline security self-tests with bounds;
+it does not run project pytest or real samples. Real-PDF analysis is a separate,
+manifested and isolated Level 3 workflow. See the operating guide for the exact
+commands, sanitized report schema, approval batch and rollback procedure.

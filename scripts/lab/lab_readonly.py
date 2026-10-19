@@ -5,40 +5,17 @@ import json
 import os
 from pathlib import Path
 import re
+import stat
 import sys
+
+from lab_contract import parse_json, validate_report
 
 REPORTS = Path("/var/lib/malpdf/reports/approved")
 REV_RE = re.compile(r"[0-9a-f]{40}\Z")
-PATH_RE = re.compile(r"(?:src|scripts|tests|configs)/(?:[A-Za-z0-9_.-]+/)*[A-Za-z0-9_.-]+\.py\Z")
-TIMESTAMP_RE = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\Z")
 
 
 def check(payload: object, sha: str) -> dict:
-    required = {"schema_version", "commit", "kind", "status", "file_count", "passed", "failed", "generated_utc", "issues"}
-    if not isinstance(payload, dict) or set(payload) != required or payload["schema_version"] != 1 or payload["commit"] != sha:
-        raise ValueError("Invalid report schema")
-    if payload["kind"] != "ast_syntax" or payload["status"] not in ("passed", "failed"):
-        raise ValueError("Invalid report kind")
-    for key in ("file_count", "passed", "failed"):
-        if type(payload[key]) is not int or not 0 <= payload[key] <= 3000:
-            raise ValueError("Invalid counts")
-    if payload["passed"] + payload["failed"] != payload["file_count"]:
-        raise ValueError("Inconsistent counts")
-    if not isinstance(payload["generated_utc"], str) or not TIMESTAMP_RE.fullmatch(payload["generated_utc"]):
-        raise ValueError("Invalid time")
-    issues = payload["issues"]
-    if not isinstance(issues, list) or len(issues) > 30:
-        raise ValueError("Invalid issues")
-    for issue in issues:
-        if not isinstance(issue, dict) or set(issue) != {"path", "line", "kind"}:
-            raise ValueError("Invalid issue")
-        if not isinstance(issue["path"], str) or not PATH_RE.fullmatch(issue["path"]):
-            raise ValueError("Invalid issue path")
-        if type(issue["line"]) is not int or not 0 <= issue["line"] <= 1_000_000:
-            raise ValueError("Invalid line")
-        if issue["kind"] not in ("SyntaxError", "UnicodeError", "FileError", "Oversize"):
-            raise ValueError("Invalid kind")
-    return payload
+    return validate_report(payload, sha)
 
 
 def main() -> int:
@@ -54,8 +31,15 @@ def main() -> int:
         if not file.is_file() or file.is_symlink() or file.stat().st_size > 16_384:
             return 3
         try:
-            obj = check(json.loads(file.read_text(encoding="utf-8")), sha)
-        except (OSError, ValueError, json.JSONDecodeError):
+            fd = os.open(file, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0))
+            with os.fdopen(fd, "rb") as stream:
+                if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
+                    return 3
+                raw = stream.read(16_385)
+            if len(raw) > 16_384:
+                return 3
+            obj = check(parse_json(raw), sha)
+        except (OSError, ValueError, RecursionError):
             return 4
         print(json.dumps(obj, separators=(",", ":")))
         return 0

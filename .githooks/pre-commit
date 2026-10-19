@@ -1,3 +1,4 @@
 #!/bin/sh
 set -eu
 python scripts/security/check_repo_content.py
+python -B scripts/lab/selftest.py --json

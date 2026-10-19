@@ -10,6 +10,7 @@ dist/
 
 # Virtual environments and local tooling
 .venv/
+/.venv-windows-dev/
 venv/
 env/
 .env

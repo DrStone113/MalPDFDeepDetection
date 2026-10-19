@@ -4,52 +4,61 @@ from __future__ import annotations
 import ast
 from datetime import datetime, timezone
 import hashlib
+import io
 import json
 import os
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 import re
 import shutil
+import signal
+import stat
+import subprocess
 import sys
 import tarfile
 import tempfile
+import uuid
+
+from lab_contract import MAX_FILE, MAX_FILES, MAX_TOTAL, REV_RE as REV, parse_json, safe_path, text_failure, validate_report
 
 INBOX = Path("/home/remnux/malpdf-inbox")
 RELEASES = Path("/home/remnux/malpdf-releases")
 REPORTS = Path("/var/lib/malpdf/reports/approved")
-REV = re.compile(r"[0-9a-f]{40}\Z")
-PATH = re.compile(r"[A-Za-z0-9_.\-/]+\Z")
-MAX_FILE = 2 * 1024 * 1024
-MAX_TOTAL = 32 * 1024 * 1024
-MAX_FILES = 3000
-BLOCK_MAGIC = (b"%PDF-", b"MZ", b"\x7fELF", b"PK\x03\x04", b"\x1f\x8b", b"\x89PNG\r\n\x1a\n")
 
 
 def digest(contents: bytes) -> str:
     return hashlib.sha256(contents).hexdigest()
 
 
+def bounded_read(path: Path, limit: int) -> bytes:
+    fd = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0))
+    with os.fdopen(fd, "rb") as stream:
+        info = os.fstat(stream.fileno())
+        if not stat.S_ISREG(info.st_mode) or info.st_size > limit:
+            raise ValueError("Unexpected input type/size")
+        payload = stream.read(limit + 1)
+    if len(payload) > limit:
+        raise ValueError("Input exceeds byte limit")
+    return payload
+
+
 def valid_path(name: str) -> bool:
-    p = PurePosixPath(name)
-    if not PATH.fullmatch(name) or p.is_absolute() or any(part in ("..", ".", "") for part in name.split("/")):
-        return False
-    if name in ("README.md", "pyproject.toml", "pytest.ini", "setup.cfg", "AGENTS.md"):
-        return True
-    if not name.startswith(("src/", "scripts/", "tests/", "configs/")):
-        return False
-    return all(not part.startswith(".") for part in p.parts) and p.suffix.lower() in {".py", ".pyi", ".toml", ".md", ".txt", ".yaml", ".yml", ".json", ".ini", ".cfg", ".sh", ".ps1"}
+    return safe_path(name)
 
 
 def install(commit: str) -> None:
+    if not REV.fullmatch(commit):
+        raise ValueError("Invalid commit")
     archive = INBOX / f"{commit}.tar"
     manifest = INBOX / f"{commit}.json"
-    if not archive.is_file() or not manifest.is_file() or archive.stat().st_size > 40 * 1024 * 1024 or manifest.stat().st_size > 512 * 1024:
+    if archive.is_symlink() or manifest.is_symlink() or not archive.is_file() or not manifest.is_file() or archive.stat().st_size > 40 * 1024 * 1024 or manifest.stat().st_size > 512 * 1024:
         raise ValueError("Missing or oversized upload")
-    meta = json.loads(manifest.read_text(encoding="utf-8"))
-    if set(meta) != {"schema_version", "commit", "archive_sha256", "files"} or meta["schema_version"] != 1 or meta["commit"] != commit:
+    meta = parse_json(bounded_read(manifest, 512 * 1024))
+    if not isinstance(meta, dict) or set(meta) != {"schema_version", "commit", "archive_sha256", "files"} or type(meta["schema_version"]) is not int or meta["schema_version"] != 1 or meta["commit"] != commit:
         raise ValueError("Invalid release manifest")
     if not isinstance(meta["files"], list) or not 0 < len(meta["files"]) <= MAX_FILES:
         raise ValueError("Invalid file count")
-    if digest(archive.read_bytes()) != meta["archive_sha256"]:
+    archive_bytes = bounded_read(archive, 40 * 1024 * 1024)
+    if digest(archive_bytes) != meta["archive_sha256"]:
         raise ValueError("Archive SHA-256 mismatch")
     expected = {}
     total = 0
@@ -72,23 +81,30 @@ def install(commit: str) -> None:
     scratch = Path(tempfile.mkdtemp(prefix="staging-", dir=RELEASES))
     try:
         actual = set()
-        with tarfile.open(archive, "r:") as tf:
-            members = tf.getmembers()
-            if len(members) != len(expected):
-                raise ValueError("Unexpected TAR entry count")
-            for member in members:
-                if not member.isfile() or not valid_path(member.name) or member.name in actual or member.name not in expected:
+        offset = 0
+        with tarfile.open(fileobj=io.BytesIO(archive_bytes), mode="r:") as tf:
+            for member in tf:
+                if len(actual) >= len(expected) or member.type != tarfile.REGTYPE or member.pax_headers or member.linkname or not valid_path(member.name) or member.name in actual or member.name not in expected:
                     raise ValueError("Unsafe TAR member")
                 size, sha = expected[member.name]
                 if member.size != size:
                     raise ValueError("TAR member size mismatch")
+                canonical = tarfile.TarInfo(member.name)
+                canonical.size = size
+                canonical.mode = 0o644
+                if member.offset != offset or member.offset_data != offset + 512 or archive_bytes[offset:offset + 512] != canonical.tobuf(format=tarfile.USTAR_FORMAT):
+                    raise ValueError("Noncanonical TAR metadata")
+                end = member.offset_data + size
+                offset = member.offset_data + ((size + 511) // 512) * 512
+                if any(archive_bytes[end:offset]):
+                    raise ValueError("Nonzero TAR member padding")
                 stream = tf.extractfile(member)
                 if stream is None:
                     raise ValueError("Missing member bytes")
                 payload = stream.read(MAX_FILE + 1)
                 if len(payload) != size or digest(payload) != sha:
                     raise ValueError("TAR member checksum mismatch")
-                if payload.startswith(BLOCK_MAGIC) or b"\x00" in payload[:4096] or b"-----BEGIN OPENSSH PRIVATE KEY" in payload:
+                if text_failure(payload, member.name):
                     raise ValueError("Forbidden binary or credential content")
                 output = scratch / member.name
                 output.parent.mkdir(parents=True, exist_ok=True)
@@ -96,22 +112,33 @@ def install(commit: str) -> None:
                     f.write(payload)
                 output.chmod(0o644)
                 actual.add(member.name)
+        if len(archive_bytes) % tarfile.RECORDSIZE or len(archive_bytes) - offset < 1024 or any(archive_bytes[offset:]):
+            raise ValueError("Noncanonical TAR trailer")
         if actual != set(expected):
             raise ValueError("Missing files")
         scratch.rename(target)
     finally:
         if scratch.exists():
+            if scratch.is_symlink() or scratch.parent.resolve() != RELEASES.resolve() or not scratch.name.startswith("staging-"):
+                raise ValueError("Unexpected staging cleanup path")
             shutil.rmtree(scratch)
     print(json.dumps({"installed": True, "commit": commit, "file_count": len(expected)}))
 
 
-def syntax(commit: str) -> None:
+def syntax(commit: str) -> dict:
+    if not REV.fullmatch(commit):
+        raise ValueError("Invalid commit")
     folder = RELEASES / commit
     if not folder.is_dir() or folder.is_symlink():
         raise ValueError("Unknown release")
-    pyfiles = sorted(folder.rglob("*.py"))
-    if len(pyfiles) > MAX_FILES:
-        raise ValueError("Too many Python files")
+    pyfiles = []
+    for path in folder.rglob("*.py"):
+        pyfiles.append(path)
+        if len(pyfiles) > MAX_FILES:
+            raise ValueError("Too many Python files")
+    if not pyfiles:
+        raise ValueError("No Python files")
+    pyfiles.sort()
     issues = []
     passed = failed = 0
     for p in pyfiles:
@@ -121,23 +148,85 @@ def syntax(commit: str) -> None:
         line = 0
         kind = ""
         try:
-            if p.is_symlink() or p.stat().st_size > MAX_FILE:
+            if p.is_symlink():
+                kind = "FileError"
+            elif p.stat().st_size > MAX_FILE:
                 kind = "Oversize"
             else:
-                ast.parse(p.read_text(encoding="utf-8"), filename=relative)
+                ast.parse(bounded_read(p, MAX_FILE).decode("utf-8-sig"), filename=relative)
         except SyntaxError as exc:
             kind, line = "SyntaxError", int(exc.lineno or 0)
         except UnicodeError:
             kind = "UnicodeError"
         except OSError:
             kind = "FileError"
+        except ValueError:
+            kind = "Oversize"
         if kind:
             failed += 1
             if len(issues) < 30:
                 issues.append({"path": relative, "line": line, "kind": kind})
         else:
             passed += 1
-    data = {"schema_version": 1, "commit": commit, "kind": "ast_syntax", "status": "passed" if failed == 0 else "failed", "file_count": passed + failed, "passed": passed, "failed": failed, "generated_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "issues": issues}
+    data = make_report(commit, "ast_syntax", passed, failed, 0, issues)
+    save_report(data)
+    return data
+
+
+def synthetic_limits() -> None:
+    import resource
+    for limit, bound in ((resource.RLIMIT_CPU, 60), (resource.RLIMIT_AS, 256 * 1024 * 1024), (resource.RLIMIT_FSIZE, 2 * 1024 * 1024), (resource.RLIMIT_NOFILE, 64), (resource.RLIMIT_NPROC, 64)):
+        resource.setrlimit(limit, (bound, bound))
+
+
+def synthetic(commit: str) -> dict:
+    if sys.platform != "linux" or os.geteuid() == 0 or not REV.fullmatch(commit):
+        raise ValueError("Synthetic LAB execution requires an approved non-root Linux session")
+    folder = RELEASES / commit
+    test_file = folder / "scripts/lab/selftest.py"
+    if not folder.is_dir() or not test_file.is_file() or any(path.is_symlink() for path in (folder, folder / "scripts", folder / "scripts/lab", test_file)):
+        raise ValueError("Missing reviewed synthetic test release")
+    with tempfile.TemporaryDirectory(prefix="malpdf-synthetic-") as temporary, tempfile.TemporaryFile() as output, tempfile.TemporaryFile() as errors:
+        env = {"PATH": "/usr/bin:/bin", "LANG": "C.UTF-8", "HOME": temporary, "TMPDIR": temporary, "GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": "/dev/null", "GIT_TERMINAL_PROMPT": "0"}
+        with subprocess.Popen(["/usr/bin/python3", "-Es", "-B", str(test_file), "--json"], cwd=folder, env=env, stdin=subprocess.DEVNULL, stdout=output, stderr=errors, start_new_session=True, preexec_fn=synthetic_limits) as process:
+            timed_out = False
+            try:
+                code = process.wait(timeout=90)
+            except subprocess.TimeoutExpired:
+                timed_out = True
+                os.killpg(process.pid, signal.SIGKILL)
+                code = process.wait()
+        output.seek(0)
+        raw = output.read(16_385)
+    kind = "Timeout" if timed_out else "TestError"
+    counts = {"total": 1, "passed": 0, "failed": 1, "skipped": 0}
+    try:
+        candidate = parse_json(raw)
+        if len(raw) > 16_384 or not isinstance(candidate, dict) or set(candidate) != set(counts):
+            raise ValueError("Invalid synthetic summary")
+        if any(type(value) is not int or not 0 <= value <= MAX_FILES for value in candidate.values()):
+            raise ValueError("Invalid synthetic counts")
+        if not candidate["total"] or candidate["passed"] + candidate["failed"] + candidate["skipped"] != candidate["total"] or code != (1 if candidate["failed"] else 0):
+            raise ValueError("Inconsistent synthetic result")
+        counts = candidate
+        kind = "AssertionFailure"
+    except (ValueError, RecursionError):
+        pass
+    issues = [{"path": "scripts/lab/selftest.py", "line": 0, "kind": kind} for _ in range(min(counts["failed"], 30))]
+    data = make_report(commit, "synthetic_security", counts["passed"], counts["failed"], counts["skipped"], issues)
+    save_report(data)
+    return data
+
+
+def make_report(commit: str, kind: str, passed: int, failed: int, skipped: int, issues: list[dict]) -> dict:
+    now = datetime.now(timezone.utc)
+    data = {"schema_version": 2, "commit": commit, "run_id": now.strftime("%Y%m%dT%H%M%SZ_") + uuid.uuid4().hex[:16], "kind": kind, "status": "failed" if failed else "partial" if skipped else "passed", "file_count": passed + failed + skipped, "passed": passed, "failed": failed, "skipped": skipped, "generated_utc": now.strftime("%Y-%m-%dT%H:%M:%SZ"), "environment": {"system": sys.platform, "python": ".".join(str(v) for v in sys.version_info[:3]), "isolation": "not_verified", "dependencies": "not_checked"}, "issues": issues}
+    return validate_report(data, commit)
+
+
+def save_report(data: dict) -> None:
+    commit = data["commit"]
+    validate_report(data, commit)
     REPORTS.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(prefix="result-", suffix=".json", dir=REPORTS)
     try:
@@ -145,24 +234,30 @@ def syntax(commit: str) -> None:
             json.dump(data, f, separators=(",", ":"))
             f.write("\n")
         os.chmod(tmp, 0o640)
+        historical = REPORTS / f"{commit}_{data['run_id']}.json"
+        with historical.open("xb") as history:
+            history.write(Path(tmp).read_bytes())
+        historical.chmod(0o640)
         os.replace(tmp, REPORTS / f"{commit}.json")
     finally:
         if os.path.exists(tmp):
             os.unlink(tmp)
-    print(json.dumps({"report_ready": True, "commit": commit, "kind": "ast_syntax", "status": data["status"], "failed": failed}))
+    print(json.dumps({"report_ready": True, "commit": commit, "kind": data["kind"], "status": data["status"], "failed": data["failed"]}))
 
 
 def main() -> int:
-    if len(sys.argv) != 3 or sys.argv[1] not in ("install", "syntax") or not REV.fullmatch(sys.argv[2]):
-        print("Usage: lab_side.py {install|syntax} <full-commit-sha>", file=sys.stderr)
+    if len(sys.argv) != 3 or sys.argv[1] not in ("install", "syntax", "synthetic") or not REV.fullmatch(sys.argv[2]):
+        print("Usage: lab_side.py {install|syntax|synthetic} <full-commit-sha>", file=sys.stderr)
         return 2
     try:
         if sys.argv[1] == "install":
             install(sys.argv[2])
+        elif sys.argv[1] == "syntax":
+            return 1 if syntax(sys.argv[2])["failed"] else 0
         else:
-            syntax(sys.argv[2])
+            return 1 if synthetic(sys.argv[2])["failed"] else 0
         return 0
-    except (OSError, ValueError, tarfile.TarError, json.JSONDecodeError) as exc:
+    except (OSError, ValueError, RecursionError, tarfile.TarError, subprocess.SubprocessError) as exc:
         print(f"LAB operation refused: {type(exc).__name__}", file=sys.stderr)
         return 1
 

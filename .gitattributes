@@ -3,3 +3,6 @@ reports/experiments/**/*.csv -text whitespace=cr-at-eol
 
 # Canonical Git encoding for the new development study; working evidence is preserved.
 reports/experiments/static_development_*/**/*.csv text eol=lf
+
+.githooks/pre-commit text eol=lf
+scripts/lab/*.sh text eol=lf

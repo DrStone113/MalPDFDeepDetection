@@ -6,6 +6,7 @@ The [project README](../README.md) provides the overview and navigation.
 | Start here | Contents |
 | --- | --- |
 | [Development environment](development.md) | Python versions, installation, Codespaces, and handoff checks |
+| [Windows DEV and REMnux LAB](windows_lab_workflow.md) | Source packages, restricted audit SSH, approvals, synthetic checks, sanitized reports and rollback |
 | [Workspace layout](workspace_layout.md) | Directory ownership, generated notebooks, maintenance storage, and legacy path contracts |
 | [Research workflows](workflows.md) | Cohort preparation, Markov caches, Vision, fusion/stacking, Protocol P/G, static inspection, and offline report parsing |
 | [PDF extraction implementation](pdf_extraction.md) | Evidence/feature/coverage contracts, static profiles, plan progress and guarded offline CIC jobs |
