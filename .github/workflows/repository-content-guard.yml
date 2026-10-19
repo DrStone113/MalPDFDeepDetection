@@ -1,0 +1,25 @@
+name: Repository content guard
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  repository-content-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository with trusted baseline history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate indexed source tree against original branch baseline
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [[ ! "$BASE_REF" =~ ^[0-9a-f]{40}$ ]] || [[ "$BASE_REF" =~ ^0{40}$ ]]; then
+            echo 'Missing trusted baseline commit. Manual review required.' >&2
+            exit 1
+          fi
+          python3 scripts/security/check_repo_content.py --baseline-ref "$BASE_REF"
