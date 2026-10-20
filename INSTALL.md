@@ -1,5 +1,8 @@
 # Windows DEV and REMnux LAB workflow
 
+Daily commands: `.\lab.ps1 status|prepare|test|report`; offline REMnux:
+`lab status|run|report|menu`. Start with the [short LAB Runner guide](docs/lab_runner.md).
+
 Run development from `C:\Project\MalPDFDeepDetection` on Windows. Read
 [AGENTS.md](AGENTS.md) and the [operating and rollback guide](docs/windows_lab_workflow.md)
 before using any LAB command.
@@ -68,3 +71,11 @@ synthetic check runs only the reviewed offline security self-tests with bounds;
 it does not run project pytest or real samples. Real-PDF analysis is a separate,
 manifested and isolated Level 3 workflow. See the operating guide for the exact
 commands, sanitized report schema, approval batch and rollback procedure.
+
+## LAB Runner
+
+Giao diện vận hành ngắn: `.\lab.ps1 status|prepare|test|report` trên Windows;
+`lab status|run|report|menu` tại console REMnux sau setup được duyệt.
+Xem [hướng dẫn một lệnh](docs/lab_runner.md) cho cài một lần, mode Host-only và
+mode ngắt toàn bộ mạng. Source implementation cần được cài/kiểm chứng trên LAB;
+không tự thay quyền SSH, bật mạng hoặc chạy PDF thật khi cài.

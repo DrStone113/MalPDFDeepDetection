@@ -21,7 +21,8 @@ REPORT_OUT = Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "MalPDFDee
 ADMIN = "remnux@192.168.217.10"
 READ = "remnux-lab-audit"
 PUBLIC_KEY = Path.home() / ".ssh/id_ed25519_malpdf_audit.pub"
-BOOTSTRAP_FILES = ("lab_contract.py", "lab_readonly.py", "lab_side.py", "setup_readonly.sh")
+BOOTSTRAP_FILES = ("lab_contract.py", "lab_readonly.py", "lab_side.py", "setup_readonly.sh",
+                   "lab_jobs.py", "lab_runner.py", "setup_runner.sh", "check_local.py", "lab_guard.py")
 SSH = str(Path(os.environ.get("WINDIR", "C:/Windows")) / "System32/OpenSSH/ssh.exe") if os.name == "nt" else "ssh"
 SSH_SECURITY = ["-F", "none", "-a", "-x", "-o", "ClearAllForwardings=yes", "-o", "ForwardAgent=no", "-o", "ForwardX11=no", "-o", "StrictHostKeyChecking=yes", "-o", "PermitLocalCommand=no", "-o", "RequestTTY=no", "-o", "ControlMaster=no", "-o", "ConnectTimeout=5", "-o", "ConnectionAttempts=1", "-o", "ServerAliveInterval=5", "-o", "ServerAliveCountMax=1"]
 AUDIT_SECURITY = [*SSH_SECURITY, "-o", "HostName=192.168.217.10", "-o", "User=malpdf-audit", "-o", "Port=22", "-o", "BatchMode=yes", "-o", "IdentitiesOnly=yes", "-o", "IdentityAgent=none", "-o", "PasswordAuthentication=no", "-o", "KbdInteractiveAuthentication=no", "-i", str(Path.home() / ".ssh/id_ed25519_malpdf_audit")]
@@ -146,7 +147,7 @@ def bootstrap(commit: str | None = None) -> Path:
     contents = dict(source_files(commit))
     files = {}
     for name in BOOTSTRAP_FILES:
-        source = "scripts/lab/" + name
+        source = "src/malpdf/static/lab_guard.py" if name == 'lab_guard.py' else "scripts/lab/" + name
         if source not in contents:
             raise ValueError("Commit lacks the complete reviewed bootstrap")
         files[name] = contents[source]
@@ -261,6 +262,9 @@ def report(commit: str, save: bool) -> None:
 
 
 def main() -> int:
+    if len(sys.argv) > 1 and sys.argv[1] == 'workflow':
+        from lab_windows import main as workflow_main
+        return workflow_main(sys.argv[2:])
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("prepare", help="Package committed allowlisted source locally; default requires clean HEAD")

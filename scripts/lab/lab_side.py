@@ -45,6 +45,47 @@ def valid_path(name: str) -> bool:
     return safe_path(name)
 
 
+def verify_release(commit: str, manifest_sha256: str) -> dict:
+    if not REV.fullmatch(commit):
+        raise ValueError('release_mismatch')
+    if any(path.is_symlink() for path in (INBOX, *INBOX.parents)):
+        raise ValueError('manifest_unavailable')
+    try:
+        raw = bounded_read(INBOX / f'{commit}.json', 512 * 1024)
+    except OSError:
+        raise ValueError('manifest_unavailable') from None
+    if digest(raw) != manifest_sha256:
+        raise ValueError('release_mismatch')
+    meta = parse_json(raw)
+    if not isinstance(meta, dict) or set(meta) != {'schema_version', 'commit', 'archive_sha256', 'files'} or type(meta['schema_version']) is not int or meta['schema_version'] != 1 or meta['commit'] != commit or not isinstance(meta['files'], list):
+        raise ValueError('release_mismatch')
+    folder = RELEASES / commit
+    if folder.is_symlink() or not folder.is_dir() or not 0 < len(meta['files']) <= MAX_FILES:
+        raise ValueError('release_mismatch')
+    expected = set()
+    total = 0
+    for entry in meta['files']:
+        if not isinstance(entry, dict) or set(entry) != {'path', 'size', 'sha256'} or not valid_path(entry['path']) or entry['path'] in expected:
+            raise ValueError('release_mismatch')
+        path = folder / entry['path']
+        if any(part.is_symlink() for part in (path, *path.parents)) or type(entry['size']) is not int or not 0 <= entry['size'] <= MAX_FILE:
+            raise ValueError('release_mismatch')
+        payload = bounded_read(path, MAX_FILE)
+        if len(payload) != entry['size'] or digest(payload) != entry['sha256'] or text_failure(payload, entry['path']):
+            raise ValueError('release_mismatch')
+        expected.add(entry['path'])
+        total += len(payload)
+    actual = set()
+    for path in folder.rglob('*'):
+        if path.is_symlink() or not path.is_file() and not path.is_dir():
+            raise ValueError('release_mismatch')
+        if path.is_file():
+            actual.add(path.relative_to(folder).as_posix())
+    if actual != expected or total > MAX_TOTAL:
+        raise ValueError('release_mismatch')
+    return meta
+
+
 def install(commit: str) -> None:
     if not REV.fullmatch(commit):
         raise ValueError("Invalid commit")
@@ -196,6 +237,10 @@ def synthetic(commit: str) -> dict:
                 timed_out = True
                 os.killpg(process.pid, signal.SIGKILL)
                 code = process.wait()
+            except BaseException:
+                os.killpg(process.pid, signal.SIGKILL)
+                process.wait(timeout=5)
+                raise
         output.seek(0)
         raw = output.read(16_385)
     kind = "Timeout" if timed_out else "TestError"

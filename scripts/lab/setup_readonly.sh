@@ -23,7 +23,7 @@ for NAME in lab_readonly.py lab_side.py lab_contract.py; do
     exit 1
   fi
 done
-KEY=$(/usr/bin/python3 -Es - "$KEY_FILE" "$SOURCE_DIR" <<'PY'
+KEY=$(/usr/bin/python3 -Es -B - "$KEY_FILE" "$SOURCE_DIR" <<'PY'
 from pathlib import Path
 import sys
 sys.path.insert(0, sys.argv[2])

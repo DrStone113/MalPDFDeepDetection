@@ -325,9 +325,12 @@ class SecurityTests(unittest.TestCase):
                 if not source.is_file() or source.suffix not in (".py", ".sh"):
                     continue
                 shutil.copyfile(source, destination / source.name)
+        destination = root / 'src/malpdf/static/lab_guard.py'
+        destination.parent.mkdir(parents=True)
+        shutil.copyfile(HERE.parents[1] / 'src/malpdf/static/lab_guard.py', destination)
         (root / "scripts/security/needle.py").write_bytes(b"needle = " + repr(key_header()).encode("ascii") + b"\n")
         (root / ".gitignore").write_text("data/\n__pycache__/\n", encoding="utf-8")
-        git("add", ".gitignore", "scripts")
+        git("add", ".gitignore", "scripts", "src")
         git("commit", "-qm", "Synthetic source-only regression")
         (root / "data/raw").mkdir(parents=True)
         (root / "data/raw/inert.pdf").write_bytes(b"%PDF-1.7\n")
@@ -378,7 +381,9 @@ def main() -> int:
     parser.add_argument("--json", action="store_true", help="Emit counts and fixed error descriptors only")
     args = parser.parse_args()
     stream = io.StringIO() if args.json else sys.stderr
-    result = unittest.TextTestRunner(stream=stream, verbosity=1).run(unittest.defaultTestLoader.loadTestsFromTestCase(SecurityTests))
+    from selftest_workflow import WorkflowTests
+    suite = unittest.TestSuite([unittest.defaultTestLoader.loadTestsFromTestCase(SecurityTests), unittest.defaultTestLoader.loadTestsFromTestCase(WorkflowTests)])
+    result = unittest.TextTestRunner(stream=stream, verbosity=1).run(suite)
     failed = len({getattr(test, "test_case", test).id() for test, _ in (*result.failures, *result.errors)})
     skipped = len(result.skipped)
     obj = {"total": result.testsRun, "passed": result.testsRun - failed - skipped, "failed": failed, "skipped": skipped}

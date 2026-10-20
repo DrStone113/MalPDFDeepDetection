@@ -158,6 +158,15 @@ def validate_report(obj: object, expected_rev: str) -> dict:
 
 def validate_status(obj: object) -> dict:
     expected = {"schema_version": 1, "role": "malpdf-audit", "connection": "read-only-command-gate"}
+    if isinstance(obj, dict) and type(obj.get('schema_version')) is int and obj['schema_version'] == 2:
+        if set(obj) != {*expected, 'runner'} or obj['role'] != expected['role'] or obj['connection'] != expected['connection']:
+            raise ValueError('Invalid runner status')
+        runner = obj['runner']
+        if not isinstance(runner, dict) or set(runner) != {'api', 'installed', 'host_only_ready', 'offline_guest_ready', 'reason'} or type(runner['api']) is not int or runner['api'] != 1:
+            raise ValueError('Invalid runner capability')
+        if any(type(runner[name]) is not bool for name in ('installed', 'host_only_ready', 'offline_guest_ready')) or runner['reason'] not in (None, 'network_blocked'):
+            raise ValueError('Invalid runner capability')
+        return obj
     if not isinstance(obj, dict) or obj != expected or type(obj.get("schema_version")) is not int:
         raise ValueError("Invalid audit status")
     return expected

@@ -21,7 +21,8 @@ def check(payload: object, sha: str) -> dict:
 def main() -> int:
     command = os.environ.get("SSH_ORIGINAL_COMMAND", "")
     if command == "status":
-        print(json.dumps({"schema_version": 1, "role": "malpdf-audit", "connection": "read-only-command-gate"}))
+        from lab_jobs import probe
+        print(json.dumps({"schema_version": 2, "role": "malpdf-audit", "connection": "read-only-command-gate", 'runner': probe()}))
         return 0
     if command.startswith("report "):
         sha = command[7:]

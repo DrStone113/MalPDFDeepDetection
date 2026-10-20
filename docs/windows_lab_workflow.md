@@ -1,5 +1,8 @@
 # Windows DEV to REMnux LAB operations
 
+For daily use, start with the [short LAB Runner guide](lab_runner.md). The new
+facades reuse these contracts; legacy commands below remain for compatibility.
+
 Windows is the source of truth. REMnux receives a reviewed committed source
 release and exports only bounded, schema-validated observations. Existing
 datasets, checkpoints, source evidence, releases and Python environments are
@@ -275,3 +278,14 @@ Before a real-PDF run, separately approve the actual VM/adapter/route/shared
 folder/clipboard controls, sample manifest, non-root command, output schema,
 byte/nesting/CPU/RAM/file/process/time limits and snapshot/recovery plan.
 `MALPDF_LAB_ISOLATED=1`, Host-only networking or an AST pass alone is insufficient.
+
+## Simplified daily interface
+
+The [LAB Runner guide](lab_runner.md) provides `lab.ps1 status/prepare/test/report`
+and offline `lab status/run/report/menu`. Its implementation reuses the existing
+helpers. After a separately approved one-time setup, the operator confirms one
+computed source/job batch instead of typing SHAs or SSH commands. The legacy
+`deploy` command below retains its full-SHA confirmation. Bootstrap now includes
+the runner helpers and the trusted guest guard,11 files including public key and
+manifest; the old six-file description records the original workflow.
+No new code is installed on LAB merely by editing this repository.

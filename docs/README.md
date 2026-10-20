@@ -5,6 +5,7 @@ The [project README](../README.md) provides the overview and navigation.
 
 | Start here | Contents |
 | --- | --- |
+| [LAB Runner: one-command operation](lab_runner.md) | Windows `lab.ps1`, offline menu, one-time setup and approval boundaries |
 | [Development environment](development.md) | Python versions, installation, Codespaces, and handoff checks |
 | [Windows DEV and REMnux LAB](windows_lab_workflow.md) | Source packages, restricted audit SSH, approvals, synthetic checks, sanitized reports and rollback |
 | [Workspace layout](workspace_layout.md) | Directory ownership, generated notebooks, maintenance storage, and legacy path contracts |
