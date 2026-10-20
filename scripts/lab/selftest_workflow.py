@@ -145,12 +145,15 @@ class WorkflowTests(unittest.TestCase):
     def test_receiver_queues_offline_job_without_running_it(self):
         job, archive, manifest = self.release()
         data = windows.packet(job, archive, manifest)
-        with patch.object(jobs, 'config'), patch.object(jobs, 'preflight'), patch.object(jobs, 'execute') as execute:
+        queued = jobs.result(job, 'queued')
+        later = {**queued, 'generated_utc': '2099-01-01T00:00:00Z'}
+        with patch.object(jobs, 'config'), patch.object(jobs, 'preflight'), patch.object(jobs, 'execute') as execute, patch.object(jobs, 'result', side_effect=[queued, later]) as result:
             value = runner.receive(io.BytesIO(data), job['job_id'])
             repeated = runner.receive(io.BytesIO(data), job['job_id'])
         self.assertEqual(value['status'], 'queued')
         self.assertEqual(value, repeated)
         execute.assert_not_called()
+        result.assert_called_once()
         self.assertEqual(jobs.pending(), [job])
 
     def test_receiver_rejects_checksum_corruption_and_oversized_frames(self):

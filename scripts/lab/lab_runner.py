@@ -62,6 +62,8 @@ def receive(stream, expected_id):
         return jobs.read_result(job['job_id'])
     if (directory / 'claim.json').exists():
         raise ValueError('already_claimed')
+    if (directory / 'queued.json').exists():
+        return jobs.read_result(job['job_id'])
     if job['mode'] == 'offline':
         if job['kind'] == 'pdf-static':
             pdf_prepare(job, directory)
