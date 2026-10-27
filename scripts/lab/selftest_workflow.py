@@ -20,6 +20,7 @@ import lab_jobs as jobs
 import lab_runner as runner
 import lab_side as side
 import lab_windows as windows
+import gateway_client as client
 
 
 class Terminal(io.StringIO):
@@ -34,11 +35,16 @@ class WorkflowTests(unittest.TestCase):
         self.base = Path(temporary.name)
         for module, attributes in ((jobs, {'JOBS': self.base / 'jobs'}),
             (side, {'INBOX': self.base / 'inbox', 'RELEASES': self.base / 'releases', 'REPORTS': self.base / 'reports'}),
-            (windows, {'STATE': self.base / 'windows'})):
+            (windows, {'STATE': self.base / 'windows'}),
+            (client, {'STATE': self.base / 'gateway'})):
             for key, value in attributes.items():
                 handle = patch.object(module, key, value)
                 handle.start()
                 self.addCleanup(handle.stop)
+        for module, name in ((client.ctl, 'audit_request'), (client, 'exchange')):
+            handle = patch.object(module, name, side_effect=AssertionError('Unexpected LAB transport in an offline unit test'))
+            handle.start()
+            self.addCleanup(handle.stop)
         self.job = jobs.make_job('a' * 40, 'b' * 64, 'c' * 64)
 
     def environment(self, mode='host-only'):
@@ -106,7 +112,8 @@ class WorkflowTests(unittest.TestCase):
     def test_pdf_summary_preserves_denominators_and_requires_offline_attestation(self):
         job = jobs.make_job('a' * 40, 'b' * 64, 'c' * 64, kind='pdf-static', mode='offline')
         summary = {'planned': 64, 'completed': 63, 'observed': 1, 'partial': 60, 'failed': 2,
-            'primary_available': 63, 'timeout': 1, 'elapsed_ms': 1000, 'peak_rss_bytes': 123456}
+            'primary_available': 63, 'timeout': 1, 'elapsed_ms': 1000, 'peak_rss_bytes': 123456,
+            'status_counts': {'observed': 1, 'partial': 60, 'decode_error': 1, 'timeout': 1}}
         value = jobs.result(job, 'partial', summary=summary, environment=self.environment('offline'))
         with self.assertRaises(ValueError):
             jobs.validate_result({**value, 'status': 'passed'}, job)
@@ -171,12 +178,14 @@ class WorkflowTests(unittest.TestCase):
         self.assertFalse(side.INBOX.exists())
 
     def test_pdf_queue_prepares_metadata_without_executing_pdf(self):
-        job, archive, manifest = self.release(kind='pdf-static')
-        with patch.object(jobs, 'config'), patch.object(jobs, 'preflight'), patch.object(runner, 'pdf_prepare') as prepare, patch.object(jobs, 'pdf_task') as run:
-            value = runner.receive(io.BytesIO(windows.packet(job, archive, manifest)), job['job_id'])
-        prepare.assert_called_once()
-        run.assert_not_called()
-        self.assertEqual(value['status'], 'queued')
+        for kind in sorted(jobs.PDF_KINDS):
+            with self.subTest(kind=kind):
+                job, archive, manifest = self.release(kind=kind)
+                with patch.object(jobs, 'config'), patch.object(jobs, 'preflight'), patch.object(runner, 'pdf_prepare') as prepare, patch.object(jobs, 'pdf_task') as run:
+                    value = runner.receive(io.BytesIO(windows.packet(job, archive, manifest)), job['job_id'])
+                prepare.assert_called_once()
+                run.assert_not_called()
+                self.assertEqual(value['status'], 'queued')
 
     def test_execute_uses_existing_checks_and_completed_job_is_idempotent(self):
         job = self.installed(mode='host-only', kind='synthetic')
@@ -282,6 +291,16 @@ class WorkflowTests(unittest.TestCase):
             self.assertEqual(windows.main(['report', '--refresh']), 2)
         exchange.assert_not_called()
 
+    def test_explicit_offline_report_ignores_a_cached_gateway_job(self):
+        job = jobs.make_job('a' * 40, 'b' * 64, 'c' * 64, mode='offline', kind='pdf-static')
+        windows.save_pending(job)
+        client.STATE.mkdir()
+        (client.STATE / 'last.json').write_bytes(b'cache must not be read in offline mode')
+        with redirect_stdout(io.StringIO()), patch.object(client, 'main') as gateway_main, patch.object(windows, 'exchange') as exchange:
+            self.assertEqual(windows.main(['report', '--mode', 'offline', '--refresh']), 2)
+        gateway_main.assert_not_called()
+        exchange.assert_not_called()
+
     def test_pdf_worker_requires_console_claim_before_source_import(self):
         job = jobs.make_job('a' * 40, 'b' * 64, 'c' * 64, mode='offline', kind='pdf-static')
         jobs.save_job(job)
@@ -358,12 +377,9 @@ class WorkflowTests(unittest.TestCase):
 
     def test_installer_preflight_and_embedded_python_are_reviewable_without_root(self):
         source = (HERE / 'setup_runner.sh').read_text(encoding='utf-8')
-        snippets = re.findall(r"<<'PY'\r?\n(.*?)\r?\nPY", source, re.S)
-        self.assertEqual(len(snippets), 2)
-        for snippet in snippets:
-            ast.parse(snippet)
-        self.assertLess(source.index('if [ "$ACTION" = --check ]'), source.index('install -d'))
-        self.assertIn('/usr/bin/python3 -Es -B -', source)
+        ast.parse((HERE / 'setup_runner.py').read_text(encoding='utf-8'))
+        self.assertIn('exec /usr/bin/python3 -Es -B', source)
+        self.assertIn('setup_runner.py', source)
         self.assertIn('/usr/bin/python3 -Es -B -', (HERE / 'setup_readonly.sh').read_text(encoding='utf-8'))
 
     def test_different_installed_helper_version_blocks_before_upload(self):

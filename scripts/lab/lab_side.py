@@ -216,7 +216,7 @@ def syntax(commit: str) -> dict:
 
 def synthetic_limits() -> None:
     import resource
-    for limit, bound in ((resource.RLIMIT_CPU, 60), (resource.RLIMIT_AS, 256 * 1024 * 1024), (resource.RLIMIT_FSIZE, 2 * 1024 * 1024), (resource.RLIMIT_NOFILE, 64), (resource.RLIMIT_NPROC, 64)):
+    for limit, bound in ((resource.RLIMIT_CPU, 60), (resource.RLIMIT_AS, 256 * 1024 * 1024), (resource.RLIMIT_FSIZE, 2 * 1024 * 1024), (resource.RLIMIT_NOFILE, 64), (resource.RLIMIT_NPROC, 2048)):
         resource.setrlimit(limit, (bound, bound))
 
 

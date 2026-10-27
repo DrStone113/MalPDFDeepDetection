@@ -31,7 +31,8 @@ FIXES = {'setup_required': 'Run the reviewed one-time LAB installer from its con
     'already_claimed': 'Use report to inspect this job; automatic retries are disabled.',
     'dependency_mismatch': 'Review the existing LAB Python/dependency environment; no packages were installed.',
     'approval_required': 'Run test yourself in a separate interactive Windows terminal.',
-    'ssh_unavailable': 'Check the approved connection at the console; networking is never changed automatically.'}
+    'ssh_unavailable': 'Check the approved connection at the console; networking is never changed automatically.',
+    'audit_response_invalid': 'The audit response failed schema validation. Preserve the installed helper and review it at the console; no raw response is displayed.'}
 
 
 def packet(job, archive, manifest):
@@ -136,13 +137,18 @@ def save_result(value, job):
 def test(*, mode, kind):
     if not sys.stdin.isatty() or not sys.stdout.isatty():
         raise ValueError('approval_required')
-    if kind == 'pdf-static' and mode != 'offline':
+    if kind in jobs.PDF_KINDS and mode != 'offline':
         raise ValueError('job_mismatch')
-    ctl.clean_repo()
+    if mode != 'offline':
+        ctl.clean_repo()
     ctl.run([sys.executable, str(ctl.REPO / 'scripts/lab/check_local.py'), '--save'], capture=True)
     with redirect_stdout(io.StringIO()):
-        commit, archive, manifest = ctl.prepare()
-    print('PASS: local source, security and dependency checks; committed package verified.')
+        if mode == 'offline':
+            from gateway_snapshot import prepare as snapshot_prepare
+            commit, archive, manifest, _ = snapshot_prepare(normalize=True)
+        else:
+            commit, archive, manifest = ctl.prepare()
+    print('PASS: local source, security and dependency checks; immutable package verified.')
     code, raw = ctl.audit_request('status')
     if code:
         raise ValueError('ssh_unavailable')
@@ -152,18 +158,29 @@ def test(*, mode, kind):
     if not status['runner']['host_only_ready']:
         raise ValueError('network_blocked')
     meta = parse_json(manifest.read_bytes())
-    job = jobs.make_job(commit, meta['archive_sha256'], jobs.sha(manifest.read_bytes()), mode=mode, kind=kind)
+    if mode == 'offline':
+        from offline_prepare import make_job
+        job = make_job(commit, manifest, meta, kind)
+    else:
+        job = jobs.make_job(commit, meta['archive_sha256'], jobs.sha(manifest.read_bytes()), mode=mode, kind=kind)
     payload = packet(job, archive, manifest)
     print(json.dumps({'job_id': job['job_id'], 'commit': commit, 'files': len(meta['files']),
         'archive_sha256': job['archive_sha256'], 'kind': kind, 'mode': mode, 'limits': job['limits'],
         'actions': ['upload_source', 'verify_release', 'queue_offline_job' if mode == 'offline' else 'syntax_and_reviewed_test', 'return_filtered_json'],
         'pdf_execution_now': False, 'dependencies': 'stdlib for syntax/synthetic; full declared stack rechecked by offline PDF preparation'}))
     print('Approve this source/job and filtered JSON return. Hypervisor settings require your review; no networking is changed.')
-    if kind == 'pdf-static':
-        print('Separate PDF approval: fixed seed42 CIC 32 Train + 32 Validation; no Test. Queue metadata now, execute only offline after console approval.')
+    if kind in jobs.PDF_KINDS:
+        from offline_prepare import cohort_contract
+        print(json.dumps({'separate_pdf_approval': cohort_contract(kind), 'queue_metadata_only': True}, sort_keys=True))
     if input('Approve this batch? [y/N]: ').strip().lower() != 'y':
         raise ValueError('approval_required')
-    ctl.clean_repo()
+    if mode == 'offline':
+        with redirect_stdout(io.StringIO()):
+            checked_commit, checked_archive, checked_manifest, _ = snapshot_prepare(normalize=True)
+        if checked_commit != commit or jobs.sha(checked_archive.read_bytes()) != job['archive_sha256'] or jobs.sha(checked_manifest.read_bytes()) != job['manifest_sha256']:
+            raise ValueError('release_mismatch')
+    else:
+        ctl.clean_repo()
     if ctl.revision() != commit:
         raise ValueError('release_mismatch')
     save_pending(job)
@@ -176,19 +193,46 @@ def test(*, mode, kind):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=('status', 'prepare', 'test', 'report', 'setup'))
-    parser.add_argument('--mode', choices=('host-only', 'offline'), default='host-only')
+    parser.add_argument('command', choices=('status', 'prepare', 'test', 'report', 'setup', 'verify', 'doctor'))
+    parser.add_argument('--mode', choices=('host-only', 'offline', 'syntax', 'synthetic'), default='host-only')
     parser.add_argument('--kind', choices=tuple(sorted(jobs.KINDS)), default='synthetic')
     parser.add_argument('--refresh', action='store_true')
     parser.add_argument('--job-id')
+    parser.add_argument('--gateway', action='store_true')
+    parser.add_argument('--operator', action='store_true')
     args = parser.parse_args(argv)
+    if args.command == 'doctor':
+        from gateway_client import main as gateway_main
+        return gateway_main(['doctor', *(['--offline'] if args.mode == 'offline' else [])])
+    if args.mode in ('syntax', 'synthetic'):
+        args.kind, args.mode = args.mode, 'host-only'
+    if args.command in ('verify',) or args.command in ('setup', 'prepare') and args.gateway or args.command == 'test' and args.mode != 'offline' and not args.operator:
+        from gateway_client import main as gateway_main
+        command = 'test' if args.command == 'test' else args.command
+        profile = args.mode if args.mode in ('syntax', 'synthetic') else args.kind
+        if command == 'test' and profile not in ('syntax', 'synthetic'):
+            print(json.dumps({'status': 'NOT READY', 'reason': 'profile_not_approved'}))
+            return 3
+        return gateway_main([command, '--profile', profile if profile in ('syntax', 'synthetic') else 'syntax'])
+    if args.command == 'report' and args.mode != 'offline' and not args.operator and not args.job_id:
+        import gateway_client
+        if (gateway_client.STATE / 'last.json').is_file():
+            return gateway_client.main(['report', *(['--refresh'] if args.refresh else [])])
     try:
         if args.command == 'status':
             ctl.status()
         elif args.command == 'prepare':
-            ctl.prepare()
+            if args.mode == 'offline':
+                from offline_prepare import prepare
+                print(json.dumps(prepare(args.kind), sort_keys=True))
+            else:
+                ctl.prepare()
         elif args.command == 'setup':
-            ctl.bootstrap()
+            if args.mode == 'offline':
+                from offline_prepare import bootstrap
+                print(json.dumps(bootstrap(), sort_keys=True))
+            else:
+                ctl.bootstrap()
         elif args.command == 'test':
             test(mode=args.mode, kind=args.kind)
         else:
@@ -209,7 +253,7 @@ def main(argv=None):
         return 0
     except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as error:
         message = str(error)
-        reason = message if message in jobs.REASONS | {'ssh_unavailable', 'job_unavailable', 'report_pending'} else 'source_dirty' if message.startswith('Windows worktree is not clean') else 'source_rejected' if message.startswith(('Unsafe blob', 'Release size', 'Check failed')) else 'worker_failed'
+        reason = message if message in jobs.REASONS | {'ssh_unavailable', 'audit_response_invalid', 'job_unavailable', 'report_pending'} else 'source_dirty' if message.startswith('Windows worktree is not clean') else 'source_rejected' if message.startswith(('Unsafe blob', 'Release size', 'Check failed')) else 'worker_failed'
         print(json.dumps({'status': 'blocked', 'reason': reason, 'fix': FIXES.get(reason, 'Review the saved job and its bounded diagnostics at the LAB console.')}))
         return 2
 

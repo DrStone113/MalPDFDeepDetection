@@ -22,7 +22,7 @@ ADMIN = "remnux@192.168.217.10"
 READ = "remnux-lab-audit"
 PUBLIC_KEY = Path.home() / ".ssh/id_ed25519_malpdf_audit.pub"
 BOOTSTRAP_FILES = ("lab_contract.py", "lab_readonly.py", "lab_side.py", "setup_readonly.sh",
-                   "lab_jobs.py", "lab_runner.py", "setup_runner.sh", "check_local.py", "lab_guard.py")
+                   "lab_jobs.py", "lab_runner.py", "setup_runner.sh", "setup_runner.py", "check_local.py", "lab_guard.py")
 SSH = str(Path(os.environ.get("WINDIR", "C:/Windows")) / "System32/OpenSSH/ssh.exe") if os.name == "nt" else "ssh"
 SSH_SECURITY = ["-F", "none", "-a", "-x", "-o", "ClearAllForwardings=yes", "-o", "ForwardAgent=no", "-o", "ForwardX11=no", "-o", "StrictHostKeyChecking=yes", "-o", "PermitLocalCommand=no", "-o", "RequestTTY=no", "-o", "ControlMaster=no", "-o", "ConnectTimeout=5", "-o", "ConnectionAttempts=1", "-o", "ServerAliveInterval=5", "-o", "ServerAliveCountMax=1"]
 AUDIT_SECURITY = [*SSH_SECURITY, "-o", "HostName=192.168.217.10", "-o", "User=malpdf-audit", "-o", "Port=22", "-o", "BatchMode=yes", "-o", "IdentitiesOnly=yes", "-o", "IdentityAgent=none", "-o", "PasswordAuthentication=no", "-o", "KbdInteractiveAuthentication=no", "-i", str(Path.home() / ".ssh/id_ed25519_malpdf_audit")]
@@ -95,21 +95,11 @@ def source_files(commit: str) -> list[tuple[str, bytes]]:
     return sorted(result)
 
 
-def prepare(commit: str | None = None) -> tuple[str, Path, Path]:
-    if commit is None:
-        clean_repo()
-        commit = revision()
-    elif not REV_RE.fullmatch(commit) or revision(commit) != commit:
-        raise ValueError("--commit requires an existing full commit SHA")
-    checker = REPO / "scripts/security/check_repo_content.py"
-    if not checker.is_file() or checker.is_symlink():
-        raise ValueError("Mandatory repository content guard is missing or symlinked")
-    run([sys.executable, str(checker), "--revision", commit], capture=True)
-    contents = source_files(commit)
-    OUT.mkdir(parents=True, exist_ok=True)
-    archive = OUT / f"{commit}.tar"
-    manifest_path = OUT / f"{commit}.json"
-    with tempfile.TemporaryDirectory(prefix="package-", dir=OUT) as temporary:
+def write_source_package(commit: str, contents: list[tuple[str, bytes]], destination: Path):
+    destination.mkdir(parents=True, exist_ok=True)
+    archive = destination / f"{commit}.tar"
+    manifest_path = destination / f"{commit}.json"
+    with tempfile.TemporaryDirectory(prefix="package-", dir=destination) as temporary:
         staged = Path(temporary) / "source.tar"
         with tarfile.open(staged, mode="w", format=tarfile.USTAR_FORMAT) as tf:
             for name, payload in contents:
@@ -131,6 +121,21 @@ def prepare(commit: str | None = None) -> tuple[str, Path, Path]:
             if not target.exists():
                 with target.open("xb") as stream:
                     stream.write(payload)
+    return archive, manifest_path, data
+
+
+def prepare(commit: str | None = None) -> tuple[str, Path, Path]:
+    if commit is None:
+        clean_repo()
+        commit = revision()
+    elif not REV_RE.fullmatch(commit) or revision(commit) != commit:
+        raise ValueError("--commit requires an existing full commit SHA")
+    checker = REPO / "scripts/security/check_repo_content.py"
+    if not checker.is_file() or checker.is_symlink():
+        raise ValueError("Mandatory repository content guard is missing or symlinked")
+    run([sys.executable, str(checker), "--revision", commit], capture=True)
+    contents = source_files(commit)
+    archive, manifest_path, data = write_source_package(commit, contents, OUT)
     print(json.dumps({"commit": commit, "file_count": len(contents), "archive_sha256": data["archive_sha256"], "archive": str(archive), "manifest": str(manifest_path), "source": "git_commit_only", "working_changes_included": False}, indent=2))
     return commit, archive, manifest_path
 
@@ -190,10 +195,10 @@ def deploy() -> None:
     print("Fetch only the sanitized report using the audit key after transfer approval.")
 
 
-def audit_request(command: str) -> tuple[int, bytes]:
+def bounded_ssh(arguments: list[str], *, payload: bytes | None = None, timeout: int = 20) -> tuple[int, bytes]:
     buffers = [bytearray(), bytearray()]
     exceeded = threading.Event()
-    with subprocess.Popen([SSH, *AUDIT_SECURITY, READ, command], cwd=REPO, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
+    with subprocess.Popen([SSH, *arguments], cwd=REPO, stdin=subprocess.DEVNULL if payload is None else subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
         def drain(pipe, bucket):
             while True:
                 chunk = pipe.read(4096)
@@ -208,10 +213,18 @@ def audit_request(command: str) -> tuple[int, bytes]:
                     return
                 bucket.extend(chunk)
         readers = [threading.Thread(target=drain, args=(pipe, bucket), daemon=True) for pipe, bucket in zip((process.stdout, process.stderr), buffers)]
+        if payload is not None:
+            def send():
+                try:
+                    process.stdin.write(payload)
+                    process.stdin.close()
+                except (OSError, BrokenPipeError):
+                    pass
+            readers.append(threading.Thread(target=send, daemon=True))
         for reader in readers:
             reader.start()
         try:
-            code = process.wait(timeout=20)
+            code = process.wait(timeout=timeout)
         except subprocess.TimeoutExpired:
             process.kill()
             process.wait()
@@ -223,11 +236,22 @@ def audit_request(command: str) -> tuple[int, bytes]:
     return code, bytes(buffers[0])
 
 
+def audit_request(command: str) -> tuple[int, bytes]:
+    return bounded_ssh([*AUDIT_SECURITY, READ, command])
+
+
 def status() -> None:
-    code, payload = audit_request("status")
+    try:
+        code, payload = audit_request("status")
+    except (OSError, ValueError, subprocess.SubprocessError):
+        raise ValueError("ssh_unavailable") from None
     if code != 0:
-        raise ValueError(f"Audit SSH unavailable (exit {code}); no remote stderr displayed")
-    print(json.dumps(validate_status(parse_json(payload)), sort_keys=True))
+        raise ValueError("ssh_unavailable")
+    try:
+        value = validate_status(parse_json(payload))
+    except (ValueError, TypeError, KeyError, UnicodeError, RecursionError):
+        raise ValueError("audit_response_invalid") from None
+    print(json.dumps(value, sort_keys=True))
 
 
 def audit_check() -> None:
@@ -273,6 +297,8 @@ def main() -> int:
     p.add_argument("--commit", help="Explicit full source commit SHA; default requires clean HEAD")
     sub.add_parser("deploy", help="Operator-only: supervised terminal, SHA confirmation and administrator password")
     sub.add_parser("status", help="Read schema-validated fixed audit status")
+    p = sub.add_parser("doctor", help="Read filtered gateway diagnosis through the audit key; never starts services")
+    p.add_argument('--offline', action='store_true', help='Record that offline result recovery requires separate approval; no SSH')
     sub.add_parser("audit-check", help="Status plus read-only command/shell refusal probes")
     p = sub.add_parser("report", help="Read schema-validated JSON using the restricted audit key")
     p.add_argument("commit", help="Full 40-hex commit SHA")
@@ -287,6 +313,9 @@ def main() -> int:
             deploy()
         elif args.cmd == "status":
             status()
+        elif args.cmd == 'doctor':
+            from gateway_client import main as gateway_main
+            return gateway_main(['doctor', *(['--offline'] if args.offline else [])])
         elif args.cmd == "audit-check":
             audit_check()
         elif args.cmd == "report":

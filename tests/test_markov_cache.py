@@ -36,7 +36,7 @@ def locked_sources(tmp_path):
     prepared.mkdir(parents=True)
     rows, inventory = [], []
     for index in range(2):
-        data = f"%PDF-1.4\n% synthetic benign fixture {index}\n%%EOF\n".encode()
+        data = "%PDF-1.4\n% synthetic benign fixture {}\n%%EOF\n".format(index).encode()
         path = raw / f"synthetic_{index}.pdf"
         path.write_bytes(data)
         copied = prepared / path.name

@@ -102,3 +102,8 @@ notebooks/generated/
 Thumbs.db
 # Human-authorized, checksum-locked Arlington reference snapshot.
 /third_party/arlington-pdf-model/
+
+# Agent skills
+agent-skills/
+skills/
+skills-lock.json

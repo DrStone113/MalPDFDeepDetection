@@ -20,9 +20,35 @@ def check(payload: object, sha: str) -> dict:
 
 def main() -> int:
     command = os.environ.get("SSH_ORIGINAL_COMMAND", "")
+    if command == 'diagnose gateway':
+        try:
+            from lab_diagnostics import collect, validate_report as validate_diagnostics
+            value = validate_diagnostics(collect())
+        except (ImportError, OSError, ValueError, KeyError, TypeError, RecursionError):
+            return 3
+        print(json.dumps(value, separators=(',', ':')))
+        return 0
     if command == "status":
         from lab_jobs import probe
-        print(json.dumps({"schema_version": 2, "role": "malpdf-audit", "connection": "read-only-command-gate", 'runner': probe()}))
+        value = {"schema_version": 2, "role": "malpdf-audit", "connection": "read-only-command-gate", 'runner': probe()}
+        try:
+            from lab_gateway import capability
+        except ImportError:
+            pass
+        else:
+            value.update(schema_version=3, gateway=capability())
+        print(json.dumps(value))
+        return 0
+    if command.startswith('report-job '):
+        identity = command[len('report-job '):]
+        if not re.fullmatch(r'[0-9a-f]{64}', identity):
+            return 2
+        try:
+            from lab_gateway import audit
+            value = audit(identity)
+        except (ImportError, OSError, ValueError, KeyError, TypeError, RecursionError):
+            return 3
+        print(json.dumps(value, separators=(',', ':')))
         return 0
     if command.startswith("report "):
         sha = command[7:]

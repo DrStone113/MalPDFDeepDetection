@@ -6,6 +6,7 @@ The [project README](../README.md) provides the overview and navigation.
 | Start here | Contents |
 | --- | --- |
 | [LAB Runner: one-command operation](lab_runner.md) | Windows `lab.ps1`, offline menu, one-time setup and approval boundaries |
+| [Restricted unattended LAB gateway](lab_gateway.md) | Separate runner key, pinned lexer profile, sandbox probes and one-time operator installation |
 | [Development environment](development.md) | Python versions, installation, Codespaces, and handoff checks |
 | [Windows DEV and REMnux LAB](windows_lab_workflow.md) | Source packages, restricted audit SSH, approvals, synthetic checks, sanitized reports and rollback |
 | [Workspace layout](workspace_layout.md) | Directory ownership, generated notebooks, maintenance storage, and legacy path contracts |
@@ -24,6 +25,7 @@ The [project README](../README.md) provides the overview and navigation.
 | --- | --- |
 | [AGENTS.md](../AGENTS.md) | Safety, partition discipline, provenance, and contribution requirements |
 | [PDF extraction proposal](../plans/extract-pdf/plan.md) | Planned extractor design; separate from implemented functionality |
+| [Full CIC cohort proposal](../plans/cic_full_cohort.md) | Draft 1 452-sample cohort design; not approved, changes no policy |
 | [Research log](../reports/research_log.md) | Append-only register of experiments and maintenance |
 | [Experiment reports](../reports/experiments/) | Immutable run evidence |
 | [Existing analyses](../reports/analysis/) | Saved feature, pipeline, protocol, and containment analyses |

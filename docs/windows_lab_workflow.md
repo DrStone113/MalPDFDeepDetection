@@ -2,6 +2,10 @@
 
 For daily use, start with the [short LAB Runner guide](lab_runner.md). The new
 facades reuse these contracts; legacy commands below remain for compatibility.
+The [restricted automation gateway](lab_gateway.md) adds standing-authorized
+syntax/approved lexer jobs with a separate key and sandboxed UID. It accepts
+validated working-tree snapshots without committing user changes; gateway
+installation, system accounts and SSHD/systemd policy remain operator-only.
 
 Windows is the source of truth. REMnux receives a reviewed committed source
 release and exports only bounded, schema-validated observations. Existing

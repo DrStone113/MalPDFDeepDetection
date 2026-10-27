@@ -382,7 +382,10 @@ def main() -> int:
     args = parser.parse_args()
     stream = io.StringIO() if args.json else sys.stderr
     from selftest_workflow import WorkflowTests
-    suite = unittest.TestSuite([unittest.defaultTestLoader.loadTestsFromTestCase(SecurityTests), unittest.defaultTestLoader.loadTestsFromTestCase(WorkflowTests)])
+    from selftest_gateway import GatewayTests
+    from selftest_diagnostics import DiagnosticsTests
+    from selftest_offline import OfflineTests
+    suite = unittest.TestSuite([unittest.defaultTestLoader.loadTestsFromTestCase(SecurityTests), unittest.defaultTestLoader.loadTestsFromTestCase(WorkflowTests), unittest.defaultTestLoader.loadTestsFromTestCase(GatewayTests), unittest.defaultTestLoader.loadTestsFromTestCase(DiagnosticsTests), unittest.defaultTestLoader.loadTestsFromTestCase(OfflineTests)])
     result = unittest.TextTestRunner(stream=stream, verbosity=1).run(suite)
     failed = len({getattr(test, "test_case", test).id() for test, _ in (*result.failures, *result.errors)})
     skipped = len(result.skipped)

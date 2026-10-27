@@ -25,14 +25,20 @@ API = 1
 JOBS = Path('/var/lib/malpdf/jobs')
 CONFIG = Path('/etc/malpdf/runner.json')
 HEX = re.compile(r'[0-9a-f]{64}\Z')
-KINDS = {'syntax', 'synthetic', 'pdf-static'}
+PDF_KINDS = {'pdf-static', 'pdf-static-cve'}
+KINDS = {'syntax', 'synthetic', *PDF_KINDS}
 LIMITS = {'wall_seconds': 1800, 'file_wall_seconds': 20, 'file_cpu_seconds': 12,
           'file_memory_bytes': 1073741824, 'file_max_bytes': 10485760,
-          'samples': 64, 'workers': 1, 'output_bytes': 536870912}
+          'samples': 64, 'workers': 5, 'output_bytes': 536870912}
 REASONS = {'network_blocked', 'runtime_unavailable', 'manifest_unavailable', 'release_mismatch',
            'already_claimed', 'dependency_mismatch', 'resource_unavailable', 'worker_timeout',
            'worker_failed', 'report_invalid', 'setup_required', 'approval_required', 'job_mismatch'}
 REASONS.update({'export_requires_review', 'credential_present'})
+PDF_STATUSES = frozenset({'observed', 'absent_within_scope', 'partial', 'decode_error', 'unsupported',
+                          'encrypted', 'timeout', 'resource_limit', 'not_run'})
+SUMMARY_COUNTS = ('completed', 'observed', 'partial', 'failed', 'primary_available', 'timeout',
+                  'elapsed_ms', 'peak_rss_bytes')
+SUMMARY_FIELDS = {*SUMMARY_COUNTS, 'planned', 'status_counts'}
 
 
 def encoded(obj):
@@ -43,9 +49,38 @@ def sha(payload):
     return hashlib.sha256(payload).hexdigest()
 
 
+def legacy_summary_valid(summary):
+    fields = {*SUMMARY_COUNTS, 'planned'}
+    if not isinstance(summary, dict) or set(summary) != fields or any(type(summary[name]) is not int or not 0 <= summary[name] <= 10**12 for name in fields):
+        return False
+    return (summary['completed'] <= summary['planned'] and summary['primary_available'] <= summary['completed']
+            and summary['timeout'] <= summary['completed']
+            and summary['observed'] + summary['partial'] + summary['failed'] == summary['completed'])
+
+
+def status_bucket(name):
+    return name if name in ('observed', 'partial') else 'failed'
+
+
+def summary_valid(summary):
+    if not isinstance(summary, dict) or any(type(summary.get(name)) is not int or not 0 <= summary[name] <= 10**12 for name in SUMMARY_COUNTS):
+        return False
+    counts = summary.get('status_counts')
+    if not isinstance(counts, dict) or any(not isinstance(name, str) or name not in PDF_STATUSES or type(amount) is not int or not 0 <= amount <= 10**12 for name, amount in counts.items()):
+        return False
+    buckets = {}
+    for name, amount in counts.items():
+        key = status_bucket(name)
+        buckets[key] = buckets.get(key, 0) + amount
+    return (sum(counts.values()) == summary['completed'] == summary['observed'] + summary['partial'] + summary['failed']
+            and all(buckets.get(name, 0) == summary[name] for name in ('observed', 'partial', 'failed')))
+
+
 def policy(kind):
     if kind == 'pdf-static':
         return LIMITS.copy()
+    if kind == 'pdf-static-cve':
+        return {**LIMITS, 'samples': 5, 'wall_seconds': 180, 'output_bytes': 40 * 1024**2}
     return {**LIMITS, 'wall_seconds': 240, 'file_wall_seconds': 90 if kind == 'synthetic' else 60,
             'file_cpu_seconds': 60 if kind == 'synthetic' else 30,
             'file_memory_bytes': 256 * 1024**2 if kind == 'synthetic' else 512 * 1024**2,
@@ -59,7 +94,7 @@ def execution_limits(kind):
     usage = resource.getrusage(resource.RUSAGE_SELF)
     bounds = ((resource.RLIMIT_AS, 512 * 1024**2),
               (resource.RLIMIT_CPU, math.ceil(usage.ru_utime + usage.ru_stime) + 120),
-              (resource.RLIMIT_FSIZE, 64 * 1024**2), (resource.RLIMIT_NOFILE, 64), (resource.RLIMIT_NPROC, 64))
+              (resource.RLIMIT_FSIZE, 64 * 1024**2), (resource.RLIMIT_NOFILE, 64), (resource.RLIMIT_NPROC, 2048))
     old = {name: resource.getrlimit(name) for name, _ in bounds}
     signals = {name: signal.getsignal(name) for name in (signal.SIGALRM, signal.SIGXCPU)}
     def expired(*args):
@@ -72,7 +107,7 @@ def execution_limits(kind):
             resource.setrlimit(name, (amount if hard == resource.RLIM_INFINITY else min(amount, hard), hard))
         for name in signals:
             signal.signal(name, expired)
-        wall = LIMITS['wall_seconds'] + 5 if kind == 'pdf-static' else 230
+        wall = policy(kind)['wall_seconds'] + 5 if kind in PDF_KINDS else 230
         signal.setitimer(signal.ITIMER_REAL, min(wall, previous_timer[0]) if previous_timer[0] else wall)
         yield
     finally:
@@ -100,7 +135,7 @@ def validate_job(job):
         raise ValueError('job_mismatch')
     if any(not isinstance(job[name], str) or not HEX.fullmatch(job[name]) for name in ('archive_sha256', 'manifest_sha256', 'job_id')):
         raise ValueError('job_mismatch')
-    if not isinstance(job['kind'], str) or not isinstance(job['mode'], str) or job['mode'] not in ('host-only', 'offline') or job['kind'] not in KINDS or job['kind'] == 'pdf-static' and job['mode'] != 'offline':
+    if not isinstance(job['kind'], str) or not isinstance(job['mode'], str) or job['mode'] not in ('host-only', 'offline') or job['kind'] not in KINDS or job['kind'] in PDF_KINDS and job['mode'] != 'offline':
         raise ValueError('job_mismatch')
     if type(job['limits']) is not dict or job['limits'] != policy(job['kind']) or any(type(value) is not int for value in job['limits'].values()):
         raise ValueError('job_mismatch')
@@ -276,22 +311,21 @@ def validate_result(value, job):
         raise ValueError('report_invalid')
     summary = value['pdf_summary']
     if summary is not None:
-        fields = {'planned', 'completed', 'observed', 'partial', 'failed', 'primary_available', 'timeout', 'elapsed_ms', 'peak_rss_bytes'}
-        if job['kind'] != 'pdf-static' or not isinstance(summary, dict) or set(summary) != fields or any(type(item) is not int or not 0 <= item <= 10**12 for item in summary.values()):
+        if job['kind'] not in PDF_KINDS or not isinstance(summary, dict) or set(summary) != SUMMARY_FIELDS or not summary_valid(summary):
             raise ValueError('report_invalid')
-        if summary['planned'] != 64 or summary['completed'] > 64 or summary['observed'] + summary['partial'] + summary['failed'] != summary['completed'] or summary['primary_available'] > summary['completed']:
+        if summary['planned'] != job['limits']['samples'] or summary['completed'] > summary['planned'] or summary['primary_available'] > summary['completed']:
             raise ValueError('report_invalid')
-        if summary['timeout'] > summary['completed'] or summary['elapsed_ms'] > 1800_000 or summary['peak_rss_bytes'] > 2 * 1024**3:
+        if summary['timeout'] > summary['completed'] or summary['elapsed_ms'] > job['limits']['wall_seconds'] * 1000 or summary['peak_rss_bytes'] > 2 * 1024**3:
             raise ValueError('report_invalid')
     if value['status'] == 'queued' and (job['mode'] != 'offline' or value['checks'] or summary is not None):
         raise ValueError('report_invalid')
     if value['status'] in ('passed', 'partial'):
         if not env['guest_network_checked'] or not env['stdlib_dependencies_checked'] or value['reason'] is not None:
             raise ValueError('report_invalid')
-        if job['kind'] == 'pdf-static':
+        if job['kind'] in PDF_KINDS:
             if summary is None or not env['hypervisor_controls_attested'] or job['mode'] != 'offline':
                 raise ValueError('report_invalid')
-            if value['status'] == 'passed' and (summary['observed'] != 64 or summary['primary_available'] != 64):
+            if value['status'] == 'passed' and (summary['observed'] != summary['planned'] or summary['primary_available'] != summary['planned']):
                 raise ValueError('report_invalid')
         elif len(value['checks']) != (2 if job['kind'] == 'synthetic' else 1):
             raise ValueError('report_invalid')
@@ -351,7 +385,14 @@ def catalog():
             raise ValueError('resource_unavailable')
         if directory.is_dir() and HEX.fullmatch(directory.name):
             entries.append(directory.name)
-    return [load_job(name) for name in sorted(entries)]
+    catalogued = []
+    for name in sorted(entries):
+        try:
+            catalogued.append(load_job(name))
+        except ValueError as error:
+            if str(error) != 'job_mismatch':
+                raise
+    return catalogued
 
 
 def pending():
@@ -362,7 +403,7 @@ def pending():
 def execute(job, *, attested=False):
     validate_job(job)
     jobs_config = config()
-    if job['kind'] == 'pdf-static':
+    if job['kind'] in PDF_KINDS:
         check_credentials(Path(jobs_config['data_root']))
     directory = job_directory(job['job_id'])
     if (directory / 'result.json').exists():
@@ -380,9 +421,9 @@ def execute(job, *, attested=False):
                    'hypervisor_controls_attested': bool(attested)}, stream)
     try:
         checks = []
-        if job['kind'] == 'pdf-static':
+        if job['kind'] in PDF_KINDS:
             summary = pdf_task(job, directory)
-            value = result(job, 'passed' if summary['observed'] == summary['primary_available'] == 64 else 'partial', summary=summary, environment=environment)
+            value = result(job, 'passed' if summary['observed'] == summary['primary_available'] == job['limits']['samples'] else 'partial', summary=summary, environment=environment)
         else:
             with redirect_stdout(io.StringIO()):
                 checks.append(side.syntax(job['commit']))
@@ -398,21 +439,66 @@ def execute(job, *, attested=False):
 
 def pdf_task(job, directory):
     cfg = config()
-    if shutil.disk_usage(directory).free < LIMITS['output_bytes'] + 256 * 1024**2:
+    if shutil.disk_usage(directory).free < job['limits']['output_bytes'] + 256 * 1024**2:
         raise ValueError('resource_unavailable')
-    command = [cfg['python'], '-Es', '-B', str(Path(__file__).with_name('lab_runner.py')), 'pdf-worker', job['job_id']]
-    with tempfile.TemporaryFile() as stdout, tempfile.TemporaryFile() as stderr:
-        process = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=stdout, stderr=stderr,
-            start_new_session=True, env={'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8', 'HOME': str(Path.home()),
-                'OPENBLAS_NUM_THREADS': '1', 'OMP_NUM_THREADS': '1', 'MKL_NUM_THREADS': '1'})
-        try:
-            code = process.wait(timeout=LIMITS['wall_seconds'])
-        except BaseException:
+    count = job['limits']['workers']
+    deadline = time.monotonic() + job['limits']['wall_seconds']
+    environment = {'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8', 'HOME': str(Path.home()),
+        'OPENBLAS_NUM_THREADS': '1', 'OMP_NUM_THREADS': '1', 'MKL_NUM_THREADS': '1'}
+    streams, processes = [], []
+    try:
+        for shard in range(count):
+            stdout, stderr = tempfile.TemporaryFile(), tempfile.TemporaryFile()
+            streams.extend((stdout, stderr))
+            command = [cfg['python'], '-Es', '-B', str(Path(__file__).with_name('lab_runner.py')),
+                'pdf-worker', job['job_id'], '--shard', str(shard), '--of', str(count)]
+            processes.append(subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=stdout,
+                stderr=stderr, start_new_session=True, env=environment))
+        for process in processes:
+            process.wait(timeout=max(1.0, deadline - time.monotonic()))
+        codes = [process.returncode for process in processes]
+    except subprocess.TimeoutExpired:
+        for process in processes:
             stop_worker(process)
-            raise
-    if code != 0:
+        raise ValueError('worker_timeout') from None
+    except BaseException:
+        for process in processes:
+            stop_worker(process)
+        raise
+    finally:
+        for stream in streams:
+            stream.close()
+    if any(code != 0 for code in codes):
         raise ValueError('worker_failed')
-    return parse_json(side.bounded_read(directory / 'pdf_summary.json', 4096))
+    summary = merge_summary(job, directory, count)
+    return summary
+
+
+def merge_summary(job, directory, count):
+    fields = {*SUMMARY_FIELDS, 'shard', 'shards'}
+    totals = dict.fromkeys(('completed', 'observed', 'partial', 'failed', 'primary_available', 'timeout'), 0)
+    counts = {}
+    elapsed_ms = 0
+    peak_rss_bytes = 0
+    for shard in range(count):
+        value = parse_json(side.bounded_read(directory / f'pdf_summary.{shard}.json', 16384))
+        if (not isinstance(value, dict) or set(value) != fields or value.get('shard') != shard or value.get('shards') != count
+                or value.get('planned') != job['limits']['samples']):
+            raise ValueError('report_invalid')
+        if any(type(value[name]) is not int or not 0 <= value[name] <= 10**12 for name in fields - {'status_counts'}) or not summary_valid(value):
+            raise ValueError('report_invalid')
+        for name in totals:
+            totals[name] += value[name]
+        elapsed_ms = max(elapsed_ms, value['elapsed_ms'])
+        peak_rss_bytes = max(peak_rss_bytes, value['peak_rss_bytes'])
+        for name, amount in value['status_counts'].items():
+            counts[name] = counts.get(name, 0) + amount
+    summary = {'planned': job['limits']['samples'], 'elapsed_ms': elapsed_ms, 'peak_rss_bytes': peak_rss_bytes,
+               'status_counts': dict(sorted(counts.items())), **totals}
+    if not summary_valid(summary):
+        raise ValueError('report_invalid')
+    immutable(directory / 'pdf_summary.json', summary)
+    return summary
 
 
 def check_credentials(data_root):

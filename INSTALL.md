@@ -2,6 +2,8 @@
 
 Daily commands: `.\lab.ps1 status|prepare|test|report`; offline REMnux:
 `lab status|run|report|menu`. Start with the [short LAB Runner guide](docs/lab_runner.md).
+For unattended Codex checks, use the separate [restricted gateway setup](docs/lab_gateway.md):
+`.\lab.ps1 setup -Gateway`, then one operator installation. For operator-only delivery from a separate interactive Windows terminal, use `.\lab.ps1 setup -Gateway -Transfer`; it copies the 14-file installer without executing it. `doctor` reads bounded systemd/setup/job metadata through the audit key. Connected `test` never falls back to administrative SSH.
 
 Run development from `C:\Project\MalPDFDeepDetection` on Windows. Read
 [AGENTS.md](AGENTS.md) and the [operating and rollback guide](docs/windows_lab_workflow.md)

@@ -158,6 +158,13 @@ def validate_report(obj: object, expected_rev: str) -> dict:
 
 def validate_status(obj: object) -> dict:
     expected = {"schema_version": 1, "role": "malpdf-audit", "connection": "read-only-command-gate"}
+    if isinstance(obj, dict) and type(obj.get('schema_version')) is int and obj['schema_version'] == 3:
+        from gateway_contract import validate_capability
+        if set(obj) != {*expected, 'runner', 'gateway'}:
+            raise ValueError('Invalid gateway status')
+        validate_status({key: value for key, value in obj.items() if key != 'gateway'} | {'schema_version': 2})
+        validate_capability(obj['gateway'])
+        return obj
     if isinstance(obj, dict) and type(obj.get('schema_version')) is int and obj['schema_version'] == 2:
         if set(obj) != {*expected, 'runner'} or obj['role'] != expected['role'] or obj['connection'] != expected['connection']:
             raise ValueError('Invalid runner status')
