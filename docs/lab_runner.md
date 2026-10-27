@@ -89,6 +89,7 @@ trên console REMnux dùng:
 
 ```sh
 lab status
+lab preflight
 lab run
 lab report
 lab menu
@@ -96,7 +97,19 @@ lab menu
 
 Chạy các lệnh này bằng tài khoản phân tích thường, không dùng `sudo lab run`.
 
-Hoặc mở **MalPDF LAB Runner** trong menu ứng dụng/Desktop. Nếu chỉ có một job,
+`lab preflight` là lệnh **chỉ đọc** để biết vì sao `lab run` sẽ bị chặn, trước khi
+bấm chạy. Output chỉ chứa số đếm và **tên** file/biến, không có nội dung file,
+không có giá trị biến:
+
+```json
+{"credentials": ["home:.codex/auth.json", "env:SSH_AUTH_SOCK"], "network_changed": false, "pending_jobs": 1}
+```
+
+`credentials` rỗng nghĩa là cửa credential đã sạch. Khi `lab run` bị chặn bởi
+`credential_present`, nó in lại đúng danh sách này và không claim job.
+
+Hoặc mở **MalPDF LAB Runner** trong menu ứng dụng/Desktop. Mục 1 hiển thị
+`lab preflight` cùng trạng thái runner; mục 2 chạy job. Nếu chỉ có một job,
 runner tự chọn nó; nếu có nhiều job, chọn bằng số. Xác nhận console một lần,
 không gõ hash hoặc đường dẫn. Guest networking, SSH session, shared mounts,
 release và resource được kiểm tra lại. Hypervisor controls là xác nhận của
@@ -316,7 +329,7 @@ kiểm tra backup. Gateway/audit đã xác minh được giữ nguyên.
 | `release_mismatch` | Kiểm lại source/manifest; không ghi đè release cũ |
 | `manifest_unavailable` | Chuẩn bị metadata/job trước khi ngắt mạng; không thay bằng cohort khác |
 | `dependency_mismatch` | Review môi trường LAB đã có; cài package là tác vụ riêng được duyệt |
-| `credential_present` | Dùng LAB đã rà soát không có credential; không tự xóa key/token |
+| `credential_present` | Chạy `lab preflight` để xem đúng tên file/biến gây chặn (chỉ tên, không giá trị); dùng LAB đã rà soát không có credential; không tự xóa key/token |
 | `already_claimed` | Xem báo cáo/diagnostic tại LAB; không tự retry hoặc xóa claim |
 | `export_requires_review` | Giữ kết quả offline tại LAB, dùng quy trình export/recovery riêng |
 

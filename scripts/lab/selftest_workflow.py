@@ -228,6 +228,16 @@ class WorkflowTests(unittest.TestCase):
         with patch.object(Path, 'home', return_value=self.base), self.assertRaisesRegex(ValueError, 'credential_present'):
             jobs.check_credentials(self.base / 'data')
 
+    def test_credential_reasons_name_only_the_trigger(self):
+        (self.base / '.codex').mkdir()
+        (self.base / '.codex/auth.json').write_text('private canary')
+        (self.base / '.netrc').write_text('private canary token')
+        environment = {'PATH': '/usr/bin', 'SSH_AUTH_SOCK': '/run/private/canary.sock', 'GITHUB_TOKEN': 'private canary'}
+        with patch.object(Path, 'home', return_value=self.base), patch.dict(jobs.os.environ, environment, clear=True):
+            reasons = jobs.credential_reasons(self.base / 'data')
+        self.assertEqual(reasons, ['home:.codex/auth.json', 'home:.netrc', 'env:GITHUB_TOKEN', 'env:SSH_AUTH_SOCK'])
+        self.assertNotIn('canary', json.dumps(reasons))
+
     def test_job_ids_cannot_be_paths_or_shell_fragments(self):
         for value in ('../outside', 'a' * 64 + ';id', 'A' * 64, None):
             with self.assertRaises(ValueError):

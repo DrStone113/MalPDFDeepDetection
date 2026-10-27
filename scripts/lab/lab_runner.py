@@ -357,6 +357,11 @@ def choose(items):
     return items[int(answer) - 1]
 
 
+def console_preflight():
+    return {'credentials': jobs.credential_reasons(Path(jobs.config()['data_root'])),
+            'pending_jobs': len(jobs.pending()), 'network_changed': False}
+
+
 def console_run():
     if not sys.stdin.isatty() or not sys.stdout.isatty():
         raise ValueError('approval_required')
@@ -369,14 +374,21 @@ def console_run():
     print('PDF/blob/ket qua chi luu tai LAB. Khong tu ket noi lai Windows.')
     if input('Chay job da duyet? [y/N]: ').strip().lower() != 'y':
         raise ValueError('approval_required')
-    with jobs.execution_limits(job['kind']):
-        value = jobs.execute(job, attested=True)
+    try:
+        with jobs.execution_limits(job['kind']):
+            value = jobs.execute(job, attested=True)
+    except ValueError as error:
+        if str(error) != 'credential_present':
+            raise
+        print(json.dumps({'status': 'blocked', 'reason': 'credential_present',
+                          'credentials': jobs.credential_reasons(Path(jobs.config()['data_root']))}, sort_keys=True))
+        return
     print(json.dumps(value, sort_keys=True))
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=('status', 'run', 'report', 'compare', 'menu', 'receive', 'pdf-worker', 'pdf-prepare'))
+    parser.add_argument('command', choices=('status', 'preflight', 'run', 'report', 'compare', 'menu', 'receive', 'pdf-worker', 'pdf-prepare'))
     parser.add_argument('job_id', nargs='?')
     parser.add_argument('other', nargs='?')
     parser.add_argument('--shard', type=int, default=0)
@@ -411,6 +423,8 @@ def main():
             print(json.dumps(value, sort_keys=True))
         elif args.command == 'status':
             print(json.dumps({'runner': jobs.probe(), 'pending_jobs': len(jobs.pending()), 'network_changed': False}))
+        elif args.command == 'preflight':
+            print(json.dumps(console_preflight(), sort_keys=True))
         elif args.command == 'run':
             console_run()
         elif args.command == 'report':
@@ -431,12 +445,12 @@ def main():
             print(json.dumps(compare(args.job_id, args.other), sort_keys=True))
         else:
             while True:
-                print('MalPDF LAB Runner\n1. Status\n2. Run approved job\n3. Report\n0. Exit')
+                print('MalPDF LAB Runner\n1. Kiem tra truoc khi chay\n2. Run approved job\n3. Report\n0. Exit')
                 answer = input('> ').strip()
                 if answer == '0':
                     break
                 if answer == '1':
-                    print(json.dumps({'runner': jobs.probe(), 'pending_jobs': len(jobs.pending())}))
+                    print(json.dumps({**console_preflight(), 'runner': jobs.probe()}, sort_keys=True))
                 elif answer == '2':
                     try:
                         console_run()

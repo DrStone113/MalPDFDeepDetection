@@ -39,6 +39,7 @@ PDF_STATUSES = frozenset({'observed', 'absent_within_scope', 'partial', 'decode_
 SUMMARY_COUNTS = ('completed', 'observed', 'partial', 'failed', 'primary_available', 'timeout',
                   'elapsed_ms', 'peak_rss_bytes')
 SUMMARY_FIELDS = {*SUMMARY_COUNTS, 'planned', 'status_counts'}
+MAX_CREDENTIAL_REASONS = 12
 
 
 def encoded(obj):
@@ -501,15 +502,24 @@ def merge_summary(job, directory, count):
     return summary
 
 
-def check_credentials(data_root):
+def credential_reasons(data_root):
     sensitive = ('.codex/auth.json', '.aws/credentials', '.kaggle/kaggle.json', '.git-credentials', '.netrc', '.env', '.config/gcloud/application_default_credentials.json')
-    for root in (Path.home(), data_root):
-        if any((root / name).exists() or (root / name).is_symlink() for name in sensitive):
-            raise ValueError('credential_present')
+    reasons = []
+    for label, root in (('home', Path.home()), ('data', Path(data_root))):
+        for name in sensitive:
+            if (root / name).exists() or (root / name).is_symlink():
+                reasons.append(label + ':' + name)
     ssh = Path.home() / '.ssh'
     if ssh.is_dir() and any(path.name.startswith('id_') and path.suffix != '.pub' for path in ssh.iterdir()):
-        raise ValueError('credential_present')
-    if any(value and (name in {'SSH_AUTH_SOCK', 'SSH_AGENT_PID'} or name.endswith(('_TOKEN', '_API_KEY', '_PASSWORD', '_SECRET'))) for name, value in os.environ.items()):
+        reasons.append('home:.ssh/id_*')
+    for name in sorted(os.environ):
+        if os.environ[name] and (name in {'SSH_AUTH_SOCK', 'SSH_AGENT_PID'} or name.endswith(('_TOKEN', '_API_KEY', '_PASSWORD', '_SECRET'))):
+            reasons.append('env:' + name)
+    return reasons[:MAX_CREDENTIAL_REASONS]
+
+
+def check_credentials(data_root):
+    if credential_reasons(data_root):
         raise ValueError('credential_present')
 
 

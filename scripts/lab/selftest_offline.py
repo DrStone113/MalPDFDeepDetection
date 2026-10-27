@@ -395,6 +395,11 @@ class OfflineTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'job_mismatch'):
                 runner.compare(left['job_id'], left['job_id'] + '0')
 
+    def test_console_preflight_lists_credential_reasons(self):
+        with patch.object(jobs, 'config', return_value={'data_root': '/home/synthetic/MalPDFDeepDetection'}), patch.object(jobs, 'credential_reasons', return_value=['env:SSH_AUTH_SOCK']), patch.object(jobs, 'pending', return_value=[{'job_id': 'a' * 64}]):
+            self.assertEqual(runner.console_preflight(),
+                             {'credentials': ['env:SSH_AUTH_SOCK'], 'pending_jobs': 1, 'network_changed': False})
+
     def test_cve_worker_requires_console_claim_and_refuses_windows_before_metadata(self):
         job = jobs.make_job('a' * 40, 'b' * 64, 'c' * 64, mode='offline', kind='pdf-static-cve')
         with patch.object(jobs, 'JOBS', self.base / 'jobs'):
