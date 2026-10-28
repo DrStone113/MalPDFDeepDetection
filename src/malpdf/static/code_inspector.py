@@ -97,7 +97,8 @@ def _unavailable(code, parser_diagnostics=None):
             "parser_recovered": False,
             "observed": None, "script_sources": [],
             "scope": "catalog-reachable PDF actions and declared XFA JavaScript syntax only",
-            "content_redacted": True, "active_content_executed": False}
+            "content_redacted": True, "active_content_executed": False,
+            "flag_ast_complexity_truncated": False, "flag_excessive_object_graph": False}
 
 
 def _decode_script_bytes(data, limits):
@@ -257,6 +258,8 @@ def _inspect_code_bytes_inner(data, limits, timings, *, supplied_reader=None, ev
     indicators = Counter({name[1:]: 0 for name in sorted(SECURITY_NAMES)})
     nodes, calls = Counter(), Counter({name: 0 for name in sorted(CALL_NAMES)})
     found = parsed = decoded = total_nodes = depth_max = loops = computed = visited = 0
+    flag_ast_complexity_truncated = False
+    flag_excessive_object_graph = False
 
     def resolve(value):
         references = set()
@@ -304,7 +307,9 @@ def _inspect_code_bytes_inner(data, limits, timings, *, supplied_reader=None, ev
         try:
             with stage(timings, "js_ast"):
                 ast = inspect_js_syntax(text, max_bytes=limits.max_script_bytes,
-                    max_nodes=limits.max_ast_nodes - total_nodes, max_depth=limits.max_ast_depth)
+                    max_nodes=limits.max_ast_nodes - total_nodes, max_depth=limits.max_ast_depth, bounded=True)
+                if ast.get("flag_ast_complexity_truncated"):
+                    flag_ast_complexity_truncated = True
         except CodeInspectionError as error:
             source["error"] = str(error)
             if str(error) == "ast_node_limit":
@@ -412,6 +417,7 @@ def _inspect_code_bytes_inner(data, limits, timings, *, supplied_reader=None, ev
         visited += 1
         if visited > limits.max_objects or depth > limits.max_pdf_depth:
             errors.add("pdf_structure_limit")
+            flag_excessive_object_graph = True
             traversal_complete = False
             break
         if isinstance(value, IndirectObject):
@@ -512,7 +518,9 @@ def _inspect_code_bytes_inner(data, limits, timings, *, supplied_reader=None, ev
             "parser_recovered": recovered,
             "budget_usage": {"decoded_bytes": decoded, "ast_nodes": total_nodes},
             "scope": "catalog-reachable PDF actions and declared XFA JavaScript syntax only", "content_redacted": True,
-            "active_content_executed": False}
+            "active_content_executed": False,
+            "flag_ast_complexity_truncated": flag_ast_complexity_truncated,
+            "flag_excessive_object_graph": flag_excessive_object_graph}
 
 
 def _apply_code_limits(limits):

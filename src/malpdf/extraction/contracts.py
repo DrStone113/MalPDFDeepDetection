@@ -17,6 +17,24 @@ class ObservationStatus(StrEnum):
     TIMEOUT = "timeout"
     RESOURCE_LIMIT = "resource_limit"
     NOT_RUN = "not_run"
+    BOUNDED_COMPLETE = "bounded_complete"
+
+
+class ExtractionStatus(StrEnum):
+    COMPLETE = "complete"
+    BOUNDED_COMPLETE = "bounded_complete"
+    TIMEOUT_PARTIAL = "timeout_partial"
+    FAILED = "failed"
+
+
+EXTRACTION_STATUSES = frozenset(str(val) for val in ExtractionStatus)
+EVASION_FLAGS = frozenset({
+    "flag_decompression_ratio_exceeded",
+    "flag_spec_violation_flood",
+    "flag_ast_complexity_truncated",
+    "is_truncated_stream",
+    "flag_excessive_object_graph",
+})
 
 
 GROUPS = (
@@ -56,8 +74,10 @@ def validate_bundle(bundle):
             raise ValueError(code)
 
     statuses = {str(value) for value in ObservationStatus}
+    optional_bundle = ("extraction_status", "evasion_or_quota_flags", "trigger_plan")
     mapping(bundle, ("schema_version", "extraction_profile", "status", "sample_sha256", "safety",
-                     "evidence_store", "feature_store", "coverage_report"), "extraction_bundle_shape")
+                     "evidence_store", "feature_store", "coverage_report"), "extraction_bundle_shape",
+            optional=optional_bundle)
     if bundle.get("schema_version") != VERSION:
         raise ValueError("extraction_schema_version")
     digest = bundle.get("sample_sha256")
@@ -67,6 +87,14 @@ def validate_bundle(bundle):
         raise ValueError("extraction_profile")
     if not isinstance(bundle.get("status"), str) or bundle["status"] not in statuses:
         raise ValueError("extraction_status")
+    if "extraction_status" in bundle:
+        ext_status = bundle["extraction_status"]
+        if not isinstance(ext_status, str) or ext_status not in EXTRACTION_STATUSES:
+            raise ValueError("extraction_status_invalid")
+    if "evasion_or_quota_flags" in bundle:
+        flags = bundle["evasion_or_quota_flags"]
+        if not isinstance(flags, dict) or any(not isinstance(k, str) or k not in EVASION_FLAGS or type(v) not in (bool, int) for k, v in flags.items()):
+            raise ValueError("evasion_or_quota_flags_invalid")
     safety = bundle.get("safety", {})
     mapping(safety, (), "extraction_safety_shape")
     if any(safety.get(key) is not False for key in (
@@ -78,7 +106,8 @@ def validate_bundle(bundle):
                          ("coverage_report", "pdf-coverage-report-v1",('groups','backends','limitations',
                              'observation_status_counts','whole_document_complete','worker','provenance'))):
         store = bundle.get(key, {})
-        mapping(store, ("schema_version", "sample_sha256",*fields), "extraction_store_shape",closed=True)
+        optional_fields = ("extraction_status", "evasion_or_quota_flags") if key == "coverage_report" else ()
+        mapping(store, ("schema_version", "sample_sha256",*fields), "extraction_store_shape",closed=True, optional=optional_fields)
         if store.get("schema_version") != version or store.get("sample_sha256") != digest:
             raise ValueError("extraction_store_identity")
     evidence = bundle["evidence_store"]

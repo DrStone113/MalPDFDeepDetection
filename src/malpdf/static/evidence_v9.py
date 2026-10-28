@@ -197,6 +197,7 @@ class _Budget:
         self.ast_initial = self.ast_used
         self.scripts, self.objects = 0, 0
         self.new_script_hashes = set()
+        self.flag_ast_complexity_truncated = False
         self.xml_nodes = sum(view.get("xfa_observed", {}).get("xml_nodes_observed", 0) for view in prior_code)
         self.ast_cache, self.decoded_cache = {}, {}
         sources = list(code.get("script_sources", []))
@@ -282,7 +283,9 @@ class _Budget:
         with stage(timings, "js_ast"):
             try:
                 summary = inspect_js_syntax(text, max_bytes=self.limits.max_script_bytes,
-                    max_nodes=remaining, max_depth=self.limits.max_ast_depth)
+                    max_nodes=remaining, max_depth=self.limits.max_ast_depth, bounded=True)
+                if summary.get("flag_ast_complexity_truncated"):
+                    self.flag_ast_complexity_truncated = True
             except CodeInspectionError as error:
                 if str(error) == "ast_node_limit":
                     self.ast_exhausted = True
@@ -309,6 +312,7 @@ class _Graph:
         self.direct_nodes, self.walked, self.failure_scopes = {}, set(), defaultdict(set)
         self.script_nodes, self.payload_nodes, self.projections, self.action_ids = {}, {}, {}, set()
         self.xfa_containers = set()
+        self.flag_excessive_object_graph = False
 
     def problem(self, capability, reason, affected=()):
         self.errors[capability].add(reason)
@@ -361,6 +365,7 @@ class _Graph:
                 return self.seen[key], self.values.get(self.seen[key]), False
             self.budget.objects += 1
             if self.budget.objects > self.limits.max_objects:
+                self.flag_excessive_object_graph = True
                 raise CodeInspectionError("graph_object_limit")
             requested = value
             try:
@@ -387,6 +392,7 @@ class _Graph:
                 return identity, self.values[identity], False
             self.budget.objects += 1
             if self.budget.objects > self.limits.max_objects:
+                self.flag_excessive_object_graph = True
                 raise CodeInspectionError("graph_object_limit")
         kind, fields = self.kind(value)
         projection = projected_object(value)
@@ -693,46 +699,6 @@ class _Graph:
                 return [self.child(identifier, value, f"[{index}]", 2)[:2]
                         for index, value in enumerate(container)]
             return [(identifier, container)]
-        pending = []
-        if "/Pages" in catalog:
-            identifier, value, _ = self.child(root, catalog.raw_get("/Pages"), "/Pages", 1)
-            if isinstance(value, DictionaryObject) and self.resolve_name(value.get("/Type")) == "/Pages":
-                self.store.edge(root, identifier, "catalog_pages", route="/Pages")
-                pending.append((identifier, value))
-        seen = set()
-        while pending:
-            parent, mapping = pending.pop()
-            if parent in seen:
-                continue
-            seen.add(parent)
-            for identifier, value in children(parent, mapping, "/Kids"):
-                if not isinstance(value, DictionaryObject):
-                    continue
-                kind = self.resolve_name(value.get("/Type"))
-                if kind not in {"/Page", "/Pages"}:
-                    continue
-                self.store.edge(parent, identifier, "pages_child", route="/Kids")
-                if kind == "/Pages":
-                    pending.append((identifier, value))
-                else:
-                    for annotation, item in children(identifier, value, "/Annots"):
-                        if isinstance(item, DictionaryObject) and self.kind(item)[0] == "annotation":
-                            self.store.edge(identifier, annotation, "page_annotation", route="/Annots")
-        if "/AcroForm" in catalog:
-            form, mapping, _ = self.child(root, catalog.raw_get("/AcroForm"), "/AcroForm", 1)
-            if isinstance(mapping, DictionaryObject):
-                self.store.edge(root, form, "document_acroform", route="/AcroForm")
-                pending = [(form, mapping, "/Fields")]
-                seen = set()
-                while pending:
-                    parent, mapping, key = pending.pop()
-                    if parent in seen:
-                        continue
-                    seen.add(parent)
-                    for identifier, value in children(parent, mapping, key):
-                        if isinstance(value, DictionaryObject):
-                            self.store.edge(parent, identifier, "form_field", route=key)
-                            pending.append((identifier, value, "/Kids"))
         if "/Names" in catalog:
             names, mapping, _ = self.child(root, catalog.raw_get("/Names"), "/Names", 1)
             if isinstance(mapping, DictionaryObject) and "/JavaScript" in mapping:
@@ -753,6 +719,49 @@ class _Graph:
                                 if isinstance(item, DictionaryObject) and self.resolve_name(item.get("/S")) == "/JavaScript":
                                     self.store.edge(root, action, "catalog_action", route=f"/Names/JavaScript/Names[{index + 1}]")
                     pending.extend(children(parent, mapping, "/Kids"))
+        if "/AcroForm" in catalog:
+            form, mapping, _ = self.child(root, catalog.raw_get("/AcroForm"), "/AcroForm", 1)
+            if isinstance(mapping, DictionaryObject):
+                self.store.edge(root, form, "document_acroform", route="/AcroForm")
+                pending = [(form, mapping, "/Fields")]
+                seen = set()
+                while pending:
+                    parent, mapping, key = pending.pop()
+                    if parent in seen:
+                        continue
+                    seen.add(parent)
+                    for identifier, value in children(parent, mapping, key):
+                        if isinstance(value, DictionaryObject):
+                            self.store.edge(parent, identifier, "form_field", route=key)
+                            pending.append((identifier, value, "/Kids"))
+        pending = []
+        if "/Pages" in catalog:
+            identifier, value, _ = self.child(root, catalog.raw_get("/Pages"), "/Pages", 1)
+            if isinstance(value, DictionaryObject) and self.resolve_name(value.get("/Type")) == "/Pages":
+                self.store.edge(root, identifier, "catalog_pages", route="/Pages")
+                pending.append((identifier, value))
+        seen = set()
+        while pending:
+            parent, mapping = pending.pop()
+            if parent in seen:
+                continue
+            seen.add(parent)
+            if len(seen) > 10_000:
+                self.flag_excessive_object_graph = True
+                break
+            for identifier, value in children(parent, mapping, "/Kids"):
+                if not isinstance(value, DictionaryObject):
+                    continue
+                kind = self.resolve_name(value.get("/Type"))
+                if kind not in {"/Page", "/Pages"}:
+                    continue
+                self.store.edge(parent, identifier, "pages_child", route="/Kids")
+                if kind == "/Pages":
+                    pending.append((identifier, value))
+                else:
+                    for annotation, item in children(identifier, value, "/Annots"):
+                        if isinstance(item, DictionaryObject) and self.kind(item)[0] == "annotation":
+                            self.store.edge(identifier, annotation, "page_annotation", route="/Annots")
 
 
 def _witnesses(result):
@@ -918,6 +927,8 @@ def inspect_evidence_v9(data, static, code, limits, *, timings=None, primary_com
         "scripts_inspected": budget.scripts, "xml_nodes": budget.xml_nodes}
     result["budget_usage"].update(scripts_prior=budget.scripts_prior,
                                    new_scripts_analyzed=len(budget.new_script_hashes))
+    result["flag_ast_complexity_truncated"] = getattr(budget, "flag_ast_complexity_truncated", False)
+    result["flag_excessive_object_graph"] = any(getattr(g, "flag_excessive_object_graph", False) for g in graphs)
     if checkpoint:
         checkpoint({key: value for key, value in result.items() if key not in {
             "observations", "edges", "capability_checks", "conflicts", "backend_results"}})

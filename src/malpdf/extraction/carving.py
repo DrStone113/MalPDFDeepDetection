@@ -90,12 +90,14 @@ class RecursiveCarver:
         self.budget = None
         self._saved = None
         self._pdf_budget_pending = False
+        self.flag_ast_complexity_truncated = False
         self.value = {'schema_version': 'pdf-recursive-artifacts-v1', 'document_sha256': root_sha256,
             'status': 'not_run', 'complete': False, 'records': [], 'analyses': {}, 'active_artifact_id': None,
             'unclassified_inputs': [], 'inputs_seen': 0, 'reason_codes': [], 'limits': asdict(self.limits),
             'decoded_bytes_available': None, 'decoded_bytes_used': 0, 'decoded_bytes_remaining': None,
             'ast_nodes_remaining': self.ast_remaining, 'scripts_remaining': self.scripts_remaining,
-            'per_pass_object_allowance_remaining': self.object_allowance, 'xml_nodes_remaining': self.xml_remaining}
+            'per_pass_object_allowance_remaining': self.object_allowance, 'xml_nodes_remaining': self.xml_remaining,
+            'flag_ast_complexity_truncated': False}
         self._saved = deepcopy(self.value)
 
     def register_context(self, analysis):
@@ -123,7 +125,8 @@ class RecursiveCarver:
             self.value.update(decoded_bytes_used=self.value['decoded_bytes_available'] - self.budget.remaining,
                               decoded_bytes_remaining=self.budget.remaining)
         self.value.update(ast_nodes_remaining=self.ast_remaining, scripts_remaining=self.scripts_remaining,
-            per_pass_object_allowance_remaining=self.object_allowance, xml_nodes_remaining=self.xml_remaining)
+            per_pass_object_allowance_remaining=self.object_allowance, xml_nodes_remaining=self.xml_remaining,
+            flag_ast_complexity_truncated=self.flag_ast_complexity_truncated)
 
         if not self.checkpoints.due(force=force):
             return
@@ -212,7 +215,9 @@ class RecursiveCarver:
         try:
             with stage(getattr(self,'timings',None),'js_ast'):
                 summary = inspect_js_syntax(text, max_bytes=self.code_limits.max_script_bytes,
-                    max_nodes=self.ast_remaining, max_depth=self.code_limits.max_ast_depth)
+                    max_nodes=self.ast_remaining, max_depth=self.code_limits.max_ast_depth, bounded=True)
+                if summary.get("flag_ast_complexity_truncated"):
+                    self.flag_ast_complexity_truncated = True
         except CodeInspectionError as error:
             if 'limit' in str(error):
                 self.ast_remaining = 0

@@ -5,11 +5,21 @@ evidence of partial work only; a failed stage never becomes input to the next.
 Production callers run this module inside the existing disposable PDF worker.
 """
 
+from collections import Counter
 from dataclasses import asdict, dataclass
 from copy import deepcopy
 import hashlib
+import math
 import zlib
 from malpdf.static.execution import UNLIMITED, valid_capacity
+
+
+def entropy(data: bytes) -> float:
+    if not data:
+        return 0.0
+    counts = Counter(data)
+    total = len(data)
+    return -sum((count / total) * math.log2(count / total) for count in counts.values())
 
 
 ALIASES = {"/Fl": "/FlateDecode", "/LZW": "/LZWDecode", "/AHx": "/ASCIIHexDecode",
@@ -17,6 +27,7 @@ ALIASES = {"/Fl": "/FlateDecode", "/LZW": "/LZWDecode", "/AHx": "/ASCIIHexDecode
            "/DCT": "/DCTDecode", "/JB2": "/JBIG2Decode"}
 SUPPORTED = frozenset({"/FlateDecode", "/LZWDecode", "/ASCIIHexDecode", "/ASCII85Decode", "/RunLengthDecode"})
 _WHITESPACE = frozenset(b"\x00\t\n\f\r ")
+DANGEROUS_STREAM_KEYWORDS = (b"eval", b"unescape", b"fromCharCode", b"exportDataObject", b"launchURL")
 
 
 @dataclass(frozen=True)
@@ -487,6 +498,18 @@ def decode_filters(raw, filters=(), *, decode_parms=None, limits=None, budget=No
         except _Stopped as error:
             partial, failed = error.prefix, True
             debit = max(debit, len(partial) if partial is not None else 0)
+            if error.code == "decoded_byte_or_expansion_limit" and partial is not None:
+                stream_entropy = entropy(raw)
+                found_keywords = [kw.decode("ascii") for kw in DANGEROUS_STREAM_KEYWORDS if kw in partial]
+                if len(partial) > 64 * 1024:
+                    partial = partial[:32 * 1024] + b"\n/* ...MALPDF_STREAM_TRUNCATED... */\n" + partial[-32 * 1024:]
+                prefix_len = len(partial)
+                step.update(flag_decompression_ratio_exceeded=True, is_truncated_stream=True,
+                            compressed_entropy=stream_entropy, prefix_bytes=prefix_len,
+                            suspicious_keywords_found=found_keywords)
+                metadata.update(flag_decompression_ratio_exceeded=True, is_truncated_stream=True,
+                                compressed_entropy=stream_entropy, prefix_bytes=prefix_len,
+                                suspicious_keywords_found=found_keywords)
             step.update(status=error.status, reason_codes=[error.code],
                         output_sha256=hashlib.sha256(partial).hexdigest() if partial is not None else None,
                         output_bytes=len(partial) if partial is not None else None,
@@ -497,7 +520,9 @@ def decode_filters(raw, filters=(), *, decode_parms=None, limits=None, budget=No
         emit()
     if not names:
         if len(raw) > min(limits.max_stage_bytes, budget.remaining, limits.max_total_bytes):
-            metadata.update(status="resource_limit", reason_codes=["decoded_byte_or_expansion_limit"])
+            metadata.update(status="resource_limit", reason_codes=["decoded_byte_or_expansion_limit"],
+                            flag_decompression_ratio_exceeded=True, is_truncated_stream=True,
+                            compressed_entropy=entropy(raw))
             emit()
             return DecodedStream(None, None, metadata)
         budget.remaining -= len(raw)

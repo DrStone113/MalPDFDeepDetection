@@ -1,5 +1,6 @@
 """Arlington rules over worker-private raw IR, without reparsing or execution."""
 
+from collections import Counter
 from dataclasses import dataclass, asdict
 from decimal import Decimal
 import hashlib
@@ -146,12 +147,14 @@ class _Engine:
         self.memo=BindingMemo(is_vm(getattr(doc,'code',None)))
         self._dictionary_indexes={}
         self.last_emit=-32
+        self.rule_exemplars=Counter(); self.rule_violation_counts=Counter(); self.total_violations=0
         self.value={'schema_version':'arlington-analysis-v1','document_sha256':doc.sha,
             'model':{key:value for key,value in catalog.provenance.items() if key!='files'},
             'status':'partial','complete':False,'checks':[],'bindings':[],
             'reason_codes':[],'limits':asdict(limits),'root_schema_candidate_outcomes':[],
             'scope':'bounded candidate schemas over cached raw IR and checked xref contexts; never whole-PDF conformance',
-            'original_ir_modified':False,'pdf_content_executed':False}
+            'original_ir_modified':False,'pdf_content_executed':False,
+            'flag_spec_violation_flood':False,'total_violation_count':0,'rule_violation_counts':{}}
         if self.memo.enabled:
             self.value.update(binding_reuses=[],evaluation_strategy='completed bindings shared within document/version/xref context; cyclic results require identical active ancestors and depth')
 
@@ -165,9 +168,11 @@ class _Engine:
                 'target_binding_id':cached.binding_id,'source_refs':sorted(refs),
                 'outcome':outcome(cached.result),'link_path_sha256':sha(path),
                 'cache_scope':'identical_active_ancestors_and_depth' if cached.context_specific else 'acyclic_subtree'}
-        self.metadata+=len(json.dumps(record,separators=(',',':')).encode())
-        if self.metadata>self.limits.max_metadata_bytes-8192:
-            raise ExpressionError('arlington_metadata_limit')
+        encoded=len(json.dumps(record,separators=(',',':')).encode())
+        if self.metadata+encoded>self.limits.max_metadata_bytes-8192:
+            self.value['flag_spec_violation_flood']=True
+            return cached.result
+        self.metadata+=encoded
         self.value['binding_reuses'].append(record)
         return cached.result
 
@@ -240,9 +245,12 @@ class _Engine:
 
     def emit(self,force=False):
         self.value['expression_steps_used']=self.budget.used
+        self.value['rule_violation_counts']=dict(self.rule_violation_counts)
+        self.value['total_violation_count']=self.total_violations
         if force or len(self.value['checks'])-self.last_emit>=32:
             if self.limits.max_metadata_bytes != UNLIMITED and len(json.dumps(self.value,separators=(',',':')).encode())>self.limits.max_metadata_bytes:
-                raise ExpressionError('arlington_metadata_limit')
+                self.value['flag_spec_violation_flood']=True
+                return
             if not self.checkpoints.due(force=force):
                 return
             if self.checkpoint: self.checkpoint(self.value)
@@ -250,6 +258,18 @@ class _Engine:
             self.checkpoints.completed()
 
     def check(self,binding,row,category,result,refs,expression='',**details):
+        model_table=details.pop('model_table')
+        model_line=row.get('line')
+        rule_id=f"{model_table}:{model_line}:{category}"
+        check_outcome=outcome(result)
+        if check_outcome!='passed':
+            self.total_violations+=1
+            self.rule_violation_counts[rule_id]+=1
+            self.value['total_violation_count']=self.total_violations
+            if self.total_violations>=500 or self.metadata>self.limits.max_metadata_bytes-16384:
+                self.value['flag_spec_violation_flood']=True
+        if self.rule_exemplars[rule_id]>=5:
+            return result
         if len(self.value['checks'])>=self.limits.max_checks:
             raise ExpressionError('arlington_check_limit')
         if 'key' in details and '*' in row.get('Key',''):
@@ -257,16 +277,18 @@ class _Engine:
             details.update(key=row['Key'],actual_key_sha256=sha(actual))
             if row['Key']!='*' and actual.isdecimal(): details['actual_index']=int(actual)
         item={'id':binding+':check:'+str(len(self.value['checks'])),'binding_id':binding,
-            'model_table':details.pop('model_table'), 'model_line':row.get('line'),
+            'model_table':model_table, 'model_line':model_line,
             'model_file_sha256':row.get('source_sha256'),'category':category,
-            'outcome':outcome(result),'reason_codes':list(result.reasons) if isinstance(result,Unknown) else [],
+            'outcome':check_outcome,'reason_codes':list(result.reasons) if isinstance(result,Unknown) else [],
             'source_refs':sorted(set(refs)),'expression_sha256':sha(expression) if expression else None,
             **details}
         encoded=len(json.dumps(item,separators=(',',':')).encode())
+        if self.metadata+encoded>self.limits.max_metadata_bytes-8192:
+            self.value['flag_spec_violation_flood']=True
+            return result
         self.metadata+=encoded
-        if self.metadata>self.limits.max_metadata_bytes-8192:
-            raise ExpressionError('arlington_metadata_limit')
         self.value['checks'].append(item)
+        self.rule_exemplars[rule_id]+=1
         return result
 
     def ev(self,text,ctx,**kwargs):

@@ -35,7 +35,7 @@ REASONS = {'network_blocked', 'runtime_unavailable', 'manifest_unavailable', 're
            'worker_failed', 'report_invalid', 'setup_required', 'approval_required', 'job_mismatch'}
 REASONS.update({'export_requires_review', 'credential_present'})
 PDF_STATUSES = frozenset({'observed', 'absent_within_scope', 'partial', 'decode_error', 'unsupported',
-                          'encrypted', 'timeout', 'resource_limit', 'not_run'})
+                          'encrypted', 'timeout', 'resource_limit', 'not_run', 'bounded_complete'})
 SUMMARY_COUNTS = ('completed', 'observed', 'partial', 'failed', 'primary_available', 'timeout',
                   'elapsed_ms', 'peak_rss_bytes')
 SUMMARY_FIELDS = {*SUMMARY_COUNTS, 'planned', 'status_counts'}
@@ -60,11 +60,13 @@ def legacy_summary_valid(summary):
 
 
 def status_bucket(name):
-    return name if name in ('observed', 'partial') else 'failed'
+    return 'observed' if name in ('observed', 'bounded_complete') else name if name == 'partial' else 'failed'
 
 
 def summary_valid(summary):
     if not isinstance(summary, dict) or any(type(summary.get(name)) is not int or not 0 <= summary[name] <= 10**12 for name in SUMMARY_COUNTS):
+        return False
+    if 'bounded_complete' in summary and (type(summary['bounded_complete']) is not int or not 0 <= summary['bounded_complete'] <= summary['observed']):
         return False
     counts = summary.get('status_counts')
     if not isinstance(counts, dict) or any(not isinstance(name, str) or name not in PDF_STATUSES or type(amount) is not int or not 0 <= amount <= 10**12 for name, amount in counts.items()):
@@ -312,7 +314,7 @@ def validate_result(value, job):
         raise ValueError('report_invalid')
     summary = value['pdf_summary']
     if summary is not None:
-        if job['kind'] not in PDF_KINDS or not isinstance(summary, dict) or set(summary) != SUMMARY_FIELDS or not summary_valid(summary):
+        if job['kind'] not in PDF_KINDS or not isinstance(summary, dict) or set(summary) - {'bounded_complete'} != SUMMARY_FIELDS or not summary_valid(summary):
             raise ValueError('report_invalid')
         if summary['planned'] != job['limits']['samples'] or summary['completed'] > summary['planned'] or summary['primary_available'] > summary['completed']:
             raise ValueError('report_invalid')
@@ -525,23 +527,25 @@ def pdf_task(job, directory):
 
 def merge_summary(job, directory, count):
     fields = {*SUMMARY_FIELDS, 'shard', 'shards'}
-    totals = dict.fromkeys(('completed', 'observed', 'partial', 'failed', 'primary_available', 'timeout'), 0)
+    totals = dict.fromkeys(('completed', 'observed', 'bounded_complete', 'partial', 'failed', 'primary_available', 'timeout'), 0)
     counts = {}
     elapsed_ms = 0
     peak_rss_bytes = 0
     for shard in range(count):
         value = parse_json(side.bounded_read(directory / f'pdf_summary.{shard}.json', 16384))
-        if (not isinstance(value, dict) or set(value) != fields or value.get('shard') != shard or value.get('shards') != count
+        if (not isinstance(value, dict) or set(value) - {'bounded_complete'} != fields
+                or value.get('shard') != shard or value.get('shards') != count
                 or value.get('planned') != job['limits']['samples']):
             raise ValueError('report_invalid')
-        if any(type(value[name]) is not int or not 0 <= value[name] <= 10**12 for name in fields - {'status_counts'}) or not summary_valid(value):
+        if any(type(value[name]) is not int or not 0 <= value[name] <= 10**12 for name in set(value) - {'status_counts'}) or not summary_valid(value):
             raise ValueError('report_invalid')
         for name in totals:
-            totals[name] += value[name]
+            totals[name] += value.get(name, 0)
         elapsed_ms = max(elapsed_ms, value['elapsed_ms'])
         peak_rss_bytes = max(peak_rss_bytes, value['peak_rss_bytes'])
         for name, amount in value['status_counts'].items():
             counts[name] = counts.get(name, 0) + amount
+    totals['bounded_complete'] = counts.get('bounded_complete', totals.get('bounded_complete', 0))
     summary = {'planned': job['limits']['samples'], 'elapsed_ms': elapsed_ms, 'peak_rss_bytes': peak_rss_bytes,
                'status_counts': dict(sorted(counts.items())), **totals}
     if not summary_valid(summary):

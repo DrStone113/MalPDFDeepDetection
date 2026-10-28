@@ -2,7 +2,7 @@
 
 import json
 
-from malpdf.extraction.contracts import GROUPS, ObservationStatus
+from malpdf.extraction.contracts import GROUPS, ObservationStatus, ExtractionStatus
 
 _STATUS = {"enum": [str(value) for value in ObservationStatus]}
 _HASH = {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$", "minLength": 64, "maxLength": 64}
@@ -15,9 +15,9 @@ def _object(properties,*,required=None,additional=False):
             "required": list(properties) if required is None else list(required), "additionalProperties": additional}
 
 
-def _store(version, properties):
+def _store(version, properties, *, required=None):
     return {"$schema": "https://json-schema.org/draft/2020-12/schema",
-            **_object({"schema_version": {"const": version}, "sample_sha256": _HASH, **properties})}
+            **_object({"schema_version": {"const": version}, "sample_sha256": _HASH, **properties}, required=required)}
 
 
 def schemas():
@@ -69,5 +69,7 @@ def schemas():
             "backends": {"type": "object",'propertyNames':{'type':'string','minLength':1}, "additionalProperties": backend},
             "limitations": _STRINGS, "observation_status_counts": {"type": "object",'propertyNames':_STATUS, "additionalProperties": {"type": "integer", "minimum": 0}},
             "whole_document_complete": {"const": False}, "worker": {"type": "object"}, "provenance": {"type": "object"},
-        }),
+            "extraction_status": {"type": "string", "enum": [str(val) for val in ExtractionStatus]},
+            "evasion_or_quota_flags": {"type": "object", "additionalProperties": {"type": ["boolean", "integer"]}},
+        }, required=("schema_version", "sample_sha256", "groups", "backends", "limitations", "observation_status_counts", "whole_document_complete", "worker", "provenance")),
     }))

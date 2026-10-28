@@ -184,7 +184,7 @@ def normalize_profile(profile, digest, extraction_profile, *, provenance=None):
         summary = {key: value for key, value in streams.items() if key not in {"records", "active_stream"}}
         summary['active_stream_id'] = (streams.get('active_stream') or {}).get('id')
         summary["storage"] = storage
-        records.append(_record(summary_id, "stream_analysis", "bounded_filters", streams["status"], details=summary))
+        records.append(_record(summary_id, "stream_analysis", "bounded_filters", streams.get("status", "partial"), details=summary))
         stream_entries = list(streams.get("records", []))
         if streams.get('active_stream'):
             if any(item['id'] == streams['active_stream']['id'] for item in stream_entries):
@@ -260,6 +260,83 @@ def normalize_profile(profile, digest, extraction_profile, *, provenance=None):
     from malpdf.extraction.plugin_features import append_plugin_features,plugin_backends
     append_plugin_features(profile,digest,records,features,edges)
     plugin_features=profile.get('plugin_features') or {}
+    code = profile.get("code") or {}
+    carving = profile.get('carving') or {}
+    flag_decompression_ratio_exceeded = bool(
+        streams.get("flag_decompression_ratio_exceeded")
+        or profile.get("flag_decompression_ratio_exceeded")
+        or "decoded_byte_or_expansion_limit" in reasons
+        or "decoded_byte_limit" in reasons
+    )
+    is_truncated_stream = bool(
+        streams.get("is_truncated_stream")
+        or profile.get("is_truncated_stream")
+        or flag_decompression_ratio_exceeded
+    )
+    flag_spec_violation_flood = bool(
+        arlington.get("flag_spec_violation_flood")
+        or profile.get("flag_spec_violation_flood")
+        or "arlington_metadata_limit" in reasons
+        or "arlington_flood" in reasons
+    )
+    flag_ast_complexity_truncated = bool(
+        code.get("flag_ast_complexity_truncated")
+        or analysis.get("flag_ast_complexity_truncated")
+        or carving.get("flag_ast_complexity_truncated")
+        or script_semantics.get("flag_ast_complexity_truncated")
+        or profile.get("flag_ast_complexity_truncated")
+        or any(r in reasons for r in ("ast_node_limit", "ast_depth_limit", "artifact_ast_limit", "artifact_ast_or_script_limit"))
+    )
+    flag_excessive_object_graph = bool(
+        code.get("flag_excessive_object_graph")
+        or analysis.get("flag_excessive_object_graph")
+        or profile.get("flag_excessive_object_graph")
+        or any(r in reasons for r in ("pdf_structure_limit", "graph_object_limit", "graph_depth_limit"))
+    )
+    evasion_flags = {
+        "flag_decompression_ratio_exceeded": flag_decompression_ratio_exceeded,
+        "flag_spec_violation_flood": flag_spec_violation_flood,
+        "flag_ast_complexity_truncated": flag_ast_complexity_truncated,
+        "is_truncated_stream": is_truncated_stream,
+        "flag_excessive_object_graph": flag_excessive_object_graph,
+    }
+    flag_refs = [primary_id] if bool(static) else [original_id] if original_available else []
+    for flag_name, flag_value in evasion_flags.items():
+        if flag_refs:
+            features.append(feature(
+                flag_name, "parser_coverage", 1 if flag_value else 0, "observed", flag_refs,
+                "defense and evasion indicator", complete=True
+            ))
+        else:
+            features.append(feature(
+                flag_name, "parser_coverage", None, "not_run", [],
+                "defense and evasion indicator", limitations=["original_evidence_unavailable"], complete=False
+            ))
+    arlington_violations = int(arlington.get("total_violations", 0))
+    checks_count = int(arlington.get("checks_count") or arlington.get("objects_checked") or (len(arlington.get("checks", [])) + len(arlington.get("binding_reuses", []))))
+    violation_rate = (arlington_violations / max(1, checks_count)) if checks_count else (1.0 if arlington_violations else 0.0)
+    discovered_streams = int(streams.get("discovered_streams") or streams.get("total_streams", 0))
+    truncated_streams = int(streams.get("truncated_stream_count") or streams.get("truncated_streams", 1 if is_truncated_stream else 0))
+    stream_ratio = (truncated_streams / max(1, discovered_streams)) if discovered_streams else (1.0 if is_truncated_stream else 0.0)
+    budget_usage = analysis.get("budget_usage") or code.get("budget_usage") or {}
+    visited_objs = int(budget_usage.get("objects_visited", 0))
+    graph_ratio = min(1.0, visited_objs / 10000.0)
+    continuous_ratios = {
+        "arlington_violation_rate": round(float(violation_rate), 4),
+        "stream_truncation_ratio": round(float(stream_ratio), 4),
+        "object_graph_visited_ratio": round(float(graph_ratio), 4),
+    }
+    for ratio_name, ratio_value in continuous_ratios.items():
+        if flag_refs:
+            features.append(feature(
+                ratio_name, "parser_coverage", ratio_value, "observed", flag_refs,
+                "continuous anomaly and quota intensity ratio", complete=True
+            ))
+        else:
+            features.append(feature(
+                ratio_name, "parser_coverage", None, "not_run", [],
+                "continuous anomaly and quota intensity ratio", limitations=["original_evidence_unavailable"], complete=False
+            ))
     groups = {}
     for group in GROUPS:
         members = [item for item in features if item["feature_group"] == group]
@@ -311,7 +388,6 @@ def normalize_profile(profile, digest, extraction_profile, *, provenance=None):
     if forensic:
         backends['raw_forensic']={'observation_status':forensic['status'],'limitations':forensic['reason_codes'],
             'scope':forensic['scope'],'lexical_observation_status':backends['raw_forensic']['observation_status']}
-    carving = profile.get('carving') or {}
     groups['embedded_artifacts']['limitations'].append('recognized_candidates_only' if carving else 'recursive_carving_not_run')
     state = "observed" if profile.get("status") == "complete" else failure_status(reasons)
     if streams and streams.get("complete") is not True:
@@ -338,8 +414,25 @@ def normalize_profile(profile, digest, extraction_profile, *, provenance=None):
     if plugin_features and plugin_features.get('complete') is not True:
         reasons=sorted(set(reasons+plugin_features.get('reason_codes',[])+plugin_features.get('worker_failure_codes',[])))
         state=failure_status(reasons)
+    has_primary = bool(static)
+    is_timeout = "timeout" in reasons or state == "timeout"
+    is_failed = not has_primary or "sigkill" in " ".join(reasons).lower() or (profile.get("worker_exit_code") not in (0, None) and not has_primary)
+    has_bounded_defense = any(evasion_flags.values()) or state == "resource_limit" or any("limit" in r or "budget" in r for r in reasons)
+    if is_failed:
+        extraction_status = "failed"
+    elif is_timeout:
+        extraction_status = "timeout_partial" if has_primary else "failed"
+    elif has_bounded_defense and has_primary:
+        extraction_status = "bounded_complete"
+        state = "bounded_complete"
+    elif state == "observed" or profile.get("status") == "complete":
+        extraction_status = "complete"
+    else:
+        extraction_status = "complete" if has_primary and not reasons else "bounded_complete" if has_primary else "failed"
     output = {"schema_version": VERSION, "sample_sha256": digest,
         "extraction_profile": extraction_profile, "status": state,
+        "extraction_status": extraction_status,
+        "evasion_or_quota_flags": evasion_flags,
         "safety": {"active_content_executed": False, "rendering_performed": False,
                    "external_uri_followed": False, "original_bytes_changed": False},
         "evidence_store": {"schema_version": "pdf-evidence-store-v1", "sample_sha256": digest,
@@ -351,6 +444,8 @@ def normalize_profile(profile, digest, extraction_profile, *, provenance=None):
             "groups": groups, "backends": backends, "limitations": reasons,
             "observation_status_counts": dict(Counter(item["observation_status"] for item in features)),
             "whole_document_complete": False,
+            "extraction_status": extraction_status,
+            "evasion_or_quota_flags": evasion_flags,
             "worker": {name: profile.get(name) for name in ("status", "worker_seconds", "worker_exit_code", "worker_cleanup_complete",
                 "peak_rss_bytes", "rss_quality", "resource_limits", "last_stage", "timings")},
             "provenance": provenance or {}}}

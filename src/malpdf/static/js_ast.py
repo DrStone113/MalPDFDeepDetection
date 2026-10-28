@@ -50,7 +50,7 @@ def _callee_name(node, depth=0):
     return None
 
 
-def inspect_js_syntax(source, *, max_bytes=256 * 1024, max_nodes=20_000, max_depth=100):
+def inspect_js_syntax(source, *, max_bytes=256 * 1024, max_nodes=20_000, max_depth=64, bounded=False):
     """Parse ECMAScript 2017 syntax. Production callers use a capped child process.
 
     Named calls are syntactic evidence only: identifiers can be shadowed or
@@ -67,9 +67,14 @@ def inspect_js_syntax(source, *, max_bytes=256 * 1024, max_nodes=20_000, max_dep
         raise CodeInspectionError("javascript_parse_error") from None
     histogram, calls = Counter(), Counter({name: 0 for name in sorted(CALL_NAMES)})
     pending, count, deepest, computed = [(tree, 0)], 0, 0, 0
+    complexity_truncated = False
+    literal_strings, total_string_len = 0, 0
     while pending:
         node, depth = pending.pop()
         if depth > max_depth:
+            if bounded:
+                complexity_truncated = True
+                continue
             raise CodeInspectionError("ast_depth_limit")
         if not isinstance(node, dict):
             continue
@@ -77,9 +82,15 @@ def inspect_js_syntax(source, *, max_bytes=256 * 1024, max_nodes=20_000, max_dep
         if kind:
             count += 1
             if count > max_nodes:
+                if bounded:
+                    complexity_truncated = True
+                    break
                 raise CodeInspectionError("ast_node_limit")
             histogram[kind] += 1
             deepest = max(deepest, depth)
+            if kind == "Literal" and isinstance(node.get("value"), str):
+                literal_strings += 1
+                total_string_len += len(node["value"])
         if kind in {"CallExpression", "NewExpression"}:
             name = _callee_name(node.get("callee"))
             if name in CALL_NAMES:
@@ -94,7 +105,11 @@ def inspect_js_syntax(source, *, max_bytes=256 * 1024, max_nodes=20_000, max_dep
     summary={"node_count": count, "max_depth": deepest,
             "node_types": dict(sorted(histogram.items())), "named_calls": dict(calls),
             "computed_members": computed,
-            "loops": sum(histogram[name] for name in ("ForStatement", "WhileStatement", "DoWhileStatement", "ForInStatement", "ForOfStatement"))}
+            "loops": sum(histogram[name] for name in ("ForStatement", "WhileStatement", "DoWhileStatement", "ForInStatement", "ForOfStatement")),
+            "literal_strings_count": literal_strings,
+            "mean_string_length": (total_string_len / literal_strings) if literal_strings else 0.0,
+            "string_literal_ratio": (literal_strings / count) if count else 0.0,
+            "flag_ast_complexity_truncated": complexity_truncated}
     if observer is not None:
         observer.capture(source,tree,summary)
     return summary

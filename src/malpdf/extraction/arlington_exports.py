@@ -51,3 +51,7 @@ def append_arlington(profile,digest,records,features,edges):
         features.append(feature('arlington_reused_schema_bindings','parser_coverage',len(analysis['binding_reuses']),
             'partial',[identity],'incoming links to completed schema evaluations within one document/version/xref and verified ancestor/depth context',
             analysis.get('reason_codes',[])))
+    if 'total_violations' in analysis:
+        features.append(feature('arlington_total_violations','parser_coverage',int(analysis['total_violations']),
+            'observed',[identity],'total Arlington specification violations across all objects',
+            analysis.get('reason_codes',[]),complete=True))

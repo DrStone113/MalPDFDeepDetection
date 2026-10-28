@@ -234,7 +234,7 @@ def pdf_worker(job_id, *, prepare=False, shard=0, count=1):
         raise ValueError('manifest_unavailable')
     catalog = load_model(data_root)
     started = time.monotonic()
-    summary = dict.fromkeys(('planned', 'completed', 'observed', 'partial', 'failed', 'primary_available', 'timeout', 'elapsed_ms', 'peak_rss_bytes'), 0)
+    summary = dict.fromkeys(('planned', 'completed', 'observed', 'bounded_complete', 'partial', 'failed', 'primary_available', 'timeout', 'elapsed_ms', 'peak_rss_bytes'), 0)
     summary['planned'] = job['limits']['samples']
     summary['shard'], summary['shards'] = shard, count
     statuses = {}
@@ -256,7 +256,8 @@ def pdf_worker(job_id, *, prepare=False, shard=0, count=1):
             output.write(payload)
         total += len(payload)
         summary['completed'] += 1
-        summary['observed' if bundle['status'] == 'observed' else 'partial' if bundle['status'] == 'partial' else 'failed'] += 1
+        summary['bounded_complete'] += (bundle['status'] == 'bounded_complete')
+        summary['observed' if bundle['status'] in ('observed', 'bounded_complete') else 'partial' if bundle['status'] == 'partial' else 'failed'] += 1
         statuses[bundle['status']] = statuses.get(bundle['status'], 0) + 1
         summary['primary_available'] += any(item['kind'] == 'primary_checkpoint' for item in bundle['evidence_store']['records'])
         worker = bundle['coverage_report']['worker']
@@ -340,7 +341,7 @@ def historical_report(job_id):
         raise ValueError('report_invalid')
     summary = value['pdf_summary']
     if summary is not None:
-        current = isinstance(summary, dict) and set(summary) == jobs.SUMMARY_FIELDS and jobs.summary_valid(summary)
+        current = isinstance(summary, dict) and set(summary) - {'bounded_complete'} == jobs.SUMMARY_FIELDS and jobs.summary_valid(summary)
         if not current and not jobs.legacy_summary_valid(summary):
             raise ValueError('report_invalid')
     return {'job_id': job_id, 'status': value['status'], 'reason': value['reason'], 'pdf_summary': summary}

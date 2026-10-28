@@ -39,7 +39,8 @@ class StreamCollector:
             "records": [], "active_stream": None, "discovered_streams": 0, "retained_sources": 0,
             "parameter_reference_reads": 0,
             "source_limit_reached": False, "reason_codes": [], "limits": asdict(self.limits),
-            "decoded_bytes_available": None, "decoded_bytes_used": 0, "decoded_bytes_remaining": None}
+            "decoded_bytes_available": None, "decoded_bytes_used": 0, "decoded_bytes_remaining": None,
+            "flag_decompression_ratio_exceeded": False, "is_truncated_stream": False, "truncated_stream_count": 0}
 
     def observe(self, value, *, backend, source_id, object_number, generation, offset):
         """Capture references only, without taking bytes from v9's decode budget."""
@@ -192,6 +193,14 @@ class StreamCollector:
                     recover_trailing=self.enhanced, media_codecs=self.enhanced, image_context=source['artifact_context'])
                 entry.update(decode=decoded.metadata, status=decoded.metadata["status"],
                              reason_codes=decoded.metadata["reason_codes"])
+                if decoded.metadata.get("flag_decompression_ratio_exceeded"):
+                    self.value["flag_decompression_ratio_exceeded"] = True
+                    self.value["is_truncated_stream"] = True
+                    self.value["truncated_stream_count"] = self.value.get("truncated_stream_count", 0) + 1
+                    keywords = decoded.metadata.get("suspicious_keywords_found", [])
+                    if keywords:
+                        self.value.setdefault("suspicious_keywords_found", [])
+                        self.value["suspicious_keywords_found"] = sorted(set(self.value["suspicious_keywords_found"] + keywords))
             except Exception as error:
 
 
