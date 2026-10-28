@@ -11,22 +11,24 @@ This repository researches malicious PDF detection using static, dynamic, tabula
 | **Transport** | VMware VMnet1 Host-only, Windows `192.168.217.1` ↔ REMnux `192.168.217.10` | SSH for automated staging, deployment, safe testing, and pre-staged job execution |
 | **Version control** | Local Git on Windows, GitHub `origin` (`DrStone113/MalPDFDeepDetection`) | Primary source history and collaboration; LAB is not the upstream source of truth |
 
-The addresses and directories above represent standard configurations. The SSH alias `remnux-lab` or direct endpoint `remnux@192.168.217.10` is used for remote operations.
+The addresses and directories above represent standard configurations. The SSH alias `remnux-lab` (direct endpoint `remnux@192.168.217.10`) is configured with the dedicated private key `~/.ssh/id_ed25519_remnux` and passwordless `sudo` privileges for all automated staging and remote management operations.
 
 **The agent's editing workspace is always the Windows repository.** Do not open or operate as a Remote-SSH workspace for ordinary development; do not edit tracked source directly on REMnux. Do not use the LAB VM as a CUDA device or presume GPU passthrough is available.
 
 ## 2. Default Agent Workflow
 
 1. **Local Windows baseline:** Inspect `git status`, local source, tests, and configurations. Implement code changes and run local synthetic unit tests exclusively in the Windows checkout.
-2. **Autonomous LAB preparation via SSH:** Connect autonomously via SSH to REMnux to perform all preparation steps without requiring per-step operator confirmation:
-   - Deploy source updates/snapshots from Windows to REMnux.
-   - Verify runtime dependencies, virtual environment health, and parser toolchains.
+2. **Autonomous LAB preparation via SSH:** Connect autonomously via SSH to REMnux (alias `remnux-lab` using `~/.ssh/id_ed25519_remnux`) to perform all setup, staging, and verification tasks without requiring per-step operator intervention:
+   - Deploy source updates, bootstrap packages, and snapshot tarballs from Windows to REMnux.
+   - Install, upgrade, and configure gateway policy and runner helpers (`setup_gateway.py --install`, `setup_runner.py --install`) via passwordless `sudo` over SSH.
+   - Verify runtime dependencies, virtual environment health, systemd services/timers, and parser toolchains.
    - Generate, update, or maintain the safe structural test corpus (`data/safe_samples/`).
    - Run synthetic tests, parser unit tests, and structural edge-case tests on REMnux.
-   - **Pre-load the active job:** Write the execution manifest, configure timeout limits, set output directories, and register the job as the active default target (`.active_job`).
+   - **Pre-stage and queue the active offline job:** Transfer the source archive and manifest, verify releases, and queue the job target under `/var/lib/malpdf/jobs/<job_id>` (`queued.json`).
 3. **Strict Human Gate for Real / Suspicious PDFs:**
    - Whenever a task targets **real, unverified, or suspicious malware samples**, the agent must pause immediately before invoking the parser or extractor on those samples.
-   - Because the agent has already pre-loaded the active job on REMnux, the operator does not need to enter job IDs, file paths, or complex flags.
+   - The operator is NEVER asked to run installation scripts, copy files, transfer keys, or type complex commands. The agent handles 100% of preparation autonomously via SSH.
+   - Because the agent has already pre-staged and queued the active job on REMnux, the operator does not need to enter job IDs, file paths, or complex flags.
 4. **Zero-Argument Operator Trigger:** The operator executes the single pre-staged runner command inside the REMnux terminal:
    - Inside REMnux terminal / console: `lab run` (or `lab menu` GUI)
    - (Windows `.\lab.ps1` is strictly for staging/status like `.\lab.ps1 prepare` or `.\lab.ps1 status`; it never executes raw PDF analysis).
@@ -63,26 +65,28 @@ To test and resolve parser/extractor failures (e.g., malformed `xref` tables, br
                                     │
        ┌────────────────────────────┴────────────────────────────┐
        ▼                                                         ▼
-[ Autonomous Operations ]                                [ Operator Gate ]
-- Remote SSH environment checks                          - Running parsers/extractors
-- Code deployment & synchronization                        against raw/suspicious PDFs
-- Dependency & pip package verification                  - Network topology changes
-- Generating safe structural samples                     - Host or VM privilege elevation
-- Running syntax/synthetic tests                         - Deleting persistent raw data
-- Pre-staging & pre-loading the active job
-- Ingesting sanitized error reports
+[ Autonomous Operations (via SSH `remnux-lab`) ]         [ Operator Gate ]
+- Remote SSH health checks & environment verification     - Running parsers/extractors
+- Code deployment, bootstrap & snapshot synchronization     against raw/suspicious PDFs
+  (`setup_gateway.py`, `setup_runner.py`)                 - Network topology changes
+- Managing gateway policies & runner helpers via sudo     - Host privilege elevation
+- Generating safe structural samples                      - Deleting persistent raw data
+- Running syntax/synthetic tests
+- Pre-staging & queuing offline jobs (`queued.json`)
+- Ingesting sanitized error reports & metrics
 ```
 
 ### Standing Authorization (Autonomous Agent Actions)
 
-The agent is authorized to connect to REMnux via SSH (`remnux@192.168.217.10` or alias `remnux-lab`) without human confirmation for:
+The agent is authorized to connect to REMnux via SSH (`remnux@192.168.217.10` or alias `remnux-lab`) using `~/.ssh/id_ed25519_remnux` without human confirmation for:
 1. Running read-only health checks (`git status`, `python3 --version`, disk space, process status).
 2. Syncing code from Windows to the LAB working directory or creating versioned test snapshots.
 3. Managing virtual environments, installing/updating dependencies via `pip`, and checking libraries on REMnux.
-4. Running generator scripts to build safe edge-case test files under `data/safe_samples/`.
-5. Running automated tests against synthetic fixtures and the safe edge-case corpus.
-6. **Pre-loading jobs:** Staging the job manifest under `.lab_staging/active_job.json` and arming the default runner so no arguments are needed at execution time.
-7. Retrieving and inspecting sanitized diagnostic summaries, exit codes, and structured error logs after an execution.
+4. Installing, verifying, and upgrading lab gateway and runner helpers (`setup_gateway.py --install`, `setup_runner.py --install`) using passwordless `sudo`.
+5. Running generator scripts to build safe edge-case test files under `data/safe_samples/`.
+6. Running automated tests against synthetic fixtures and the safe edge-case corpus.
+7. **Pre-loading jobs:** Staging the job manifest, transferring the release payload, and queuing the job under `/var/lib/malpdf/jobs/<job_id>` so no arguments or paths are needed at execution time.
+8. Retrieving and inspecting sanitized diagnostic summaries, exit codes, and structured error logs after an execution.
 
 ### Zero-Argument Operator Trigger (Human Gate)
 
@@ -110,6 +114,8 @@ lab run
   Host remnux-lab
       HostName 192.168.217.10
       User remnux
+      IdentityFile ~/.ssh/id_ed25519_remnux
+      IdentitiesOnly yes
       ForwardAgent no
       ForwardX11 no
       ClearAllForwardings yes
