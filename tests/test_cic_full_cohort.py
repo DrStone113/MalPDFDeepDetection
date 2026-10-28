@@ -68,5 +68,23 @@ class TestCicFullCohort(unittest.TestCase):
             select_corpus(manifest, sources, seed=42)
 
 
+    def test_selection_json_buffer_limit_anti_regression(self):
+        import json
+        manifest = []
+        sources = []
+        for i in range(1452):
+            sha = f'{i:064x}'
+            sid = f'cic_{i:04d}'
+            split = 'train' if i < 870 else 'validation' if i < 1161 else 'test'
+            label = '1' if i % 2 == 0 else '0'
+            manifest.append({'sample_id': sid, 'duplicate_group_id': f'dup_{i}', 'split': split, 'Label': label, 'cohort': 'cic'})
+            sources.append({'sample_id': sid, 'Label': label, 'pdf_relative_path': f'data/raw/cic_pdf/CIC-Evasive-PDFMal2022/Cohort/{sid}_{sha}.pdf', 'pdf_sha256': sha, 'related_group_id': f'rel_{i}_{sha}'})
+        chosen = select_corpus(manifest, sources, seed=42)
+        selection = {'job_id': '0' * 64, 'rows': chosen, 'selection_sha256': '1' * 64}
+        encoded = json.dumps(selection).encode('utf-8')
+        self.assertGreater(len(encoded), 512 * 1024)
+        self.assertLess(len(encoded), 4 * 1024**2)
+
+
 if __name__ == '__main__':
     unittest.main()

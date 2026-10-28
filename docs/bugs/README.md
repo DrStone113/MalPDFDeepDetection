@@ -16,6 +16,7 @@ Hệ thống lưu trữ, phân tích chuyên sâu nguyên nhân gốc rễ và c
 | `BUG-001` | Lỗi `os.pidfd_open` POSIX syscall không tương thích trên Windows DEV | `CROSS_PLATFORM` | `HIGH` | `RESOLVED` | `tests/test_local_agent.py` | [Chi tiết](BUG-001-linux-pidfd-on-windows.md) |
 | `BUG-002` | Tràn bộ đệm metadata Arlington (512 KB) do bão vi phạm cú pháp lặp lại | `PARSER_SYNTAX` | `CRITICAL` | `RESOLVED` | `tests/test_arlington.py` | [Chi tiết](BUG-002-arlington-metadata-buffer-overflow.md) |
 | `BUG-003` | Worker crash (SIGKILL / OOM) do Decompression Bomb và stream đệ quy | `RESOURCE_OOM` | `CRITICAL` | `RESOLVED` | `tests/test_stream_filters.py` | [Chi tiết](BUG-003-stream-decompression-bomb-sigkill.md) |
+| `BUG-004` | Worker crash (worker_failed) do giới hạn đọc selection.json (512 KB) khi chạy 1,452 mẫu | `RESOURCE_OOM` | `CRITICAL` | `RESOLVED` | `tests/test_cic_full_cohort.py` | [Chi tiết](BUG-004-selection-json-buffer-limit.md) |
 
 ---
 

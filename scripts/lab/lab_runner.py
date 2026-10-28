@@ -239,7 +239,7 @@ def pdf_worker(job_id, *, prepare=False, shard=0, count=1):
     if prepare:
         jobs.immutable(directory / 'selection.json', selection)
         return
-    stored = parse_json(side.bounded_read(directory / 'selection.json', 512 * 1024))
+    stored = parse_json(side.bounded_read(directory / 'selection.json', 4 * 1024**2))
     if stored != selection:
         raise ValueError('manifest_unavailable')
     if not 0 <= shard < count <= job['limits']['workers']:
@@ -318,7 +318,7 @@ def bundle_view(directory, index):
 
 def selection_id(directory):
     try:
-        value = parse_json(side.bounded_read(directory / 'selection.json', 512 * 1024))
+        value = parse_json(side.bounded_read(directory / 'selection.json', 4 * 1024**2))
     except OSError:
         return None
     return value.get('selection_sha256') if isinstance(value, dict) else None
