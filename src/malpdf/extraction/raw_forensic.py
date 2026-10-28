@@ -77,10 +77,10 @@ class _Document:
         self.value.update(decoded_bytes_remaining=self.decode_budget.remaining,
             decoded_bytes_used=self.value['decoded_bytes_available']-self.decode_budget.remaining,
             syntax_tokens_used=self.syntax.tokens,syntax_nodes_used=self.syntax.nodes)
-        if self.limits.max_metadata_bytes != UNLIMITED and len(json.dumps(self.value,allow_nan=False,separators=(',',':')).encode()) > self.limits.max_metadata_bytes-1024:
-            raise SyntaxIssue('forensic_metadata_limit',0,'resource_limit')
         if not self.checkpoints.due(force=force):
             return
+        if self.limits.max_metadata_bytes != UNLIMITED and len(json.dumps(self.value,allow_nan=False,separators=(',',':')).encode()) > self.limits.max_metadata_bytes-1024:
+            raise SyntaxIssue('forensic_metadata_limit',0,'resource_limit')
         if self.checkpoint:
             self.checkpoint(deepcopy(self.value))
         self.saved = deepcopy(self.value)

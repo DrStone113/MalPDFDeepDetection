@@ -201,10 +201,10 @@ def inspect_parser_views(data, limits, *, retain=None, checkpoint=None, max_meta
     def emit(*, force=False):
         nonlocal saved
         result['raw_bytes_used'] = limits.max_file_bytes - raw_budget.remaining
-        if max_metadata_bytes != UNLIMITED and len(json.dumps(result,allow_nan=False,separators=(',',':')).encode()) > max_metadata_bytes - 512:
-            raise CodeInspectionError('inventory_metadata_limit')
         if not snapshots.due(force=force):
             return
+        if max_metadata_bytes != UNLIMITED and len(json.dumps(result,allow_nan=False,separators=(',',':')).encode()) > max_metadata_bytes - 512:
+            raise CodeInspectionError('inventory_metadata_limit')
         if checkpoint:
             checkpoint(deepcopy(result))
         saved = deepcopy(result)

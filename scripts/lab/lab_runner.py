@@ -226,7 +226,9 @@ def pdf_worker(job_id, *, prepare=False, shard=0, count=1):
     from malpdf.extraction.jobs import require_extraction_lab
     from malpdf.static.code_inspector import CodeInspectionLimits, _worker_count
     require_extraction_lab(True, repository_root=data_root)
-    limits = CodeInspectionLimits(wall_seconds=20, cpu_seconds=12)
+    file_wall = min(60, int(job['limits'].get('file_wall_seconds', 60)))
+    file_cpu = min(file_wall, int(job['limits'].get('file_cpu_seconds', 45)))
+    limits = CodeInspectionLimits(wall_seconds=file_wall, cpu_seconds=file_cpu)
     _worker_count(1, limits)
     if parse_json(side.bounded_read(data_root / 'configs/arlington.lock.json', 2 * 1024**2)) != parse_json(side.bounded_read(source / 'configs/arlington.lock.json', 2 * 1024**2)):
         raise ValueError('manifest_unavailable')

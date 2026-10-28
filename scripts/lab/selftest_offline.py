@@ -449,7 +449,7 @@ class OfflineTests(unittest.TestCase):
             self.assertEqual(path, root / row['pdf_relative_path'])
             self.assertEqual(kwargs['boundary'], root / 'data/raw/cve_t4pdf')
             self.assertEqual(kwargs['expected_sha256'], row['pdf_sha256'])
-            self.assertEqual(kwargs['limits'], {'wall_seconds': 20, 'cpu_seconds': 12})
+            self.assertEqual(kwargs['limits'], {'wall_seconds': 60, 'cpu_seconds': 45})
             self.assertEqual(kwargs['arlington_catalog'], 'synthetic-catalog')
         summary = json.loads((directory / 'pdf_summary.0.json').read_bytes())
         self.assertEqual((summary['planned'], summary['completed'], summary['observed'], summary['partial']), (5, 5, 4, 1))

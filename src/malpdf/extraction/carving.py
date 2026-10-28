@@ -125,10 +125,10 @@ class RecursiveCarver:
         self.value.update(ast_nodes_remaining=self.ast_remaining, scripts_remaining=self.scripts_remaining,
             per_pass_object_allowance_remaining=self.object_allowance, xml_nodes_remaining=self.xml_remaining)
 
-        if self.limits.max_metadata_bytes != UNLIMITED and len(json.dumps(self.value, allow_nan=False, separators=(',', ':')).encode()) > self.limits.max_metadata_bytes - 256:
-            raise _CarveIssue('resource_limit', 'artifact_metadata_limit')
         if not self.checkpoints.due(force=force):
             return
+        if self.limits.max_metadata_bytes != UNLIMITED and len(json.dumps(self.value, allow_nan=False, separators=(',', ':')).encode()) > self.limits.max_metadata_bytes - 256:
+            raise _CarveIssue('resource_limit', 'artifact_metadata_limit')
         if self.checkpoint:
             self.checkpoint(deepcopy(self.value))
         self._saved = deepcopy(self.value)
@@ -567,8 +567,13 @@ class RecursiveCarver:
                 elif is_vm(self.code_limits) and entry['kind'] in {'jpeg', 'png', 'jpx', 'jbig2', 'image_data', 'sfnt_font', 'woff_font', 'font_data', 'flash', 'content_stream'}:
                     from malpdf.extraction.media import MediaIssue, inspect_image, inspect_font, inspect_flash
                     try:
+                        from malpdf.extraction.content_stream import ContentStreamIssue, inspect_content_stream
+                    except ImportError:
+                        ContentStreamIssue, inspect_content_stream = type('ContentStreamIssue', (Exception,), {}), None
+                    try:
                         if entry['kind'] == 'content_stream':
-                            from malpdf.extraction.content_stream import ContentStreamIssue, inspect_content_stream
+                            if inspect_content_stream is None:
+                                raise _CarveIssue('unsupported', 'content_stream_parser_unavailable')
                             box = entry.get('source_metadata', {}).get('boundary_box')
                             analysis = inspect_content_stream(data, boundary_box=box)
                         elif entry['kind'] in {'jpeg', 'png', 'jpx', 'jbig2', 'image_data'}:

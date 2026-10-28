@@ -27,7 +27,7 @@ CONFIG = Path('/etc/malpdf/runner.json')
 HEX = re.compile(r'[0-9a-f]{64}\Z')
 PDF_KINDS = {'pdf-static', 'pdf-static-cve'}
 KINDS = {'syntax', 'synthetic', *PDF_KINDS}
-LIMITS = {'wall_seconds': 1800, 'file_wall_seconds': 20, 'file_cpu_seconds': 12,
+LIMITS = {'wall_seconds': 1800, 'file_wall_seconds': 60, 'file_cpu_seconds': 45,
           'file_memory_bytes': 1073741824, 'file_max_bytes': 10485760,
           'samples': 64, 'workers': 5, 'output_bytes': 536870912}
 REASONS = {'network_blocked', 'runtime_unavailable', 'manifest_unavailable', 'release_mismatch',
