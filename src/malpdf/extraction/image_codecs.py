@@ -3,7 +3,7 @@
 import hashlib
 import struct
 
-from malpdf.extraction.media import MediaIssue, jpeg_structure, jpx_structure
+from malpdf.extraction.media import MediaIssue, jpeg_structure, jpx_structure, jbig2_structure
 
 
 def decode_image(data: bytes, codec: str, parameters: dict | None, cap: int,
@@ -12,6 +12,8 @@ def decode_image(data: bytes, codec: str, parameters: dict | None, cap: int,
     parameters, context = parameters or {}, context or {}
     if codec == '/CCITTFaxDecode':
         return decode_fax(data, parameters, cap, context)
+    if codec in {'/JBIG2Decode', '/JB2'}:
+        return decode_jbig2(data, parameters, cap, context)
     if parameters:
         raise MediaIssue("image_decode_parameters_unsupported", "unsupported")
     if codec == "/DCTDecode":
@@ -109,3 +111,37 @@ def decode_fax(data: bytes, parameters: dict, cap: int, context: dict) -> tuple[
         'bits_per_component': 1, 'output_bytes': len(body), 'output_sha256': hashlib.sha256(body).hexdigest(),
         'format': 'ccitt_fax', 'scope': 'declared rows decoded in memory; EOB and compressed-byte consumption unverified',
         'reason_codes': ['fax_consumption_unverified'], 'rendering_performed': False, 'library_version': pymupdf.VersionFitz}
+
+
+def decode_jbig2(data: bytes, parameters: dict, cap: int, context: dict) -> tuple[bytes, dict]:
+    structural = jbig2_structure(data)
+    if not structural["complete"]:
+        raise MediaIssue("jbig2_structure_incomplete", details=structural)
+    width = structural.get("width") or context.get("width")
+    height = structural.get("height") or context.get("height")
+    if not width or not height or min(width, height) < 1:
+        raise MediaIssue("jbig2_geometry_unavailable", "unsupported", details=structural)
+    if any(type(context.get(key)) is int and context[key] != actual for key, actual in
+           (("width", width), ("height", height))):
+        raise MediaIssue("image_declared_geometry_mismatch", details=structural)
+    row_bytes = (width + 7) // 8
+    total_bytes = row_bytes * height
+    if total_bytes > cap:
+        raise MediaIssue("image_decoded_byte_limit", "resource_limit", details=structural)
+    metadata = {
+        "backend": "JBIG2 structural framing",
+        "width": width,
+        "height": height,
+        "components": 1,
+        "bits_per_component": 1,
+        "format": "jbig2",
+        "output_sha256": hashlib.sha256(data).hexdigest(),
+        "output_bytes": len(data),
+        "segment_count": structural["segment_count"],
+        "segment_types_present": structural["segment_types_present"],
+        "scope": "JBIG2 segment framing and declared geometry without pixel decompression",
+        "rendering_performed": False,
+        "pixel_decode_performed": False,
+    }
+    return data, metadata
+

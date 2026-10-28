@@ -13,7 +13,7 @@ from pypdf.generic import EncodedStreamObject, NameObject, NumberObject
 
 from malpdf.extraction.carving import RecursiveCarver
 from malpdf.extraction.filters import DecodeBudget, FilterLimits, decode_filters
-from malpdf.extraction.media import MediaIssue, inspect_flash, inspect_font, inspect_image, jpeg_structure, png_structure
+from malpdf.extraction.media import MediaIssue, inspect_flash, inspect_font, inspect_image, jpeg_structure, png_structure, jbig2_structure
 from malpdf.extraction.streams import StreamCollector
 from malpdf.static.code_inspector import VMInspectionLimits
 from malpdf.static.execution import UNLIMITED
@@ -47,6 +47,14 @@ def flash(*, compressed: bool = False, script: bool = True) -> bytes:
         body += struct.pack('<H', (82 << 6) | 4) + b'\0\0\0\0'
     body += b'\0\0'
     return (b'CWS' if compressed else b'FWS') + bytes([10]) + struct.pack('<I', len(body) + 8) + (zlib.compress(body) if compressed else body)
+
+
+def jbig2(*, header: bool = True, trailing: bytes = b"") -> bytes:
+    prefix = b"\x97JB2\r\n\x1a\n\x00" if header else b""
+    seg0 = struct.pack(">IBB", 0, 48, 0) + bytes([1]) + struct.pack(">I", 8) + struct.pack(">II", 16, 8)
+    seg1 = struct.pack(">IBB", 1, 38, 0x20) + bytes([0]) + bytes([1]) + struct.pack(">I", 4) + b"\x00\x00\x00\x00"
+    seg2 = struct.pack(">IBB", 2, 51, 0) + bytes([0]) + struct.pack(">I", 0)
+    return prefix + seg0 + seg1 + seg2 + trailing
 
 
 @pytest.mark.parametrize('size', [1, 100, 20000])
@@ -211,7 +219,7 @@ def test_vm_stream_collector_routes_verified_recovery_and_preserves_geometry() -
     assert routed[0][0] == b'\x01\x02' and routed[0][1]['artifact_context']['width'] == 2
 
 
-@pytest.mark.parametrize('builder,kind', [(jpeg, 'jpeg'), (png, 'png'), (font, 'sfnt_font'), (flash, 'flash')])
+@pytest.mark.parametrize('builder,kind', [(jpeg, 'jpeg'), (png, 'png'), (jbig2, 'jbig2'), (font, 'sfnt_font'), (flash, 'flash')])
 def test_vm_carver_analyzes_media_instead_of_blanket_unsupported(builder, kind: str) -> None:
     data = builder()
     worker = RecursiveCarver('a' * 64, VMInspectionLimits())
@@ -219,3 +227,53 @@ def test_vm_carver_analyzes_media_instead_of_blanket_unsupported(builder, kind: 
     result = worker.finish(UNLIMITED)
     assert result['records'][0]['kind'] == kind and result['records'][0]['status'] == 'observed'
     assert result['analyses'][identity]['complete']
+
+
+def test_jbig2_structure_standalone_and_embedded() -> None:
+    standalone = jbig2(header=True)
+    res_standalone = jbig2_structure(standalone)
+    assert res_standalone["complete"] and res_standalone["has_file_header"]
+    assert res_standalone["segment_count"] == 3 and res_standalone["width"] == 16 and res_standalone["height"] == 8
+    assert res_standalone["has_end_of_file"]
+
+    embedded = jbig2(header=False)
+    res_embedded = jbig2_structure(embedded)
+    assert res_embedded["complete"] and not res_embedded["has_file_header"]
+    assert res_embedded["segment_count"] == 3 and res_embedded["width"] == 16 and res_embedded["height"] == 8
+
+
+def test_jbig2_anomalies_and_corruptions() -> None:
+    seg0 = struct.pack(">IBB", 0, 48, 0) + bytes([1]) + struct.pack(">I", 8) + struct.pack(">II", 16, 8)
+    bad_ref_seg1 = struct.pack(">IBB", 1, 38, 0x20) + bytes([2]) + bytes([1]) + struct.pack(">I", 4) + b"\x00\x00\x00\x00"
+    seg2 = struct.pack(">IBB", 2, 51, 0) + bytes([0]) + struct.pack(">I", 0)
+    forward_ref = seg0 + bad_ref_seg1 + seg2
+    res_fwd = jbig2_structure(forward_ref)
+    assert not res_fwd["complete"] and "jbig2_forward_segment_reference" in res_fwd["reason_codes"]
+
+    dup_seg = seg0 + struct.pack(">IBB", 0, 51, 0) + bytes([0]) + struct.pack(">I", 0)
+    res_dup = jbig2_structure(dup_seg)
+    assert not res_dup["complete"] and "jbig2_duplicate_segment_number" in res_dup["reason_codes"]
+
+    unknown_type = struct.pack(">IBB", 0, 61, 0) + bytes([1]) + struct.pack(">I", 0)
+    res_unk = jbig2_structure(unknown_type)
+    assert not res_unk["complete"] and "jbig2_unknown_segment_type" in res_unk["reason_codes"]
+
+    with pytest.raises(MediaIssue, match="jbig2_segment_truncated"):
+        jbig2_structure(struct.pack(">IBB", 0, 48, 0) + bytes([1]) + struct.pack(">I", 8) + b"\x00")
+
+    trailing_data = jbig2(header=True, trailing=b"trailing_bytes")
+    res_trailing = jbig2_structure(trailing_data)
+    assert not res_trailing["complete"] and "image_trailing_data" in res_trailing["reason_codes"]
+    assert res_trailing["trailing_bytes"] == len(b"trailing_bytes")
+
+
+def test_jbig2_decode_filter_and_inspect_image() -> None:
+    data = jbig2(header=True)
+    res_image = inspect_image(data)
+    assert res_image["format"] == "jbig2" and res_image["complete"]
+
+    filtered = decode_filters(data, ["/JBIG2Decode"], media_codecs=True)
+    assert filtered.metadata["complete"] and filtered.data == data
+    codec_meta = filtered.metadata["steps"][0]["image_codec"]
+    assert codec_meta["format"] == "jbig2" and codec_meta["width"] == 16 and codec_meta["height"] == 8
+

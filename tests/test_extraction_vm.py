@@ -7,7 +7,6 @@ import os
 from pathlib import Path
 import csv
 import random
-import resource
 import threading
 import zlib
 
@@ -131,6 +130,7 @@ def test_vm_cancellation_reaps_the_spawned_parser(tmp_path) -> None:
 
 
 def test_vm_worker_reads_input_above_ten_megabytes_without_thread_or_os_quotas(tmp_path, monkeypatch) -> None:
+    resource = pytest.importorskip('resource', reason='Requires POSIX rlimits')
     monkeypatch.setenv("OPENBLAS_NUM_THREADS", "3")
     monkeypatch.setenv("OMP_NUM_THREADS", "2")
     data = benign_bytes() + b" " * (11 * 1024**2)

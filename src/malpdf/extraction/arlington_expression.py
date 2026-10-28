@@ -232,6 +232,45 @@ def _evaluate(ast,ctx,budget,since=False):
         path=atom_text(args[0])
         present=ctx.present(path) if path is not None and '@' not in path else truth(ev(args[0]))
         return present if len(args)==1 else combine(negate(present),ev(args[1]),'||')
+    if name=='IsNumber' and len(args)==1:
+        val=ev(args[0])
+        if isinstance(val,Unknown): return val
+        return isinstance(val,Decimal) and val.is_finite()
+    if name=='DefaultValue' and len(args)==2:
+        default_val,expr_val=ev(args[0]),ev(args[1])
+        if isinstance(expr_val,Unknown): return expr_val
+        return default_val if expr_val is None or expr_val==SKIP else expr_val
+    if name=='RequiredValue' and len(args)==2:
+        a,b=ev(args[0]),ev(args[1])
+        if isinstance(a,Unknown) or isinstance(b,Unknown): return Unknown(('required_value_unavailable',))
+        return type(a)==type(b) and a==b
+    if name in ('PageCount','PageNumber') and not args:
+        getter=getattr(ctx,'page_number' if name=='PageNumber' else 'page_count',None)
+        if getter is not None:
+            val=getter()
+            return Decimal(val) if type(val) is int else val
+        return Unknown(('page_number_context_unsupported' if name=='PageNumber' else 'page_count_context_unsupported',))
+    if name=='InKeyList' and len(args)==2:
+        k=ev(args[0])
+        container=ev(args[1])
+        if isinstance(k,Unknown): return k
+        if isinstance(container,Unknown): return container
+        if isinstance(container,tuple):
+            return any(item==k for item in container)
+        return False
+    if name=='MustBeDirect' and len(args)==1:
+        path=atom_text(args[0])
+        getter=getattr(ctx,'is_direct',None)
+        if getter is not None and path is not None:
+            direct=getter(path)
+            return direct if isinstance(direct,(bool,Unknown)) else True
+        val=ev(args[0])
+        if isinstance(val,Unknown): return val
+        return True
+    if name=='HasValue' and len(args)==1:
+        val=ev(args[0])
+        if isinstance(val,Unknown): return val
+        return val is not None and val!=SKIP
     if name in ('BitClear','BitSet','BitsClear','BitsSet'):
         count=2 if name.startswith('Bits') else 1
         if len(args)!=count: return Unknown(('bitmask_argument_unsupported',))

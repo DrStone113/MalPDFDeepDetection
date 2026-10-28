@@ -1,5 +1,24 @@
 # Research log
 
+## 2026-10-28 - Extractor Three Pillars: JBIG2 Structure, Content Stream Semantics, and Arlington Predicates
+
+- Purpose: expand static extraction resilience across three critical zero-click and obfuscation vectors without rendering engines or untrusted execution: JBIG2 segment framing, content stream invisible text semantics, and Arlington PDF Model conformance verification.
+- Added modules and integrations:
+  - `src/malpdf/extraction/media.py`: implemented `jbig2_structure()` parsing ITU-T T.88 segment framing, control flags, referenced segment graph, and exploit anomalies (`jbig2_forward_segment_reference`, `jbig2_duplicate_segment_number`, `jbig2_unknown_segment_type`, `jbig2_segment_truncated`, `image_trailing_data`).
+  - `src/malpdf/extraction/carving.py`, `image_codecs.py`, `filters.py`: added `jbig2` artifact detection and native `/JBIG2Decode` filter dispatch.
+  - `src/malpdf/extraction/content_stream.py`: implemented `tokenize_stream()` and `inspect_content_stream()` tracking text rendering mode (`Tr 3`), font size 0, white-on-white text, off-page coordinates, graphics state save/restore (`q`/`Q`), character counts, and invisible ratio.
+  - `src/malpdf/extraction/streams.py` and `carving.py`: wired `content_stream` artifact classification and dispatch for `/Form` XObjects and untyped page contents streams.
+  - `src/malpdf/extraction/arlington_expression.py`: added extended predicates `fn:IsNumber`, `fn:DefaultValue`, `fn:RequiredValue`, `fn:PageCount`, `fn:PageNumber`, `fn:InKeyList`, `fn:MustBeDirect`, and `fn:HasValue`.
+  - `src/malpdf/extraction/arlington_model.py`: normalized relative paths with forward slashes for cross-platform Git tree consistency on Windows.
+- Safety and zero-comment policy: all additions strictly adhere to the zero-comment rule in Python code. Evaluated purely on in-memory synthetic inputs on Windows DEV; no live malware was executed.
+- Validation:
+  - `tests/test_extraction_media.py`: 30 passed in 0.74s.
+  - `tests/test_content_stream.py`: 12 passed in 0.68s.
+  - `tests/test_arlington.py`: 140 passed, 1 skipped (Windows OS symlink privilege), 0 failed.
+  - `scripts/25_validate_extractor_synthetic.py --save`: 52/52 native and legacy probes passed.
+  - `scripts/security/check_repo_content.py`: passed 2184 tracked index files.
+- Status: complete and verified on Windows DEV.
+
 ## 2026-09-28 - GitHub Codespaces reproducible development environment
 
 - Purpose: provide a Python 3.11 Codespaces/devcontainer configuration for reproducible source development and synthetic-test execution.

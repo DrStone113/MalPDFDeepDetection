@@ -9,7 +9,6 @@ import math
 import multiprocessing
 import os
 from pathlib import Path
-import resource
 import time
 
 import numpy as np
@@ -59,6 +58,8 @@ def read_acquired_inventory(root: Path, inputs: list[dict], expected_count: int)
 
 def _feature_child(connection, path, boundary, digest, limits, cpu_seconds, memory_bytes):
     """Only JSON travels back across the parser boundary, never pickled objects."""
+    import resource
+
     try:
         resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
         resource.setrlimit(resource.RLIMIT_FSIZE, (0, 0))

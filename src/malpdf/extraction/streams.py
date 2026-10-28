@@ -64,6 +64,16 @@ class StreamCollector:
             color = value.raw_get('/ColorSpace') if '/ColorSpace' in value else None
             if isinstance(color, NameObject) and str(color) in {'/DeviceGray', '/DeviceRGB', '/DeviceCMYK'}:
                 context['components'] = {'/DeviceGray': 1, '/DeviceRGB': 3, '/DeviceCMYK': 4}[str(color)]
+        elif isinstance(subtype, NameObject) and str(subtype) == '/Form':
+            context['hint'] = 'content_stream'
+            bbox = value.raw_get('/BBox') if '/BBox' in value else None
+            if isinstance(bbox, (list, tuple)) and len(bbox) == 4:
+                try:
+                    context['boundary_box'] = [float(NumberObject(x)) for x in bbox]
+                except Exception:
+                    pass
+        elif '/Type' not in value and '/Subtype' not in value:
+            context['hint'] = 'content_stream'
         self.sources.append((value, {"source_id": source_id, "backend": backend,
             "object_number": object_number, "generation": generation, "offset": offset, 'artifact_context': context}))
         self.value["retained_sources"] = len(self.sources)

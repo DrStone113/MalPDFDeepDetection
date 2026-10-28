@@ -14,7 +14,6 @@ import re
 import subprocess
 from time import perf_counter
 import os
-import resource
 
 import numpy as np
 import yaml
@@ -646,7 +645,12 @@ def run_cic_profile(root, prepared_run, *, lab_attested=False, model_file=None):
                 "training_provenance": loaded[1]["training_dataset"] if loaded else None,
                 "requested_n_jobs": 1,
                 "scope": "checksum-verified frozen RIT model recorded by identity; inference timing only, no CIC accuracy claim; setup excluded from per-file inference"}
-            summary["peak_parent_rss_bytes"] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024
+            try:
+                import resource
+            except ImportError:
+                summary["peak_parent_rss_bytes"] = None
+            else:
+                summary["peak_parent_rss_bytes"] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024
             summary["memory_scope"] = "worker current-process VmHWM when returned, rusage fallback explicitly tagged; killed worker polling lower bound; concurrent parent+worker RSS sum sampled and may double count shared pages"
             summary["failure_inventory"] = "private artifacts/per_file.jsonl and failures.jsonl; no samples silently discarded"
             summary["os_cache"] = "uncontrolled; cold/warm refer to application cache"

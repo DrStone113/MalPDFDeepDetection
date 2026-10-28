@@ -166,6 +166,181 @@ def jpx_structure(data: bytes) -> dict:
             'complete': True, 'reason_codes': [], 'scope': 'JP2 box bounds and codestream SIZ/EOC framing; entropy data validated separately'}
 
 
+
+JBIG2_SEGMENT_TYPES = {
+    0: "symbol_dictionary",
+    4: "intermediate_text_region",
+    6: "immediate_text_region",
+    7: "immediate_lossless_text_region",
+    16: "pattern_dictionary",
+    20: "intermediate_halftone_region",
+    22: "immediate_halftone_region",
+    23: "immediate_lossless_halftone_region",
+    36: "intermediate_generic_region",
+    38: "immediate_generic_region",
+    39: "immediate_lossless_generic_region",
+    40: "intermediate_generic_refinement_region",
+    42: "immediate_generic_refinement_region",
+    43: "immediate_lossless_generic_refinement_region",
+    48: "page_information",
+    49: "end_of_page",
+    50: "end_of_stripe",
+    51: "end_of_file",
+    52: "profiles",
+    53: "tables",
+    62: "extension",
+}
+
+
+def jbig2_structure(data: bytes) -> dict:
+    if not data:
+        raise MediaIssue("jbig2_data_empty")
+    result = {
+        "format": "jbig2",
+        "complete": False,
+        "reason_codes": [],
+        "has_file_header": False,
+        "file_organization": "embedded",
+        "number_of_pages_known": False,
+        "declared_pages": None,
+        "segment_count": 0,
+        "segment_types_present": {},
+        "segments": [],
+        "width": None,
+        "height": None,
+        "components": 1,
+        "bits_per_component": 1,
+        "has_end_of_file": False,
+        "scope": "JBIG2 segment framing, headers and referred-to segment graph only; no image rendering or decompression",
+        "rendering_performed": False,
+        "pixel_decode_performed": False,
+    }
+    if data.startswith(b"\x97JB2\r\n\x1a\n"):
+        result["has_file_header"] = True
+        if len(data) < 9:
+            raise MediaIssue("jbig2_file_header_truncated", details=result)
+        flags = data[8]
+        result["file_organization"] = "sequential" if not (flags & 1) else "random_access"
+        pages_known = bool(flags & 2)
+        result["number_of_pages_known"] = pages_known
+        offset = 9
+        if pages_known:
+            if len(data) < 13:
+                raise MediaIssue("jbig2_file_header_truncated", details=result)
+            result["declared_pages"] = int.from_bytes(data[9:13], "big")
+            offset = 13
+    else:
+        offset = 0
+    seen_numbers = set()
+    reasons = set()
+    type_counts = Counter()
+    while offset < len(data):
+        if offset + 11 > len(data):
+            reasons.add("jbig2_segment_header_truncated")
+            result["reason_codes"] = sorted(reasons)
+            raise MediaIssue("jbig2_segment_header_truncated", details=result)
+        seg_number = int.from_bytes(data[offset:offset + 4], "big")
+        if seg_number in seen_numbers:
+            reasons.add("jbig2_duplicate_segment_number")
+        seen_numbers.add(seg_number)
+        header_flags = data[offset + 4]
+        deferred = bool(header_flags & 0x80)
+        page_assoc_size = 4 if (header_flags & 0x40) else 1
+        seg_type = header_flags & 0x3F
+        type_name = JBIG2_SEGMENT_TYPES.get(seg_type, "unknown_type")
+        if seg_type not in JBIG2_SEGMENT_TYPES:
+            reasons.add("jbig2_unknown_segment_type")
+        type_counts[type_name] += 1
+        ref_byte = data[offset + 5]
+        short_count = (ref_byte >> 5) & 0x07
+        cur = offset + 6
+        if short_count <= 4:
+            ref_count = short_count
+        else:
+            if cur + 4 > len(data):
+                reasons.add("jbig2_segment_header_truncated")
+                result["reason_codes"] = sorted(reasons)
+                raise MediaIssue("jbig2_segment_header_truncated", details=result)
+            ref_count = int.from_bytes(data[cur:cur + 4], "big")
+            cur += 4
+            if ref_count > 65536:
+                reasons.add("jbig2_excessive_reference_count")
+            flag_bytes = (ref_count + 1) // 8
+            if cur + flag_bytes > len(data):
+                reasons.add("jbig2_segment_header_truncated")
+                result["reason_codes"] = sorted(reasons)
+                raise MediaIssue("jbig2_segment_header_truncated", details=result)
+            cur += flag_bytes
+        ref_num_size = 1 if seg_number <= 256 else 2 if seg_number <= 65536 else 4
+        if cur + ref_count * ref_num_size > len(data):
+            reasons.add("jbig2_segment_header_truncated")
+            result["reason_codes"] = sorted(reasons)
+            raise MediaIssue("jbig2_segment_header_truncated", details=result)
+        referred_segments = []
+        for _ in range(ref_count):
+            ref_target = int.from_bytes(data[cur:cur + ref_num_size], "big")
+            cur += ref_num_size
+            if ref_target >= seg_number:
+                reasons.add("jbig2_forward_segment_reference")
+            referred_segments.append(ref_target)
+        if cur + page_assoc_size > len(data):
+            reasons.add("jbig2_segment_header_truncated")
+            result["reason_codes"] = sorted(reasons)
+            raise MediaIssue("jbig2_segment_header_truncated", details=result)
+        page_assoc = int.from_bytes(data[cur:cur + page_assoc_size], "big")
+        cur += page_assoc_size
+        if cur + 4 > len(data):
+            reasons.add("jbig2_segment_header_truncated")
+            result["reason_codes"] = sorted(reasons)
+            raise MediaIssue("jbig2_segment_header_truncated", details=result)
+        data_length = int.from_bytes(data[cur:cur + 4], "big")
+        cur += 4
+        if data_length == 0xFFFFFFFF:
+            reasons.add("jbig2_unknown_data_length")
+            seg_body = memoryview(data)[cur:]
+            cur = len(data)
+        else:
+            if cur + data_length > len(data):
+                reasons.add("jbig2_segment_truncated")
+                result["reason_codes"] = sorted(reasons)
+                raise MediaIssue("jbig2_segment_truncated", details=result)
+            seg_body = memoryview(data)[cur:cur + data_length]
+            cur += data_length
+        if seg_type == 48 and len(seg_body) >= 8:
+            page_width, page_height = struct.unpack_from(">II", seg_body, 0)
+            if result["width"] is None:
+                result["width"] = page_width
+                result["height"] = page_height
+            elif result["width"] != page_width or result["height"] != page_height:
+                reasons.add("jbig2_page_geometry_conflict")
+        seg_record = {
+            "segment_number": seg_number,
+            "type": seg_type,
+            "type_name": type_name,
+            "deferred_non_retain": deferred,
+            "page_association": page_assoc,
+            "referred_to_segments": referred_segments,
+            "size_bytes": len(seg_body),
+            "offset": offset,
+            "header_bytes": cur - offset - len(seg_body),
+            "sha256": digest(seg_body),
+        }
+        result["segments"].append(seg_record)
+        offset = cur
+        if seg_type == 51:
+            result["has_end_of_file"] = True
+            if offset < len(data):
+                result["trailing_bytes"] = len(data) - offset
+                result["trailing_sha256"] = digest(data[offset:])
+                reasons.add("image_trailing_data")
+            break
+    result["segment_count"] = len(result["segments"])
+    result["segment_types_present"] = dict(type_counts)
+    result["complete"] = not bool(reasons)
+    result["reason_codes"] = sorted(reasons)
+    return result
+
+
 def inspect_image(data: bytes, context: dict | None = None) -> dict:
     context = context or {}
     if data.startswith(b"\xff\xd8"):
@@ -174,7 +349,10 @@ def inspect_image(data: bytes, context: dict | None = None) -> dict:
         result = png_structure(data)
     elif data.startswith((b'\x00\x00\x00\x0cjP  \r\n\x87\n', b'\xff\x4f\xff\x51')):
         result = jpx_structure(data)
+    elif data.startswith(b"\x97JB2\r\n\x1a\n") or context.get("codec") in {"/JBIG2Decode", "/JB2"}:
+        result = jbig2_structure(data)
     elif all(type(context.get(key)) is int for key in ("width", "height", "components", "bits_per_component")):
+
         width, height, components, bits = (context[key] for key in ("width", "height", "components", "bits_per_component"))
         if min(width, height, components) < 1 or bits not in (1, 2, 4, 8, 16):
             raise MediaIssue("raster_geometry_invalid")

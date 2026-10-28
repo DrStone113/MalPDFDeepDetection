@@ -7,7 +7,6 @@ import math
 import multiprocessing
 import os
 from pathlib import Path
-import resource
 import time
 
 from malpdf.static.code_inspector import (
@@ -38,6 +37,10 @@ def current_process_peak_rss():
         value = next(int(line.split()[1]) * 1024 for line in Path("/proc/self/status").read_text().splitlines() if line.startswith("VmHWM:"))
         return value, "proc_vmhwm"
     except (OSError, StopIteration, ValueError):
+        try:
+            import resource
+        except ImportError:
+            return 0, "unavailable"
         return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024, "rusage_fallback"
 
 

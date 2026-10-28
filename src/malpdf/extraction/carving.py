@@ -62,6 +62,7 @@ def artifact_kind(data, hint=None):
     signatures = ((b'%PDF-', 'pdf'), (b'PK\x03\x04', 'zip'), (b'PK\x05\x06', 'zip'),
         (b'\x89PNG\r\n\x1a\n', 'png'), (b'\xff\xd8\xff', 'jpeg'),
         (b'\x00\x00\x00\x0cjP  \r\n\x87\n', 'jpx'), (b'\xff\x4f\xff\x51', 'jpx'),
+        (b'\x97JB2\r\n\x1a\n', 'jbig2'),
         (b'\x00\x01\x00\x00', 'sfnt_font'), (b'OTTO', 'sfnt_font'), (b'true', 'sfnt_font'), (b'typ1', 'sfnt_font'),
         (b'wOFF', 'woff_font'), (b'wOF2', 'woff_font'),
         (b'%!PS-AdobeFont', 'font_data'), (b'%!FontType1', 'font_data'), (b'\x80\x01', 'font_data'),
@@ -71,7 +72,7 @@ def artifact_kind(data, hint=None):
         if data.startswith(signature):
             return kind
     return hint if hint in {'javascript', 'xfa_xml', 'object_stream', 'image_data', 'font_data',
-                             'javascript_candidate', 'xml_candidate'} else 'unknown'
+                             'javascript_candidate', 'xml_candidate', 'content_stream'} else 'unknown'
 
 
 class RecursiveCarver:
@@ -563,10 +564,14 @@ class RecursiveCarver:
                     issues = [item for item in analysis['members'] if item['status'] != 'observed' or item.get('script', {}).get('status', 'observed') != 'observed'] or analysis['duplicate_object_numbers']
                 elif entry['kind'] == 'empty':
                     analysis, issues = {'empty_artifact': True}, []
-                elif is_vm(self.code_limits) and entry['kind'] in {'jpeg', 'png', 'jpx', 'image_data', 'sfnt_font', 'woff_font', 'font_data', 'flash'}:
+                elif is_vm(self.code_limits) and entry['kind'] in {'jpeg', 'png', 'jpx', 'jbig2', 'image_data', 'sfnt_font', 'woff_font', 'font_data', 'flash', 'content_stream'}:
                     from malpdf.extraction.media import MediaIssue, inspect_image, inspect_font, inspect_flash
                     try:
-                        if entry['kind'] in {'jpeg', 'png', 'jpx', 'image_data'}:
+                        if entry['kind'] == 'content_stream':
+                            from malpdf.extraction.content_stream import ContentStreamIssue, inspect_content_stream
+                            box = entry.get('source_metadata', {}).get('boundary_box')
+                            analysis = inspect_content_stream(data, boundary_box=box)
+                        elif entry['kind'] in {'jpeg', 'png', 'jpx', 'jbig2', 'image_data'}:
                             analysis = inspect_image(data, entry['source_metadata'])
                         elif entry['kind'] in {'sfnt_font', 'font_data'}:
                             if data.startswith((b'%!PS-AdobeFont', b'%!FontType1', b'\x80\x01')):
@@ -583,9 +588,9 @@ class RecursiveCarver:
                         else:
                             analysis = inspect_flash(data, budget=self.budget,
                                 max_expansion_ratio=self.limits.max_expansion_ratio, retain=self.retain)
-                    except MediaIssue as error:
+                    except (MediaIssue, ContentStreamIssue) as error:
                         self.value['analyses'][identity] = error.details
-                        raise _CarveIssue(error.status, error.code) from None
+                        raise _CarveIssue(error.status if hasattr(error, 'status') else 'partial', error.code) from None
                     issues = analysis['reason_codes']
                     media_issues = issues
                 else:

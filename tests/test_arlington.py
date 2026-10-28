@@ -496,11 +496,11 @@ def test_worker_timeout_keeps_rule_sources_and_primary(tmp_path,monkeypatch):
 def reference(tmp_path):
     snapshot=tmp_path/'third_party/arlington-pdf-model';tsv=snapshot/'tsv/latest'
     tsv.mkdir(parents=True);(tmp_path/'configs').mkdir()
-    (snapshot/'LICENSE').write_text('Synthetic license fixture\n')
-    (snapshot/'NOTICE.txt').write_text('Synthetic notice fixture\n')
+    (snapshot/'LICENSE').write_bytes(b'Synthetic license fixture\n')
+    (snapshot/'NOTICE.txt').write_bytes(b'Synthetic notice fixture\n')
     values=[row('Size',Required='TRUE')]
-    (tsv/'FileTrailer.tsv').write_text('\t'.join(HEADER)+'\n'+'\n'.join('\t'.join(r[c] for c in HEADER) for r in values)+'\n')
-    for args in (['init','-q'],['add','.'],['-c','user.name=Fixture','-c','user.email=fixture@example.invalid','commit','-qm','Benign synthetic model']):
+    (tsv/'FileTrailer.tsv').write_bytes(('\t'.join(HEADER)+'\n'+'\n'.join('\t'.join(r[c] for c in HEADER) for r in values)+'\n').encode())
+    for args in (['init','-q'],['-c','core.autocrlf=false','add','.'],['-c','core.autocrlf=false','-c','user.name=Fixture','-c','user.email=fixture@example.invalid','commit','-qm','Benign synthetic model']):
         subprocess.run(['git','-C',str(snapshot),*args],check=True,capture_output=True)
     commit=subprocess.check_output(['git','-C',str(snapshot),'rev-parse','HEAD'],text=True).strip()
     return tmp_path,snapshot,tsv,commit
@@ -522,19 +522,23 @@ def test_model_drift_is_unavailable_without_head_or_fixture_fallback(reference,c
     root,snapshot,tsv,commit=reference
     seal_model(root,commit=commit)
     file=tsv/'FileTrailer.tsv'
-    if change in {'content','resealed_content'}: file.write_text(file.read_text()+'\n')
-    elif change=='extra': (tsv/'Extra.tsv').write_text(file.read_text())
+    if change in {'content','resealed_content'}: file.write_bytes(file.read_bytes()+b'\n')
+    elif change=='extra': (tsv/'Extra.tsv').write_bytes(file.read_bytes())
     elif change=='missing': file.unlink()
-    elif change=='license': (snapshot/'LICENSE').write_text('changed')
+    elif change=='license': (snapshot/'LICENSE').write_bytes(b'changed')
     elif change=='symlink':
-        target=root/'redirect.tsv';target.write_text(file.read_text());file.unlink();file.symlink_to(target)
+        target=root/'redirect.tsv';target.write_bytes(file.read_bytes());file.unlink()
+        try:
+            file.symlink_to(target)
+        except OSError:
+            pytest.skip('symlink creation not permitted on this platform')
     else:
-        subprocess.run(['git','-C',str(snapshot),'-c','user.name=Fixture','-c','user.email=fixture@example.invalid','commit','--allow-empty','-qm','Changed HEAD'],check=True,capture_output=True)
+        subprocess.run(['git','-C',str(snapshot),'-c','core.autocrlf=false','-c','user.name=Fixture','-c','user.email=fixture@example.invalid','commit','--allow-empty','-qm','Changed HEAD'],check=True,capture_output=True)
     if change=='resealed_content':
-        lock=root/'configs/arlington.lock.json';value=json.loads(lock.read_text())
-        spec=value['files'][str(file.relative_to(root))];data=file.read_bytes()
+        lock=root/'configs/arlington.lock.json';value=json.loads(lock.read_bytes())
+        spec=value['files'][str(file.relative_to(root)).replace('\\', '/')];data=file.read_bytes()
         spec.update(size_bytes=len(data),sha256=hashlib.sha256(data).hexdigest(),git_blob_sha1=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest())
-        lock.write_text(json.dumps(value))
+        lock.write_bytes(json.dumps(value).encode())
     with pytest.raises(ModelUnavailable): load_model(root)
 
 
@@ -561,3 +565,39 @@ def test_reference_cli_is_explicit_and_deep_static_only(tmp_path):
 @pytest.mark.parametrize('values',[{'max_checks':0},{'max_metadata_bytes':1},{'max_steps':100001},{'max_depth':True}])
 def test_invalid_rule_limits_refused(values):
     with pytest.raises(ValueError): RuleLimits(**values)
+
+
+def test_extended_predicates_evaluation():
+    context = ExprContext()
+    assert evaluate('fn:IsNumber(42)', context) is True
+    assert evaluate('fn:IsNumber(@Name)', context) is False
+    assert isinstance(evaluate('fn:IsNumber(@Missing)', context), Unknown)
+
+    assert evaluate('fn:DefaultValue(10, @N)', context) == Decimal(8)
+    assert evaluate('fn:DefaultValue(10, null)', context) == Decimal(10)
+
+    assert evaluate('fn:RequiredValue(42, 42)', context) is True
+    assert evaluate('fn:RequiredValue(42, 99)', context) is False
+    assert isinstance(evaluate('fn:RequiredValue(@Missing, 42)', context), Unknown)
+
+    assert isinstance(evaluate('fn:PageCount()', context), Unknown)
+    context.page_count = lambda: 5
+    assert evaluate('fn:PageCount()', context) == Decimal(5)
+
+    assert isinstance(evaluate('fn:PageNumber()', context), Unknown)
+    context.page_number = lambda: 1
+    assert evaluate('fn:PageNumber()', context) == Decimal(1)
+
+    assert evaluate('fn:InKeyList(42, [1, 42, 99])', context) is True
+    assert evaluate('fn:InKeyList(7, [1, 42, 99])', context) is False
+    assert isinstance(evaluate('fn:InKeyList(@Missing, [1, 2])', context), Unknown)
+
+    assert evaluate('fn:MustBeDirect(42)', context) is True
+    context.is_direct = lambda path: path == 'DirectObj'
+    assert evaluate('fn:MustBeDirect(DirectObj)', context) is True
+    assert evaluate('fn:MustBeDirect(IndirectObj)', context) is False
+
+    assert evaluate('fn:HasValue(42)', context) is True
+    assert evaluate('fn:HasValue(null)', context) is False
+    assert isinstance(evaluate('fn:HasValue(@Missing)', context), Unknown)
+

@@ -83,14 +83,14 @@ def seal_model(root, *, commit, snapshot='third_party/arlington-pdf-model',
     directory,paths=_snapshot(root,snapshot,tsv)
     if _git(directory,'rev-parse','HEAD').decode().strip()!=commit:
         raise ModelUnavailable('arlington_commit_mismatch')
-    names=[str(path.relative_to(directory)) for path in paths]+['LICENSE','NOTICE.txt']
-    tree=_tree(directory,commit,str((root/tsv).relative_to(directory)))
+    names=[str(path.relative_to(directory)).replace('\\', '/') for path in paths]+['LICENSE','NOTICE.txt']
+    tree=_tree(directory,commit,str((root/tsv).relative_to(directory)).replace('\\', '/'))
     if set(tree)!=set(names):
         raise ModelUnavailable('arlington_git_file_set_mismatch')
     files={}
     total=0
     for name in names:
-        relative=str((directory/name).relative_to(root))
+        relative=str((directory/name).relative_to(root)).replace('\\', '/')
         data=_read(root,relative,1024**2)
         total+=len(data)
         if total>16*1024**2:
@@ -104,7 +104,6 @@ def seal_model(root, *, commit, snapshot='third_party/arlington-pdf-model',
     destination=root/_relative(lock)
     if any(path.is_symlink() for path in (destination,*destination.parents)):
         raise ModelUnavailable('arlington_lock_symlink')
-    # Validate the exact content before publishing a reviewable lock.
     catalog=_load(root,value)
     with destination.open('x',encoding='utf-8') as handle:
         json.dump(value,handle,indent=2,sort_keys=True,allow_nan=False)
@@ -121,12 +120,12 @@ def _load(root, value):
         directory,paths=_snapshot(root,value['snapshot'],value['tsv_directory'])
         if _git(directory,'rev-parse','HEAD').decode().strip()!=value['commit']:
             raise ModelUnavailable('arlington_commit_mismatch')
-        expected={str(path.relative_to(root)) for path in paths}
-        expected.update(str((directory/name).relative_to(root)) for name in ('LICENSE','NOTICE.txt'))
+        expected={str(path.relative_to(root)).replace('\\', '/') for path in paths}
+        expected.update(str((directory/name).relative_to(root)).replace('\\', '/') for name in ('LICENSE','NOTICE.txt'))
         if set(value['files'])!=expected:
             raise ModelUnavailable('arlington_file_set_mismatch')
-        tree=_tree(directory,value['commit'],str((root/value['tsv_directory']).relative_to(directory)))
-        if {str((directory/name).relative_to(root)) for name in tree}!=expected:
+        tree=_tree(directory,value['commit'],str((root/value['tsv_directory']).relative_to(directory)).replace('\\', '/'))
+        if {str((directory/name).relative_to(root)).replace('\\', '/') for name in tree}!=expected:
             raise ModelUnavailable('arlington_git_file_set_mismatch')
         tables={}; total=0; row_count=0
         for relative,spec in sorted(value['files'].items()):
@@ -135,7 +134,7 @@ def _load(root, value):
             if (set(spec)!={'sha256','size_bytes','git_blob_sha1'} or type(spec['size_bytes']) is not int
                     or total>16*1024**2 or spec['size_bytes']!=len(data) or spec['sha256']!=hashlib.sha256(data).hexdigest()):
                 raise ModelUnavailable('arlington_checksum_mismatch')
-            name=str((root/relative).relative_to(directory))
+            name=str((root/relative).relative_to(directory)).replace('\\', '/')
             blob=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
             if spec['git_blob_sha1']!=blob or tree[name]!=blob:
                 raise ModelUnavailable('arlington_git_blob_mismatch')

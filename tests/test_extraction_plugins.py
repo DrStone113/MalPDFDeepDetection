@@ -7,7 +7,6 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import resource
 import zlib
 
 import pytest
@@ -25,8 +24,7 @@ from malpdf.extraction.raw import inspect_raw_layout
 from malpdf.extraction.contracts import validate_bundle,feature
 from malpdf.static.code_inspector import CodeInspectionLimits
 
-_IMPORT_CPU_LIMIT=resource.getrlimit(resource.RLIMIT_CPU)[0]
-_IMPORT_MEMORY_LIMIT=resource.getrlimit(resource.RLIMIT_AS)[0]
+
 
 
 def sha(data):return hashlib.sha256(data).hexdigest()

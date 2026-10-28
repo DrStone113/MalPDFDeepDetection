@@ -14,7 +14,7 @@ from malpdf.static.execution import UNLIMITED, valid_capacity
 
 ALIASES = {"/Fl": "/FlateDecode", "/LZW": "/LZWDecode", "/AHx": "/ASCIIHexDecode",
            "/A85": "/ASCII85Decode", "/RL": "/RunLengthDecode", "/CCF": "/CCITTFaxDecode",
-           "/DCT": "/DCTDecode"}
+           "/DCT": "/DCTDecode", "/JB2": "/JBIG2Decode"}
 SUPPORTED = frozenset({"/FlateDecode", "/LZWDecode", "/ASCIIHexDecode", "/ASCII85Decode", "/RunLengthDecode"})
 _WHITESPACE = frozenset(b"\x00\t\n\f\r ")
 
@@ -402,7 +402,7 @@ def decode_filters(raw, filters=(), *, decode_parms=None, limits=None, budget=No
             identity_crypt = name == "/Crypt" and isinstance(parms, dict) and parms.get("/Name") == "/Identity"
             if name == "/Crypt" and not identity_crypt:
                 raise _Stopped("encrypted", "crypt_context_unavailable")
-            native_image = media_codecs and name in {"/DCTDecode", "/JPXDecode", "/CCITTFaxDecode"}
+            native_image = media_codecs and name in {"/DCTDecode", "/JPXDecode", "/CCITTFaxDecode", "/JBIG2Decode"}
             if name not in SUPPORTED and not identity_crypt and custom is None and not native_image:
                 raise _Stopped("unsupported", "unsupported_stream_filter")
             if custom is not None:
