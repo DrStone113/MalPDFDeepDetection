@@ -447,6 +447,11 @@ def pdf_task(job, directory):
     environment = {'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8', 'HOME': str(Path.home()),
         'OPENBLAS_NUM_THREADS': '1', 'OMP_NUM_THREADS': '1', 'MKL_NUM_THREADS': '1'}
     streams, processes = [], []
+    outputs = directory / 'private_bundles'
+    planned = job['limits']['samples']
+    started = time.monotonic()
+    last_print = 0.0
+    last_completed = -1
     try:
         for shard in range(count):
             stdout, stderr = tempfile.TemporaryFile(), tempfile.TemporaryFile()
@@ -455,8 +460,41 @@ def pdf_task(job, directory):
                 'pdf-worker', job['job_id'], '--shard', str(shard), '--of', str(count)]
             processes.append(subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=stdout,
                 stderr=stderr, start_new_session=True, env=environment))
-        for process in processes:
-            process.wait(timeout=max(1.0, deadline - time.monotonic()))
+        while True:
+            alive = [process for process in processes if process.poll() is None]
+            try:
+                completed = len(os.listdir(outputs)) if outputs.is_dir() else 0
+            except OSError:
+                completed = 0
+            now = time.monotonic()
+            if now - last_print >= 0.5 or completed != last_completed or not alive:
+                last_print = now
+                last_completed = completed
+                pct = (completed * 100) // planned if planned else 100
+                elapsed = int(now - started)
+                elapsed_str = f"{elapsed // 60:02d}:{elapsed % 60:02d}"
+                active_count = len(alive)
+                if completed > 0 and planned > completed:
+                    eta_sec = int((planned - completed) * (now - started) / completed)
+                    eta_str = f"~{eta_sec // 60:02d}:{eta_sec % 60:02d}"
+                elif completed >= planned:
+                    eta_str = "00:00"
+                else:
+                    eta_str = "--:--"
+                message = f"Tien trinh: {completed}/{planned} ({pct}%) | Da chay: {elapsed_str} | Con lai: {eta_str} | Workers: {active_count}/{count}"
+                if sys.stdout.isatty():
+                    sys.stdout.write(f"\r{message:<80s}")
+                    sys.stdout.flush()
+                elif completed != last_completed or not alive:
+                    print(message, flush=True)
+            if not alive:
+                break
+            if now > deadline:
+                raise subprocess.TimeoutExpired(command, deadline - started)
+            time.sleep(0.2)
+        if sys.stdout.isatty():
+            sys.stdout.write("\n")
+            sys.stdout.flush()
         codes = [process.returncode for process in processes]
     except subprocess.TimeoutExpired:
         for process in processes:
@@ -470,6 +508,16 @@ def pdf_task(job, directory):
         for stream in streams:
             stream.close()
     if any(code != 0 for code in codes):
+        for shard, code in enumerate(codes):
+            if code != 0 and len(streams) > shard * 2 + 1:
+                try:
+                    stderr_stream = streams[shard * 2 + 1]
+                    stderr_stream.seek(0)
+                    detail = stderr_stream.read(2048).decode('utf-8', errors='replace').strip()
+                    if detail and sys.stdout.isatty():
+                        sys.stderr.write(f"Worker {shard} error: {detail}\n")
+                except OSError:
+                    pass
         raise ValueError('worker_failed')
     summary = merge_summary(job, directory, count)
     return summary

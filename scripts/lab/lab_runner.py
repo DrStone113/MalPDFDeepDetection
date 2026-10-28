@@ -375,6 +375,7 @@ def console_run():
     if input('Chay job da duyet? [y/N]: ').strip().lower() != 'y':
         raise ValueError('approval_required')
     try:
+        print('Bat dau chay job ' + job['job_id'][:12] + '...')
         with jobs.execution_limits(job['kind']):
             value = jobs.execute(job, attested=True)
     except ValueError as error:
