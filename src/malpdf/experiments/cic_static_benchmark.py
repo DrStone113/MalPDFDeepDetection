@@ -172,6 +172,39 @@ def select_subset(manifest, sources, count=32, seed=42):
     return chosen
 
 
+def select_corpus(manifest, sources, seed=42):
+    if seed != 42:
+        raise ValueError("Invalid fixed subset budget")
+    indexed = {row["sample_id"]: row for row in sources}
+    if len(indexed) != len(sources) or len({row["sample_id"] for row in manifest}) != len(manifest):
+        raise ValueError("Repeated manifest identity")
+    assignments = defaultdict(set)
+    for row in manifest:
+        source = indexed.get(row["sample_id"])
+        if source is None or source["Label"] != row["Label"] or row["split"] not in {"train", "validation", "test"}:
+            raise ValueError("Manifest/source labels or split invalid")
+        for key in ("duplicate_group_id",):
+            assignments[(key, row[key])].add(row["split"])
+        for key in ("pdf_sha256", "related_group_id"):
+            assignments[(key, source[key])].add(row["split"])
+    if any(len(splits) != 1 for splits in assignments.values()):
+        raise ValueError("Saved file or related/equivalent group crosses partitions")
+    chosen = []
+    for row in manifest:
+        if row.get("cohort") == "cic":
+            source = indexed[row["sample_id"]]
+            path = Path(source["pdf_relative_path"])
+            if path.is_absolute() or ".." in path.parts or not path.is_relative_to("data/raw/cic_pdf"):
+                raise ValueError("CIC PDF path outside its raw boundary")
+            if re.fullmatch(r"[0-9a-f]{64}", source["pdf_sha256"]) is None:
+                raise ValueError("Invalid saved PDF identity")
+            chosen.append({**row, **{name: source[name] for name in ("pdf_sha256", "pdf_relative_path", "related_group_id")}})
+    chosen.sort(key=lambda r: r["sample_id"])
+    if len(chosen) != 1452:
+        raise ValueError("Corpus count mismatch")
+    return chosen
+
+
 def source_fingerprint(root, limits):
     import platform
     from xml.parsers import expat
@@ -496,7 +529,6 @@ def compare_cic_features(run, records, configuration):
 
 def run_cic_profile(root, prepared_run, *, lab_attested=False, model_file=None):
     root = Path(root).absolute()
-    # This guard precedes every metadata/model/PDF operation in run mode.
     try:
         lab = require_offline_lab(lab_attested)
         clean_code(root)
@@ -509,7 +541,6 @@ def run_cic_profile(root, prepared_run, *, lab_attested=False, model_file=None):
             if outcome is not None:
                 raise ValueError('V8 benchmark already attempted; '
                     f"saved status={outcome['status']}; report_path={outcome['report_path']}")
-            # Admission failures cannot consume the sole PDF evaluation claim.
             _worker_count(lock['configuration']['workers'], limits)
     except Exception:
         with ResearchRun(root, "cic_static_refused", {"protocol": "CIC offline job preflight",
@@ -564,8 +595,6 @@ def run_cic_profile(root, prepared_run, *, lab_attested=False, model_file=None):
         session = StaticScanSession(repository_root=root, inspector=lambda key, limits=None: readouts[key], model_loader=loader)
         try:
             if lock.get('v8_design') is not None:
-                # Loading the frozen model also consumes parent RAM. Recheck
-                # immediately before claiming and before the first PDF access.
                 _worker_count(cfg['workers'], limits)
                 run.state['parser_memory_admission'] = worker_memory_budget(limits)
                 from malpdf.experiments.cic_v8 import claim_v8_attempt

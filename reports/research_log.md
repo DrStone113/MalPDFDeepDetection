@@ -1,5 +1,22 @@
 # Research log
 
+## 2026-10-28 - Bounded Static Extraction Standard & CIC-Evasion Real-World Evaluation (Job f8a8ea1fae10)
+
+- Purpose: evaluate the newly deployed Bounded Static Extraction standard, stream head/tail keyword salvage, and quota evasion flags against 64 real-world PDF samples (CIC-Evasion: 32 benign, 32 malicious) in the isolated REMnux LAB environment.
+- System metrics & stability:
+  - Job ID: `f8a8ea1fae10b45fe447a5804c0602bfcdab031b59a3c5e0f10c7098676277e0` on commit `0a0cad10e79f630377ffa78206c65ef1636689b1`.
+  - Process throughput: 64 / 64 samples completed across 5 workers in 465 seconds (~7.7 minutes) without worker SIGKILL, memory exhaustion, or deadlock.
+  - Peak worker RSS: 403 MB (well below the 1,024 MB per-worker and 2,048 MB runner address space limits).
+- Extraction status & telemetry:
+  - `bounded_complete`: 54 / 64 samples (84.4%) — 26 benign, 28 malicious. Completed pipeline and captured 500+ features per bundle.
+  - `timeout_partial`: 10 / 64 samples (15.6%) — 6 benign, 4 malicious. Hit the 60s per-file wall-clock bound but successfully salvaged 545 to 969 features each (retaining core syntax, tokens, and layout) instead of discarding the sample.
+  - Hard crashes (`failed`): 0.
+- Empirical evasion flag distribution:
+  - `flag_decompression_ratio_exceeded` & `is_truncated_stream`: 17 samples total — **15 malware vs 2 benign**. Demonstrates strong discriminative power as an explicit defensive feature.
+  - `flag_spec_violation_flood`: 19 samples total — 12 benign vs 7 malware.
+  - `flag_excessive_object_graph`: 5 samples total — 2 benign vs 3 malware.
+- Conclusion: The Bounded Static Extraction standard successfully decouples operational system errors from defensive evasion signals, preserves feature consistency across batches, and provides robust resilience against stream bombs and AST complexity attacks.
+
 ## 2026-10-28 - Extractor Three Pillars: JBIG2 Structure, Content Stream Semantics, and Arlington Predicates
 
 - Purpose: expand static extraction resilience across three critical zero-click and obfuscation vectors without rendering engines or untrusted execution: JBIG2 segment framing, content stream invisible text semantics, and Arlington PDF Model conformance verification.

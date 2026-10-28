@@ -19,6 +19,17 @@ The [project README](../README.md) provides the overview and navigation.
 | [Research status](research_status.md) | Recorded extractor changes, Kaggle development studies, outcomes, and limitations |
 | [Lubuntu migration](lubuntu_migration.md) | Private transfer verification and local environment restoration |
 
+## Agent and Architecture Standards
+
+| Specification | Contents |
+| --- | --- |
+| [Architecture and Environments](agent_architecture_and_environments.md) | Dual-environment topology (DEV/LAB), SSH config, permissions and data handoff |
+| [Workflow and Execution Gates](agent_workflow_and_gates.md) | 5-phase agent workflow, zero-argument `lab run`, pre-staging and handoff checklist |
+| [Security and Safe Corpus](agent_security_and_safe_corpus.md) | Untrusted inputs, live malware boundaries, safe synthetic corpora, host-only rules |
+| [Engineering and Resilience](agent_engineering_and_resilience.md) | Strict zero comments in Python, bug documentation, extractor states, deserialization safety |
+| [Datasets and Provenance](agent_datasets_and_provenance.md) | Protocol G partition manifest, leakage prevention, experiment runs and research log |
+| [Bug Knowledge Base & Registry](bugs/README.md) | Deep-dive root cause analyses, anti-regression invariants, and bug catalog (BUG-001+) |
+
 ## Evidence and project rules
 
 | Reference | Purpose |

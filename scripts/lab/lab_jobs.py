@@ -25,7 +25,7 @@ API = 1
 JOBS = Path('/var/lib/malpdf/jobs')
 CONFIG = Path('/etc/malpdf/runner.json')
 HEX = re.compile(r'[0-9a-f]{64}\Z')
-PDF_KINDS = {'pdf-static', 'pdf-static-cve'}
+PDF_KINDS = {'pdf-static', 'pdf-static-cve', 'pdf-static-cic-full'}
 KINDS = {'syntax', 'synthetic', *PDF_KINDS}
 LIMITS = {'wall_seconds': 1800, 'file_wall_seconds': 60, 'file_cpu_seconds': 45,
           'file_memory_bytes': 1073741824, 'file_max_bytes': 10485760,
@@ -82,6 +82,8 @@ def summary_valid(summary):
 def policy(kind):
     if kind == 'pdf-static':
         return LIMITS.copy()
+    if kind == 'pdf-static-cic-full':
+        return {**LIMITS, 'samples': 1452, 'wall_seconds': 7200, 'output_bytes': 2 * 1024**3}
     if kind == 'pdf-static-cve':
         return {**LIMITS, 'samples': 5, 'wall_seconds': 180, 'output_bytes': 40 * 1024**2}
     return {**LIMITS, 'wall_seconds': 240, 'file_wall_seconds': 90 if kind == 'synthetic' else 60,

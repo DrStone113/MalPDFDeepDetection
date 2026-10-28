@@ -29,6 +29,21 @@ def cve_contract():
         'labels': 'historical user-assigned labels; no accuracy evaluation'}
 
 
+def cic_full_contract():
+    manifests = {
+        'split_manifest': {'path': 'data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/split_manifest.csv',
+                           'sha256': 'e939a676c51c7a98b9dc4bb843e846f546e1ada2bfb576b41416c406415c0643'},
+        'source_manifest': {'path': 'data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/source_manifest.csv',
+                            'sha256': 'd74729236017dc27a71c999bc4d69f84a16fa4148573c3bbc7f4eb03709b150b'},
+        'normalization_manifest': {'path': 'data/processed/cic_normalization/run_20261003T104918756555Z_3b68d36a5705/normalization_manifest.csv',
+                                   'sha256': 'c4dc77f00849518ee56dc34d0f0cc7daf0c92b3ce9fd1e93fd63d053caf8570f'},
+    }
+    return {'cohort': 'cic-full-1452', 'samples': 1452, 'seed': 42,
+            'train': 870, 'validation': 291, 'test': 291,
+            'boundary': 'data/raw/cic_pdf', 'manifests': manifests,
+            'selection': 'all 1452 CIC samples partitioned under Protocol G; train 870, validation 291, test 291'}
+
+
 def cve_rows(data_root):
     manifest = jobs.trusted_path(data_root / CVE_MANIFEST['path'])
     try:
@@ -177,6 +192,15 @@ def pdf_metadata(job):
     data_root = Path(cfg['data_root'])
     if job['kind'] == 'pdf-static-cve':
         return source, data_root, cve_rows(data_root)
+    if job['kind'] == 'pdf-static-cic-full':
+        from malpdf.experiments.cic_static_benchmark import checked_table, select_corpus, verify_label_provenance
+        cohort = yaml.safe_load((source / 'configs/cic_static_benchmark.yaml').read_text(encoding='utf-8'))
+        tables = {key: checked_table(data_root, cohort[key]) for key in ('split_manifest', 'source_manifest', 'normalization_manifest')}
+        rows = select_corpus(tables['split_manifest'], tables['source_manifest'], 42)
+        verify_label_provenance(rows, tables['normalization_manifest'])
+        if len(rows) != 1452:
+            raise ValueError('manifest_unavailable')
+        return source, data_root, rows
     from malpdf.experiments.cic_static_benchmark import checked_table, select_subset, verify_label_provenance
     cohort = yaml.safe_load((source / 'configs/cic_static_benchmark.yaml').read_text(encoding='utf-8'))
     tables = {key: checked_table(data_root, cohort[key]) for key in ('split_manifest', 'source_manifest', 'normalization_manifest')}
@@ -372,6 +396,8 @@ def console_run():
     print('Job: ' + job['job_id'] + ' | kind: ' + job['kind'])
     if job['kind'] == 'pdf-static-cve':
         print(json.dumps(cve_contract(), sort_keys=True))
+    if job['kind'] == 'pdf-static-cic-full':
+        print(json.dumps(cic_full_contract(), sort_keys=True))
     print(json.dumps({'limits': job['limits'], 'lab_output_directory': str(jobs.job_directory(job['job_id']))}, sort_keys=True))
     print('Xac nhan snapshot/recovery, tat clipboard/drag-drop/shared folders, khong credentials; NIC da ngat.')
     print('PDF/blob/ket qua chi luu tai LAB. Khong tu ket noi lai Windows.')

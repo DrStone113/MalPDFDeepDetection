@@ -3,7 +3,7 @@ param(
     [string]$Command = 'status',
     [ValidateSet('host-only', 'offline', 'syntax', 'synthetic')]
     [string]$Mode = 'host-only',
-    [ValidateSet('syntax', 'synthetic', 'pdf-static', 'pdf-static-cve')]
+    [ValidateSet('syntax', 'synthetic', 'pdf-static', 'pdf-static-cve', 'pdf-static-cic-full')]
     [string]$Kind = 'synthetic',
     [switch]$Refresh,
     [switch]$Gateway,
@@ -13,7 +13,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 if ($Help) {
-    Write-Output '.\lab.ps1 status|prepare|test|report|setup|verify|doctor [-Mode syntax|synthetic|offline] [-Kind syntax|synthetic|pdf-static|pdf-static-cve] [-Refresh] [-Gateway] [-Transfer] [-Operator]'
+    Write-Output '.\lab.ps1 status|prepare|test|report|setup|verify|doctor [-Mode syntax|synthetic|offline] [-Kind syntax|synthetic|pdf-static|pdf-static-cve|pdf-static-cic-full] [-Refresh] [-Gateway] [-Transfer] [-Operator]'
     Write-Output 'doctor reads bounded diagnostic metadata through the audit key and never starts or repairs services.'
     Write-Output 'Connected test uses the verified restricted gateway. setup -Gateway prepares its installer locally. Offline/admin workflows require the operator.'
     Write-Output 'setup -Gateway -Transfer copies the installer only, after operator confirmation in a separate interactive terminal.'
