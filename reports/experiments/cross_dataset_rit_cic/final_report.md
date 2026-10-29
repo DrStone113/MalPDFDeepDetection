@@ -90,3 +90,4 @@ Trong kịch bản thực tế, hệ thống phòng thủ triển khai tại c�
 1. **Minh chứng Bẫy Né Tránh (The Evasion Gap):** Đã thực nghiệm chứng minh rằng các mô hình học máy truyền thống được huấn luyện trên kho dữ liệu VirusTotal thông thường (RIT-PDFMal) sẽ bị suy giảm hiệu năng nghiêm trọng khi đối mặt với mã độc né tránh (Recall rơi gần 15% - 20%).
 2. **Khả Năng Chuyển Miền Đột Phá:** Mô hình phòng thủ được trang bị bộ đặc trưng tỷ lệ mật độ chỉ cần huấn luyện trên 870 mẫu CIC-Evasive nhưng có thể quét sạch **24,337 mẫu VirusTotal thực tế với độ chính xác đạt tới 93.70%** mà không cần nhìn thấy nhãn của RIT.
 3. **Cơ sở cho Luận Văn Tốt Nghiệp:** Toàn bộ bảng số liệu, khoảng cách MMD, biểu đồ KDE, và ma trận chuyển miền này cung cấp dữ liệu đối chứng độc nhất vô nhị cho Chương 4 (Thực nghiệm) và Chương 5 (Bàn luận) của luận văn.
+

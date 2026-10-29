@@ -33,3 +33,4 @@ def test_load_aligned_datasets_no_startxref():
     assert "startxref" not in cic_df.columns
     assert "xref" not in rit_df.columns
     assert "xref" not in cic_df.columns
+

@@ -104,3 +104,4 @@ Trên tập kiểm thử Test Set cố định (160 Mã độc, 131 Lành tính)
 
 > [!TIP]
 > Do kích thước mô hình siêu nhỏ gọn (<1M tham số), việc suy luận trên CPU thậm chí còn nhanh hơn trên GPU ở kích thước batch 1 (14.82 ms vs 27.46 ms) nhờ loại bỏ hoàn toàn độ trễ truyền dữ liệu qua bus PCIe. Điều này biến PDF-TransGraph thành giải pháp lý tưởng cho các thiết bị tường lửa biên (Edge Gateway) và Email Sandbox.
+
