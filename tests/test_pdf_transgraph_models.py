@@ -70,3 +70,4 @@ def test_focal_loss_computation():
     assert loss.dim() == 0
     assert not torch.isnan(loss)
     assert loss.item() > 0.0
+

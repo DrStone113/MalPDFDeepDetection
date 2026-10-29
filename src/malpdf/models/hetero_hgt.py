@@ -71,3 +71,4 @@ class HeteroGraphTransformer(nn.Module):
         pooled = torch.cat([mean_p, max_p], dim=-1)
         out = self.pool_proj(pooled)
         return self.out_norm(F.silu(out))
+

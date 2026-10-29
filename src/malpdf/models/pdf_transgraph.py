@@ -38,8 +38,11 @@ class PDFTransGraph(nn.Module):
         ast_vocab_size: int = 64,
         tabular_in_features: int = 35,
         hidden_dim: int = 128,
+        ablation_mode: str = "full",
     ):
         super().__init__()
+        self.ablation_mode = ablation_mode
+        self.hidden_dim = hidden_dim
         self.graph_encoder = HeteroGraphTransformer(
             node_in_dim=node_in_dim,
             hidden_dim=hidden_dim,
@@ -62,6 +65,13 @@ class PDFTransGraph(nn.Module):
             nn.Dropout(0.2),
             nn.Linear(hidden_dim, 1),
         )
+        self.single_branch_head = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim // 2),
+            nn.LayerNorm(hidden_dim // 2),
+            nn.SiLU(),
+            nn.Dropout(0.2),
+            nn.Linear(hidden_dim // 2, 1),
+        )
 
     def forward(
         self,
@@ -73,9 +83,28 @@ class PDFTransGraph(nn.Module):
         ast_tokens: torch.Tensor,
         tabular_features: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
+        if self.ablation_mode == "tab_only":
+            h_tab = self.tabular_encoder(tabular_features)
+            logits = self.single_branch_head(h_tab).squeeze(-1)
+            dummy_attn = torch.zeros(h_tab.size(0), 1, 2, device=h_tab.device)
+            return logits, dummy_attn
+        if self.ablation_mode == "graph_only":
+            h_graph = self.graph_encoder(node_features, node_types, edge_index, edge_rel, batch)
+            logits = self.single_branch_head(h_graph).squeeze(-1)
+            dummy_attn = torch.zeros(h_graph.size(0), 1, 2, device=h_graph.device)
+            return logits, dummy_attn
+        if self.ablation_mode == "ast_only":
+            h_seq = self.ast_encoder(ast_tokens)
+            logits = self.single_branch_head(h_seq).squeeze(-1)
+            dummy_attn = torch.zeros(h_seq.size(0), 1, 2, device=h_seq.device)
+            return logits, dummy_attn
         h_graph = self.graph_encoder(node_features, node_types, edge_index, edge_rel, batch)
         h_seq = self.ast_encoder(ast_tokens)
         h_tab = self.tabular_encoder(tabular_features)
+        if self.ablation_mode == "tab_ast":
+            h_graph = torch.zeros_like(h_graph)
+        elif self.ablation_mode == "tab_graph":
+            h_seq = torch.zeros_like(h_seq)
         z_final, attn_weights = self.fusion(h_graph, h_seq, h_tab)
         logits = self.classifier(z_final).squeeze(-1)
         return logits, attn_weights

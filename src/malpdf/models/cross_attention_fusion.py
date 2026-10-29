@@ -33,3 +33,4 @@ class CrossModalAttentionFusion(nn.Module):
         combined = torch.cat([h_tab, attn_out], dim=-1)
         fused = self.out_norm(combined + self.fusion_mlp(combined))
         return fused, attn_weights
+

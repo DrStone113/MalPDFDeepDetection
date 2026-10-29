@@ -33,3 +33,4 @@ class TabularResNet(nn.Module):
         for block in self.blocks:
             h = block(h)
         return self.out_norm(h)
+

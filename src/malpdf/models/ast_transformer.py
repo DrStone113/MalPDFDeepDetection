@@ -55,3 +55,4 @@ class ASTSequenceTransformer(nn.Module):
         attn_weights = F.softmax(self.pool_attn(encoded), dim=1)
         pooled = (encoded * attn_weights).sum(dim=1)
         return self.norm(pooled)
+
