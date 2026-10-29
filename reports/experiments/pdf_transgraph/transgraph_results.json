@@ -1,0 +1,37 @@
+{
+  "architecture": "PDF-TransGraph (Heterogeneous HGT + AST Transformer + Tabular ResNet)",
+  "protocol": "Protocol G (seed 42: 870 Train / 291 Val / 291 Test)",
+  "hardware": "NVIDIA GeForce RTX 5060 Ti (CUDA 12.8)",
+  "validation_metrics": {
+    "accuracy": 0.979381443298969,
+    "precision": 0.98125,
+    "recall": 0.98125,
+    "f1": 0.98125,
+    "mcc": 0.9583492366412214,
+    "roc_auc": 0.985496183206107,
+    "pr_auc": 0.9915077919391805,
+    "brier": 0.028932555750526244,
+    "confusion_matrix": {
+      "tn": 128,
+      "fp": 3,
+      "fn": 3,
+      "tp": 157
+    }
+  },
+  "test_metrics": {
+    "accuracy": 0.9243986254295533,
+    "precision": 0.96,
+    "recall": 0.9,
+    "f1": 0.9290322580645162,
+    "mcc": 0.8503529920814001,
+    "roc_auc": 0.9840648854961831,
+    "pr_auc": 0.9864651472013826,
+    "brier": 0.05407561006133645,
+    "confusion_matrix": {
+      "tn": 125,
+      "fp": 6,
+      "fn": 16,
+      "tp": 144
+    }
+  }
+}

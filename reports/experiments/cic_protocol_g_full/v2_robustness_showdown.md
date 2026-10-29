@@ -114,3 +114,4 @@ Khi loại bỏ `StartXref`, bộ phân loại buộc phải phân tán trọng 
 3. **Mô hình Khuyến nghị Triển khai:**
    - Sử dụng **Model V1** cho các hệ thống quét tự động tốc độ cao với các nguồn cấp dữ liệu chuẩn (In-the-wild feed thông thường).
    - Sử dụng **Model V2 (4 Trụ cột)** cho các cổng kiểm soát an ninh nghiêm ngặt (High-security email/firewall gateway) để ngăn chặn các cuộc tấn công có chủ đích (APT) dùng kỹ thuật giả mạo incremental update.
+
