@@ -1,5 +1,40 @@
 # Research log
 
+## 2026-10-29 - Full CIC Evasive-PDFMal2022 Static Extraction (Job 7d0196367b50)
+
+- Purpose: execute full-scale static extraction of all 1,452 samples from the CIC Evasive-PDFMal2022 corpus (800 malware, 652 benign) under Protocol G deterministic split (seed 42) in the isolated REMnux LAB VM.
+- Hardware & concurrency scaling:
+  - REMnux VM scaled to 12 vCPUs and 6 GB RAM.
+  - Concurrency upgraded from 5 to 10 parallel workers with centralized work-stealing queue.
+  - RAM-aware throttling (< 1.2 GB available triggers 0.5s pause) and per-worker memory ceiling (1,024 MB).
+- Execution & throughput metrics:
+  - Job ID: 7d0196367b50d13c286bb78aa8e64baa9f989f9ce4d1fa99581f2c80ebd04573 on commit dd1a1667e098fa2bcae52ca352d5f7cb957b41ff.
+  - Total samples completed: 1,452 / 1,452 (100.0%) across 10 shards.
+  - Wall-clock elapsed: 2,502,907 ms (~41.7 minutes), down from earlier projection of 2.5–3 hours.
+  - Peak worker RSS: 411.9 MB (well below the 1,024 MB per-worker and 2,048 MB runner address space limits).
+  - Hard worker crashes (failed): 0.
+- Extraction status distribution across full corpus:
+  - Total samples: 1,452 (800 malware, 652 benign).
+  - bounded_complete: 412 / 1,452 (28.4%) — 215 malware, 197 benign.
+  - 	imeout: 416 / 1,452 (28.7%) — 232 malware, 184 benign. Bounded at 35s wall / 30s CPU, triggering clean feature salvage and evasion tagging.
+  - unsupported: 336 / 1,452 (23.1%) — 189 malware, 147 benign (proprietary DRM, unsupported encryption handler, non-standard xref).
+  - partial: 208 / 1,452 (14.3%) — 123 malware, 85 benign.
+  - decode_error: 79 / 1,452 (5.4%) — 41 malware, 38 benign.
+  - observed: 1 / 1,452 (0.1%) — 1 benign.
+  - Primary feature vectors available: 1,317 / 1,452 (90.7% total feature capture rate).
+- Empirical evasion & anomaly flag distribution:
+  - evasive_timeout_anomaly: 349 samples (200 malware vs 149 benign) — strong defensive signal of deliberate DoS / complexity evasion.
+  - flag_spec_violation_flood: 244 samples (134 malware vs 110 benign).
+  - flag_excessive_object_graph: 206 samples (109 malware vs 97 benign).
+  - flag_decompression_ratio_exceeded & is_truncated_stream: 203 samples (111 malware vs 92 benign) — stream bomb / recursive compression defense.
+  - flag_ast_complexity_truncated: 6 samples (1 malware vs 5 benign).
+- Engineering invariants verified:
+  - Resilient claim recovery: dead PID auto-clear verified in practice.
+  - Fast-Skip: 428 pre-extracted bundles bypassed in < 0.5s without re-parsing.
+  - Atomic storage: .tmp file buffering and os.replace produced zero 0-byte bundles.
+  - Real-time logging: live per-PDF progress and terminal bell completion banner executed cleanly.
+  - Zero Python comments maintained throughout.
+
 ## 2026-10-28 - Bounded Static Extraction Standard & CIC-Evasion Real-World Evaluation (Job f8a8ea1fae10)
 
 - Purpose: evaluate the newly deployed Bounded Static Extraction standard, stream head/tail keyword salvage, and quota evasion flags against 64 real-world PDF samples (CIC-Evasion: 32 benign, 32 malicious) in the isolated REMnux LAB environment.
@@ -1221,4 +1256,4 @@ Initialization evidence: Python 3.11.13 in a fresh virtual environment at `/tmp/
 | 2026-10-28T15:58:01.000000+00:00 | e2560cc122de487a20429eba7ac9a954cdc30601dbf02b5f4dbc6dda530e8fcf | pdf-static-cic-full / failed | full CIC Evasive-PDFMal2022 corpus (1,452 samples) / 42 | N/A | N/A | N/A | N/A | N/A | N/A | 4b593556db4bfffafe8bffabe84fe71ac2a54c9e | clean | docs/bugs/BUG-004-selection-json-buffer-limit.md | Failed at start (00:07) with worker_failed. Root cause: selection.json (962 KB) exceeded 512 KB bounded_read limit in lab_runner.py. Resolved under BUG-004 with 4 MiB buffer. |
 | 2026-10-28T16:05:25.000000+00:00 | 90d5a03254552f8c330a6290c1ca3517600aeb72aae34b0166347ab3e71d447f | pdf-static-cic-full / interrupted | full CIC Evasive-PDFMal2022 corpus (1,452 samples) / 42 | N/A | N/A | N/A | N/A | N/A | N/A | 77280b717b80e01e918a0c771d600391a194cd8e | clean | /var/lib/malpdf/jobs/90d5a03254552f8c330a6290c1ca3517600aeb72aae34b0166347ab3e71d447f/claim.json | Interrupted at 428/1,452 samples due to VM power off / shutdown. Retained 428 bundles in private_bundles/. |
 | 2026-10-29T10:06:07.000000+00:00 | 0d77b2406d8286c1f0d1a6a332c38340031c41584286dff071cf9a9094c3dbff | pdf-static-cic-full / superseded | full CIC Evasive-PDFMal2022 corpus (1,452 samples) / 42 | N/A | N/A | N/A | N/A | N/A | N/A | 63ffa35ab935edff726993bb2274991c848bbec4 | clean | /var/lib/malpdf/jobs/0d77b2406d8286c1f0d1a6a332c38340031c41584286dff071cf9a9094c3dbff/queued.json | Superseded by 7d0196367b50 following vCPU upgrade to 12 and 10-worker scaling. |
-| 2026-10-29T11:16:20.000000+00:00 | 7d0196367b50d13c286bb78aa8e64baa9f989f9ce4d1fa99581f2c80ebd04573 | pdf-static-cic-full / staged_queued | full CIC Evasive-PDFMal2022 corpus (1,452 samples) under Protocol G / 42 | N/A | N/A | N/A | N/A | N/A | N/A | dd1a1667e098fa2bcae52ca352d5f7cb957b41ff | clean | /var/lib/malpdf/jobs/7d0196367b50d13c286bb78aa8e64baa9f989f9ce4d1fa99581f2c80ebd04573/queued.json | Staged and queued 10-worker, 12-vCPU resilient run with live per-PDF signals, Fast-Skip (428 bundles seeded), 35s adaptive timeout, RAM throttling, and atomic storage. Operator trigger ready via zero-argument 'lab run'. |
+| 2026-10-29T12:04:19.000000+00:00 | 7d0196367b50d13c286bb78aa8e64baa9f989f9ce4d1fa99581f2c80ebd04573 | pdf-static-cic-full / completed_partial | full CIC Evasive-PDFMal2022 corpus (1,452 samples: 800 malware, 652 benign) under Protocol G / 42 | N/A | N/A | N/A | N/A | N/A | N/A | dd1a1667e098fa2bcae52ca352d5f7cb957b41ff | clean | /var/lib/malpdf/jobs/7d0196367b50d13c286bb78aa8e64baa9f989f9ce4d1fa99581f2c80ebd04573/result.json | 1,452/1,452 (100%) samples completed across 10 workers in 41.7 mins (2,502.9s) with zero worker crashes. 1,317/1,452 (90.7%) primary feature vectors captured. 412 bounded_complete, 416 timeout_partial (salvaged + evasive_timeout_anomaly=1), 336 unsupported, 208 partial, 79 decode_error, 1 observed. Peak RSS 411.9 MB. |
