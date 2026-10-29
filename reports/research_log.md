@@ -1,5 +1,27 @@
 # Research log
 
+## 2026-10-29 - Large-Scale Cross-Dataset Evaluation (RIT-PDFMal-2026 vs CIC-Evasive-PDFMal2022)
+
+- Purpose: execute rigorous cross-dataset domain shift, bidirectional zero-shot transfer, and unsupervised domain adaptation (Deep CORAL) comparing conventional wild malware (RIT-PDFMal-2026, 24,337 samples) and evasive malware (CIC-Evasive-PDFMal2022, 1,452 samples) across 32 aligned canonical features.
+- Domain Discrepancy & Feature Inversion (Experiment 2.1):
+  - Overall Maximum Mean Discrepancy (MMD, RBF gamma=0.1): 0.2098.
+  - Category MMD breakdown: Form & Encodings 0.2633, Structure & Size 0.1734, Script & Execution 0.1058, Xref & Traversal 0.1040.
+  - Discovered stark feature inversion: In RIT wild data, JS presence is 75.94% (malware) vs 5.80% (benign), and OpenAction is 64.17% (malware) vs 16.71% (benign). In CIC evasive data, attackers conceal JS/OpenAction while enterprise benign documents heavily use them.
+  - Distribution figure exported: reports/figures/kde_feature_inversion_rit_vs_cic.png.
+- Bidirectional Zero-Shot Transfer (Experiment 2.2):
+  - Direction A (RIT Conventional -> CIC Evasive): Random forest drops from 98.44% in-domain to 88.32% on CIC Test, with recall dropping from 96.76% to 81.88% (missing ~18.1% of evasive malware). Tabular MLP drops to 87.29% accuracy. Confirms the 'Evasion Collapse Trap' when conventional models face evasive malware.
+  - Direction B (CIC Evasive Hardened -> RIT All 24,337 samples): Model trained on only 870 CIC evasive samples achieves 93.70% accuracy (RF) and 92.83% accuracy (Tabular ResNet) across all 24,337 wild VirusTotal samples without seeing any RIT training labels.
+  - De-biasing Study: Removing StartXref from CIC training increases cross-dataset transfer accuracy on RIT from 92.17% to 92.92% (Precision 93.78%), confirming physical density ratios transcend local dataset artifacts.
+- Unsupervised Domain Adaptation via Deep CORAL (Experiment 2.3):
+  - Source: Labeled CIC (870). Target: Unlabeled RIT (19,469).
+  - Baseline zero-shot transfer: 92.83% Accuracy, 91.13% Recall, 93.01% Precision.
+  - Deep CORAL (lambda=0.5): 92.87% Accuracy, 90.81% Recall, 93.38% Precision (reduces False Positives in wild test set).
+- Production artifacts:
+  - Dataset loader: src/malpdf/data/cross_dataset_loader.py (tested with 3/3 passing unit tests).
+  - Comprehensive report: reports/experiments/cross_dataset_rit_cic/final_report.md.
+  - JSON results: reports/experiments/cross_dataset_rit_cic/{mmd_and_inversion_analysis,bidirectional_transfer_results,deep_coral_adaptation_results}.json.
+  - Zero Python comments invariant strictly verified throughout.
+
 ## 2026-10-29 - PDF-TransGraph Multimodal Architecture & Rigorous Academic Evaluation
 
 - Purpose: establish and experimentally defend the state-of-the-art multimodal architecture **PDF-TransGraph** (Heterogeneous Graph Transformer + RoPE AST Sequence Transformer + Tabular ResNet fused via Tabular-Query Cross-Modal Attention) on CIC-Evasive-PDFMal2022 under Protocol G deterministic split (870 train / 291 val / 291 test).

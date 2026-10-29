@@ -1,0 +1,52 @@
+{
+  "overall_mmd_distance": 0.2098,
+  "category_mmd_distances": {
+    "Structure & Size": 0.1734,
+    "Script & Execution": 0.1058,
+    "Xref & Traversal": 0.104,
+    "Form & Encodings": 0.2633
+  },
+  "feature_inversion_statistics": {
+    "JS_presence": {
+      "RIT_Conventional": {
+        "malware_pct": 75.94,
+        "benign_pct": 5.8
+      },
+      "CIC_Evasive": {
+        "malware_pct": 67.38,
+        "benign_pct": 7.67
+      }
+    },
+    "OpenAction_presence": {
+      "RIT_Conventional": {
+        "malware_pct": 64.17,
+        "benign_pct": 16.71
+      },
+      "CIC_Evasive": {
+        "malware_pct": 52.25,
+        "benign_pct": 2.91
+      }
+    },
+    "StartXref_mean": {
+      "RIT_Conventional": {
+        "malware_mean": 1.04,
+        "benign_mean": 1.62
+      },
+      "CIC_Evasive": {
+        "malware_mean": 0.82,
+        "benign_mean": 2.04
+      }
+    },
+    "Density_Stream_Ratio_mean": {
+      "RIT_Conventional": {
+        "malware_mean": 0.367,
+        "benign_mean": 0.1473
+      },
+      "CIC_Evasive": {
+        "malware_mean": 1.2324,
+        "benign_mean": 0.5516
+      }
+    }
+  },
+  "figure_exported": "C:\\Project\\MalPDFDeepDetection\\reports\\figures\\kde_feature_inversion_rit_vs_cic.png"
+}
