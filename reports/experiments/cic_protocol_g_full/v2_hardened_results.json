@@ -1,0 +1,178 @@
+{
+  "benchmark_id": "v2_four_pillars_hardened_robustness",
+  "protocol": "Protocol G (seed 42: 870 Train / 291 Val / 291 Test)",
+  "features": {
+    "v1_baseline_count": 40,
+    "v2_hardened_count": 48,
+    "startxref_included_in_v2": false
+  },
+  "evaluation_standard_test": {
+    "model_v1_baseline_rf": {
+      "accuracy": 0.9862542955326461,
+      "precision": 0.9814814814814815,
+      "recall": 0.99375,
+      "f1": 0.9875776397515528,
+      "mcc": 0.9722883234920869,
+      "roc_auc": 0.9987118320610687,
+      "pr_auc": 0.9989326142136715,
+      "brier": 0.014850624293019296,
+      "confusion_matrix": {
+        "tn": 128,
+        "fp": 3,
+        "fn": 1,
+        "tp": 159
+      }
+    },
+    "model_v2_hardened_rf": {
+      "accuracy": 0.9072164948453608,
+      "precision": 0.8594594594594595,
+      "recall": 0.99375,
+      "f1": 0.9217391304347826,
+      "mcc": 0.8221955285997704,
+      "roc_auc": 0.9530057251908396,
+      "pr_auc": 0.9566454968232954,
+      "brier": 0.08372645455603786,
+      "confusion_matrix": {
+        "tn": 105,
+        "fp": 26,
+        "fn": 1,
+        "tp": 159
+      }
+    },
+    "model_v2_hardened_xgb": {
+      "accuracy": 0.9072164948453608,
+      "precision": 0.8633879781420765,
+      "recall": 0.9875,
+      "f1": 0.9212827988338192,
+      "mcc": 0.8204108493182616,
+      "roc_auc": 0.9930820610687022,
+      "pr_auc": 0.995016519485332,
+      "brier": 0.08065833145271466,
+      "confusion_matrix": {
+        "tn": 106,
+        "fp": 25,
+        "fn": 2,
+        "tp": 158
+      }
+    },
+    "model_v2_hardened_ensemble": {
+      "accuracy": 0.9072164948453608,
+      "precision": 0.8633879781420765,
+      "recall": 0.9875,
+      "f1": 0.9212827988338192,
+      "mcc": 0.8204108493182616,
+      "roc_auc": 0.9695610687022901,
+      "pr_auc": 0.973847134579487,
+      "brier": 0.08104205303632885,
+      "confusion_matrix": {
+        "tn": 106,
+        "fp": 25,
+        "fn": 2,
+        "tp": 158
+      }
+    }
+  },
+  "evaluation_adversarial_reverse_mimicry": {
+    "attack_description": "Incremental update forgery: faking StartXref=2, Xref=2, XrefLength=2 on all malware samples",
+    "model_v1_baseline_rf": {
+      "accuracy": 0.9828178694158075,
+      "precision": 0.9813664596273292,
+      "recall": 0.9875,
+      "f1": 0.9844236760124611,
+      "mcc": 0.9652902928993956,
+      "roc_auc": 0.990625,
+      "pr_auc": 0.988510069189343,
+      "brier": 0.037236510097122866,
+      "confusion_matrix": {
+        "tn": 128,
+        "fp": 3,
+        "fn": 2,
+        "tp": 158
+      }
+    },
+    "model_v2_hardened_rf": {
+      "accuracy": 0.9072164948453608,
+      "precision": 0.8594594594594595,
+      "recall": 0.99375,
+      "f1": 0.9217391304347826,
+      "mcc": 0.8221955285997704,
+      "roc_auc": 0.8740458015267175,
+      "pr_auc": 0.8331239611996804,
+      "brier": 0.08756071692563311,
+      "confusion_matrix": {
+        "tn": 105,
+        "fp": 26,
+        "fn": 1,
+        "tp": 159
+      }
+    },
+    "model_v2_hardened_xgb": {
+      "accuracy": 0.9072164948453608,
+      "precision": 0.8633879781420765,
+      "recall": 0.9875,
+      "f1": 0.9212827988338192,
+      "mcc": 0.8204108493182616,
+      "roc_auc": 0.9897423664122137,
+      "pr_auc": 0.992535647378123,
+      "brier": 0.08053816975935128,
+      "confusion_matrix": {
+        "tn": 106,
+        "fp": 25,
+        "fn": 2,
+        "tp": 158
+      }
+    },
+    "model_v2_hardened_ensemble": {
+      "accuracy": 0.9072164948453608,
+      "precision": 0.8633879781420765,
+      "recall": 0.9875,
+      "f1": 0.9212827988338192,
+      "mcc": 0.8204108493182616,
+      "roc_auc": 0.9329198473282443,
+      "pr_auc": 0.9344940357476621,
+      "brier": 0.08214528877223001,
+      "confusion_matrix": {
+        "tn": 106,
+        "fp": 25,
+        "fn": 2,
+        "tp": 158
+      }
+    }
+  },
+  "top_features_model_v2": {
+    "random_forest": {
+      "MetadataSize": 0.1037256003494469,
+      "Stream": 0.101204878222616,
+      "Javascript": 0.07974498312468822,
+      "PdfSize": 0.07486546190311236,
+      "Endobj": 0.0659605904197754,
+      "Endstream": 0.06318229271162532,
+      "Obj": 0.058790355236469125,
+      "JS": 0.0549818008820221,
+      "XrefLength": 0.05311386050814667,
+      "Images": 0.03568439110214487,
+      "Xref": 0.035651376557557984,
+      "OpenAction": 0.03370726821326638,
+      "density_metadata_ratio": 0.03311561717234142,
+      "Trailer": 0.025206909229670393,
+      "density_stream_ratio": 0.022734332307786657
+    },
+    "xgboost": {
+      "Stream": 0.2004793882369995,
+      "Javascript": 0.133277028799057,
+      "JS": 0.10407762974500656,
+      "XFA": 0.08306312561035156,
+      "Obj": 0.060784514993429184,
+      "MetadataSize": 0.058586325496435165,
+      "Images": 0.038802970200777054,
+      "PageNo": 0.03226086497306824,
+      "OpenAction": 0.028742428869009018,
+      "PdfSize": 0.027814041823148727,
+      "Pages": 0.027169732376933098,
+      "density_obj_stream_ratio": 0.022536249831318855,
+      "Endstream": 0.019572097808122635,
+      "Colors": 0.015609386377036572,
+      "Xref": 0.015299007296562195
+    }
+  }
+}
