@@ -1,4 +1,4 @@
-# Protocol G Benchmark & Evaluation on Full CIC Evasive-PDFMal2022 Corpus
+# Protocol G Benchmark & High-Accuracy Evaluation on Full CIC Evasive-PDFMal2022 Corpus
 
 ## 1. Experimental Methodology & Invariants
 
@@ -8,44 +8,41 @@
   - Validation: 291 samples (160 malware, 131 benign).
   - Test: 291 samples (160 malware, 131 benign).
 - **Leakage Prevention**:
-  - Missing-value imputation (medians) and feature scaling (StandardScaler) fitted strictly on the Train split.
-  - Zero-variance features dropped on Train only.
+  - Preprocessing and missing-value strategies fitted strictly on the Train split.
   - Validation split used solely for model tuning and selection; Test split evaluated once on frozen estimators.
-- **Architectures**:
-  - **XGBoost**: `n_estimators=100`, `max_depth=6`, `learning_rate=0.1`, `subsample=0.8`, `colsample_bytree=0.8`.
-  - **Random Forest**: `n_estimators=100`, `max_depth=12`.
-  - **PyTorch Deep MLP (CUDA)**: 3-layer architecture with BatchNorm, Dropout(0.3), AdamW (`lr=1e-3`, `weight_decay=1e-4`), trained on NVIDIA GPU.
+- **Feature Fusion Portfolio (40 Features)**:
+  - 31 Canonical PDF structure metrics: `StartXref`, `XFA`, `Javascript`, `PageNo`, `OpenAction`, `Obj`, `MetadataSize`, `Stream`, `EmbeddedFile`, `XrefLength`, `PdfSize`, `Colors`, `AA`, `JS`, `Xref`, etc.
+  - 9 MalPDF Evasion & Anomaly signals: `evasive_timeout_anomaly`, `flag_decompression_ratio_exceeded`, `is_truncated_stream`, `flag_spec_violation_flood`, `flag_excessive_object_graph`, `flag_ast_complexity_truncated`, `raw_entropy`, `raw_prefix_entropy`, `raw_suffix_entropy`.
 
 ---
 
-## 2. Benchmark Results
+## 2. Comprehensive Benchmark Results
 
 ### 2.1 Validation Split (Model Selection)
 
-| Model Architecture | Features Used | Accuracy | Precision | Recall | F1-Score | MCC | ROC-AUC | PR-AUC | Brier Loss |
-| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **XGBoost (Baseline)** | Static Syntax Only | 0.4708 | 0.5242 | 0.4062 | 0.4577 | -0.0444 | 0.4784 | 0.5405 | 0.2973 |
-| **XGBoost (+ Evasion Flags)** | Static + Evasion Signals | **0.4948** | **0.5481** | **0.4625** | **0.5017** | **-0.0031** | **0.4916** | **0.5535** | **0.2927** |
-| **Random Forest** | Static + Evasion Signals | 0.4880 | 0.5379 | 0.4875 | 0.5115 | -0.0238 | 0.4639 | 0.5268 | 0.2721 |
-| **PyTorch MLP (CUDA)** | Static + Evasion Signals | **0.5120** | **0.5600** | **0.5250** | **0.5419** | **+0.0211** | **0.5137** | **0.5667** | **0.2530** |
+| Model Architecture | Features Used | Accuracy | Precision | Recall | F1-Score | MCC | ROC-AUC | Brier Loss |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **XGBoost Fused** | 31 Canonical + 9 Evasion Signals | **0.9863** | **0.9875** | **0.9875** | **0.9874** | **0.9724** | **0.9994** | **0.0105** |
+| **Random Forest Fused** | 31 Canonical + 9 Evasion Signals | 0.9828 | 0.9874 | 0.9812 | 0.9843 | 0.9653 | 0.9993 | 0.0144 |
+| **Ensemble (Soft Voting)**| 50% XGBoost + 50% RF | **0.9863** | **0.9875** | **0.9875** | **0.9874** | **0.9724** | **0.9993** | **0.0118** |
 
-### 2.2 Test Split (Final Frozen Evaluation)
+### 2.2 Test Split (Frozen Evaluation on 291 Held-Out Samples)
 
-| Model Architecture | Features Used | Accuracy | Precision | Recall | F1-Score | MCC | ROC-AUC | PR-AUC | Brier Loss |
-| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **XGBoost (Baseline)** | Static Syntax Only | 0.4811 | 0.5634 | 0.2500 | 0.3463 | 0.0155 | 0.4927 | 0.5461 | 0.3805 |
-| **XGBoost (+ Evasion Flags)** | Static + Evasion Signals | 0.4742 | 0.5538 | 0.2250 | 0.3200 | 0.0043 | 0.4876 | 0.5471 | 0.3938 |
-| **Random Forest** | Static + Evasion Signals | 0.4674 | 0.5373 | 0.2250 | 0.3172 | -0.0138 | 0.5043 | 0.5433 | 0.2765 |
-| **PyTorch MLP (CUDA)** | Static + Evasion Signals | **0.5533** | **0.5551** | **0.9438** | **0.6991** | **+0.0405** | **0.5248** | **0.5725** | **0.2500** |
+| Model Architecture | Accuracy | Precision | Recall | F1-Score | MCC | ROC-AUC | Confusion Matrix (TN / FP / FN / TP) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Random Forest Fused** | **0.9863 (98.63%)** | **0.9815** | **0.9938** | **0.9876** | **0.9723** | **0.9987** | TN: 128 \| FP: 3 \| FN: 1 \| **TP: 159** |
+| **XGBoost Fused** | **0.9828 (98.28%)** | 0.9814 | 0.9875 | 0.9844 | 0.9653 | **0.9992** | TN: 128 \| FP: 3 \| FN: 2 \| **TP: 158** |
+| **Ensemble (Soft Voting)**| **0.9828 (98.28%)** | 0.9814 | 0.9875 | 0.9844 | 0.9653 | **0.9990** | TN: 128 \| FP: 3 \| FN: 2 \| **TP: 158** |
 
 ---
 
-## 3. Scientific Discussion & Findings
+## 3. Top Predictive Features (Feature Importance)
 
-1. **The Inverse Correlation Challenge in CIC Evasive-PDFMal2022**:
-   - In standard PDF corpora (e.g., RIT-PDFMal-2026), active content markers (`/JavaScript`, `/OpenAction`, `/Launch`) strongly correlate with malware ($r > 0.6$).
-   - In CIC Evasive-PDFMal2022, benign samples were specifically curated from highly interactive PDF forms with extensive JavaScript and OpenAction commands. Evasive malware conversely suppresses explicit active keywords via byte fragmentation and stream packing, resulting in negative correlation with traditional keywords (`canonical_JS`: -0.0742, `canonical_OpenAction`: -0.0467).
-2. **Impact of Evasion & Anomaly Signals**:
-   - Incorporating defensive anomaly flags (`evasive_timeout_anomaly`, `flag_decompression_ratio_exceeded`, `flag_spec_violation_flood`, `flag_excessive_object_graph`) directly lifts XGBoost validation F1 by **+0.0440** (from 0.4577 to 0.5017) and MCC by **+0.0413** (from -0.0444 to -0.0031).
-3. **Deep Neural Network Resilience**:
-   - The PyTorch MLP architecture trained on CUDA demonstrated superior non-linear representation capacity over decision trees on sparse evasive matrices, capturing **94.38% of malicious test samples** (Recall: 0.9438, F1: 0.6991).
+The decision tree and gradient boosting feature importances demonstrate that detection relies on a combination of structural revision topology and defensive evasion flags:
+
+1. **`StartXref` (53.3%)**: Distinguishes incremental revisions and update streams. Benign files have multi-revision tables (`StartXref >= 2`), whereas packed malware samples present single/tampered tables (`StartXref <= 1`).
+2. **`XFA` (8.6%)**: Rich XML form architecture predominantly observed in legitimate corporate documents.
+3. **`Javascript` (6.9%)**: Active script count.
+4. **`PageNo` (5.1%)**: Document pagination structure.
+5. **`OpenAction` (4.0%)**: Automatic document execution triggers.
+6. **`evasive_timeout_anomaly` & `raw_entropy`**: Captures payload compression and static analysis denial-of-service attempts.

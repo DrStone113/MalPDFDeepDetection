@@ -16,6 +16,7 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import time
 import uuid
 
 from lab_contract import MAX_FILE, MAX_FILES, MAX_TOTAL, REV_RE as REV, parse_json, safe_path, text_failure, validate_report
@@ -157,7 +158,14 @@ def install(commit: str) -> None:
             raise ValueError("Noncanonical TAR trailer")
         if actual != set(expected):
             raise ValueError("Missing files")
-        scratch.rename(target)
+        for attempt in range(5):
+            try:
+                scratch.rename(target)
+                break
+            except PermissionError:
+                if attempt == 4:
+                    raise
+                time.sleep(0.05)
     finally:
         if scratch.exists():
             if scratch.is_symlink() or scratch.parent.resolve() != RELEASES.resolve() or not scratch.name.startswith("staging-"):
