@@ -14,7 +14,9 @@ class TestCicFullCohort(unittest.TestCase):
     def test_policy_pdf_static_cic_full(self):
         p = lab_jobs.policy('pdf-static-cic-full')
         self.assertEqual(p['samples'], 1452)
-        self.assertEqual(p['workers'], 5)
+        self.assertEqual(p['workers'], 10)
+        self.assertEqual(p['file_wall_seconds'], 35)
+        self.assertEqual(p['file_cpu_seconds'], 30)
         self.assertEqual(p['wall_seconds'], 7200)
         self.assertEqual(p['output_bytes'], 2 * 1024**3)
         self.assertIn('pdf-static-cic-full', lab_jobs.PDF_KINDS)
@@ -84,6 +86,27 @@ class TestCicFullCohort(unittest.TestCase):
         encoded = json.dumps(selection).encode('utf-8')
         self.assertGreater(len(encoded), 512 * 1024)
         self.assertLess(len(encoded), 4 * 1024**2)
+
+
+    def test_stale_claim_auto_recovery_and_resumability(self):
+        import tempfile
+        from pathlib import Path
+        import shutil
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            job = lab_jobs.make_job('2' * 40, '0' * 64, '3' * 64, mode='offline', kind='pdf-static-cic-full', attempt='1' * 32)
+            job_dir = temp_path / job['job_id']
+            job_dir.mkdir(parents=True, exist_ok=True)
+            lab_jobs.immutable(job_dir / 'job.json', job)
+            lab_jobs.immutable(job_dir / 'queued.json', lab_jobs.result(job, 'queued'))
+            claim_payload = {'job_id': job['job_id'], 'parent_pid': 99999999, 'start_ticks': 1234567,
+                             'generated_utc': '2026-10-29T00:00:00Z', 'hypervisor_controls_attested': True}
+            lab_jobs.immutable(job_dir / 'claim.json', claim_payload)
+            with patch.object(lab_jobs, 'JOBS', temp_path):
+                pending = lab_jobs.pending()
+                self.assertEqual(len(pending), 1)
+                self.assertEqual(pending[0]['job_id'], job['job_id'])
 
 
 if __name__ == '__main__':

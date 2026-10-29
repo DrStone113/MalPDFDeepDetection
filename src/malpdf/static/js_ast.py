@@ -50,7 +50,7 @@ def _callee_name(node, depth=0):
     return None
 
 
-def inspect_js_syntax(source, *, max_bytes=256 * 1024, max_nodes=20_000, max_depth=64, bounded=False):
+def inspect_js_syntax(source, *, max_bytes=256 * 1024, max_nodes=10_000, max_depth=64, bounded=False):
     """Parse ECMAScript 2017 syntax. Production callers use a capped child process.
 
     Named calls are syntactic evidence only: identifiers can be shadowed or
@@ -109,7 +109,8 @@ def inspect_js_syntax(source, *, max_bytes=256 * 1024, max_nodes=20_000, max_dep
             "literal_strings_count": literal_strings,
             "mean_string_length": (total_string_len / literal_strings) if literal_strings else 0.0,
             "string_literal_ratio": (literal_strings / count) if count else 0.0,
-            "flag_ast_complexity_truncated": complexity_truncated}
+            "flag_ast_complexity_truncated": complexity_truncated,
+            "js_truncated": complexity_truncated}
     if observer is not None:
         observer.capture(source,tree,summary)
     return summary

@@ -31,7 +31,8 @@ SCP_SECURITY = ["-F", "none", "-o", "ClearAllForwardings=yes", "-o", "ForwardAge
 
 
 def run(args: list[str], *, check=True, capture=False, input_data: bytes | None = None) -> subprocess.CompletedProcess:
-    return subprocess.run(args, input=input_data, check=check, cwd=REPO, text=False, timeout=120, stdout=subprocess.PIPE if capture else None, stderr=subprocess.PIPE if capture else None)
+    env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+    return subprocess.run(args, input=input_data, check=check, cwd=REPO, env=env, text=False, timeout=120, stdout=subprocess.PIPE if capture else None, stderr=subprocess.PIPE if capture else None)
 
 
 def git(*args: str, input_data: bytes | None = None) -> bytes:

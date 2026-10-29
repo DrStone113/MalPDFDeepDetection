@@ -83,7 +83,8 @@ def policy(kind):
     if kind == 'pdf-static':
         return LIMITS.copy()
     if kind == 'pdf-static-cic-full':
-        return {**LIMITS, 'samples': 1452, 'wall_seconds': 7200, 'output_bytes': 2 * 1024**3}
+        return {**LIMITS, 'samples': 1452, 'wall_seconds': 7200, 'workers': 10,
+                'file_wall_seconds': 35, 'file_cpu_seconds': 30, 'output_bytes': 2 * 1024**3}
     if kind == 'pdf-static-cve':
         return {**LIMITS, 'samples': 5, 'wall_seconds': 180, 'output_bytes': 40 * 1024**2}
     return {**LIMITS, 'wall_seconds': 240, 'file_wall_seconds': 90 if kind == 'synthetic' else 60,
@@ -401,11 +402,27 @@ def catalog():
 
 
 def pending():
-    return [job for job in catalog() if (job_directory(job['job_id']) / 'queued.json').is_file()
-            and not (job_directory(job['job_id']) / 'claim.json').exists()]
+    items = []
+    for job in catalog():
+        directory = job_directory(job['job_id'])
+        if not (directory / 'queued.json').is_file() or (directory / 'result.json').is_file():
+            continue
+        claim_file = directory / 'claim.json'
+        if not claim_file.exists():
+            items.append(job)
+            continue
+        try:
+            claim = parse_json(side.bounded_read(claim_file, 4096))
+            pid = claim.get('parent_pid')
+            ticks = claim.get('start_ticks')
+            if pid is None or process_identity(pid) != ticks:
+                items.append(job)
+        except (OSError, ValueError):
+            pass
+    return items
 
 
-def execute(job, *, attested=False):
+def execute(job, *, attested=False, resume=False):
     validate_job(job)
     jobs_config = config()
     if job['kind'] in PDF_KINDS:
@@ -413,17 +430,30 @@ def execute(job, *, attested=False):
     directory = job_directory(job['job_id'])
     if (directory / 'result.json').exists():
         return read_result(job['job_id'])
-    if (directory / 'claim.json').exists():
-        raise ValueError('already_claimed')
+    claim_file = directory / 'claim.json'
+    if claim_file.exists():
+        if not resume:
+            raise ValueError('already_claimed')
+        try:
+            claim = parse_json(side.bounded_read(claim_file, 4096))
+            pid = claim.get('parent_pid')
+            ticks = claim.get('start_ticks')
+            if pid is not None and process_identity(pid) == ticks:
+                raise ValueError('already_claimed')
+        except (OSError, ValueError):
+            raise ValueError('already_claimed')
     environment = preflight(job['mode'], attested=attested)
     metadata = side.verify_release(job['commit'], job['manifest_sha256'])
     verify_helpers(metadata)
     directory = save_job(job)
-    with (directory / 'claim.json').open('x', encoding='ascii') as stream:
-        json.dump({'job_id': job['job_id'], 'parent_pid': os.getpid(),
-                   'start_ticks': process_identity(os.getpid()),
-                   'generated_utc': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
-                   'hypervisor_controls_attested': bool(attested)}, stream)
+    claim_payload = {'job_id': job['job_id'], 'parent_pid': os.getpid(),
+                     'start_ticks': process_identity(os.getpid()),
+                     'generated_utc': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+                     'hypervisor_controls_attested': bool(attested)}
+    claim_tmp = directory / 'claim.json.tmp'
+    with claim_tmp.open('w', encoding='ascii') as stream:
+        json.dump(claim_payload, stream)
+    os.replace(claim_tmp, claim_file)
     try:
         checks = []
         if job['kind'] in PDF_KINDS:
@@ -456,6 +486,14 @@ def pdf_task(job, directory):
     started = time.monotonic()
     last_print = 0.0
     last_completed = -1
+    seen_bundles = set()
+    if outputs.is_dir():
+        for name in os.listdir(outputs):
+            if name.endswith('.json') and not name.endswith('.tmp'):
+                try:
+                    seen_bundles.add(int(name[:-5]))
+                except ValueError:
+                    pass
     try:
         for shard in range(count):
             stdout, stderr = tempfile.TemporaryFile(), tempfile.TemporaryFile()
@@ -470,6 +508,38 @@ def pdf_task(job, directory):
                 completed = len(os.listdir(outputs)) if outputs.is_dir() else 0
             except OSError:
                 completed = 0
+            if outputs.is_dir():
+                for name in sorted(os.listdir(outputs)):
+                    if name.endswith('.json') and not name.endswith('.tmp'):
+                        try:
+                            idx = int(name[:-5])
+                            if idx not in seen_bundles:
+                                seen_bundles.add(idx)
+                                bundle_path = outputs / name
+                                try:
+                                    bundle_data = parse_json(side.bounded_read(bundle_path, 8 * 1024**2 + 1024))
+                                    b_status = bundle_data.get('status', 'complete')
+                                except (OSError, ValueError):
+                                    b_status = 'observed'
+                                icon = '✓' if b_status in ('bounded_complete', 'observed') else '⏱' if b_status in ('timeout', 'timeout_partial') else '!'
+                                evasive_tag = ' [Evasive]' if b_status in ('timeout', 'timeout_partial') else ''
+                                tag_line = f"[{icon} {idx:04d}/{planned}] PDF {idx:04d} -> {b_status}{evasive_tag} | Workers: {len(alive)}/{count}"
+                                if sys.stdout.isatty():
+                                    sys.stdout.write(f"\r{tag_line:<80s}\n")
+                                    sys.stdout.flush()
+                                else:
+                                    print(tag_line, flush=True)
+                        except ValueError:
+                            pass
+            try:
+                meminfo = side.bounded_read(Path('/proc/meminfo'), 8192).decode('ascii')
+                for mline in meminfo.splitlines():
+                    if mline.startswith('MemAvailable:'):
+                        if int(mline.split()[1]) < 1200 * 1024:
+                            time.sleep(0.5)
+                        break
+            except (OSError, ValueError):
+                pass
             now = time.monotonic()
             if now - last_print >= 0.5 or completed != last_completed or not alive:
                 last_print = now
@@ -497,7 +567,18 @@ def pdf_task(job, directory):
                 raise subprocess.TimeoutExpired(command, deadline - started)
             time.sleep(0.2)
         if sys.stdout.isatty():
-            sys.stdout.write("\n")
+            sys.stdout.write("\n\a\a")
+            banner = [
+                "=" * 80,
+                f"                    MALPDF EXTRACTION COMPLETED SUCCESSFULLY                   ",
+                "=" * 80,
+                f"  Job ID:        {job['job_id']}",
+                f"  Total Samples: {last_completed} / {planned} ({pct}%)",
+                f"  Elapsed Time:  {elapsed_str}",
+                f"  Workers:       {count} workers",
+                "=" * 80,
+            ]
+            sys.stdout.write("\n".join(banner) + "\n")
             sys.stdout.flush()
         codes = [process.returncode for process in processes]
     except subprocess.TimeoutExpired:

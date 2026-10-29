@@ -269,6 +269,30 @@ def pdf_worker(job_id, *, prepare=False, shard=0, count=1):
     for index, row in rows:
         if time.monotonic() - started > job['limits']['wall_seconds'] - 25:
             break
+        target = outputs / f'{index:04d}.json'
+        target_tmp = outputs / f'{index:04d}.json.tmp'
+        if target.is_file():
+            try:
+                existing = parse_json(side.bounded_read(target, 8 * 1024**2 + 1024))
+                if isinstance(existing, dict) and existing.get('status') in jobs.PDF_STATUSES:
+                    summary['completed'] += 1
+                    summary['bounded_complete'] += (existing['status'] == 'bounded_complete')
+                    summary['observed' if existing['status'] in ('observed', 'bounded_complete') else 'partial' if existing['status'] == 'partial' else 'failed'] += 1
+                    statuses[existing['status']] = statuses.get(existing['status'], 0) + 1
+                    summary['primary_available'] += any(item['kind'] == 'primary_checkpoint' for item in existing.get('evidence_store', {}).get('records', []))
+                    summary['timeout'] += existing['status'] == 'timeout'
+                    continue
+            except (OSError, ValueError):
+                pass
+            try:
+                target.unlink(missing_ok=True)
+            except OSError:
+                pass
+        if target_tmp.is_file():
+            try:
+                target_tmp.unlink(missing_ok=True)
+            except OSError:
+                pass
         require_extraction_lab(True, repository_root=data_root)
         boundary = 'data/raw/cve_t4pdf' if job['kind'] == 'pdf-static-cve' else 'data/raw/cic_pdf'
         bundle = extract_pdf(data_root / row['pdf_relative_path'], boundary=data_root / boundary,
@@ -276,8 +300,9 @@ def pdf_worker(job_id, *, prepare=False, shard=0, count=1):
         payload = jobs.encoded(bundle)
         if len(payload) > 8 * 1024**2 or total + len(payload) > job['limits']['output_bytes']:
             break
-        with (outputs / f'{index:04d}.json').open('xb') as output:
+        with target_tmp.open('wb') as output:
             output.write(payload)
+        os.replace(target_tmp, target)
         total += len(payload)
         summary['completed'] += 1
         summary['bounded_complete'] += (bundle['status'] == 'bounded_complete')
@@ -403,10 +428,13 @@ def console_run():
     print('PDF/blob/ket qua chi luu tai LAB. Khong tu ket noi lai Windows.')
     if input('Chay job da duyet? [y/N]: ').strip().lower() != 'y':
         raise ValueError('approval_required')
+    directory = jobs.job_directory(job['job_id'])
+    is_resuming = (directory / 'claim.json').is_file()
     try:
-        print('Bat dau chay job ' + job['job_id'][:12] + '...')
+        prefix = 'Tiep tuc chay (resume) job ' if is_resuming else 'Bat dau chay job '
+        print(prefix + job['job_id'][:12] + '...')
         with jobs.execution_limits(job['kind']):
-            value = jobs.execute(job, attested=True)
+            value = jobs.execute(job, attested=True, resume=is_resuming)
     except ValueError as error:
         if str(error) != 'credential_present':
             raise

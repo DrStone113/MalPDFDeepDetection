@@ -299,6 +299,12 @@ def normalize_profile(profile, digest, extraction_profile, *, provenance=None):
         "flag_ast_complexity_truncated": flag_ast_complexity_truncated,
         "is_truncated_stream": is_truncated_stream,
         "flag_excessive_object_graph": flag_excessive_object_graph,
+        "evasive_timeout_anomaly": bool(
+            "timeout" in reasons
+            or "wall_timeout" in reasons
+            or profile.get("status") in ("timeout", "timeout_partial")
+            or "wall_timeout" in profile.get("errors", [])
+        ),
     }
     flag_refs = [primary_id] if bool(static) else [original_id] if original_available else []
     for flag_name, flag_value in evasion_flags.items():

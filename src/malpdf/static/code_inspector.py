@@ -42,7 +42,7 @@ _ACTION_PATH_NAMES = frozenset({"/OpenAction", "/AA", "/A", "/Next", "/Names",
 class CodeInspectionLimits:
     max_file_bytes: int = 10 * 1024**2
     max_objects: int = 2000
-    max_pdf_depth: int = 64
+    max_pdf_depth: int = 15
     max_scripts: int = 64
     max_script_bytes: int = 256 * 1024
     max_decoded_bytes: int = 4 * 1024**2

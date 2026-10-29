@@ -310,8 +310,9 @@ class SecurityTests(unittest.TestCase):
     def test_packaging_and_guard_on_actual_sources_in_a_disposable_repo(self):
         root = self.base / "repo"
         root.mkdir()
+        clean_env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
         def git(*args):
-            return subprocess.run(["git", "-C", str(root), *args], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout
+            return subprocess.run(["git", "-C", str(root), *args], env=clean_env, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout
         git("init", "-q")
         git("config", "user.name", "Synthetic Test")
         git("config", "user.email", "test@example.invalid")
@@ -392,6 +393,8 @@ def main() -> int:
     obj = {"total": result.testsRun, "passed": result.testsRun - failed - skipped, "failed": failed, "skipped": skipped}
     if args.json:
         print(json.dumps(obj, sort_keys=True))
+        if not result.wasSuccessful():
+            sys.stderr.write(stream.getvalue())
     else:
         print(("PASS" if result.wasSuccessful() else "FAIL") + ": offline LAB security regressions " + json.dumps(obj, sort_keys=True))
     return 0 if result.wasSuccessful() else 1

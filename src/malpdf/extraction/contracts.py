@@ -34,6 +34,7 @@ EVASION_FLAGS = frozenset({
     "flag_ast_complexity_truncated",
     "is_truncated_stream",
     "flag_excessive_object_graph",
+    "evasive_timeout_anomaly",
 })
 
 
