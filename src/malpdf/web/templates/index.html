@@ -2177,7 +2177,7 @@
       return formattedSections.join('\n\n');
     }
 
-    function _formatAttackPathStepVi(step) {
+    function _formatAttackPathStepVi(step, isMal = true) {
       const s = String(step || '').trim();
       if (!s) return 'Thành phần PDF';
       if (s.includes('Catalog') || s.includes('/Trailer/Root') || s === 'catalog:root') {
@@ -2200,10 +2200,10 @@
         return 'Kho mã kịch bản ngầm (/Names/JavaScript)';
       }
       if (s.includes('/OpenAction') || s.includes('open_action')) {
-        return 'Lệnh tự chạy ngay khi mở (/OpenAction)';
+        return isMal ? 'Lệnh tự chạy ngay khi mở (/OpenAction)' : 'Điều hướng mở trang đầu (/OpenAction)';
       }
       if (s.includes('/Catalog/AA') || s.includes('Action (/AA)') || s === 'action:aa') {
-        return 'Hành động kích hoạt tự động (/AA)';
+        return isMal ? 'Hành động kích hoạt tự động (/AA)' : 'Thiết lập sự kiện trang (/AA)';
       }
       if (s.includes('Annot') || s.includes('annot_')) {
         return 'Vùng tương tác / Liên kết trên trang';
@@ -2492,7 +2492,7 @@
               ? 'px-3 py-1.5 rounded-xl bg-error/10 text-error text-xs font-semibold border border-error/25 shadow-sm' 
               : 'px-3 py-1.5 rounded-xl bg-tertiary/10 text-tertiary text-xs font-semibold border border-tertiary/25 shadow-sm';
             badge.title = _cleanEvidenceTextVi(p);
-            badge.innerText = _formatAttackPathStepVi(p);
+            badge.innerText = _formatAttackPathStepVi(p, isMal);
             pathFlowEl.appendChild(badge);
           });
         }
@@ -2899,7 +2899,7 @@
         icon.innerText = isThreat ? 'gpp_maybe' : 'verified_user';
         icon.className = `material-symbols-outlined ${isThreat ? 'text-error' : 'text-tertiary'} text-[26px]`;
       }
-      const isLow = aiData.danger_level === 'LOW';
+      const isLow = aiData.danger_level === 'LOW' || aiData.danger_level === 'SAFE' || (!isThreat && aiData.danger_level !== 'UNAVAILABLE');
       if (title) {
         title.innerText = isThreat
           ? (isCritical ? 'ĐÁNH GIÁ: RẤT NGUY HIỂM' : 'ĐÁNH GIÁ: NGUY HIỂM CAO')
@@ -3709,7 +3709,7 @@
       const rawLabel = String(n.label || '');
       const isAnnotKind = kind === 'annot' || kind === 'annotation' || id.startsWith('annot:') || id.startsWith('annotation:');
       const isUriLink = !n.is_threat && (snippet.includes('/URI') || (/annot_/i.test(id) && kind === 'action' && !snippet.includes('/JS') && !snippet.includes('/JavaScript')));
-      const isThreat = Boolean(n.is_threat || kind === 'js' || kind === 'script' || kind === 'filespec' || (kind === 'action' && !isUriLink));
+      const isThreat = Boolean(n.is_threat || n.is_threat_trigger || kind === 'js' || kind === 'script' || kind === 'filespec');
 
       let title = 'Thành phần PDF';
       let subtitle = id;
@@ -3793,6 +3793,15 @@
         plainExplain = 'Đây chỉ là một đường dẫn liên kết web (/URI) thông thường đính kèm trên trang tài liệu (ví dụ: đường dẫn tham khảo bài báo / ORCID). Thành phần này hoàn toàn không phải mã độc tự chạy.';
         cartoonKind = 'uri_link';
         nodeSize = 21;
+      } else if ((kind === 'action' || id.startsWith('action:')) && !isThreat) {
+        title = 'Điều hướng mở trang đầu';
+        subtitle = '/OpenAction • Khung nhìn trang (An toàn)';
+        shortLabel = '🧭 Mở trang đầu\n(/OpenAction)';
+        badgeText = 'Đ.HƯỚNG';
+        roleVi = 'Thiết lập khung nhìn trang khi mở (/OpenAction)';
+        plainExplain = 'Đây chỉ là thiết lập điều hướng khung nhìn tiêu chuẩn của tệp PDF (ví dụ: mở tài liệu ở Trang 1 với tỷ lệ thu phóng 100%, rất phổ biến trong báo cáo Word / LaTeX). Thành phần này hoàn toàn an toàn, không chứa mã kịch bản thực thi.';
+        cartoonKind = 'uri_link';
+        nodeSize = 23;
       } else if (kind === 'action' || id.startsWith('action:')) {
         if (id.includes('open_action')) {
           title = '⚡ Lệnh tự chạy khi mở';

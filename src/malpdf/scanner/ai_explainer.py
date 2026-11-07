@@ -41,8 +41,8 @@ class AIThreatExplainer:
             "Tệp PDF có dấu hiệu chứa mã độc" if verdict == "MALICIOUS" else "Tài liệu PDF an toàn"
         )
         all_triggers = dossier.get("trigger_objects", []) or dossier.get("suspicious_triggers", []) or []
-        active_triggers = [t for t in all_triggers if t.get("is_threat_trigger") or t.get("kind") == "script"]
-        triggers = active_triggers if active_triggers else all_triggers
+        active_triggers = [t for t in all_triggers if t.get("is_threat_trigger") or t.get("kind") in ("script", "filespec")]
+        triggers = active_triggers if (active_triggers or verdict == "BENIGN") else all_triggers
         scripts = dossier.get("threat_scripts", []) or dossier.get("script_findings", []) or []
         attack_path_str = dossier.get("attack_path_string") or " -> ".join(
             dossier.get("attack_path") or ["Catalog (/Root)"]
@@ -151,8 +151,8 @@ class AIThreatExplainer:
         detected_cnt = taxonomy.get("detected_count", 0)
         total_analyzers = taxonomy.get("total_analyzers", 8)
         all_triggers = dossier.get("trigger_objects", []) or dossier.get("suspicious_triggers", []) or []
-        active_triggers = [t for t in all_triggers if t.get("is_threat_trigger") or t.get("kind") == "script"]
-        triggers = active_triggers if active_triggers else all_triggers
+        active_triggers = [t for t in all_triggers if t.get("is_threat_trigger") or t.get("kind") in ("script", "filespec")]
+        triggers = active_triggers if (active_triggers or verdict == "BENIGN") else all_triggers
         scripts = dossier.get("threat_scripts", []) or dossier.get("script_findings", []) or []
         attack_path_str = dossier.get("attack_path_string") or " -> ".join(dossier.get("attack_path") or ["Catalog (/Root)"])
 
@@ -355,8 +355,8 @@ class AIThreatExplainer:
         dossier = scan_result.get("forensic_dossier", {}) or {}
         taxonomy = scan_result.get("threat_taxonomy") or dossier.get("threat_taxonomy") or {}
         all_triggers = dossier.get("trigger_objects", []) or dossier.get("suspicious_triggers", []) or []
-        active_triggers = [t for t in all_triggers if t.get("is_threat_trigger") or t.get("kind") == "script"]
-        triggers = active_triggers if active_triggers else all_triggers
+        active_triggers = [t for t in all_triggers if t.get("is_threat_trigger") or t.get("kind") in ("script", "filespec")]
+        triggers = active_triggers if (active_triggers or verdict == "BENIGN") else all_triggers
         scripts = dossier.get("threat_scripts", []) or dossier.get("script_findings", []) or []
         attack_path = dossier.get("attack_path_string") or " -> ".join(dossier.get("attack_path") or ["Catalog (/Root)"])
         modality = dossier.get("modality_breakdown") or {}
