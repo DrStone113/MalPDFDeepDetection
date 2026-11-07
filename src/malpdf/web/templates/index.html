@@ -1523,11 +1523,11 @@
 
           <!-- 2. Interactive Split-Screen Slider View -->
           <div id="diff-split-slider-view" class="hidden pt-2">
-            <div id="diff-split-box" class="diff-split-container rounded-2xl aspect-[3/4] max-h-[680px] xl:max-h-[740px] w-full max-w-2xl bg-white mx-auto shadow-xl border border-surface-container flex items-center justify-center relative overflow-hidden cursor-ew-resize">
-              <img id="diff-split-orig-img" src="" alt="Tệp gốc" class="absolute inset-0 w-full h-full object-contain select-none pointer-events-none p-2" />
+            <div id="diff-split-box" class="diff-split-container rounded-2xl aspect-[3/4] max-h-[680px] xl:max-h-[740px] w-full max-w-2xl bg-white mx-auto shadow-xl border border-surface-container flex items-center justify-center relative overflow-hidden cursor-ew-resize select-none">
+              <img id="diff-split-orig-img" src="" alt="Tệp gốc" class="absolute inset-0 w-full h-full object-contain select-none pointer-events-none p-2" style="clip-path: inset(0 50% 0 0);" />
               
-              <div id="diff-split-clean-wrap" class="absolute inset-0 overflow-hidden pointer-events-none" style="width: 0%;">
-                <img id="diff-split-clean-img" src="" alt="Tệp đã làm sạch" class="absolute top-0 bottom-0 left-0 max-w-none w-full h-full object-contain select-none pointer-events-none p-2" />
+              <div id="diff-split-clean-wrap" class="absolute inset-0 w-full h-full overflow-hidden pointer-events-none" style="clip-path: inset(0 0 0 50%);">
+                <img id="diff-split-clean-img" src="" alt="Tệp đã làm sạch" class="absolute inset-0 w-full h-full object-contain select-none pointer-events-none p-2" />
               </div>
 
               <div id="diff-split-handle" class="diff-split-handle" style="left: 50%;">
@@ -1910,11 +1910,20 @@
     }
 
     function updateSplitSliderPosition(percent) {
-      diffSplitPercent = Math.max(0, Math.min(100, percent));
+      diffSplitPercent = Math.max(2, Math.min(98, percent));
+      const origImg = document.getElementById('diff-split-orig-img');
       const wrap = document.getElementById('diff-split-clean-wrap');
       const handle = document.getElementById('diff-split-handle');
-      if (wrap) wrap.style.width = `${diffSplitPercent}%`;
-      if (handle) handle.style.left = `${diffSplitPercent}%`;
+      if (origImg) {
+        origImg.style.clipPath = `inset(0 ${100 - diffSplitPercent}% 0 0)`;
+      }
+      if (wrap) {
+        wrap.style.width = '100%';
+        wrap.style.clipPath = `inset(0 0 0 ${diffSplitPercent}%)`;
+      }
+      if (handle) {
+        handle.style.left = `${diffSplitPercent}%`;
+      }
     }
 
     function initSplitSliderEvents() {
@@ -1923,34 +1932,33 @@
 
       const onMove = (clientX) => {
         const rect = box.getBoundingClientRect();
+        if (!rect.width) return;
         const x = clientX - rect.left;
         const pct = (x / rect.width) * 100;
         updateSplitSliderPosition(pct);
       };
 
-      box.addEventListener('mousedown', (e) => {
+      box.addEventListener('pointerdown', (e) => {
         isDraggingDiffSplit = true;
+        if (box.setPointerCapture) {
+          try { box.setPointerCapture(e.pointerId); } catch (err) {}
+        }
         onMove(e.clientX);
       });
-      window.addEventListener('mousemove', (e) => {
-        if (isDraggingDiffSplit) onMove(e.clientX);
+      box.addEventListener('pointermove', (e) => {
+        if (isDraggingDiffSplit) {
+          onMove(e.clientX);
+        }
       });
-      window.addEventListener('mouseup', () => {
+      const stopDrag = (e) => {
         isDraggingDiffSplit = false;
-      });
-
-      box.addEventListener('touchstart', (e) => {
-        if (e.touches && e.touches[0]) {
-          isDraggingDiffSplit = true;
-          onMove(e.touches[0].clientX);
+        if (e && e.pointerId !== undefined && box.releasePointerCapture) {
+          try { box.releasePointerCapture(e.pointerId); } catch (err) {}
         }
-      }, { passive: true });
-      window.addEventListener('touchmove', (e) => {
-        if (isDraggingDiffSplit && e.touches && e.touches[0]) {
-          onMove(e.touches[0].clientX);
-        }
-      }, { passive: true });
-      window.addEventListener('touchend', () => {
+      };
+      box.addEventListener('pointerup', stopDrag);
+      box.addEventListener('pointercancel', stopDrag);
+      window.addEventListener('mouseup', () => {
         isDraggingDiffSplit = false;
       });
     }
@@ -4935,6 +4943,7 @@
           if (cleanPl) cleanPl.classList.add('hidden');
           if (splitClean) splitClean.src = diff.sanitized_render_uri;
           if (splitPl) splitPl.classList.add('hidden');
+          updateSplitSliderPosition(diffSplitPercent);
         } else {
           if (cleanImg) cleanImg.classList.add('hidden');
           if (cleanPl) cleanPl.classList.remove('hidden');
