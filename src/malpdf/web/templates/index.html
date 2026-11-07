@@ -197,16 +197,18 @@
       position: absolute;
       left: 0;
       right: 0;
-      height: 3px;
+      bottom: 0;
+      height: 4px;
       background: linear-gradient(90deg, transparent, #0071E3 20%, #5856D6 50%, #0071E3 80%, transparent);
-      box-shadow: 0 0 16px 3px rgba(0, 113, 227, 0.7), 0 0 4px 1px #5856D6;
-      animation: cyberLaser 2.2s ease-in-out infinite;
+      background-size: 200% 100%;
+      box-shadow: 0 -2px 12px 1px rgba(0, 113, 227, 0.35);
+      animation: cyberLaser 1.6s linear infinite;
       z-index: 25;
     }
     @keyframes cyberLaser {
-      0% { top: 0%; opacity: 0.8; }
-      50% { top: 96%; opacity: 1; filter: drop-shadow(0 0 8px #5856D6); }
-      100% { top: 0%; opacity: 0.8; }
+      0% { background-position: 100% 0; opacity: 0.85; }
+      50% { background-position: 0% 0; opacity: 1; }
+      100% { background-position: -100% 0; opacity: 0.85; }
     }
 
     /* Dropzone Drag-Over Highlight */
@@ -395,7 +397,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
           
           <!-- Dropzone (8 cols on lg, 9 cols on xl) -->
-          <div class="lg:col-span-8 xl:col-span-9 border-2 border-dashed border-primary-container/30 hover:border-primary-container rounded-2xl p-5 sm:p-6 text-center transition bg-white/40 cursor-pointer flex flex-col sm:flex-row items-center justify-center gap-4 relative overflow-hidden group"
+          <div class="lg:col-span-8 xl:col-span-9 min-h-[128px] border-2 border-dashed border-primary-container/30 hover:border-primary-container rounded-2xl p-4 sm:p-5 text-center transition bg-white/60 cursor-pointer flex flex-col sm:flex-row items-center justify-center gap-4 relative overflow-hidden group"
                id="dropzone"
                onclick="document.getElementById('file-input').click();">
             <input type="file" id="file-input" class="hidden" accept=".pdf" onchange="handleFileSelect(this.files[0])" />
@@ -409,38 +411,39 @@
             </div>
 
             <!-- Cyber Laser Scanner Line -->
-            <div id="scan-laser-line" class="hidden scan-laser-line pointer-events-none"></div>
+            <div id="scan-laser-line" class="hidden scan-laser-line pointer-events-none opacity-35"></div>
 
             <!-- Scanning Spinner & Multi-Step Telemetry Overlay -->
-            <div id="scanning-overlay" class="hidden absolute inset-0 bg-white/94 backdrop-blur-md flex flex-col items-center justify-center gap-3 z-20 p-4 transition-all duration-300">
-              <div class="relative w-12 h-12 flex items-center justify-center">
-                <div class="absolute inset-0 rounded-full border-3 border-primary-container/20"></div>
-                <div class="absolute inset-0 rounded-full border-3 border-primary-container border-t-transparent animate-spin"></div>
-                <span class="material-symbols-outlined text-primary-container text-[22px] animate-pulse">radar</span>
-              </div>
-              
-              <div class="text-center space-y-0.5">
-                <p class="text-xs font-bold text-on-surface" id="scan-spinner-text">Đang kiểm tra tệp PDF...</p>
-                <p class="text-[11px] text-on-surface-variant" id="scan-spinner-subtext">Đang rà soát cấu trúc trang và các đoạn mã ẩn...</p>
+            <div id="scanning-overlay" class="hidden absolute inset-0 bg-white flex flex-col md:flex-row items-center justify-between gap-3 z-20 px-4 sm:px-6 py-2.5 transition-all duration-300">
+              <div class="flex items-center gap-3.5 min-w-0">
+                <div class="relative w-11 h-11 flex items-center justify-center shrink-0">
+                  <div class="absolute inset-0 rounded-full border-3 border-primary-container/20"></div>
+                  <div class="absolute inset-0 rounded-full border-3 border-primary-container border-t-transparent animate-spin"></div>
+                  <span class="material-symbols-outlined text-primary-container text-[20px] animate-pulse">radar</span>
+                </div>
+                <div class="text-left min-w-0">
+                  <p class="text-xs sm:text-sm font-bold text-on-surface truncate max-w-[260px] sm:max-w-[360px]" id="scan-spinner-text">Đang kiểm tra tệp PDF...</p>
+                  <p class="text-[11px] text-on-surface-variant truncate" id="scan-spinner-subtext">Đang rà soát cấu trúc trang và các đoạn mã ẩn...</p>
+                </div>
               </div>
 
               <!-- Animated 4-Phase Progress Stepper -->
-              <div class="w-full max-w-md grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] text-left bg-surface-container-low/80 p-2.5 rounded-xl border border-surface-container shadow-inner">
-                <div id="scan-step-1" class="flex items-center gap-2 text-primary-container font-semibold transition">
-                  <span class="material-symbols-outlined text-[15px]">check_circle</span>
-                  <span>1. Đọc tệp PDF từ máy tính</span>
+              <div class="w-full md:w-auto md:min-w-[390px] grid grid-cols-2 gap-x-4 gap-y-1.5 text-[11px] text-left bg-slate-50 px-3.5 py-2 rounded-xl border border-slate-200/90 shrink-0">
+                <div id="scan-step-1" class="flex items-center gap-1.5 text-primary-container font-semibold transition">
+                  <span class="material-symbols-outlined text-[14px]">check_circle</span>
+                  <span class="truncate">1. Đọc tệp PDF từ máy tính</span>
                 </div>
-                <div id="scan-step-2" class="flex items-center gap-2 text-outline transition">
-                  <span class="material-symbols-outlined text-[15px]">pending</span>
-                  <span>2. Kiểm tra bố cục & mã ẩn</span>
+                <div id="scan-step-2" class="flex items-center gap-1.5 text-outline transition">
+                  <span class="material-symbols-outlined text-[14px]">pending</span>
+                  <span class="truncate">2. Kiểm tra bố cục & mã ẩn</span>
                 </div>
-                <div id="scan-step-3" class="flex items-center gap-2 text-outline transition">
-                  <span class="material-symbols-outlined text-[15px]">pending</span>
-                  <span>3. Đánh giá mức độ an toàn</span>
+                <div id="scan-step-3" class="flex items-center gap-1.5 text-outline transition">
+                  <span class="material-symbols-outlined text-[14px]">pending</span>
+                  <span class="truncate">3. Đánh giá mức độ an toàn</span>
                 </div>
-                <div id="scan-step-4" class="flex items-center gap-2 text-outline transition">
-                  <span class="material-symbols-outlined text-[15px]">pending</span>
-                  <span>4. Tổng hợp giải thích dễ hiểu</span>
+                <div id="scan-step-4" class="flex items-center gap-1.5 text-outline transition">
+                  <span class="material-symbols-outlined text-[14px]">pending</span>
+                  <span class="truncate">4. Tổng hợp giải thích dễ hiểu</span>
                 </div>
               </div>
             </div>
@@ -1045,17 +1048,17 @@
               </div>
 
               <div class="flex flex-wrap items-center gap-1.5 p-1 rounded-full bg-surface-container-low border border-surface-container shadow-inner text-xs">
-                <button id="btn-graph-mode-tree" onclick="setGraphLayoutMode('hierarchical')" class="px-3 py-1 rounded-full bg-primary-container text-white font-bold shadow-xs transition flex items-center gap-1 active:scale-95">
-                  <span class="material-symbols-outlined text-[15px]">account_tree</span>
-                  <span>Sơ đồ phân tầng (Dễ hiểu)</span>
-                </button>
-                <button id="btn-graph-mode-network" onclick="setGraphLayoutMode('network')" class="px-3 py-1 rounded-full text-on-surface-variant hover:text-on-surface font-semibold transition flex items-center gap-1 active:scale-95">
-                  <span class="material-symbols-outlined text-[15px]">hub</span>
-                  <span>Sơ đồ mạng lưới</span>
+                <button id="btn-graph-compact" onclick="toggleCompactPagesMode()" class="px-3 py-1 rounded-full bg-primary-container text-white font-bold shadow-xs transition flex items-center gap-1 active:scale-95" title="Tự động gộp gọn các trang lặp lại khi tệp PDF có nhiều trang">
+                  <span class="material-symbols-outlined text-[15px]">auto_awesome_motion</span>
+                  <span id="lbl-graph-compact">Tự gộp trang dài: Bật</span>
                 </button>
                 <button id="btn-graph-filter-threat" onclick="toggleThreatOnlyFilter()" class="px-3 py-1 rounded-full text-on-surface-variant hover:text-on-surface font-semibold transition flex items-center gap-1 active:scale-95">
                   <span class="material-symbols-outlined text-[15px]">filter_alt</span>
-                  <span id="btn-graph-filter-label">Hiện tất cả nhánh</span>
+                  <span id="lbl-graph-filter-threat">Chỉ hiện nhánh nguy hiểm</span>
+                </button>
+                <button onclick="togglePhysics()" class="px-3 py-1 rounded-full bg-white hover:bg-surface-container text-on-surface font-semibold shadow-2xs transition active:scale-95 flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[15px]">animation</span>
+                  <span id="btn-physics-label" class="text-tertiary">Độ nảy vật lý: Bật</span>
                 </button>
                 <button onclick="networkFit()" class="px-3 py-1 rounded-full bg-white hover:bg-surface-container text-on-surface font-semibold shadow-2xs transition active:scale-95 flex items-center gap-1">
                   <span class="material-symbols-outlined text-[15px]">fit_screen</span>
@@ -1069,7 +1072,7 @@
               <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
                 <div class="flex items-center gap-1.5 font-bold text-sky-300">
                   <span class="material-symbols-outlined text-[17px]">route</span>
-                  <span id="graph-flow-summary-title"> Tóm tắt luồng hoạt động khi mở tệp PDF</span>
+                  <span id="graph-flow-summary-title">Tóm tắt luồng hoạt động khi mở tệp PDF</span>
                 </div>
                 <span id="graph-flow-summary-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300">Chưa có tệp</span>
               </div>
@@ -1080,20 +1083,20 @@
 
             <!-- Legend Pills Bar -->
             <div class="flex flex-wrap items-center gap-2 mb-3 text-xs">
-              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-blue-50 text-blue-800 border border-blue-200 font-semibold">
-                <span class="w-2.5 h-2.5 rounded-sm bg-blue-600"></span>1. Khung gốc tài liệu (/Catalog)
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 text-blue-800 border border-blue-200 font-semibold">
+                <span class="w-3 h-3 rounded-full bg-blue-600 border-2 border-slate-900"></span>📘 Khung gốc PDF (/Catalog)
               </span>
-              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-red-50 text-red-800 border border-red-300 font-bold">
-                <span class="w-2.5 h-2.5 rounded-sm bg-red-600"></span>2. Lệnh tự chạy & Mã độc JavaScript (Nguy hiểm)
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-50 text-red-800 border border-red-300 font-bold">
+                <span class="w-3 h-3 rounded-full bg-red-500 border-2 border-slate-900"></span>⚡ Lệnh tự chạy & 👾 Mã độc JS (Nguy hiểm)
               </span>
-              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold">
-                <span class="w-2.5 h-2.5 rounded-sm bg-emerald-600"></span>3. Danh sách trang & Trang văn bản (An toàn)
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-800 border border-indigo-200 font-semibold">
+                <span class="w-3 h-3 rounded-full bg-indigo-500 border-2 border-slate-900"></span>🗂️ Danh sách trang & 📄 Trang văn bản
               </span>
-              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-sky-50 text-sky-800 border border-sky-200 font-semibold">
-                <span class="w-2.5 h-2.5 rounded-sm bg-sky-600"></span>4. Nội dung chữ & hình ảnh (/Contents)
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 text-amber-900 border border-amber-200 font-semibold">
+                <span class="w-3 h-3 rounded-full bg-amber-400 border-2 border-slate-900"></span>🎨 Nội dung chữ & hình ảnh
               </span>
-              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-100 text-slate-700 border border-slate-300 font-medium">
-                <span class="w-2.5 h-2.5 rounded-sm bg-slate-500"></span>5. Liên kết Web / Chú thích trang (/URI)
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-50 text-cyan-900 border border-cyan-200 font-medium">
+                <span class="w-3 h-3 rounded-full bg-cyan-500 border-2 border-slate-900"></span>🔗 Liên kết Web / Ghi chú trang (An toàn)
               </span>
             </div>
 
@@ -3582,173 +3585,284 @@
       document.getElementById('hash-ingress').innerText = data.sha256 || '--';
     }
 
-    let graphLayoutMode = 'hierarchical';
+    let graphLayoutMode = 'network';
     let graphThreatOnlyFilter = false;
+    let graphCompactPages = true;
     let currentMappedGraphNodes = [];
+    let currentVisibleEdges = [];
+    let graphAnimFrameId = null;
+
+    function _createCartoonNodeSvgUri(cartoonKind, badgeText = '') {
+      const safeBadge = String(badgeText || '').replace(/[<>&"']/g, '').slice(0, 6);
+      let gradStart = '#60A5FA';
+      let gradEnd = '#2563EB';
+      let innerArt = '';
+
+      if (cartoonKind === 'catalog') {
+        gradStart = '#38BDF8';
+        gradEnd = '#1D4ED8';
+        innerArt = `
+          <rect x="24" y="23" width="40" height="42" rx="7" fill="#FFFFFF" stroke="#0F172A" stroke-width="3.2"/>
+          <path d="M24 33 H64" stroke="#93C5FD" stroke-width="3"/>
+          <circle cx="31" cy="28" r="2.2" fill="#EF4444"/>
+          <circle cx="38" cy="28" r="2.2" fill="#F59E0B"/>
+          <circle cx="45" cy="28" r="2.2" fill="#10B981"/>
+          <polygon points="44,37 47,44 54,44 48.5,48.5 50.5,55.5 44,51 37.5,55.5 39.5,48.5 34,44 41,44" fill="#FBBF24" stroke="#0F172A" stroke-width="2.2" stroke-linejoin="round"/>
+        `;
+      } else if (cartoonKind === 'threat_action') {
+        gradStart = '#FB923C';
+        gradEnd = '#DC2626';
+        innerArt = `
+          <polygon points="48,17 27,46 42,46 37,70 61,39 45,39" fill="#FEF08A" stroke="#0F172A" stroke-width="3.4" stroke-linejoin="round"/>
+          <circle cx="25" cy="27" r="3" fill="#FDE047"/>
+          <circle cx="64" cy="29" r="2.5" fill="#FDE047"/>
+        `;
+      } else if (cartoonKind === 'threat_script') {
+        gradStart = '#FB7185';
+        gradEnd = '#BE123C';
+        innerArt = `
+          <path d="M33 26 L27 18 M55 26 L61 18" stroke="#0F172A" stroke-width="3.5" stroke-linecap="round"/>
+          <circle cx="26" cy="17" r="3.5" fill="#FDE047" stroke="#0F172A" stroke-width="2"/>
+          <circle cx="62" cy="17" r="3.5" fill="#FDE047" stroke="#0F172A" stroke-width="2"/>
+          <rect x="25" y="25" width="38" height="36" rx="14" fill="#1E1B4B" stroke="#0F172A" stroke-width="3.2"/>
+          <circle cx="36" cy="40" r="5" fill="#FDE047"/>
+          <circle cx="52" cy="40" r="5" fill="#FDE047"/>
+          <circle cx="36" cy="40" r="2" fill="#0F172A"/>
+          <circle cx="52" cy="40" r="2" fill="#0F172A"/>
+          <path d="M34 52 Q44 46 54 52" stroke="#FB7185" stroke-width="3" fill="none" stroke-linecap="round"/>
+        `;
+      } else if (cartoonKind === 'pages') {
+        gradStart = '#A78BFA';
+        gradEnd = '#4F46E5';
+        innerArt = `
+          <rect x="22" y="29" width="36" height="36" rx="6" fill="#DDD6FE" stroke="#0F172A" stroke-width="2.8"/>
+          <rect x="27" y="24" width="36" height="36" rx="6" fill="#FFFFFF" stroke="#0F172A" stroke-width="3"/>
+          <line x1="34" y1="34" x2="55" y2="34" stroke="#6366F1" stroke-width="3.2" stroke-linecap="round"/>
+          <line x1="34" y1="42" x2="55" y2="42" stroke="#818CF8" stroke-width="3.2" stroke-linecap="round"/>
+          <line x1="34" y1="50" x2="47" y2="50" stroke="#A5B4FC" stroke-width="3.2" stroke-linecap="round"/>
+        `;
+      } else if (cartoonKind === 'page') {
+        gradStart = '#6EE7B7';
+        gradEnd = '#059669';
+        innerArt = `
+          <path d="M28 22 H51 L60 31 V64 H28 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M51 22 V31 H60" fill="#A7F3D0" stroke="#0F172A" stroke-width="2.6" stroke-linejoin="round"/>
+          <line x1="34" y1="39" x2="53" y2="39" stroke="#10B981" stroke-width="3" stroke-linecap="round"/>
+          <line x1="34" y1="47" x2="53" y2="47" stroke="#34D399" stroke-width="3" stroke-linecap="round"/>
+          <text x="44" y="59" text-anchor="middle" font-family="Inter, sans-serif" font-weight="900" font-size="10" fill="#065F46">${safeBadge}</text>
+        `;
+      } else if (cartoonKind === 'stream') {
+        gradStart = '#FCD34D';
+        gradEnd = '#D97706';
+        innerArt = `
+          <rect x="24" y="25" width="40" height="38" rx="7" fill="#FFFBEB" stroke="#0F172A" stroke-width="3"/>
+          <circle cx="35" cy="36" r="4.2" fill="#F59E0B"/>
+          <path d="M27 56 L38 44 L46 52 L53 45 L61 56 Z" fill="#38BDF8" stroke="#0F172A" stroke-width="2.2" stroke-linejoin="round"/>
+        `;
+      } else if (cartoonKind === 'cluster') {
+        gradStart = '#2DD4BF';
+        gradEnd = '#0D9488';
+        innerArt = `
+          <rect x="20" y="31" width="38" height="34" rx="6" fill="#99F6E4" stroke="#0F172A" stroke-width="2.6"/>
+          <rect x="25" y="26" width="38" height="34" rx="6" fill="#CCFBF1" stroke="#0F172A" stroke-width="2.6"/>
+          <rect x="30" y="21" width="38" height="34" rx="6" fill="#FFFFFF" stroke="#0F172A" stroke-width="3"/>
+          <text x="49" y="42" text-anchor="middle" font-family="Inter, sans-serif" font-weight="900" font-size="12" fill="#0F766E">${safeBadge}</text>
+        `;
+      } else {
+        gradStart = '#67E8F9';
+        gradEnd = '#0284C7';
+        innerArt = `
+          <circle cx="44" cy="44" r="18" fill="#FFFFFF" stroke="#0F172A" stroke-width="3"/>
+          <path d="M37 47 L42 52 C45 55 50 55 53 52 L56 49 C59 46 59 41 56 38 L53 35" stroke="#0284C7" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+          <path d="M51 41 L46 36 C43 33 38 33 35 36 L32 39 C29 42 29 47 32 50 L35 53" stroke="#0F172A" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+        `;
+      }
+
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 88 88" width="88" height="88">
+        <defs>
+          <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="${gradStart}"/>
+            <stop offset="100%" stop-color="${gradEnd}"/>
+          </linearGradient>
+        </defs>
+        <circle cx="44" cy="46" r="38" fill="rgba(15,23,42,0.18)"/>
+        <circle cx="44" cy="43" r="37" fill="url(#g)" stroke="#0F172A" stroke-width="4.5"/>
+        <circle cx="44" cy="43" r="33.5" fill="none" stroke="rgba(255,255,255,0.65)" stroke-width="2.2"/>
+        <path d="M20 27 A28 22 0 0 1 68 27" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="4" stroke-linecap="round"/>
+        ${innerArt}
+      </svg>`;
+      return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+    }
 
     function _describeGraphNodeVi(n) {
       const id = String(n.id || '');
       const kind = String(n.kind || '').toLowerCase();
       const snippet = String(n.snippet || '');
       const rawLabel = String(n.label || '');
+      const isAnnotKind = kind === 'annot' || kind === 'annotation' || id.startsWith('annot:') || id.startsWith('annotation:');
       const isUriLink = !n.is_threat && (snippet.includes('/URI') || (/annot_/i.test(id) && kind === 'action' && !snippet.includes('/JS') && !snippet.includes('/JavaScript')));
-      const isThreat = Boolean(n.is_threat || kind === 'js' || kind === 'script' || (kind === 'action' && !isUriLink));
+      const isThreat = Boolean(n.is_threat || kind === 'js' || kind === 'script' || kind === 'filespec' || (kind === 'action' && !isUriLink));
 
-      let title = 'Thành phần tài liệu PDF';
+      let title = 'Thành phần PDF';
       let subtitle = id;
+      let shortLabel = 'Thành phần PDF';
       let badgeText = 'PDF';
       let roleVi = 'Thành phần cấu trúc PDF';
       let plainExplain = 'Thành phần cấu trúc bên trong tệp PDF.';
-      let level = 2;
+      let cartoonKind = 'uri_link';
+      let nodeSize = 24;
+      let pageIndex = null;
 
       if (kind === 'catalog' || id === 'catalog:root') {
         title = 'Khung gốc tài liệu';
         subtitle = '/Catalog • Điểm bắt đầu';
+        shortLabel = '📘 Khung gốc PDF\n(/Catalog)';
         badgeText = 'GỐC';
         roleVi = 'Khung gốc tài liệu (/Catalog)';
         plainExplain = 'Đây là điểm xuất phát đầu tiên khi trình đọc mở tệp PDF. Từ khung gốc này, trình đọc sẽ tìm đến danh sách các trang văn bản và kiểm tra xem có lệnh tự động nào gắn kèm hay không.';
-        level = 0;
+        cartoonKind = 'catalog';
+        nodeSize = 35;
       } else if (kind === 'pages' || id === 'pages:root') {
         title = 'Danh sách các trang';
         subtitle = '/Pages • Quản lý bố cục';
+        shortLabel = '🗂️ Danh sách trang\n(/Pages)';
         badgeText = 'TRANG';
         roleVi = 'Cây danh mục trang (/Pages)';
         plainExplain = 'Thành phần quản lý toàn bộ số lượng trang và thứ tự các trang đọc bên trong tài liệu PDF. Đây là cấu trúc chuẩn hoàn toàn bình thường.';
-        level = 1;
+        cartoonKind = 'pages';
+        nodeSize = 30;
       } else if (kind === 'page' || id.startsWith('page:')) {
         const pageIdxMatch = id.match(/page:(\d+)/i) || rawLabel.match(/\((\d+)\)/);
-        const pageNum = pageIdxMatch ? (parseInt(pageIdxMatch[1], 10) + 1) : 1;
+        const pIdx = pageIdxMatch ? parseInt(pageIdxMatch[1], 10) : 0;
+        const pageNum = pIdx + 1;
+        pageIndex = pIdx;
         title = `Trang văn bản số ${pageNum}`;
         subtitle = `/Page ${pageNum} • Trang hiển thị`;
-        badgeText = `TR.${pageNum}`;
+        shortLabel = `📄 Trang ${pageNum}`;
+        badgeText = `T${pageNum}`;
         roleVi = `Trang tài liệu số ${pageNum}`;
         plainExplain = `Trang hiển thị số ${pageNum} của tài liệu PDF, nơi chứa nội dung chữ viết, hình ảnh và các chú thích hoặc liên kết trên mặt trang.`;
-        level = 2;
+        cartoonKind = 'page';
+        nodeSize = 25;
       } else if (kind === 'stream' || id.startsWith('stream:')) {
         const streamPageMatch = id.match(/page_(\d+)/i) || rawLabel.match(/page_(\d+)/i);
-        const pageNum = streamPageMatch ? (parseInt(streamPageMatch[1], 10) + 1) : null;
+        const pIdx = streamPageMatch ? parseInt(streamPageMatch[1], 10) : null;
+        const pageNum = pIdx !== null ? (pIdx + 1) : null;
+        pageIndex = pIdx;
         title = pageNum ? `Nội dung chữ & hình (Trang ${pageNum})` : 'Luồng nội dung hiển thị';
         subtitle = `/Contents • ${n.size_bytes || 0} byte`;
+        shortLabel = pageNum ? `🎨 Chữ & Hình\n(Trang ${pageNum})` : '🎨 Luồng chữ & hình';
         badgeText = 'CHỮ';
         roleVi = 'Luồng nội dung văn bản & hình ảnh (/Contents)';
         plainExplain = 'Luồng dữ liệu chứa văn bản, phông chữ và hình ảnh thực sự hiển thị cho người đọc trên mặt trang. Khi làm sạch tệp (CDR), phần nội dung này được giữ nguyên 100%.';
-        level = 3;
-      } else if (kind === 'annot' || id.startsWith('annot:')) {
-        const annotMatch = id.match(/annot:(\d+)_(\d+)/i);
-        const pageNum = annotMatch ? (parseInt(annotMatch[1], 10) + 1) : 1;
+        cartoonKind = 'stream';
+        nodeSize = 22;
+      } else if (isAnnotKind) {
+        const annotMatch = id.match(/(?:annot|annotation):(\d+)_(\d+)/i);
+        const pIdx = annotMatch ? parseInt(annotMatch[1], 10) : 0;
+        const pageNum = pIdx + 1;
         const annotNum = annotMatch ? (parseInt(annotMatch[2], 10) + 1) : 1;
-        title = `Vùng gắn liên kết #${annotNum}`;
+        pageIndex = pIdx;
+        title = `Ghi chú / Vùng liên kết #${annotNum}`;
         subtitle = `Trên Trang ${pageNum} (/Annot)`;
-        badgeText = 'LIÊN KẾT';
+        shortLabel = `📌 Ghi chú #${annotNum}\n(Trang ${pageNum})`;
+        badgeText = 'GH.CHÚ';
         roleVi = 'Vùng tương tác / Chú thích trên trang (/Annot)';
-        plainExplain = `Vùng bấm chuột trên mặt Trang ${pageNum} (thường dùng để gắn đường dẫn website tham khảo hoặc mục lục). Bản thân vùng tương tác này không tự chạy mã độc.`;
-        level = 3;
+        plainExplain = `Vùng tương tác hoặc chú thích số ${annotNum} đặt trên mặt Trang ${pageNum} (thường dùng để gắn đường dẫn website tham khảo hoặc mục lục). Bản thân vùng chú thích này không tự chạy mã độc.`;
+        cartoonKind = 'uri_link';
+        nodeSize = 20;
       } else if (isUriLink) {
+        const actAnnotMatch = id.match(/annot_(\d+)_(\d+)/i);
+        const pIdx = actAnnotMatch ? parseInt(actAnnotMatch[1], 10) : 0;
+        pageIndex = pIdx;
         const uriMatch = snippet.match(/\/URI\s+([^\s>]+)/i);
-        const shortUri = uriMatch ? uriMatch[1].replace(/^https?:\/\//i, '').slice(0, 28) : 'Đường dẫn web';
+        const shortUri = uriMatch ? uriMatch[1].replace(/^https?:\/\//i, '').slice(0, 24) : 'Đường dẫn web';
         title = 'Liên kết Web ngoài';
         subtitle = `/URI • ${shortUri}`;
+        shortLabel = `🔗 Liên kết Web\n(Trang ${pIdx + 1})`;
         badgeText = 'WEB';
         roleVi = 'Liên kết mở trang Web (/URI)';
         plainExplain = 'Đây chỉ là một đường dẫn liên kết web (/URI) thông thường đính kèm trên trang tài liệu (ví dụ: đường dẫn tham khảo bài báo / ORCID). Thành phần này hoàn toàn không phải mã độc tự chạy.';
-        level = 4;
+        cartoonKind = 'uri_link';
+        nodeSize = 21;
       } else if (kind === 'action' || id.startsWith('action:')) {
         if (id.includes('open_action')) {
-          title = '⚠️ Lệnh tự chạy khi mở';
+          title = '⚡ Lệnh tự chạy khi mở';
           subtitle = '/OpenAction • Kích hoạt ngay';
+          shortLabel = '⚡ Lệnh tự chạy\n(/OpenAction)';
           plainExplain = 'NGUY HIỂM: Khoá /OpenAction ép trình đọc PDF tự động thực thi lệnh ngay khoảnh khắc người dùng vừa mở tệp mà không cần bấm bất kỳ nút nào.';
         } else if (id.includes('aa')) {
-          title = '⚠️ Hành động tự động';
+          title = '⚡ Hành động tự động';
           subtitle = '/AA • Tự kích hoạt theo sự kiện';
+          shortLabel = '⚡ Lệnh tự động\n(/AA)';
           plainExplain = 'NGUY HIỂM: Khoá /AA (Additional Actions) cài đặt lệnh tự động chạy ngầm khi người dùng mở trang, đóng trang hoặc di chuột qua tài liệu.';
         } else {
-          title = '⚠️ Lệnh kích hoạt ẩn';
+          title = '⚡ Lệnh kích hoạt ẩn';
           subtitle = '/Action • Thực thi lệnh';
+          shortLabel = '⚡ Lệnh tự chạy\n(/Action)';
           plainExplain = 'Thành phần chứa chỉ thị điều khiển hành vi tự động bên trong tệp PDF.';
         }
         badgeText = 'LỆNH';
         roleVi = 'Lệnh tự động kích hoạt (/OpenAction / /AA)';
-        level = 1;
-      } else if (kind === 'js' || kind === 'script' || id.startsWith('script:')) {
+        cartoonKind = 'threat_action';
+        nodeSize = 33;
+      } else if (kind === 'js' || kind === 'script' || id.startsWith('script:') || kind === 'filespec') {
         if (id.includes('names_js')) {
-          title = '🚨 Kho mã JavaScript ẩn';
+          title = '👾 Kho mã JavaScript ẩn';
           subtitle = '/Names/JavaScript • Lưu trữ mã';
+          shortLabel = '👾 Kho mã JS ẩn\n(/Names/JS)';
           plainExplain = 'NGUY HIỂM CAO: Danh mục lưu trữ các đoạn mã kịch bản JavaScript ẩn sâu bên trong cấu trúc tệp PDF để phục vụ hành vi độc hại.';
-          level = 1;
         } else if (id.includes('open_action')) {
-          title = '🚨 Mã độc JavaScript';
+          title = '👾 Mã độc JavaScript';
           subtitle = 'Chạy tự động qua /OpenAction';
+          shortLabel = '👾 Mã độc JS ẩn\n(Qua /OpenAction)';
           plainExplain = 'NGUY HIỂM CAO: Đoạn mã kịch bản JavaScript độc hại được gắn trực tiếp vào lệnh tự chạy khi mở tệp (/OpenAction). Cần làm sạch và gỡ bỏ ngay.';
-          level = 2;
         } else if (id.includes('aa')) {
-          title = '🚨 Mã độc JavaScript';
+          title = '👾 Mã độc JavaScript';
           subtitle = 'Chạy tự động qua /AA';
+          shortLabel = '👾 Mã độc JS ẩn\n(Qua /AA)';
           plainExplain = 'NGUY HIỂM CAO: Đoạn mã kịch bản JavaScript ẩn được kích hoạt qua khoá hành động tự động (/AA) khi người dùng thao tác với trang.';
-          level = 2;
+        } else if (kind === 'filespec' || id.includes('embedded')) {
+          title = '👾 Tệp đính kèm nhúng ngầm';
+          subtitle = '/EmbeddedFiles • Tệp ẩn';
+          shortLabel = '👾 Tệp nhúng ẩn\n(/EmbeddedFiles)';
+          plainExplain = 'NGUY HIỂM: Tệp đính kèm được giấu bên trong cấu trúc tài liệu PDF.';
         } else {
-          title = '🚨 Đoạn mã JavaScript ẩn';
+          title = '👾 Đoạn mã JavaScript ẩn';
           subtitle = `/JS • ${n.size_bytes || 0} byte`;
+          shortLabel = '👾 Mã độc JS ẩn\n(/JS)';
           plainExplain = 'NGUY HIỂM CAO: Đoạn mã kịch bản thực thi nhúng ngầm bên trong tệp PDF.';
-          level = 2;
         }
         badgeText = 'MÃ ẨN';
         roleVi = 'Đoạn mã kịch bản JavaScript ẩn (/JS)';
+        cartoonKind = 'threat_script';
+        nodeSize = 34;
       }
 
-      let colorObj = {
-        background: '#F8FAFC',
-        border: '#94A3B8',
-        highlight: { background: '#F1F5F9', border: '#475569' },
-        hover: { background: '#F1F5F9', border: '#475569' },
+      const fontObj = {
+        color: isThreat ? '#881337' : '#0F172A',
+        face: 'Plus Jakarta Sans, Inter, sans-serif',
+        size: isThreat || kind === 'catalog' ? 12 : 11,
+        bold: isThreat || kind === 'catalog',
+        background: isThreat ? 'rgba(255, 241, 242, 0.94)' : 'rgba(255, 255, 255, 0.92)',
+        strokeWidth: 0,
       };
-      let fontObj = { color: '#1E293B', face: 'Plus Jakarta Sans, Inter, sans-serif', size: 12, multi: 'html' };
-
-      if (kind === 'catalog' || id === 'catalog:root') {
-        colorObj = {
-          background: '#EFF6FF',
-          border: '#0071E3',
-          highlight: { background: '#DBEAFE', border: '#1D4ED8' },
-          hover: { background: '#DBEAFE', border: '#1D4ED8' },
-        };
-        fontObj = { color: '#0F172A', face: 'Plus Jakarta Sans, Inter, sans-serif', size: 13, bold: true };
-      } else if (isThreat) {
-        const isScript = kind === 'js' || kind === 'script' || id.startsWith('script:');
-        colorObj = {
-          background: isScript ? '#FFE4E6' : '#FEF2F2',
-          border: isScript ? '#BE123C' : '#DC2626',
-          highlight: { background: '#FECDD3', border: '#9F1239' },
-          hover: { background: '#FECDD3', border: '#9F1239' },
-        };
-        fontObj = { color: '#881337', face: 'Plus Jakarta Sans, Inter, sans-serif', size: 12, bold: true };
-      } else if (kind === 'pages' || kind === 'page') {
-        colorObj = {
-          background: '#F0FDF4',
-          border: '#16A34A',
-          highlight: { background: '#DCFCE7', border: '#15803D' },
-          hover: { background: '#DCFCE7', border: '#15803D' },
-        };
-        fontObj = { color: '#064E3B', face: 'Plus Jakarta Sans, Inter, sans-serif', size: 12 };
-      } else if (kind === 'stream') {
-        colorObj = {
-          background: '#F0F9FF',
-          border: '#0284C7',
-          highlight: { background: '#E0F2FE', border: '#0369A1' },
-          hover: { background: '#E0F2FE', border: '#0369A1' },
-        };
-        fontObj = { color: '#0C4A6E', face: 'Plus Jakarta Sans, Inter, sans-serif', size: 12 };
-      }
 
       return {
         title,
         subtitle,
-        fullLabel: `${title}\n${subtitle}`,
+        shortLabel,
+        fullLabel: shortLabel,
         badgeText,
         roleVi,
         plainExplain,
         isThreat,
         isUriLink,
-        level,
-        colorObj,
+        isAnnotKind,
+        pageIndex,
+        cartoonKind,
+        nodeSize,
+        imageUri: _createCartoonNodeSvgUri(cartoonKind, badgeText),
         fontObj,
       };
     }
@@ -3764,20 +3878,20 @@
       const streamNodes = mappedNodes.filter(n => n.rawMeta && n.rawMeta.kind === 'stream');
 
       if (threatNodes.length > 0) {
-        barEl.className = 'mb-3 p-3.5 rounded-2xl bg-gradient-to-r from-red-50/90 via-white to-amber-50/60 border border-red-200/90 shadow-sm';
+        barEl.className = 'mb-3 p-3.5 rounded-2xl bg-gradient-to-r from-red-50/95 via-white to-amber-50/70 border border-red-200/90 shadow-sm';
         badgeEl.innerText = `Phát hiện ${threatNodes.length} mắt xích tự chạy / mã độc cần gỡ bỏ`;
         badgeEl.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-error/15 text-error border border-error/25';
 
         const catalogNode = mappedNodes.find(n => n.id === 'catalog:root') || mappedNodes[0];
         const triggerNode = threatNodes.find(n => n.rawMeta && n.rawMeta.kind === 'action') || threatNodes[0];
-        const scriptNode = threatNodes.find(n => n.rawMeta && (n.rawMeta.kind === 'js' || String(n.id).startsWith('script:'))) || threatNodes[threatNodes.length - 1];
+        const scriptNode = threatNodes.find(n => n.rawMeta && (n.rawMeta.kind === 'js' || n.rawMeta.kind === 'script' || String(n.id).startsWith('script:'))) || threatNodes[threatNodes.length - 1];
 
         const chainItems = [];
         if (catalogNode) {
           chainItems.push({
             id: catalogNode.id,
             step: 'Bước 1',
-            label: 'Người dùng mở tệp (/Catalog)',
+            label: '📘 Mở tệp (/Catalog)',
             cls: 'bg-blue-50 text-primary-container border-blue-200 hover:bg-blue-100',
           });
         }
@@ -3785,7 +3899,7 @@
           chainItems.push({
             id: triggerNode.id,
             step: 'Bước 2',
-            label: triggerNode.desc.title.replace(/^⚠️\s*/, ''),
+            label: triggerNode.desc.title,
             cls: 'bg-red-50 text-error border-red-200 hover:bg-red-100',
           });
         }
@@ -3793,14 +3907,14 @@
           chainItems.push({
             id: scriptNode.id,
             step: 'Bước 3',
-            label: `${scriptNode.desc.title.replace(/^🚨\s*/, '')} (${scriptNode.desc.subtitle})`,
+            label: `${scriptNode.desc.title} (${scriptNode.desc.subtitle})`,
             cls: 'bg-rose-100/90 text-rose-900 border-rose-300 hover:bg-rose-200/80',
           });
         }
         chainItems.push({
           id: pageNodes[0] ? pageNodes[0].id : (catalogNode ? catalogNode.id : ''),
           step: 'Nhánh nội dung',
-          label: `${pageNodes.length || 1} trang văn bản & ${streamNodes.length || 1} luồng chữ (An toàn — giữ nguyên khi làm sạch)`,
+          label: `📄 ${pageNodes.length || 1} trang văn bản & ${streamNodes.length || 1} luồng chữ (An toàn — giữ nguyên khi làm sạch)`,
           cls: 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100',
         });
 
@@ -3817,26 +3931,33 @@
         badgeEl.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-tertiary/15 text-tertiary border border-tertiary/25';
 
         stepsEl.innerHTML = `
-          <span class="px-3 py-1.5 rounded-xl border border-blue-200 bg-blue-50 text-primary-container text-xs font-bold">1. Khung gốc tài liệu (/Catalog)</span>
+          <span class="px-3 py-1.5 rounded-xl border border-blue-200 bg-blue-50 text-primary-container text-xs font-bold">1. 📘 Khung gốc tài liệu (/Catalog)</span>
           <span class="material-symbols-outlined text-slate-400 text-[16px]">arrow_forward</span>
-          <span class="px-3 py-1.5 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 text-xs font-bold">2. Danh sách ${pageNodes.length || 1} trang văn bản (/Pages)</span>
+          <span class="px-3 py-1.5 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 text-xs font-bold">2. 🗂️ Danh sách ${pageNodes.length || 1} trang văn bản (/Pages)</span>
           <span class="material-symbols-outlined text-slate-400 text-[16px]">arrow_forward</span>
-          <span class="px-3 py-1.5 rounded-xl border border-sky-200 bg-sky-50 text-sky-800 text-xs font-bold">3. Hiển thị ${streamNodes.length || 1} luồng chữ & hình ảnh bình thường</span>
+          <span class="px-3 py-1.5 rounded-xl border border-amber-200 bg-amber-50 text-amber-900 text-xs font-bold">3. 🎨 Hiển thị ${streamNodes.length || 1} luồng chữ & hình ảnh bình thường</span>
         `;
       }
     }
 
     function setGraphLayoutMode(mode) {
-      graphLayoutMode = mode === 'network' ? 'network' : 'hierarchical';
-      const btnTree = document.getElementById('btn-graph-mode-tree');
-      const btnNet = document.getElementById('btn-graph-mode-network');
-      if (btnTree && btnNet) {
-        if (graphLayoutMode === 'hierarchical') {
-          btnTree.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-primary-container text-white shadow-sm transition flex items-center gap-1.5';
-          btnNet.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-surface-container hover:bg-surface-container-high text-on-surface border border-slate-200/80 transition flex items-center gap-1.5';
+      graphLayoutMode = mode === 'hierarchical' ? 'hierarchical' : 'network';
+      if (currentScanResult) {
+        initDAGGraph(currentScanResult);
+      }
+    }
+
+    function toggleCompactPagesMode() {
+      graphCompactPages = !graphCompactPages;
+      const btn = document.getElementById('btn-graph-compact');
+      const lbl = document.getElementById('lbl-graph-compact');
+      if (btn && lbl) {
+        if (graphCompactPages) {
+          btn.className = 'px-3 py-1 rounded-full bg-primary-container text-white font-bold shadow-xs transition flex items-center gap-1 active:scale-95';
+          lbl.innerText = 'Tự gộp trang dài: Bật';
         } else {
-          btnNet.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-primary-container text-white shadow-sm transition flex items-center gap-1.5';
-          btnTree.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-surface-container hover:bg-surface-container-high text-on-surface border border-slate-200/80 transition flex items-center gap-1.5';
+          btn.className = 'px-3 py-1 rounded-full bg-white text-on-surface font-semibold shadow-2xs transition flex items-center gap-1 active:scale-95';
+          lbl.innerText = 'Tự gộp trang dài: Tắt (Hiện hết)';
         }
       }
       if (currentScanResult) {
@@ -3847,19 +3968,36 @@
     function toggleThreatOnlyFilter() {
       graphThreatOnlyFilter = !graphThreatOnlyFilter;
       const btn = document.getElementById('btn-graph-filter-threat');
-      const label = document.getElementById('lbl-graph-filter-threat');
+      const label = document.getElementById('lbl-graph-filter-threat') || document.getElementById('btn-graph-filter-label');
       if (btn && label) {
         if (graphThreatOnlyFilter) {
-          btn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-error text-white border border-error shadow-sm transition flex items-center gap-1.5';
+          btn.className = 'px-3 py-1 rounded-full bg-error text-white font-bold shadow-xs transition flex items-center gap-1 active:scale-95';
           label.innerText = 'Đang lọc: Chỉ nhánh nguy hiểm';
         } else {
-          btn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-surface-container hover:bg-error/10 text-on-surface-variant hover:text-error border border-slate-200/80 transition flex items-center gap-1.5';
+          btn.className = 'px-3 py-1 rounded-full text-on-surface-variant hover:text-on-surface font-semibold transition flex items-center gap-1 active:scale-95';
           label.innerText = 'Chỉ hiện nhánh nguy hiểm';
         }
       }
       if (currentScanResult) {
         initDAGGraph(currentScanResult);
       }
+    }
+
+    function _startGraphCartoonAnimation() {
+      if (graphAnimFrameId) {
+        cancelAnimationFrame(graphAnimFrameId);
+        graphAnimFrameId = null;
+      }
+      function step() {
+        const viewGraph = document.getElementById('view-graph');
+        if (network && viewGraph && !viewGraph.classList.contains('hidden')) {
+          try {
+            network.redraw();
+          } catch (e) {}
+        }
+        graphAnimFrameId = requestAnimationFrame(step);
+      }
+      graphAnimFrameId = requestAnimationFrame(step);
     }
 
     function initDAGGraph(data) {
@@ -3874,14 +4012,18 @@
           const desc = _describeGraphNodeVi(n);
           return {
             id: n.id,
-            label: desc.fullLabel,
-            color: desc.colorObj,
-            shape: 'box',
-            margin: { top: 9, right: 13, bottom: 9, left: 13 },
-            borderWidth: desc.isThreat ? 2.5 : (n.id === 'catalog:root' ? 2.2 : 1.5),
-            borderWidthSelected: 3.5,
-            shapeProperties: { borderRadius: 10 },
-            level: desc.level,
+            label: desc.shortLabel,
+            shape: 'circularImage',
+            image: desc.imageUri,
+            size: desc.nodeSize,
+            borderWidth: desc.isThreat ? 3.5 : 2.5,
+            borderWidthSelected: 5,
+            color: {
+              border: desc.isThreat ? '#BE123C' : '#0F172A',
+              background: '#FFFFFF',
+              highlight: { border: '#F59E0B', background: '#FEF3C7' },
+              hover: { border: '#2563EB', background: '#EFF6FF' },
+            },
             font: desc.fontObj,
             title: `${desc.title} — ${desc.subtitle} (${n.size_bytes || 0} byte)`,
             rawMeta: n,
@@ -3895,129 +4037,346 @@
         const nodeById = {};
         allMapped.forEach(item => { nodeById[item.id] = item; });
 
+        const rawEdges = (data.graph_edges || []).slice();
+        const hasIncoming = new Set(rawEdges.map(e => e.to));
+        const hasOutgoing = new Set(rawEdges.map(e => e.from));
+
+        allMapped.forEach(item => {
+          if (item.desc.isAnnotKind && !hasIncoming.has(item.id) && !hasOutgoing.has(item.id)) {
+            const pIdx = item.desc.pageIndex !== null ? item.desc.pageIndex : 0;
+            const parentPageId = nodeById[`page:${pIdx}`] ? `page:${pIdx}` : (nodeById['pages:root'] ? 'pages:root' : 'catalog:root');
+            const suffix = item.id.split(':')[1] || '';
+            const correspondingActionId = `action:annot_${suffix}`;
+            if (nodeById[correspondingActionId]) {
+              rawEdges.push({ from: parentPageId, to: item.id });
+              rawEdges.push({ from: item.id, to: correspondingActionId });
+            } else {
+              rawEdges.push({ from: parentPageId, to: item.id });
+            }
+          }
+        });
+
+        const pageItems = allMapped.filter(item => (item.rawMeta && item.rawMeta.kind === 'page') || String(item.id).startsWith('page:'));
+        const maxVisiblePages = 4;
+        const shouldClusterPages = graphCompactPages && !graphThreatOnlyFilter && pageItems.length > maxVisiblePages;
+
+        const hiddenByClusterIds = new Set();
+        let clusterNodeObj = null;
+
+        if (shouldClusterPages) {
+          const pagesWithThreatChild = new Set();
+          rawEdges.forEach(e => {
+            const target = nodeById[e.to];
+            if (target && target.desc && target.desc.isThreat && target.desc.pageIndex !== null) {
+              pagesWithThreatChild.add(target.desc.pageIndex);
+            }
+          });
+
+          const keptPageIndices = new Set([0, 1, 2]);
+          pagesWithThreatChild.forEach(idx => keptPageIndices.add(idx));
+
+          let clusteredPageCount = 0;
+          let clusteredStreamCount = 0;
+          let clusteredTotalBytes = 0;
+
+          allMapped.forEach(item => {
+            const pIdx = item.desc.pageIndex;
+            if (pIdx !== null && !keptPageIndices.has(pIdx) && !item.desc.isThreat) {
+              hiddenByClusterIds.add(item.id);
+              if (item.rawMeta && item.rawMeta.kind === 'page') clusteredPageCount++;
+              if (item.rawMeta && item.rawMeta.kind === 'stream') clusteredStreamCount++;
+              clusteredTotalBytes += Number((item.rawMeta && item.rawMeta.size_bytes) || 0);
+            }
+          });
+
+          allMapped.forEach(item => {
+            if (!hiddenByClusterIds.has(item.id) && (item.desc.isAnnotKind || item.desc.isUriLink)) {
+              const m = String(item.id).match(/_(\d+)$/);
+              const annotIdx = m ? parseInt(m[1], 10) : 0;
+              if (annotIdx >= 2 && !item.desc.isThreat) {
+                hiddenByClusterIds.add(item.id);
+              }
+            }
+          });
+
+          if (clusteredPageCount > 0) {
+            const clusterDesc = {
+              title: `Cụm ${clusteredPageCount} trang văn bản tiếp theo`,
+              subtitle: `Trang 4 → ${pageItems.length} • Đã gộp gọn để sơ đồ dễ nhìn`,
+              shortLabel: `📚 +${clusteredPageCount} Trang khác\n(Tr.4 → ${pageItems.length} • An toàn)`,
+              badgeText: `+${clusteredPageCount}`,
+              roleVi: `Cụm ${clusteredPageCount} trang văn bản & ${clusteredStreamCount} luồng nội dung (An toàn)`,
+              plainExplain: `Tài liệu PDF này dài ${pageItems.length} trang. Hệ thống đã tự động gộp ${clusteredPageCount} trang văn bản lặp lại (từ Trang 4 đến Trang ${pageItems.length}) cùng ${clusteredStreamCount} luồng chữ viết vào biểu tượng này để sơ đồ không bị rối. Tất cả các trang này đều an toàn. Bạn có thể bấm nút "Tự gộp trang dài" ở góc trên nếu muốn bung toàn bộ ${allMapped.length} thành phần.`,
+              isThreat: false,
+              isUriLink: false,
+              isCluster: true,
+              cartoonKind: 'cluster',
+              nodeSize: 31,
+              imageUri: _createCartoonNodeSvgUri('cluster', `+${clusteredPageCount}`),
+              fontObj: {
+                color: '#065F46',
+                face: 'Plus Jakarta Sans, Inter, sans-serif',
+                size: 11,
+                bold: true,
+                background: 'rgba(236, 253, 245, 0.94)',
+                strokeWidth: 0,
+              },
+            };
+            clusterNodeObj = {
+              id: 'cluster:extra_pages',
+              label: clusterDesc.shortLabel,
+              shape: 'circularImage',
+              image: clusterDesc.imageUri,
+              size: clusterDesc.nodeSize,
+              borderWidth: 3,
+              borderWidthSelected: 5,
+              color: {
+                border: '#0F172A',
+                background: '#FFFFFF',
+                highlight: { border: '#059669', background: '#D1FAE5' },
+                hover: { border: '#059669', background: '#D1FAE5' },
+              },
+              font: clusterDesc.fontObj,
+              title: `${clusterDesc.title} (${Math.round(clusteredTotalBytes / 1024)} KB)`,
+              rawMeta: {
+                id: 'cluster:extra_pages',
+                kind: 'pages',
+                size_bytes: Math.round(clusteredTotalBytes),
+                entropy: 4.2,
+                saliency: 0.0,
+                snippet: `Đã gộp gọn ${clusteredPageCount} trang văn bản (Trang 4 -> Trang ${pageItems.length}) và ${clusteredStreamCount} luồng nội dung (/Contents) hoàn toàn bình thường.`,
+              },
+              desc: clusterDesc,
+            };
+          }
+        }
+
         if (graphThreatOnlyFilter) {
           const anyThreat = allMapped.some(item => item.desc.isThreat);
           if (anyThreat) {
             nodesArray = allMapped.filter(item => item.id === 'catalog:root' || item.id === 'pages:root' || item.desc.isThreat);
           } else {
-            nodesArray = allMapped;
+            nodesArray = allMapped.filter(item => !hiddenByClusterIds.has(item.id));
           }
         } else {
-          nodesArray = allMapped;
+          nodesArray = allMapped.filter(item => !hiddenByClusterIds.has(item.id));
+          if (clusterNodeObj) {
+            nodesArray.push(clusterNodeObj);
+          }
         }
 
         const visibleIds = new Set(nodesArray.map(item => item.id));
+        const dedupEdgeSet = new Set();
 
-        edgesArray = (data.graph_edges || [])
-          .filter(e => visibleIds.has(e.from) && visibleIds.has(e.to))
-          .map(e => {
-            const fromNode = nodeById[e.from];
-            const toNode = nodeById[e.to];
-            const isThreatEdge = Boolean(toNode && toNode.desc && toNode.desc.isThreat);
-            let edgeLabel = '';
-            if (toNode && toNode.desc) {
-              const tKind = String((toNode.rawMeta && toNode.rawMeta.kind) || '');
-              if (isThreatEdge && tKind === 'action') edgeLabel = 'tự kích hoạt';
-              else if (isThreatEdge && (tKind === 'js' || tKind === 'script')) edgeLabel = 'chạy mã ngầm';
-              else if (tKind === 'pages') edgeLabel = 'quản lý trang';
-              else if (tKind === 'page') edgeLabel = 'chứa trang';
-              else if (tKind === 'stream') edgeLabel = 'hiển thị chữ';
-              else if (tKind === 'annot') edgeLabel = 'gắn liên kết';
-              else if (toNode.desc.isUriLink) edgeLabel = 'mở đường dẫn';
-            }
-            return {
-              from: e.from,
-              to: e.to,
-              label: edgeLabel,
-              arrows: { to: { enabled: true, scaleFactor: 0.85 } },
-              color: isThreatEdge
-                ? { color: '#DC2626', highlight: '#BE123C', hover: '#BE123C' }
-                : { color: '#94A3B8', highlight: '#0071E3', hover: '#0071E3' },
-              width: isThreatEdge ? 2.8 : 1.7,
-              dashes: Boolean(toNode && toNode.desc && toNode.desc.isUriLink),
-              font: {
-                size: 10,
-                color: isThreatEdge ? '#B91C1C' : '#475569',
-                face: 'Plus Jakarta Sans, Inter, sans-serif',
-                background: 'rgba(255,255,255,0.88)',
-                strokeWidth: 0,
-              },
-            };
+        rawEdges.forEach(e => {
+          if (!visibleIds.has(e.from) || !visibleIds.has(e.to)) return;
+          if (e.from === `page:0` && String(e.to).startsWith('action:annot_')) {
+            const suffix = String(e.to).replace('action:annot_', '');
+            if (visibleIds.has(`annotation:${suffix}`)) return;
+          }
+          const key = `${e.from}->${e.to}`;
+          if (dedupEdgeSet.has(key)) return;
+          dedupEdgeSet.add(key);
+
+          const toNode = nodeById[e.to];
+          const isThreatEdge = Boolean(toNode && toNode.desc && toNode.desc.isThreat);
+          edgesArray.push({
+            from: e.from,
+            to: e.to,
+            isThreatEdge: isThreatEdge,
+            arrows: { to: { enabled: true, scaleFactor: 0.75 } },
+            color: isThreatEdge
+              ? { color: '#EF4444', highlight: '#BE123C', hover: '#BE123C' }
+              : { color: '#94A3B8', highlight: '#2563EB', hover: '#2563EB' },
+            width: isThreatEdge ? 3.2 : 2.0,
+            dashes: Boolean(toNode && toNode.desc && (toNode.desc.isUriLink || toNode.desc.isAnnotKind)),
           });
+        });
+
+        if (clusterNodeObj && visibleIds.has('pages:root')) {
+          edgesArray.push({
+            from: 'pages:root',
+            to: 'cluster:extra_pages',
+            isThreatEdge: false,
+            arrows: { to: { enabled: true, scaleFactor: 0.75 } },
+            color: { color: '#10B981', highlight: '#059669', hover: '#059669' },
+            width: 2.4,
+            dashes: [6, 5],
+          });
+        }
       } else {
         currentMappedGraphNodes = [];
         nodesArray = [];
         edgesArray = [];
       }
 
-      document.getElementById('graph-node-count').innerText = nodesArray.length;
+      currentVisibleEdges = edgesArray;
+      document.getElementById('graph-node-count').innerText =
+        currentMappedGraphNodes.length > nodesArray.length
+          ? `${nodesArray.length} (gộp từ ${currentMappedGraphNodes.length})`
+          : `${nodesArray.length}`;
       document.getElementById('graph-edge-count').innerText = edgesArray.length;
 
       const nodes = new vis.DataSet(nodesArray);
       const edges = new vis.DataSet(edgesArray);
 
-      const isHierarchical = graphLayoutMode === 'hierarchical';
       const options = {
-        layout: isHierarchical
-          ? {
-              hierarchical: {
-                enabled: true,
-                direction: 'UD',
-                sortMethod: 'directed',
-                shakeTowards: 'roots',
-                levelSeparation: 118,
-                nodeSpacing: 185,
-                treeSpacing: 210,
-                blockShifting: true,
-                edgeMinimization: true,
-                parentCentralization: true,
-              },
-            }
-          : {
-              hierarchical: { enabled: false },
-            },
-        physics: isHierarchical
-          ? {
-              enabled: false,
-            }
-          : {
-              enabled: true,
-              stabilization: { iterations: 80, updateInterval: 20 },
-              barnesHut: { gravitationalConstant: -3800, springLength: 155, springConstant: 0.04, damping: 0.3 },
-            },
+        layout: {
+          hierarchical: { enabled: false },
+        },
+        physics: {
+          enabled: true,
+          stabilization: { iterations: 90, updateInterval: 25 },
+          barnesHut: {
+            gravitationalConstant: -3200,
+            centralGravity: 0.28,
+            springLength: 130,
+            springConstant: 0.045,
+            damping: 0.28,
+            avoidOverlap: 0.92,
+          },
+        },
         interaction: { hover: true, zoomView: true, dragNodes: true, tooltipDelay: 80 },
         nodes: {
+          shapeProperties: { useBorderWithImage: true },
           shadow: {
             enabled: true,
-            color: 'rgba(15, 23, 42, 0.08)',
-            size: 8,
+            color: 'rgba(15, 23, 42, 0.16)',
+            size: 10,
             x: 0,
-            y: 3,
+            y: 4,
           },
         },
         edges: {
-          smooth: isHierarchical
-            ? { type: 'cubicBezier', forceDirection: 'vertical', roundness: 0.45 }
-            : { type: 'continuous' },
+          smooth: { type: 'dynamic', roundness: 0.35 },
         },
       };
 
       if (network) {
         network.destroy();
       }
-      physicsEnabled = !isHierarchical;
+      physicsEnabled = true;
+      const pLabel = document.getElementById('btn-physics-label');
+      if (pLabel) {
+        pLabel.innerText = 'Độ nảy vật lý: Bật';
+        pLabel.className = 'text-tertiary';
+      }
+
       network = new vis.Network(container, { nodes, edges }, options);
 
-      if (!isHierarchical) {
-        network.once('stabilizationIterationsDone', function() {
-          physicsEnabled = false;
-          network.setOptions({ physics: { enabled: false } });
+      network.on('beforeDrawing', function(ctx) {
+        const now = performance.now() * 0.001;
+        const positions = network.getPositions();
+        nodesArray.forEach(n => {
+          const pos = positions[n.id];
+          if (!pos) return;
+          if (n.desc && n.desc.isThreat) {
+            const pulse1 = (now * 1.15) % 1;
+            const pulse2 = (now * 1.15 + 0.5) % 1;
+            [pulse1, pulse2].forEach(p => {
+              const radius = (n.size || 30) + 6 + p * 26;
+              const alpha = (1 - p) * 0.38;
+              ctx.save();
+              ctx.beginPath();
+              ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
+              ctx.fillStyle = `rgba(239, 68, 68, ${alpha * 0.35})`;
+              ctx.fill();
+              ctx.lineWidth = 2.4;
+              ctx.strokeStyle = `rgba(225, 29, 72, ${alpha})`;
+              ctx.stroke();
+              ctx.restore();
+            });
+            ctx.save();
+            ctx.translate(pos.x, pos.y);
+            ctx.rotate(now * 0.9);
+            ctx.beginPath();
+            ctx.setLineDash([6, 6]);
+            ctx.arc(0, 0, (n.size || 30) + 9, 0, Math.PI * 2);
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = 'rgba(245, 158, 11, 0.75)';
+            ctx.stroke();
+            ctx.restore();
+          } else if (n.id === 'catalog:root') {
+            const breathe = Math.sin(now * 2.4) * 4;
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(pos.x, pos.y, (n.size || 34) + 10 + breathe, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(59, 130, 246, 0.12)';
+            ctx.fill();
+            ctx.lineWidth = 1.8;
+            ctx.strokeStyle = 'rgba(37, 99, 235, 0.28)';
+            ctx.stroke();
+            ctx.restore();
+          }
+
+          if (selectedGraphNode && selectedGraphNode.id === n.id) {
+            const bounce = Math.sin(now * 4) * 2.5;
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(pos.x, pos.y, (n.size || 26) + 7 + bounce, 0, Math.PI * 2);
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#F59E0B';
+            ctx.stroke();
+            ctx.restore();
+          }
         });
-      } else {
-        setTimeout(() => {
-          if (network) network.fit({ animation: { duration: 280, easingFunction: 'easeInOutQuad' } });
-        }, 60);
-      }
+      });
+
+      network.on('afterDrawing', function(ctx) {
+        const now = performance.now() * 0.001;
+        const positions = network.getPositions();
+
+        currentVisibleEdges.forEach((edge, idx) => {
+          const pFrom = positions[edge.from];
+          const pTo = positions[edge.to];
+          if (!pFrom || !pTo) return;
+          const speed = edge.isThreatEdge ? 0.85 : 0.42;
+          const t = (now * speed + idx * 0.21) % 1;
+          const x = pFrom.x + (pTo.x - pFrom.x) * t;
+          const y = pFrom.y + (pTo.y - pFrom.y) * t;
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(x, y, edge.isThreatEdge ? 5 : 3.2, 0, Math.PI * 2);
+          ctx.fillStyle = edge.isThreatEdge ? '#EF4444' : '#3B82F6';
+          ctx.shadowColor = edge.isThreatEdge ? '#EF4444' : '#3B82F6';
+          ctx.shadowBlur = 8;
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.arc(x, y, edge.isThreatEdge ? 2.2 : 1.4, 0, Math.PI * 2);
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fill();
+          ctx.restore();
+        });
+
+        nodesArray.forEach((n, idx) => {
+          if (!n.desc || !n.desc.isThreat) return;
+          const pos = positions[n.id];
+          if (!pos) return;
+          const bobY = pos.y - (n.size || 32) - 16 + Math.sin(now * 3.4 + idx) * 3.2;
+          const tagText = n.desc.cartoonKind === 'threat_action' ? '⚡ TỰ CHẠY!' : '👾 MÃ ĐỘC!';
+          ctx.save();
+          ctx.font = '800 10px "Plus Jakarta Sans", Inter, sans-serif';
+          const tw = ctx.measureText(tagText).width + 14;
+          const rx = pos.x - tw / 2;
+          const ry = bobY - 9;
+          ctx.fillStyle = '#DC2626';
+          ctx.strokeStyle = '#0F172A';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.roundRect(rx, ry, tw, 18, 9);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#FFFFFF';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(tagText, pos.x, bobY);
+          ctx.restore();
+        });
+      });
+
+      _startGraphCartoonAnimation();
 
       network.on('click', function(params) {
         if (params.nodes.length > 0) {
@@ -4066,8 +4425,8 @@
       if (desc.isThreat) {
         statusTag.innerText = 'NGUY HIỂM • MÃ TỰ CHẠY';
         statusTag.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-error/15 text-error border border-error/25';
-      } else if (desc.isUriLink) {
-        statusTag.innerText = 'AN TOÀN • LIÊN KẾT WEB';
+      } else if (desc.isUriLink || desc.isAnnotKind) {
+        statusTag.innerText = 'AN TOÀN • LIÊN KẾT / GHI CHÚ';
         statusTag.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200';
       } else {
         statusTag.innerText = 'AN TOÀN • BÌNH THƯỜNG';
@@ -4113,7 +4472,7 @@
 
     async function executeNodeAblation() {
       if (!selectedGraphNode) {
-        showToast('Bạn hãy bấm chọn một ô thành phần trên sơ đồ trước nhé!', 'warning');
+        showToast('Bạn hãy bấm chọn một thành phần trên sơ đồ trước nhé!', 'warning');
         return;
       }
 
@@ -4174,6 +4533,11 @@
       if (!network) return;
       physicsEnabled = !physicsEnabled;
       network.setOptions({ physics: { enabled: physicsEnabled } });
+      const label = document.getElementById('btn-physics-label');
+      if (label) {
+        label.innerText = physicsEnabled ? 'Độ nảy vật lý: Bật' : 'Độ nảy vật lý: Đã cố định';
+        label.className = physicsEnabled ? 'text-tertiary' : 'text-outline';
+      }
     }
 
     async function handleCDRFileUpload(file) {
