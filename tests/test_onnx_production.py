@@ -109,6 +109,44 @@ def test_production_web_service_endpoints_and_cdr_integrity() -> None:
     assert abl_json["ablation_method"] == "pikepdf_binary_excision"
     assert abl_json["prob_after"] < 0.50
 
+    r_ablate_surgical = client.post(
+        "/api/xai/ablate",
+        data={
+            "node_id": "action:open_action",
+            "scan_id": scan_id,
+            "ablate_mode": "surgical",
+        },
+    )
+    assert r_ablate_surgical.status_code == 200
+    surg_json = r_ablate_surgical.json()
+    assert "/Root/OpenAction" in surg_json["excised_keys"]
+    assert "action:open_action" in surg_json["excised_node_ids"]
+    assert len(surg_json["remaining_threat_node_ids"]) >= 1
+
+    r_ablate_cum = client.post(
+        "/api/xai/ablate",
+        data={
+            "node_id": "script:names_js",
+            "scan_id": scan_id,
+            "ablate_mode": "surgical",
+            "exclude_node_ids": "action:open_action,action:aa",
+        },
+    )
+    assert r_ablate_cum.status_code == 200
+    cum_json = r_ablate_cum.json()
+    assert cum_json["verdict_after"] == "BENIGN"
+    assert cum_json["prob_after"] < 0.50
+    assert cum_json["remaining_threat_node_ids"] == []
+
+    r_mail_job = client.post(f"/api/gateway/inspect-job/{scan_id}")
+    assert r_mail_job.status_code == 200
+    mail_job_json = r_mail_job.json()
+    assert mail_job_json["action"] == "SANITIZED_ATTACHMENT"
+    assert mail_job_json["has_sanitized_eml"] is True
+    r_mail_dl = client.get(f"/api/gateway/download/eml/{mail_job_json['eml_job_id']}")
+    assert r_mail_dl.status_code == 200
+    assert len(r_mail_dl.content) > 500
+
     r_disarm = client.post(f"/api/disarm/{scan_id}")
     assert r_disarm.status_code == 200
     disarm_json = r_disarm.json()

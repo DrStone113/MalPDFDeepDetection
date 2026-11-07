@@ -289,3 +289,46 @@ def test_demo_routes_are_absent() -> None:
     for endpoint in ("/api/fixture/threat", "/api/fixture/benign", "/api/fixtures/info"):
         assert client.get(endpoint).status_code == 404
     assert client.post("/api/gateway/simulate").status_code == 404
+
+
+def test_surgical_cumulative_ablation_and_mail_gateway_inspect_job() -> None:
+    threat_bytes = load_real_threat_bytes()
+    scan_res = client.post(
+        "/api/scan",
+        files={"file": ("real_threat_document.pdf", threat_bytes, "application/pdf")},
+    )
+    assert scan_res.status_code == 200
+    scan_id = scan_res.json()["scan_id"]
+
+    s1 = client.post(
+        "/api/xai/ablate",
+        data={"node_id": "action:open_action", "scan_id": scan_id, "ablate_mode": "surgical"},
+    )
+    assert s1.status_code == 200
+    s1_json = s1.json()
+    assert "/Root/OpenAction" in s1_json["excised_keys"]
+    assert len(s1_json["remaining_threat_node_ids"]) >= 1
+
+    s2 = client.post(
+        "/api/xai/ablate",
+        data={
+            "node_id": "script:names_js",
+            "scan_id": scan_id,
+            "ablate_mode": "surgical",
+            "exclude_node_ids": "action:open_action,action:aa",
+        },
+    )
+    assert s2.status_code == 200
+    s2_json = s2.json()
+    assert s2_json["verdict_after"] == "BENIGN"
+    assert s2_json["remaining_threat_node_ids"] == []
+
+    gw_res = client.post(f"/api/gateway/inspect-job/{scan_id}")
+    assert gw_res.status_code == 200
+    gw_json = gw_res.json()
+    assert gw_json["action"] == "SANITIZED_ATTACHMENT"
+    assert gw_json["has_sanitized_eml"] is True
+    dl_eml = client.get(f"/api/gateway/download/eml/{gw_json['eml_job_id']}")
+    assert dl_eml.status_code == 200
+    assert len(dl_eml.content) > 500
+

@@ -400,7 +400,7 @@
           <div class="lg:col-span-8 xl:col-span-9 min-h-[128px] border-2 border-dashed border-primary-container/30 hover:border-primary-container rounded-2xl p-4 sm:p-5 text-center transition bg-white/60 cursor-pointer flex flex-col sm:flex-row items-center justify-center gap-4 relative overflow-hidden group"
                id="dropzone"
                onclick="document.getElementById('file-input').click();">
-            <input type="file" id="file-input" class="hidden" accept=".pdf" onchange="handleFileSelect(this.files[0])" />
+            <input type="file" id="file-input" class="hidden" accept=".pdf" multiple onchange="handleFileList(this.files)" />
             
             <div class="w-14 h-14 rounded-2xl bg-primary-container/10 flex items-center justify-center text-primary-container shrink-0 morphicon group-hover:scale-110">
               <span class="material-symbols-outlined text-[32px]">upload_file</span>
@@ -511,7 +511,7 @@
               <span class="material-symbols-outlined text-[16px] text-primary-container">hub</span>
               <span>Xem sơ đồ tệp</span>
             </button>
-            <button id="btn-quick-disarm" onclick="switchTab('cdr')" class="hidden px-4 py-1.5 rounded-full text-xs font-semibold bg-accent-safe hover:bg-emerald-600 text-white shadow-sm shadow-accent-safe/30 transition flex items-center gap-1.5 active:scale-95">
+            <button id="btn-quick-disarm" onclick="quickSwitchAndDisarm()" class="hidden px-4 py-1.5 rounded-full text-xs font-semibold bg-accent-safe hover:bg-emerald-600 text-white shadow-sm shadow-accent-safe/30 transition flex items-center gap-1.5 active:scale-95">
               <span class="material-symbols-outlined text-[16px]">healing</span>
               <span>Làm sạch tệp ngay</span>
             </button>
@@ -1010,7 +1010,7 @@
                   <span class="material-symbols-outlined text-[15px]">download</span>
                   <span>Tải báo cáo chi tiết (.json)</span>
                 </button>
-                <button onclick="switchTab('cdr')" class="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-tertiary text-white shadow-md shadow-tertiary/20 hover:bg-emerald-700 transition flex items-center gap-1.5 active:scale-95">
+                <button onclick="quickSwitchAndDisarm()" class="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-tertiary text-white shadow-md shadow-tertiary/20 hover:bg-emerald-700 transition flex items-center gap-1.5 active:scale-95">
                   <span class="material-symbols-outlined text-[15px]">healing</span>
                   <span>Làm sạch tệp này</span>
                 </button>
@@ -1192,40 +1192,58 @@
 
             <!-- Test Removal Box -->
             <div class="mt-1 pt-3.5 border-t border-surface-container space-y-3">
-              <div class="flex items-center justify-between">
+              <div class="flex items-center justify-between gap-2">
                 <div class="flex items-center gap-1.5">
                   <span class="material-symbols-outlined text-secondary text-[18px]">tune</span>
                   <span class="text-xs font-bold text-on-surface">Kiểm tra giả định: Gỡ thử thành phần này</span>
                 </div>
+                <button id="btn-reset-ablation" onclick="resetGraphAblationState()" class="hidden px-2.5 py-1 rounded-full text-[11px] font-bold bg-surface-container hover:bg-surface-container-high text-on-surface transition flex items-center gap-1 active:scale-95">
+                  <span class="material-symbols-outlined text-[13px]">restart_alt</span>
+                  <span>Khôi phục sơ đồ</span>
+                </button>
               </div>
 
               <p class="text-xs text-on-surface-variant leading-relaxed">
-                Bạn có thể bấm nút bên dưới để hệ thống thử tách riêng thành phần đang chọn ra khỏi tệp và chấm điểm lại ngay lập tức xem mức độ nguy hiểm giảm đi bao nhiêu %.
+                Bạn có thể bấm nút bên dưới để phẫu thuật cắt đúng khóa PDF của thành phần đang chọn ra khỏi tệp nhị phân gốc và chấm điểm AI lại ngay lập tức (có thể bấm gỡ liên tiếp từng nhánh).
               </p>
 
-              <button id="btn-ablate-node" onclick="executeNodeAblation()" class="w-full py-2.5 px-4 rounded-full text-xs font-bold bg-secondary text-white hover:bg-secondary-container shadow-md shadow-secondary/25 transition flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+              <button id="btn-ablate-node" onclick="executeNodeAblation('surgical')" class="w-full py-2.5 px-4 rounded-full text-xs font-bold bg-secondary text-white hover:bg-secondary-container shadow-md shadow-secondary/25 transition flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
                 <span class="material-symbols-outlined text-[16px]" id="ablate-icon">content_cut</span>
                 <span id="ablate-text">Thử gỡ bỏ thành phần đang chọn</span>
               </button>
 
               <!-- Ablation Result Box -->
-              <div id="ablation-result-box" class="hidden p-3.5 rounded-2xl bg-surface-container-low/90 border border-surface-container space-y-2 text-xs">
-                <div class="flex items-center justify-between">
-                  <span class="font-bold text-on-surface">Kết quả sau khi gỡ thử:</span>
+              <div id="ablation-result-box" class="hidden p-3.5 rounded-2xl bg-surface-container-low/95 border border-surface-container space-y-2.5 text-xs">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="font-bold text-on-surface">Kết quả sau khi phẫu thuật gỡ thử:</span>
                   <span id="ablation-res-verdict" class="px-2 py-0.5 rounded-full text-[10px] font-bold"></span>
+                </div>
+                <div class="p-2 rounded-xl bg-white/80 border border-surface-container text-[11px] text-on-surface-variant flex items-start gap-1.5">
+                  <span class="material-symbols-outlined text-[15px] text-secondary shrink-0 mt-0.5">surgical</span>
+                  <span id="ablation-excised-keys" class="font-medium leading-snug">Đã cắt khóa: --</span>
                 </div>
                 <div class="flex justify-between items-center text-on-surface-variant">
                   <span>Mức rủi ro ban đầu:</span>
                   <span id="ablation-prob-before" class="font-bold text-on-surface font-mono">--%</span>
                 </div>
                 <div class="flex justify-between items-center text-on-surface-variant">
-                  <span>Mức rủi ro sau khi gỡ:</span>
+                  <span>Mức rủi ro sau khi gỡ nhánh này:</span>
                   <span id="ablation-prob-after" class="font-bold text-tertiary font-mono">--%</span>
                 </div>
                 <div class="flex justify-between items-center pt-1 border-t border-surface-container">
                   <span class="font-bold text-on-surface">Mức thay đổi rủi ro:</span>
                   <span id="ablation-prob-delta" class="text-sm font-extrabold text-tertiary font-mono">--%</span>
                 </div>
+
+                <!-- Remaining Backup Threat Branches Notice -->
+                <div id="ablation-remaining-box" class="hidden p-2.5 rounded-xl bg-amber-50/90 border border-amber-200/90 space-y-2 text-[11px] text-amber-950">
+                  <p id="ablation-remaining-text" class="leading-relaxed font-medium"></p>
+                  <button type="button" onclick="executeNodeAblation('all_triggers')" class="w-full py-1.5 px-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] transition flex items-center justify-center gap-1.5 shadow-2xs active:scale-95">
+                    <span class="material-symbols-outlined text-[15px]">cleaning_services</span>
+                    <span>Gỡ thử tất cả nhánh độc hại cùng lúc</span>
+                  </button>
+                </div>
+
                 <div class="text-[11px] text-outline text-right" id="ablation-latency-tag">
                   Thời gian kiểm tra: -- ms
                 </div>
@@ -1562,23 +1580,58 @@
     <div id="view-mail" class="hidden space-y-6">
       <div class="glass-card rounded-3xl p-6 md:p-8 space-y-6">
         
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <div class="flex items-center gap-2.5">
               <div class="w-9 h-9 rounded-full bg-secondary/15 text-secondary flex items-center justify-center font-bold shadow-sm">
                 <span class="material-symbols-outlined text-[22px]">mark_email_read</span>
               </div>
-              <h2 class="font-bold text-2xl text-on-surface">Lịch sử kiểm tra Email (.eml)</h2>
+              <h2 class="font-bold text-2xl text-on-surface">Cổng kiểm tra & Làm sạch Email đính kèm PDF (.eml)</h2>
             </div>
             <p class="text-xs text-on-surface-variant mt-1.5 leading-relaxed">
-              Danh sách các thư điện tử (.eml) đã tải lên để tự động quét và làm sạch tệp PDF đính kèm bên trong.
+              Tải lên tệp thư điện tử (<code class="font-mono">.eml</code>) hoặc dùng ngay tệp PDF vừa quét để mô phỏng cổng bảo mật Email tự động tách, quét AI và làm sạch tệp PDF đính kèm.
             </p>
           </div>
 
-          <button onclick="loadMailGatewayHistory()" class="px-5 py-2.5 rounded-full text-xs font-bold bg-secondary hover:bg-secondary-container text-white shadow-lg shadow-secondary/25 transition flex items-center gap-2 active:scale-95">
-            <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" id="mail-spinner" style="display:none;"></div>
-            <span>Cập nhật danh sách</span>
-          </button>
+          <div class="flex flex-wrap items-center gap-2.5">
+            <input type="file" id="mail-tab-file-input" class="hidden" accept=".eml,.msg,.pdf" onchange="handleEMLUpload(this.files[0])" />
+            <button onclick="document.getElementById('mail-tab-file-input').click()" class="px-4 py-2.5 rounded-full text-xs font-bold bg-white hover:bg-slate-50 text-on-surface border border-slate-200 shadow-sm transition flex items-center gap-1.5 active:scale-95">
+              <span class="material-symbols-outlined text-[17px] text-secondary">upload_file</span>
+              <span>Tải tệp .eml / .pdf lên kiểm tra</span>
+            </button>
+            <button id="btn-inspect-active-job-mail" onclick="inspectActiveJobViaMailGateway()" class="px-4 py-2.5 rounded-full text-xs font-bold bg-primary-container hover:bg-primary text-white shadow-md shadow-primary-container/20 transition flex items-center gap-1.5 active:scale-95">
+              <span class="material-symbols-outlined text-[17px]" id="mail-active-job-icon">forward_to_inbox</span>
+              <span id="mail-active-job-text">Kiểm thử Email với tệp PDF hiện tại</span>
+            </button>
+            <button onclick="loadMailGatewayHistory()" class="px-4 py-2.5 rounded-full text-xs font-bold bg-secondary hover:bg-secondary-container text-white shadow-lg shadow-secondary/25 transition flex items-center gap-2 active:scale-95">
+              <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" id="mail-spinner" style="display:none;"></div>
+              <span class="material-symbols-outlined text-[16px]">refresh</span>
+              <span>Làm mới</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Latest Email Inspection Banner Inside Tab 4 -->
+        <div id="mail-tab-result-card" class="hidden glass-card rounded-2xl p-4 space-y-3 border-l-4 border-secondary bg-secondary/5">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="text-xs font-bold text-secondary flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[16px]">verified</span>
+              <span>Kết quả kiểm tra thư điện tử vừa thực hiện</span>
+            </span>
+            <span id="mail-tab-action-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-secondary/15 text-secondary">ĐÃ XỬ LÝ</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+            <div class="p-2.5 rounded-xl bg-white/80 border border-surface-container"><span class="text-outline">Tiêu đề:</span> <span id="mail-tab-res-subject" class="font-bold text-on-surface">--</span></div>
+            <div class="p-2.5 rounded-xl bg-white/80 border border-surface-container"><span class="text-outline">Người gửi:</span> <span id="mail-tab-res-sender" class="font-bold text-on-surface">--</span></div>
+            <div class="p-2.5 rounded-xl bg-white/80 border border-surface-container"><span class="text-outline">Tệp đính kèm:</span> <span id="mail-tab-res-attachments" class="font-bold text-on-surface">--</span></div>
+            <div class="p-2.5 rounded-xl bg-white/80 border border-surface-container"><span class="text-outline">Kết quả:</span> <span id="mail-tab-res-threats" class="font-bold text-error">--</span></div>
+          </div>
+          <div class="flex justify-end pt-1">
+            <a id="btn-mail-tab-download-eml" href="#" class="px-4 py-2 rounded-full text-xs font-bold bg-secondary text-white hover:bg-secondary-container transition shadow-sm flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[16px]">download</span>
+              <span>Tải thư (.eml) đã làm sạch</span>
+            </a>
+          </div>
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center text-xs">
@@ -1609,12 +1662,13 @@
                 <th class="p-3">Người gửi</th>
                 <th class="p-3">Tệp PDF đính kèm</th>
                 <th class="p-3">Kết quả xử lý</th>
-                <th class="p-3 text-right">Thời gian</th>
+                <th class="p-3">Thời gian</th>
+                <th class="p-3 text-right">Tải thư (.eml)</th>
               </tr>
             </thead>
             <tbody id="mail-stream-body" class="divide-y divide-surface-container">
               <tr>
-                <td colspan="6" class="p-6 text-center text-outline text-xs">Chưa có email (.eml) nào được tải lên kiểm tra. Bạn có thể chọn tệp .eml ở mục "Làm sạch tệp".</td>
+                <td colspan="7" class="p-6 text-center text-outline text-xs">Chưa có email (.eml) nào được kiểm tra. Hãy bấm "Tải tệp .eml / .pdf lên kiểm tra" hoặc "Kiểm thử Email với tệp PDF hiện tại" ở góc trên.</td>
               </tr>
             </tbody>
           </table>
@@ -1638,13 +1692,23 @@
               <h2 class="font-bold text-2xl text-on-surface">Nhật ký hoạt động & Tệp đang cách ly</h2>
             </div>
             <p class="text-xs text-on-surface-variant mt-1.5 leading-relaxed">
-              Theo dõi lịch sử các lần quét, làm sạch tệp và danh sách các tệp nguy hiểm đã được lưu cách ly riêng.
+              Theo dõi lịch sử các lần quét, làm sạch tệp, gỡ thử thành phần và danh sách các tệp nguy hiểm đã được lưu cách ly riêng.
             </p>
           </div>
 
-          <div class="flex items-center gap-2 bg-surface-container p-1 rounded-full">
-            <button id="subtab-siem-feed" onclick="switchSiemSubTab('feed')" class="px-4 py-1.5 rounded-full text-xs font-bold bg-white text-primary-container shadow-xs transition">Nhật ký hoạt động</button>
-            <button id="subtab-siem-vault" onclick="switchSiemSubTab('vault')" class="px-4 py-1.5 rounded-full text-xs font-bold text-on-surface-variant hover:text-on-surface transition">Tệp đang cách ly</button>
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="flex items-center gap-1.5 bg-surface-container p-1 rounded-full">
+              <button id="subtab-siem-feed" onclick="switchSiemSubTab('feed')" class="px-4 py-1.5 rounded-full text-xs font-bold bg-white text-primary-container shadow-xs transition">Nhật ký hoạt động</button>
+              <button id="subtab-siem-vault" onclick="switchSiemSubTab('vault')" class="px-4 py-1.5 rounded-full text-xs font-bold text-on-surface-variant hover:text-on-surface transition">Tệp đang cách ly</button>
+            </div>
+            <button onclick="fetchSiemLogs(); fetchQuarantineVault();" class="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white hover:bg-slate-50 text-on-surface border border-slate-200 shadow-2xs transition flex items-center gap-1 active:scale-95">
+              <span class="material-symbols-outlined text-[15px]">refresh</span>
+              <span>Làm mới</span>
+            </button>
+            <button onclick="exportSiemJSON()" class="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-primary-container hover:bg-primary text-white shadow-sm transition flex items-center gap-1.5 active:scale-95">
+              <span class="material-symbols-outlined text-[15px]">download</span>
+              <span>Tải nhật ký (.json)</span>
+            </button>
           </div>
         </div>
 
@@ -1981,19 +2045,43 @@
         });
       });
       drop.addEventListener('drop', (e) => {
-        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
-          handleFileSelect(e.dataTransfer.files[0]);
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          handleFileList(e.dataTransfer.files);
         }
       });
     }
     let currentCDRAudit = null;
     let selectedGraphNode = null;
+    let ablatedGraphNodeIds = new Set();
     let network = null;
     let physicsEnabled = true;
     let activeTab = 'scan';
     let dagGraphDirty = false;
     let visualDiffDirty = false;
+    let totalDiffPages = 1;
     const visualDiffCache = new Map();
+
+    async function quickSwitchAndDisarm() {
+      if (!currentScanResult) {
+        showToast('Bạn hãy tải tệp PDF lên kiểm tra trước nhé!', 'warning');
+        return;
+      }
+      switchTab('cdr');
+      const alreadyDisarmed = currentCDRAudit && currentCDRAudit.scan_id === currentScanResult.scan_id && currentCDRAudit.is_sanitized;
+      if (!alreadyDisarmed) {
+        await executeLiveCDR();
+      }
+    }
+
+    async function handleFileList(fileList) {
+      if (!fileList || fileList.length === 0) return;
+      const files = Array.from(fileList);
+      for (const f of files) {
+        await handleFileSelect(f);
+      }
+      const inputEl = document.getElementById('file-input');
+      if (inputEl) inputEl.value = '';
+    }
 
     function switchTab(tab) {
       activeTab = tab;
@@ -2087,6 +2175,8 @@
           }
         });
 
+        currentCDRAudit = null;
+        resetCDRAfterCard(data.file_name);
         renderScanResult(data);
         const verdictVi = data.verdict === 'MALICIOUS' ? 'Phát hiện nguy hiểm' : 'Tài liệu an toàn';
         showToast(`Đã kiểm tra xong "${data.file_name}": ${verdictVi}`, data.verdict === 'MALICIOUS' ? 'warning' : 'success');
@@ -2355,6 +2445,9 @@
 
     function renderScanResult(data) {
       currentScanResult = data;
+      ablatedGraphNodeIds.clear();
+      const resetAblBtn = document.getElementById('btn-reset-ablation');
+      if (resetAblBtn) resetAblBtn.classList.add('hidden');
       const emptyState = document.getElementById('scanner-empty-state');
       if (emptyState) emptyState.classList.add('hidden');
       document.getElementById('results-panel').classList.remove('hidden');
@@ -3199,6 +3292,22 @@
       }
     }
 
+    async function deleteScanJob(event, scanId) {
+      if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+      }
+      if (!scanId) return;
+      try {
+        const res = await fetch(`/api/scans/${scanId}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error(`Mã lỗi ${res.status}`);
+        showToast('Đã xóa tệp khỏi danh sách vừa kiểm tra.', 'info', 2200);
+        await fetchScanHistory();
+      } catch (err) {
+        showToast('Không thể xóa mục này: ' + err.message, 'error');
+      }
+    }
+
     function renderVerticalQueue(jobs) {
       const vContainer = document.getElementById('scan-history-items-vertical');
       const badge = document.getElementById('queue-count-badge');
@@ -3216,14 +3325,15 @@
       jobs.slice(0, 20).forEach(j => {
         const isMal = j.verdict === 'MALICIOUS';
         const isPending = j.verdict === 'PENDING' || j.status === 'SCANNING';
+        const isDisarmed = j.status === 'DISARMED' || j.has_sanitized_pdf;
         const isActive = currentScanResult && (currentScanResult.scan_id === j.scan_id || currentScanResult.sha256 === j.sha256);
         const probStr = j.malware_probability !== null ? `${Math.round(j.malware_probability * 100)}%` : '';
         const sizeKb = j.file_size_bytes ? `${Math.round(j.file_size_bytes / 1024)} KB` : '-- KB';
-        const statusVi = isPending ? 'Đang kiểm tra' : 'Đã kiểm tra';
+        const statusVi = isDisarmed ? 'Đã làm sạch' : (isPending ? 'Đang kiểm tra' : 'Đã kiểm tra');
         const pillText = isMal ? `Nguy hiểm${probStr ? ' ' + probStr : ''}` : (isPending ? 'Đang quét' : 'An toàn');
 
         const item = document.createElement('div');
-        item.className = `p-2.5 rounded-xl border transition cursor-pointer flex items-center justify-between gap-2.5 active:scale-98 ${
+        item.className = `p-2.5 rounded-xl border transition cursor-pointer flex items-center justify-between gap-2 active:scale-98 group ${
           isActive 
             ? 'border-primary-container bg-primary-container/10 ring-1 ring-primary-container shadow-xs' 
             : 'border-surface-container/70 bg-white/60 hover:bg-white hover:border-slate-300'
@@ -3240,10 +3350,13 @@
               <p class="text-[10px] text-on-surface-variant truncate">${sizeKb} • ${statusVi}</p>
             </div>
           </div>
-          <div class="flex items-center gap-1 shrink-0">
+          <div class="flex items-center gap-1.5 shrink-0">
             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isMal ? 'bg-error/15 text-error' : (isPending ? 'bg-slate-100 text-outline' : 'bg-tertiary/15 text-tertiary')}">
               ${pillText}
             </span>
+            <button type="button" onclick="deleteScanJob(event, '${_escTax(j.scan_id)}')" title="Xóa khỏi danh sách" class="w-5 h-5 rounded-full hover:bg-error/15 text-outline hover:text-error transition flex items-center justify-center opacity-70 group-hover:opacity-100">
+              <span class="material-symbols-outlined text-[13px]">close</span>
+            </button>
           </div>
         `;
         vContainer.appendChild(item);
@@ -3455,17 +3568,19 @@
 
         const statusLabel = st.risk_score || (isMal ? 'Cần lưu ý' : 'Bình thường');
         const statusColor = isMal ? (isCritical ? 'text-error' : 'text-on-surface-variant') : 'text-tertiary';
+        const targetNodeRef = st.node_id || st.object_ref || (Array.isArray(st.tags) && st.tags[1]) || '';
 
         div.innerHTML = `
           <div class="absolute -left-6 top-1.5 w-4 h-4 rounded-full ${dotColor} ring-4 ring-white shadow-sm"></div>
-          <div class="p-3.5 rounded-2xl bg-surface-container-low/70 hover:bg-surface-container-low transition-colors space-y-1 border border-surface-container/60">
+          <div onclick="${targetNodeRef ? `inspectAndAblateNode('${_escTax(targetNodeRef)}')` : ''}" class="p-3.5 rounded-2xl bg-surface-container-low/70 hover:bg-surface-container-low transition-colors space-y-1 border border-surface-container/60 ${targetNodeRef ? 'cursor-pointer' : ''}">
             <div class="flex items-center justify-between gap-2">
               <span class="font-bold text-xs text-on-surface">${_escTax(humanized.title)}</span>
               <span class="text-xs font-bold shrink-0 ${statusColor}">${_escTax(statusLabel)}</span>
             </div>
             <p class="text-xs text-on-surface-variant leading-relaxed">${_escTax(humanized.description)}</p>
-            <div class="flex flex-wrap items-center gap-1.5 pt-1">
-              ${tagsHtml}
+            <div class="flex flex-wrap items-center justify-between gap-1.5 pt-1">
+              <div class="flex flex-wrap items-center gap-1.5">${tagsHtml}</div>
+              ${targetNodeRef ? '<span class="text-[10px] font-bold text-primary-container group-hover:underline">Xem trên sơ đồ ➔</span>' : ''}
             </div>
           </div>
         `;
@@ -3676,6 +3791,13 @@
           <rect x="30" y="21" width="38" height="34" rx="6" fill="#FFFFFF" stroke="#0F172A" stroke-width="3"/>
           <text x="49" y="42" text-anchor="middle" font-family="Inter, sans-serif" font-weight="900" font-size="12" fill="#0F766E">${safeBadge}</text>
         `;
+      } else if (cartoonKind === 'ablated') {
+        gradStart = '#94A3B8';
+        gradEnd = '#475569';
+        innerArt = `
+          <circle cx="44" cy="44" r="19" fill="#F1F5F9" stroke="#334155" stroke-width="2.8" stroke-dasharray="4 3"/>
+          <path d="M33 33 L55 55 M55 33 L33 55" stroke="#059669" stroke-width="4" stroke-linecap="round"/>
+        `;
       } else {
         gradStart = '#67E8F9';
         gradEnd = '#0284C7';
@@ -3856,12 +3978,23 @@
         nodeSize = 34;
       }
 
+      const isAblated = ablatedGraphNodeIds && ablatedGraphNodeIds.has(id);
+      if (isAblated) {
+        title = `✂️ Đã gỡ thử: ${title.replace(/^[⚡👾]\s*/, '')}`;
+        subtitle = `${subtitle} • Đã phẫu thuật cắt khỏi tệp`;
+        shortLabel = `✂️ Đã gỡ thử\n${shortLabel.split('\n').pop() || id}`;
+        badgeText = 'ĐÃ GỠ';
+        plainExplain = `Thành phần này đã được bạn bấm gỡ thử ra khỏi bản nhị phân PDF trong phiên kiểm tra giả định. Hãy xem bảng kết quả bên dưới để đối chiếu mức độ rủi ro thay đổi.`;
+        cartoonKind = 'ablated';
+      }
+
+      const effectiveThreat = isThreat && !isAblated;
       const fontObj = {
-        color: isThreat ? '#881337' : '#0F172A',
+        color: isAblated ? '#475569' : (effectiveThreat ? '#881337' : '#0F172A'),
         face: 'Plus Jakarta Sans, Inter, sans-serif',
-        size: isThreat || kind === 'catalog' ? 12 : 11,
-        bold: isThreat || kind === 'catalog',
-        background: isThreat ? 'rgba(255, 241, 242, 0.94)' : 'rgba(255, 255, 255, 0.92)',
+        size: effectiveThreat || kind === 'catalog' ? 12 : 11,
+        bold: effectiveThreat || kind === 'catalog',
+        background: isAblated ? 'rgba(241, 245, 249, 0.94)' : (effectiveThreat ? 'rgba(255, 241, 242, 0.94)' : 'rgba(255, 255, 255, 0.92)'),
         strokeWidth: 0,
       };
 
@@ -3873,7 +4006,9 @@
         badgeText,
         roleVi,
         plainExplain,
-        isThreat,
+        isThreat: effectiveThreat,
+        wasThreat: isThreat,
+        isAblated,
         isUriLink,
         isAnnotKind,
         pageIndex,
@@ -4197,6 +4332,7 @@
 
           const toNode = nodeById[e.to];
           const isThreatEdge = Boolean(toNode && toNode.desc && toNode.desc.isThreat);
+          const isAblatedEdge = Boolean(toNode && toNode.desc && toNode.desc.isAblated);
           edgesArray.push({
             from: e.from,
             to: e.to,
@@ -4206,7 +4342,7 @@
               ? { color: '#EF4444', highlight: '#BE123C', hover: '#BE123C' }
               : { color: '#94A3B8', highlight: '#2563EB', hover: '#2563EB' },
             width: isThreatEdge ? 3.2 : 2.0,
-            dashes: Boolean(toNode && toNode.desc && (toNode.desc.isUriLink || toNode.desc.isAnnotKind)),
+            dashes: Boolean(isAblatedEdge || (toNode && toNode.desc && (toNode.desc.isUriLink || toNode.desc.isAnnotKind))),
           });
         });
 
@@ -4405,8 +4541,18 @@
         }
       });
 
+      network.on('doubleClick', function(params) {
+        if (params.nodes.length > 0 && params.nodes[0] === 'cluster:extra_pages') {
+          toggleCompactPagesMode();
+        }
+      });
+
+      const preservedSelection = selectedGraphNode && nodesArray.find(n => n.id === selectedGraphNode.id);
       const threatNode = nodesArray.find(n => n.desc && n.desc.isThreat);
-      if (threatNode) {
+      if (preservedSelection) {
+        selectNodeForInspection(preservedSelection, true);
+        network.selectNodes([preservedSelection.id]);
+      } else if (threatNode) {
         selectNodeForInspection(threatNode);
         network.selectNodes([threatNode.id]);
       } else if (nodesArray.length > 0) {
@@ -4415,7 +4561,7 @@
       }
     }
 
-    function selectNodeForInspection(nodeObj) {
+    function selectNodeForInspection(nodeObj, preserveAblationBox = false) {
       selectedGraphNode = nodeObj;
       const meta = nodeObj.rawMeta || nodeObj || {};
       const desc = nodeObj.desc || _describeGraphNodeVi(meta);
@@ -4435,11 +4581,16 @@
       if (plainBox) {
         plainBox.className = desc.isThreat
           ? 'p-3.5 rounded-xl bg-red-50/90 border border-red-200/90 text-xs text-red-950 leading-relaxed'
-          : 'p-3.5 rounded-xl bg-blue-50/70 border border-blue-200/80 text-xs text-on-surface leading-relaxed';
+          : (desc.isAblated
+            ? 'p-3.5 rounded-xl bg-emerald-50/80 border border-emerald-200/80 text-xs text-emerald-950 leading-relaxed'
+            : 'p-3.5 rounded-xl bg-blue-50/70 border border-blue-200/80 text-xs text-on-surface leading-relaxed');
       }
 
       const statusTag = document.getElementById('hud-node-status-tag');
-      if (desc.isThreat) {
+      if (desc.isAblated) {
+        statusTag.innerText = 'ĐÃ GỠ THỬ • AN TOÀN';
+        statusTag.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200';
+      } else if (desc.isThreat) {
         statusTag.innerText = 'NGUY HIỂM • MÃ TỰ CHẠY';
         statusTag.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-error/15 text-error border border-error/25';
       } else if (desc.isUriLink || desc.isAnnotKind) {
@@ -4461,7 +4612,9 @@
         ? _formatReadableCodeSnippet(rawSnippet)
         : 'Thành phần cấu trúc này không chứa đoạn mã kịch bản ẩn.';
 
-      document.getElementById('ablation-result-box').classList.add('hidden');
+      if (!preserveAblationBox) {
+        document.getElementById('ablation-result-box').classList.add('hidden');
+      }
     }
 
     function inspectAndAblateNode(targetId) {
@@ -4470,7 +4623,7 @@
         initDAGGraph(currentScanResult);
         dagGraphDirty = false;
       }
-      if (network && currentMappedGraphNodes && currentMappedGraphNodes.length > 0) {
+      if (currentMappedGraphNodes && currentMappedGraphNodes.length > 0) {
         const found = currentMappedGraphNodes.find(n =>
           n.id === targetId ||
           String(targetId).includes(n.id) ||
@@ -4478,18 +4631,54 @@
           (n.rawMeta && (n.rawMeta.evidence_id === targetId || n.rawMeta.obj_ref_str === targetId || String(n.rawMeta.label || '').includes(targetId)))
         );
         if (found) {
+          let needsReinit = false;
+          if (graphThreatOnlyFilter && !(found.desc && found.desc.isThreat) && found.id !== 'catalog:root' && found.id !== 'pages:root') {
+            graphThreatOnlyFilter = false;
+            needsReinit = true;
+          }
+          if (graphCompactPages && found.desc && found.desc.pageIndex !== null && found.desc.pageIndex >= 3 && !found.desc.isThreat) {
+            graphCompactPages = false;
+            const btn = document.getElementById('btn-graph-compact');
+            const lbl = document.getElementById('lbl-graph-compact');
+            if (btn && lbl) {
+              btn.className = 'px-3 py-1 rounded-full bg-white text-on-surface font-semibold shadow-2xs transition flex items-center gap-1 active:scale-95';
+              lbl.innerText = 'Tự gộp trang dài: Tắt (Hiện hết)';
+            }
+            needsReinit = true;
+          }
+          if (needsReinit && currentScanResult) {
+            initDAGGraph(currentScanResult);
+          }
           selectNodeForInspection(found);
-          try {
-            network.selectNodes([found.id]);
-            network.focus(found.id, { scale: 1.15, animation: { duration: 320, easingFunction: 'easeInOutQuad' } });
-          } catch (e) {}
+          if (network) {
+            try {
+              network.selectNodes([found.id]);
+              network.focus(found.id, { scale: 1.15, animation: { duration: 320, easingFunction: 'easeInOutQuad' } });
+            } catch (e) {}
+          }
         }
       }
     }
 
-    async function executeNodeAblation() {
+    function resetGraphAblationState() {
+      ablatedGraphNodeIds.clear();
+      const resetBtn = document.getElementById('btn-reset-ablation');
+      if (resetBtn) resetBtn.classList.add('hidden');
+      const resBox = document.getElementById('ablation-result-box');
+      if (resBox) resBox.classList.add('hidden');
+      if (currentScanResult) {
+        initDAGGraph(currentScanResult);
+      }
+      showToast('Đã khôi phục sơ đồ cấu trúc về trạng thái ban đầu.', 'info', 2200);
+    }
+
+    async function executeNodeAblation(mode = 'surgical') {
       if (!selectedGraphNode) {
         showToast('Bạn hãy bấm chọn một thành phần trên sơ đồ trước nhé!', 'warning');
+        return;
+      }
+      if (selectedGraphNode.id === 'cluster:extra_pages') {
+        toggleCompactPagesMode();
         return;
       }
 
@@ -4499,11 +4688,20 @@
 
       icon.innerText = 'progress_activity';
       icon.classList.add('animate-spin');
-      text.innerText = 'Đang thử gỡ bỏ thành phần này...';
+      text.innerText = mode === 'all_triggers'
+        ? 'Đang phẫu thuật gỡ toàn bộ nhánh độc hại...'
+        : 'Đang phẫu thuật cắt nhánh đang chọn...';
       btn.disabled = true;
 
       const formData = new FormData();
       formData.append('node_id', selectedGraphNode.id);
+      formData.append('ablate_mode', mode);
+      if (currentScanResult && currentScanResult.scan_id) {
+        formData.append('scan_id', currentScanResult.scan_id);
+      }
+      if (ablatedGraphNodeIds.size > 0) {
+        formData.append('exclude_node_ids', Array.from(ablatedGraphNodeIds).join(','));
+      }
 
       try {
         const res = await fetch('/api/xai/ablate', { method: 'POST', body: formData });
@@ -4513,15 +4711,31 @@
         }
         const abl = await res.json();
 
+        const excisedNodes = Array.isArray(abl.excised_node_ids) ? abl.excised_node_ids : [];
+        excisedNodes.forEach(nid => ablatedGraphNodeIds.add(nid));
+        if (excisedNodes.length > 0 && currentScanResult) {
+          const resetBtn = document.getElementById('btn-reset-ablation');
+          if (resetBtn) resetBtn.classList.remove('hidden');
+          initDAGGraph(currentScanResult);
+        }
+
         const resBox = document.getElementById('ablation-result-box');
         resBox.classList.remove('hidden');
 
         const vAfter = abl.verdict_after;
         const vBadge = document.getElementById('ablation-res-verdict');
-        vBadge.innerText = vAfter === 'MALICIOUS' ? 'VẪN CÒN NGUY HIỂM' : 'TRỞ NÊN AN TOÀN';
+        vBadge.innerText = vAfter === 'MALICIOUS' ? 'CÒN NHÁNH ĐỘC KHÁC' : 'TRỞ NÊN AN TOÀN';
         vBadge.className = vAfter === 'MALICIOUS' 
-          ? 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-error/15 text-error' 
-          : 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-tertiary/15 text-tertiary';
+          ? 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-800 border border-amber-500/30' 
+          : 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-tertiary/15 text-tertiary border border-tertiary/30';
+
+        const excisedKeysEl = document.getElementById('ablation-excised-keys');
+        if (excisedKeysEl) {
+          const keysList = Array.isArray(abl.excised_keys) ? abl.excised_keys : [];
+          excisedKeysEl.innerText = keysList.length > 0
+            ? `Đã cắt khóa PDF nhị phân: ${keysList.join(', ')}`
+            : `Thành phần (${selectedGraphNode.id}) là trang/nội dung chuẩn nên không có khóa kích hoạt độc hại nào bị cắt.`;
+        }
 
         document.getElementById('ablation-prob-before').innerText = (abl.prob_before * 100).toFixed(2) + '%';
         document.getElementById('ablation-prob-after').innerText = (abl.prob_after * 100).toFixed(2) + '%';
@@ -4529,9 +4743,26 @@
         const delta = abl.prob_delta * 100;
         const deltaEl = document.getElementById('ablation-prob-delta');
         deltaEl.innerText = `${delta >= 0 ? '+' : ''}${delta.toFixed(2)}%`;
-        deltaEl.className = delta <= 0 ? 'text-sm font-extrabold text-tertiary' : 'text-sm font-extrabold text-error';
+        deltaEl.className = delta <= 0 ? 'text-sm font-extrabold text-tertiary font-mono' : 'text-sm font-extrabold text-error font-mono';
 
-        document.getElementById('ablation-latency-tag').innerText = `Đã thử gỡ ${abl.masked_node_count || 1} thành phần • Kiểm tra lại mất ${abl.latency_ms.toFixed(1)} ms`;
+        const remBox = document.getElementById('ablation-remaining-box');
+        const remText = document.getElementById('ablation-remaining-text');
+        const remNodes = Array.isArray(abl.remaining_threat_node_ids) ? abl.remaining_threat_node_ids : [];
+        if (remBox && remText) {
+          if (remNodes.length > 0) {
+            const fullAfterPct = Number.isFinite(abl.full_chain_prob_after)
+              ? (abl.full_chain_prob_after * 100).toFixed(2) + '%'
+              : 'An toàn';
+            const friendlyRem = remNodes.map(id => _formatAttackPathStepVi(id, true)).join(', ');
+            remText.innerText = `Lưu ý: Tệp này vẫn còn ${remNodes.length} mắt xích độc hại dự phòng khác chưa gỡ (${friendlyRem}). Bạn có thể bấm chọn tiếp từng ô màu đỏ trên sơ đồ để gỡ thêm, hoặc gỡ tất cả cùng lúc (rủi ro sẽ giảm còn ${fullAfterPct}).`;
+            remBox.classList.remove('hidden');
+          } else {
+            remBox.classList.add('hidden');
+          }
+        }
+
+        document.getElementById('ablation-latency-tag').innerText =
+          `Đã phẫu thuật gỡ ${abl.masked_node_count || excisedNodes.length || 0} mắt xích • Chấm điểm lại mất ${abl.latency_ms.toFixed(1)} ms`;
       } catch (err) {
         showToast('Không thể thử gỡ thành phần này: ' + err.message, 'error');
       } finally {
@@ -4564,6 +4795,90 @@
       await executeLiveCDR();
     }
 
+    function resetCDRAfterCard(fileName = 'document.pdf') {
+      const btn = document.getElementById('btn-execute-disarm');
+      const text = document.getElementById('btn-disarm-text');
+      const icon = document.getElementById('cdr-disarm-icon');
+      if (btn) btn.className = 'px-5 py-2.5 rounded-full text-xs font-bold bg-primary-container hover:bg-primary text-white shadow-lg shadow-primary-container/25 transition flex items-center gap-2 active:scale-95';
+      if (text) text.innerText = 'Làm sạch tệp PDF ngay';
+      if (icon) { icon.innerText = 'healing'; icon.classList.remove('animate-spin'); }
+      const badgeAfter = document.getElementById('badge-cdr-after');
+      if (badgeAfter) {
+        badgeAfter.innerText = 'CHƯA LÀM SẠCH';
+        badgeAfter.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-tertiary/10 text-tertiary';
+      }
+      const cleanNameEl = document.getElementById('cdr-clean-filename');
+      if (cleanNameEl) cleanNameEl.innerText = `sanitized_${fileName || 'document.pdf'}`;
+      const cleanVerdictEl = document.getElementById('cdr-clean-verdict');
+      if (cleanVerdictEl) cleanVerdictEl.innerText = 'Chưa chạy';
+      const strippedEl = document.getElementById('cdr-stripped-count');
+      if (strippedEl) strippedEl.innerText = 'Chưa chạy';
+      const pagesEl = document.getElementById('cdr-pages-preserved');
+      if (pagesEl) pagesEl.innerText = '--';
+      const textIntEl = document.getElementById('cdr-text-integrity');
+      if (textIntEl) textIntEl.innerText = '--';
+      const hashSanEl = document.getElementById('hash-sanitized');
+      if (hashSanEl) hashSanEl.innerText = '--';
+      const dlBtn = document.getElementById('btn-download-sanitized');
+      if (dlBtn) dlBtn.disabled = true;
+      const body = document.getElementById('cdr-diff-table-body');
+      if (body) {
+        body.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-outline text-xs">Nhấn nút "Làm sạch tệp PDF ngay" ở trên để gỡ bỏ phần nguy hiểm và xem danh sách chi tiết tại đây.</td></tr>';
+      }
+      const summary = document.getElementById('cdr-diff-summary');
+      if (summary) summary.textContent = '0 thành phần đã gỡ';
+    }
+
+    function applyCDRAuditToUI(audit, animateChars = false) {
+      if (!audit) return;
+      currentCDRAudit = audit;
+      const btn = document.getElementById('btn-execute-disarm');
+      const text = document.getElementById('btn-disarm-text');
+      const icon = document.getElementById('cdr-disarm-icon');
+      if (btn) btn.className = 'px-5 py-2.5 rounded-full text-xs font-bold bg-tertiary text-white shadow-lg shadow-tertiary/25 transition flex items-center gap-2 active:scale-95';
+      if (text) text.innerText = 'Đã làm sạch tệp thành công!';
+      if (icon) { icon.innerText = 'verified'; icon.classList.remove('animate-spin'); }
+
+      const ratioPct = audit.size_before > 0 ? ((audit.size_after / audit.size_before) * 100).toFixed(1) : '--';
+      const badgeAfter = document.getElementById('badge-cdr-after');
+      if (badgeAfter) {
+        badgeAfter.innerText = audit.is_sanitized ? 'ĐÃ LÀM SẠCH AN TOÀN' : 'CẦN KIỂM TRA LẠI';
+        badgeAfter.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-tertiary/10 text-tertiary';
+      }
+      const cleanNameEl = document.getElementById('cdr-clean-filename');
+      if (cleanNameEl) cleanNameEl.innerText = `sanitized_${audit.file_name || 'document.pdf'}`;
+      const psv = audit.post_scan_verification || {};
+      const cleanVerdictEl = document.getElementById('cdr-clean-verdict');
+      if (cleanVerdictEl) {
+        const vAfterVi = psv.verdict_after === 'MALICIOUS' ? 'Cần lưu ý' : 'An toàn';
+        if (Number.isFinite(psv.prob_after)) {
+          const pAfterPct = (psv.prob_after * 100).toFixed(2);
+          cleanVerdictEl.innerText = `${vAfterVi} (chỉ còn ${pAfterPct}% rủi ro)`;
+        } else {
+          cleanVerdictEl.innerText = vAfterVi;
+        }
+      }
+      const remCount = Array.isArray(audit.removed_triggers) ? audit.removed_triggers.length : 0;
+      const strippedEl = document.getElementById('cdr-stripped-count');
+      if (strippedEl) strippedEl.innerText = `Đã gỡ bỏ ${remCount} mục nguy hiểm`;
+      const pagesEl = document.getElementById('cdr-pages-preserved');
+      if (pagesEl) pagesEl.innerText = `Giữ nguyên ${audit.sanitized_pages}/${audit.original_pages} trang (${ratioPct}% dung lượng)`;
+      const suffix = audit.text_integrity_verified === true ? ' ký tự (giữ nguyên 100% chữ)' : ' ký tự';
+      if (animateChars) {
+        animateValue('cdr-text-integrity', 0, audit.extracted_text_chars || 0, 750, 0, suffix);
+      } else {
+        const textIntEl = document.getElementById('cdr-text-integrity');
+        if (textIntEl) textIntEl.innerText = Number(audit.extracted_text_chars || 0).toLocaleString() + suffix;
+      }
+      const hashSanEl = document.getElementById('hash-sanitized');
+      if (hashSanEl) hashSanEl.innerText = audit.sha256_after || '--';
+      const dlBtn = document.getElementById('btn-download-sanitized');
+      if (dlBtn) dlBtn.disabled = false;
+
+      renderCDRDiffMatrix(audit);
+      renderPagePreviews(audit.page_previews || []);
+    }
+
     async function executeLiveCDR() {
       if (!currentScanResult) {
         showToast('Bạn hãy tải tệp PDF lên trước khi làm sạch tệp nhé!', 'warning');
@@ -4586,35 +4901,10 @@
           throw new Error(err.detail || `Mã lỗi ${res.status}`);
         }
         const audit = await res.json();
-        currentCDRAudit = audit;
+        applyCDRAuditToUI(audit, true);
 
-        btn.className = 'px-5 py-2.5 rounded-full text-xs font-bold bg-tertiary text-white shadow-lg shadow-tertiary/25 transition flex items-center gap-2 active:scale-95';
-        text.innerText = 'Đã làm sạch tệp thành công!';
-        icon.innerText = 'verified';
-        icon.classList.remove('animate-spin');
-
-        const ratioPct = audit.size_before > 0 ? ((audit.size_after / audit.size_before) * 100).toFixed(1) : '--';
-        document.getElementById('badge-cdr-after').innerText = audit.is_sanitized ? 'ĐÃ LÀM SẠCH AN TOÀN' : 'CẦN KIỂM TRA LẠI';
-        document.getElementById('badge-cdr-after').className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-tertiary/10 text-tertiary';
-
-        document.getElementById('cdr-clean-filename').innerText = `sanitized_${audit.file_name || 'document.pdf'}`;
-        const psv = audit.post_scan_verification || {};
-        const cleanVerdictEl = document.getElementById('cdr-clean-verdict');
-        if (cleanVerdictEl) {
-          const vAfterVi = psv.verdict_after === 'MALICIOUS' ? 'Cần lưu ý' : 'An toàn';
-          if (Number.isFinite(psv.prob_after)) {
-            const pAfterPct = (psv.prob_after * 100).toFixed(2);
-            cleanVerdictEl.innerText = `${vAfterVi} (chỉ còn ${pAfterPct}% rủi ro)`;
-          } else {
-            cleanVerdictEl.innerText = vAfterVi;
-          }
-        }
-        document.getElementById('cdr-stripped-count').innerText = `Đã gỡ bỏ ${audit.removed_triggers.length} mục nguy hiểm`;
-        document.getElementById('cdr-pages-preserved').innerText = `Giữ nguyên ${audit.sanitized_pages}/${audit.original_pages} trang (${ratioPct}% dung lượng)`;
-        animateValue('cdr-text-integrity', 0, audit.extracted_text_chars || 0, 750, 0, audit.text_integrity_verified === true ? ' ký tự (giữ nguyên 100% chữ)' : ' ký tự');
-        showToast(`Đã làm sạch tệp xong! Đã gỡ bỏ ${audit.removed_triggers.length} thành phần nguy hiểm và giữ nguyên vẹn ${audit.sanitized_pages} trang.`, 'success');
-
-        document.getElementById('hash-sanitized').innerText = audit.sha256_after || '--';
+        const remCount = Array.isArray(audit.removed_triggers) ? audit.removed_triggers.length : 0;
+        showToast(`Đã làm sạch tệp xong! Đã gỡ bỏ ${remCount} thành phần nguy hiểm và giữ nguyên vẹn ${audit.sanitized_pages} trang.`, 'success');
 
         if (audit.scan_id) {
           if (!currentScanResult) currentScanResult = {};
@@ -4624,22 +4914,15 @@
           renderAIExplainer(audit.ai_threat_explanation, false, currentScanResult);
         }
 
-        renderCDRDiffMatrix(audit);
-
         visualDiffCache.clear();
         loadVisualDiff(currentDiffPage || 0);
-
-        renderPagePreviews(audit.page_previews || []);
         fetchScanHistory();
-
-        const dlBtn = document.getElementById('btn-download-sanitized');
-        if (dlBtn) dlBtn.disabled = false;
 
       } catch (err) {
         showToast('Không thể làm sạch tệp: ' + err.message, 'error');
         icon.innerText = 'build';
         icon.classList.remove('animate-spin');
-        text.innerText = 'Bắt đầu làm sạch tệp';
+        text.innerText = 'Làm sạch tệp PDF ngay';
       }
     }
 
@@ -4732,20 +5015,32 @@
         body.replaceChildren();
         for (const record of data.results) {
           const row = document.createElement('tr');
-          for (const value of [record.msg_id, record.subject, record.sender_full, record.attachment, record.action, record.latency_ms.toFixed(1) + ' ms']) {
+          row.className = 'hover:bg-surface-container-low/50 transition';
+          const actionVi = record.action === 'SANITIZED_ATTACHMENT'
+            ? 'Đã làm sạch tệp đính kèm'
+            : (record.action === 'DELIVERED_CLEAN' ? 'An toàn — Đã chuyển tiếp' : (record.action || '--'));
+          for (const value of [record.msg_id, record.subject, record.sender_full || record.sender, record.attachment, actionVi, Number(record.latency_ms || 0).toFixed(1) + ' ms']) {
             const cell = document.createElement('td');
-            cell.className = 'p-3';
+            cell.className = 'p-3 text-xs';
             cell.textContent = value;
             row.appendChild(cell);
           }
+          const dlCell = document.createElement('td');
+          dlCell.className = 'p-3 text-right';
+          if (record.eml_job_id) {
+            dlCell.innerHTML = `<a href="/api/gateway/download/eml/${encodeURIComponent(record.eml_job_id)}" class="px-3 py-1 rounded-full text-[11px] font-bold bg-secondary/15 text-secondary hover:bg-secondary hover:text-white transition inline-flex items-center gap-1"><span class="material-symbols-outlined text-[13px]">download</span><span>Tải .eml sạch</span></a>`;
+          } else {
+            dlCell.textContent = '--';
+          }
+          row.appendChild(dlCell);
           body.appendChild(row);
         }
         if (!data.results.length) {
           const row = body.insertRow();
           const cell = row.insertCell();
-          cell.colSpan = 6;
-          cell.className = 'p-4 text-center text-outline text-xs';
-          cell.textContent = 'Chưa có email nào được kiểm tra trong phiên này.';
+          cell.colSpan = 7;
+          cell.className = 'p-5 text-center text-outline text-xs';
+          cell.textContent = 'Chưa có email nào được kiểm tra trong phiên này. Hãy bấm nút "Tải tệp .eml / .pdf lên kiểm tra" hoặc "Kiểm thử Email với tệp PDF hiện tại" ở góc trên.';
         }
       } catch (error) {
         showToast('Không đọc được lịch sử kiểm tra email: ' + error.message, 'error');
@@ -4777,6 +5072,14 @@
         }
 
         const eventViMap = {
+          'SCAN_COMPLETED': 'Kiểm tra tệp PDF',
+          'DISARM_COMPLETED': 'Làm sạch tệp PDF (CDR)',
+          'QUARANTINE_ISOLATED': 'Cách ly bản gốc nguy hiểm',
+          'XAI_ABLATION': 'Phẫu thuật gỡ thử thành phần',
+          'EML_INSPECTION': 'Kiểm tra & làm sạch Email (.eml)',
+          'JOB_CREATED': 'Tiếp nhận tệp tải lên',
+          'STATUS_CHANGED': 'Cập nhật trạng thái xử lý',
+          'JOB_DELETED': 'Xóa tệp khỏi danh sách',
           'PDF_SCAN': 'Kiểm tra tệp PDF',
           'CDR_DISARM': 'Làm sạch tệp PDF',
           'EML_INSPECT': 'Kiểm tra tệp Email',
@@ -4784,11 +5087,14 @@
         };
         const verdictViMap = {
           'MALICIOUS': 'Nguy hiểm',
-          'BENIGN': 'An toàn'
+          'BENIGN': 'An toàn',
+          'PENDING': 'Đang xử lý',
+          'UNAVAILABLE': 'Cần lưu ý'
         };
 
         data.logs.forEach(entry => {
           const row = document.createElement('tr');
+          row.className = 'hover:bg-surface-container-low/50 transition';
           const detail = entry.details || {};
           const evLabel = eventViMap[entry.event] || entry.event || '--';
           const verLabel = verdictViMap[detail.verdict] || detail.verdict || '--';
@@ -4796,7 +5102,7 @@
             entry.event_id || '--',
             (entry.timestamp || '').replace('T', ' ').substring(0, 19),
             evLabel,
-            detail.file_name || detail.scan_id || '--',
+            detail.file_name || detail.subject || detail.scan_id || '--',
             verLabel,
             detail.action || detail.status || 'Hoàn tất',
             Number.isFinite(detail.latency_ms) ? detail.latency_ms.toFixed(1) + ' ms' : '--'
@@ -4896,15 +5202,16 @@
         const res = await fetch(`/api/scans/${scanId}`);
         if (!res.ok) throw new Error('Không tìm thấy kết quả này');
         const job = await res.json();
-        if (job.cdr_audit) {
-          currentCDRAudit = job.cdr_audit;
-          renderCDRDiffMatrix(job.cdr_audit);
-        } else {
-          currentCDRAudit = null;
-        }
         if (job.scan_result) {
           job.scan_result.scan_id = job.scan_id;
           renderScanResult(job.scan_result);
+        }
+        if (job.cdr_audit) {
+          job.cdr_audit.scan_id = job.scan_id;
+          applyCDRAuditToUI(job.cdr_audit, false);
+        } else {
+          currentCDRAudit = null;
+          resetCDRAfterCard((job.scan_result && job.scan_result.file_name) || job.file_name || 'document.pdf');
         }
       } catch (err) {
         showToast('Không thể mở lại kết quả kiểm tra: ' + err.message, 'error');
@@ -4930,13 +5237,15 @@
           }
           visualDiffCache.set(cacheKey, diff);
         }
+        totalDiffPages = Math.max(1, Number(diff.total_pages || 1));
+        currentDiffPage = Math.max(0, Math.min(totalDiffPages - 1, Number(diff.page || 0)));
         const origImg = document.getElementById('diff-orig-img');
         const cleanImg = document.getElementById('diff-clean-img');
         const origPl = document.getElementById('diff-orig-placeholder');
         const cleanPl = document.getElementById('diff-clean-placeholder');
         const indicator = document.getElementById('diff-page-indicator');
 
-        if (indicator) indicator.innerText = `Trang ${diff.page + 1} / ${Math.max(1, diff.total_pages)}`;
+        if (indicator) indicator.innerText = `Trang ${currentDiffPage + 1} / ${totalDiffPages}`;
 
         const splitOrig = document.getElementById('diff-split-orig-img');
         const splitClean = document.getElementById('diff-split-clean-img');
@@ -4965,8 +5274,51 @@
     }
 
     function changeDiffPage(delta) {
-      const next = Math.max(0, currentDiffPage + delta);
+      const next = Math.max(0, Math.min(totalDiffPages - 1, currentDiffPage + delta));
       loadVisualDiff(next);
+    }
+
+    function renderEMLInspectionResult(data) {
+      if (!data) return;
+      const threatText = data.malicious_attachments > 0
+        ? `Đã làm sạch ${data.malicious_attachments} tệp nguy hiểm`
+        : 'An toàn (Không có tệp nguy hiểm)';
+      const badgeLabel = data.malicious_attachments > 0 ? 'Đã làm sạch tệp đính kèm' : 'Email an toàn';
+      const badgeCls = data.malicious_attachments > 0 
+        ? 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-error/15 text-error' 
+        : 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-tertiary/15 text-tertiary';
+
+      const card = document.getElementById('eml-result-card');
+      if (card) {
+        card.classList.remove('hidden');
+        document.getElementById('eml-res-subject').innerText = data.subject || '--';
+        document.getElementById('eml-res-sender').innerText = data.sender || '--';
+        document.getElementById('eml-res-attachments').innerText = `${data.total_attachments || 0} tệp đính kèm`;
+        document.getElementById('eml-res-threats').innerText = threatText;
+        const badge = document.getElementById('eml-action-badge');
+        if (badge) { badge.innerText = badgeLabel; badge.className = badgeCls; }
+        const dlBtn = document.getElementById('btn-download-eml');
+        if (dlBtn && data.eml_job_id) {
+          dlBtn.href = `/api/gateway/download/eml/${data.eml_job_id}`;
+          dlBtn.classList.remove('hidden');
+        }
+      }
+
+      const tabCard = document.getElementById('mail-tab-result-card');
+      if (tabCard) {
+        tabCard.classList.remove('hidden');
+        document.getElementById('mail-tab-res-subject').innerText = data.subject || '--';
+        document.getElementById('mail-tab-res-sender').innerText = data.sender || '--';
+        document.getElementById('mail-tab-res-attachments').innerText = `${data.total_attachments || 0} tệp đính kèm`;
+        document.getElementById('mail-tab-res-threats').innerText = threatText;
+        const tabBadge = document.getElementById('mail-tab-action-badge');
+        if (tabBadge) { tabBadge.innerText = badgeLabel; tabBadge.className = badgeCls; }
+        const tabDlBtn = document.getElementById('btn-mail-tab-download-eml');
+        if (tabDlBtn && data.eml_job_id) {
+          tabDlBtn.href = `/api/gateway/download/eml/${data.eml_job_id}`;
+          tabDlBtn.classList.remove('hidden');
+        }
+      }
     }
 
     async function handleEMLUpload(file) {
@@ -4982,31 +5334,46 @@
           throw new Error(err.detail || 'Mã lỗi ' + res.status);
         }
         const data = await res.json();
-        const card = document.getElementById('eml-result-card');
-        if (card) card.classList.remove('hidden');
-        document.getElementById('eml-res-subject').innerText = data.subject || '--';
-        document.getElementById('eml-res-sender').innerText = data.sender || '--';
-        document.getElementById('eml-res-attachments').innerText = `${data.total_attachments} tệp đính kèm`;
-        document.getElementById('eml-res-threats').innerText = data.malicious_attachments > 0
-          ? `Đã làm sạch ${data.malicious_attachments} tệp nguy hiểm`
-          : 'Không có tệp nguy hiểm';
-        const badge = document.getElementById('eml-action-badge');
-        if (badge) {
-          badge.innerText = data.malicious_attachments > 0 ? 'Đã làm sạch tệp đính kèm' : 'Email an toàn';
-          badge.className = data.malicious_attachments > 0 
-            ? 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-error/15 text-error' 
-            : 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-tertiary/15 text-tertiary';
-        }
-        const dlBtn = document.getElementById('btn-download-eml');
-        if (dlBtn && data.eml_job_id) {
-          dlBtn.href = `/api/gateway/download/eml/${data.eml_job_id}`;
-          dlBtn.classList.remove('hidden');
-        }
+        renderEMLInspectionResult(data);
         if (statusEl) statusEl.innerText = 'Đã kiểm tra xong tệp email (.eml)';
+        showToast(`Đã kiểm tra xong thư điện tử "${data.subject || file.name}"!`, 'success');
         loadMailGatewayHistory();
       } catch (err) {
         showToast('Không thể kiểm tra tệp email: ' + err.message, 'error');
         if (statusEl) statusEl.innerText = 'Chưa kiểm tra được tệp email';
+      } finally {
+        const f1 = document.getElementById('eml-file-input');
+        if (f1) f1.value = '';
+        const f2 = document.getElementById('mail-tab-file-input');
+        if (f2) f2.value = '';
+      }
+    }
+
+    async function inspectActiveJobViaMailGateway() {
+      const icon = document.getElementById('mail-active-job-icon');
+      const text = document.getElementById('mail-active-job-text');
+      const btn = document.getElementById('btn-inspect-active-job-mail');
+      if (icon) { icon.innerText = 'progress_activity'; icon.classList.add('animate-spin'); }
+      if (text) text.innerText = 'Đang đóng gói & quét qua Cổng Email...';
+      if (btn) btn.disabled = true;
+      try {
+        const scanId = (currentScanResult && currentScanResult.scan_id) || (currentCDRAudit && currentCDRAudit.scan_id);
+        const url = scanId ? `/api/gateway/inspect-job/${scanId}` : '/api/gateway/inspect-job';
+        const res = await fetch(url, { method: 'POST' });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ detail: 'Hãy tải một tệp PDF lên trước khi kiểm thử Cổng Email' }));
+          throw new Error(err.detail || `Mã lỗi ${res.status}`);
+        }
+        const data = await res.json();
+        renderEMLInspectionResult(data);
+        await loadMailGatewayHistory();
+        showToast(`Cổng Email đã quét và xử lý xong tệp đính kèm (${data.action === 'SANITIZED_ATTACHMENT' ? 'Đã làm sạch mã độc' : 'Tệp an toàn'})!`, 'success');
+      } catch (err) {
+        showToast('Không thể kiểm thử Cổng Email: ' + err.message, 'warning');
+      } finally {
+        if (icon) { icon.innerText = 'forward_to_inbox'; icon.classList.remove('animate-spin'); }
+        if (text) text.innerText = 'Kiểm thử Email với tệp PDF hiện tại';
+        if (btn) btn.disabled = false;
       }
     }
 
@@ -5077,7 +5444,7 @@
           e.preventDefault();
           dropzone.classList.remove('dropzone-dragover');
           if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            handleFileSelect(e.dataTransfer.files[0]);
+            handleFileList(e.dataTransfer.files);
           }
         });
       }
