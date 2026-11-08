@@ -117,3 +117,14 @@ UI_Example/
 # Agent internal directories and spreadsheets
 .agents/
 *.xlsx
+*.docx
+*.pptx
+*.bak
+*.tmp
+*.swp
+*~
+.antigravity/
+.gemini/
+.claude/
+.cursor/
+MinhChung_*/
