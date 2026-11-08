@@ -1,0 +1,78 @@
+{
+  "bundle_immutability": {
+    "baseline_bundles_checked": 1452,
+    "baseline_changed": 0,
+    "replay_bundles_checked": 74,
+    "replay_changed": 0
+  },
+  "elapsed_seconds": 271.93,
+  "expected_index_sha256": "01b3f248a9685890bc53fda5355052453672649215474a796c4aa56fb40483ff",
+  "local_files_sha256": {
+    "cases.jsonl": "3d5dd524bb36f9e68cad7b7f7d8c909c4deeaddc88a15c57da160de9d6cf8538",
+    "locked_methodology.json": "3296a1d2cd270089a08c5f80b1b68d422e6af5a1379514dd6b1c91be7cceecb4",
+    "manifest.json": "7c1a9c568a46f23cf9c363bd3c27465ca92de1e27cf6b363b9eac2f455403d22",
+    "replay_overlay_cases.jsonl": "eb7e84f5e2b618541a1c0eaa76db2a1495e75a8642c288ae50fbe99ff89cc3aa",
+    "report.md": "f28805f66ca30417fec797356c465b971c41835d3bdb7d7cb494cade9f857a5a",
+    "summary.json": "5a786c9356eb4e64c52f0eb0ae6a7549dd8a4bb5994f9495dce21ba693a531ee"
+  },
+  "operator_lab_run_required": false,
+  "raw_pdf_processing": false,
+  "remnux_pytest": {
+    "after": {
+      "failed": [
+        "tests.test_extraction::test_byte_cap_symlink_and_hybrid_execution_are_refused",
+        "tests.test_extraction::test_distributable_schemas_cover_actual_stores_and_all_observation_states",
+        "tests.test_extraction::test_input_and_admission_failures_return_no_fabricated_zero_features",
+        "tests.test_extraction::test_interrupted_secondary_preserves_primary_values_and_separate_failure[worker_memory_limit-resource_limit]",
+        "tests.test_extraction_vm::test_vm_worker_reads_input_above_ten_megabytes_without_thread_or_os_quotas"
+      ],
+      "passed": 281,
+      "skipped": 0,
+      "tests": 286
+    },
+    "before": {
+      "failed": [
+        "tests.test_extraction::test_byte_cap_symlink_and_hybrid_execution_are_refused",
+        "tests.test_extraction::test_distributable_schemas_cover_actual_stores_and_all_observation_states",
+        "tests.test_extraction::test_input_and_admission_failures_return_no_fabricated_zero_features",
+        "tests.test_extraction::test_interrupted_secondary_preserves_primary_values_and_separate_failure[worker_memory_limit-resource_limit]",
+        "tests.test_extraction_vm::test_vm_worker_reads_input_above_ten_megabytes_without_thread_or_os_quotas"
+      ],
+      "passed": 266,
+      "skipped": 0,
+      "tests": 271
+    },
+    "modules": [
+      "tests/test_diagnostic_replay.py",
+      "tests/test_evidence_ipc_v9.py",
+      "tests/test_extraction.py",
+      "tests/test_extraction_quality_gate.py",
+      "tests/test_extraction_vm.py",
+      "tests/test_graph_audit.py",
+      "tests/test_graph_audit_job.py",
+      "tests/test_graph_truncation_audit.py",
+      "tests/test_lab_halt_reporting.py",
+      "tests/test_numeric_export_job.py",
+      "tests/test_numeric_postrun_export.py",
+      "tests/test_worker_diagnostics.py"
+    ],
+    "new_failures": []
+  },
+  "remote_receipt": {
+    "baseline_job_id": "dfafd888f7a948a87ffac2e0b68ab702fd60dd1dc9bc630fa6cdbe4496e4a06f",
+    "baseline_verdict": "blocked_unresolved_extraction_failures",
+    "legacy_19d_model_input_ready": false,
+    "output": "/home/remnux/malpdf-extraction-quality-gates/run_20261106T095240284120Z_dfafd888f7a9",
+    "raw_pdf_processing": false,
+    "records": 1452,
+    "replay_overlay_job_id": "6f9cc944ed98304746fbbb5bc7066d9fb1c8d5b6a737ffd0f08205390527d575",
+    "training_executed": false,
+    "training_unlocked": false,
+    "virtual_post_b1_verdict": "hold_pending_v2_projection_and_size_contract"
+  },
+  "retrieved_at_utc": "2026-11-06T09:55:41.063352+00:00",
+  "schema_version": 1,
+  "stage": "BUG-007B3",
+  "training_executed": false,
+  "validation_package_file_count": 434
+}

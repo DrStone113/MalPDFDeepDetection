@@ -132,8 +132,8 @@ class PdfSources:
         for identifier in manifest.sample_id:
             row = self.rows[identifier]
             digest = row["pdf_sha256"]
-            # Verify every file path even when identical hashes repeat; a second
-            # source file cannot inherit a checksum check from another path.
+
+
             path = self.root / row["pdf_relative_path"]
             result = measure_pdf_obfuscation(path, boundary=self.root / "data", expected_sha256=digest)
             if digest in by_hash and result != by_hash[digest]:
@@ -273,7 +273,7 @@ def run_safe_stacking_v3(root: Path, config: dict, *, execute: bool = False, run
         for column, name in enumerate(V3_BRANCHES):
             report["metrics"][f"{name}/validation_threshold_selection"] = calibration_metrics(validation_y[positions], val_scores[positions, column], n_bins=10)
         report["metrics"]["safe_stacking_v3/validation_threshold_selection"] = calibration_metrics(validation_y[positions], stack.predict_proba(val_scores)[positions], threshold=stack.threshold, n_bins=10)
-        # First actual test feature measurement/inference follows the persisted lock.
+
         test_raw = sources.measured_frame(source, parts["test"], "test", lock_path)
         test_x, test_y = safe_feature_view(test_raw), parts["test"].Label.to_numpy()
         test_scores = np.column_stack([np.mean([model.predict_proba(test_x) for model in models[name]], axis=0) for name in V3_BRANCHES])

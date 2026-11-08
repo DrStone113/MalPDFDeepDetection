@@ -37,8 +37,8 @@ class Blobs:
 
 
 def pixels(png):
-    # Independent decoder from the already declared torchvision/Pillow stack;
-    # only our generated bounded PNG fixtures are opened, never input images.
+
+
     with Image.open(BytesIO(png)) as image:
         image.load();assert image.mode=='L'
         return image.size,image.tobytes()
@@ -90,7 +90,7 @@ def test_all_chunks_roundtrip_without_resizing_and_exact_limit_is_not_a_failure(
 
 
 def test_budget_keeps_whole_head_tail_tiles_and_marks_missing_middle():
-    data=bytes(range(256))*1280  # Five complete 64KiB chunks.
+    data=bytes(range(256))*1280
     result,_=pure(data,limits=replace(ByteImageLimits(),max_tiles=3))
     assert [tile['tile_index'] for tile in result['tiles']]==[0,4,1]
     assert not result['complete'] and 'byte_image_tile_limit' in result['reason_codes']
@@ -256,9 +256,9 @@ def test_parent_persisted_tiles_are_independently_decodable_and_traceable(tmp_pa
     from malpdf.static.profile_worker import profile_pdf
     data=pdf_fixture(child=b'inert bytes\x00\xff',js=True);path=tmp_path/'benign.pdf';path.write_bytes(data)
     directory=tmp_path/'blobs'
-    # Both sides need v9's JS source enrichment. This parity fixture allows
-    # bounded startup/scheduling slack; it does not measure the offline job's
-    # production deadline (20s). CPU and memory caps stay identical.
+
+
+
     limits=CodeInspectionLimits(wall_seconds=30,cpu_seconds=12)
     baseline=profile_pdf(path,boundary=tmp_path,digest=sha(data),limits=limits,analysis_version='v9')
     assert baseline['analysis_v8']['complete'], baseline.get('errors')

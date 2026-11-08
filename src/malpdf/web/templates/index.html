@@ -10,9 +10,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet" />
 
-  <!-- Tailwind CSS & Vis.js -->
+  <!-- Tailwind CSS, Vis.js & Markdown Parser -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
   <script>
     tailwind.config = {
@@ -306,6 +307,87 @@
     }
     ::-webkit-scrollbar-thumb:hover {
       background: rgba(113, 119, 133, 0.5);
+    }
+
+    /* Enhanced Chat Markdown Formatting */
+    .chat-prose {
+      color: #131B2E;
+      font-size: 0.8125rem;
+      line-height: 1.625;
+      word-break: break-word;
+    }
+    .chat-prose p {
+      margin-bottom: 0.45rem;
+    }
+    .chat-prose p:last-child {
+      margin-bottom: 0;
+    }
+    .chat-prose strong {
+      font-weight: 600;
+      color: #0c1527;
+    }
+    .chat-prose em {
+      font-style: italic;
+    }
+    .chat-prose ul {
+      list-style-type: disc;
+      padding-left: 1.25rem;
+      margin-top: 0.35rem;
+      margin-bottom: 0.45rem;
+    }
+    .chat-prose ol {
+      list-style-type: decimal;
+      padding-left: 1.25rem;
+      margin-top: 0.35rem;
+      margin-bottom: 0.45rem;
+    }
+    .chat-prose li {
+      margin-bottom: 0.25rem;
+      line-height: 1.55;
+    }
+    .chat-prose li:last-child {
+      margin-bottom: 0;
+    }
+    .chat-prose code:not(pre code) {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.73rem;
+      background-color: rgba(0, 113, 227, 0.08);
+      color: #0059b5;
+      padding: 0.12rem 0.35rem;
+      border-radius: 0.375rem;
+      border: 1px solid rgba(0, 113, 227, 0.18);
+      font-weight: 500;
+    }
+    .chat-prose pre {
+      background-color: #0f172a;
+      color: #f1f5f9;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      padding: 0.65rem 0.85rem;
+      border-radius: 0.75rem;
+      margin: 0.45rem 0;
+      overflow-x: auto;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      line-height: 1.45;
+    }
+    .chat-prose blockquote {
+      border-left: 3px solid #0071E3;
+      background: rgba(0, 113, 227, 0.05);
+      padding: 0.35rem 0.75rem;
+      border-radius: 0 0.5rem 0.5rem 0;
+      margin: 0.4rem 0;
+      color: #414753;
+    }
+    .chat-prose h1, .chat-prose h2, .chat-prose h3, .chat-prose h4 {
+      font-weight: 700;
+      color: #131B2E;
+      margin: 0.5rem 0 0.25rem 0;
+    }
+    .chat-prose h3 {
+      font-size: 0.85rem;
+    }
+    .chat-prose h4 {
+      font-size: 0.8rem;
     }
   </style>
 </head>
@@ -912,10 +994,10 @@
                           <div class="flex flex-wrap items-center gap-1.5">
                             <span class="font-bold text-on-surface text-xs">Chuyên gia AI giải thích kết quả quét</span>
                             <span id="ai-engine-mode-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary-container/10 text-primary-container border border-primary-container/20">
-                              Đang kiểm tra phần cứng WebGPU...
+                              Đang kiểm tra phần cứng...
                             </span>
                           </div>
-                          <p class="text-[11px] text-on-surface-variant">Ưu tiên chạy mô hình SLM cục bộ qua WebGPU (Cache Storage API), tự động fallback khi máy yếu</p>
+                          <p class="text-[11px] text-on-surface-variant">Trợ lý AI giải thích chuyên sâu kết quả kiểm tra và hướng dẫn xử lý an toàn</p>
                         </div>
                       </div>
                     </div>
@@ -926,14 +1008,16 @@
                         <span class="material-symbols-outlined text-[15px] text-primary-container shrink-0">memory</span>
                         <select id="webllm-model-select" onchange="handleWebLLMModelChange(this.value)"
                                 class="flex-1 px-2.5 py-1 rounded-xl text-[11px] font-semibold bg-white border border-surface-container text-on-surface focus:outline-none focus:border-primary-container">
-                          <option value="Qwen2.5-1.5B-Instruct-q4f16_1-MLC" selected>Qwen2.5-1.5B-Instruct (4-bit • ~900MB • Ưu tiên tiếng Việt)</option>
-                          <option value="Llama-3.2-1B-Instruct-q4f16_1-MLC">Llama-3.2-1B-Instruct (4-bit • ~650MB • Nhẹ & Nhanh)</option>
+                          <option value="cnb/minimax-m3.1-flash" selected>Cloud AI</option>
+                          <option value="Qwen2.5-1.5B-Instruct-q4f16_1-MLC">Local AI (Qwen2.5-1.5B)</option>
+                          <option value="Llama-3.2-1B-Instruct-q4f16_1-MLC">Local AI (Llama-3.2-1B)</option>
+                          <option value="deterministic-server">Động cơ Chuyên gia</option>
                         </select>
                       </div>
                       <button id="btn-init-webllm" type="button" onclick="initWebLLMEngine(false)"
-                              class="px-3 py-1 rounded-full text-[11px] font-bold bg-primary-container hover:bg-primary text-white shadow-xs transition flex items-center gap-1 active:scale-95 shrink-0">
-                        <span id="btn-init-webllm-icon" class="material-symbols-outlined text-[14px]">bolt</span>
-                        <span id="btn-init-webllm-text">Nạp AI mới (WebGPU)</span>
+                              class="px-3 py-1 rounded-full text-[11px] font-bold bg-tertiary text-white shadow-xs transition flex items-center gap-1 active:scale-95 shrink-0">
+                        <span id="btn-init-webllm-icon" class="material-symbols-outlined text-[14px]">cloud_done</span>
+                        <span id="btn-init-webllm-text">AI đã sẵn sàng</span>
                       </button>
                     </div>
 
@@ -975,24 +1059,24 @@
                     <button onclick="askAIPreset('Làm sạch tệp hoạt động thế nào, có mất chữ không?')" class="px-2.5 py-1 rounded-full text-[11px] font-medium bg-surface-container-low hover:bg-surface-container text-on-surface border border-surface-container transition active:scale-95">
                       Làm sạch có mất chữ không?
                     </button>
-                    <button onclick="askAIPreset('Bạn là mô hình AI gì?')" class="px-2.5 py-1 rounded-full text-[11px] font-medium bg-surface-container-low hover:bg-surface-container text-on-surface border border-surface-container transition active:scale-95">
-                      Bạn là model gì?
+                    <button onclick="askAIPreset('Làm sao để xử lý an toàn nhất?')" class="px-2.5 py-1 rounded-full text-[11px] font-medium bg-surface-container-low hover:bg-surface-container text-on-surface border border-surface-container transition active:scale-95">
+                      Xử lý an toàn thế nào?
                     </button>
                   </div>
 
                   <!-- Chat Dialogue Stream -->
                   <div id="ai-chat-messages" class="p-3.5 rounded-2xl bg-surface-container-low/80 border border-surface-container space-y-3 min-h-[280px] max-h-[420px] xl:max-h-[480px] overflow-y-auto text-xs">
-                    <div class="flex items-start gap-2">
-                      <div class="w-6 h-6 rounded-full bg-primary-container text-white flex items-center justify-center shrink-0 text-[10px] font-bold">AI</div>
-                      <div class="p-2.5 rounded-2xl bg-white text-on-surface shadow-2xs border border-surface-container leading-relaxed">
-                        Xin chào! Bạn có thể chọn một câu hỏi gợi ý bên trên hoặc gõ câu hỏi bất kỳ để tìm hiểu thêm về tệp PDF này.
+                    <div class="flex items-start gap-2.5">
+                      <div class="w-6 h-6 rounded-full bg-gradient-to-tr from-primary to-primary-container text-white flex items-center justify-center shrink-0 text-[10px] font-bold mt-0.5 shadow-xs">AI</div>
+                      <div class="p-3 rounded-2xl bg-white text-on-surface shadow-xs border border-surface-container leading-relaxed text-xs flex-1 min-w-0 chat-prose">
+                        <p>Xin chào! Bạn có thể chọn một câu hỏi gợi ý bên trên hoặc gõ câu hỏi bất kỳ để tìm hiểu thêm về tệp PDF này.</p>
                       </div>
                     </div>
                   </div>
 
                   <!-- Chat Input Field & Send Button -->
                   <div class="flex items-center gap-2">
-                    <input type="text" id="ai-chat-input" placeholder="Nhập câu hỏi của bạn về tệp này (ví dụ: Tệp này có nguy hiểm không, bạn là model gì...)..." 
+                    <input type="text" id="ai-chat-input" placeholder="Nhập câu hỏi của bạn về tệp này (ví dụ: Tệp này có nguy hiểm không, xử lý ra sao...)..." 
                            class="flex-1 px-3.5 py-2.5 rounded-full text-xs bg-white border border-surface-container text-on-surface focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container shadow-inner"
                            onkeydown="if(event.key === 'Enter') sendAIChatMessage()" />
                     <button id="ai-chat-send-btn" onclick="sendAIChatMessage()" class="px-4 py-2.5 rounded-full text-xs font-bold bg-primary-container hover:bg-primary text-white shadow-md shadow-primary-container/20 transition flex items-center gap-1 active:scale-95 shrink-0">
@@ -2662,8 +2746,15 @@
       'Bạn là Trợ lý AI Phân tích An toàn Tài liệu PDF của hệ thống MalPDF DeepDetection. ' +
       'Người dùng đang tra cứu báo cáo kiểm tra an toàn của chính họ để phòng vệ và làm sạch tệp PDF. ' +
       'Hãy luôn trả lời thân thiện, rõ ràng, dễ hiểu bằng tiếng Việt dựa trên Dữ liệu phân tích chuẩn được cung cấp. ' +
-      'Khi người dùng chào hỏi hoặc hỏi bạn là mô hình gì, hãy giới thiệu tên mô hình đang chạy trên WebGPU và tóm tắt trạng thái tệp PDF hiện tại. ' +
+      'Sử dụng định dạng Markdown phong phú (in đậm **...**, danh sách đánh số 1. 2., danh sách gạch đầu dòng, khối code `...`) để câu trả lời trực quan, mạch lạc, dễ đọc. ' +
       'Không bao giờ từ chối giải thích báo cáo kiểm tra an toàn của hệ thống.';
+
+    const VILAO_API_CONFIG = {
+      baseUrl: 'https://api.vilao.ai/v1',
+      endpoint: 'https://api.vilao.ai/v1/chat/completions',
+      apiKey: 'sk-4d3c4ccce022ef61fdb2a595f8c2fa5bb9c690f205901a0c633d2f8d9bac9865',
+      model: 'cnb/minimax-m3.1-flash'
+    };
 
     const clientAIState = {
       checked: false,
@@ -2671,7 +2762,7 @@
       hardwareReason: '',
       detectedRamGb: null,
       adapterInfo: null,
-      selectedModel: 'Qwen2.5-1.5B-Instruct-q4f16_1-MLC',
+      selectedModel: 'cnb/minimax-m3.1-flash',
       loadedModel: null,
       engine: null,
       engineReady: false,
@@ -2721,10 +2812,6 @@
     }
 
     async function evaluateClientAIHardware() {
-      const supported = await checkSystemRequirements();
-      clientAIState.checked = true;
-      clientAIState.hardwareSupported = supported;
-
       const badge = document.getElementById('ai-engine-mode-badge');
       const fallbackBanner = document.getElementById('ai-hardware-fallback-banner');
       const fallbackTitle = document.getElementById('ai-hardware-fallback-title');
@@ -2734,20 +2821,60 @@
       const initText = document.getElementById('btn-init-webllm-text');
       const initIcon = document.getElementById('btn-init-webllm-icon');
 
+      if (clientAIState.selectedModel === 'cnb/minimax-m3.1-flash') {
+        if (badge) {
+          badge.innerText = 'Cloud AI';
+          badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-tertiary/15 text-tertiary border border-tertiary/30';
+        }
+        if (initIcon) {
+          initIcon.innerText = 'cloud_done';
+          initIcon.classList.remove('animate-spin');
+        }
+        if (initText) initText.innerText = 'Cloud AI';
+        if (initBtn) {
+          initBtn.disabled = false;
+          initBtn.className = 'px-3 py-1 rounded-full text-[11px] font-bold bg-tertiary text-white shadow-xs transition flex items-center gap-1 active:scale-95 shrink-0';
+        }
+        if (fallbackBanner) fallbackBanner.classList.add('hidden');
+        return true;
+      }
+
+      if (clientAIState.selectedModel === 'deterministic-server') {
+        if (badge) {
+          badge.innerText = 'Động cơ Chuyên gia';
+          badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary-container/10 text-primary-container border border-primary-container/20';
+        }
+        if (initIcon) {
+          initIcon.innerText = 'verified_user';
+          initIcon.classList.remove('animate-spin');
+        }
+        if (initText) initText.innerText = 'Sẵn sàng';
+        if (initBtn) {
+          initBtn.disabled = false;
+          initBtn.className = 'px-3 py-1 rounded-full text-[11px] font-bold bg-primary-container hover:bg-primary text-white shadow-xs transition flex items-center gap-1 active:scale-95 shrink-0';
+        }
+        if (fallbackBanner) fallbackBanner.classList.add('hidden');
+        return true;
+      }
+
+      const supported = await checkSystemRequirements();
+      clientAIState.checked = true;
+      clientAIState.hardwareSupported = supported;
+
       if (!supported) {
         clientAIState.engineReady = false;
         clientAIState.lastFallbackReason = clientAIState.hardwareReason;
         if (badge) {
-          badge.innerText = 'Đã fallback về mô hình cũ (Thiết bị không đủ tài nguyên)';
+          badge.innerText = 'Chế độ tiêu chuẩn (máy chủ)';
           badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-800 border border-amber-500/30';
         }
         if (fallbackBanner) fallbackBanner.classList.remove('hidden');
         if (fallbackTitle) {
-          fallbackTitle.innerText = 'Thiết bị người dùng không đủ tài nguyên để chạy mô hình AI mới (WebLLM WebGPU) — Đã tự động fallback về hệ thống cũ';
+          fallbackTitle.innerText = 'Thiết bị người dùng không đủ tài nguyên để chạy mô hình AI mới — Đã tự động chuyển về chế độ tiêu chuẩn';
         }
         if (fallbackReason) {
           fallbackReason.innerText =
-            `Tính năng chuyên gia AI cục bộ yêu cầu thiết bị hỗ trợ WebGPU và RAM tối thiểu 8GB để hoạt động ổn định (Chi tiết thiết bị: ${clientAIState.hardwareReason}). Hệ thống đã tự động chuyển về bộ giải thích tiêu chuẩn để bạn vẫn có thể hỏi đáp đầy đủ.`;
+            `Tính năng chuyên gia AI yêu cầu thiết bị hỗ trợ WebGPU và RAM tối thiểu 4GB để hoạt động ổn định (Chi tiết: ${clientAIState.hardwareReason}). Hệ thống đã tự động chuyển về bộ giải thích tiêu chuẩn để bạn vẫn có thể hỏi đáp đầy đủ.`;
         }
         if (selectEl) selectEl.disabled = true;
         if (initBtn) {
@@ -2755,7 +2882,7 @@
           initBtn.className = 'px-3 py-1 rounded-full text-[11px] font-bold bg-surface-container text-outline cursor-not-allowed flex items-center gap-1 shrink-0';
         }
         if (initIcon) initIcon.innerText = 'lock';
-        if (initText) initText.innerText = 'Thiết bị không đủ WebGPU / RAM ≥ 8GB';
+        if (initText) initText.innerText = 'Thiết bị không đủ RAM / WebGPU';
         return false;
       }
 
@@ -2770,27 +2897,62 @@
           : 'px-3 py-1 rounded-full text-[11px] font-bold bg-primary-container hover:bg-primary text-white shadow-xs transition flex items-center gap-1 active:scale-95 shrink-0';
       }
       if (clientAIState.engineReady) {
+        const shortName = (clientAIState.selectedModel && clientAIState.selectedModel.includes('Llama')) ? 'Llama-3.2-1B' : 'Qwen2.5-1.5B';
         if (badge) {
-          badge.innerText = `Đang dùng AI mới: ${clientAIState.loadedModel} (WebGPU)`;
+          badge.innerText = `Local AI (${shortName})`;
           badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-tertiary/15 text-tertiary border border-tertiary/30';
         }
-        if (initIcon) initIcon.innerText = 'verified';
-        if (initText) initText.innerText = 'AI mới (WebGPU) đã sẵn sàng';
-      } else {
+        if (initIcon) {
+          initIcon.innerText = 'verified';
+          initIcon.classList.remove('animate-spin');
+        }
+        if (initText) initText.innerText = `Local AI (${shortName})`;
+      } else if (clientAIState.isInitializing) {
+        const shortName = (clientAIState.selectedModel && clientAIState.selectedModel.includes('Llama')) ? 'Llama-3.2-1B' : 'Qwen2.5-1.5B';
         if (badge) {
-          badge.innerText = 'Ưu tiên: Mô hình AI mới (WebLLM WebGPU)';
+          badge.innerText = `Đang nạp Local AI (${shortName})...`;
           badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary-container/10 text-primary-container border border-primary-container/20';
         }
-        if (initIcon) initIcon.innerText = 'bolt';
-        if (initText) initText.innerText = 'Nạp AI mới (WebGPU)';
+        if (initIcon) {
+          initIcon.innerText = 'progress_activity';
+          initIcon.classList.add('animate-spin');
+        }
+        if (initText) initText.innerText = 'Đang nạp...';
+      } else {
+        const shortName = (clientAIState.selectedModel && clientAIState.selectedModel.includes('Llama')) ? 'Llama-3.2-1B' : 'Qwen2.5-1.5B';
+        if (badge) {
+          badge.innerText = `Local AI (${shortName}) sẵn sàng nạp`;
+          badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary-container/10 text-primary-container border border-primary-container/20';
+        }
+        if (initIcon) {
+          initIcon.innerText = 'bolt';
+          initIcon.classList.remove('animate-spin');
+        }
+        if (initText) initText.innerText = 'Nạp Local AI';
+
+        // Auto load model when device has sufficient RAM & WebGPU
+        if (clientAIState.preferNewModel && !clientAIState.isInitializing && !clientAIState.engineReady) {
+          setTimeout(() => {
+            if (!clientAIState.engineReady && !clientAIState.isInitializing && clientAIState.hardwareSupported) {
+              initWebLLMEngine(true);
+            }
+          }, 350);
+        }
       }
       return true;
     }
 
     function handleWebLLMModelChange(modelId) {
       clientAIState.selectedModel = modelId;
-      if (clientAIState.loadedModel && clientAIState.loadedModel !== modelId) {
-        clientAIState.engineReady = false;
+      if (modelId.includes('MLC')) {
+        if (clientAIState.loadedModel && clientAIState.loadedModel !== modelId) {
+          clientAIState.engineReady = false;
+        }
+        evaluateClientAIHardware();
+        if (clientAIState.hardwareSupported && !clientAIState.engineReady && !clientAIState.isInitializing) {
+          initWebLLMEngine(false);
+        }
+      } else {
         evaluateClientAIHardware();
       }
     }
@@ -2893,7 +3055,7 @@
             const pct = Math.min(100, Math.max(0, Math.round((report.progress || 0) * 100)));
             if (progressBar) progressBar.style.width = `${pct}%`;
             if (progressPct) progressPct.innerText = `${pct}%`;
-            if (progressText) progressText.innerText = report.text || `Đang tải ${targetModel} vào Cache Storage...`;
+            if (progressText) progressText.innerText = report.text || `Đang tải ${targetModel} vào bộ nhớ...`;
           }
         });
         clientAIState.engine = engine;
@@ -2902,27 +3064,27 @@
         clientAIState.lastFallbackReason = '';
         if (progressBar) progressBar.style.width = '100%';
         if (progressPct) progressPct.innerText = '100%';
-        if (progressText) progressText.innerText = `Đã nạp ${targetModel} vào bộ nhớ đệm trình duyệt (WebGPU sẵn sàng).`;
+        if (progressText) progressText.innerText = `Đã nạp ${targetModel} vào bộ nhớ (Sẵn sàng).`;
         if (fallbackBanner) fallbackBanner.classList.add('hidden');
         if (!autoTriggered) {
-          showToast(`Mô hình AI mới (${targetModel}) đã sẵn sàng trên WebGPU!`, 'success');
+          showToast(`Mô hình AI (${targetModel}) đã sẵn sàng!`, 'success');
         }
         return true;
       } catch (err) {
         console.warn('WebLLM initialization failed, falling back to deterministic engine:', err);
         clientAIState.engineReady = false;
         clientAIState.engine = null;
-        clientAIState.lastFallbackReason = err && err.message ? err.message : 'Không thể tải trọng số mô hình WebLLM';
+        clientAIState.lastFallbackReason = err && err.message ? err.message : 'Không thể tải trọng số mô hình';
         if (fallbackBanner) fallbackBanner.classList.remove('hidden');
         if (fallbackTitle) {
-          fallbackTitle.innerText = 'Không thể khởi tạo mô hình AI mới trên trình duyệt — Đã tự động fallback về hệ thống cũ';
+          fallbackTitle.innerText = 'Không thể khởi tạo mô hình AI trên trình duyệt — Đã tự động fallback về hệ thống cũ';
         }
         if (fallbackReason) {
-          fallbackReason.innerText = `Không thể nạp mô hình WebLLM cục bộ (${clientAIState.lastFallbackReason}). Hệ thống đã tự động chuyển về bộ giải thích tiêu chuẩn trên máy chủ để đảm bảo việc hỏi đáp không bị gián đoạn.`;
+          fallbackReason.innerText = `Không thể nạp mô hình (${clientAIState.lastFallbackReason}). Hệ thống đã tự động chuyển về bộ giải thích tiêu chuẩn trên máy chủ để đảm bảo việc hỏi đáp không bị gián đoạn.`;
         }
         const badge = document.getElementById('ai-engine-mode-badge');
         if (badge) {
-          badge.innerText = 'Đã fallback về mô hình cũ';
+          badge.innerText = 'Chế độ tiêu chuẩn (máy chủ)';
           badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-800 border border-amber-500/30';
         }
         return false;
@@ -2955,6 +3117,9 @@
 
       if (tab === 'chat') {
         evaluateClientAIHardware();
+        if (clientAIState.hardwareSupported && !clientAIState.engineReady && !clientAIState.isInitializing && clientAIState.preferNewModel) {
+          initWebLLMEngine(true);
+        }
       }
     }
 
@@ -3060,13 +3225,14 @@
 
       const chatBox = document.getElementById('ai-chat-messages');
       if (chatBox) {
+        const welcomeText = `Xin chào! Mình đã kiểm tra xong tệp **${_escTax((fullScanResult && fullScanResult.file_name) || 'PDF')}**.\n\n` +
+          `Kết luận hiện tại: **${isThreat ? 'Phát hiện nguy hiểm — không nên mở trực tiếp' : 'Tài liệu an toàn'}**.\n\n` +
+          `Bạn có thể bấm vào các câu hỏi gợi ý bên trên hoặc hỏi bất kỳ điều gì về tệp này nhé!`;
         chatBox.innerHTML = `
-          <div class="flex items-start gap-2">
-            <div class="w-6 h-6 rounded-full bg-primary-container text-white flex items-center justify-center shrink-0 text-[10px] font-bold">AI</div>
-            <div class="p-2.5 rounded-2xl bg-white text-on-surface shadow-2xs border border-surface-container leading-relaxed">
-              Xin chào! Mình đã kiểm tra xong tệp <strong>${_escTax((fullScanResult && fullScanResult.file_name) || 'PDF')}</strong>. 
-              Kết luận hiện tại: <strong class="${isThreat ? 'text-error' : 'text-tertiary'}">${isThreat ? 'Phát hiện nguy hiểm — không nên mở trực tiếp' : 'Tài liệu an toàn'}</strong>.
-              Bạn có thể bấm vào các câu hỏi gợi ý bên trên hoặc hỏi bất kỳ điều gì về tệp này nhé!
+          <div class="flex items-start gap-2.5">
+            <div class="w-6 h-6 rounded-full bg-gradient-to-tr from-primary to-primary-container text-white flex items-center justify-center shrink-0 text-[10px] font-bold mt-0.5 shadow-xs">AI</div>
+            <div class="p-3 rounded-2xl bg-white text-on-surface shadow-xs border border-surface-container leading-relaxed text-xs flex-1 min-w-0 chat-prose">
+              ${renderAIChatMarkdown(welcomeText)}
             </div>
           </div>
         `;
@@ -3110,22 +3276,132 @@
       return refusalMarkers.some(m => t.includes(m));
     }
 
+    function _buildMiniMaxPrompt(question, groundTruthAnswer) {
+      const fileName = (currentScanResult && currentScanResult.file_name) || 'tài liệu PDF';
+      const isMal = currentScanResult && currentScanResult.verdict === 'MALICIOUS';
+      const probPct = (currentScanResult && Number.isFinite(currentScanResult.malware_probability))
+        ? `${(currentScanResult.malware_probability * 100).toFixed(2)}%`
+        : 'Chưa xác định';
+      const dossier = (currentScanResult && currentScanResult.forensic_dossier) || {};
+      const triggers = (dossier.trigger_objects || []).slice(0, 5).map(
+        t => `${t.invoker || '/Unknown'} (${t.obj_ref_str || t.object_id || ''})`
+      );
+      const scripts = (dossier.threat_scripts || []).slice(0, 3).map(
+        s => `${s.script_id || 'script'} (dấu hiệu: ${(s.dangerous_indicators || []).join(', ') || 'đáng ngờ'})`
+      );
+
+      return (
+        `Thông tin tài liệu PDF đang kiểm tra an toàn:\n` +
+        `- Tên tệp: ${fileName}\n` +
+        `- Kết luận kiểm định: ${isMal ? 'PHÁT HIỆN NGUY HIỂM (MÃ ĐỘC)' : 'AN TOÀN'}\n` +
+        `- Xác suất rủi ro: ${probPct}\n` +
+        (triggers.length > 0 ? `- Ngòi nổ kích hoạt: ${triggers.join(', ')}\n` : '') +
+        (scripts.length > 0 ? `- Mã nhúng / Scripts: ${scripts.join('; ')}\n` : '') +
+        `- Hướng dẫn xử lý an toàn: ${isMal ? "Khuyên người dùng bấm nút 'Làm sạch tệp' để In-Place CDR gỡ bỏ ngòi nổ, giữ nguyên 100% chữ và hình ảnh, không mở trực tiếp." : "Tài liệu an toàn, có thể mở bình thường."}\n\n` +
+        (groundTruthAnswer ? `- Dữ liệu phân tích kỹ thuật chuẩn từ MalPDF:\n${groundTruthAnswer}\n\n` : '') +
+        `Câu hỏi của người dùng: "${question}"\n\n` +
+        `Yêu cầu:\n` +
+        `- Trả lời rõ ràng, thân thiện, chính xác bằng tiếng Việt. Sử dụng định dạng Markdown đẹp mắt (in đậm, danh sách có thứ tự, code block). Giữ câu trả lời súc tích, tập trung vào an toàn cho người dùng.\n` +
+        `- Tuyệt đối KHÔNG nhắc tên các mô hình AI kỹ thuật (như MiniMax, Qwen, Llama, GPT, WebLLM...). Nếu người dùng hỏi bạn là ai, hãy chỉ xưng là "Trợ lý AI Bảo mật MalPDF".`
+      );
+    }
+
     function _buildGroundedWebLLMPrompt(question, groundTruthAnswer) {
       const fileName = (currentScanResult && currentScanResult.file_name) || 'tài liệu PDF';
       const isMal = currentScanResult && currentScanResult.verdict === 'MALICIOUS';
       const probPct = (currentScanResult && Number.isFinite(currentScanResult.malware_probability))
         ? `${(currentScanResult.malware_probability * 100).toFixed(2)}%`
         : 'Chưa xác định';
-      const activeModel = clientAIState.loadedModel || clientAIState.selectedModel || 'Qwen2.5-1.5B-Instruct-q4f16_1-MLC';
 
       return (
         `Thông tin vận hành:\n` +
-        `- Tên mô hình AI của bạn: ${activeModel} (chạy trực tiếp trên trình duyệt qua WebGPU & Cache Storage API).\n` +
+        `- Vai trò: Trợ lý AI Bảo mật MalPDF (phân tích mã độc và an toàn tệp PDF).\n` +
         `- Tệp đang kiểm tra: ${fileName} (Kết luận: ${isMal ? 'Nguy hiểm - Cần làm sạch trước khi mở' : 'An toàn'}, Mức rủi ro: ${probPct}).\n` +
         `- Nội dung phân tích chuẩn từ hệ thống phòng vệ MalPDF:\n${groundTruthAnswer || 'Tệp đã được kiểm tra cấu trúc và mã nhúng.'}\n\n` +
         `Câu hỏi của người dùng: "${question}"\n` +
-        `Yêu cầu: Dựa sát vào Nội dung phân tích chuẩn ở trên, hãy trả lời trực tiếp, rõ ràng, thân thiện bằng tiếng Việt (tối đa 4-6 câu).`
+        `Yêu cầu: Dựa sát vào Nội dung phân tích chuẩn ở trên, trả lời trực tiếp, rõ ràng, thân thiện bằng tiếng Việt. Trình bày bằng định dạng Markdown (danh sách có thứ tự, in đậm, khối code backticks) một cách trực quan, mạch lạc. Tuyệt đối không đề cập đến tên mô hình kỹ thuật (như Qwen, Llama, WebLLM).`
       );
+    }
+
+    function renderAIChatMarkdown(rawText) {
+      if (!rawText) return '';
+      const text = String(rawText).trim();
+
+      if (typeof marked !== 'undefined' && typeof marked.parse === 'function') {
+        try {
+          marked.setOptions({ gfm: true, breaks: true });
+          return marked.parse(text);
+        } catch (e) {
+          console.warn('Marked parse error, using fallback parser:', e);
+        }
+      }
+
+      let html = text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+      // Code blocks
+      html = html.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, (match, lang, code) => {
+        return `<pre class="my-2 p-3 rounded-xl bg-slate-900 text-slate-100 font-mono text-[11px] overflow-x-auto border border-slate-800"><code>${code.trim()}</code></pre>`;
+      });
+
+      // Inline code
+      html = html.replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded-md bg-surface-container font-mono text-[11px] text-primary font-semibold border border-surface-container-high">$1</code>');
+
+      // Headings
+      html = html.replace(/^### (.*$)/gim, '<h3 class="font-bold text-on-surface text-xs mt-2.5 mb-1">$1</h3>');
+      html = html.replace(/^## (.*$)/gim, '<h2 class="font-bold text-on-surface text-sm mt-3 mb-1.5">$1</h2>');
+      html = html.replace(/^# (.*$)/gim, '<h1 class="font-bold text-on-surface text-sm mt-3 mb-1.5">$1</h1>');
+
+      // Bold & Italic
+      html = html.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-bold text-on-surface">$1</strong>');
+      html = html.replace(/__([^_]+)__/g, '<strong class="font-bold text-on-surface">$1</strong>');
+      html = html.replace(/\*([^*]+)\*/g, '<em class="italic">$1</em>');
+      html = html.replace(/_([^_]+)_/g, '<em class="italic">$1</em>');
+
+      // Blockquotes
+      html = html.replace(/^> (.*$)/gim, '<blockquote class="border-l-2 border-primary-container bg-primary-container/5 px-2.5 py-1 rounded-r my-1.5 text-on-surface-variant">$1</blockquote>');
+
+      // Lists
+      const lines = html.split('\n');
+      let inUl = false;
+      let inOl = false;
+      const processed = [];
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const olMatch = line.match(/^(\d+)\.\s+(.*)$/);
+        const ulMatch = line.match(/^[-*•]\s+(.*)$/);
+
+        if (olMatch) {
+          if (inUl) { processed.push('</ul>'); inUl = false; }
+          if (!inOl) { processed.push('<ol class="list-decimal pl-5 space-y-1 my-1.5">'); inOl = true; }
+          processed.push(`<li>${olMatch[2]}</li>`);
+        } else if (ulMatch) {
+          if (inOl) { processed.push('</ol>'); inOl = false; }
+          if (!inUl) { processed.push('<ul class="list-disc pl-5 space-y-1 my-1.5">'); inUl = true; }
+          processed.push(`<li>${ulMatch[1]}</li>`);
+        } else {
+          if (inOl) { processed.push('</ol>'); inOl = false; }
+          if (inUl) { processed.push('</ul>'); inUl = false; }
+          processed.push(line);
+        }
+      }
+      if (inOl) processed.push('</ol>');
+      if (inUl) processed.push('</ul>');
+
+      html = processed.join('\n');
+
+      const paragraphs = html.split(/\n\s*\n/);
+      return paragraphs.map(p => {
+        p = p.trim();
+        if (!p) return '';
+        if (p.startsWith('<pre') || p.startsWith('<ol') || p.startsWith('<ul') || p.startsWith('<blockquote') || p.startsWith('<h1') || p.startsWith('<h2') || p.startsWith('<h3')) {
+          return p;
+        }
+        return `<p class="mb-1.5 last:mb-0 leading-relaxed">${p.replace(/\n/g, '<br/>')}</p>`;
+      }).filter(Boolean).join('');
     }
 
     async function sendAIChatMessage() {
@@ -3151,23 +3427,29 @@
       input.value = '';
 
       const aiWrap = document.createElement('div');
-      aiWrap.className = 'flex items-start gap-2';
+      aiWrap.className = 'flex items-start gap-2.5';
       const avatar = document.createElement('div');
-      avatar.className = 'w-6 h-6 rounded-full bg-primary-container text-white flex items-center justify-center shrink-0 text-[10px] font-bold mt-0.5';
+      avatar.className = 'w-6 h-6 rounded-full bg-gradient-to-tr from-primary to-primary-container text-white flex items-center justify-center shrink-0 text-[10px] font-bold mt-0.5 shadow-xs';
       avatar.textContent = 'AI';
 
       const bubbleContainer = document.createElement('div');
-      bubbleContainer.className = 'p-3 rounded-2xl bg-white text-on-surface shadow-xs border border-surface-container leading-relaxed text-xs space-y-2 flex-1 min-w-0';
+      bubbleContainer.className = 'p-3 rounded-2xl bg-white text-on-surface shadow-xs border border-surface-container leading-relaxed text-xs flex-1 min-w-0';
 
-      const modeTag = document.createElement('div');
-      modeTag.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-surface-container text-on-surface-variant';
-      modeTag.textContent = 'Đang phân tích câu hỏi...';
+      const thinkingIndicator = document.createElement('div');
+      thinkingIndicator.className = 'flex items-center gap-2 py-0.5 text-xs text-outline font-medium';
+      thinkingIndicator.innerHTML = `
+        <span class="flex gap-1 items-center">
+          <span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-bounce" style="animation-delay: 0ms"></span>
+          <span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-bounce" style="animation-delay: 150ms"></span>
+          <span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-bounce" style="animation-delay: 300ms"></span>
+        </span>
+        <span>Đang suy nghĩ...</span>
+      `;
 
       const answer = document.createElement('div');
-      answer.className = 'whitespace-pre-wrap text-on-surface leading-relaxed';
-      answer.textContent = 'Đang tổng hợp dữ liệu...';
+      answer.className = 'chat-prose hidden';
 
-      bubbleContainer.appendChild(modeTag);
+      bubbleContainer.appendChild(thinkingIndicator);
       bubbleContainer.appendChild(answer);
       aiWrap.appendChild(avatar);
       aiWrap.appendChild(bubbleContainer);
@@ -3176,6 +3458,13 @@
 
       if (button) button.disabled = true;
       if (input) input.disabled = true;
+
+      function displayFinalAnswer(text) {
+        thinkingIndicator.classList.add('hidden');
+        answer.classList.remove('hidden');
+        answer.innerHTML = renderAIChatMarkdown(text);
+        messages.scrollTop = messages.scrollHeight;
+      }
 
       let groundTruthAnswer = '';
       try {
@@ -3193,30 +3482,83 @@
           console.warn('Ground-truth fetch warning:', gtErr);
         }
 
+        if (_isIdentityOrGreetingQuery(question) && clientAIState.selectedModel !== 'cnb/minimax-m3.1-flash' && groundTruthAnswer) {
+          const intro = `Xin chào! Mình là **Trợ lý AI Phân tích An toàn PDF** của MalPDF. Mình có thể giúp bạn giải thích chi tiết các nguy cơ và hướng dẫn làm sạch tệp PDF an toàn.\n\n${groundTruthAnswer}`;
+          displayFinalAnswer(intro);
+          return;
+        }
+
+        if (clientAIState.selectedModel === 'cnb/minimax-m3.1-flash') {
+          try {
+            const userPrompt = _buildMiniMaxPrompt(question, groundTruthAnswer);
+            const response = await fetch(VILAO_API_CONFIG.endpoint, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${VILAO_API_CONFIG.apiKey}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                model: VILAO_API_CONFIG.model,
+                messages: [
+                  { role: 'system', content: CLIENT_LLM_SYSTEM_PROMPT },
+                  { role: 'user', content: userPrompt }
+                ],
+                stream: true,
+                temperature: 0.2,
+                max_tokens: 650
+              })
+            });
+
+            if (!response.ok) {
+              throw new Error(`Cloud API HTTP ${response.status}`);
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let fullReply = '';
+            let buffer = '';
+
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split('\n');
+              buffer = lines.pop() || '';
+
+              for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed || trimmed === 'data: [DONE]') continue;
+                if (trimmed.startsWith('data: ')) {
+                  try {
+                    const data = JSON.parse(trimmed.slice(6));
+                    const delta = (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) || '';
+                    if (delta) {
+                      fullReply += delta;
+                      displayFinalAnswer(fullReply);
+                    }
+                  } catch (e) {}
+                }
+              }
+            }
+
+            if (fullReply.trim()) {
+              displayFinalAnswer(fullReply.trim());
+              return;
+            }
+          } catch (apiErr) {
+            console.warn('Cloud API error, auto falling back to backup architecture:', apiErr);
+          }
+        }
+
         const hardwareOk = await evaluateClientAIHardware();
 
-        if (hardwareOk && clientAIState.preferNewModel) {
+        if (hardwareOk && clientAIState.preferNewModel && clientAIState.selectedModel && clientAIState.selectedModel.includes('MLC')) {
           if (!clientAIState.engineReady || !clientAIState.engine) {
-            modeTag.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-primary-container/10 text-primary-container';
-            modeTag.textContent = `Đang nạp mô hình AI mới (${clientAIState.selectedModel})...`;
-            answer.textContent = 'Đang tải mô hình SLM vào bộ nhớ đệm trình duyệt (Cache Storage API)...';
             await initWebLLMEngine(true);
           }
 
           if (clientAIState.engineReady && clientAIState.engine) {
-            modeTag.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-tertiary/15 text-tertiary border border-tertiary/30';
-            modeTag.textContent = `Mô hình AI mới • ${clientAIState.loadedModel} (WebGPU Cục bộ)`;
-
-            if (_isIdentityOrGreetingQuery(question) && groundTruthAnswer) {
-              const gpuLabel = (clientAIState.adapterInfo && (clientAIState.adapterInfo.description || clientAIState.adapterInfo.vendor)) || 'WebGPU';
-              answer.textContent =
-                `Xin chào! Mình đang hoạt động trực tiếp trên trình duyệt của bạn bằng mô hình ngôn ngữ cục bộ ${clientAIState.loadedModel} (tăng tốc phần cứng qua ${gpuLabel}).\n\n` +
-                groundTruthAnswer;
-              return;
-            }
-
             try {
-              answer.textContent = 'Đang suy luận trên WebGPU...';
               const userPrompt = _buildGroundedWebLLMPrompt(question, groundTruthAnswer);
 
               const chunks = await clientAIState.engine.chat.completions.create({
@@ -3239,48 +3581,29 @@
                   break;
                 }
                 if (fullReply.trim().length > 0) {
-                  answer.textContent = fullReply;
-                  messages.scrollTop = messages.scrollHeight;
+                  displayFinalAnswer(fullReply);
                 }
               }
 
               const cleanedReply = fullReply.trim();
               if (!refusalDetected && !_isRefusalOrBrokenLLMReply(cleanedReply)) {
-                answer.textContent = cleanedReply;
-                return;
-              }
-              if (groundTruthAnswer) {
-                answer.textContent = groundTruthAnswer;
+                displayFinalAnswer(cleanedReply);
                 return;
               }
             } catch (webllmErr) {
               console.warn('WebLLM generation error, using ground-truth answer:', webllmErr);
-              clientAIState.lastFallbackReason = webllmErr && webllmErr.message ? webllmErr.message : 'Lỗi thực thi WebGPU';
-              if (groundTruthAnswer) {
-                answer.textContent = groundTruthAnswer;
-                return;
-              }
+              clientAIState.lastFallbackReason = webllmErr && webllmErr.message ? webllmErr.message : 'Lỗi thực thi';
             }
           }
         }
 
-        if (!hardwareOk) {
-          modeTag.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-800 border border-amber-500/30';
-          modeTag.textContent = `Đã fallback về mô hình cũ • Thiết bị không đủ tài nguyên chạy AI mới (${clientAIState.hardwareReason})`;
-        } else {
-          modeTag.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-800 border border-amber-500/30';
-          modeTag.textContent = clientAIState.lastFallbackReason
-            ? `Đã fallback về mô hình cũ • ${clientAIState.lastFallbackReason}`
-            : 'Đã fallback về mô hình cũ (Bộ giải thích tiêu chuẩn)';
-        }
-
         if (groundTruthAnswer) {
-          answer.textContent = groundTruthAnswer;
+          displayFinalAnswer(groundTruthAnswer);
         } else {
           throw new Error('Chưa có câu trả lời từ hệ thống');
         }
       } catch (error) {
-        answer.textContent = groundTruthAnswer || ('Không thể lấy câu trả lời lúc này: ' + error.message);
+        displayFinalAnswer(groundTruthAnswer || ('Không thể lấy câu trả lời lúc này: ' + error.message));
       } finally {
         clientAIState.isGenerating = false;
         if (button) button.disabled = false;

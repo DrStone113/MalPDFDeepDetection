@@ -19,7 +19,7 @@ from malpdf.experiments import multi_cohort_gpu as gpu
 def cic_fixture():
     frame = pd.DataFrame({"sample_id": [f"benign_fixture_{i:04}" for i in range(1452)],
         "Label": np.r_[np.ones(800, int), np.zeros(652, int)], "JS": np.arange(1452, dtype=float)})
-    # A 209-row component contains both labels, so simple row stratification leaks.
+
     frame.loc[np.r_[np.arange(110), np.arange(800, 899)], "JS"] = -1
     return frame
 
@@ -149,7 +149,7 @@ def test_five_ft_folds_cpu_smoke_preserves_train_only_statistics_and_exports_no_
     assert pd.read_csv(directory / "ft_probs_test.csv").shape == (4, 2)
     assert json.loads((directory / "ft_selection_lock.json").read_text())["selected_role"] == "validation_base_selection"
     for file in directory.glob("ft_transformer/*/scaler.json"):
-        assert json.loads(file.read_text())["mean"][0] < 20  # Validation/Test cannot influence fitted statistics.
+        assert json.loads(file.read_text())["mean"][0] < 20
     inventory = json.loads((directory / "output_checksums.json").read_text())
     assert "ft_transformer/fold_5/model.pt" in inventory and "ft_selection_lock.json" in inventory
     environment = json.loads((directory / "environment_metadata.json").read_text())
@@ -171,7 +171,7 @@ def test_expanded_read_only_delta_is_copied_before_adding_source_matrices(tmp_pa
     (mounted / "bundle_metadata.json").write_text(json.dumps(metadata))
     for file in mounted.rglob("*"):
         if file.is_file(): file.chmod(0o444)
-    # Keep the synthetic writable copy within pytest's temporary directory.
+
     import tempfile
     monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
     copied = writable_numeric_bundle(mounted, metadata)

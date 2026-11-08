@@ -316,8 +316,8 @@ def canonicalize_cic_strict6(
     features = pd.DataFrame({canonical: values.to_numpy(copy=False) for canonical, (values, _) in parsed.items()}, index=labels.index)
     numeric_errors = tuple(error for _, error in parsed.values() if error is not None)
     source_sha256 = sha256_file(source)
-    # The identifier is one-way and source-independent so CSV/Parquet records
-    # can be compared.  Raw FileName/hash values never leave memory.
+
+
     safe_ids = frame.loc[valid, identifiers[0]].map(_mirror_match_identifier).astype(str)
     if not safe_ids.is_unique:
         raise Strict6Error("CIC safe identifiers are not unique; refusing an ambiguous canonical view")
@@ -355,8 +355,8 @@ def canonicalize_rit_strict6(
     parsed = {canonical: _parse_numeric_strict(frame[column], "RIT", canonical) for canonical, column in source_columns.items()}
     features = pd.DataFrame({canonical: values.to_numpy(copy=False) for canonical, (values, _) in parsed.items()})
     digest = sha256_file(source)
-    # Reuse the project record-content identifier, which explicitly avoids a
-    # DataFrame index and gives fully identical records deterministic occurrences.
+
+
     identifiers = build_deterministic_sample_ids(frame).astype(str).reset_index(drop=True)
     view = CanonicalDatasetView(
         name="RIT-PDFMal-2026", source_path=source.resolve(), source_sha256=digest,

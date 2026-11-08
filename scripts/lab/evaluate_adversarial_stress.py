@@ -24,6 +24,7 @@ from torch.utils.data import DataLoader, Dataset
 
 from malpdf.models.adversarial_simulator import create_adversarial_sample
 from malpdf.models.adversarial_trainer import AdversarialRobustLoss
+from malpdf.data.graph_contract import index_measured_graphs
 from malpdf.models.pdf_transgraph import FocalLoss, PDFTransGraph
 
 REPO = Path(__file__).resolve().parents[2]
@@ -190,7 +191,7 @@ def load_dataset():
 
     with gzip.open(GRAPHS_PATH, "rt", encoding="utf-8") as stream:
         raw_graphs = json.load(stream)
-    graph_dict = {g["sha256"]: g for g in raw_graphs}
+    graph_dict = index_measured_graphs(raw_graphs, set(merged["pdf_sha256"]))
     samples_by_split = {"train": [], "validation": [], "test": []}
     ast_type_cols = [c for c in df_ours.columns if "ast_type_" in c]
     for _, row in merged.iterrows():
@@ -202,19 +203,12 @@ def load_dataset():
         if len(ast_counts) < 32:
             ast_counts += [0.0] * (32 - len(ast_counts))
         ast_tokens = torch.tensor([int(c) % 64 for c in ast_counts], dtype=torch.long)
-        g = graph_dict.get(sha)
-        if g is not None and g["num_nodes"] > 0:
-            nf = torch.tensor(g["node_features"], dtype=torch.float32)
-            nt = torch.tensor(g["node_types"], dtype=torch.long)
-            e_src = torch.tensor(g["edge_src"], dtype=torch.long)
-            e_dst = torch.tensor(g["edge_dst"], dtype=torch.long)
-            e_rel = torch.tensor(g["edge_rel"], dtype=torch.long)
-        else:
-            nf = torch.zeros((1, 19), dtype=torch.float32)
-            nt = torch.tensor([8], dtype=torch.long)
-            e_src = torch.zeros((0,), dtype=torch.long)
-            e_dst = torch.zeros((0,), dtype=torch.long)
-            e_rel = torch.zeros((0,), dtype=torch.long)
+        g = graph_dict[sha]
+        nf = torch.tensor(g["node_features"], dtype=torch.float32)
+        nt = torch.tensor(g["node_types"], dtype=torch.long)
+        e_src = torch.tensor(g["edge_src"], dtype=torch.long)
+        e_dst = torch.tensor(g["edge_dst"], dtype=torch.long)
+        e_rel = torch.tensor(g["edge_rel"], dtype=torch.long)
         samples_by_split[split].append(
             {
                 "sha256": sha,

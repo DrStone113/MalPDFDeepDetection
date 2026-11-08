@@ -80,7 +80,7 @@ def find_kaggle_bundle(input_root, expected_metadata_sha256):
                         archives.append(path)
             except (zipfile.BadZipFile, EOFError, RuntimeError, NotImplementedError):
                 continue
-    # Some mounts contain both the original ZIP and its expanded contents.
+
     matches = expanded if expanded else archives
     if len(matches) > 1:
         raise ValueError("Ambiguous matching bundles; set INPUT_ROOT to one dataset directory. "

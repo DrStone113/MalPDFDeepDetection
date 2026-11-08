@@ -124,7 +124,7 @@ class PluginSpec:
         if not path:raise ValueError('plugin_importable_source_required')
         object.__setattr__(self,'kind',kind);object.__setattr__(self,'source_path',str(Path(path).absolute()))
         object.__setattr__(self,'source_sha256',_source(path));object.__setattr__(self,'parameters_json',params)
-        # Detach caller dictionaries. Runtime uses the immutable canonical text.
+
         object.__setattr__(self,'parameters',json.loads(params))
 
     def describe(self):

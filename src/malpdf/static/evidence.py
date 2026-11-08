@@ -71,7 +71,7 @@ def _graph(reader, backend, limits, decoded_remaining):
             errors.add(str(error) if isinstance(error,CodeInspectionError) else 'graph_name_reference_failure')
             return None
         return str(value) if isinstance(value,NameObject) else None
-    # Lazy frames retain good objects when a sibling reference/stream fails.
+
     stack = [(iter([(reader.trailer.raw_get('/Root'), None, '/Root')]), 0)]
     while stack:
         iterator, depth = stack[-1]
@@ -159,7 +159,7 @@ def inspect_evidence(data, static, code, limits, *, timings=None, primary_comple
         remaining = 0
     from malpdf.static.raw_scan import RAW_DIRECT_TOKENS
     for name, value in static.get('features', {}).items():
-        # Legacy sentinels remain intact in static; they are unknown evidence.
+
         value = None if value == -1 else value
         source = 'raw_scanner' if name in RAW_DIRECT_TOKENS or name in {'obj','endobj','stream','endstream','xref','startxref','page_command'} else 'rit_reference'
         result['features'].append(fact('canonical_'+name, value, source, complete=value is not None,

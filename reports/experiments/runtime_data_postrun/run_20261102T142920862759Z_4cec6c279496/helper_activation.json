@@ -1,0 +1,26 @@
+{
+  "backup": "/var/lib/malpdf/bootstrap-backups/20261102T145939626968Z-postrun-helpers",
+  "helpers": [
+    {
+      "name": "lab_jobs.py",
+      "previous_sha256": "e27932c6d6b7610844f542f50f6a25225d63e9801850f13295d485740c629dab",
+      "sha256": "95068c3b1bbb757a63993da4616d9f76800f8c40c94476361e498524f5c8d071"
+    },
+    {
+      "name": "lab_runner.py",
+      "previous_sha256": "8e53f0fe1e54cc3721c96e7e5a74d048bf1c14d168454ed1c25a035bcd79a96b",
+      "sha256": "dfbaa67fedb79fc4b925b647c22a0797fc1fa8e69c82d6fb3b78677b932fd5f6"
+    }
+  ],
+  "gateway_configuration_before": {
+    "configuration": "passed",
+    "helpers": "passed",
+    "policy": "mismatch",
+    "units": "passed",
+    "sshd": "passed",
+    "proof": "passed"
+  },
+  "gateway_policy_unchanged": true,
+  "sshd_unchanged": true,
+  "raw_pdf_processing": false
+}

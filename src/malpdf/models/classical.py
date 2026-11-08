@@ -81,7 +81,7 @@ def create_model(model_name: str, seed: int = 42) -> Any:
     if model_name == "xgboost":
         try:
             from xgboost import XGBClassifier
-        except ImportError as error:  # pragma: no cover - dependency declared in pyproject
+        except ImportError as error:
             raise ImportError("XGBoost is required; install the project dependencies.") from error
         if parameters.get("missing") == "NaN":
             parameters["missing"] = float("nan")

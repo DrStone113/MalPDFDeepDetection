@@ -251,8 +251,8 @@ def checkpoint_crash(connection,*args):
 def test_backend_crash_preserves_primary_evidence_and_reports_unknown(tmp_path,monkeypatch):
     import multiprocessing
     from malpdf.static import profile_worker
-    # The simulated crash must not include unrelated spawn import latency.
-    # Real spawn and OS caps are exercised by the disposable-worker test below.
+
+
     context=multiprocessing.get_context('fork')
     monkeypatch.setattr(profile_worker.multiprocessing,'get_context',lambda *args:context)
     monkeypatch.setattr(profile_worker,'_profile_child',checkpoint_crash)
@@ -265,8 +265,8 @@ def test_backend_crash_preserves_primary_evidence_and_reports_unknown(tmp_path,m
 
 def test_actual_disposable_v8_worker_never_rewrites_benign_input(tmp_path,monkeypatch):
     from malpdf.static import profile_worker
-    # Admission is tested separately; this fixture must not depend on host RAM.
-    # The actual subprocess still receives its hard address-space/CPU limits.
+
+
     monkeypatch.setattr(profile_worker,'_worker_count',lambda *args: 1)
     data=pdf(broken_marker=True); path=tmp_path/'benign.pdf';path.write_bytes(data)
     result=profile_worker.profile_pdf(path,boundary=tmp_path,digest=hashlib.sha256(data).hexdigest(),include_v8=True,

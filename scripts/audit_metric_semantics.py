@@ -9,8 +9,8 @@ from pathlib import Path
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 
-from malpdf.analysis.metric_semantics import MetricSemanticsError, run_metric_semantics_audit  # noqa: E402
-from malpdf.analysis.protocol_p_vs_g import ProtocolComparisonError  # noqa: E402
+from malpdf.analysis.metric_semantics import MetricSemanticsError, run_metric_semantics_audit
+from malpdf.analysis.protocol_p_vs_g import ProtocolComparisonError
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -97,7 +97,7 @@ def extract_cic_archives(root, raw, run, *, archive_files=()):
 def exclude_source_feature_groups(source_features, candidates, feature_order):
     """Exclude exact model-input equivalence independently of labels or row order."""
     combined = pd.concat([source_features.loc[:, feature_order], candidates.loc[:, feature_order]], ignore_index=True).astype(float)
-    combined["Label"] = 0  # Target is excluded by the existing group helper.
+    combined["Label"] = 0
     groups = build_duplicate_group_ids(combined)
     contained = groups.iloc[len(source_features):].isin(set(groups.iloc[:len(source_features)]))
     return contained.to_numpy()
@@ -148,7 +148,7 @@ def _evaluate_frozen(root, run, config, reference, lock, features, cache):
         raise ValueError("Original 25-fold model plan is unavailable")
     training_config = json.loads(read_bounded_bytes(root / config["reference"]["directory"] / "locked_methodology.json",
         boundary=root / "reports/experiments", max_bytes=1024**2))["configuration"]
-    # Pin each checkpoint again to the saved pre-Test metadata, not just a mutable reuse plan.
+
     saved_hashes = {(info["model"], i % 5 + 1): info["checkpoint_sha256"]
                     for i, info in enumerate(lock["base_fit_metadata"])}
     models = {}
@@ -205,7 +205,7 @@ def _evaluate_frozen(root, run, config, reference, lock, features, cache):
                   "referred": referred}).to_csv(run.artifacts / "external_predictions.csv", index=False)
     run.state.update(external_evaluation_count=1, base_models_refitted=0, meta_models_refitted=0,
                      threshold=stack.threshold, routing=[pure, closed])
-    # Read an existing result for comparison; do not invoke the original Test.
+
     baseline = reference["metrics"]["stacking_v3/test"]
     pd.DataFrame([{"cohort": "original_protocol_g_test", "status": "copied_saved_evidence", **baseline},
                   {"cohort": "cic_independent_external", "status": "evaluated_once", **metrics}]).to_csv(
@@ -246,8 +246,8 @@ def run_cic_cross_dataset(root, code_root, config, *, archive_files=(),
         available = plan.exclusion_reason.eq("") & plan.pdf_relative_path.ne("")
         audit = plan.label_conflict & plan.source_overlap if audit_conflicts else pd.Series(False, index=plan.index)
         plan.loc[audit & plan.pdf_relative_path.eq(""), "pdf_relative_path"] = plan.loc[audit, "source_pdf_relative_path"]
-        # Normalize all CIC rows with verified local bytes, including overlaps
-        # for audit; only independent rows can enter frozen external metrics.
+
+
         selected = plan.loc[plan.pdf_relative_path.ne("")].copy()
         data = root / "data/processed/cic_normalization" / run.identifier
         if any(path.is_symlink() for path in (data, *data.parents)):
@@ -370,8 +370,8 @@ def evaluate_prepared_cic(root, code_root, config, prepared_run, *, allow_input_
         if not np.array_equal(eligible.Label.to_numpy(), truth):
             raise ValueError("Measured rows and preserved publisher labels differ")
         source = pd.read_csv(io.BytesIO(locked_bytes(root, reference["inputs"]["all_features"], "data/processed")))
-        # Recheck the exact numeric representation supplied to frozen models.
-        # CSV parsing can collapse a last-bit float difference in raw features.
+
+
         contained = exclude_source_feature_groups(source, eligible, lock["feature_order"])
         additional_exclusions = int(contained.sum())
         eligible.loc[contained].to_csv(run.artifacts / "additional_source_feature_exclusions.csv", index=False)

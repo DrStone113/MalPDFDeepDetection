@@ -94,8 +94,8 @@ def main(argv=None, *, root=None):
             if input("Chuẩn bị xong: nhấn Enter để kiểm tra và chạy; nhập q để đóng: ") != "":
                 print("Đã đóng; chưa chạy PDF.")
                 return 0
-            # Operator changes are observed only after Enter. Waiting never
-            # claims/runs a job, polls or changes NICs/credential files.
+
+
             report = inspect_launch(root, args.prepared_run)
             if any(reason not in LAB_ISSUES for reason in report["blocking_reasons"]):
                 print(json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False), flush=True)
@@ -127,8 +127,8 @@ def main(argv=None, *, root=None):
             if not report["blocking_reasons"]:
                 break
             print("CHƯA CHẠY: bạn có thể xử lý rồi nhấn Enter ngay trong cửa sổ này.")
-        # The runner rechecks all gates after the operator confirmation, before
-        # its exclusive claim/PDF access. No retries or environment sanitizing.
+
+
         result = jobs.run_job(root, args.prepared_run, lab_attested=True)
         summary = {k: result[k] for k in ("run_id", "status", "rows", "planned", "report_path", "output_path") if k in result}
         print(json.dumps(summary, ensure_ascii=False, indent=2, allow_nan=False), flush=True)
@@ -138,8 +138,8 @@ def main(argv=None, *, root=None):
         print("Đã dừng. Giữ nguyên evidence/claim nếu job đã bắt đầu; không tự chạy lại.")
         return 130
     except (OSError, ValueError, KeyError, TypeError, RuntimeError) as error:
-        # Do not echo exception text: a dependency/manifest error may contain
-        # private paths or sample metadata. Saved run evidence remains private.
+
+
         print(f"CHƯA HOÀN TẤT ({type(error).__name__}): kiểm tra job/source/model và điều kiện LAB.")
         print("Giữ nguyên evidence/claim nếu đã tạo; không tự chạy lại hoặc bỏ guard.")
         return 1

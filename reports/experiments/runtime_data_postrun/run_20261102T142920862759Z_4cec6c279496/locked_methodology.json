@@ -1,0 +1,29 @@
+{
+  "job": {
+    "schema_version": 1,
+    "api": 1,
+    "commit": "c6b920385d966eaba9f0e1eec0ac2dcb789a4664",
+    "archive_sha256": "bffb3ef0a3f5ffa12776bba3fc5594ae62a20a86541f803b120ece9015e2b253",
+    "manifest_sha256": "e4a9a1ce4f34f1aabc1dced5dcd027295ee6a73469f7f10c749079c7ff8f14fb",
+    "mode": "offline",
+    "kind": "pdf-static-cic-full",
+    "limits": {
+      "wall_seconds": 7200,
+      "file_wall_seconds": 35,
+      "file_cpu_seconds": 30,
+      "file_memory_bytes": 1073741824,
+      "file_max_bytes": 10485760,
+      "samples": 1452,
+      "workers": 10,
+      "output_bytes": 2147483648
+    },
+    "attempt": "6eee14df0a8246048fefc66843e83eb1",
+    "job_id": "4cec6c2794967311bc5c55a924933a0b0cbda0529ff31fe1f19de8b4cdcd7b75"
+  },
+  "source_receipt": "artifacts/tmp/runtime_audit/deployment_latest.json",
+  "read_only_postrun": true,
+  "source_data": "Saved LAB JSON bundles only; no PDF parser or raw PDF access",
+  "exports": "Only schema-validated numeric projections and sanitized diagnostics",
+  "metrics_claim": "Extraction coverage; no new classifier accuracy/F1",
+  "previous_cache_preserved": true
+}

@@ -1,0 +1,96 @@
+{
+  "generated_utc": "2026-11-02T12:37:59.504749+00:00",
+  "fixture_integrity": [
+    {
+      "file_name": "real_benign_document.pdf",
+      "fixture_only": true,
+      "sha256_before": "ef43e7f9e1c138d5d5279fe3c16e54c7d0a63c1a056f5008550872e31b4b0fa7",
+      "sha256_after": "0e42661dc5be6febf5e0ac6ae6163fcc040ddff701816068808e3185ab3b74c3",
+      "size_before": 324418,
+      "size_after": 324418,
+      "size_retention_pct": 100.0,
+      "pages_before": 2,
+      "pages_after": 2,
+      "text_chars": 9839,
+      "text_equal": true,
+      "contents_equal": true,
+      "resources_equal": true,
+      "removed_keys": 0,
+      "cdr_latency_ms": 461.29,
+      "parsed_objects": 12,
+      "scripts_observed": 0,
+      "prediction_available": false,
+      "probability": null,
+      "prediction_blockers": [
+        "training_feature_semantics_unverified",
+        "graph_and_ast_training_parity_unverified",
+        "feature_not_observed:byte_image_file_encoded_ratio",
+        "feature_not_observed:byte_image_file_persisted_ratio",
+        "feature_not_observed:stream_truncation_ratio",
+        "feature_not_observed:evasive_timeout_anomaly",
+        "feature_not_observed:flag_decompression_ratio_exceeded",
+        "feature_not_observed:is_truncated_stream",
+        "feature_not_observed:flag_spec_violation_flood",
+        "feature_not_observed:flag_excessive_object_graph",
+        "feature_not_observed:flag_ast_complexity_truncated"
+      ]
+    },
+    {
+      "file_name": "real_threat_document.pdf",
+      "fixture_only": true,
+      "sha256_before": "b260f9e53f0b8dabdc9ac81e93119e9b66766db88f8ece507596c7039cff9eca",
+      "sha256_after": "895fe937b66356bca7665a2749136ab233001436fd4d20d073ca6864da8a3516",
+      "size_before": 324957,
+      "size_after": 324431,
+      "size_retention_pct": 99.84,
+      "pages_before": 2,
+      "pages_after": 2,
+      "text_chars": 9839,
+      "text_equal": true,
+      "contents_equal": true,
+      "resources_equal": true,
+      "removed_keys": 5,
+      "cdr_latency_ms": 386.7,
+      "parsed_objects": 16,
+      "scripts_observed": 2,
+      "prediction_available": false,
+      "probability": null,
+      "prediction_blockers": [
+        "training_feature_semantics_unverified",
+        "graph_and_ast_training_parity_unverified",
+        "feature_not_observed:byte_image_file_encoded_ratio",
+        "feature_not_observed:byte_image_file_persisted_ratio",
+        "feature_not_observed:stream_truncation_ratio",
+        "feature_not_observed:evasive_timeout_anomaly",
+        "feature_not_observed:flag_decompression_ratio_exceeded",
+        "feature_not_observed:is_truncated_stream",
+        "feature_not_observed:flag_spec_violation_flood",
+        "feature_not_observed:flag_excessive_object_graph",
+        "feature_not_observed:flag_ast_complexity_truncated"
+      ]
+    }
+  ],
+  "numeric_cache_audit": {
+    "numeric_rows": 1452,
+    "measured_graphs": 1314,
+    "missing_graphs": 138,
+    "split_counts": {
+      "train": 870,
+      "validation": 291,
+      "test": 291
+    },
+    "missing_graphs_by_split": {
+      "train": 85,
+      "validation": 27,
+      "test": 26
+    },
+    "inputs_sha256": {
+      "data/processed/cic_full/cic_features_1452.parquet": "79f9e662b3f3b327bc2cc4e87fb5d097dd435b54ec56e6e1b72821456aeef1e2",
+      "data/processed/cic_full/hetero_cic_graphs.json.gz": "4754739fc935e8477d0d56ffc86064a610e2ffb0ea9496f90e5423fa0b83fe28"
+    },
+    "status": "blocked_missing_or_invalid_measured_graphs",
+    "reason": "missing_measured_graphs:138; extract actual graphs in LAB before training"
+  },
+  "model_performance": "not_evaluated",
+  "lab_raw_pdf_execution": "requires_operator_lab_run"
+}

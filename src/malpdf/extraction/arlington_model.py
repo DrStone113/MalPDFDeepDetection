@@ -52,7 +52,7 @@ def _snapshot(root, snapshot, tsv):
     directory=root/snapshot
     if not (root/tsv).is_relative_to(directory) or (root/tsv)==directory:
         raise ModelUnavailable('arlington_tsv_outside_snapshot')
-    # Check ancestors before Git can follow a redirected checkout/config path.
+
     if any(path.is_symlink() for path in (root/tsv,*(root/tsv).parents)):
         raise ModelUnavailable('arlington_snapshot_symlink')
     paths=sorted((root/tsv).glob('*.tsv'))
@@ -146,8 +146,8 @@ def _load(root, value):
                 raise ModelUnavailable('arlington_tsv_header_mismatch')
             rows=[]
             for line,cells in enumerate(reader,2):
-                # This pinned upstream tree omits the final optional Note cell
-                # on two DocInfo rows. Never repair source TSV bytes.
+
+
                 missing_note=len(cells)==len(HEADER)-1
                 if missing_note:
                     cells=cells+['']

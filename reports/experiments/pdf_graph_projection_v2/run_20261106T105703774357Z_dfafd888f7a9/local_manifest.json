@@ -1,0 +1,16 @@
+{
+  "files": {
+    "cases.jsonl": "dba9cc68e8db0cd4b3fd253e7cd4f1c1f8b1cc67b570533b304464f7f163e73b",
+    "locked_methodology.json": "8b56eecb3d29531a608bf734fd1fde897873b2cf03cae3b92aedc5aca8784698",
+    "manifest.json": "9f710f18634cfc4e00908ed61e2791b3ae2a9fc6c9bd65b305fee55483d96cb9",
+    "replay_overlay_cases.jsonl": "8212323fe9dce5e28a01b987f736c5b4db9d28561df11efa2563beaa374d11d0",
+    "report.md": "d1d204cde913a8f4009fa16d4cd600df641c6dbf6b1fdac2390365915569089f",
+    "summary.json": "ff8ef2bf83f94fcc2d65c807cd84e8bca5ee5aa334b816b075b3813edf777055",
+    "verification.json": "5fe01dc1673a37c6aa4929d294e28c720276aba4a9bbb72ebb7b4725cfe3cdec",
+    "virtual_export_dry_run/locked_methodology.json": "9bf3a8fc5cdd68a5b9b802252619bcb4e6378fb83d346a0b9d8a00a565da37a3",
+    "virtual_export_dry_run/manifest.json": "7a752c77749cacad10d2aab1586e1c6827395e5f098cc249b7b951b9c24021e7",
+    "virtual_export_dry_run/quality_gate_summary.json": "67fee28acb90f681d56de612e53fbbdc51014f3c70d02e2583717abe0823e7ee",
+    "virtual_export_dry_run/unavailable_document_ledger.json": "09780f8916438e72c960304c599fecad3bbb96cd79a628d0782679631ac40e94"
+  },
+  "run_name": "run_20261106T105703774357Z_dfafd888f7a9"
+}

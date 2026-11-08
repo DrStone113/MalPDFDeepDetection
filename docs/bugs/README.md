@@ -17,6 +17,13 @@ Hệ thống lưu trữ, phân tích chuyên sâu nguyên nhân gốc rễ và c
 | `BUG-002` | Tràn bộ đệm metadata Arlington (512 KB) do bão vi phạm cú pháp lặp lại | `PARSER_SYNTAX` | `CRITICAL` | `RESOLVED` | `tests/test_arlington.py` | [Chi tiết](BUG-002-arlington-metadata-buffer-overflow.md) |
 | `BUG-003` | Worker crash (SIGKILL / OOM) do Decompression Bomb và stream đệ quy | `RESOURCE_OOM` | `CRITICAL` | `RESOLVED` | `tests/test_stream_filters.py` | [Chi tiết](BUG-003-stream-decompression-bomb-sigkill.md) |
 | `BUG-004` | Worker crash (worker_failed) do giới hạn đọc selection.json (512 KB) khi chạy 1,452 mẫu | `RESOURCE_OOM` | `CRITICAL` | `RESOLVED` | `tests/test_cic_full_cohort.py` | [Chi tiết](BUG-004-selection-json-buffer-limit.md) |
+| `BUG-005` | Dữ liệu thiếu, demo và kết luận chưa đo bị hiển thị như bằng chứng thật | `EVIDENCE_INTEGRITY` | `HIGH` | `MITIGATED` | `tests/test_runtime_evidence.py`, `tests/test_cdr_disarm.py` | [Chi tiết](BUG-005-fabricated-runtime-evidence.md) |
+| `BUG-006` | Shard dừng sớm nhưng console báo thành công; cache thiếu kiểm chứng cleanup | `EVIDENCE_INTEGRITY` | `HIGH` | `MITIGATED` | `tests/test_lab_halt_reporting.py`, `tests/test_numeric_postrun_export.py`, `tests/test_numeric_export_job.py` | [Chi tiết](BUG-006-incomplete-job-success-banner.md) |
+| `BUG-007` | Lỗi profile bị gộp; projection rỗng chưa phân biệt với thiếu evidence | `EVIDENCE_DIAGNOSTICS` | `HIGH` | `UNDER_INVESTIGATION` | `tests/test_graph_audit.py`, `tests/test_graph_audit_job.py` | [Chi tiết](BUG-007-graph-audit-diagnostic-loss.md) |
+| `BUG-007A` | Giữ diagnostic worker trước cleanup | `EVIDENCE_DIAGNOSTICS` | `HIGH / P0` | `RESOLVED` | `tests/test_worker_diagnostics.py` | [Chi tiết](BUG-007A-worker-diagnostic-preservation.md) |
+| `BUG-007B` | Chẩn đoán lại 74 mẫu, phân tích 465 graph bị cap và khóa cổng chất lượng trích xuất | `GRAPH_PROVENANCE` | `HIGH` | `RESOLVED` | `tests/test_diagnostic_replay.py`, `tests/test_graph_truncation_audit.py`, `tests/test_extraction_quality_gate.py` | [Chi tiết](BUG-007B-recovery-and-truncation-analysis.md) |
+| `BUG-008` | Outer shard crash (`worker_failed`) do đối chiếu byte-exact `locked_methodology.json` với `/proc/meminfo` `MemTotal` sau khởi động lại VM | `CROSS_BOOT_PROVENANCE` | `CRITICAL` | `RESOLVED` | `tests/test_diagnostic_replay.py` | [Chi tiết](BUG-008-replay-methodology-boot-memtotal-mismatch.md) |
+| `BUG-009` | Lỗi CDR `read_bytes called on unfilterable stream` khi tài liệu chứa ảnh `/DCTDecode` (JPEG) trong `/Resources/XObject` và chuỗi đối tượng gián tiếp dài | `CDR_BINARY_MUTATION` | `HIGH` | `RESOLVED` | `tests/test_cdr_disarm.py` | [Chi tiết](BUG-009-cdr-unfilterable-stream-read-bytes.md) |
 
 ---
 

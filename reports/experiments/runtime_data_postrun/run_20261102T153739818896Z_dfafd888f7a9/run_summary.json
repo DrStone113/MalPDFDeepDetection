@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "job_id": "dfafd888f7a948a87ffac2e0b68ab702fd60dd1dc9bc630fa6cdbe4496e4a06f",
+  "execution_status": "partial",
+  "all_samples_attempted": true,
+  "metrics": "metrics.json",
+  "comparison": "recovery_comparison.json",
+  "dataset": "data/processed/runtime_postrun/dfafd888f7a948a87ffac2e0b68ab702fd60dd1dc9bc630fa6cdbe4496e4a06f/a07a82e079974a0e9e7dff2a796d680a311967ff9fc41f3384daef4f704068cd",
+  "operator_trigger_required_for_this_job": false,
+  "pending_jobs": 0,
+  "classifier_training_ready": false,
+  "raw_pdf_transferred": false,
+  "report": "reports/progress/runtime_data_recovery_postrun_2026-11-02.md",
+  "source_result_hash_verified": true,
+  "prior_results_preserved": true
+}

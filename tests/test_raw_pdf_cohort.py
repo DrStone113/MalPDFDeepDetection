@@ -55,7 +55,7 @@ def test_object_cap_stops_reference_before_page_text_processing(tmp_path):
 def test_group_split_preserves_mixed_labels_vectors_and_related_samples():
     rows = [{"sample_id": f"inert_{i}", **{f: float(i + j) for j, f in enumerate(RAW_FEATURES)}, "Label": i % 2} for i in range(100)]
     table = pd.DataFrame(rows)
-    table.loc[1, list(RAW_FEATURES)] = table.loc[0, list(RAW_FEATURES)].to_numpy()  # Same vector, conflicting labels: keep both.
+    table.loc[1, list(RAW_FEATURES)] = table.loc[0, list(RAW_FEATURES)].to_numpy()
     source = pd.DataFrame({"sample_id": table.sample_id, "pdf_sha256": [f"hash{i}" for i in range(100)],
                            "related_group_id": ["related" if i in (2, 3, 4, 5) else f"single{i}" for i in range(100)]})
     manifest, evidence = locked_raw_split(table, source)

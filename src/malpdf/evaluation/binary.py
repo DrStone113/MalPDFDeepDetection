@@ -119,7 +119,7 @@ def evaluate_binary_predictions(
         "f1_macro": float(
             f1_score(truth, predicted, labels=[0, POSITIVE_LABEL], average="macro", zero_division=0)
         ),
-        # Backward-compatible aliases used by completed historical reports.
+
         "precision": malicious_precision,
         "recall": malicious_recall,
         "f1": malicious_f1,

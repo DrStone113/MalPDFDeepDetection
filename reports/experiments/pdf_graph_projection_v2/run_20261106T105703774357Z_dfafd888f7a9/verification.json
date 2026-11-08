@@ -1,0 +1,110 @@
+{
+  "bundle_immutability": {
+    "baseline_bundles_checked": 1452,
+    "baseline_changed": 0,
+    "replay_bundles_checked": 74,
+    "replay_changed": 0
+  },
+  "elapsed_seconds": 1464.95,
+  "expected_index_sha256": "01b3f248a9685890bc53fda5355052453672649215474a796c4aa56fb40483ff",
+  "export_graph_stats": {
+    "capped_graphs": 1,
+    "graphs_checked": 1448,
+    "security_sensitive_dropped_total": 0,
+    "stream_payloads_known": 9275,
+    "total_contracted_edges": 23859,
+    "total_direct_edges": 40258,
+    "total_edges": 64117,
+    "total_nodes": 42306,
+    "verified_spans_known": 6879
+  },
+  "export_receipt": {
+    "baseline_job_id": "dfafd888f7a948a87ffac2e0b68ab702fd60dd1dc9bc630fa6cdbe4496e4a06f",
+    "cohort_gate_verdict": "ready_for_locked_export",
+    "export_scope": "virtual_post_b1_dry_run",
+    "gnn_exported_graphs": 1448,
+    "node_feature_dim": 23,
+    "output": "/home/remnux/malpdf-graph-exports-v2/export_20261106T111844432382Z_dfafd888f7a9",
+    "planned_denominator": 1452,
+    "raw_pdf_processing": false,
+    "replay_overlay_job_id": "6f9cc944ed98304746fbbb5bc7066d9fb1c8d5b6a737ffd0f08205390527d575",
+    "training_executed": false,
+    "unavailable_empty_graphs": 4
+  },
+  "fail_closed_baseline_rejected": true,
+  "gate_receipt": {
+    "baseline_job_id": "dfafd888f7a948a87ffac2e0b68ab702fd60dd1dc9bc630fa6cdbe4496e4a06f",
+    "baseline_verdict": "blocked_unresolved_extraction_failures",
+    "legacy_19d_model_input_ready": false,
+    "output": "/home/remnux/malpdf-extraction-quality-gates/run_20261106T105703774357Z_dfafd888f7a9",
+    "projection_version": "v2",
+    "raw_pdf_processing": false,
+    "records": 1452,
+    "replay_overlay_job_id": "6f9cc944ed98304746fbbb5bc7066d9fb1c8d5b6a737ffd0f08205390527d575",
+    "training_executed": false,
+    "training_unlocked": false,
+    "v2_graph_model_input_ready": false,
+    "virtual_post_b1_verdict": "ready_for_locked_export"
+  },
+  "local_files_sha256": {
+    "cases.jsonl": "dba9cc68e8db0cd4b3fd253e7cd4f1c1f8b1cc67b570533b304464f7f163e73b",
+    "locked_methodology.json": "8b56eecb3d29531a608bf734fd1fde897873b2cf03cae3b92aedc5aca8784698",
+    "manifest.json": "9f710f18634cfc4e00908ed61e2791b3ae2a9fc6c9bd65b305fee55483d96cb9",
+    "replay_overlay_cases.jsonl": "8212323fe9dce5e28a01b987f736c5b4db9d28561df11efa2563beaa374d11d0",
+    "report.md": "d1d204cde913a8f4009fa16d4cd600df641c6dbf6b1fdac2390365915569089f",
+    "summary.json": "ff8ef2bf83f94fcc2d65c807cd84e8bca5ee5aa334b816b075b3813edf777055",
+    "virtual_export_dry_run/locked_methodology.json": "9bf3a8fc5cdd68a5b9b802252619bcb4e6378fb83d346a0b9d8a00a565da37a3",
+    "virtual_export_dry_run/manifest.json": "7a752c77749cacad10d2aab1586e1c6827395e5f098cc249b7b951b9c24021e7",
+    "virtual_export_dry_run/quality_gate_summary.json": "67fee28acb90f681d56de612e53fbbdc51014f3c70d02e2583717abe0823e7ee",
+    "virtual_export_dry_run/unavailable_document_ledger.json": "09780f8916438e72c960304c599fecad3bbb96cd79a628d0782679631ac40e94"
+  },
+  "operator_lab_run_required": false,
+  "raw_pdf_processing": false,
+  "remnux_pytest": {
+    "after": {
+      "failed": [
+        "tests.test_extraction::test_byte_cap_symlink_and_hybrid_execution_are_refused",
+        "tests.test_extraction::test_distributable_schemas_cover_actual_stores_and_all_observation_states",
+        "tests.test_extraction::test_input_and_admission_failures_return_no_fabricated_zero_features",
+        "tests.test_extraction::test_interrupted_secondary_preserves_primary_values_and_separate_failure[worker_memory_limit-resource_limit]",
+        "tests.test_extraction_vm::test_vm_worker_reads_input_above_ten_megabytes_without_thread_or_os_quotas"
+      ],
+      "passed": 287,
+      "skipped": 0,
+      "tests": 292
+    },
+    "before": {
+      "failed": [
+        "tests.test_extraction::test_byte_cap_symlink_and_hybrid_execution_are_refused",
+        "tests.test_extraction::test_distributable_schemas_cover_actual_stores_and_all_observation_states",
+        "tests.test_extraction::test_input_and_admission_failures_return_no_fabricated_zero_features",
+        "tests.test_extraction::test_interrupted_secondary_preserves_primary_values_and_separate_failure[worker_memory_limit-resource_limit]",
+        "tests.test_extraction_vm::test_vm_worker_reads_input_above_ten_megabytes_without_thread_or_os_quotas"
+      ],
+      "passed": 266,
+      "skipped": 0,
+      "tests": 271
+    },
+    "modules": [
+      "tests/test_diagnostic_replay.py",
+      "tests/test_evidence_ipc_v9.py",
+      "tests/test_extraction.py",
+      "tests/test_extraction_quality_gate.py",
+      "tests/test_extraction_vm.py",
+      "tests/test_graph_audit.py",
+      "tests/test_graph_audit_job.py",
+      "tests/test_graph_projection_v2.py",
+      "tests/test_graph_truncation_audit.py",
+      "tests/test_lab_halt_reporting.py",
+      "tests/test_numeric_export_job.py",
+      "tests/test_numeric_postrun_export.py",
+      "tests/test_worker_diagnostics.py"
+    ],
+    "new_failures": []
+  },
+  "retrieved_at_utc": "2026-11-06T11:18:51.014212+00:00",
+  "schema_version": 2,
+  "stage": "GRAPH-PROJECTION-V2",
+  "training_executed": false,
+  "validation_package_file_count": 437
+}

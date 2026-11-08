@@ -441,8 +441,8 @@ def _run_model(preflight: DeepLearningPreflight, model_name: str) -> dict[str, A
         paths.checkpoint_path,
     )
     checkpoint_sha256 = sha256_file(paths.checkpoint_path)
-    # The first use of the test partition happens only here, after validation
-    # selection and after reloading the one saved best checkpoint.
+
+
     checkpoint = torch.load(paths.checkpoint_path, map_location=preflight.device, weights_only=True)
     model.load_state_dict(checkpoint["model_state_dict"])
     model.to(preflight.device)

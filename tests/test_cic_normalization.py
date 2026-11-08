@@ -301,7 +301,7 @@ def test_extraction_preserves_nulls_aligns_parser_results_and_reuses_real_markov
                           "pdf_sha256": hashlib.sha256(content).hexdigest()})
     inventory = pd.DataFrame(inventory)
     def parser(*args, **kwargs):
-        for position in [1, 0]:  # Isolated workers can finish out of order.
+        for position in [1, 0]:
             features = {key: float(position + 1) for key in RAW_FEATURES}
             if position == 0: features["pages"] = None
             yield position, {"features": features, "complete": position != 0,
@@ -434,7 +434,7 @@ def test_reference_checksum_failure_precedes_parser_and_inference(pipeline):
 def prepared_fixture(pipeline, monkeypatch):
     root, config, _, _, _ = pipeline
     target = pd.read_parquet(root / config["target"]["path"])
-    # A third independent identity remains unavailable under the fixed caps.
+
     target.loc[len(target)] = ["e" * 64, "Malicious"]
     target.to_parquet(root / config["target"]["path"], index=False)
     config["target"]["sha256"] = hashlib.sha256((root / config["target"]["path"]).read_bytes()).hexdigest()

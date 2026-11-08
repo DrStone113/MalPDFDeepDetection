@@ -118,7 +118,7 @@ def _index_analysis(analysis):
                     and observations[edge["source"]].get("backend") == "original"
                     and observations[edge["source"]].get("immutable") is True
                     and edge.get("kind") in {"document_catalog", "document_acroform", "document_page"})):
-            # An alternate backend identity is not an identity proof.
+
             reasons.append("cross_backend_identity_unverified")
         support = edge.get("supporting_ids", [])
         if not _id_list(support) or any(identifier not in all_ids for identifier in support):
@@ -223,7 +223,7 @@ def derive_feature_provenance(profile, analysis):
                 for identifier in selected.get("evidence_ids", []):
                     parts = identifier.split(":")
                     if len(parts) != 3 or parts[0] != backend or not all(part.isdigit() for part in parts[1:]):
-                        continue  # A v8 direct-owner count stays an original measured count.
+                        continue
                     key = backend, int(parts[1]), int(parts[2])
                     candidate = objects.get(key)
                     projection = legacy_views.get(backend, {}).get("graph", {}).get("objects", {}).get(identifier)
@@ -389,7 +389,7 @@ def _eligible_witnesses(observations, edges):
     def step(path, edge, target):
         return path + [edge["id"], target["id"]] + edge.get("supporting_ids", [])
     documents = [node["id"] for node in observations.values() if node.get("kind") == "document" and verified(node)]
-    # Typed containment is the only way to reach page/annotation/form origins.
+
     contain = {"document_catalog": ({"document"}, {"catalog"}),
                "catalog_pages": ({"catalog"}, {"pages"}),
                "pages_child": ({"pages"}, {"pages", "page"}),

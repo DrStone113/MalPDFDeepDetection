@@ -324,7 +324,7 @@ def test_invalid_feature_output_is_not_published_and_later_plugins_still_run(cls
 def test_repaired_source_propagates_through_forward_references():
     from malpdf.extraction.normalize import _record
     data=pdf();source=profile(data)
-    # Existing repaired source is exported from a synthetic v9 observation.
+
     source['analysis_v9']={'document_sha256':sha(data),'observations':[{'id':'repaired-source','kind':'pdf_object','backend':'MuPDF','status':'observed'}],
         'edges':[],'backend_results':[],'conflicts':[]}
     value=run_feature_plugins(data,source,sha(data),CodeInspectionLimits(),registry(RepairedFeature))

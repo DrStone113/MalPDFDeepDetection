@@ -136,8 +136,8 @@ def test_field_projections_are_optional_and_do_not_change_original_hashes():
 def test_qpdf_decimal_projection_preserves_native_precision_without_float_cast():
     from decimal import Decimal
     from malpdf.extraction.parser_views import _RawBudget
-    # Use a generated QPDF dictionary to isolate exact scalar adaptation from
-    # xref-offset damage; it is never a source PDF acquired from elsewhere.
+
+
     with pikepdf.Pdf.new(conversion_mode='explicit') as document, pikepdf.explicit_conversion():
         value = document.make_indirect(pikepdf.Object.parse(b'<< /Number 0.123456789012345678901234567890 >>'))
         adapter = QPDFReader.__new__(QPDFReader)
@@ -222,8 +222,8 @@ def test_bounded_failures_preserve_prior_observations_and_fixed_reasons(failure,
     if failure == 'object_limit':
         limits = replace(limits,max_objects=1)
     elif failure == 'raw_limit':
-        # Shared raw cap derives from max_file_bytes; several parsers read the
-        # same compressed stream, but the allowance is never reset per backend.
+
+
         class EmptyBudget:
             def __init__(self,*args):
                 self.remaining = 0
@@ -309,9 +309,9 @@ def test_worker_timeout_keeps_native_inventory_and_primary_checkpoint(tmp_path,m
     monkeypatch.setattr(profile_worker.multiprocessing,'get_context',lambda *args:context)
     monkeypatch.setattr(profile_worker,'_worker_count',lambda *args:1)
     data = fixture_pdf()
-    # This test measures preservation of a completed checkpoint, not native
-    # startup/parse speed. Keep fixture construction outside its one-second
-    # deadline; native parsing is exercised by the separate inventory tests.
+
+
+
     limits=CodeInspectionLimits(wall_seconds=1,cpu_seconds=1)
     prepared={'status':'complete','errors':[],
         'static':{'input':{'sha256':sha(data)},'features':{'JS':1}},'code':None,

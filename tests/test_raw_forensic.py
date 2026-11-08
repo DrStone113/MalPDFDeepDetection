@@ -274,7 +274,7 @@ def test_xref_ambiguity_never_falls_back_to_a_favorable_revision(mode):
         data=re.sub(rb'startxref\n\d+\n',b'startxref\n0\n',data)
     else:
         position=data.index(b'trailer')
-        # Duplicate a subsection entry with a conflicting offset in one block.
+
         data=data[:position]+b'1 1\n0000000000 00000 n \n'+data[position:]
     result=inspect(data)
     assert not result['complete'] and result['reason_codes']
@@ -364,7 +364,7 @@ def test_regular_truncations_keep_a_valid_partial_bundle_with_no_native_fallback
         truncated=data[:end]
         result=inspect(truncated)
         if result['complete']:
-            assert truncated.rstrip()==data.rstrip()  # Only final whitespace was removed.
+            assert truncated.rstrip()==data.rstrip()
         validate_bundle(bundle(truncated,result))
 
 

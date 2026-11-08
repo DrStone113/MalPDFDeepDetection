@@ -375,7 +375,7 @@ def select_validation_fusion(
                 "selection_ece": metrics["ece"],
             })
     results = pd.DataFrame(rows)
-    # Stable sorting preserves the declared method/family/grid order for exact ties.
+
     selected_index = results.sort_values(["selection_mcc", "selection_f1_malicious"], ascending=False, kind="stable").index[0]
     selected = dict(results.loc[selected_index])
     selected["selection_policy"] = "maximize validation-selection MCC; malicious F1 secondary; exact ties keep declared candidate order"
@@ -578,7 +578,7 @@ def execute_selective_ensemble(preflight: EnsemblePreflight) -> dict[str, Any]:
     _write_json(paths.config_json, preflight.configuration)
     joblib.dump(base.xgb, paths.artifacts_directory / "xgboost.joblib")
     torch.save({"state_dict": base.ft.state_dict(), "feature_order": list(preflight.feature_order), "scaler_mean": base.scaler.mean_.tolist(), "scaler_scale": base.scaler.scale_.tolist(), "configuration": preflight.ft_configuration["models"]["ft_transformer"]}, paths.artifacts_directory / "ft_transformer.pt")
-    # The first test access occurs only after the lock has been persisted.
+
     test = preflight.partitions["test"]
     labels_test = test[TARGET_COLUMN].to_numpy(dtype=int)
     test_features = protocol_g_feature_view(test, G_DROP3CONSTANT)

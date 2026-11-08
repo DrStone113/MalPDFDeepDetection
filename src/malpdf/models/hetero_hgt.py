@@ -1,7 +1,20 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn import global_max_pool, global_mean_pool
+def global_mean_pool(x: torch.Tensor, batch: torch.Tensor) -> torch.Tensor:
+    num_graphs = int(batch.max().item()) + 1 if batch.numel() > 0 else 1
+    out = torch.zeros(num_graphs, x.size(-1), device=x.device, dtype=x.dtype)
+    counts = torch.zeros(num_graphs, 1, device=x.device, dtype=x.dtype)
+    out.index_add_(0, batch, x)
+    counts.index_add_(0, batch, torch.ones_like(x[:, :1]))
+    return out / counts.clamp(min=1.0)
+
+
+def global_max_pool(x: torch.Tensor, batch: torch.Tensor) -> torch.Tensor:
+    num_graphs = int(batch.max().item()) + 1 if batch.numel() > 0 else 1
+    out = torch.full((num_graphs, x.size(-1)), -float("inf"), device=x.device, dtype=x.dtype)
+    expanded_batch = batch.unsqueeze(-1).expand_as(x)
+    return out.scatter_reduce(0, expanded_batch, x, reduce="amax", include_self=False)
 
 
 class RelationAwareMessagePassing(nn.Module):
@@ -18,9 +31,11 @@ class RelationAwareMessagePassing(nn.Module):
         self.rel_emb = nn.Embedding(num_relations, out_dim)
         self.out_proj = nn.Linear(out_dim, out_dim)
         self.norm = nn.LayerNorm(out_dim)
+        self.last_edge_alpha: torch.Tensor | None = None
 
     def forward(self, x: torch.Tensor, edge_index: torch.Tensor, edge_rel: torch.Tensor) -> torch.Tensor:
         if edge_index.numel() == 0:
+            self.last_edge_alpha = torch.zeros((0, self.num_heads), device=x.device)
             return self.norm(x)
         src, dst = edge_index[0], edge_index[1]
         q = self.q_proj(x).view(-1, self.num_heads, self.head_dim)
@@ -34,6 +49,7 @@ class RelationAwareMessagePassing(nn.Module):
         attn = torch.exp(score)
         norm_factor = torch.zeros(x.size(0), self.num_heads, device=x.device).index_add_(0, dst, attn) + 1e-6
         alpha = attn / norm_factor[dst]
+        self.last_edge_alpha = alpha.detach()
         weighted_v = v_msg * alpha.unsqueeze(-1)
         aggr = torch.zeros(x.size(0), self.num_heads, self.head_dim, device=x.device).index_add_(0, dst, weighted_v)
         aggr_flat = aggr.view(-1, self.out_dim)

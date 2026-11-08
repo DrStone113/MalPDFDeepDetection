@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "job_id": "6f9cc944ed98304746fbbb5bc7066d9fb1c8d5b6a737ffd0f08205390527d575",
+  "verified_on_remnux": true,
+  "baseline_changed_indices": [],
+  "halt_files": [],
+  "private_counts": {
+    "private_cases": 74,
+    "private_bundles": 74,
+    "private_attempts": 74
+  },
+  "shard_memory_bytes": {
+    "0": 6222536704,
+    "1": 6222536704,
+    "2": 6222536704,
+    "3": 6222536704,
+    "4": 6222536704,
+    "5": 6222536704,
+    "6": 6222536704,
+    "7": 6222536704,
+    "8": 6222536704,
+    "9": 6222536704
+  },
+  "retrieved_file_sha256": {
+    "result.json": "55aa751bc39dc2d5b74838a02e1b187642bfd981b6f819bc6ce1ddcb96f9e768",
+    "pdf_summary.json": "92c910c1c37207e9ab7d853abed31b7cf37cece927aa85e282943a52b90a0da9",
+    "manifest.json": "59f933f6767bb0f2951b026a63f582d3b0ea728be68a260cc46cd13266fb7e03",
+    "summary.json": "ccdb11201c443a8ef3cf7a4af5a4e233f2b4d456c2741c08bcec2d2535494f97",
+    "cases.jsonl": "048e13a75db3652a41d69caf68a7995d4f7d22804c7eef60db0512ea031938f9",
+    "outer_diagnostics.json": "c2e24f990ed69efe6fd98bcbfb01caa5c63cf3d932e4bec505f3c33cf32b1394",
+    "report.md": "f64974d568041c0b7acf108949fc4192e1cb05c157b3a5fa9083561058c9a927"
+  }
+}

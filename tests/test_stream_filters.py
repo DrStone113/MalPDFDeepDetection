@@ -80,7 +80,7 @@ def test_decompression_bomb_is_capped_before_allocating_the_full_output():
     assert result.data is None and result.partial_data == b"A" * 64
     assert result.metadata["status"] == "resource_limit" and budget.remaining == 0
     assert result.metadata["decoded_byte_debit"] == 64
-    # A shared budget cannot be reset by moving to the next stream.
+
     other = decode_filters(zlib.compress(b"B"), ["/FlateDecode"], limits=limits, budget=budget)
     assert other.metadata["status"] == "resource_limit" and other.partial_data == b""
 
@@ -131,8 +131,8 @@ def test_runlength_literals_repeats_and_truncation():
 
 @pytest.mark.parametrize("size", [1, 100, 1024, 16000])
 def test_lzw_matches_pinned_upstream_encoder_across_width_changes_and_table_resets(size):
-    # Hash-derived bytes are deterministic and exercise dictionary growth without
-    # machine state or a random generator shared with the decoder implementation.
+
+
     data = b"".join(hashlib.sha256(str(index).encode()).digest() for index in range((size + 31) // 32))[:size]
     encoded = LzwCodec().encode(data)
     result = decode_filters(encoded, ["/LZWDecode"])
@@ -149,8 +149,8 @@ def test_lzw_truncated_end_and_invalid_clear_are_not_complete():
 
 @pytest.mark.parametrize("early_change", [0, 1])
 def test_lzw_explicit_width_transition_vectors_for_both_early_change_modes(early_change):
-    # Valid, deliberately uncompressed literal-code stream. Independent fixed
-    # transition positions encode all 9/10/11/12-bit boundaries and an EOD.
+
+
     count = 2600
     def width(index):
         return 9 if index < 255 - early_change else 10 if index < 767 - early_change else 11 if index < 1791 - early_change else 12
@@ -217,4 +217,4 @@ def test_each_completed_filter_emits_an_independent_checkpoint_before_later_fail
     assert first["steps"][0]["complete"] and first["steps"][0]["output_sha256"] == hashlib.sha256(compressed).hexdigest()
     assert first["decoded_byte_debit"] == len(compressed)
     assert result.metadata["status"] == "decode_error" and result.data is None
-    assert len(first["steps"]) == 1  # Later stages cannot mutate an older checkpoint.
+    assert len(first["steps"]) == 1

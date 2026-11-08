@@ -1,6 +1,11 @@
 """Small explicit export contracts; missing observations never imply absence."""
 
-from enum import StrEnum
+try:
+    from enum import StrEnum
+except ImportError:
+    from enum import Enum
+    class StrEnum(str, Enum):
+        pass
 from collections import Counter
 import json
 import math
@@ -229,7 +234,6 @@ def validate_bundle(bundle):
     if (any(not isinstance(key,str) or key not in statuses or type(value) is not int or value<0 for key,value in counts.items())
             or any(counts.get(key,0)!=expected.get(key,0) for key in statuses)):
         raise ValueError('extraction_status_counts')
-    # Python's encoder otherwise silently coerces numeric dict keys to strings.
     pending=[bundle];seen=set()
     while pending:
         item=pending.pop()

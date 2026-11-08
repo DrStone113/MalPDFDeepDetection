@@ -1,0 +1,12 @@
+{
+  "files": {
+    "cases.jsonl": "3d5dd524bb36f9e68cad7b7f7d8c909c4deeaddc88a15c57da160de9d6cf8538",
+    "locked_methodology.json": "3296a1d2cd270089a08c5f80b1b68d422e6af5a1379514dd6b1c91be7cceecb4",
+    "manifest.json": "7c1a9c568a46f23cf9c363bd3c27465ca92de1e27cf6b363b9eac2f455403d22",
+    "replay_overlay_cases.jsonl": "eb7e84f5e2b618541a1c0eaa76db2a1495e75a8642c288ae50fbe99ff89cc3aa",
+    "report.md": "f28805f66ca30417fec797356c465b971c41835d3bdb7d7cb494cade9f857a5a",
+    "summary.json": "5a786c9356eb4e64c52f0eb0ae6a7549dd8a4bb5994f9495dce21ba693a531ee",
+    "verification.json": "67664f309a405ec732d79453d3718b2f28993b1187ee5faf07beca660bf73889"
+  },
+  "run_name": "run_20261106T095240284120Z_dfafd888f7a9"
+}

@@ -92,8 +92,8 @@ def test_empty_unsupported_encrypted_and_malformed_streams_remain_distinct(tmp_p
     step = damaged["details"]["decode"]["steps"][0]
     assert step["output_bytes"] == len(b"inert recovered prefix")
     assert step["retention"]["parent_verification_status"] == "verified_not_persisted"
-    # All original primary measurements remain present even though the new
-    # supplement reports local decode failures and the bundle is partial.
+
+
     primary = next(record for record in result["evidence_store"]["records"] if record["kind"] == "primary_checkpoint")
     assert primary["details"]["features"]["JS"] == 1
     assert result["status"] != "observed"

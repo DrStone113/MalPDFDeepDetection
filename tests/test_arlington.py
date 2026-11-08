@@ -228,7 +228,7 @@ def test_dictionary_lookup_indexes_once_and_preserves_duplicates_and_node_identi
         assert context.entry('Missing') is None
     assert pairs.iterations==1
     assert engine.dictionary_entries(node)[b'/Key7']==[pairs[7][1],duplicate]
-    # Same spans in a different node/context must not share an index or owner.
+
     other=Node('dictionary',[(Node('name',b'/Key7',0,1),Node('number',42,1,2))],0,300)
     ctx=Context(engine,Value(other,'older-owner'),1,(1,4))
     assert ctx.entry('Key7').node.value==42 and ctx.entry('Key7').owner=='older-owner'

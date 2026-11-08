@@ -96,7 +96,7 @@ def load_locked_cohort(root, config):
     unknown = full.loc[full.Label.isna()].copy().sort_values("sample_id", kind="stable")
     if len(unknown) != config["expected_samples"]["unlabeled"] or not source_index.loc[unknown.sample_id].Label.eq("").all():
         raise ValueError("Unknown samples must remain genuinely unlabeled")
-    # Verify equivalence containment without regenerating the established split.
+
     vector = build_duplicate_group_ids(labeled.loc[:, [*RAW_FEATURES, "Label"]])
     audit = manifest.copy()
     audit["feature_vector"] = vector
@@ -224,7 +224,7 @@ def run_raw_tri_modal(root, code_root, config, *, execute=False, run_id=None):
         for i, name in enumerate(V3_BRANCHES):
             run.state["metrics"][name + "/train_oof"] = calibration_metrics(train.Label, oof[:, i])
         cache = root / "data/processed/markov_cache"
-        # All cache identities are preverified; Test is not forwarded to a model.
+
         verified = verify_vision_caches(_vision_samples(labeled, sources) + _vision_samples(unknown, sources), cache)
         sample_map = {sample.sample_id: sample for sample in verified}
         samples = lambda frame: [sample_map[sid] for sid in frame.sample_id]
@@ -261,8 +261,8 @@ def run_raw_tri_modal(root, code_root, config, *, execute=False, run_id=None):
         selected = roles["threshold_selection"]
         run.state["metrics"]["stacking_v3/validation_threshold_selection"] = calibration_metrics(validation.Label.to_numpy()[selected], stack.predict_proba(val_scores[selected]), threshold=stack.threshold)
         run.progress("validation_locked", threshold=stack.threshold, regularization_c=stack.selection["regularization_c"], vision_best_epoch=outcome.best_epoch)
-        # Exclusive marker precedes all Test inference. A rerun gets a new run,
-        # never access to this invocation's Test through a mutable checkpoint.
+
+
         from malpdf.experiments.raw_tri_modal_resume import claim_test_evaluation
         claim_test_evaluation(root, config["inputs"], run.report,
                               hashlib.sha256((run.report / "validation_lock.json").read_bytes()).hexdigest())
@@ -290,8 +290,8 @@ def run_raw_tri_modal(root, code_root, config, *, execute=False, run_id=None):
         unknown_scores = np.column_stack([np.mean([model.predict_proba(unknown.loc[:, list(feature_order)]) for model in models[name]], axis=0) for name in V3_BRANCHES])
         unknown_scores = np.column_stack((unknown_scores, vision_probabilities(vision, _vision_loader(samples(unknown), cache, vision_config["batch_size"], include_labels=False))))
         unknown_fused = stack.predict_proba(unknown_scores)
-        # The four-row batch cannot estimate a population entropy percentile;
-        # retain parser-forced referrals and expose entropy for manual review.
+
+
         unknown_entropy = binary_entropy(unknown_fused) / np.log(2.0)
         pd.DataFrame({"sample_id": unknown.sample_id, "Label": [None] * len(unknown),
                       **{name: unknown_scores[:, i] for i, name in enumerate(BRANCHES)}, "p_fused": unknown_fused,

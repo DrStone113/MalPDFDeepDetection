@@ -140,7 +140,7 @@ def extract_cic_rows(root, inventory, output, *, workers=2, progress=lambda **co
             errors.append({"sample_id": row.sample_id, "errors": result["errors"], "warnings": result["warnings"]})
     columns = ["sample_id", "Label", *RAW_FEATURES, "parser_failed"]
     features = pd.DataFrame(feature_rows, columns=columns).set_index("sample_id").loc[inventory.sample_id].reset_index()
-    # Save raw nulls/errors before subsequent cache or inference failures.
+
     features.to_csv(output / "raw_v3_features.csv", index=False)
     with (output / "parser_errors.json").open("x", encoding="utf-8") as stream:
         json.dump(errors, stream, indent=2)

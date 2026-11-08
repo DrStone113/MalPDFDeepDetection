@@ -321,7 +321,7 @@ def run_late_fusion(root: Path, configuration: dict, *, execute: bool = False, r
             report["metrics"][f"{study}/{partition.partition if positions is None else 'validation_selection'}"] = calibration_metrics(partition.labels[mask], fused[mask], n_bins=10)
             return fused
         record_metrics(validation, roles["selection"])
-        # Test tables cannot reach any fit/selection function; first decode is after lock.
+
         test = _load_partition(root, configuration, manifest, "test", vision_groups, **cache_arguments)
         if set(validation.sample_ids) & set(test.sample_ids) or set(validation.group_ids) & set(test.group_ids):
             raise ValueError("Fusion validation/test IDs or groups overlap")

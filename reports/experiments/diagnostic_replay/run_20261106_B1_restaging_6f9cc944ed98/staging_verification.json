@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "job": {
+    "api": 1,
+    "archive_sha256": "c0230c6d08c3093377e9dcffc8a07deaf590262b31141755a973fb426b0095c7",
+    "attempt": "dff211d51939c8a04162e19b33b11973",
+    "commit": "d1e10fd2c341e1f553ca47f4fe31db8c21a8307c",
+    "job_id": "6f9cc944ed98304746fbbb5bc7066d9fb1c8d5b6a737ffd0f08205390527d575",
+    "kind": "pdf-diagnostic-replay",
+    "limits": {
+      "file_cpu_seconds": 30,
+      "file_max_bytes": 10485760,
+      "file_memory_bytes": 1073741824,
+      "file_wall_seconds": 35,
+      "output_bytes": 2147483648,
+      "samples": 74,
+      "wall_seconds": 7200,
+      "workers": 10
+    },
+    "manifest_sha256": "cc82c65e69a329364e8b08111bb5dfe89c7399066560deda849b81fc54a488a7",
+    "mode": "offline",
+    "schema_version": 1
+  },
+  "status": "queued",
+  "pending_job_ids": [
+    "6f9cc944ed98304746fbbb5bc7066d9fb1c8d5b6a737ffd0f08205390527d575"
+  ],
+  "previous_failed_job": {
+    "job_id": "5fb4b0967c68c75237f3ede29295ed7c1596af6611c7af626fb6facef84de3d0",
+    "status": "failed",
+    "reason": "worker_failed",
+    "raw_pdf_processing": false
+  },
+  "sample_count": 74,
+  "manifest_sha256": "bd66e91e68aa7afc81eb5462f7330636914aeef2e02b035fd0dc384ceb13e7d4",
+  "selection_sha256": "e9b3a7def820249d0d82e7e82a1da1927027f02b5cb65c6b0dbc806badac8791",
+  "methodology_environment": {
+    "logical_cpus": 12,
+    "machine": "x86_64",
+    "memory_bytes": 6222536704,
+    "packages": {
+      "PyMuPDF": "1.26.7",
+      "esprima": "4.0.1",
+      "numpy": "2.4.6",
+      "pandas": "2.3.3",
+      "pikepdf": "10.17.0",
+      "pypdf": "6.18.1",
+      "torch": "2.11.0+cpu",
+      "torchvision": "0.26.0+cpu"
+    },
+    "platform": "Linux-6.8.0-147-generic-x86_64-with-glibc2.39",
+    "python": "3.11.17",
+    "thread_environment": {
+      "MKL_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1"
+    }
+  },
+  "raw_pdf_processing": false,
+  "claim_present": false,
+  "baseline": {
+    "bundle_count": 1452,
+    "changed_bundle_indices": [],
+    "job_sha256": "926d938c3c3fb1b69d572d41e980b63d1f9cca8dd9b06481a5a808e09d975e48",
+    "result_sha256": "e0725acc4ccd20212e5ef050fe9ed88095438abbd35fca82b3e5372507d7e1ae",
+    "selection_file_sha256": "3c01a85f5c695c0e25999673a971a985f7103d64c39fcc1a6b0eb73758398e1b",
+    "selection_rows_sha256": "2fc0b5ae5ab1dfd1006d4c17b8991d78edc9f32493a2de6dd2254f3b2b69ded9"
+  },
+  "tests": {
+    "before": {
+      "tests": 268,
+      "passed": 263,
+      "failed": [
+        "tests.test_extraction::test_byte_cap_symlink_and_hybrid_execution_are_refused",
+        "tests.test_extraction::test_distributable_schemas_cover_actual_stores_and_all_observation_states",
+        "tests.test_extraction::test_input_and_admission_failures_return_no_fabricated_zero_features",
+        "tests.test_extraction::test_interrupted_secondary_preserves_primary_values_and_separate_failure[worker_memory_limit-resource_limit]",
+        "tests.test_extraction_vm::test_vm_worker_reads_input_above_ten_megabytes_without_thread_or_os_quotas"
+      ],
+      "skipped": 0
+    },
+    "after": {
+      "tests": 271,
+      "passed": 266,
+      "failed": [
+        "tests.test_extraction::test_byte_cap_symlink_and_hybrid_execution_are_refused",
+        "tests.test_extraction::test_distributable_schemas_cover_actual_stores_and_all_observation_states",
+        "tests.test_extraction::test_input_and_admission_failures_return_no_fabricated_zero_features",
+        "tests.test_extraction::test_interrupted_secondary_preserves_primary_values_and_separate_failure[worker_memory_limit-resource_limit]",
+        "tests.test_extraction_vm::test_vm_worker_reads_input_above_ten_megabytes_without_thread_or_os_quotas"
+      ],
+      "skipped": 0
+    },
+    "new_failed_cases": []
+  },
+  "release_verified_files": 416,
+  "validation_package_verified_files": 422,
+  "credentials_present": false,
+  "bootstrap": {
+    "schema_version": 1,
+    "installed_helpers": {
+      "lab_jobs.py": "bcbdf5a18855e01bf96775fab8d7dcb241b92edbcd6663ea18f0abc390d5af6d"
+    },
+    "previous_helpers": {
+      "lab_jobs.py": "26b695c92967ed0f53d9eb6ea7eda040e0b38ff49308207dfb29f96351127b85"
+    },
+    "backup": "/var/lib/malpdf/bootstrap-backups/bug008_6f9cc944ed98",
+    "gateway_configuration_unchanged": true,
+    "gateway_preexisting_verification": false,
+    "raw_pdf_processing": false
+  },
+  "gateway_config_hashes_unchanged": {
+    "/etc/malpdf/gateway.json": "c14f513bc1486555abbf7f1db47c8b8f01c72e0c573b86cb07e10cbc7b403195",
+    "/etc/malpdf/gateway-verified.json": "d91860a8636f18bc13af12417cc7a5192a8fe858c1009ea4541076e3ef9a9924"
+  },
+  "lab_status": {
+    "runner": {
+      "api": 1,
+      "installed": true,
+      "host_only_ready": true,
+      "offline_guest_ready": false,
+      "reason": null
+    },
+    "pending_jobs": 1,
+    "network_changed": false
+  }
+}

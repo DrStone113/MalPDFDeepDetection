@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+
 """Launch or collect the bounded private Kaggle static-development study."""
 import argparse
 import json

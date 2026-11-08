@@ -150,7 +150,7 @@ def _export(inputs,output_root,repository_root,formats,limits,from_files):
             size=max(len(raw),source['source_bytes'])
             if len(raw)>limits.max_bundle_bytes: raise ValueError('export_bundle_byte_limit')
             if manifest['input_bytes']+size>limits.max_input_bytes: raise ValueError('export_input_byte_limit')
-            # Bound validation/projection work before any record or graph expansion.
+
             row_count=(1+len(bundle.get('feature_store',{}).get('records',[]))
                 +len(bundle.get('evidence_store',{}).get('records',[]))+len(bundle.get('evidence_store',{}).get('edges',[]))
                 +len(bundle.get('coverage_report',{}).get('groups',{}))+len(bundle.get('coverage_report',{}).get('backends',{})))
@@ -184,7 +184,7 @@ def _export(inputs,output_root,repository_root,formats,limits,from_files):
         for entry in manifest['files']:
             if entry['status']=='writing': entry['status']='incomplete'
         try: _manifest(directory,manifest)
-        except (OSError,ValueError,MemoryError): pass # The prior running manifest still cannot claim completion.
+        except (OSError,ValueError,MemoryError): pass
         if isinstance(error,(KeyboardInterrupt,SystemExit)): raise
         raise ExportFailure(directory,reason) from error
     return directory

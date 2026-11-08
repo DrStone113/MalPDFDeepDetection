@@ -1,0 +1,41 @@
+{
+  "base_commit": "c6b920385d966eaba9f0e1eec0ac2dcb789a4664",
+  "python": "3.11.16",
+  "packages": {
+    "torch": "2.11.0+cu128",
+    "numpy": "2.4.6",
+    "pikepdf": "10.17.0",
+    "PyMuPDF": "1.26.7",
+    "pypdf": "6.18.1",
+    "pyarrow": "19.0.1",
+    "fastapi": "0.162.0"
+  },
+  "source_kind": "worktree_snapshot",
+  "source_sha256": {
+    "pyproject.toml": "ca52f5df6acddcd686b5d7f08d4598a005d95fa7d152a87948f7ee1b502c2f25",
+    "scripts/audit_runtime_data.py": "7e6da3290bbdf7c79a512442b144af3533899c40ed5f2c411b672f3af1a320e8",
+    "scripts/lab/academic_evaluation_transgraph.py": "f02a2c7682fb9c1d0a0881db55369f091377bc35d23caf50b0f80b4b1b2b34e2",
+    "scripts/lab/evaluate_adversarial_stress.py": "93531e007ebfa76772dda955f8f23193f31c1b013055f781c552d76e3d256829",
+    "scripts/lab/train_pdf_transgraph.py": "6dda93f1a7e974c605a2762ef999284fe6fca90576092ec7b2c65149b30ea24f",
+    "src/malpdf/cdr/__init__.py": "6723d2695bb8a0cc812c5b91f3650ca008866c735cb3a91a1950c215e22bff9d",
+    "src/malpdf/cdr/engine.py": "49580611ed66692e08d75e9349ecc7e938b58829775bb7a709ffee14d38b0c60",
+    "src/malpdf/cdr/fixtures.py": "ef0f5f69bc580429152ce934af5c405fa89a40b52ac280407f708dd6d39e7133",
+    "src/malpdf/data/graph_contract.py": "d282267aff37819c62c63b0078bb605d48f6fb0474770b831b6c25697fbc96f0",
+    "src/malpdf/gateway/__init__.py": "1f47514c5f6a795a584df2c61099540859af1c44e3b2fda3d469ed4f9dd98328",
+    "src/malpdf/gateway/mail_filter.py": "d52de138e07e6fdb6670672d1c25c2c0fd99fcee1eeecdf1252972844e8f916e",
+    "src/malpdf/scanner/__init__.py": "ade48af75853c3b1178d7d277da4116a2155f43618f4a1a21d2d99177333e34a",
+    "src/malpdf/scanner/ai_explainer.py": "4e6b914bffdb2c69ca817f3204ff8652753abee50920b55a07772d8a15bb7fed",
+    "src/malpdf/scanner/engine.py": "288f06d3a5713cac88064cfaee69edf6daa2ea84fefef7814aa58023e444141c",
+    "src/malpdf/scanner/forensic.py": "5cb0500790276bd0df9ae50f4050f4f125434989db374152bd25458849968fbd",
+    "src/malpdf/scanner/ingestion.py": "8e8957b9f58d88800595a7dd26e4e0f49de3523fb157bc82919f8253625a497c",
+    "src/malpdf/web/__init__.py": "e1324696a6bde60bfece031292e512dd287a5d76e198a71ec486cc9d3fe4f4fc",
+    "src/malpdf/web/app.py": "2f452da46ee474505b9ea12056763f99420464709b617bbf473756e9da1c4113",
+    "src/malpdf/web/store.py": "8edbcb66c1e93001e31710eec8054684b656dcb63be7b167b570eaf4153e99e3",
+    "src/malpdf/web/templates/index.html": "4654843b507917d0f407bd4393812dcf35b20e5c9c018604f619d6c70cd73297"
+  },
+  "fixture_scope": "Reviewed academic document and controlled harmless active-action variant; these are not a real-malware evaluation corpus",
+  "data_access": "Only reviewed fixtures and existing numeric Parquet/graph cache; no raw malware PDFs",
+  "training": "Not run; missing measured graph inputs must never become invented zero-node samples",
+  "live_classification": "Blocked until the extraction and training feature contracts match",
+  "historical_metrics": "Preserved; no historical result is promoted to freshly verified performance"
+}

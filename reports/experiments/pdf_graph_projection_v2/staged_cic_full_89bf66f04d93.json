@@ -1,0 +1,169 @@
+{
+  "generated_utc": "2026-11-06T11:34:44.594191+00:00",
+  "helper_sync": {
+    "already_synced": true,
+    "doctor_reason": "ready_idle",
+    "doctor_status": "ready",
+    "expected_policy_sha256": "d59b2e622dfb660f67df2e2fae482d941b42f2dfc4c3bdfec267be718cf94040",
+    "gateway_bootstrap_manifest_id": "ff0b52eb5d359b35ecfff05a321124a9bd97db45fd64b4e40f5f12ce103ea013",
+    "post_libexec": {
+      "check_local.py": "265ee4427aff2e71b6784707f36df7fe99537ae8f92d6048415fa3ef958a9a09",
+      "gateway_contract.py": "56a4c0216562f97f09c8272ffe6a81c5f239d627c3e5a54518d1f97f763a2edc",
+      "gateway_harness.py": "dcf61e17f05cc9109c25656bb838f554707f5afa941f7e10de37a3b5cc6dadf6",
+      "lab_contract.py": "426e34b0470cd47175b34983e11f61fc972058bbb58d4c19ca2d09b1b97f1b67",
+      "lab_diagnostics.py": "4eca3df74ce4e7bcd4046f438aa8190d03baac1ba9ec2276c8ba3b47ca98e1d0",
+      "lab_gateway.py": "d7ef6adb497d19d71e9389e3377e109c7967793a441c83faa48791ebb5320041",
+      "lab_guard.py": "717ba03e4be7f153fb2ae67bff4c4b03da5aeb8b8412aaf49ff2898a0088b3b8",
+      "lab_jobs.py": "bcbdf5a18855e01bf96775fab8d7dcb241b92edbcd6663ea18f0abc390d5af6d",
+      "lab_readonly.py": "8f558d94751b259a3b97b1688fcbc8623fb5692417ca048975e8625bed4b22fe",
+      "lab_runner.py": "d9caa078ef76e60179ce0117db921b41da6471679cb530b467ba474843ff3a01",
+      "lab_side.py": "0d939b058f908864c82ba09e1ea4b416806deb313d46985fadd007d74bbc8fba"
+    },
+    "pre_libexec": {
+      "check_local.py": "265ee4427aff2e71b6784707f36df7fe99537ae8f92d6048415fa3ef958a9a09",
+      "gateway_contract.py": "56a4c0216562f97f09c8272ffe6a81c5f239d627c3e5a54518d1f97f763a2edc",
+      "gateway_harness.py": "dcf61e17f05cc9109c25656bb838f554707f5afa941f7e10de37a3b5cc6dadf6",
+      "lab_contract.py": "426e34b0470cd47175b34983e11f61fc972058bbb58d4c19ca2d09b1b97f1b67",
+      "lab_diagnostics.py": "4eca3df74ce4e7bcd4046f438aa8190d03baac1ba9ec2276c8ba3b47ca98e1d0",
+      "lab_gateway.py": "d7ef6adb497d19d71e9389e3377e109c7967793a441c83faa48791ebb5320041",
+      "lab_guard.py": "717ba03e4be7f153fb2ae67bff4c4b03da5aeb8b8412aaf49ff2898a0088b3b8",
+      "lab_jobs.py": "bcbdf5a18855e01bf96775fab8d7dcb241b92edbcd6663ea18f0abc390d5af6d",
+      "lab_readonly.py": "8f558d94751b259a3b97b1688fcbc8623fb5692417ca048975e8625bed4b22fe",
+      "lab_runner.py": "d9caa078ef76e60179ce0117db921b41da6471679cb530b467ba474843ff3a01",
+      "lab_side.py": "0d939b058f908864c82ba09e1ea4b416806deb313d46985fadd007d74bbc8fba"
+    },
+    "readiness_profiles": [
+      "syntax",
+      "synthetic"
+    ],
+    "readiness_verified": true,
+    "runner_bootstrap_manifest_id": "a26a9d8a37d2a73b83c7344981d0aa0756393b2bcc0771bbb6ad8eabcb126dbe",
+    "setup_stdout_lines": []
+  },
+  "job": {
+    "api": 1,
+    "archive_sha256": "2d0a46c86bf676a427d95ccc1d3a3a519a2d930dd9aa6cdaf159b0db112ac422",
+    "attempt": "3c9d1f5c661b924e50d63536a5b2a53d",
+    "commit": "766f2856bf735d51d2ab676f5264b46e454cdf0c",
+    "job_id": "89bf66f04d932dece2518500fbdfb3121fff8799df74b2f02accac03197e1900",
+    "kind": "pdf-static-cic-full",
+    "limits": {
+      "file_cpu_seconds": 30,
+      "file_max_bytes": 10485760,
+      "file_memory_bytes": 1073741824,
+      "file_wall_seconds": 35,
+      "output_bytes": 2147483648,
+      "samples": 1452,
+      "wall_seconds": 7200,
+      "workers": 10
+    },
+    "manifest_sha256": "1816a3855aa331d841a1f7e433571c1de195719ebab7278509df5f047bec839b",
+    "mode": "offline",
+    "schema_version": 1
+  },
+  "local_validation": {
+    "ast_file_count": 386,
+    "head_preserved": "c6b920385d966eaba9f0e1eec0ac2dcb789a4664",
+    "packaged_file_count": 425,
+    "synthetic_selftest": {
+      "failed": 0,
+      "passed": 237,
+      "skipped": 0,
+      "total": 237
+    }
+  },
+  "receive_receipt": {
+    "checks": [],
+    "generated_utc": "2026-11-06T11:34:43Z",
+    "job": {
+      "api": 1,
+      "archive_sha256": "2d0a46c86bf676a427d95ccc1d3a3a519a2d930dd9aa6cdaf159b0db112ac422",
+      "attempt": "3c9d1f5c661b924e50d63536a5b2a53d",
+      "commit": "766f2856bf735d51d2ab676f5264b46e454cdf0c",
+      "job_id": "89bf66f04d932dece2518500fbdfb3121fff8799df74b2f02accac03197e1900",
+      "kind": "pdf-static-cic-full",
+      "limits": {
+        "file_cpu_seconds": 30,
+        "file_max_bytes": 10485760,
+        "file_memory_bytes": 1073741824,
+        "file_wall_seconds": 35,
+        "output_bytes": 2147483648,
+        "samples": 1452,
+        "wall_seconds": 7200,
+        "workers": 10
+      },
+      "manifest_sha256": "1816a3855aa331d841a1f7e433571c1de195719ebab7278509df5f047bec839b",
+      "mode": "offline",
+      "schema_version": 1
+    },
+    "pdf_summary": null,
+    "preflight": {
+      "guest_network_checked": false,
+      "hypervisor_controls_attested": false,
+      "mode": "offline",
+      "stdlib_dependencies_checked": false
+    },
+    "reason": null,
+    "schema_version": 1,
+    "status": "queued"
+  },
+  "remote_verification": {
+    "claim_present": false,
+    "new_job_files": [
+      "job.json",
+      "queued.json",
+      "selection.json"
+    ],
+    "preserved_jobs": {
+      "baseline_dfafd888f7a9": {
+        "bundle_count": 1452,
+        "job_sha256": "926d938c3c3fb1b69d572d41e980b63d1f9cca8dd9b06481a5a808e09d975e48",
+        "result_sha256": "e0725acc4ccd20212e5ef050fe9ed88095438abbd35fca82b3e5372507d7e1ae",
+        "selection_file_sha256": "3c01a85f5c695c0e25999673a971a985f7103d64c39fcc1a6b0eb73758398e1b"
+      },
+      "failed_replay_5fb4b0967c68": {
+        "exists": true,
+        "result_sha256": "ce491ecd1494503882e5dc01ced30a918388a0099fbfaa1caaf32b4572d466d6"
+      },
+      "replay_6f9cc944ed98": {
+        "bundle_count": 74,
+        "job_sha256": "b2369a5bb1dcfef01996fdbc5740c7b684264696f39f466fcf96198f16ca8221",
+        "result_sha256": "55aa751bc39dc2d5b74838a02e1b187642bfd981b6f819bc6ce1ddcb96f9e768"
+      }
+    },
+    "private_bundles_present": false,
+    "queued_status": "queued",
+    "raw_pdf_processing": false,
+    "result_present": false,
+    "runner_preflight": {
+      "credentials": [],
+      "network_changed": false,
+      "pending_jobs": 1
+    },
+    "runner_status": {
+      "network_changed": false,
+      "pending_jobs": 1,
+      "runner": {
+        "api": 1,
+        "host_only_ready": true,
+        "installed": true,
+        "offline_guest_ready": false,
+        "reason": null
+      }
+    },
+    "selection_file_sha256": "5a224b95d9e45685aaae300f842e687cf072a26bff4a0bce2650e20367acb832",
+    "selection_labels": {
+      "0": 652,
+      "1": 800
+    },
+    "selection_sample_count": 1452,
+    "selection_sha256": "2fc0b5ae5ab1dfd1006d4c17b8991d78edc9f32493a2de6dd2254f3b2b69ded9",
+    "selection_splits": {
+      "test": 291,
+      "train": 870,
+      "validation": 291
+    }
+  },
+  "schema_version": 1,
+  "stage": "phase2b_canonical_cic_full_staging"
+}

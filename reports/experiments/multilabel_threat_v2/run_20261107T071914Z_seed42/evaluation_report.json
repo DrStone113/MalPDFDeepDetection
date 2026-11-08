@@ -1,0 +1,209 @@
+{
+  "support_by_split": {
+    "js_script_exec": {
+      "train": 413,
+      "validation": 129,
+      "test": 151
+    },
+    "auto_open_trigger": {
+      "train": 349,
+      "validation": 109,
+      "test": 97
+    },
+    "obfuscated_payload": {
+      "train": 268,
+      "validation": 56,
+      "test": 120
+    },
+    "buffer_loop_staging": {
+      "train": 105,
+      "validation": 27,
+      "test": 4
+    },
+    "active_form_or_exploit": {
+      "train": 115,
+      "validation": 80,
+      "test": 25
+    },
+    "embedded_dropper_or_launch": {
+      "train": 155,
+      "validation": 78,
+      "test": 118
+    },
+    "suspicious_uri_redirect": {
+      "train": 143,
+      "validation": 20,
+      "test": 6
+    },
+    "structural_parser_evasion": {
+      "train": 352,
+      "validation": 121,
+      "test": 131
+    }
+  },
+  "validation": {
+    "denominator": 291,
+    "macro_roc_auc": 0.9667,
+    "macro_pr_auc": 0.9507,
+    "macro_f1": 0.9021,
+    "micro_f1": 0.8997,
+    "exact_subset_accuracy": 0.7526,
+    "per_label": {
+      "js_script_exec": {
+        "support_pos": 129,
+        "threshold": 0.3,
+        "roc_auc": 0.9724,
+        "pr_auc": 0.9707,
+        "f1": 0.9,
+        "precision": 0.8931,
+        "recall": 0.907
+      },
+      "auto_open_trigger": {
+        "support_pos": 109,
+        "threshold": 0.68,
+        "roc_auc": 0.9745,
+        "pr_auc": 0.9656,
+        "f1": 0.8889,
+        "precision": 0.8972,
+        "recall": 0.8807
+      },
+      "obfuscated_payload": {
+        "support_pos": 56,
+        "threshold": 0.35,
+        "roc_auc": 0.9632,
+        "pr_auc": 0.9168,
+        "f1": 0.875,
+        "precision": 0.875,
+        "recall": 0.875
+      },
+      "buffer_loop_staging": {
+        "support_pos": 27,
+        "threshold": 0.3,
+        "roc_auc": 0.9976,
+        "pr_auc": 0.9787,
+        "f1": 0.9434,
+        "precision": 0.9615,
+        "recall": 0.9259
+      },
+      "active_form_or_exploit": {
+        "support_pos": 80,
+        "threshold": 0.3,
+        "roc_auc": 0.9398,
+        "pr_auc": 0.9244,
+        "f1": 0.8816,
+        "precision": 0.9306,
+        "recall": 0.8375
+      },
+      "embedded_dropper_or_launch": {
+        "support_pos": 78,
+        "threshold": 0.47,
+        "roc_auc": 0.9591,
+        "pr_auc": 0.9381,
+        "f1": 0.9079,
+        "precision": 0.9324,
+        "recall": 0.8846
+      },
+      "suspicious_uri_redirect": {
+        "support_pos": 20,
+        "threshold": 0.69,
+        "roc_auc": 0.955,
+        "pr_auc": 0.947,
+        "f1": 0.9048,
+        "precision": 0.8636,
+        "recall": 0.95
+      },
+      "structural_parser_evasion": {
+        "support_pos": 121,
+        "threshold": 0.38,
+        "roc_auc": 0.9718,
+        "pr_auc": 0.9641,
+        "f1": 0.9157,
+        "precision": 0.8906,
+        "recall": 0.9421
+      }
+    }
+  },
+  "test": {
+    "denominator": 291,
+    "macro_roc_auc": 0.9267,
+    "macro_pr_auc": 0.8404,
+    "macro_f1": 0.7597,
+    "micro_f1": 0.8321,
+    "exact_subset_accuracy": 0.6048,
+    "per_label": {
+      "js_script_exec": {
+        "support_pos": 151,
+        "threshold": 0.3,
+        "roc_auc": 0.9697,
+        "pr_auc": 0.9703,
+        "f1": 0.9145,
+        "precision": 0.9085,
+        "recall": 0.9205
+      },
+      "auto_open_trigger": {
+        "support_pos": 97,
+        "threshold": 0.68,
+        "roc_auc": 0.9482,
+        "pr_auc": 0.89,
+        "f1": 0.7826,
+        "precision": 0.6767,
+        "recall": 0.9278
+      },
+      "obfuscated_payload": {
+        "support_pos": 120,
+        "threshold": 0.35,
+        "roc_auc": 0.9588,
+        "pr_auc": 0.9172,
+        "f1": 0.9098,
+        "precision": 0.8952,
+        "recall": 0.925
+      },
+      "buffer_loop_staging": {
+        "support_pos": 4,
+        "threshold": 0.3,
+        "roc_auc": 0.9983,
+        "pr_auc": 0.8875,
+        "f1": 0.8,
+        "precision": 0.6667,
+        "recall": 1.0
+      },
+      "active_form_or_exploit": {
+        "support_pos": 25,
+        "threshold": 0.3,
+        "roc_auc": 0.9923,
+        "pr_auc": 0.9178,
+        "f1": 0.902,
+        "precision": 0.8846,
+        "recall": 0.92
+      },
+      "embedded_dropper_or_launch": {
+        "support_pos": 118,
+        "threshold": 0.47,
+        "roc_auc": 0.9467,
+        "pr_auc": 0.9138,
+        "f1": 0.7475,
+        "precision": 0.925,
+        "recall": 0.6271
+      },
+      "suspicious_uri_redirect": {
+        "support_pos": 6,
+        "threshold": 0.69,
+        "roc_auc": 0.6596,
+        "pr_auc": 0.3158,
+        "f1": 0.1765,
+        "precision": 0.1071,
+        "recall": 0.5
+      },
+      "structural_parser_evasion": {
+        "support_pos": 131,
+        "threshold": 0.38,
+        "roc_auc": 0.9402,
+        "pr_auc": 0.911,
+        "f1": 0.8446,
+        "precision": 0.8833,
+        "recall": 0.8092
+      }
+    }
+  },
+  "checkpoint_sha256": "b2fa3337c5dd4e2387e3fa85be5f3d488b02be95d5e46a4e9b36360b597861df"
+}

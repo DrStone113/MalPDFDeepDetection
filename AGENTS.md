@@ -35,3 +35,20 @@ The agent connects to REMnux via `ssh remnux-lab` without human confirmation for
 3. **Zero Operator Burden:** Never ask the operator to copy files, install packages, or enter complex arguments. The operator only triggers `lab run` in the REMnux console.
 4. **No Unsafe Deserialization:** Never use `pickle`, `joblib`, `dill`, or `allow_pickle=True`.
 5. **Editing Boundary:** All code editing occurs in the Windows repository; never edit tracked source directly on REMnux.
+
+## 4. Zero-Mock & In-Place Binary Mutation Policy (Bộ Quy Tắc Thép)
+
+1. **Zero-Mock Runtime (Cấm Tuyệt đối Mock Data trong Mã nguồn Chạy thật):**
+   - Toàn bộ các endpoint API (`/api/scan`, `/api/disarm`) bắt buộc phải nhận và xử lý trực tiếp byte stream nhị phân thật từ tệp người dùng tải lên (`UploadFile.read()`).
+   - Nghiêm cấm tạo các endpoint phụ dạng fake demo trả về dữ liệu mẫu hardcoded hoặc sinh PDF rỗng trong RAM. Khi cần nạp mẫu thử nghiệm, bắt buộc đọc tệp PDF thật có nội dung từ ổ đĩa (`tests/fixtures/`).
+2. **In-Place Binary Mutation (Tẩy độc Phải là Chỉnh sửa Nhị phân Tại chỗ):**
+   - Tuyệt đối không khởi tạo đối tượng PDF mới rỗng rồi chép trang sang vì sẽ làm mất luồng `/Contents`, font chữ, hình ảnh và bố cục.
+   - Bắt buộc sử dụng `pikepdf` (`pikepdf.open(io.BytesIO(raw_bytes))`) để mở trực tiếp dòng byte nhị phân gốc, phẫu thuật tại chỗ: chỉ xóa đúng các khóa kích hoạt độc hại (`/OpenAction`, `/AA`, `/Names/JavaScript`, `/AcroForm/XFA`, `/JS`, `/Launch`) và giữ nguyên 100% `/Pages`, `/Contents`, `/Resources`.
+3. **Real Fixtures Only (Kiểm thử Bắt buộc Dùng Mẫu PDF Thật):**
+   - Cấm dùng hàm tự sinh file PDF trắng (`add_blank_page`) để kiểm thử.
+   - Sử dụng các tệp PDF thật có đầy đủ văn bản, font chữ và bố cục trong `tests/fixtures/` (`real_benign_document.pdf` và `real_threat_document.pdf`) cho toàn bộ kiểm thử.
+4. **Integrity Assertions (Cơ chế Khẳng định Toàn vẹn CDR):**
+   - Mọi bài kiểm thử CDR bắt buộc phải khẳng định 3 điều kiện bất biến sau khi tẩy độc:
+     - `len(cleaned_bytes) > 0.8 * len(raw_bytes)` (dung lượng file sau tẩy độc không bị suy hao quá 20%).
+     - Số trang của file sau tẩy độc bằng đúng số trang của file gốc (`sanitized_pages == original_pages`).
+     - Trích xuất được văn bản thật từ file sau tẩy độc khớp với văn bản gốc (`len(extracted_text) > 0`), chứng minh luồng hiển thị `/Contents` còn nguyên vẹn 100%.

@@ -71,7 +71,7 @@ def _synthetic_frame() -> pd.DataFrame:
                     "Label": label,
                 }
             )
-            # Identical feature vectors intentionally exist; G must keep each group intact.
+
             rows.extend([row.copy(), row.copy()])
     frame = pd.DataFrame(rows)
     assert len(frame.columns) == 42

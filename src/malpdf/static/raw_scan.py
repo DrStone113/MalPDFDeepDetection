@@ -17,8 +17,8 @@ RAW_DIRECT_TOKENS: Mapping[str, bytes] = {
     "JBIG2Decode": b"/JBIG2Decode", "RichMedia": b"/RichMedia",
     "Launch": b"/Launch", "EmbeddedFile": b"/EmbeddedFile", "XFA": b"/XFA",
     "Colors": b"/Colors > 2^24", "URI": b"/URI",
-    # This apparent leading "j" is a released PDFMalExtract v0.1 quirk.
-    # It is retained for dataset-contract fidelity, not corrected to /BaseEncoding.
+
+
     "BaseEncoding": b"j/BaseEncoding", "Encoding": b"/Encoding", "ProcSet": b"/ProcSet",
     "Registry": b"/Registry", "Resources": b"/Resources", "www": b"/www",
     "server": b"/server", "Root": b"/Root", "BitsPerComponent": b"/BitsPerComponent",

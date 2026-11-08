@@ -196,8 +196,8 @@ def train_with_validation(
             finite_gradients = not finite_checks or bool(torch.stack(finite_checks).all())
             if not finite_gradients and not mixed_precision:
                 raise RuntimeError("Training gradient is non-finite")
-            # AMP overflow skips the optimizer update and lowers the loss scale.
-            # Checks remain explicit; an epoch with no finite update is rejected.
+
+
             skipped_steps += int(not finite_gradients)
             steps += 1
             scaler.step(optimizer)

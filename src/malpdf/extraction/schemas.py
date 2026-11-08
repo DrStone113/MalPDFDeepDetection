@@ -54,7 +54,7 @@ def schemas():
         'model':{'type':'object'},'graph_observation_status':_STATUS,'graph_limitations':_STRINGS,
         'lexical_observation_status':_STATUS},required=('observation_status','limitations'))
     edge=_object({key:{'type':'string','minLength':1} for key in ('id','source','target')},additional=True)
-    # JSON materialization breaks template aliases within and across documents.
+
     return json.loads(json.dumps({
         "evidence_store.schema.json": _store("pdf-evidence-store-v1", {
             "records": {"type": "array", "items": observation},

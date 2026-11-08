@@ -104,7 +104,7 @@ def test_gpu_training_exports_test_probabilities_once_without_test_loss_or_metri
     assert state["status"] == "completed" and state["test_prediction_passes"] == 1
     assert state['data_loading']['matrix_reads'] == len(frame)
     assert state['data_loading']['persistent_workers'] is True
-    assert state['mixed_precision_effective'] is False  # Explicit CPU smoke only.
+    assert state['mixed_precision_effective'] is False
     history = pd.read_csv(output / 'training_history.csv')
     assert (history.epoch_seconds > 0).all() and (history.train_data_wait_seconds >= 0).all()
     assert state["test_metrics_computed"] is False
@@ -140,7 +140,7 @@ def notebook_bootstrap(input_root, checksum, extraction_root):
     source = next("".join(c["source"]) for c in notebook["cells"] if c["cell_type"] == "code")
     source = source.replace("Path('/kaggle/input')", f"Path({str(input_root)!r})")
     source = source.replace("Path('/tmp')", f"Path({str(extraction_root)!r})")
-    # Exercise discovery, extraction and all checks without importing fixture code.
+
     source = source.split("sys.dont_write_bytecode = True", 1)[0]
     namespace = {}
     exec(compile(source, "offline_notebook_fixture", "exec"), namespace)

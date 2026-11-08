@@ -46,9 +46,9 @@ def evidence_decision(probability, analysis, *, input_available):
             has_action = any(a['kind'] == '/JavaScript' for a in graph.get('actions', []))
             linked_payload = any(e.get('magic') in {'pe', 'elf'} for e in graph.get('embedded', [])) and any(
                 a['kind'] in {'/Launch', '/GoToE'} for a in graph.get('actions', []))
-            # This is evidence availability, not a rule declaring JS or an
-            # attachment malicious. A separately fitted positive ML score is
-            # still required. Co-occurrence does not prove actual execution.
+
+
+
             contextual |= (has_ast and has_action) or linked_payload
         if probability < 0.5:
             reasons.append('incomplete_negative')

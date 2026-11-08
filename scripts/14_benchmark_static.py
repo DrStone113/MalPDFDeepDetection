@@ -16,8 +16,8 @@ def main():
     parser.add_argument("--repeats", type=int, default=5)
     parser.add_argument("--batch-size", type=int, default=128)
     args = parser.parse_args()
-    # Spawn replays this file before applying the parser's absolute CPU/AS caps.
-    # Keep the model/experiment stack out of the child interpreter's startup.
+
+
     from malpdf.experiments.static_benchmark import benchmark_static
 
     state = benchmark_static(args.report_root, Path(__file__).resolve().parents[1],

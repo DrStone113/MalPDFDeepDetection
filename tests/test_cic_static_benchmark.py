@@ -81,7 +81,7 @@ def test_ascii_streams_and_filter_chains_recover_js_without_execution(filters):
 @pytest.mark.parametrize("filters", [(), ("/FlateDecode",), ("/ASCIIHexDecode", "/FlateDecode")])
 def test_pdf_text_encodings_recover_stream_scripts_through_indirect_actions(data, expected, filters):
     from pypdf.generic import ByteStringObject
-    # Equality verifies character meaning as well as a nonempty AST.
+
     assert _script_text(ByteStringObject(data), CodeInspectionLimits()) == expected
     result = _inspect_code_bytes(fixture_pdf(script=data, filters=filters), CodeInspectionLimits())
     assert result["complete"] and result["scripts_found"] == result["scripts_parsed"] == 1
@@ -176,7 +176,7 @@ def test_missing_startxref_recovers_only_partial_evidence_and_preserves_source(t
     if script is not None:
         assert code["observed"]["ast"]["named_calls"]["util.printf"] == 1
     else:
-        assert code["observed"]["ast"] is None  # No full-history absence claim.
+        assert code["observed"]["ast"] is None
     diagnostic = code["parser_diagnostics"]
     assert diagnostic["failures"][0]["reason"] == "startxref_missing" and not diagnostic["open_success"]
     retry = diagnostic["recovery_attempt"]
@@ -296,7 +296,7 @@ def test_normalized_publisher_labels_are_joined_and_conflicts_refused():
     normalized = [{**row, "target_pdf_byte_verified": "True", "target_label_source": "fixture publisher label"} for row in rows]
     study.verify_label_provenance(rows, normalized)
     assert all(row["label_source"] == "fixture publisher label" for row in rows)
-    normalized.append(dict(normalized[0]))  # Same-file aliases are not extra identities.
+    normalized.append(dict(normalized[0]))
     study.verify_label_provenance(rows, normalized)
     normalized[0]["Label"] = "1" if normalized[0]["Label"] == "0" else "0"
     with pytest.raises(ValueError, match="publisher label"):
@@ -447,7 +447,7 @@ def test_cic_comparison_uses_same_rows_train_only_imputation_and_keeps_refusals(
         assert model["malicious_planned"] == model["benign_planned"] == 3
         assert model["malicious_coverage"] == model["benign_coverage"] == 2 / 3
         assert model["threshold"] == 0.5
-    assert all(row["code"] is None for row in records)  # Unknown raw AST never rewritten to zeros.
+    assert all(row["code"] is None for row in records)
 
 
 def test_new_feature_equivalence_blocks_comparison_before_fit(tmp_path, monkeypatch):

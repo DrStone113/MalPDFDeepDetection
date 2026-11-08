@@ -162,7 +162,7 @@ def test_resident_session_batches_only_compatible_rows_and_preserves_order():
     assert results[0].explanation["reason"] == "not_requested"
     manifest["threshold"] = 0.95
     assert session.scan_many(["9"])[0].prediction["predicted_label"] == 1
-    assert len(loads) == 1  # Immutable manifest snapshot stays frozen.
+    assert len(loads) == 1
 
 
 def test_session_all_gate_failures_never_load_model():
@@ -252,7 +252,7 @@ def test_pdf_literal_and_flate_scripts_yield_same_syntax_evidence(compressed):
 
 def test_pdf_decoded_names_are_followed_without_counting_literal_mentions():
     data = _pdf('var text="/JS eval";')
-    escaped = data.replace(b"/JS ", b"/J#53 ")  # after xref offsets: rebuild with writer
+    escaped = data.replace(b"/JS ", b"/J#53 ")
     from pypdf import PdfReader
     writer = PdfWriter(clone_from=PdfReader(io.BytesIO(escaped), strict=False))
     output = io.BytesIO()
@@ -296,14 +296,14 @@ def test_actual_spawn_inspection_handles_benign_flate_and_non_pdf(tmp_path):
 
 
 def _slow_child(connection, path, boundary, limits, expected_sha256):
-    time.sleep(30)  # synthetic worker timeout; no sample code is executed
+    time.sleep(30)
 
 
 def test_os_address_space_limit_rejects_oversized_mapping():
     import subprocess
     import sys
-    # A minimal interpreter avoids loading the test module's numeric libraries
-    # before the small address-space cap. No physical memory is touched by mmap.
+
+
     probe = """
 import json, mmap
 from malpdf.static.code_inspector import CodeInspectionLimits, _apply_code_limits
@@ -338,8 +338,8 @@ def _descendant_child(connection, path, boundary, limits, expected_sha256):
 
 def test_timeout_kills_worker_descendants(tmp_path, monkeypatch):
     from pathlib import Path
-    # This control-process probe needs no fresh parser imports. Use fork so the
-    # timeout measures the synthetic stalled worker, not test-module startup.
+
+
     context = multiprocessing.get_context("fork")
     monkeypatch.setattr("malpdf.static.code_inspector.multiprocessing.get_context", lambda name: context)
     monkeypatch.setattr("malpdf.static.code_inspector._code_child", _descendant_child)
@@ -347,8 +347,8 @@ def test_timeout_kills_worker_descendants(tmp_path, monkeypatch):
     result = inspect_pdf_code(marker, limits=replace(CodeInspectionLimits(), wall_seconds=1, cpu_seconds=1))
     assert result["errors"] == ["parser_exit_or_timeout"]
     state = Path("/proc") / marker.read_text() / "stat"
-    # Signal delivery/exit are asynchronous. Allow a bounded interval for the
-    # killed orphan to disappear or become a zombie awaiting the OS reaper.
+
+
     deadline = time.monotonic() + 2
     while state.exists():
         try:
@@ -381,7 +381,7 @@ def test_finished_worker_result_is_not_lost_between_pipe_and_exit_checks(tmp_pat
 
         def poll(self):
             self.polls += 1
-            # The worker sends its result and exits after the first pipe check.
+
             return self.polls > 1
 
         def recv_bytes(self, maxlength):
@@ -531,9 +531,9 @@ def test_partial_ast_retains_parsed_script_evidence_without_zero_filling_failed_
 
 
 def test_javascript_action_in_object_stream_is_resolved_through_xref_stream():
-    # A benign PDF 1.5 fixture: object 5 is compressed in /ObjStm 4, and its
-    # hex /JS payload is indirect object 6. Neither /JS nor /JavaScript appears
-    # as a raw token in the compressed action, so lexical scanning cannot find it.
+
+
+
     data = bytearray(b"%PDF-1.5\n")
     offsets = {}
     def add(number, body):

@@ -79,8 +79,8 @@ def main():
                 verification['fixture_results'].append(row)
                 write_json(run.artifacts/(name+'_verification.json'),row)
                 if not all(assertions.values()): raise ValueError('Arlington synthetic verification failed: '+name)
-        # Reference hashes are public dependency data; all PDF evidence is synthetic
-        # and stays private in ignored runtime storage.
+
+
         write_json(run.report/'arlington_verification.json',verification)
         run.state.update(status='completed',tsv_count=catalog.provenance['tsv_count'],
             arlington_commit=catalog.provenance['commit'],fixtures=len(verification['fixture_results']),

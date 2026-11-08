@@ -158,7 +158,7 @@ def native_treeshap_contributions(estimator: Any, features: pd.DataFrame) -> tup
     """Return feature contributions, bias, raw margin, and malicious probability from native XGBoost."""
     try:
         import xgboost as xgb
-    except ImportError as error:  # pragma: no cover
+    except ImportError as error:
         raise ExplainabilityError("XGBoost dependency is unavailable") from error
     booster = estimator.get_booster()
     matrix = xgb.DMatrix(features, feature_names=list(features.columns))

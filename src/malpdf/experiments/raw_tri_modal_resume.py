@@ -73,8 +73,8 @@ def validate_vision_evidence(directory, root, inventory, csv_hashes):
             or checks.get("vision_resnet_best.pt") != lock["checkpoint_sha256"]
             or type(lock.get("best_epoch")) is not int or not 1 <= lock["best_epoch"] <= lock.get("configuration", {}).get("max_epochs", 0)):
         raise ValueError("Kaggle outputs do not prove the same validation-only selected Vision run")
-    # Accept only code sealed in this repository's export, or a known performance
-    # overlay. A claimed arbitrary commit is not sufficient training provenance.
+
+
     code_commit = lock.get("code_commit")
     if code_commit != inventory["code_commit"]:
         provenance = lock.get("training_code_provenance")
@@ -186,7 +186,7 @@ def load_resume_inputs(root, config, handoff_run, vision_directory, run):
 
 def claim_test_evaluation(root, input_locks, report, lock_digest):
     """An exclusive cohort marker survives failure and blocks repeated Test use."""
-    # Older full-training runs predate the shared marker. Respect their evidence.
+
     for path in (root / "reports/experiments/raw_tri_modal_v3").glob("run_*/test_evaluation_started.json"):
         prior = _json(path.parent / "locked_methodology.json", root / "reports/experiments/raw_tri_modal_v3")
         if prior.get("configuration", {}).get("inputs") == input_locks:
@@ -200,7 +200,7 @@ def claim_test_evaluation(root, input_locks, report, lock_digest):
         raise ValueError("Invalid locked split checksum")
     evidence = {"report": str(report.relative_to(root)), "validation_lock_sha256": lock_digest,
                 "split_manifest_sha256": key, "allowed_evaluations": 1}
-    # x mode makes concurrent continuations fail closed before inference.
+
     write_json(directory / (key + ".json"), evidence)
     write_json(report / "test_evaluation_started.json", evidence)
 

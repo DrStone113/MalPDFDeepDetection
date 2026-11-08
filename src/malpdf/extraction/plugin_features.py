@@ -116,7 +116,7 @@ def plugin_backends(profile):
     result={}
     for spec in registry.get('specs',[]):
         if spec['kind']=='parser' and any(v['backend']=='plugin:'+spec['plugin_id'] for v in (profile.get('parser_analysis') or {}).get('views',[])):
-            continue # Native inventory already exports this view and its state.
+            continue
         codes=[];statuses=[]
         if spec['kind']=='feature':
             for run in (profile.get('plugin_features') or {}).get('runs',[]):

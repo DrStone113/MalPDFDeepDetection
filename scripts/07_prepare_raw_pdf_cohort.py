@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 import sys
 
-# Keep the parent fork-safe: no BLAS/OpenMP worker threads during parsing.
+
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"

@@ -4,7 +4,12 @@ from __future__ import annotations
 
 import math
 from dataclasses import asdict, dataclass, field
-from enum import StrEnum
+try:
+    from enum import StrEnum
+except ImportError:
+    from enum import Enum
+    class StrEnum(str, Enum):
+        pass
 from numbers import Real
 from typing import Any
 
@@ -72,7 +77,6 @@ class StaticInspectionResult:
 
     def protocol_g_drop3constant_gate(self) -> FeatureCompatibilityGate:
         """Require all 38 exact-semantics numeric features; never impute values."""
-        # Local import avoids a schema/result import cycle.
         from malpdf.static.schema import PROTOCOL_G_REQUIRED_FEATURES
 
         blockers: list[dict[str, str]] = []

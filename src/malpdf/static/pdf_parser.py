@@ -86,7 +86,7 @@ _STRUCTURAL_NAMES = frozenset(
 
 
 def _indicator_name(name: str) -> str:
-    # Keep the old diagnostic key while recognizing the standard PDF spelling.
+
     return "Acroform" if name == "/AcroForm" else name.removeprefix("/")
 
 
@@ -166,8 +166,8 @@ class _StructureWalker:
             keys = {str(key) for key in value.keys()}
             for key in keys.intersection(_STRUCTURAL_NAMES):
                 self.indicators[_indicator_name(key)] += 1
-            # Action and type names are values in ordinary PDF dictionaries
-            # (for example << /S /Launch >>), not only dictionary keys.
+
+
             for key, child in value.items():
                 if str(key) in {"/S", "/Type"} and str(child) in _STRUCTURAL_NAMES:
                     self.indicators[_indicator_name(str(child))] += 1
@@ -229,7 +229,7 @@ def inspect_pdf_structure(data: bytes, limits: StaticInspectionLimits) -> Parser
         diagnostic.failure(error, "open")
         result.errors.append(StructuredExtractionIssue("parser_failure", _bounded_message(error, limits)))
         return result
-    except Exception as error:  # pypdf can expose malformed-object implementation errors.
+    except Exception as error:
         diagnostic.failure(error, "open")
         result.errors.append(StructuredExtractionIssue("parser_failure", _bounded_message(error, limits)))
         return result
@@ -307,8 +307,8 @@ def inspect_pdf_structure(data: bytes, limits: StaticInspectionLimits) -> Parser
     text_length = 0
     try:
         for page in pages:
-            # pypdf parses content streams only. It does not execute JavaScript,
-            # Launch actions, URLs, embedded files, macros, or external programs.
+
+
             text_length += len(page.extract_text() or "")
         result.contains_text = int(text_length >= 50)
     except Exception as error:

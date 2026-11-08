@@ -61,7 +61,7 @@ def v3_validation_roles(manifest: pd.DataFrame, *, seed: int = 42) -> dict[str, 
         raise ValueError("V3 role assignment accepts only seed-42 validation")
     if not manifest.sample_id.is_unique or manifest.duplicate_group_id.isna().any() or manifest.groupby("duplicate_group_id").Label.nunique().max() != 1:
         raise ValueError("Validation requires unique IDs and label-pure nonempty groups")
-    # Reuse v2's group logic; it depends only on cohort IDs/groups/labels.
+
     cohort = SimpleNamespace(partition="validation", sample_ids=tuple(manifest.sample_id),
                              group_ids=tuple(manifest.duplicate_group_id), labels=manifest.Label.to_numpy())
     roles = validation_roles(cohort, seed=seed)
@@ -102,8 +102,8 @@ def youden_threshold(labels, scores) -> tuple[float, dict]:
     if truth.shape != probabilities.shape or truth.ndim != 1 or set(truth) != {0, 1} or not np.isfinite(probabilities).all() or (probabilities < 0).any() or (probabilities > 1).any():
         raise ValueError("Youden selection requires aligned binary validation labels and probabilities")
     fpr, tpr, thresholds = roc_curve(truth, probabilities, drop_intermediate=False)
-    # Exclude sklearn's infinite all-negative sentinel. Literal probability 1
-    # remains a legal threshold; decisions consistently use p >= threshold.
+
+
     candidates = [(float(t), float(j)) for t, j in zip(thresholds, tpr - fpr) if np.isfinite(t) and 0 <= t <= 1]
     best_j = max(j for _, j in candidates)
     tied = [(t, calibration_metrics(truth, probabilities, threshold=t)) for t, j in candidates if abs(j - best_j) <= 1e-12]

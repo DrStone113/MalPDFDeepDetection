@@ -168,9 +168,9 @@ class StaticPDFAnalyzer:
         result.warnings.extend(reference.warnings)
 
         features.update(reference.features)
-        # pypdf values remain separate diagnostics. Canonical values above use
-        # the published PDFMalExtract/PyMuPDF methods and their explicit
-        # sentinels; absent values are never imputed.
+
+
+
         return result
 
 

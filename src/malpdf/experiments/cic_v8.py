@@ -58,8 +58,8 @@ def v8_attempt_outcome(root, prepared_run):
     marker = _json(root, path.relative_to(root))
     if marker['prepared_run'] != prepared_run:
         raise ValueError('V8 attempt identity mismatch')
-    # Older markers predate the explicit profile pointer. Match their locked
-    # methodology rather than picking the most recent or most favorable run.
+
+
     directory = root/'reports/experiments/cic_static_profile'
     profile_run = marker.get('profile_run')
     if profile_run is not None:
@@ -209,11 +209,11 @@ def v8_feature_values(row):
     names += ['embedded_'+s for s in ['pdf','pe','elf','zip','png','jpeg','other']]
     for name in names:
         facts = [f for f in evidence.get('features',[]) if f['name']==name and f['status'] in {'observed','absent_after_complete_check'}]
-        # Deterministic primary-first choice, never sum or max incompatible
-        # backend interpretations. Conflicted rows are refused by the policy.
+
+
         selected = next((f for f in facts if f['source']=='pypdf'), facts[0] if facts else None)
         values['v8_'+name] = None if selected is None else selected['value']
-    # Preserve separate backend lower bounds, including recovered XFA/JS AST.
+
     from malpdf.static.js_ast import CALL_NAMES
     for backend in ('pypdf','MuPDF'):
         view = next((b.get('code') for b in evidence.get('backends',[]) if b['backend']==backend), None) or {}

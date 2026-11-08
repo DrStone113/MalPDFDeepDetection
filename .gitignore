@@ -107,3 +107,13 @@ Thumbs.db
 agent-skills/
 skills/
 skills-lock.json
+
+# Scratch and temporary work
+scratch/
+
+# UI mockups and design references
+UI_Example/
+
+# Agent internal directories and spreadsheets
+.agents/
+*.xlsx

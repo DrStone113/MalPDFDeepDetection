@@ -245,7 +245,7 @@ def test_connected_launcher_waits_for_manual_disconnect_then_one_enter_runs(read
         def close(self): calls.append("close")
     monkeypatch.setattr(local_agent, "probe_local_agent", lambda: Agent())
     def confirm(*a):
-        assert not calls  # No agent stop or job before operator's Enter.
+        assert not calls
         state["connected_interfaces"] = []
         return ""
     monkeypatch.setattr("builtins.input", confirm)

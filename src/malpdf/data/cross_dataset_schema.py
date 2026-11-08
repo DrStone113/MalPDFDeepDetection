@@ -94,7 +94,7 @@ def build_feature_alignment(cic_report: dict[str, Any]) -> list[dict[str, Any]]:
         elif name in _NO_MATCH:
             cic_column, canonical, rationale = _NO_MATCH[name]
             status = AlignmentStatus.NO_MATCH
-        else:  # Defensive so a future RIT dictionary addition cannot silently be aligned.
+        else:
             cic_column, canonical, rationale, status = None, name, "No alignment rule was reviewed for this RIT feature.", AlignmentStatus.NO_MATCH
         if cic_column is not None and cic_column not in cic_columns:
             status = AlignmentStatus.NO_MATCH
@@ -278,8 +278,8 @@ def write_schema_alignment_outputs(report: dict[str, Any], reports_root: str | P
     return paths
 
 
-# Version 2 keeps the original audit immutable and records only defensible
-# reclassifications supported by both documented semantics and local raw values.
+
+
 _V2_RECLASSIFICATIONS: dict[str, tuple[AlignmentStatus, str]] = {
     "pdf_ver": (
         AlignmentStatus.NO_MATCH,

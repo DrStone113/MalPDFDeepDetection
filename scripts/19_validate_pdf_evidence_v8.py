@@ -29,8 +29,8 @@ def main():
         if venv.exists() or venv.is_symlink():
             raise ValueError('Fresh validation requires an absent root .venv; existing environment preserved')
         python = venv / 'bin/python'
-        # DataLoader file-descriptor sharing uses Unix sockets below TMPDIR.
-        # Keep that path short as well as on disk, outside RAM-backed /tmp.
+
+
         temporary_root = root / 'artifacts/tmp'
         temporary_root.mkdir(exist_ok=True)
         temporary = Path(tempfile.mkdtemp(prefix='v8_', dir=temporary_root))

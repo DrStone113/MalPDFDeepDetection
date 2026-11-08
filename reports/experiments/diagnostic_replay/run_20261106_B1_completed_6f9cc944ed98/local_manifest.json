@@ -1,0 +1,11 @@
+{
+  "cases.jsonl": "048e13a75db3652a41d69caf68a7995d4f7d22804c7eef60db0512ea031938f9",
+  "manifest.json": "59f933f6767bb0f2951b026a63f582d3b0ea728be68a260cc46cd13266fb7e03",
+  "outer_diagnostics.json": "c2e24f990ed69efe6fd98bcbfb01caa5c63cf3d932e4bec505f3c33cf32b1394",
+  "pdf_summary.json": "92c910c1c37207e9ab7d853abed31b7cf37cece927aa85e282943a52b90a0da9",
+  "postrun_analysis.json": "9fbb3d57ec0f46347d7f027afa359cea7fefc2778331f9b86ddbd4509c841f69",
+  "report.md": "f64974d568041c0b7acf108949fc4192e1cb05c157b3a5fa9083561058c9a927",
+  "result.json": "55aa751bc39dc2d5b74838a02e1b187642bfd981b6f819bc6ce1ddcb96f9e768",
+  "retrieval_verification.json": "7a1c1c371721eabe4ddafb2572603ea63cb3feec7f3d6380684c3e7ec2c09a76",
+  "summary.json": "ccdb11201c443a8ef3cf7a4af5a4e233f2b4d456c2741c08bcec2d2535494f97"
+}

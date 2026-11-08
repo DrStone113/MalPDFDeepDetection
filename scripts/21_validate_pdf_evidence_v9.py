@@ -72,8 +72,8 @@ def main():
             if venv.exists() or venv.is_symlink():
                 raise ValueError('Fresh validation requires an absent root .venv; existing environment preserved')
             check('create_venv', [sys.executable, '-m', 'venv', venv])
-            # Wheels are transient: keep them off the almost-full project disk.
-            # The fresh installed environment and test TMPDIR stay on disk.
+
+
             install_env = {**environment, 'TMPDIR': '/tmp'}
             check('install', [venv/'bin/python', '-m', 'pip', 'install', '--no-cache-dir',
                 '--extra-index-url', 'https://download.pytorch.org/whl/cpu', '-c', constraints, '-e', '.[dev]'],

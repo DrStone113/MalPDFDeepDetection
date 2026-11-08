@@ -1,0 +1,8 @@
+{
+  "python_files_parsed": 365,
+  "python_comments": 0,
+  "git_diff_check_passed": true,
+  "postrun_validation": "Every exported record validated against closed numeric schema and pinned SHA/label/split; reused bundles compared by source hash",
+  "product_code_changed_this_turn": false,
+  "pytest_rerun_this_turn": false
+}

@@ -50,8 +50,8 @@ def diverse_validation_roles(rows):
         target = np.maximum(np.bincount(frame.Label.to_numpy(int), minlength=2) / 4, 1)
         for gid, labels, _ in groups:
             eligible = np.flatnonzero(counts < quotas)
-            # Spread groups before refining class balance; an oversized group
-            # cannot monopolize a role and leave its other examples unrepresented.
+
+
             lowest = counts[eligible].min()
             eligible = eligible[counts[eligible] == lowest]
             index = min(eligible, key=lambda i: (float(np.sum(((classes[i] + labels) / target) ** 2)), int(i)))

@@ -160,7 +160,7 @@ def test_rf_imputation_fits_train_only_and_retains_missing_validation_denominato
     assert manifest['training_dataset']['training_rows']==8
     artifact=tmp_path/manifest['artifact_relative_path']
     assert hashlib.sha256(artifact.read_bytes()).hexdigest()==manifest['artifact_sha256']
-    # Load only this test's own synthetic model; no supplied binaries or datasets.
+
     model=joblib.load(artifact);imputer,forest=model.steps[0][1],model.steps[1][1]
     assert imputer.statistics_[0]==4.5
     assert forest.n_estimators==200 and forest.max_depth==12 and forest.min_samples_leaf==2

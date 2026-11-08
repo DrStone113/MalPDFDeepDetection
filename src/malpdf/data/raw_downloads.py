@@ -303,8 +303,8 @@ def inspect_zip_directory(path: Path, limits: DownloadLimits) -> list[zipfile.Zi
     info = path.lstat()
     if any(p.is_symlink() for p in (path, *path.parents)) or not stat.S_ISREG(info.st_mode) or info.st_size > limits.max_download_bytes:
         raise AcquisitionError("Require a regular ZIP within the download cap")
-    # Bound the central directory before ZipFile allocates or decodes it. ZIP64
-    # and multipart archives are intentionally unsupported by this small loader.
+
+
     with path.open("rb") as handle:
         handle.seek(max(0, info.st_size - 65557))
         tail = handle.read(65557)
@@ -355,8 +355,8 @@ def extract_pdf_archive(path: Path, output: Path, limits: DownloadLimits, *,
                      and m.file_size <= limits.max_pdf_bytes
                      and m.file_size <= max(1, m.compress_size) * limits.max_compression_ratio]
         if encrypted:
-            # A complete bounded read verifies CRC before any output is published.
-            # Retry only this probe; never replay partially extracted source data.
+
+
             probe = min(encrypted, key=lambda m: m.file_size)
             for index, candidate in enumerate(candidates, start=1):
                 try:
@@ -467,7 +467,7 @@ def acquire_raw_datasets(root: Path, configuration: dict, *, authorized: bool = 
     for path in (raw, audit, report):
         if path.exists() or any(p.is_symlink() for p in (path, *path.parents)):
             raise AcquisitionError("Run collision or symbolic link; previous runs are immutable")
-    # Verify ignore coverage before writing sample bytes or their identities.
+
     for path in (raw / "guard.pdf", audit / "guard.json"):
         result = subprocess.run(["git", "-C", str(root), "check-ignore", "-q", "--", str(path)], check=False)
         if result.returncode != 0:
@@ -585,14 +585,14 @@ def acquire_raw_datasets(root: Path, configuration: dict, *, authorized: bool = 
                     if state["status"] == "started":
                         state["status"] = "failed"
                     state["error_type"] = type(error).__name__
-                    # Response/ZIP error details are kept only in ignored evidence.
+
                     _json(audit / (source["name"] + "_error.json"), {"type": type(error).__name__, "message": str(error)})
                 except BaseException:
                     state["status"] = "interrupted"
                     raise
                 finally:
-                    # Charge failed/truncated payloads too: retaining failure
-                    # evidence must not bypass the global download/disk cap.
+
+
                     summary["downloaded_bytes"] = sum(p.stat().st_size for p in raw.glob("*/payload.*") if p.is_file())
                     summary["published_pdf_bytes"] = sum(p.stat().st_size for p in raw.glob("*/pdfs/*.pdf") if p.is_file())
                     event({"event": "source_finished", "source": source["name"], "status": state["status"], "unique_pdfs": state["unique_pdfs"]})

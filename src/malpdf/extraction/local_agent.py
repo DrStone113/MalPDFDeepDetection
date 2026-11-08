@@ -48,10 +48,10 @@ class LocalAgent:
             raise ValueError("Agent socket identity changed")
 
     def stop(self):
-        # No network/session manipulation. This checks the current console again.
+
         require_offline_lab(True)
         self.verify()
-        # A pidfd targets the verified process, never a reused numeric PID.
+
         signal.pidfd_send_signal(self.pidfd, signal.SIGTERM)
         if not select.select([self.pidfd], [], [], 3)[0]:
             raise ValueError("Agent shutdown not confirmed")
@@ -59,8 +59,8 @@ class LocalAgent:
             raise ValueError("Agent socket remains; environment preserved")
         if os.environ.get("SSH_AGENT_PID") != self.env_pid or os.environ.get("SSH_AUTH_SOCK") != self.env_socket:
             raise ValueError("Agent environment changed; environment preserved")
-        # Only stale agent variables are removed, after exit/socket removal.
-        # All other credentials and environment values remain visible to guards.
+
+
         os.environ.pop("SSH_AUTH_SOCK", None)
         os.environ.pop("SSH_AGENT_PID", None)
 
@@ -119,7 +119,7 @@ def clear_stale_agent():
     try:
         fd = os.pidfd_open(int(pid))
     except ProcessLookupError:
-        pass  # ESRCH proves the selected PID is absent, not merely unreadable.
+        pass
     except OSError:
         return False
     else:

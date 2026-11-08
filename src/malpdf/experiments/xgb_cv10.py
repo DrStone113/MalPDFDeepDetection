@@ -599,7 +599,7 @@ def execute_xgb_cv10_from_preflight(
                     }
                     for sample_id, label, prediction, score in zip(test_ids, test_frame[TARGET_COLUMN], predictions, score_values, strict=True)
                 )
-            except Exception as error:  # Preserve a failed fold rather than silently omitting it.
+            except Exception as error:
                 record.update({"status": "failed", "error": {"type": type(error).__name__, "message": str(error), "traceback": traceback.format_exc()}})
                 failures.append(f"{variant}:fold{fold_number}")
             if not cv_fold_record_schema_is_valid(record):

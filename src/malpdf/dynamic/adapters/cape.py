@@ -96,7 +96,7 @@ def _process_stats(records: list[Mapping[str, Any]] | None) -> tuple[int | None,
             parent_links[child_id] = str(parent)
         if isinstance(explicit_children, Sequence) and not isinstance(explicit_children, (str, bytes, bytearray)):
             child_count += len(explicit_children)
-    # A bounded walk prevents malicious/corrupt cyclic metadata from looping.
+
     maximum_depth = 1
     for child in parent_links:
         depth, current, seen = 1, child, {child}

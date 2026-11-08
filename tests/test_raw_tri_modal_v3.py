@@ -52,7 +52,7 @@ def test_median_is_learned_on_train_and_missing_flags_survive_transform():
     output = processor.transform(future)
     assert output[1, column] == 15
     assert output[1, processor.expanded_order.index("title length__missing")] == 1
-    assert output[2, column] == -999  # Finite source values are not clipped/reinterpreted.
+    assert output[2, column] == -999
     assert np.isnan(train[2, column])
     assert processor.imputer.statistics_[column] == 15
 

@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "stage": "BUG-007A",
+  "base_git_head": "c6b920385d966eaba9f0e1eec0ac2dcb789a4664",
+  "source_identity": "enumerated_dirty_worktree_package; main commit unchanged",
+  "source_package_sha256": "a53c1ceb1bffcc0e7cbcb21e403e2e1f30da431b29b7122a3a0f1d60ecd83e9c",
+  "lab_validation_root": "/home/remnux/malpdf-diagnostic-validation/bug007a_20261102/after_v3",
+  "source_job_id": "dfafd888f7a948a87ffac2e0b68ab702fd60dd1dc9bc630fa6cdbe4496e4a06f",
+  "unknown_values": null,
+  "stderr_raw_byte_cap": 16384,
+  "traceback_frame_cap": 32,
+  "stderr_export": "private LAB bundle only; numeric exporter excludes diagnostic",
+  "worker_exit_code_scope": "observed before cleanup; cleanup_exit_code kept separately",
+  "selection_hash_scope": "canonical rows from producer contract",
+  "windows_test_scope": "full tests/",
+  "remnux_test_scope": "selected extraction/worker/audit/export suites",
+  "remnux_packaging_failure": "one baseline assertion expects Git metadata absent from standalone package",
+  "bug007b_status": "planned; no real-sample rerun queued"
+}

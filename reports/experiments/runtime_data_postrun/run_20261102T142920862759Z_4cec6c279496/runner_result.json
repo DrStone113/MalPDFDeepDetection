@@ -1,0 +1,54 @@
+{
+  "checks": [],
+  "generated_utc": "2026-11-02T14:07:07Z",
+  "job": {
+    "api": 1,
+    "archive_sha256": "bffb3ef0a3f5ffa12776bba3fc5594ae62a20a86541f803b120ece9015e2b253",
+    "attempt": "6eee14df0a8246048fefc66843e83eb1",
+    "commit": "c6b920385d966eaba9f0e1eec0ac2dcb789a4664",
+    "job_id": "4cec6c2794967311bc5c55a924933a0b0cbda0529ff31fe1f19de8b4cdcd7b75",
+    "kind": "pdf-static-cic-full",
+    "limits": {
+      "file_cpu_seconds": 30,
+      "file_max_bytes": 10485760,
+      "file_memory_bytes": 1073741824,
+      "file_wall_seconds": 35,
+      "output_bytes": 2147483648,
+      "samples": 1452,
+      "wall_seconds": 7200,
+      "workers": 10
+    },
+    "manifest_sha256": "e4a9a1ce4f34f1aabc1dced5dcd027295ee6a73469f7f10c749079c7ff8f14fb",
+    "mode": "offline",
+    "schema_version": 1
+  },
+  "pdf_summary": {
+    "bounded_complete": 283,
+    "completed": 1380,
+    "elapsed_ms": 3980880,
+    "failed": 957,
+    "observed": 284,
+    "partial": 139,
+    "peak_rss_bytes": 412389376,
+    "planned": 1452,
+    "primary_available": 1309,
+    "status_counts": {
+      "bounded_complete": 283,
+      "decode_error": 48,
+      "observed": 1,
+      "partial": 139,
+      "timeout": 587,
+      "unsupported": 322
+    },
+    "timeout": 587
+  },
+  "preflight": {
+    "guest_network_checked": true,
+    "hypervisor_controls_attested": true,
+    "mode": "offline",
+    "stdlib_dependencies_checked": true
+  },
+  "reason": null,
+  "schema_version": 1,
+  "status": "partial"
+}

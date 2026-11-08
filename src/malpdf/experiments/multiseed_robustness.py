@@ -405,7 +405,7 @@ def create_seed_split_manifests(
     )
     protocol_g_manifest, protocol_g_result = create_rit_pdfmal_split(frame, seed=seed)
     protocol_g_manifest = protocol_g_manifest.assign(seed=seed, dataset_sha256=dataset_sha256)
-    # Repeat hard validation after adding provenance columns; no rows/values are changed.
+
     validate_protocol_p_manifest(frame, protocol_p_manifest)
     validate_split_manifest(frame, protocol_g_manifest)
     _validate_manifest_against_frame(frame, protocol_g_manifest)
@@ -579,7 +579,7 @@ def _execute_protocol_p_record(
             )},
             "model_artifact": str(artifact),
         })
-    except Exception as error:  # Persist complete failure evidence; never fabricate a metric.
+    except Exception as error:
         record.update({"status": "failed", "error": {"type": type(error).__name__, "message": str(error), "traceback": traceback.format_exc()}})
     if not multiseed_result_schema_is_valid(record):
         raise MultiSeedRobustnessError(f"Invalid Protocol P result schema for seed {seed}, {model_name}")
@@ -639,7 +639,7 @@ def _execute_protocol_g_record(
             },
             "model_artifact": str(artifact),
         })
-    except Exception as error:  # Preserve failures instead of silently omitting a seed/model.
+    except Exception as error:
         record.update({"status": "failed", "error": {"type": type(error).__name__, "message": str(error), "traceback": traceback.format_exc()}})
     if not multiseed_result_schema_is_valid(record):
         raise MultiSeedRobustnessError(f"Invalid Protocol G result schema for seed {seed}, {model_name}")
@@ -960,7 +960,7 @@ def run_multiseed_robustness(
     aggregate_rows, paired_rows = aggregate_multiseed_results(
         records, split_seeds=request["split_seeds"], models=request["models"], protocols=request["protocols"]
     )
-    # The read-only seed-42 sources must remain byte-identical through execution.
+
     for source in preflight.baseline_references.values():
         if sha256_file(source["path"]) != source["sha256"]:
             raise MultiSeedRobustnessError("A seed-42 baseline source changed during robustness execution")

@@ -1,0 +1,7 @@
+{
+  "backup": "/var/lib/malpdf/bootstrap-backups/20261102T150708113640Z-large-manifest-lab_jobs.py",
+  "old_sha256": "95068c3b1bbb757a63993da4616d9f76800f8c40c94476361e498524f5c8d071",
+  "sha256": "559a11c9b9e710d99ef7a8d0a19fd4eb649c2011626d2ca24d6bfc47984c1cea",
+  "gateway_policy_unchanged": true,
+  "raw_pdf_processing": false
+}

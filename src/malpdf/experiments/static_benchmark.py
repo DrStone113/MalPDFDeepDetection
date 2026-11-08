@@ -55,7 +55,7 @@ def benchmark_static(root, code_root, *, samples=256, repeats=5, batch_size=128)
         pdf.write_bytes(data)
         io_times = {"previous_read_hash": [], "bounded_single_snapshot": []}
         for repeat in range(repeats):
-            # Alternate order after one warm-up read; report warm-cache results.
+
             pdf.read_bytes()
             order = list(io_times) if repeat % 2 == 0 else list(reversed(io_times))
             for mode in order:

@@ -25,7 +25,7 @@ API = 1
 JOBS = Path('/var/lib/malpdf/jobs')
 CONFIG = Path('/etc/malpdf/runner.json')
 HEX = re.compile(r'[0-9a-f]{64}\Z')
-PDF_KINDS = {'pdf-static', 'pdf-static-cve', 'pdf-static-cic-full'}
+PDF_KINDS = {'pdf-static', 'pdf-static-cve', 'pdf-static-cic-full', 'pdf-diagnostic-replay'}
 KINDS = {'syntax', 'synthetic', *PDF_KINDS}
 LIMITS = {'wall_seconds': 1800, 'file_wall_seconds': 60, 'file_cpu_seconds': 45,
           'file_memory_bytes': 1073741824, 'file_max_bytes': 10485760,
@@ -80,6 +80,8 @@ def summary_valid(summary):
 
 
 def policy(kind):
+    if kind == 'pdf-diagnostic-replay':
+        return {**policy('pdf-static-cic-full'), 'samples': 74}
     if kind == 'pdf-static':
         return LIMITS.copy()
     if kind == 'pdf-static-cic-full':
@@ -279,7 +281,7 @@ def immutable(path, value):
     path = trusted_path(path)
     payload = encoded(value) + b'\n'
     if path.exists():
-        if side.bounded_read(path, 512 * 1024) != payload:
+        if side.bounded_read(path, len(payload)) != payload:
             raise ValueError('job_mismatch')
         return
     with path.open('xb') as stream:
@@ -458,7 +460,11 @@ def execute(job, *, attested=False, resume=False):
         checks = []
         if job['kind'] in PDF_KINDS:
             summary = pdf_task(job, directory)
-            value = result(job, 'passed' if summary['observed'] == summary['primary_available'] == job['limits']['samples'] else 'partial', summary=summary, environment=environment)
+            passed = summary['observed'] == summary['primary_available'] == job['limits']['samples'] and not pdf_halt_records(job, directory)
+            if job['kind'] == 'pdf-diagnostic-replay':
+                replay_summary = parse_json(side.bounded_read(directory / 'analysis/summary.json', 128 * 1024))
+                passed = passed and replay_summary.get('diagnostic_coverage_complete') is True
+            value = result(job, 'passed' if passed else 'partial', summary=summary, environment=environment)
         else:
             with redirect_stdout(io.StringIO()):
                 checks.append(side.syntax(job['commit']))
@@ -470,6 +476,77 @@ def execute(job, *, attested=False, resume=False):
         value = result(job, 'failed', environment=environment, reason='worker_timeout' if str(error) == 'worker_timeout' else 'worker_failed')
     immutable(directory / 'result.json', value)
     return value
+
+
+def write_pdf_halt(job, directory, *, shard, index, reason):
+    validate_job(job)
+    allowed = {'wall_limit', 'output_limit', 'bundle_size_limit', 'worker_cleanup_incomplete'}
+    if (type(shard) is not int or not 0 <= shard < job['limits']['workers']
+            or type(index) is not int or not 0 <= index < job['limits']['samples']
+            or index % job['limits']['workers'] != shard or reason not in allowed):
+        raise ValueError('invalid_pdf_halt')
+    immutable(directory / f'pdf_halt.{shard}.json', {
+        'schema_version': 1, 'job_id': job['job_id'], 'shard': shard,
+        'index': index, 'reason': reason})
+
+
+def pdf_halt_records(job, directory):
+    records = []
+    allowed = {'wall_limit', 'output_limit', 'bundle_size_limit', 'worker_cleanup_incomplete'}
+    for shard in range(job['limits']['workers']):
+        path = directory / f'pdf_halt.{shard}.json'
+        if not path.exists():
+            continue
+        value = parse_json(side.bounded_read(trusted_path(path), 4096))
+        if (not isinstance(value, dict) or set(value) != {'schema_version', 'job_id', 'shard', 'index', 'reason'}
+                or value.get('schema_version') != 1 or value.get('job_id') != job['job_id'] or value.get('shard') != shard
+                or type(value.get('index')) is not int or not 0 <= value['index'] < job['limits']['samples']
+                or value['index'] % job['limits']['workers'] != shard
+                or not isinstance(value.get('reason'), str) or value['reason'] not in allowed):
+            raise ValueError('report_invalid')
+        records.append(value)
+    return records
+
+
+def pdf_bundle_progress_status(path):
+    try:
+        value = parse_json(side.bounded_read(path, 8 * 1024**2 + 1024))
+    except (OSError, ValueError):
+        return 'unreadable'
+    if (not isinstance(value, dict) or not isinstance(value.get('status'), str)
+            or value['status'] not in PDF_STATUSES):
+        return 'unknown'
+    return value['status']
+
+
+def pdf_completion_banner(job, summary, *, elapsed_seconds, workers, halted_shards=0):
+    validate_job(job)
+    if (not isinstance(summary, dict) or not summary_valid(summary)
+            or summary.get('planned') != job['limits']['samples']
+            or not 0 <= summary['completed'] <= summary['planned']
+            or not 0 <= summary['primary_available'] <= summary['completed']
+            or not math.isfinite(elapsed_seconds) or elapsed_seconds < 0
+            or type(workers) is not int or not 1 <= workers <= job['limits']['workers']
+            or type(halted_shards) is not int or not 0 <= halted_shards <= workers):
+        raise ValueError('report_invalid')
+    missing = summary['planned'] - summary['completed']
+    state = ('INCOMPLETE' if missing else 'COMPLETED SUCCESSFULLY'
+             if summary['observed'] == summary['primary_available'] == summary['planned'] and not halted_shards else 'PARTIAL')
+    elapsed = int(elapsed_seconds)
+    return '\n'.join((
+        '=' * 80, f'MALPDF EXTRACTION {state}', '=' * 80,
+        f"Job ID: {job['job_id']}",
+        f"Processed: {summary['completed']} / {summary['planned']} | Missing: {missing}",
+        f"Observed: {summary['observed']} | Partial: {summary['partial']} | Failed/unsupported: {summary['failed']}",
+        f'Elapsed: {elapsed // 60:02d}:{elapsed % 60:02d} | Workers: {workers} | Halted shards: {halted_shards}', '=' * 80))
+
+
+def pdf_bundle_indices(outputs, planned):
+    if not outputs.is_dir():
+        return set()
+    return {int(path.stem) for path in outputs.iterdir()
+            if re.fullmatch(r'[0-9]{4}\.json', path.name) and not path.is_symlink()
+            and path.is_file() and int(path.stem) < planned}
 
 
 def pdf_task(job, directory):
@@ -486,14 +563,7 @@ def pdf_task(job, directory):
     started = time.monotonic()
     last_print = 0.0
     last_completed = -1
-    seen_bundles = set()
-    if outputs.is_dir():
-        for name in os.listdir(outputs):
-            if name.endswith('.json') and not name.endswith('.tmp'):
-                try:
-                    seen_bundles.add(int(name[:-5]))
-                except ValueError:
-                    pass
+    seen_bundles = pdf_bundle_indices(outputs, planned)
     try:
         for shard in range(count):
             stdout, stderr = tempfile.TemporaryFile(), tempfile.TemporaryFile()
@@ -504,33 +574,18 @@ def pdf_task(job, directory):
                 stderr=stderr, start_new_session=True, env=environment))
         while True:
             alive = [process for process in processes if process.poll() is None]
-            try:
-                completed = len(os.listdir(outputs)) if outputs.is_dir() else 0
-            except OSError:
-                completed = 0
-            if outputs.is_dir():
-                for name in sorted(os.listdir(outputs)):
-                    if name.endswith('.json') and not name.endswith('.tmp'):
-                        try:
-                            idx = int(name[:-5])
-                            if idx not in seen_bundles:
-                                seen_bundles.add(idx)
-                                bundle_path = outputs / name
-                                try:
-                                    bundle_data = parse_json(side.bounded_read(bundle_path, 8 * 1024**2 + 1024))
-                                    b_status = bundle_data.get('status', 'complete')
-                                except (OSError, ValueError):
-                                    b_status = 'observed'
-                                icon = '✓' if b_status in ('bounded_complete', 'observed') else '⏱' if b_status in ('timeout', 'timeout_partial') else '!'
-                                evasive_tag = ' [Evasive]' if b_status in ('timeout', 'timeout_partial') else ''
-                                tag_line = f"[{icon} {idx:04d}/{planned}] PDF {idx:04d} -> {b_status}{evasive_tag} | Workers: {len(alive)}/{count}"
-                                if sys.stdout.isatty():
-                                    sys.stdout.write(f"\r{tag_line:<80s}\n")
-                                    sys.stdout.flush()
-                                else:
-                                    print(tag_line, flush=True)
-                        except ValueError:
-                            pass
+            present = pdf_bundle_indices(outputs, planned)
+            completed = len(present)
+            for idx in sorted(present - seen_bundles):
+                seen_bundles.add(idx)
+                b_status = pdf_bundle_progress_status(outputs / f'{idx:04d}.json')
+                icon = '✓' if b_status in ('bounded_complete', 'observed') else '⏱' if b_status == 'timeout' else '!'
+                tag_line = f"[{icon} {idx:04d}/{planned}] PDF {idx:04d} -> {b_status} | Workers: {len(alive)}/{count}"
+                if sys.stdout.isatty():
+                    sys.stdout.write(f"\r{tag_line:<80s}\n")
+                    sys.stdout.flush()
+                else:
+                    print(tag_line, flush=True)
             try:
                 meminfo = side.bounded_read(Path('/proc/meminfo'), 8192).decode('ascii')
                 for mline in meminfo.splitlines():
@@ -566,46 +621,82 @@ def pdf_task(job, directory):
             if now > deadline:
                 raise subprocess.TimeoutExpired(command, deadline - started)
             time.sleep(0.2)
-        if sys.stdout.isatty():
-            sys.stdout.write("\n\a\a")
-            banner = [
-                "=" * 80,
-                f"                    MALPDF EXTRACTION COMPLETED SUCCESSFULLY                   ",
-                "=" * 80,
-                f"  Job ID:        {job['job_id']}",
-                f"  Total Samples: {last_completed} / {planned} ({pct}%)",
-                f"  Elapsed Time:  {elapsed_str}",
-                f"  Workers:       {count} workers",
-                "=" * 80,
-            ]
-            sys.stdout.write("\n".join(banner) + "\n")
-            sys.stdout.flush()
         codes = [process.returncode for process in processes]
     except subprocess.TimeoutExpired:
+        if job['kind'] == 'pdf-diagnostic-replay':
+            replay_transport(job, directory, processes, streams, reason='timeout')
         for process in processes:
             stop_worker(process)
         raise ValueError('worker_timeout') from None
     except BaseException:
+        if job['kind'] == 'pdf-diagnostic-replay':
+            replay_transport(job, directory, processes, streams, reason='supervisor_exception')
         for process in processes:
             stop_worker(process)
         raise
     finally:
+        if job['kind'] == 'pdf-diagnostic-replay':
+            replay_transport(job, directory, processes, streams)
+            replay_cleanup(job, directory, processes)
         for stream in streams:
             stream.close()
+        if job['kind'] == 'pdf-diagnostic-replay':
+            replay_analysis(job, cfg, environment)
     if any(code != 0 for code in codes):
-        for shard, code in enumerate(codes):
-            if code != 0 and len(streams) > shard * 2 + 1:
-                try:
-                    stderr_stream = streams[shard * 2 + 1]
-                    stderr_stream.seek(0)
-                    detail = stderr_stream.read(2048).decode('utf-8', errors='replace').strip()
-                    if detail and sys.stdout.isatty():
-                        sys.stderr.write(f"Worker {shard} error: {detail}\n")
-                except OSError:
-                    pass
         raise ValueError('worker_failed')
     summary = merge_summary(job, directory, count)
+    halts = pdf_halt_records(job, directory)
+    print(pdf_completion_banner(job, summary, elapsed_seconds=time.monotonic() - started, workers=count,
+                                halted_shards=len(halts)), flush=True)
     return summary
+
+
+def replay_transport(job, directory, processes, streams, *, reason='observed_process_exit'):
+    try:
+        _replay_transport(job, directory, processes, streams, reason=reason)
+        return True
+    except (OSError, ValueError, MemoryError):
+        return False
+
+
+def replay_cleanup(job, directory, processes):
+    try:
+        immutable(directory / 'private_outer/cleanup.json', {'run_id': job['job_id'], 'exit_codes': [process.poll() for process in processes]})
+        return True
+    except (OSError, ValueError, MemoryError):
+        return False
+
+
+def _replay_transport(job, directory, processes, streams, *, reason):
+    output = directory / 'private_outer'
+    output.mkdir(mode=0o700, exist_ok=True)
+    for shard, process in enumerate(processes):
+        path = output / f'transport.{shard}.json'
+        if path.exists():
+            continue
+        record = {'schema_version': 1, 'run_id': job['job_id'], 'shard': shard, 'exit_before_cleanup': process.poll(), 'supervisor_reason': reason}
+        for key, stream in zip(('stdout', 'stderr'), streams[2*shard:2*shard+2]):
+            size = os.fstat(stream.fileno()).st_size
+            record[key+'_observed_bytes'] = size
+            if hasattr(os, 'pread'):
+                payload = os.pread(stream.fileno(), min(size, 16384), 0)
+            else:
+                position = stream.tell()
+                try:
+                    stream.seek(0)
+                    payload = stream.read(min(size, 16384))
+                finally:
+                    stream.seek(position)
+            record[key] = payload.decode('utf-8', errors='replace')
+        immutable(path, record)
+
+
+def replay_analysis(job, cfg, environment):
+    command = [cfg['python'], '-Es', '-B', str(Path(__file__).with_name('lab_runner.py')), 'replay-report', job['job_id']]
+    checked = subprocess.run(command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        env=environment, timeout=90)
+    if checked.returncode or len(checked.stdout) > 128 * 1024:
+        raise ValueError('report_invalid')
 
 
 def merge_summary(job, directory, count):

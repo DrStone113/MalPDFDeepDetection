@@ -563,7 +563,7 @@ def run_protocol_p_benchmark(
                     "model_artifact": str(artifact),
                 }
             )
-        except Exception as error:  # Preserve per-run evidence before failing overall.
+        except Exception as error:
             record.update(
                 {
                     "status": "failed",

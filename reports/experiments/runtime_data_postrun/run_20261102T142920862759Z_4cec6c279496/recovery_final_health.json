@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "job_id": "dfafd888f7a948a87ffac2e0b68ab702fd60dd1dc9bc630fa6cdbe4496e4a06f",
+  "status": "queued",
+  "pending_jobs": 1,
+  "reused_bundles": 1379,
+  "fresh_samples": 73,
+  "cleanup_incomplete_bundle_excluded": true,
+  "original_saved_bundles": 1380,
+  "source_release_verified": true,
+  "helper_hashes_verified": true,
+  "runner": {
+    "api": 1,
+    "installed": true,
+    "host_only_ready": true,
+    "offline_guest_ready": false,
+    "reason": null
+  },
+  "gateway_checks": {
+    "configuration": "passed",
+    "helpers": "passed",
+    "policy": "mismatch",
+    "units": "passed",
+    "sshd": "passed",
+    "proof": "passed"
+  },
+  "claim_exists": false,
+  "result_exists": false,
+  "raw_pdf_processing": false
+}

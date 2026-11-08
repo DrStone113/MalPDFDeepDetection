@@ -44,8 +44,8 @@ def _feature(
     }
 
 
-# Table 2 terminology is retained where practical. Counts are the authors'
-# stated number of string occurrences, not a claim about executable behavior.
+
+
 PAPER_FEATURE_DICTIONARY = [
     _feature(
         "pdfsize",
@@ -138,7 +138,7 @@ PAPER_FEATURE_DICTIONARY = [
 ]
 
 PAPER_STATISTICS: dict[str, tuple[float, float, float, float]] = {
-    # mean, variance, minimum, maximum from Table 3
+
     "pdfsize": (800.93, 22774872.63, 0, 468246), "metadata size": (319.70, 1542151.37, 176, 77185),
     "pages": (8.26, 1343.50, 0, 2096), "xref length": (2454.95, 248276623.09, 0, 263987),
     "title length": (45.23, 1150837.32, 0, 76993), "isEncrypted": (0.01, 0.01, 0, 1),
@@ -170,9 +170,9 @@ PAPER_BASELINE_RESULTS = [
     {"model": "XGB", "accuracy": 0.994906, "precision": 0.995156, "recall": 0.994590, "f1": 0.994863, "inference_time_ms": 0.564525},
 ]
 
-# Paper Table 6. Precision, recall, and F1 are mapped to project macro metrics
-# by the separately documented metric-semantics correction; the paper table does
-# not independently state that averaging convention.
+
+
+
 PAPER_XGB_10_FOLD_CV_TABLE6 = {
     "mean": {"accuracy": 0.993878, "precision": 0.995663, "recall": 0.990901, "f1": 0.993274},
     "standard_deviation": {"accuracy": 0.000789, "precision": 0.001382, "recall": 0.002012, "f1": 0.000841},

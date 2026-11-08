@@ -24,8 +24,8 @@ def test_benchmark_spawn_replay_keeps_parser_startup_lightweight(tmp_path):
     pdf.write_bytes(output.getvalue())
     script = Path(__file__).resolve().parents[1] / "scripts/14_benchmark_static.py"
     launcher = tmp_path / "spawn_replay.py"
-    # Replay the actual CLI in the child, as multiprocessing.spawn does. The
-    # parent can load models; the capped child must not import that stack.
+
+
     launcher.write_text(f'''
 import json, runpy, sys
 if __name__ == "__mp_main__":
@@ -39,9 +39,9 @@ if __name__ == "__main__":
 ''', encoding="utf-8")
     environment = dict(os.environ)
     environment.update({name: "1" for name in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS")})
-    # Cold VM interpreter startup is separate from parser work. This benign
-    # replay uses the CIC job's 20s wall budget, retaining 4s CPU/1GiB caps and
-    # checking that no model stack is imported in the child. Defaults stay 8s.
+
+
+
     completed = subprocess.run([sys.executable, str(launcher)], env=environment,
         capture_output=True, text=True, timeout=60, check=True)
     result = json.loads(completed.stdout)
@@ -74,7 +74,7 @@ def test_failed_ast_smoke_preserves_evidence_before_raising(tmp_path, monkeypatc
         def __exit__(self, *args):
             return False
 
-    # Only this synthetic runner fixture bypasses Git/provenance setup.
+
     monkeypatch.setattr(benchmark, "ResearchRun", Run)
     monkeypatch.setattr(benchmark.subprocess, "check_output", lambda *args, **kwargs: "")
     monkeypatch.setattr(benchmark, "inspect_pdf_codes", lambda *args, **kwargs: iter([(0, syntax)]))

@@ -32,7 +32,7 @@ def synthetic_partition(partition="validation", *, vision=False):
     scores = np.column_stack((xgb, ft))
     if vision:
         scores = np.column_stack((scores, np.where(labels, 0.7, 0.3)))
-    # Every group has two rows with the same label.
+
     return fusion.FusionPartition(partition, tuple(f"id_{index:03}" for index in range(len(labels))),
                                   tuple(f"group_{index // 4}_{label}" for index, label in enumerate(labels)), labels, scores,
                                   fusion.VISION_BRANCHES if vision else fusion.BASE_BRANCHES)
@@ -60,7 +60,7 @@ def test_meta_and_platt_fit_separate_validation_roles_without_refitting(monkeypa
         return actual_fit(model, features, labels, *args, **kwargs)
     monkeypatch.setattr(fusion.LogisticRegression, "fit", fit)
     stack, rows, _ = fusion.fit_validation_stack(validation, (fusion.FusionCandidate("stacking"),))
-    assert len(calls) == 2  # One meta fit, one Platt fit; no all-validation refit.
+    assert len(calls) == 2
     assert np.array_equal(calls[0][0], validation.probabilities[roles["meta_fit"]])
     assert np.array_equal(calls[0][1], validation.labels[roles["meta_fit"]])
     assert calls[1][0].shape == (len(roles["calibration_fit"]), 1)
@@ -247,7 +247,7 @@ def test_official_pipeline_locks_before_test_and_fits_only_before_lock(probabili
     assert len(pd.read_csv(directory / "model_comparison.csv")) == 7
     assert len(pd.read_csv(directory / "routing_analysis.csv")) == 1
     assert (root / report["artifact_directory"] / "test_predictions.parquet").exists()
-    assert report["metrics"]["xgboost/test"]["accuracy"] == 1  # Uses raw column, not 0.5 v1 calibrated columns.
+    assert report["metrics"]["xgboost/test"]["accuracy"] == 1
     assert report["routing"]["coverage"] == 0.9
     false_negatives = report["metrics"]["late_fusion_v2/test"]["confusion_matrix"][1][0]
     assert report["routing"]["fn_total"] == false_negatives

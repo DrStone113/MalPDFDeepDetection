@@ -18,7 +18,7 @@ from malpdf.models import late_fusion
 from malpdf.models.vision_resnet import VisionResNet18
 from malpdf.static.cache_manager import load_cached_markov_pdf
 from malpdf.static.markov import MARKOV_ALGORITHM, byte_transition_matrix
-from test_late_fusion import probability_sources, sha  # Shared offline Protocol G fixture.
+from test_late_fusion import probability_sources, sha
 
 
 class TinyVision(torch.nn.Module):
@@ -122,7 +122,7 @@ def test_complete_cache_pipeline_locks_before_single_test_inference_and_decode(c
     vision = pd.read_parquet(artifact / "vision_test_predictions.parquet")
     assert set(vision.sample_id) == set(manifest.loc[manifest.split == "test"].sample_id)
     for label, score in zip(vision.true_label, vision.vision_probability):
-        assert (score >= 0.5) == bool(label)  # Inference uses cache tensors, never labels.
+        assert (score >= 0.5) == bool(label)
     table = pd.read_parquet(artifact / "test_predictions.parquet")
     expected = calibration_metrics(table.true_label.to_numpy(), table.ensemble_probability.to_numpy(), n_bins=10)
     assert metrics["tri_modal_fusion/test"] == expected

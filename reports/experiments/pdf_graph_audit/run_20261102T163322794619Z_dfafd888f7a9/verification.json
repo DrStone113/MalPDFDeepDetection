@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "focused_windows": {
+    "passed": 77,
+    "failed": 0,
+    "skipped": 1,
+    "skip_reason": "symlink creation not available for Windows account"
+  },
+  "focused_lab": {
+    "tests": 78,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "full_windows": {
+    "tests": 2198,
+    "failures": 200,
+    "errors": 0,
+    "skipped": 22
+  },
+  "full_windows_passed": 1976,
+  "baseline_failure_delta": {
+    "baseline_failures": 200,
+    "current_failures": 200,
+    "new_failed_cases": [],
+    "resolved_failed_cases": [],
+    "same_failed_case_set": true
+  },
+  "all_cases_validated_against_pinned_hash_label_split": true,
+  "extractor_source_existing_files_unchanged": true,
+  "python_comments": 0,
+  "python_files_parsed": 369,
+  "raw_pdf_read_or_transferred": false,
+  "model_input_ready": false
+}

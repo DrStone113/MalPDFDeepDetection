@@ -217,7 +217,7 @@ def verify_protocol_g(
             return {"status": "missing_manifest", "match_fraction": None, "manifest": str(selected.relative_to(root))}
         manifest, _ = create_rit_pdfmal_split(frame, seed=42)
         candidate = output_directory / "rit-pdfmal-2026_split_manifest.csv"
-        # The historical Windows CSV uses CRLF; preserve its exact locked bytes.
+
         content = manifest.to_csv(index=False, lineterminator="\r\n").encode("utf-8")
         existing_bytes = sum(path.stat().st_size for path in output_directory.parent.rglob("*") if path.is_file())
         if len(content) > limits.max_file_bytes or existing_bytes + len(content) > limits.max_total_output_bytes:
@@ -315,7 +315,7 @@ def prepare_source_datasets(
         rit_archive = root / SOURCE_DIRECTORIES["rit_pdfmal_2026"] / "rit-pdfmal-2026.csv.zip"
         verify_input("rit_pdfmal_2026", rit_archive)
         rit_path = output_root / "rit/rit-pdfmal-2026.csv"
-        # Public archive password documented by the dataset publisher.
+
         extract_table_archive(rit_archive, rit_path, expected_member=rit_path.name, limits=limits, password=b"pdfmal", max_output_bytes=remaining_output_bytes())
         with rit_path.open(encoding="utf-8-sig", newline="") as content:
             reader = csv.reader(content)

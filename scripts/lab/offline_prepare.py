@@ -69,6 +69,9 @@ def make_job(commit, manifest, metadata, kind):
 
 
 def cohort_contract(kind='pdf-static'):
+    if kind == 'pdf-diagnostic-replay':
+        from malpdf.extraction.diagnostic_replay import cohort_contract as replay_contract
+        return replay_contract(ctl.REPO)
     if kind == 'pdf-static-cve':
         from lab_runner import cve_contract
         return cve_contract()

@@ -72,9 +72,9 @@ class EvidenceAccumulator:
         self._bytes = total
 
     def interrupted(self, codes):
-        # The lifecycle failure is additional information, never a replacement
-        # for a completed primary observation or capability check.
-        # Lifecycle metadata can still be added when the evidence cap is full.
+
+
+
         self.value.update(status="partial", complete=False, worker_failure_codes=list(codes))
         return self.value
 
@@ -154,7 +154,7 @@ class ParentRawStore:
             output = active["output"]
             if output is not None:
                 output.close()
-                # A fresh directory and exclusive creation prevent collisions.
+
                 (self.directory / (digest + ".partial")).rename(self.directory / (digest + ".bin"))
             self.records.append({"sha256": digest, "size_bytes": active["size"],
                                  "status": "verified" if output is not None else "verified_not_persisted"})

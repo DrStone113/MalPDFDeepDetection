@@ -1,0 +1,11 @@
+{
+  "protocol": "Protocol_G_deterministic_split",
+  "seed": 42,
+  "scaler_fitted_strictly_on": "train",
+  "thresholds_tuned_strictly_on": "validation",
+  "source_export_dir": "data\\processed\\graph_exports_v2\\export_20261106T135440198431Z_89bf66f04d93",
+  "git_commit": "c6b920385d966eaba9f0e1eec0ac2dcb789a4664",
+  "device": "cuda",
+  "gpu_name": "NVIDIA GeForce RTX 5060 Ti",
+  "elapsed_seconds": 52.02
+}

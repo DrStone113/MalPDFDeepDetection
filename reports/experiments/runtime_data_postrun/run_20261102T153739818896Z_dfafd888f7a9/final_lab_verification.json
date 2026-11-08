@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "job_id": "dfafd888f7a948a87ffac2e0b68ab702fd60dd1dc9bc630fa6cdbe4496e4a06f",
+  "execution_status": "partial",
+  "saved_bundles": 1452,
+  "halts": [],
+  "pending_jobs": 0,
+  "source_release_verified": true,
+  "helper_hashes_verified": true,
+  "source_job_saved_bundles": 1380,
+  "source_result_sha256": "b954a1b4fa161498ecca3b1cdd3d23f692d18547418abea0d70c0b9a0fad4560",
+  "current_result_sha256": "e0725acc4ccd20212e5ef050fe9ed88095438abbd35fca82b3e5372507d7e1ae",
+  "raw_pdf_processing": false,
+  "network_changed": false
+}

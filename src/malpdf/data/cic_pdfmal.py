@@ -308,8 +308,8 @@ def _profile_column(column: str, series: pd.Series, row_count: int, role: str) -
     string_audit = _text_quality(series)
     identifier_values_redacted = role == "identifier"
     if identifier_values_redacted:
-        # Individual file-like hashes/IDs are unnecessary for a schema audit and
-        # must not leak from an ignored dataset into a tracked research report.
+
+
         representative_values = [{"value": "<redacted identifier values>", "count": int(series.notna().sum())}]
         dominant_value = "<redacted identifier value>"
         if string_audit is not None:

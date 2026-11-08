@@ -111,8 +111,8 @@ def export_v4_gpu(root, code_root, prepared_run, tree_run):
         roles, _ = _roles(root, preparation, manifest.loc[manifest.split.eq("validation")].reset_index(drop=True))
         portable, mapping, exported_roles = anonymize_rows(labeled, manifest, sources, unknown, roles)
         mapping.to_csv(run.artifacts / "private_id_map.csv", index=False)
-        # Reuse the exact numeric bundle already uploaded for v3, rather than
-        # recompressing and uploading 19,962 source matrices again.
+
+
         source_result = read_spec(root, preparation["configuration"]["source_summary"], "reports/experiments")
         legacy_run = source_result["handoff_run"]
         legacy = _json(root, f"reports/experiments/kaggle_handoff/{legacy_run}/run_summary.json", "reports/experiments")
@@ -142,7 +142,7 @@ def export_v4_gpu(root, code_root, prepared_run, tree_run):
             "learning_rate": 0.0003, "weight_decay": 0.0001, "min_delta": 0.0, "preload_ram": True,
             "mixed_precision": True, "num_workers": 2, "prefetch_factor": 1, "max_ram_cache_gib": 6},
             "feature_order": preparation["feature_order"], "metadata_features": list(METADATA_FEATURES)}
-        # Input identities/paths are local only, never copied into portable configuration.
+
         gpu["tabular"] = {k: prior["configuration"][k] for k in ("models", "training", "cpu_threads")}
         train_manifest = manifest.loc[manifest.split.eq("train")].reset_index(drop=True)
         train_folds = train_manifest[["sample_id"]].copy().assign(fold=0)
@@ -204,7 +204,7 @@ def export_v4_gpu(root, code_root, prepared_run, tree_run):
             content = json.dumps(inventory, indent=2).encode()
             out.writestr("bundle_metadata.json", content)
         notebook = render_kaggle_notebook(code_root / "notebooks/kaggle_vision_resnet18.ipynb", hashlib.sha256(content).hexdigest())
-        notebook["cells"] = notebook["cells"][:2]  # Existing standard-library safe bootstrap only.
+        notebook["cells"] = notebook["cells"][:2]
         notebook["cells"][0]["source"] = ["# MalPDF v4: retrospective multi-cohort GPU training\n",
             "Attach this v4 delta dataset AND nguyenkhang294/malpdf-markov-cache. Train five FT folds and Vision from scratch. Download the whole output run; Test metrics are computed later in Codespace.\n"]
         bootstrap = "".join(notebook["cells"][1]["source"])
@@ -294,7 +294,7 @@ def resume_v4(root, code_root, handoff_run, gpu_directory):
                 or vision_lock.get("bundle_metadata_sha256") != export["metadata_sha256"]
                 or vision_lock.get("selected_role") != "validation_base_selection"):
             raise ValueError("GPU training evidence violates the exported v4 lock")
-        # Verify original sealed archive and rebuild all portable identities locally.
+
         archive = root / export["archive"]
         if sha256_file(archive) != export["archive_sha256"]:
             raise ValueError("V4 numeric archive changed")
@@ -351,7 +351,7 @@ def resume_v4(root, code_root, handoff_run, gpu_directory):
             "vision_checkpoint_sha256": vision_lock["checkpoint_sha256"], "previous_v3_outcomes_exposed": True})
         pd.DataFrame(candidates).to_csv(run.report / "validation_candidates.csv", index=False)
         claim_v4_tests(root, run, preparation["inputs"]["split_manifest"]["sha256"], sha256_file(run.report / "validation_lock.json"))
-        # All Test scoring starts here. No model fitting or threshold changes below.
+
         torch.set_num_threads(2)
         train_manifest = manifest.loc[manifest.split.eq("train")].reset_index(drop=True)
         train = labeled.set_index("sample_id").loc[train_manifest.sample_id].reset_index()

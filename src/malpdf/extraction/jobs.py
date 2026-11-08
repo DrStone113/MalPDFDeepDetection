@@ -87,8 +87,8 @@ def _configuration(root, config):
     if cohort["seed"] != 42 or cohort["samples_per_partition"] != 32:
         raise ValueError("Saved cohort selection changed")
     candidates = {}
-    # Related CIC configs must agree; a newer/older incompatible candidate is
-    # reported rather than silently chosen by mtime, count, or favorable outcome.
+
+
     for candidate in sorted((root / "configs").glob("cic*.yaml")):
         other = yaml.safe_load(_read(root, str(candidate.relative_to(root)), 64 * 1024))
         if isinstance(other, dict) and other.get("prepared_cohort") == cohort.get("prepared_cohort"):
@@ -213,7 +213,7 @@ def run_job(root, prepared_run, *, lab_attested=False):
     from malpdf.experiments.cic_static_benchmark import clean_code
 
     root = Path(root).absolute()
-    # All preconditions run before the claim or PDF access. We never change NICs.
+
     try:
         lab = require_extraction_lab(lab_attested, repository_root=root)
         clean_code(root)

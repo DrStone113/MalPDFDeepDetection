@@ -1,0 +1,171 @@
+{
+  "schema_version": 1,
+  "stage": "BUG-007B1_POSTRUN_ANALYSIS",
+  "analyzed_at": "2026-11-06T09:06:00.268476+00:00",
+  "job_id": "6f9cc944ed98304746fbbb5bc7066d9fb1c8d5b6a737ffd0f08205390527d575",
+  "commit": "d1e10fd2c341e1f553ca47f4fe31db8c21a8307c",
+  "baseline_job_id": "dfafd888f7a948a87ffac2e0b68ab702fd60dd1dc9bc630fa6cdbe4496e4a06f",
+  "denominator": {
+    "planned": 74,
+    "completed": 74,
+    "availability_present": 74,
+    "diagnostic_records": 74,
+    "diagnostic_coverage_complete": true,
+    "halted_shards": 0,
+    "primary_available": 73
+  },
+  "graph_recovery": {
+    "graph_results_observed": 74,
+    "graphs_restored": 71,
+    "remaining_zero_projected_nodes": 3,
+    "capped_at_200_count": 24,
+    "capped_at_200_baseline_indices": [
+      255,
+      265,
+      275,
+      285,
+      295,
+      325,
+      347,
+      365,
+      375,
+      395,
+      435,
+      445,
+      455,
+      495,
+      515,
+      525,
+      545,
+      585,
+      595,
+      635,
+      675,
+      685,
+      725,
+      745
+    ],
+    "total_projected_nodes": 8744,
+    "total_projected_edges": 4529,
+    "node_sizes_known": 0,
+    "node_sizes_unknown": 8744,
+    "by_split": {
+      "train": {
+        "planned": 45,
+        "graphs_restored": 42,
+        "zero_projected_nodes": 3
+      },
+      "validation": {
+        "planned": 17,
+        "graphs_restored": 17,
+        "zero_projected_nodes": 0
+      },
+      "test": {
+        "planned": 12,
+        "graphs_restored": 12,
+        "zero_projected_nodes": 0
+      }
+    },
+    "by_label": {
+      "0": {
+        "planned": 33,
+        "graphs_restored": 30,
+        "zero_projected_nodes": 3
+      },
+      "1": {
+        "planned": 41,
+        "graphs_restored": 41,
+        "zero_projected_nodes": 0
+      }
+    },
+    "zero_projected_node_cases": [
+      {
+        "baseline_index": 292,
+        "replay_ordinal": 7,
+        "split": "train",
+        "label": 0,
+        "baseline_failure_family": "timeout",
+        "replay_bundle_status": "timeout",
+        "observed_mechanism": "wall_timeout",
+        "last_phase": "parse_pdf",
+        "checkpoint_status": "partial",
+        "elapsed_ms": 35018,
+        "evidence_nodes": 3,
+        "evidence_edges": 0,
+        "projected_nodes": 0,
+        "projected_edges": 0
+      },
+      {
+        "baseline_index": 407,
+        "replay_ordinal": 31,
+        "split": "train",
+        "label": 0,
+        "baseline_failure_family": "worker_error_unspecified",
+        "replay_bundle_status": "timeout",
+        "observed_mechanism": "wall_timeout",
+        "last_phase": "parser_analysis",
+        "checkpoint_status": "parser_error",
+        "elapsed_ms": 35006,
+        "evidence_nodes": 634,
+        "evidence_edges": 615,
+        "projected_nodes": 0,
+        "projected_edges": 0
+      },
+      {
+        "baseline_index": 749,
+        "replay_ordinal": 68,
+        "split": "train",
+        "label": 0,
+        "baseline_failure_family": "timeout",
+        "replay_bundle_status": "timeout",
+        "observed_mechanism": "wall_timeout",
+        "last_phase": "parser_analysis",
+        "checkpoint_status": "parser_error",
+        "elapsed_ms": 35014,
+        "evidence_nodes": 660,
+        "evidence_edges": 641,
+        "projected_nodes": 0,
+        "projected_edges": 0
+      }
+    ]
+  },
+  "mechanisms_and_statuses": {
+    "observed_mechanism_counts": {
+      "no_worker_failure_observed": 43,
+      "signal_exit_unresolved": 1,
+      "wall_timeout": 30
+    },
+    "bundle_status_counts": {
+      "bounded_complete": 18,
+      "decode_error": 3,
+      "partial": 4,
+      "timeout": 30,
+      "unsupported": 19
+    },
+    "baseline_to_replay_transitions": {
+      "timeout -> wall_timeout (timeout)": 4,
+      "worker_error_unspecified -> no_worker_failure_observed (bounded_complete)": 17,
+      "worker_error_unspecified -> no_worker_failure_observed (decode_error)": 3,
+      "worker_error_unspecified -> no_worker_failure_observed (partial)": 4,
+      "worker_error_unspecified -> no_worker_failure_observed (unsupported)": 19,
+      "worker_error_unspecified -> signal_exit_unresolved (bounded_complete)": 1,
+      "worker_error_unspecified -> wall_timeout (timeout)": 26
+    },
+    "baseline_worker_error_shard_concentration": {
+      "shard_5_contiguous_245_to_795_step_10": 56,
+      "shard_7_contiguous_287_to_417_step_10": 14,
+      "other_shards": 0
+    }
+  },
+  "epistemological_boundaries": {
+    "historical_root_causes_confirmed": null,
+    "parser_corruption_confirmed_any": false,
+    "sigkill_index_795_root_cause": null,
+    "b1_complete": true,
+    "b2_executed": false,
+    "b3_executed": false,
+    "training_executed": false,
+    "model_feature_dim": null,
+    "model_input_ready": false
+  }
+}

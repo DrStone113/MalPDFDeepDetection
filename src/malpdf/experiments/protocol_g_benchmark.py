@@ -742,7 +742,7 @@ def run_protocol_g_benchmark(
                     "model_artifact": str(artifact),
                 }
             )
-        except Exception as error:  # Save evidence for every failed primary configuration.
+        except Exception as error:
             record.update(
                 {
                     "status": "failed",

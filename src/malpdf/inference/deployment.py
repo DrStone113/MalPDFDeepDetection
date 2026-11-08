@@ -380,7 +380,7 @@ def load_verified_deployment_model(repository_root: str | Path) -> tuple[Any, di
     manifest, _manifest_path, artifact_path = load_deployment_manifest(repository_root)
     try:
         from xgboost import XGBClassifier
-    except ImportError as error:  # pragma: no cover - declared project dependency
+    except ImportError as error:
         raise DeploymentError("XGBoost is required for deployment inference") from error
     model = XGBClassifier()
     try:
@@ -419,7 +419,7 @@ def restore_verified_deployment_model(repository_root: str | Path, source: str |
                 output.write(content)
                 output.flush()
                 os.fsync(output.fileno())
-            os.link(temporary, target)  # Refuse races/overwrites; publish complete bytes.
+            os.link(temporary, target)
             created = True
         _model, verified = load_verified_deployment_model(root)
         return {"status": "restored" if created else "already_verified", "model_id": verified["model_id"],

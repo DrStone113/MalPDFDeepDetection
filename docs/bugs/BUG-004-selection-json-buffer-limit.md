@@ -85,3 +85,11 @@ ValueError: Unexpected input type/size
 
 1. **Giới hạn kích thước Manifest Tỷ lệ thuận:** Mọi API đọc metadata danh sách mẫu (`selection.json`) qua `bounded_read` phải có buffer trần tối thiểu 4 MiB.
 2. **Xác thực trước khi nhận Job:** Unit test kiểm tra cohort lớn phải xác nhận kích thước tuần tự hóa JSON của danh sách mẫu luôn nhỏ hơn giới hạn đọc của worker.
+
+## 5. Bổ sung 2026-11-02 — Replay metadata đã chuẩn bị
+
+Khi chuẩn bị job tiếp tục sau lần chạy thật, `pdf-prepare` gặp lại giới hạn 512 KiB trong `lab_jobs.immutable`. Lần ghi đầu thành công nhưng đọc để đối chiếu một `selection.json` đã tồn tại gần 962 KiB bị từ chối. Không có PDF nào được đọc trong lần lỗi chuẩn bị này; job chưa được queue.
+
+Sửa hợp đồng idempotency chung: khi nội dung cần ghi đã được tuần tự hóa thành `payload`, chỉ đọc tối đa đúng `len(payload)` từ tệp hiện có và yêu cầu khớp byte hoàn toàn. Nội dung dài hơn, ngắn hơn hoặc khác byte đều bị từ chối; không cắt dữ liệu và không ghi đè. Trần 4 MiB riêng của selection và các giới hạn đầu vào ở từng caller tiếp tục áp dụng.
+
+Hai regression dùng JSON 600 KiB trong `tests/test_lab_halt_reporting.py`: replay giống hệt phải thành công; replay khác phải thất bại và giữ byte gốc. Kiểm thử liên quan sau sửa: 79 passed trên Windows và 79 passed trên REMnux.

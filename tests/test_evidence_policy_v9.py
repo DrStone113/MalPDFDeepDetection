@@ -393,7 +393,7 @@ def test_actual_benign_extractor_graph_connects_to_policy_and_frozen_inputs(tmp_
     profile, view, support = measured_benign_profile(tmp_path, kind)
     verified = verify_model_inputs(profile, frozen_feature_order(), view, missing_supported=support)
     assert verified["verified"], verified["reason_codes"]
-    # Synthetic model probability tests eligibility only, with no malware claim.
+
     result = evidence_decision_v9(0.9, view, input_available=True, model_identity=IDENTITY, model_contract=verified)
     assert result["decision"] == "Malicious", result["reasons"]
     assert result["selected_witness"]["family"] == ("xfa_javascript" if kind == "xfa" else "pdf_javascript")

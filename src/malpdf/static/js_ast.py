@@ -23,7 +23,7 @@ class CodeInspectionError(ValueError):
 
 
 def _literal_string(node, depth=0):
-    # Only literal concatenation is recognized; no interpreter or user function.
+
     if not isinstance(node, dict) or depth > 16:
         return None
     if node.get("type") == "Literal" and isinstance(node.get("value"), str):

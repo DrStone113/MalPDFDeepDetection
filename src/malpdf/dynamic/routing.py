@@ -89,9 +89,9 @@ def route_static_result(
     config.validate()
     params = config.to_dict()
     if not prediction_available or malicious_probability is None:
-        # Extraction/schema failure is outside probabilistic policy selection:
-        # no static verdict is emitted, so a future dynamic stage is recommended
-        # whenever the explicit safety flag remains enabled.
+
+
+
         required = config.dynamic_on_prediction_unavailable
         return RoutingResult(config.policy, None, static_verdict, required, "STATIC_EXTRACTION_INCOMPLETE", params)
     if not isinstance(malicious_probability, (int, float)) or isinstance(malicious_probability, bool) or not math.isfinite(float(malicious_probability)) or not 0.0 <= float(malicious_probability) <= 1.0:
@@ -102,7 +102,7 @@ def route_static_result(
     if config.policy == RoutingPolicy.ALWAYS_SANDBOX:
         return RoutingResult(config.policy, probability, static_verdict, True, "POLICY_ALWAYS_DYNAMIC", params)
     if config.policy == RoutingPolicy.UNCERTAINTY_BAND:
-        required = config.uncertainty_lower <= probability <= config.uncertainty_upper  # validated above
+        required = config.uncertainty_lower <= probability <= config.uncertainty_upper
         return RoutingResult(config.policy, probability, static_verdict, required, "STATIC_UNCERTAIN" if required else "STATIC_CONFIDENT", params)
     suspicious = static_verdict in config.suspicious_verdicts or bool(extraction_warnings)
     return RoutingResult(config.policy, probability, static_verdict, suspicious, "STATIC_SUSPICIOUS" if suspicious else "STATIC_CONFIDENT", params)

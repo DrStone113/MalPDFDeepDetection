@@ -46,8 +46,8 @@ def read_acquired_inventory(root: Path, inputs: list[dict], expected_count: int)
                 raise ValueError("Acquired PDF changed or fails magic/size/checksum")
             seen.add(digest)
             source = row["source"]
-            # One reviewed PoC repository is a known related component. Do not
-            # place its related examples in different partitions or fold roles.
+
+
             related = "cve_t4pdf_repository" if source.startswith("cve_t4pdf_") else (
                 source if source.startswith("contagio_s3_") else "pdf:" + digest)
             rows.append({**row, "related_group_id": related})
@@ -91,8 +91,8 @@ def isolated_features(inventory: pd.DataFrame, root: Path, *, workers=2, wall_se
     if (not 1 <= workers <= 2 or not 1 <= cpu_seconds <= wall_seconds <= 60
             or not 256 * 1024**2 <= memory_bytes <= 4 * 1024**3):
         raise ValueError("Invalid parser process resource caps")
-    # A separate process per PDF prevents a damaged parser state from affecting
-    # the next sample. The parent is single-threaded and performs no model fits.
+
+
     context, active, next_row, finished, last = multiprocessing.get_context("fork"), {}, 0, 0, time.monotonic()
     limits = StaticInspectionLimits(max_file_size_bytes=10 * 1024**2)
     try:
@@ -173,8 +173,8 @@ def locked_raw_split(table: pd.DataFrame, source: pd.DataFrame) -> tuple[pd.Data
     for positions in components.values():
         group = "component_" + hashlib.sha256("\n".join(sorted(table.iloc[positions].sample_id)).encode()).hexdigest()
         grouped[positions] = group
-    # Five disjoint approximately stratified folds yield 60/20/20, including
-    # mixed-label equivalence components; conflicting vectors are never dropped.
+
+
     held = list(StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=42).split(values, table.Label, grouped))
     splits = np.full(len(table), "train", dtype=object)
     splits[held[0][1]], splits[held[1][1]] = "test", "validation"

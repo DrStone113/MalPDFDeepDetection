@@ -25,9 +25,9 @@ if len(PROTOCOL_G_REQUIRED_FEATURES) != 38:
     raise RuntimeError("Protocol G drop3constant must require exactly 38 features")
 
 
-# Paper Table 2 explicitly defines most of these as occurrences of a named
-# string.  Exact lexical counting implements that documented concept; it is
-# nevertheless kept distinct from parser-confirmed active-content structure.
+
+
+
 _VERIFIED_RAW_FEATURES = frozenset(
     {
         "obj", "endobj", "stream", "endstream", "trailer", "xref", "startxref", "ObjStm",
@@ -49,7 +49,7 @@ def implementation_statuses() -> Mapping[str, FeatureStatus]:
     for feature in RIT_FEATURES:
         if feature in _VERIFIED_RAW_FEATURES or feature in _REFERENCE_METADATA_FEATURES:
             statuses[feature] = FeatureStatus.IMPLEMENTED_VERIFIED_SEMANTICS
-        else:  # Defensive guard if the source-of-truth dictionary changes.
+        else:
             statuses[feature] = FeatureStatus.UNSUPPORTED
     return statuses
 

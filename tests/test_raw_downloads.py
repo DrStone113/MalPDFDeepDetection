@@ -19,8 +19,8 @@ import pytest
 from malpdf.data import raw_downloads as raw
 
 PDF = b"%PDF-1.4\n% synthetic inert fixture\n%%EOF\n"
-# Fixed ZipCrypto archive of the inert PDF above; password is synthetic. Tests
-# neither invoke archive utilities nor access an external corpus.
+
+
 ENCRYPTED = base64.b64decode("UEsDBAoACQAAADJjQl1e9ybsNQAAACkAAAALABwAZml4dHVyZS5wZGZVVAkAA8Civ2rAor9qdXgLAAEE6AMAAAToAwAAROoA5PmYcCsq1lzlJfgSNE3F3vSc0errm0EFwDVhsKf9nEC65LRVmOFljHBw48XqXcRJmJBQSwcIXvcm7DUAAAApAAAAUEsBAh4DCgAJAAAAMmNCXV73Juw1AAAAKQAAAAsAGAAAAAAAAQAAAKaBAAAAAGZpeHR1cmUucGRmVVQFAAPAor9qdXgLAAEE6AMAAAToAwAAUEsFBgAAAAABAAEAUQAAAIoAAAAAAA==")
 SOURCE = {"name": "fixture", "url": "https://example.org/fixture.pdf", "kind": "pdf",
           "reference": "synthetic fixture", "label": None, "label_source": "synthetic_unlabeled"}
@@ -329,8 +329,8 @@ def test_wrong_candidate_with_valid_encryption_header_retries_corrupt_stream(err
 
     class InvalidPlaintext(io.BytesIO):
         def read(self, size=-1):
-            # ZipCrypto checks only one header byte. A wrong password can pass
-            # that check and subsequently fail during deflate decoding/EOF.
+
+
             raise error_type("invalid decrypted stream")
 
     def open_member(self, member, *args, **kwargs):

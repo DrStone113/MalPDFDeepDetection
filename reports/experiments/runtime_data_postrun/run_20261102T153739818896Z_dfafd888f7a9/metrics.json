@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "generated_utc": "2026-11-02T15:42:20.242985+00:00",
+  "job_id": "dfafd888f7a948a87ffac2e0b68ab702fd60dd1dc9bc630fa6cdbe4496e4a06f",
+  "execution_status": "partial",
+  "planned": 1452,
+  "completed": 1452,
+  "validated_bundles": 1452,
+  "missing_bundles": 0,
+  "invalid_bundles": 0,
+  "status_counts": {
+    "bounded_complete": 326,
+    "timeout": 589,
+    "unsupported": 342,
+    "partial": 143,
+    "decode_error": 51,
+    "observed": 1
+  },
+  "primary_available": 1381,
+  "reused_bundles": 1379,
+  "fresh_bundles": 73,
+  "worker_cleanup_complete": 1452,
+  "graphs_with_observed_nodes": 1377,
+  "graphs_missing": 75,
+  "graphs_with_unknown_node_sizes": 1377,
+  "known_node_sizes": 0,
+  "unknown_node_sizes": 171055,
+  "partition_coverage": {
+    "test/present": 291,
+    "train/present": 870,
+    "validation/present": 291
+  },
+  "model_input_ready": false,
+  "accuracy": null,
+  "f1": null,
+  "mcc": null,
+  "auc": null,
+  "classifier_evaluation_executed": false,
+  "raw_pdf_transferred": false,
+  "performance_benchmark_eligible": false,
+  "dataset": "data/processed/runtime_postrun/dfafd888f7a948a87ffac2e0b68ab702fd60dd1dc9bc630fa6cdbe4496e4a06f/a07a82e079974a0e9e7dff2a796d680a311967ff9fc41f3384daef4f704068cd"
+}

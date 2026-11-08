@@ -113,7 +113,7 @@ def synthetic_bundle(path):
     manifest = pd.DataFrame(records)
     features = pd.DataFrame({name: np.arange(len(records), dtype=float) for name in V3_FEATURES})
     features.insert(0, "sample_id", manifest.sample_id)
-    features.loc[manifest.split.eq("test"), list(V3_FEATURES)] = np.inf  # Test must not be transformed/inspected for feature selection.
+    features.loc[manifest.split.eq("test"), list(V3_FEATURES)] = np.inf
     configuration = {"feature_order": list(V3_FEATURES), "metadata_features": list(METADATA_FEATURES), "tabular": {}}
     members = {"manifest.csv": manifest.to_csv(index=False).encode(), "validation_roles.csv": pd.DataFrame(roles).to_csv(index=False).encode(),
         "train_folds.csv": pd.DataFrame(folds).to_csv(index=False).encode(), "source_matrix_reuse.csv": pd.DataFrame(reuse).to_csv(index=False).encode(),
@@ -195,8 +195,8 @@ import malpdf.experiments.static_development
 from malpdf.static import StaticInspectionLimits
 print('numeric imports verified')
 """
-    # Cold torch/model imports on the small VM can exceed 30s. This bounded
-    # harness checks the import boundary; no PDF parser or sample is allowed.
+
+
     result = subprocess.run([sys.executable, "-E", "-c", script], text=True, capture_output=True, timeout=60)
     assert result.returncode == 0, result.stderr
     assert "numeric imports verified" in result.stdout

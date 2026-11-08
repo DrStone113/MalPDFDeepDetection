@@ -168,7 +168,7 @@ def test_synthetic_execution_uses_only_track_training_source_and_keeps_outputs_i
 
     output, records = execute_cross_dataset_strict6_from_preflight(preflight, model_factory=factory)
     assert len(records) == len(estimators) == 20
-    # Track order is fixed: within RIT, within CIC, R2C, then C2R.
+
     assert all(estimator.fit_minimum is not None and estimator.fit_minimum < 1000 for estimator in estimators[:5])
     assert all(estimator.fit_minimum is not None and estimator.fit_minimum >= 1000 for estimator in estimators[5:10])
     assert all(estimator.fit_minimum == 0.0 for estimator in estimators[10:15])

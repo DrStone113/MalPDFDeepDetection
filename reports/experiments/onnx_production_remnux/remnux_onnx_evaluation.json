@@ -1,0 +1,458 @@
+{
+  "schema": "malpdf_remnux_onnx_production_evaluation_v1",
+  "evaluated_at_utc": "2026-11-07T09:03:26.108666+00:00",
+  "environment": {
+    "hostname": "remnux",
+    "platform": "Linux-6.8.0-147-generic-x86_64-with-glibc2.39",
+    "python_version": "3.11.17",
+    "torch_version": "2.11.0+cpu",
+    "onnxruntime_version": "1.28.0",
+    "ort_providers": [
+      "AzureExecutionProvider",
+      "CPUExecutionProvider"
+    ]
+  },
+  "models": {
+    "binary_onnx_sha256": "be9a09ba01223d7205272cb257486544a5f5e122ca99ba3f785495604075c469",
+    "multilabel_onnx_sha256": "19db4c44a7f72b406f04211ef30aea6eff06ed76ae9557105df2cf0040b5cf13",
+    "binary_onnx_size_bytes": 3320676,
+    "multilabel_onnx_size_bytes": 4006326
+  },
+  "canonical_cic_export": {
+    "export_dir": "/home/remnux/malpdf-graph-exports-v2/export_20261106T135440198431Z_89bf66f04d93",
+    "protocol": "Protocol G (seed=42)",
+    "total_records": 1452,
+    "test_split_records": 291,
+    "validation_split_records": 291
+  },
+  "binary_transgraph_v2_test": {
+    "sample_count": 291,
+    "malware_count": 160,
+    "benign_count": 131,
+    "onnx_metrics": {
+      "accuracy": 0.958763,
+      "precision": 0.95122,
+      "recall": 0.975,
+      "f1": 0.962963,
+      "mcc": 0.916823,
+      "roc_auc": 0.985973,
+      "pr_auc": 0.987073,
+      "confusion_matrix": {
+        "tn": 123,
+        "fp": 8,
+        "fn": 4,
+        "tp": 156
+      }
+    },
+    "pytorch_parity": {
+      "max_abs_logit_diff": 1.7881393432617188e-06,
+      "mean_abs_logit_diff": 4.2683377708356404e-07,
+      "max_abs_prob_diff": 2.496941482466042e-07,
+      "verdict_agreement_count": 291,
+      "verdict_agreement_rate": 1.0
+    },
+    "latency_benchmark": {
+      "pytorch_cpu_median_ms": 4.7356,
+      "pytorch_cpu_mean_ms": 7.1075,
+      "pytorch_cpu_total_ms": 2068.27,
+      "onnx_cpu_median_ms": 1.7504,
+      "onnx_cpu_mean_ms": 2.2056,
+      "onnx_cpu_total_ms": 641.82,
+      "onnx_throughput_samples_per_sec": 453.4,
+      "speedup_median_x": 2.71,
+      "speedup_mean_x": 3.22
+    }
+  },
+  "binary_transgraph_v2_validation": {
+    "sample_count": 289,
+    "malware_count": 159,
+    "benign_count": 130,
+    "onnx_metrics": {
+      "accuracy": 0.968858,
+      "precision": 0.987013,
+      "recall": 0.955975,
+      "f1": 0.971246,
+      "mcc": 0.937872,
+      "roc_auc": 0.989744,
+      "pr_auc": 0.992918,
+      "confusion_matrix": {
+        "tn": 128,
+        "fp": 2,
+        "fn": 7,
+        "tp": 152
+      }
+    },
+    "pytorch_parity": {
+      "max_abs_logit_diff": 1.6689300537109375e-06,
+      "mean_abs_logit_diff": 4.4711217748252576e-07,
+      "max_abs_prob_diff": 3.6023332877777037e-07,
+      "verdict_agreement_count": 289,
+      "verdict_agreement_rate": 1.0
+    },
+    "latency_benchmark": {
+      "pytorch_cpu_median_ms": 4.5497,
+      "pytorch_cpu_mean_ms": 5.4257,
+      "pytorch_cpu_total_ms": 1568.03,
+      "onnx_cpu_median_ms": 1.7386,
+      "onnx_cpu_mean_ms": 2.09,
+      "onnx_cpu_total_ms": 604.01,
+      "onnx_throughput_samples_per_sec": 478.47,
+      "speedup_median_x": 2.62,
+      "speedup_mean_x": 2.6
+    }
+  },
+  "multilabel_threat_net_v2_test": {
+    "sample_count": 291,
+    "macro_roc_auc": 0.926724,
+    "macro_pr_auc": 0.839023,
+    "macro_f1": 0.759681,
+    "per_head_metrics": [
+      {
+        "id": "js_script_exec",
+        "code_name": "JS",
+        "label_vi": "Chạy mã JavaScript ngầm",
+        "mitre_id": "T1059.007",
+        "threshold": 0.30000001192092896,
+        "ground_truth_positives": 151,
+        "onnx_predicted_positives_all": 153,
+        "onnx_predicted_positives_on_malware": 145,
+        "roc_auc": 0.969726,
+        "pr_auc": 0.970426,
+        "f1": 0.914474,
+        "precision": 0.908497,
+        "recall": 0.92053
+      },
+      {
+        "id": "auto_open_trigger",
+        "code_name": "AutoAction",
+        "label_vi": "Tự động kích hoạt khi mở tệp",
+        "mitre_id": "T1204.002",
+        "threshold": 0.6800000071525574,
+        "ground_truth_positives": 97,
+        "onnx_predicted_positives_all": 133,
+        "onnx_predicted_positives_on_malware": 127,
+        "roc_auc": 0.948135,
+        "pr_auc": 0.878622,
+        "f1": 0.782609,
+        "precision": 0.676692,
+        "recall": 0.927835
+      },
+      {
+        "id": "obfuscated_payload",
+        "code_name": "ObfuscatedJS",
+        "label_vi": "Làm rối mã để che giấu hành vi",
+        "mitre_id": "T1027",
+        "threshold": 0.3499999940395355,
+        "ground_truth_positives": 120,
+        "onnx_predicted_positives_all": 124,
+        "onnx_predicted_positives_on_malware": 115,
+        "roc_auc": 0.958821,
+        "pr_auc": 0.917243,
+        "f1": 0.909836,
+        "precision": 0.895161,
+        "recall": 0.925
+      },
+      {
+        "id": "buffer_loop_staging",
+        "code_name": "HeapStaging",
+        "label_vi": "Vòng lặp tự nạp dữ liệu vào bộ nhớ",
+        "mitre_id": "T1203",
+        "threshold": 0.30000001192092896,
+        "ground_truth_positives": 4,
+        "onnx_predicted_positives_all": 6,
+        "onnx_predicted_positives_on_malware": 5,
+        "roc_auc": 0.998258,
+        "pr_auc": 0.8875,
+        "f1": 0.8,
+        "precision": 0.666667,
+        "recall": 1.0
+      },
+      {
+        "id": "active_form_or_exploit",
+        "code_name": "ReaderExploit",
+        "label_vi": "Lợi dụng biểu mẫu động / lỗi trình đọc",
+        "mitre_id": "T1203",
+        "threshold": 0.30000001192092896,
+        "ground_truth_positives": 25,
+        "onnx_predicted_positives_all": 26,
+        "onnx_predicted_positives_on_malware": 25,
+        "roc_auc": 0.992331,
+        "pr_auc": 0.917763,
+        "f1": 0.901961,
+        "precision": 0.884615,
+        "recall": 0.92
+      },
+      {
+        "id": "embedded_dropper_or_launch",
+        "code_name": "DropperLaunch",
+        "label_vi": "Giấu tệp lạ hoặc tự gọi lệnh máy tính",
+        "mitre_id": "T1027.009",
+        "threshold": 0.4699999988079071,
+        "ground_truth_positives": 118,
+        "onnx_predicted_positives_all": 80,
+        "onnx_predicted_positives_on_malware": 75,
+        "roc_auc": 0.946703,
+        "pr_auc": 0.913823,
+        "f1": 0.747475,
+        "precision": 0.925,
+        "recall": 0.627119
+      },
+      {
+        "id": "suspicious_uri_redirect",
+        "code_name": "SuspiciousURI",
+        "label_vi": "Chuyển hướng đường dẫn web đáng ngờ",
+        "mitre_id": "T1566.002",
+        "threshold": 0.6899999976158142,
+        "ground_truth_positives": 6,
+        "onnx_predicted_positives_all": 28,
+        "onnx_predicted_positives_on_malware": 25,
+        "roc_auc": 0.659649,
+        "pr_auc": 0.315788,
+        "f1": 0.176471,
+        "precision": 0.107143,
+        "recall": 0.5
+      },
+      {
+        "id": "structural_parser_evasion",
+        "code_name": "StructuralEvasion",
+        "label_vi": "Biến dạng cấu trúc tệp để né kiểm tra",
+        "mitre_id": "T1027.006",
+        "threshold": 0.3799999952316284,
+        "ground_truth_positives": 131,
+        "onnx_predicted_positives_all": 120,
+        "onnx_predicted_positives_on_malware": 114,
+        "roc_auc": 0.940172,
+        "pr_auc": 0.911022,
+        "f1": 0.844622,
+        "precision": 0.883333,
+        "recall": 0.80916
+      }
+    ],
+    "pytorch_parity": {
+      "max_abs_logit_diff": 1.33514404296875e-05,
+      "mean_abs_logit_diff": 1.7502335543485032e-06,
+      "max_abs_prob_diff": 1.6877171034601623e-06,
+      "prediction_agreement_rate": 1.0
+    },
+    "latency_benchmark": {
+      "pytorch_cpu_median_ms": 4.6672,
+      "pytorch_cpu_mean_ms": 5.3521,
+      "onnx_cpu_median_ms": 1.7091,
+      "onnx_cpu_mean_ms": 1.9556,
+      "speedup_median_x": 2.73,
+      "speedup_mean_x": 2.74
+    }
+  },
+  "multilabel_threat_net_v2_validation": {
+    "sample_count": 291,
+    "macro_roc_auc": 0.966669,
+    "macro_pr_auc": 0.950663,
+    "macro_f1": 0.902148,
+    "per_head_metrics": [
+      {
+        "id": "js_script_exec",
+        "code_name": "JS",
+        "label_vi": "Chạy mã JavaScript ngầm",
+        "mitre_id": "T1059.007",
+        "threshold": 0.30000001192092896,
+        "ground_truth_positives": 129,
+        "onnx_predicted_positives_all": 131,
+        "onnx_predicted_positives_on_malware": 124,
+        "roc_auc": 0.972342,
+        "pr_auc": 0.970649,
+        "f1": 0.9,
+        "precision": 0.89313,
+        "recall": 0.906977
+      },
+      {
+        "id": "auto_open_trigger",
+        "code_name": "AutoAction",
+        "label_vi": "Tự động kích hoạt khi mở tệp",
+        "mitre_id": "T1204.002",
+        "threshold": 0.6800000071525574,
+        "ground_truth_positives": 109,
+        "onnx_predicted_positives_all": 107,
+        "onnx_predicted_positives_on_malware": 102,
+        "roc_auc": 0.974493,
+        "pr_auc": 0.965476,
+        "f1": 0.888889,
+        "precision": 0.897196,
+        "recall": 0.880734
+      },
+      {
+        "id": "obfuscated_payload",
+        "code_name": "ObfuscatedJS",
+        "label_vi": "Làm rối mã để che giấu hành vi",
+        "mitre_id": "T1027",
+        "threshold": 0.3499999940395355,
+        "ground_truth_positives": 56,
+        "onnx_predicted_positives_all": 56,
+        "onnx_predicted_positives_on_malware": 53,
+        "roc_auc": 0.963222,
+        "pr_auc": 0.916788,
+        "f1": 0.875,
+        "precision": 0.875,
+        "recall": 0.875
+      },
+      {
+        "id": "buffer_loop_staging",
+        "code_name": "HeapStaging",
+        "label_vi": "Vòng lặp tự nạp dữ liệu vào bộ nhớ",
+        "mitre_id": "T1203",
+        "threshold": 0.30000001192092896,
+        "ground_truth_positives": 27,
+        "onnx_predicted_positives_all": 26,
+        "onnx_predicted_positives_on_malware": 26,
+        "roc_auc": 0.997615,
+        "pr_auc": 0.978658,
+        "f1": 0.943396,
+        "precision": 0.961538,
+        "recall": 0.925926
+      },
+      {
+        "id": "active_form_or_exploit",
+        "code_name": "ReaderExploit",
+        "label_vi": "Lợi dụng biểu mẫu động / lỗi trình đọc",
+        "mitre_id": "T1203",
+        "threshold": 0.30000001192092896,
+        "ground_truth_positives": 80,
+        "onnx_predicted_positives_all": 72,
+        "onnx_predicted_positives_on_malware": 71,
+        "roc_auc": 0.93981,
+        "pr_auc": 0.92443,
+        "f1": 0.881579,
+        "precision": 0.930556,
+        "recall": 0.8375
+      },
+      {
+        "id": "embedded_dropper_or_launch",
+        "code_name": "DropperLaunch",
+        "label_vi": "Giấu tệp lạ hoặc tự gọi lệnh máy tính",
+        "mitre_id": "T1027.009",
+        "threshold": 0.4699999988079071,
+        "ground_truth_positives": 78,
+        "onnx_predicted_positives_all": 74,
+        "onnx_predicted_positives_on_malware": 72,
+        "roc_auc": 0.959131,
+        "pr_auc": 0.938148,
+        "f1": 0.907895,
+        "precision": 0.932432,
+        "recall": 0.884615
+      },
+      {
+        "id": "suspicious_uri_redirect",
+        "code_name": "SuspiciousURI",
+        "label_vi": "Chuyển hướng đường dẫn web đáng ngờ",
+        "mitre_id": "T1566.002",
+        "threshold": 0.6899999976158142,
+        "ground_truth_positives": 20,
+        "onnx_predicted_positives_all": 22,
+        "onnx_predicted_positives_on_malware": 20,
+        "roc_auc": 0.954982,
+        "pr_auc": 0.947013,
+        "f1": 0.904762,
+        "precision": 0.863636,
+        "recall": 0.95
+      },
+      {
+        "id": "structural_parser_evasion",
+        "code_name": "StructuralEvasion",
+        "label_vi": "Biến dạng cấu trúc tệp để né kiểm tra",
+        "mitre_id": "T1027.006",
+        "threshold": 0.3799999952316284,
+        "ground_truth_positives": 121,
+        "onnx_predicted_positives_all": 128,
+        "onnx_predicted_positives_on_malware": 122,
+        "roc_auc": 0.971755,
+        "pr_auc": 0.964142,
+        "f1": 0.915663,
+        "precision": 0.890625,
+        "recall": 0.942149
+      }
+    ],
+    "pytorch_parity": {
+      "max_abs_logit_diff": 1.0967254638671875e-05,
+      "mean_abs_logit_diff": 1.7114156453879838e-06,
+      "max_abs_prob_diff": 1.6691060045204154e-06,
+      "prediction_agreement_rate": 1.0
+    },
+    "latency_benchmark": {
+      "pytorch_cpu_median_ms": 5.1864,
+      "pytorch_cpu_mean_ms": 5.6956,
+      "onnx_cpu_median_ms": 1.8467,
+      "onnx_cpu_mean_ms": 2.2209,
+      "speedup_median_x": 2.81,
+      "speedup_mean_x": 2.56
+    }
+  },
+  "combined_dual_model_benchmark": {
+    "pytorch_cpu_dual_median_ms": 9.4028,
+    "onnx_cpu_dual_median_ms": 3.4595,
+    "combined_speedup_median_x": 2.72
+  },
+  "end_to_end_scanner_and_cdr": {
+    "benign_fixture": {
+      "file_name": "real_benign_document.pdf",
+      "sha256": "ef43e7f9e1c138d5d5279fe3c16e54c7d0a63c1a056f5008550872e31b4b0fa7",
+      "verdict": "BENIGN",
+      "malware_probability": 0.061,
+      "latency_ms": 103.34,
+      "family_label_vi": null,
+      "canonical_label": null,
+      "threat_label": "Clean.PDF.Verified",
+      "threat_title_vi": "Tài liệu PDF an toàn — Không phát hiện hành vi độc hại"
+    },
+    "threat_fixture": {
+      "file_name": "real_threat_document.pdf",
+      "sha256": "b260f9e53f0b8dabdc9ac81e93119e9b66766db88f8ece507596c7039cff9eca",
+      "verdict": "MALICIOUS",
+      "malware_probability": 0.9214,
+      "latency_ms": 709.2,
+      "family_label_vi": null,
+      "canonical_label": null,
+      "active_multilabel_codes": [],
+      "threat_label": "Trojan.PDFExp.AutoAction.ObfuscatedJS",
+      "threat_title_vi": "AI phát hiện 5 hành vi nguy hiểm: chạy mã JavaScript ngầm & tự động kích hoạt khi mở tệp",
+      "predicted_labels_vi": [
+        {
+          "id": "js_script_exec",
+          "label_vi": "Chạy mã JavaScript ngầm",
+          "probability_pct": 100.0
+        },
+        {
+          "id": "auto_open_trigger",
+          "label_vi": "Tự động kích hoạt khi mở tệp",
+          "probability_pct": 100.0
+        },
+        {
+          "id": "obfuscated_payload",
+          "label_vi": "Làm rối mã để che giấu hành vi",
+          "probability_pct": 100.0
+        },
+        {
+          "id": "buffer_loop_staging",
+          "label_vi": "Vòng lặp tự nạp dữ liệu vào bộ nhớ",
+          "probability_pct": 99.4
+        },
+        {
+          "id": "structural_parser_evasion",
+          "label_vi": "Biến dạng cấu trúc tệp để né kiểm tra",
+          "probability_pct": 88.2
+        }
+      ]
+    },
+    "cdr_disarm_verification": {
+      "size_before_bytes": 324957,
+      "size_after_bytes": 324431,
+      "size_retention_ratio": 0.9984,
+      "original_pages": 2,
+      "sanitized_pages": 2,
+      "extracted_text_chars": 9839,
+      "text_integrity_verified": true,
+      "removed_triggers_count": 5,
+      "post_cdr_verdict": "BENIGN",
+      "post_cdr_malware_probability": 0.061,
+      "all_cdr_invariants_passed": true
+    }
+  }
+}

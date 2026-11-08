@@ -1,0 +1,120 @@
+{
+  "academic_seeds": [
+    42,
+    100,
+    2026
+  ],
+  "batch_size_eval": 64,
+  "batch_size_train": 32,
+  "checkpoints": {
+    "full_seed42_path": "artifacts\\models\\pdf_transgraph_v2\\run_20261106T151845675931Z_c6b920385d96\\pdf_transgraph_v2_23d_seed42_best.pt",
+    "full_seed42_sha256": "55092f81fda136bc44beed60a506181493618808529da3051d04940c1ba38a2f",
+    "tab_ast_seed42_path": "artifacts\\models\\pdf_transgraph_v2\\run_20261106T151845675931Z_c6b920385d96\\pdf_transgraph_v2_tab_ast_seed42_best.pt",
+    "tab_ast_seed42_sha256": "617076c3706a45bbde7a8297f03e7a1d67ee64c59cabc331497c49191a17de19"
+  },
+  "epochs": 25,
+  "gate_contract_version": "pdf-extraction-quality-gate-v2",
+  "generated_utc": "20261106T151845675931Z",
+  "git_commit": "c6b920385d966eaba9f0e1eec0ac2dcb789a4664",
+  "loss": {
+    "alpha": 0.6,
+    "gamma": 2.0,
+    "name": "FocalLoss"
+  },
+  "node_feature_dim": 23,
+  "optimizer": {
+    "lr": 0.001,
+    "name": "AdamW",
+    "weight_decay": 0.0001
+  },
+  "primary_seed": 42,
+  "projection_contract_version": "pdf-graph-projection-v2",
+  "protocol": "Protocol G",
+  "protocol_g_seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "run_id": "run_20261106T151845675931Z_c6b920385d96",
+  "scaler_fit_partition": "train_only_870",
+  "schema_version": 2,
+  "source_export": {
+    "baseline_job_id": "89bf66f04d932dece2518500fbdfb3121fff8799df74b2f02accac03197e1900",
+    "export_dir": "C:\\Project\\MalPDFDeepDetection\\data\\processed\\graph_exports_v2\\export_20261106T135440198431Z_89bf66f04d93",
+    "verified_files": {
+      "hetero_graphs_v2.jsonl.gz": {
+        "bytes": 1178411,
+        "sha256": "3dcdc8d741e5f9a55f46897b0afc0d903d38ea9e28fd5bb696ddeea57cf75eb0"
+      },
+      "locked_methodology.json": {
+        "bytes": 861,
+        "sha256": "38d329335a9b7b14336a1befe9bbd23b10a399907d5e230f57edb938986c5cf6"
+      },
+      "quality_gate_summary.json": {
+        "bytes": 8299,
+        "sha256": "9510fe3ae92e498a0a676fc660970bffea02e4ee5ab403f9b8972d415e638703"
+      },
+      "tabular_features_v2.jsonl.gz": {
+        "bytes": 4213111,
+        "sha256": "6ca22c2cedc0afc02468576e62c44c4e519c96540713dc33b3033e3a559e59a6"
+      },
+      "unavailable_document_ledger.json": {
+        "bytes": 1870,
+        "sha256": "cc3d52831fef1e5b170c4dbbfcd3832c4b8c8e3432c1b0f152052b8f79c8a3bd"
+      }
+    }
+  },
+  "study": "pdf_transgraph_v2",
+  "tabular_feature_names": [
+    "Javascript",
+    "JS",
+    "Stream",
+    "Endstream",
+    "Obj",
+    "Endobj",
+    "MetadataSize",
+    "PdfSize",
+    "Pages",
+    "PageNo",
+    "XFA",
+    "OpenAction",
+    "Colors",
+    "Images",
+    "density_stream_ratio",
+    "density_obj_stream_ratio",
+    "density_metadata_ratio",
+    "entropy_gap",
+    "ast_complexity_per_node",
+    "ast_call_ratio",
+    "ast_identifier_ratio",
+    "ast_computed_ratio",
+    "byte_image_file_encoded_ratio",
+    "byte_image_file_persisted_ratio",
+    "stream_truncation_ratio",
+    "legacy_observed_ast_node_count",
+    "legacy_observed_ast_max_depth",
+    "legacy_observed_ast_loops",
+    "legacy_observed_ast_computed_members",
+    "evasive_timeout_anomaly",
+    "flag_decompression_ratio_exceeded",
+    "is_truncated_stream",
+    "flag_spec_violation_flood",
+    "flag_excessive_object_graph",
+    "flag_ast_complexity_truncated",
+    "raw_entropy",
+    "raw_prefix_entropy",
+    "raw_suffix_entropy"
+  ],
+  "tabular_in_features": 38,
+  "unavailable_document_policy": {
+    "artificial_nonempty_1452_required": false,
+    "eval_denominator_shrinkage_allowed": false,
+    "eval_empty_graph_handling": "explicit_abstention_or_verified_tabular_fallback_counted_against_full_split_denominator",
+    "placeholder_zero_nodes_allowed": false,
+    "protocol_g_denominator_preserved": true,
+    "rejected_sample_handling": "fail_closed_abort_evaluation",
+    "train_empty_graph_handling": "exclude_from_gnn_message_passing_batches_retain_in_cohort_manifest_and_tabular_audit"
+  }
+}

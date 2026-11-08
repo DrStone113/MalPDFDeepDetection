@@ -1,0 +1,24 @@
+{
+  "files": {
+    "ablation_and_multiseed_results.json": {
+      "bytes": 53828,
+      "sha256": "0392c3f07f37dd9335bc2bbdcc2f2450e985fa40d47da74e267273915bca41f8"
+    },
+    "locked_methodology.json": {
+      "bytes": 3932,
+      "sha256": "65663b103f231e950e8366707280b17e3507ef020579d785529179332bd7a241"
+    },
+    "metrics.json": {
+      "bytes": 6572,
+      "sha256": "5df70f748d6062588d350149362c405331ba948a230681fe175bd4971d06921c"
+    },
+    "report.md": {
+      "bytes": 5867,
+      "sha256": "3ce3f8e3cd464a9544590214edd4d138d275f1bd11603b7c47c39a95f10bbea9"
+    }
+  },
+  "generated_utc": "20261106T151845675931Z",
+  "git_commit": "c6b920385d966eaba9f0e1eec0ac2dcb789a4664",
+  "run_id": "run_20261106T151845675931Z_c6b920385d96",
+  "schema_version": 2
+}

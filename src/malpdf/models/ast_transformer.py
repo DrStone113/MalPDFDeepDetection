@@ -41,9 +41,14 @@ class ASTSequenceTransformer(nn.Module):
             batch_first=True,
             norm_first=True,
         )
-        self.encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
+        self.encoder = nn.TransformerEncoder(
+            encoder_layer,
+            num_layers=num_layers,
+            enable_nested_tensor=False,
+        )
         self.pool_attn = nn.Linear(hidden_dim, 1)
         self.norm = nn.LayerNorm(hidden_dim)
+        self.last_token_attn: torch.Tensor | None = None
 
     def forward(self, tokens: torch.Tensor) -> torch.Tensor:
         if tokens.dim() == 1:
@@ -53,6 +58,7 @@ class ASTSequenceTransformer(nn.Module):
         h_rope = apply_rotary_pos_emb(h, cos, sin)
         encoded = self.encoder(h_rope)
         attn_weights = F.softmax(self.pool_attn(encoded), dim=1)
+        self.last_token_attn = attn_weights.detach()
         pooled = (encoded * attn_weights).sum(dim=1)
         return self.norm(pooled)
 

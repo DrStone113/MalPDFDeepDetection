@@ -159,7 +159,7 @@ def referral_by_uncertainty(uncertainty: Any, *, referral_rate: float, always_re
     additional = max(0, requested_count - int(referred.sum()))
     if additional:
         candidates = np.flatnonzero(~referred)
-        # lexsort keeps lower original position first for equal scores.
+
         order = candidates[np.lexsort((candidates, -scores[candidates]))]
         referred[order[:additional]] = True
     actual_rate = float(referred.mean())

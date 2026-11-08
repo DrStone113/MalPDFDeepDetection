@@ -59,8 +59,8 @@ class ResearchRun:
                    "packages": {name: importlib.metadata.version(name) for name in packages},
                    "generating_commit": self.commit, "code_worktree": self.state["code_worktree"],
                    "data_worktree": self.state["data_worktree"]})
-        # Record source identity and dirty state without duplicating source trees.
-        # An official experiment still requires committed generating code.
+
+
         hashes = {}
         for folder in ("src/malpdf", "scripts", "configs"):
             for source in (self.code_root / folder).rglob("*"):

@@ -43,7 +43,7 @@ def profiles(tmp_path):
                     "observed": {"scripts_found": 1, "ast": ast, "structural_indicators": structure}, "scripts_parsed": 1}
                 if number == 1:
                     code = _unavailable("pdf_parser_failure")
-                code["schema_version"] = "pdf-code-inspection-v5"  # Pinned historical profile.
+                code["schema_version"] = "pdf-code-inspection-v5"
                 record = {"sample_id": identifier, "pdf_sha256": digest, "pdf_relative_path": path,
                     "Label": label, "split": partition, "cache_mode": "cold", "status": "parser_error" if number == 1 else "partial",
                     "static": {"input": {"size_bytes": 2000, "sha256": digest}, "features": raw,

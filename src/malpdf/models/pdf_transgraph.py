@@ -75,11 +75,11 @@ class PDFTransGraph(nn.Module):
 
     def forward(
         self,
-        node_features: torch.Tensor,
-        node_types: torch.Tensor,
-        edge_index: torch.Tensor,
-        edge_rel: torch.Tensor,
-        batch: torch.Tensor,
+        node_features: torch.Tensor | None,
+        node_types: torch.Tensor | None,
+        edge_index: torch.Tensor | None,
+        edge_rel: torch.Tensor | None,
+        batch: torch.Tensor | None,
         ast_tokens: torch.Tensor,
         tabular_features: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
@@ -89,6 +89,14 @@ class PDFTransGraph(nn.Module):
             dummy_attn = torch.zeros(h_tab.size(0), 1, 2, device=h_tab.device)
             return logits, dummy_attn
         if self.ablation_mode == "graph_only":
+            if (
+                node_features is None
+                or node_types is None
+                or edge_index is None
+                or edge_rel is None
+                or batch is None
+            ):
+                raise ValueError("graph_only_requires_measured_graph")
             h_graph = self.graph_encoder(node_features, node_types, edge_index, edge_rel, batch)
             logits = self.single_branch_head(h_graph).squeeze(-1)
             dummy_attn = torch.zeros(h_graph.size(0), 1, 2, device=h_graph.device)
@@ -98,12 +106,15 @@ class PDFTransGraph(nn.Module):
             logits = self.single_branch_head(h_seq).squeeze(-1)
             dummy_attn = torch.zeros(h_seq.size(0), 1, 2, device=h_seq.device)
             return logits, dummy_attn
-        h_graph = self.graph_encoder(node_features, node_types, edge_index, edge_rel, batch)
         h_seq = self.ast_encoder(ast_tokens)
         h_tab = self.tabular_encoder(tabular_features)
-        if self.ablation_mode == "tab_ast":
-            h_graph = torch.zeros_like(h_graph)
-        elif self.ablation_mode == "tab_graph":
+        if self.ablation_mode == "tab_ast" or node_features is None:
+            h_graph = torch.zeros_like(h_tab)
+        else:
+            if node_types is None or edge_index is None or edge_rel is None or batch is None:
+                raise ValueError("multimodal_graph_branch_requires_topology")
+            h_graph = self.graph_encoder(node_features, node_types, edge_index, edge_rel, batch)
+        if self.ablation_mode == "tab_graph":
             h_seq = torch.zeros_like(h_seq)
         z_final, attn_weights = self.fusion(h_graph, h_seq, h_tab)
         logits = self.classifier(z_final).squeeze(-1)

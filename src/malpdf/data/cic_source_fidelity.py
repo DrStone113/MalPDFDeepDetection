@@ -49,7 +49,7 @@ def _canonical_value(value: Any) -> str:
     if _NUMERIC_LEXICAL.fullmatch(text):
         try:
             return "numeric:" + str(Decimal(text).normalize())
-        except InvalidOperation:  # pragma: no cover - guarded by the regex
+        except InvalidOperation:
             pass
     return "text:" + text
 

@@ -266,7 +266,7 @@ def test_final_output_guard_restores_last_bounded_checkpoint_before_ipc():
     collector,_=capture('var a=1;',limits=replace(SemanticLimits(),max_metadata_bytes=8192))
     collector.checkpoint=lambda value:checkpoints.append(value)
     collector.emit()
-    # Simulate unexpected downstream metadata growth beyond the record ledger.
+
     collector.value['scripts']=[{'unexpected_metadata':'x'*10000}]
     collector.emit()
     assert not collector.value['complete'] and collector.output_halted

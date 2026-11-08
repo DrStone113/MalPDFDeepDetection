@@ -1,0 +1,22 @@
+{
+  "source_existing_files_changed": [],
+  "source_existing_files_removed": [],
+  "source_added_files": [
+    "scripts/lab/audit_graph_extraction.py",
+    "src/malpdf/extraction/graph_audit.py",
+    "tests/test_graph_audit.py",
+    "tests/test_graph_audit_job.py"
+  ],
+  "baseline_release": "/home/remnux/malpdf-releases/e90e0340390ddc44ffb3f3ce25dbfb087202ddd6",
+  "audit_release": "/home/remnux/malpdf-releases/1f8aeece5cb4c3b02c875849f6ff615cd8cec469",
+  "health": {
+    "job_id": "dfafd888f7a948a87ffac2e0b68ab702fd60dd1dc9bc630fa6cdbe4496e4a06f",
+    "saved_bundles": 1452,
+    "source_job_sha256": "926d938c3c3fb1b69d572d41e980b63d1f9cca8dd9b06481a5a808e09d975e48",
+    "source_result_sha256": "e0725acc4ccd20212e5ef050fe9ed88095438abbd35fca82b3e5372507d7e1ae",
+    "selection_sha256": "2fc0b5ae5ab1dfd1006d4c17b8991d78edc9f32493a2de6dd2254f3b2b69ded9",
+    "pending_jobs": 0,
+    "raw_pdf_processing": false
+  },
+  "main_head": "c6b920385d966eaba9f0e1eec0ac2dcb789a4664"
+}

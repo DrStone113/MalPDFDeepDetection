@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "study": "recovery_postrun",
+  "job": {
+    "api": 1,
+    "archive_sha256": "2a3eb9860d4c855748c7dbe17ec1db5eb5f843fef01346469ad9ca6da55e81a4",
+    "attempt": "9bbdf36b696548aaa1187b0eca908bb7",
+    "commit": "e90e0340390ddc44ffb3f3ce25dbfb087202ddd6",
+    "job_id": "dfafd888f7a948a87ffac2e0b68ab702fd60dd1dc9bc630fa6cdbe4496e4a06f",
+    "kind": "pdf-static-cic-full",
+    "limits": {
+      "file_cpu_seconds": 30,
+      "file_max_bytes": 10485760,
+      "file_memory_bytes": 1073741824,
+      "file_wall_seconds": 35,
+      "output_bytes": 2147483648,
+      "samples": 1452,
+      "wall_seconds": 7200,
+      "workers": 10
+    },
+    "manifest_sha256": "447e638a07da94dd01dc63c3552ee52ba6942858e85e0b786cd7f6505bb34699",
+    "mode": "offline",
+    "schema_version": 1
+  },
+  "prior_postrun": {
+    "folder": "reports/experiments/runtime_data_postrun/run_20261102T142920862759Z_4cec6c279496",
+    "job_id": "4cec6c2794967311bc5c55a924933a0b0cbda0529ff31fe1f19de8b4cdcd7b75"
+  },
+  "source_data": "Saved LAB JSON bundles only; no raw PDF parsing or transfer",
+  "selection_denominator": 1452,
+  "seed": 42,
+  "expected_reused_bundles": 1379,
+  "expected_fresh_samples": 73,
+  "source_selection_and_labels_preserved": true,
+  "unknown_values": "null; no imputation or placeholder nodes",
+  "metrics_claim": "Extraction coverage only; no new classifier evaluation; reused bundles exclude cold-run timing claim",
+  "previous_results_preserved": true
+}

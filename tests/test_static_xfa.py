@@ -43,7 +43,7 @@ def xml_script(source='var inertCount=1;', *, language='application/x-javascript
 @pytest.mark.parametrize('compressed',[False,True])
 def test_xfa_stream_and_packet_array_add_missing_ast_with_object_provenance(packets,compressed):
     xml=xml_script('var private_fixture_text="inert"; unescape("%41");')
-    # Packet fragments exercise namespaced XML split through the script tag.
+
     parts=[xml[:95],xml[95:]] if packets else xml
     result=_inspect_code_bytes(xfa_pdf(parts,packets=packets,compressed=compressed),CodeInspectionLimits())
     assert result['complete'] and result['scripts_found']==result['scripts_parsed']==1

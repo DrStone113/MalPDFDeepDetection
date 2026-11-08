@@ -190,6 +190,14 @@ def pdf_metadata(job):
         raise ValueError('dependency_mismatch') from None
     import yaml
     data_root = Path(cfg['data_root'])
+    if job['kind'] == 'pdf-diagnostic-replay':
+        from malpdf.extraction.diagnostic_replay import load_replay
+        rows = load_replay(source, jobs.JOBS)[1]
+        for row in rows:
+            path = jobs.trusted_path(data_root / row['pdf_relative_path'])
+            if not path.is_file() or path.stat().st_size > job['limits']['file_max_bytes']:
+                raise ValueError('manifest_unavailable')
+        return source, data_root, rows
     if job['kind'] == 'pdf-static-cve':
         return source, data_root, cve_rows(data_root)
     if job['kind'] == 'pdf-static-cic-full':
@@ -219,7 +227,84 @@ def worker_limits(*, prepare=False, wall_seconds=1800):
         resource.setrlimit(name, (amount, amount))
 
 
+PRE_SPAWN_PHASES = ('validation', 'profile_boundary', 'worker_admission', 'worker_start')
+
+
+def _available_memory_bytes():
+    meminfo = Path('/proc/meminfo')
+    if not meminfo.is_file():
+        return None
+    try:
+        for line in meminfo.read_text(encoding='utf-8').splitlines():
+            if line.startswith('MemAvailable:'):
+                return int(line.split()[1]) * 1024
+    except (OSError, ValueError, IndexError):
+        return None
+    return None
+
+
+def _wait_for_memory_headroom(deadline, *, min_bytes=900 * 1024**2, max_wait=30.0):
+    wait_until = min(deadline, time.monotonic() + max_wait)
+    while time.monotonic() < wait_until:
+        available = _available_memory_bytes()
+        if available is None or available >= min_bytes:
+            return
+        time.sleep(0.25)
+
+
+def _is_prespawn_admission_failure(bundle):
+    worker = (bundle.get('coverage_report') or {}).get('worker') if isinstance(bundle, dict) else None
+    if not isinstance(worker, dict) or worker.get('worker_cleanup_complete') is not None:
+        return False
+    diagnostic = worker.get('diagnostic')
+    if isinstance(diagnostic, dict):
+        return (
+            diagnostic.get('cleanup_complete') is None
+            and diagnostic.get('worker_exit_code') is None
+            and diagnostic.get('cleanup_exit_code') is None
+            and diagnostic.get('last_phase') in PRE_SPAWN_PHASES
+        )
+    return worker.get('status') == 'input_error' and worker.get('worker_exit_code') is None
+
+
+def reusable_pdf_bundle(bundle, expected_sha256):
+    from malpdf.extraction.contracts import validate_bundle
+    if (not isinstance(expected_sha256, str) or not jobs.HEX.fullmatch(expected_sha256)
+            or not isinstance(bundle, dict) or bundle.get('sample_sha256') != expected_sha256
+            or not isinstance(bundle.get('status'), str) or bundle['status'] not in jobs.PDF_STATUSES):
+        return False
+    try:
+        validate_bundle(bundle)
+        return bundle['coverage_report']['worker'].get('worker_cleanup_complete') is True
+    except (ValueError, TypeError, KeyError):
+        return False
+
+
 def pdf_worker(job_id, *, prepare=False, shard=0, count=1):
+    if sys.platform != 'linux':
+        raise ValueError('runtime_unavailable')
+    job = jobs.load_job(job_id)
+    started = time.monotonic()
+    try:
+        return _pdf_worker(job_id, prepare=prepare, shard=shard, count=count)
+    except Exception as error:
+        if not prepare and job['kind'] in jobs.PDF_KINDS and 0 <= shard < job['limits']['workers']:
+            frames = []
+            trace = error.__traceback__
+            while trace is not None:
+                code = trace.tb_frame.f_code
+                frames.append({'file': Path(code.co_filename).name, 'function': code.co_name, 'line': trace.tb_lineno})
+                trace = trace.tb_next
+            directory = jobs.job_directory(job_id) / 'private_outer'
+            directory.mkdir(mode=0o700, exist_ok=True)
+            jobs.immutable(directory / f'exception.{shard}.json', {'schema_version': 1, 'run_id': job_id, 'shard': shard,
+                'exception_type': type(error).__name__, 'exception_errno': getattr(error, 'errno', None),
+                'traceback': frames[-32:], 'last_phase': frames[-1]['function'] if frames else None,
+                'elapsed_ms': int((time.monotonic()-started)*1000), 'preserved_before_outer_exit': True})
+        raise
+
+
+def _pdf_worker(job_id, *, prepare=False, shard=0, count=1):
     if sys.platform != 'linux':
         raise ValueError('runtime_unavailable')
     job = jobs.load_job(job_id)
@@ -237,6 +322,9 @@ def pdf_worker(job_id, *, prepare=False, shard=0, count=1):
     directory = jobs.job_directory(job_id)
     selection = {'job_id': job_id, 'rows': rows, 'selection_sha256': jobs.sha(jobs.encoded(rows))}
     if prepare:
+        if job['kind'] == 'pdf-diagnostic-replay':
+            from malpdf.extraction.diagnostic_replay_runner import prepare_replay
+            prepare_replay(job, directory, source, jobs)
         jobs.immutable(directory / 'selection.json', selection)
         return
     stored = parse_json(side.bounded_read(directory / 'selection.json', 4 * 1024**2))
@@ -257,6 +345,10 @@ def pdf_worker(job_id, *, prepare=False, shard=0, count=1):
     if parse_json(side.bounded_read(data_root / 'configs/arlington.lock.json', 2 * 1024**2)) != parse_json(side.bounded_read(source / 'configs/arlington.lock.json', 2 * 1024**2)):
         raise ValueError('manifest_unavailable')
     catalog = load_model(data_root)
+    if job['kind'] == 'pdf-diagnostic-replay':
+        from malpdf.extraction.diagnostic_replay_runner import run_shard
+        run_shard(job, directory, source, data_root, rows, limits, catalog, shard, count, jobs)
+        return
     started = time.monotonic()
     summary = dict.fromkeys(('planned', 'completed', 'observed', 'bounded_complete', 'partial', 'failed', 'primary_available', 'timeout', 'elapsed_ms', 'peak_rss_bytes'), 0)
     summary['planned'] = job['limits']['samples']
@@ -268,13 +360,14 @@ def pdf_worker(job_id, *, prepare=False, shard=0, count=1):
     os.environ['MALPDF_LAB_ISOLATED'] = '1'
     for index, row in rows:
         if time.monotonic() - started > job['limits']['wall_seconds'] - 25:
+            jobs.write_pdf_halt(job, directory, shard=shard, index=index, reason='wall_limit')
             break
         target = outputs / f'{index:04d}.json'
         target_tmp = outputs / f'{index:04d}.json.tmp'
         if target.is_file():
             try:
                 existing = parse_json(side.bounded_read(target, 8 * 1024**2 + 1024))
-                if isinstance(existing, dict) and existing.get('status') in jobs.PDF_STATUSES:
+                if reusable_pdf_bundle(existing, row['pdf_sha256']):
                     summary['completed'] += 1
                     summary['bounded_complete'] += (existing['status'] == 'bounded_complete')
                     summary['observed' if existing['status'] in ('observed', 'bounded_complete') else 'partial' if existing['status'] == 'partial' else 'failed'] += 1
@@ -295,10 +388,25 @@ def pdf_worker(job_id, *, prepare=False, shard=0, count=1):
                 pass
         require_extraction_lab(True, repository_root=data_root)
         boundary = 'data/raw/cve_t4pdf' if job['kind'] == 'pdf-static-cve' else 'data/raw/cic_pdf'
+        deadline = started + job['limits']['wall_seconds'] - 25
+        _wait_for_memory_headroom(deadline)
         bundle = extract_pdf(data_root / row['pdf_relative_path'], boundary=data_root / boundary,
-            expected_sha256=row['pdf_sha256'], limits=limits, arlington_catalog=catalog)
+            expected_sha256=row['pdf_sha256'], limits=limits, arlington_catalog=catalog,
+            run_id=job['job_id'], entry_point='lab_runner.pdf_static_worker')
+        for delay in (1.0, 2.0, 4.0):
+            if not _is_prespawn_admission_failure(bundle) or time.monotonic() + delay >= deadline:
+                break
+            time.sleep(delay)
+            _wait_for_memory_headroom(deadline)
+            bundle = extract_pdf(data_root / row['pdf_relative_path'], boundary=data_root / boundary,
+                expected_sha256=row['pdf_sha256'], limits=limits, arlington_catalog=catalog,
+                run_id=job['job_id'], entry_point='lab_runner.pdf_static_worker')
         payload = jobs.encoded(bundle)
-        if len(payload) > 8 * 1024**2 or total + len(payload) > job['limits']['output_bytes']:
+        if len(payload) > 8 * 1024**2:
+            jobs.write_pdf_halt(job, directory, shard=shard, index=index, reason='bundle_size_limit')
+            break
+        if total + len(payload) > job['limits']['output_bytes']:
+            jobs.write_pdf_halt(job, directory, shard=shard, index=index, reason='output_limit')
             break
         with target_tmp.open('wb') as output:
             output.write(payload)
@@ -312,7 +420,8 @@ def pdf_worker(job_id, *, prepare=False, shard=0, count=1):
         worker = bundle['coverage_report']['worker']
         summary['timeout'] += bundle['status'] == 'timeout'
         summary['peak_rss_bytes'] = max(summary['peak_rss_bytes'], worker.get('peak_rss_bytes') or 0)
-        if worker.get('worker_cleanup_complete') is not True:
+        if worker.get('worker_cleanup_complete') is not True and not _is_prespawn_admission_failure(bundle):
+            jobs.write_pdf_halt(job, directory, shard=shard, index=index, reason='worker_cleanup_incomplete')
             break
     summary['elapsed_ms'] = int((time.monotonic() - started) * 1000)
     jobs.immutable(directory / f'pdf_summary.{shard}.json', {**summary, 'status_counts': statuses})
@@ -328,6 +437,17 @@ def historical(job_id):
     if not isinstance(limits, dict) or type(limits.get('samples')) is not int or not 1 <= limits['samples'] <= 4096:
         raise ValueError('job_mismatch')
     return directory, value
+
+
+def replay_report(job_id):
+    job = jobs.load_job(job_id)
+    if job['kind'] != 'pdf-diagnostic-replay':
+        raise ValueError('job_mismatch')
+    source = source_imports(job)
+    from malpdf.extraction.diagnostic_replay import load_replay
+    from malpdf.extraction.diagnostic_replay_report import finalize_report
+    lock, _ = load_replay(source, jobs.JOBS)
+    return finalize_report(job, jobs.job_directory(job_id), lock, jobs)
 
 
 def bundle_view(directory, index):
@@ -423,6 +543,10 @@ def console_run():
         print(json.dumps(cve_contract(), sort_keys=True))
     if job['kind'] == 'pdf-static-cic-full':
         print(json.dumps(cic_full_contract(), sort_keys=True))
+    if job['kind'] == 'pdf-diagnostic-replay':
+        source = source_imports(job)
+        from malpdf.extraction.diagnostic_replay import cohort_contract
+        print(json.dumps(cohort_contract(source), sort_keys=True))
     print(json.dumps({'limits': job['limits'], 'lab_output_directory': str(jobs.job_directory(job['job_id']))}, sort_keys=True))
     print('Xac nhan snapshot/recovery, tat clipboard/drag-drop/shared folders, khong credentials; NIC da ngat.')
     print('PDF/blob/ket qua chi luu tai LAB. Khong tu ket noi lai Windows.')
@@ -446,7 +570,7 @@ def console_run():
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=('status', 'preflight', 'run', 'report', 'compare', 'menu', 'receive', 'pdf-worker', 'pdf-prepare'))
+    parser.add_argument('command', choices=('status', 'preflight', 'run', 'report', 'compare', 'menu', 'receive', 'pdf-worker', 'pdf-prepare', 'replay-report'))
     parser.add_argument('job_id', nargs='?')
     parser.add_argument('other', nargs='?')
     parser.add_argument('--shard', type=int, default=0)
@@ -465,6 +589,8 @@ def main():
     try:
         if args.command in ('pdf-worker', 'pdf-prepare'):
             pdf_worker(args.job_id, prepare=args.command == 'pdf-prepare', shard=args.shard, count=args.of)
+        elif args.command == 'replay-report':
+            print(json.dumps(replay_report(args.job_id), sort_keys=True))
         elif args.command == 'receive':
             if sys.platform != 'linux':
                 raise ValueError('runtime_unavailable')

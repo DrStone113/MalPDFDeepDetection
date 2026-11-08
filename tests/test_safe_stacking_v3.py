@@ -68,7 +68,7 @@ def sources(tmp_path, monkeypatch):
 
 def test_escaped_name_count_is_an_actual_raw_measurement_not_encoding_proxy(tmp_path):
     content = b"%PDF-1.4\n/Java#53cript /#4A#53 /AA#00 /JS#ZZ /Encoding /ObjStm\n%%EOF\n"
-    assert count_escaped_pdf_names(content) == 3  # Each escaped name once, not each escaped byte.
+    assert count_escaped_pdf_names(content) == 3
     path = tmp_path / "benign.pdf"
     path.write_bytes(content)
     result = measure_pdf_obfuscation(path, boundary=tmp_path, expected_sha256=sha(path))
@@ -86,7 +86,7 @@ def test_only_three_training_constants_are_removed_and_all_other_values_survive(
     source = frame.copy()
     source["ObfuscationCount"] = np.arange(len(frame)) % 4
     source["contains_text"] = -1
-    source["RichMedia"] = 0  # Also constant, but never permitted to remove.
+    source["RichMedia"] = 0
     result = stacking.safe_feature_view(source, check_training_constants=True)
     assert tuple(result.columns) == stacking.V3_FEATURES and len(result.columns) == 40
     for column in RIT_FEATURES:
@@ -97,7 +97,7 @@ def test_only_three_training_constants_are_removed_and_all_other_values_survive(
     source.loc[0, "Acroform"] = 1
     with pytest.raises(ValueError, match="zero-variance"):
         stacking.safe_feature_view(source, check_training_constants=True)
-    # Fixed train-selected exclusion does not inspect validation variance.
+
     stacking.safe_feature_view(source)
     with pytest.raises(ValueError, match="real checksum-verified PDF"):
         stacking.safe_feature_view(source.drop(columns="ObfuscationCount"))
@@ -174,7 +174,7 @@ def test_complete_offline_pipeline_trains_all_five_models_and_locks_before_test(
     def fit(name, config, tx, ty, vx, vy, directory):
         assert not lock.exists()
         assert len(tx) < manifest.split.eq("train").sum()
-        # Every feature-equivalent pair stays wholly inside/outside a fitting fold.
+
         assert tx.drop(columns=["ObfuscationCount"]).value_counts().eq(2).all()
         fits.append((name, len(tx), len(vx)))
         return original_fit(name, config, tx, ty, vx, vy, directory)

@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "completed_utc": "2026-11-02T16:47:13.820042+00:00",
+  "job_id": "dfafd888f7a948a87ffac2e0b68ab702fd60dd1dc9bc630fa6cdbe4496e4a06f",
+  "audit_complete": true,
+  "audited_cases": 1452,
+  "focus_cases": 75,
+  "unresolved_root_causes": 74,
+  "extractor_modified": false,
+  "raw_pdf_processing": false,
+  "training_executed": false,
+  "python_files_parsed": 369,
+  "python_comments": 0,
+  "git_diff_check_passed": true,
+  "new_files_whitespace_valid": true,
+  "source_report": "reports/progress/pdf_graph_audit_2026-11-02.md",
+  "files": [
+    {
+      "name": "audit_report.md",
+      "sha256": "387c2f4f84d4a1676ec556a7d931cdc10d28b88f42827c3f7b4bce622362b428"
+    },
+    {
+      "name": "cases.jsonl",
+      "sha256": "3fb324dc6839d551bc73672de382c95efa020d623637145b754bcbbc7a58f736"
+    },
+    {
+      "name": "locked_methodology.json",
+      "sha256": "c4f7b5145ee19df57ede39836b84e4028ca081a9e4d03f9e9c3af23e9629313f"
+    },
+    {
+      "name": "manifest.json",
+      "sha256": "805d7c4f3c11030c47d39620ef085c9158e51116388022e10c4c093b83ada37f"
+    },
+    {
+      "name": "metrics.json",
+      "sha256": "b4598826d078e7c747816e9be874fed2d9a5cd4b24d1d2c4e07b042d5586f52a"
+    },
+    {
+      "name": "source_boundary_verification.json",
+      "sha256": "62cfd500378e22e98cb7d8c39caa49a250d815501b495cf30815171c531c22eb"
+    },
+    {
+      "name": "transfer_receipt.json",
+      "sha256": "6b2b408e38e3f9dcf0678be05d65a266e9420ee119773baf7ecea5d40a4ae186"
+    },
+    {
+      "name": "verification.json",
+      "sha256": "15ad49c44b45256fdf3f4f5cbba7dfb186d95bfc0a37eb2bb3d0c38e86df059e"
+    },
+    {
+      "name": "windows_full_delta.json",
+      "sha256": "40199ea55d63b776d025e89393261cadf42a3590a878debe06259517ccc91f0b"
+    },
+    {
+      "name": "windows_full_summary.json",
+      "sha256": "958da451dac0a59982db23eef5e41e7ddc2b5d83a1539cfb18a2c1ec509da442"
+    }
+  ]
+}

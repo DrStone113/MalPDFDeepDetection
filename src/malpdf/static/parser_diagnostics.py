@@ -29,8 +29,8 @@ class ParserDiagnostics:
             "scope": "fixed exception categories and pypdf open-time recovery notices; no raw messages or complete repair history"}
 
     def failure(self, error, stage):
-        # Only these fixed categories leave the process, even if a library
-        # exception includes an attacker-controlled string or object repr.
+
+
         message = str(error)[:512].lower()
         reason = next((code for phrase, code in _REASONS if phrase in message), "unclassified_parser_exception")
         event = {"stage": stage, "exception_type": exception_type(error), "reason": reason}

@@ -22,7 +22,8 @@ def profile_pdf(*args, **kwargs):
 
 
 def extract_pdf(path, *, boundary=None, profile="deep-static", limits=None, expected_sha256=None, raw_artifact_dir=None,
-                arlington_lock=None, repository_root=None,plugins=None,cancellation_event=None,arlington_catalog=None):
+                arlington_lock=None, repository_root=None,plugins=None,cancellation_event=None,arlington_catalog=None,
+                run_id=None, entry_point='extract_pdf', profile_observer=None):
     """Inspect inert bytes only; admission/input failures remain explicit.
 
     An explicitly configured Arlington reference may be loaded locally. No
@@ -70,18 +71,27 @@ def extract_pdf(path, *, boundary=None, profile="deep-static", limits=None, expe
         code = "input_checksum_mismatch" if str(error) == "input_checksum_mismatch" else "input_read_failed"
         result = {"status": "input_error", "errors": [code]}
     else:
+        from malpdf.static.worker_diagnostics import WorkerDiagnostics
+        diagnostic = WorkerDiagnostics(digest, run_id, entry_point)
+        diagnostic.phase('profile_boundary')
         try:
             result = profile_pdf(path, boundary=boundary, digest=digest, limits=limits,
+                run_id=diagnostic.data['run_id'], entry_point=entry_point,
                 analysis_version="v9", extraction_profile=profile, raw_artifact_dir=raw_artifact_dir,
                 **({'cancellation_event':cancellation_event} if cancellation_event is not None else {}),
                 **({'plugins':plugins} if plugins is not None else {}),
                 **({'arlington_catalog':catalog} if catalog is not None else {}))
         except (OSError, ValueError) as error:
             result = {"status": "worker_error", "errors": ["worker_admission_failed"],
-                      "worker_cleanup_complete": True}
+                      "worker_cleanup_complete": None}
+            diagnostic.exception(error)
+            diagnostic.preserve(result)
+            result['diagnostic'] = diagnostic.data
     if arlington is not None:
         result.setdefault('arlington_analysis',{**arlington,'document_sha256':digest})
     if plugins is not None:result.setdefault('plugin_registry',plugins.describe())
+    if profile_observer is not None:
+        profile_observer(result)
     provenance = {"python": platform.python_version(),
                   "packages": {name: importlib.metadata.version(name) for name in ("pypdf", "PyMuPDF", "pikepdf", "esprima")},
                   "seed": 42, "requested_limits": asdict(limits),

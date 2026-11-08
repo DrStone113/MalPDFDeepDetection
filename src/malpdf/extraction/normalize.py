@@ -457,4 +457,6 @@ def normalize_profile(profile, digest, extraction_profile, *, provenance=None):
             "provenance": provenance or {}}}
     if "worker_result_received" in profile:
         output["coverage_report"]["worker"]["worker_result_received"] = profile["worker_result_received"]
+    if 'diagnostic' in profile:
+        output['coverage_report']['worker']['diagnostic'] = profile['diagnostic']
     return validate_bundle(output)

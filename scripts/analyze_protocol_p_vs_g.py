@@ -9,7 +9,7 @@ from pathlib import Path
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 
-from malpdf.analysis.protocol_p_vs_g import (  # noqa: E402
+from malpdf.analysis.protocol_p_vs_g import (
     ProtocolComparisonError,
     run_protocol_p_vs_g_analysis,
 )

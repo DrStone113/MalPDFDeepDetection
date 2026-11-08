@@ -23,8 +23,8 @@ def schemas():
     """Fixed schemas avoid inference from all-null/empty/heterogeneous columns."""
     import pyarrow as pa
     string,integer,real,boolean=pa.string(),pa.int64(),pa.float64(),pa.bool_()
-    # Parquet's compliant three-level LIST uses the child name "element".
-    # Declare it explicitly so strict Arrow field metadata survives a round trip.
+
+
     strings=pa.list_(pa.field('element',string))
     common=[('export_id',string),('bundle_id',string),('bundle_index',integer),('sample_sha256',string),('record_index',integer)]
     fields={

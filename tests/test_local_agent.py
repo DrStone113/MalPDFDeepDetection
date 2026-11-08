@@ -34,7 +34,7 @@ signal.signal(signal.SIGTERM,stop)
 print('READY',flush=True)
 while True: signal.pause()
 '''
-    # Keep AF_UNIX paths short, independent of pytest's long basetemp path.
+
     with tempfile.TemporaryDirectory(prefix="malpdf_agent_") as directory:
         path = Path(directory) / "s"
         process = subprocess.Popen([sys.executable, "-I", "-c", script, str(path),

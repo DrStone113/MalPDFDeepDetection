@@ -97,7 +97,7 @@ def test_archive_is_bounded_in_memory_and_names_never_become_paths(monkeypatch):
     assert rows[0]['unsafe_path'] is True
     assert all(row['status'] == 'observed' for row in rows)
     assert {entry['kind'] for entry in result['records']} == {'zip', 'javascript_candidate', 'empty', 'unknown'}
-    assert result['status'] == 'partial'  # Unknown binary remains unsupported.
+    assert result['status'] == 'partial'
     assert result['decoded_bytes_used'] == 25
     script = next(analysis for analysis in result['analyses'].values() if 'ast' in analysis)
     assert script['ast']['node_count'] > 0 and script['execution_performed'] is False
@@ -107,7 +107,7 @@ def test_archive_is_bounded_in_memory_and_names_never_become_paths(monkeypatch):
 def test_deflate_crc_failure_retains_prefix_without_routing_it():
     data = bytearray(archive([('inert.js', b'var safeFixture = 1;')], compression=zipfile.ZIP_DEFLATED))
     central = data.index(b'PK\x01\x02')
-    # Matching but false CRC in both headers must fail after bounded decoding.
+
     struct.pack_into('<I', data, 14, 123)
     struct.pack_into('<I', data, central + 16, 123)
     worker = carver()
@@ -376,7 +376,7 @@ def _carving_checkpoint_then_stall(connection, path, boundary, digest, limits, *
     carving.update(status='partial', complete=False, active_artifact_id='unfinished-sibling')
     from malpdf.extraction.raw import inspect_raw_layout
     layout = inspect_raw_layout(data)
-    layout['sha256'] = digest  # Synthetic checkpoint injection, no actual path read.
+    layout['sha256'] = digest
     connection.send_bytes(json.dumps({'event': 'checkpoint', 'profile': {'status': 'complete', 'errors': [],
         'static': {'input': {'sha256': digest}, 'features': {'JS': 1}}, 'code': None,
         'raw_layout': layout, 'carving': carving}}).encode())
@@ -406,7 +406,7 @@ def test_repaired_child_provenance_is_inherited_in_the_export():
     root, child = pdf(), pdf(action=True)
     worker = carver(root=sha(root))
     identifier = admit(worker, child, parent_id='original:' + sha(root), repaired=True)
-    carving = worker.finish(0)  # Layout saved; child analysis is explicitly limited.
+    carving = worker.finish(0)
     assert carving['records'][0]['status'] == 'resource_limit'
     profile = {'status': 'partial', 'raw_layout': inspect_raw_layout(root), 'carving': carving}
     bundle = normalize_profile(profile, sha(root), 'deep-static')

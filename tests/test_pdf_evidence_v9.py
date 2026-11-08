@@ -174,7 +174,7 @@ def test_checkpoint_merge_is_additive_and_collision_refuses_overwrite():
 
 
 def executable_fixture():
-    # Format-identification bytes only: no instructions or executable body.
+
     content = bytearray(88)
     content[:2], content[60:64], content[64:68] = b"MZ", (64).to_bytes(4, "little"), b"PE\0\0"
     return bytes(content)

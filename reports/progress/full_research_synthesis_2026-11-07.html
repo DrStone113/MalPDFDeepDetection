@@ -1,0 +1,1415 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Báo cáo tổng hợp nghiên cứu MalPDFDeepDetection: RIT-2026, CIC-2022, rò rỉ dữ liệu, Bounded Extractor, Graph 23D, PDF-TransGraph v2, CDR và ONNX Production.">
+  <meta name="color-scheme" content="light">
+  <title>Tổng Hợp Nghiên Cứu Toàn Diện · MalPDFDeepDetection · 07/11/2026</title>
+  <style>
+    :root {
+      --paper: #f4f6f4;
+      --white: #ffffff;
+      --ink: #13252d;
+      --muted: #52656d;
+      --line: #d8e2df;
+      --teal: #006b5e;
+      --teal-dark: #004d43;
+      --teal-soft: #e7f5f1;
+      --amber: #8c580f;
+      --amber-soft: #fff4df;
+      --red: #a4332e;
+      --red-soft: #fdeceb;
+      --blue: #1f558f;
+      --blue-soft: #ebf2fb;
+      --purple: #5c3c8e;
+      --purple-soft: #f3ecfb;
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 84px; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+    a { color: var(--teal); text-underline-offset: 3px; }
+    a:hover { text-decoration-thickness: 2px; }
+    button { font: inherit; cursor: pointer; }
+    button:disabled { opacity: .4; cursor: not-allowed; }
+    :focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+    .skip { position: absolute; top: -100px; left: 20px; z-index: 30; padding: 10px 16px; background: #fff; border-radius: 8px; }
+    .skip:focus { top: 10px; }
+
+    /* Top bar */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+    }
+    .topbar-inner {
+      max-width: 1360px;
+      margin: auto;
+      padding: 11px 24px;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; }
+    .brand-mark {
+      display: inline-grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--ink);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .actions { display: flex; gap: 8px; align-items: center; }
+    .btn {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 6px 13px;
+      background: #fff;
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 600;
+      transition: all .15s ease;
+    }
+    .btn.primary { border-color: var(--teal); background: var(--teal); color: #fff; }
+    .btn:hover:not(:disabled) { box-shadow: 0 2px 6px rgba(19, 37, 45, 0.12); transform: translateY(-1px); }
+
+    /* Layout */
+    .shell {
+      max-width: 1360px;
+      margin: auto;
+      display: grid;
+      grid-template-columns: 240px minmax(0, 1fr);
+      gap: 28px;
+      padding: 28px 24px 80px;
+    }
+    .sidebar { align-self: start; position: sticky; top: 82px; max-height: calc(100vh - 100px); overflow-y: auto; padding-right: 6px; }
+    .eyebrow { margin: 0 0 10px; text-transform: uppercase; letter-spacing: .12em; font-size: 11px; font-weight: 800; color: var(--muted); }
+    .sidebar nav { display: grid; gap: 3px; }
+    .sidebar a {
+      color: var(--muted);
+      text-decoration: none;
+      padding: 7px 10px;
+      border-radius: 7px;
+      font-size: 12.8px;
+      line-height: 1.35;
+      font-weight: 500;
+      transition: background .12s, color .12s;
+    }
+    .sidebar a:hover { background: #e5ede9; color: var(--teal); font-weight: 600; }
+    .sidebar .footnote { padding: 14px 10px 0; border-top: 1px solid var(--line); margin-top: 18px; font-size: 11.8px; color: var(--muted); }
+
+    main { min-width: 0; }
+    .slide { scroll-margin-top: 84px; margin-bottom: 24px; }
+
+    /* Hero */
+    .hero {
+      position: relative;
+      background: linear-gradient(135deg, #10242b 0%, #163640 55%, #084c44 100%);
+      color: #fff;
+      padding: 38px 40px;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 280px;
+      height: 280px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 50%;
+      right: -80px;
+      top: -80px;
+      pointer-events: none;
+    }
+    .hero .eyebrow { color: #9ed4cb; }
+    .hero h1 {
+      margin: 8px 0 14px;
+      font-size: clamp(26px, 3.2vw, 38px);
+      line-height: 1.22;
+      letter-spacing: -.025em;
+      max-width: 900px;
+    }
+    .hero p { max-width: 900px; color: #dce7e8; margin: 0 0 12px; }
+    .hero .lede { font-size: 16.5px; line-height: 1.55; }
+    .hero-bullets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 18px 0 6px; }
+    .hero-bullet { background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 12px 14px; }
+    .hero-bullet strong { display: block; font-size: 13.5px; color: #9de6d7; margin-bottom: 4px; }
+    .hero-bullet span { font-size: 12.2px; color: #cddcdf; line-height: 1.45; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px 18px; color: #b7d1d3; font-size: 12.5px; margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.1); }
+    .hero .badge { background: rgba(255, 255, 255, 0.12); color: #ffe2a8; border: 1px solid rgba(255, 226, 168, 0.35); }
+
+    /* Stats */
+    .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+    .stat { padding: 18px 20px; background: var(--white); border: 1px solid var(--line); border-radius: 13px; }
+    .stat strong { display: block; font-size: 28px; line-height: 1.15; letter-spacing: -.03em; color: var(--teal); }
+    .stat .label { display: block; margin-top: 6px; font-size: 13px; font-weight: 700; color: var(--ink); }
+    .stat p { margin: 4px 0 0; font-size: 12px; color: var(--muted); line-height: 1.45; }
+
+    /* Sections */
+    .section-card { background: var(--white); border: 1px solid var(--line); border-radius: var(--radius); padding: 28px 30px; }
+    .section-head { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 20px; border-bottom: 1px solid var(--line); padding-bottom: 15px; }
+    .number {
+      flex: 0 0 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      background: var(--teal-soft);
+      color: var(--teal);
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    h2 { font-size: 23px; line-height: 1.3; margin: 0 0 5px; letter-spacing: -.02em; }
+    h3 { font-size: 16.5px; margin: 18px 0 8px; line-height: 1.38; color: var(--ink); }
+    h4 { font-size: 14px; margin: 12px 0 6px; color: var(--ink); font-weight: 700; }
+    p { margin: 0 0 12px; }
+    .section-head p { margin: 0; font-size: 14px; color: var(--muted); }
+    .muted, .footnote { color: var(--muted); }
+    .footnote { font-size: 12px; line-height: 1.55; margin: 10px 0 0; }
+
+    /* Badges & Callouts */
+    .badge { display: inline-block; border-radius: 5px; padding: 2px 8px; font-size: 11px; font-weight: 800; line-height: 1.5; }
+    .badge.green { background: var(--teal-soft); color: var(--teal); }
+    .badge.amber { background: var(--amber-soft); color: var(--amber); }
+    .badge.red { background: var(--red-soft); color: var(--red); }
+    .badge.blue { background: var(--blue-soft); color: var(--blue); }
+    .badge.purple { background: var(--purple-soft); color: var(--purple); }
+
+    .takeaway {
+      display: flex;
+      gap: 10px;
+      align-items: baseline;
+      background: #f0f6f4;
+      border: 1px solid #c9ded7;
+      border-left: 4px solid var(--teal);
+      border-radius: 0 8px 8px 0;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+      font-size: 13.8px;
+    }
+    .takeaway strong { color: var(--teal-dark); white-space: nowrap; }
+
+    .callout {
+      border-left: 4px solid var(--teal);
+      background: var(--teal-soft);
+      border-radius: 0 9px 9px 0;
+      padding: 13px 16px;
+      margin: 15px 0;
+      font-size: 13.8px;
+    }
+    .callout.amber { border-color: var(--amber); background: var(--amber-soft); }
+    .callout.red { border-color: var(--red); background: var(--red-soft); }
+    .callout.blue { border-color: var(--blue); background: var(--blue-soft); }
+    .callout p:last-child { margin: 0; }
+
+    /* Grids & Panels */
+    .grid-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 12px; }
+    .grid-three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+    .panel { border: 1px solid var(--line); border-radius: 11px; padding: 16px 18px; min-width: 0; background: #fff; }
+    .panel.soft { background: #f8faf9; }
+    .panel.teal-border { border-top: 3.5px solid var(--teal); }
+    .panel.amber-border { border-top: 3.5px solid var(--amber); }
+    .panel.red-border { border-top: 3.5px solid var(--red); }
+    .panel.blue-border { border-top: 3.5px solid var(--blue); }
+    .panel h3 { margin-top: 0; }
+    .panel p:last-child, .panel ul:last-child, .panel ol:last-child { margin-bottom: 0; }
+
+    /* Tables */
+    .table-wrap { overflow-x: auto; margin: 14px 0; border: 1px solid var(--line); border-radius: 11px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; background: #fff; }
+    caption { text-align: left; font-weight: 700; color: var(--ink); padding: 10px 14px 7px; font-size: 13px; background: #f7faf9; border-bottom: 1px solid var(--line); }
+    th, td { padding: 9px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    tbody tr:last-child th, tbody tr:last-child td { border-bottom: none; }
+    thead th { background: #f0f5f3; font-size: 12px; font-weight: 700; color: var(--ink); }
+    tbody th { font-weight: 600; color: var(--ink); }
+    tr.highlight { background: #eef7f3; }
+    tr.warn-row { background: #fff8ec; }
+    td.numeric, th.numeric { text-align: right; white-space: nowrap; }
+    .good { color: var(--teal); font-weight: 700; }
+    .caution { color: var(--amber); font-weight: 700; }
+    .bad { color: var(--red); font-weight: 700; }
+
+    /* Flow blocks */
+    .flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 14px 0; }
+    .flow-item { background: #f7faf8; border: 1px solid var(--line); border-radius: 9px; padding: 13px; }
+    .flow-item strong { display: block; margin-bottom: 4px; font-size: 13px; color: var(--teal); }
+    .flow-item span { font-size: 12px; color: var(--muted); display: block; line-height: 1.45; }
+
+    ul, ol { padding-left: 19px; margin: 6px 0 10px; }
+    li { margin: 4px 0; font-size: 13.8px; }
+    li strong { color: var(--ink); }
+    details { margin-top: 14px; border: 1px solid var(--line); border-radius: 9px; padding: 11px 15px; background: #fafbfa; }
+    summary { cursor: pointer; font-weight: 700; font-size: 13.5px; color: var(--teal); }
+    details[open] summary { margin-bottom: 10px; padding-bottom: 7px; border-bottom: 1px solid var(--line); }
+    code { font-family: "SF Mono", Consolas, Menlo, monospace; font-size: .88em; background: #edf3f0; padding: 1px 5px; border-radius: 4px; }
+    footer { font-size: 12.5px; color: var(--muted); padding: 16px 4px 0; }
+
+    /* Presenter Mode */
+    [hidden] { display: none !important; }
+    .presenter-controls { display: flex; align-items: center; gap: 8px; }
+    #slide-counter { font-size: 12px; color: var(--muted); min-width: 48px; text-align: center; font-weight: 600; }
+    body.presenting .shell { display: block; max-width: 1260px; padding-top: 20px; }
+    body.presenting .sidebar, body.presenting footer { display: none; }
+    body.presenting .slide { display: none; }
+    body.presenting .slide.active { display: block; }
+    body.presenting .section-card { padding: 32px; min-height: calc(100vh - 120px); }
+    body.presenting h2 { font-size: 26px; }
+
+    @media (max-width: 1080px) {
+      .shell { grid-template-columns: 190px minmax(0, 1fr); gap: 18px; padding: 20px 16px 50px; }
+      .stats, .hero-bullets { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .flow, .grid-three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 780px) {
+      .shell { display: block; padding: 16px 12px 40px; }
+      .sidebar { position: static; max-height: none; margin-bottom: 16px; }
+      .sidebar nav { display: flex; gap: 4px; flex-wrap: wrap; }
+      .sidebar a { background: #e7eeea; font-size: 11.5px; padding: 5px 8px; }
+      .grid-two, .grid-three, .flow, .stats, .hero-bullets { grid-template-columns: 1fr; }
+    }
+    @page { size: A4; margin: 12mm; }
+    @media print {
+      body { background: #fff; font-size: 9pt; line-height: 1.4; }
+      .topbar, .sidebar, .skip, .presenter-controls { display: none !important; }
+      .shell, body.presenting .shell { display: block; padding: 0; max-width: none; }
+      .slide, body.presenting .slide { display: block !important; margin: 0 0 6mm; }
+      .hero { background: #fff !important; color: #13252d !important; border: 1px solid #9bb0a9; padding: 5mm; }
+      .hero p, .hero .eyebrow, .hero .meta { color: #344a52 !important; }
+      .section-card { padding: 4mm; border-radius: 6px; }
+      details { open: true; }
+    }
+  </style>
+</head>
+<body>
+  <a href="#report" class="skip">Chuyển đến nội dung chính</a>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">MP</span>
+        <span>MalPDFDeepDetection · Hồ Sơ Tổng Hợp Nghiên Cứu (08/2026 – 11/2026)</span>
+      </div>
+      <div class="presenter-controls" id="presenter-controls" hidden>
+        <button class="btn" id="previous-slide" type="button" aria-label="Slide trước">← Trước</button>
+        <span id="slide-counter" aria-live="polite"></span>
+        <button class="btn" id="next-slide" type="button" aria-label="Slide tiếp theo">Sau →</button>
+      </div>
+      <div class="actions" id="actions" hidden>
+        <button class="btn" id="expand-all" type="button">Mở rộng chi tiết</button>
+        <button class="btn" id="print-report" type="button">In / Xuất PDF</button>
+        <button class="btn primary" id="presentation-toggle" type="button" aria-pressed="false">Trình chiếu</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="shell">
+    <aside class="sidebar" aria-label="Mục lục báo cáo">
+      <p class="eyebrow">Hành trình nghiên cứu</p>
+      <nav>
+        <a href="#overview">00 · Bức tranh lớn &amp; Thành tựu</a>
+        <a href="#original-papers">01 · Mổ xẻ 2 bài báo chuẩn (Ưu/Nhược)</a>
+        <a href="#baseline-repro">02 · Baseline &amp; Rò rỉ bản sao (Protocol G)</a>
+        <a href="#data-expansion">03 · Dữ liệu thực &amp; 4 đợt GPU Kaggle</a>
+        <a href="#domain-shift">04 · Cú sốc chuyển miền &amp; Bẫy StartXref</a>
+        <a href="#extractor-evolution">05 · Tiến hóa Bộ trích xuất (v1 → 23D)</a>
+        <a href="#extractor-comparison">06 · So sánh Extractor vs Bài báo gốc</a>
+        <a href="#data-labeling">07 · Gắn nhãn tự động 8 hành vi MITRE</a>
+        <a href="#transgraph-v2">08 · Đột phá PDF-TransGraph v2 (23D)</a>
+        <a href="#adversarial-cdr">09 · Chống đối kháng, XAI &amp; Tẩy độc CDR</a>
+        <a href="#onnx-production">10 · ONNX Production &amp; Đánh giá REMnux</a>
+        <a href="#bug-registry">11 · Sổ tay 9 lỗi cốt lõi &amp; Bất biến</a>
+      </nav>
+      <div class="footnote">
+        <strong>Dữ liệu thực nghiệm: 07/11/2026</strong><br>
+        Tổng hợp từ 45.751 mẫu, kiểm toán mã băm SHA-256 và đánh giá độc lập trên REMnux LAB.
+      </div>
+    </aside>
+
+    <main id="report">
+      <!-- 00. OVERVIEW -->
+      <section class="slide" id="overview" aria-labelledby="overview-title">
+        <div class="hero">
+          <p class="eyebrow">Báo cáo nghiên cứu khoa học &amp; Kỹ thuật thực chiến</p>
+          <h1 id="overview-title">Phát Hiện &amp; Tẩy Độc Tệp PDF Độc Hại Bằng Học Sâu Đa Phương Thức Đồ Thị Dị Thể</h1>
+          <p class="lede">
+            Tổng kết trọn vẹn chu trình R&amp;D của dự án <strong>MalPDFDeepDetection</strong>: giải mã các lỗ hổng rò rỉ dữ liệu trong các bài báo chuẩn quốc tế, thiết kế bộ trích xuất tĩnh chịu tải <strong>Bounded Extractor</strong>, huấn luyện mạng đồ thị dị thể <strong>PDF-TransGraph v2 (23D)</strong>, phẫu thuật <strong>tẩy độc nhị phân tại chỗ (In-Place CDR)</strong> và tối ưu hóa <strong>ONNX Runtime Production</strong> đạt tốc độ suy luận vài mili-giây.
+          </p>
+
+          <div class="hero-bullets">
+            <div class="hero-bullet">
+              <strong>1. Kiểm toán &amp; Khử rò rỉ dữ liệu</strong>
+              <span>Phát hiện rò rỉ bản sao đặc trưng 36,8% (RIT) và 85,5% (CIC); thiết lập chuẩn kiểm định không rò rỉ Protocol G.</span>
+            </div>
+            <div class="hero-bullet">
+              <strong>2. Đột phá Trích xuất Đồ thị 23D</strong>
+              <span>Khắc phục 100% ca sập parser (0 worker crash trên 1.452 mẫu); biểu diễn cấu trúc tệp PDF bằng đồ thị dị thể 23 chiều.</span>
+            </div>
+            <div class="hero-bullet">
+              <strong>3. Phòng thủ &amp; Tẩy độc thực chiến</strong>
+              <span>Miễn nhiễm trước tấn công đối kháng (98,12% Recall); tẩy độc giữ nguyên 99,8% dung lượng và 100% văn bản hiển thị.</span>
+            </div>
+          </div>
+
+          <div class="meta">
+            <span><strong>45.751+</strong> mẫu PDF &amp; bản ghi đã kiểm toán</span>
+            <span><strong>1.452/1.452</strong> mẫu CIC trích xuất an toàn</span>
+            <span><strong>97,92% ± 0,59%</strong> Recall trên Protocol G</span>
+            <span><strong>3,46 ms/mẫu</strong> suy luận kép ONNX trên REMnux</span>
+          </div>
+        </div>
+
+        <div class="stats">
+          <article class="stat">
+            <strong>97,92%</strong>
+            <span class="label">Recall bắt trúng mã độc (v2 23D)</span>
+            <p>Đạt đỉnh <strong>98,75% – 99,38%</strong> dưới chuẩn chia nhóm Protocol G không dùng cột ăn gian <code>StartXref</code>.</p>
+          </article>
+          <article class="stat">
+            <strong>98,12%</strong>
+            <span class="label">Recall trước tấn công đối kháng</span>
+            <p>Đứng vững trước đòn bơm 50 đối tượng rác + làm rối mã (trong khi Random Forest của bài báo gốc sụt xuống 86,25%).</p>
+          </article>
+          <article class="stat">
+            <strong>92,67%</strong>
+            <span class="label">Macro ROC-AUC Đa nhãn (Test)</span>
+            <p>Tự động nhận diện 8 hành vi tấn công MITRE ATT&amp;CK và đặt tên họ mã độc theo chuẩn phần mềm diệt virus quốc tế.</p>
+          </article>
+          <article class="stat">
+            <strong>2,72× – 4,06×</strong>
+            <span class="label">Tăng tốc bằng ONNX Runtime</span>
+            <p>Khớp <strong>100% (291/291)</strong> phán quyết so với PyTorch; chạy độc lập trên CPU mà không cần cài đặt <code>torch</code>.</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- 01. ORIGINAL PAPERS -->
+      <section class="slide section-card" id="original-papers" aria-labelledby="papers-title">
+        <div class="section-head">
+          <span class="number">01</span>
+          <div>
+            <h2 id="papers-title">Mổ xẻ 2 bài báo gốc: Ưu điểm, Hạn chế &amp; Lỗ hổng rò rỉ dữ liệu</h2>
+            <p>Kiểm toán độc lập hai bộ dữ liệu chuẩn đại diện cho hai thế hệ bài toán phát hiện mã độc PDF.</p>
+          </div>
+        </div>
+
+        <div class="takeaway">
+          <strong>Điểm mấu chốt:</strong> Con số chính xác 99,4% – 99,8% ở các bài báo gốc bị thổi phồng do trùng lặp dữ liệu giữa tập học và tập thi (36,8% ở RIT, 85,5% ở CIC) và học vẹt vị trí byte <code>StartXref</code>.
+        </div>
+
+        <div class="grid-two">
+          <article class="panel blue-border">
+            <span class="badge blue">BÀI BÁO 1 · DỮ LIỆU ĐẠI TRÀ (WILD MALWARE)</span>
+            <h3>RIT-PDFMal-2026 (IEEE Access 2026)</h3>
+            <p><strong>Quy mô:</strong> 24.337 dòng (13.235 lành / 11.102 độc) với 41 đặc trưng số học từ công cụ <code>PDFMalExtract v0.1</code>.</p>
+            <h4>Ưu điểm:</h4>
+            <ul>
+              <li>Bộ mẫu hiện đại lấy từ VirusTotal, vượt trội so với các tập cũ từ năm 2010 (Contagio).</li>
+              <li>Ghi nhận cờ lỗi có giá trị bảo mật: <code>contains_text = -1</code> (tệp hỏng cấu trúc), <code>pages = 0</code> (973/986 mẫu 0 trang là mã độc).</li>
+            </ul>
+            <h4>Hạn chế nghiêm trọng phát hiện qua kiểm toán:</h4>
+            <ul>
+              <li><strong>36,8% vector bị trùng lặp (8.966 dòng dư thừa):</strong> Thực chất chỉ có 15.371 vector độc nhất. Chia ngẫu nhiên 75/25 khiến vector giống hệt nhau nằm ở cả Train và Test.</li>
+              <li><strong>Mất cột mã băm SHA-256:</strong> File CSV phát hành bị xóa mất cột hash và không có file PDF gốc để kiểm chứng.</li>
+              <li><strong>3 cột luôn bằng 0 do lỗi code tác giả:</strong> Cột <code>Acroform</code>, <code>Colors</code>, <code>BaseEncoding</code> bằng 0 trên cả 24.337 dòng do gõ sai chuỗi <code>b'j/BaseEncoding'</code> và sai hoa/thường.</li>
+              <li><strong>Độ đo nhập nhằng:</strong> Bài báo dùng trung bình Macro (Macro-average) nhưng không chú thích rõ.</li>
+            </ul>
+          </article>
+
+          <article class="panel amber-border">
+            <span class="badge amber">BÀI BÁO 2 · MÃ ĐỘC NÉ TRÁNH (EVASIVE MALWARE)</span>
+            <h3>CIC-Evasive-PDFMal2022 (ICISSP 2022)</h3>
+            <p><strong>Quy mô:</strong> 10.025 bản ghi (5.557 độc / 4.468 lành) với 31–37 đặc trưng tĩnh từ <code>pdfid.py</code> và <code>peepdf</code>.</p>
+            <h4>Ưu điểm:</h4>
+            <ul>
+              <li>Tập trung vào mã độc né tránh: che giấu thẻ <code>/JS</code> và <code>/OpenAction</code> lộ liễu để lừa các bộ lọc tĩnh.</li>
+              <li>Có kèm file PDF nhị phân thực tế để phân tích cấu trúc sâu.</li>
+            </ul>
+            <h4>Hạn chế nghiêm trọng phát hiện qua kiểm toán:</h4>
+            <ul>
+              <li><strong>Ảo giác quy mô — Trùng lặp tới 85,5%:</strong> Toàn bộ 10.025 bản ghi thực chất chỉ xoay quanh <strong>1.452 nhóm vector đặc trưng độc nhất</strong> (800 độc, 652 lành)!</li>
+              <li><strong>Lỗi sập công cụ trích xuất ghi đè vào dữ liệu:</strong> <code>pdfid.py</code> bị crash trên file dị dạng, khiến chuỗi traceback Python (<code>'(most'</code>, <code>'pdfid.py'</code>, <code>'bytes[endHeader]'</code>) bị ghi thẳng vào các cột số.</li>
+              <li><strong>Bẫy học vẹt <code>StartXref</code>:</strong> Cột vị trí byte chỉ mục chiếm tới <strong>35,9% độ quan trọng</strong> của mô hình cây — học kích thước tệp chứ không học hành vi độc hại.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <!-- 02. BASELINE REPRO -->
+      <section class="slide section-card" id="baseline-repro" aria-labelledby="baseline-title">
+        <div class="section-head">
+          <span class="number">02</span>
+          <div>
+            <h2 id="baseline-title">Dựng lại Baseline &amp; Đo lường mức độ rò rỉ dữ liệu (Protocol P vs Protocol G)</h2>
+            <p>Tách bạch rạch ròi: Protocol P (chia ngẫu nhiên theo bài báo gốc) và Protocol G (khử hoàn toàn trùng lặp vector).</p>
+          </div>
+        </div>
+
+        <div class="flow">
+          <div class="flow-item">
+            <strong>1. Protocol P (75/25)</strong>
+            <span>Chia ngẫu nhiên theo dòng đúng như bài báo gốc (18.252 Train / 6.085 Test).</span>
+          </div>
+          <div class="flow-item">
+            <strong>2. Chuẩn hóa độ đo</strong>
+            <span>Xác nhận bài báo dùng Macro-average; tách riêng F1-Mã độc và F1-Macro.</span>
+          </div>
+          <div class="flow-item">
+            <strong>3. Protocol G (60/20/20)</strong>
+            <span>Gom thành 15.371 nhóm độc nhất; chặn đứng rò rỉ vector trùng giữa Train/Val/Test.</span>
+          </div>
+          <div class="flow-item">
+            <strong>4. Đa hạt giống &amp; XAI</strong>
+            <span>Kiểm định 5 seeds (42..46), chạy TreeSHAP, FT-Transformer và định tuyến bất định.</span>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <caption>Đối chiếu hiệu năng trên RIT-PDFMal-2026: Bài báo gốc vs Protocol P (Có rò rỉ) vs Protocol G (Khử rò rỉ · Seed 42)</caption>
+            <thead>
+              <tr>
+                <th scope="col">Mô hình</th>
+                <th scope="col" class="numeric">Bài báo gốc (F1)</th>
+                <th scope="col" class="numeric">Protocol P (Macro F1)</th>
+                <th scope="col" class="numeric">Protocol G (Accuracy)</th>
+                <th scope="col" class="numeric">Protocol G (Recall Mã độc)</th>
+                <th scope="col" class="numeric">Protocol G (F1 Mã độc)</th>
+                <th scope="col" class="numeric">Độ sụt giảm khi khử rò rỉ (G − P)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">Logistic Regression</th>
+                <td class="numeric">90,70%</td>
+                <td class="numeric">93,27%</td>
+                <td class="numeric">90,32%</td>
+                <td class="numeric">83,20%</td>
+                <td class="numeric">88,69%</td>
+                <td class="numeric bad">−3,78%</td>
+              </tr>
+              <tr>
+                <th scope="row">Decision Tree</th>
+                <td class="numeric">98,86%</td>
+                <td class="numeric">98,51%</td>
+                <td class="numeric">96,59%</td>
+                <td class="numeric">94,14%</td>
+                <td class="numeric">96,18%</td>
+                <td class="numeric bad">−2,19%</td>
+              </tr>
+              <tr>
+                <th scope="row">Random Forest</th>
+                <td class="numeric">99,40%</td>
+                <td class="numeric">99,11%</td>
+                <td class="numeric">97,47%</td>
+                <td class="numeric">94,73%</td>
+                <td class="numeric">97,16%</td>
+                <td class="numeric bad">−1,84%</td>
+              </tr>
+              <tr class="highlight">
+                <th scope="row">XGBoost (Cổ điển tốt nhất)</th>
+                <td class="numeric">99,49%</td>
+                <td class="numeric">99,25%</td>
+                <td class="numeric">97,70%</td>
+                <td class="numeric">95,41%</td>
+                <td class="numeric good">97,42%</td>
+                <td class="numeric bad">−1,76% (Bỏ sót tăng 37 → 102 mẫu)</td>
+              </tr>
+              <tr class="highlight">
+                <th scope="row">FT-Transformer (Mạng nơ-ron bảng)</th>
+                <td class="numeric">—</td>
+                <td class="numeric">—</td>
+                <td class="numeric good">97,95%</td>
+                <td class="numeric good">96,40%</td>
+                <td class="numeric good">97,72%</td>
+                <td class="numeric good">+0,29% vs XGB (chỉ sót 80 mẫu)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="grid-two">
+          <div class="panel soft">
+            <h4>Bằng chứng thực nghiệm về rò rỉ bản sao:</h4>
+            <ul>
+              <li>Khi khử trùng lặp (từ P sang G), <strong>mọi mô hình đều sụt F1 từ 1,76% đến 3,81%</strong> trên cả 5 hạt giống.</li>
+              <li>Số lượng mẫu mã độc bị bỏ lọt (False Negatives) của XGBoost <strong>tăng gấp 2,75 lần</strong> (từ 37 lên 102 mẫu).</li>
+            </ul>
+          </div>
+          <div class="panel soft">
+            <h4>Giải thích TreeSHAP &amp; Định tuyến Chọn lọc:</h4>
+            <ul>
+              <li><strong>102 mẫu mã độc bị sót</strong> đều có điểm chung: không chứa từ khóa <code>/JavaScript</code> lộ liễu → mô hình bảng bị mù khi gặp mã độc không dùng JS bề mặt.</li>
+              <li><strong>Định tuyến bất định:</strong> Khi chuyển 10% mẫu mà mô hình phân vân nhất sang kiểm tra sâu, 90% còn lại đạt <strong>F1 = 99,71%</strong> và hốt trọn 90% lượng mã độc bị sót.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- 03. DATA EXPANSION -->
+      <section class="slide section-card" id="data-expansion" aria-labelledby="data-expansion-title">
+        <div class="section-head">
+          <span class="number">03</span>
+          <div>
+            <h2 id="data-expansion-title">Thu thập PDF nhị phân thực tế &amp; 4 đợt huấn luyện trên GPU Kaggle</h2>
+            <p>Khắc phục việc RIT-2026 chỉ có CSV mà không có file PDF gốc bằng cách thu thập hơn 21.400 tệp PDF thực tế.</p>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <caption>4 nguồn dữ liệu nghiên cứu (Kiểm toán mã băm SHA-256, chia theo Protocol G seed 42)</caption>
+            <thead>
+              <tr>
+                <th scope="col">Tên tập dữ liệu</th>
+                <th scope="col">Đặc điểm dữ liệu</th>
+                <th scope="col" class="numeric">Tổng mẫu</th>
+                <th scope="col" class="numeric">Lành (0)</th>
+                <th scope="col" class="numeric">Độc (1)</th>
+                <th scope="col">Vai trò trong dự án</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">1. RIT-PDFMal-2026</th>
+                <td>Bảng CSV 41 đặc trưng (15.371 nhóm độc nhất)</td>
+                <td class="numeric">24.337</td>
+                <td class="numeric">13.235</td>
+                <td class="numeric">11.102</td>
+                <td>Dựng baseline cổ điển, TreeSHAP, kiểm toán chuyển miền.</td>
+              </tr>
+              <tr>
+                <th scope="row">2. Public PDF Sources (Zenodo + CVE)</th>
+                <td><strong>File PDF nhị phân gốc</strong> từ 2 kho Zenodo + 5 file CVE-T4PDF</td>
+                <td class="numeric">19.958</td>
+                <td class="numeric">8.986</td>
+                <td class="numeric">10.972</td>
+                <td>Trích xuất ma trận chuyển tiếp byte Markov 256×256 &amp; ResNet-18 Vision.</td>
+              </tr>
+              <tr class="highlight">
+                <th scope="row">3. CIC-Evasive-PDFMal2022</th>
+                <td><strong>File PDF nhị phân gốc</strong> (toàn bộ 1.452 nhóm độc nhất)</td>
+                <td class="numeric">1.452</td>
+                <td class="numeric">652</td>
+                <td class="numeric">800</td>
+                <td>Trọng tâm huấn luyện đồ thị PDF-TransGraph v2 &amp; Đa nhãn 8 hành vi.</td>
+              </tr>
+              <tr>
+                <th scope="row">4. Safe Corpus &amp; Fixtures</th>
+                <td>Mẫu PDF thực tế &amp; mô phỏng an toàn (<code>app.alert</code>)</td>
+                <td class="numeric">54</td>
+                <td class="numeric">27</td>
+                <td class="numeric">27</td>
+                <td>Kiểm thử hồi quy parser, CI/CD và kiểm tra toàn vẹn tẩy độc CDR.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Kết quả 4 đợt huấn luyện trên GPU Kaggle (21.414 ma trận Markov 256×256):</h3>
+        <div class="grid-two">
+          <div class="panel teal-border">
+            <span class="badge green">ĐỢT 1 &amp; 2 · HUẤN LUYỆN MA TRẬN BYTE MARKOV</span>
+            <h4>Đạt 99,98% trên dữ liệu đại trà, nhưng sụp đổ khi gặp CIC-Evasive</h4>
+            <ul>
+              <li><strong>Đợt 1 (11.931 file Zenodo):</strong> Vision ResNet-18 và FT-Transformer đạt <strong>Accuracy = 99,98%</strong> trên 4.050 file Test cùng nguồn.</li>
+              <li><strong>Đợt 2 (Đem quét thử trên CIC):</strong> Độ chính xác <strong>sụt xuống 54,64%</strong> vì mô hình đoán bừa 288/291 file là mã độc (báo nhầm 130/131 file lành của CIC thành độc!).</li>
+            </ul>
+          </div>
+          <div class="panel amber-border">
+            <span class="badge amber">ĐỢT 3 &amp; 4 · CÂN BẰNG TRỌNG SỐ &amp; ĐẶC TRƯNG BYTE</span>
+            <h4>Chứng minh: Thống kê byte phẳng không thể giải quyết mã độc né tránh</h4>
+            <ul>
+              <li><strong>Đợt 3 (Cân bằng trọng số 50 lượt):</strong> Tinh chỉnh tỷ lệ đóng góp giữa các tập dữ liệu nhưng Accuracy trên CIC vẫn giẫm chân ở <code>53,13%</code>.</li>
+              <li><strong>Đợt 4 (Nối thêm 33 đặc trưng phân phối byte):</strong> Accuracy trên CIC tiếp tục giảm xuống <code>52,08%</code> → Cần biểu diễn bằng <strong>cấu trúc đồ thị đối tượng và cú pháp mã</strong>.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- 04. DOMAIN SHIFT -->
+      <section class="slide section-card" id="domain-shift" aria-labelledby="domain-shift-title">
+        <div class="section-head">
+          <span class="number">04</span>
+          <div>
+            <h2 id="domain-shift-title">Cú sốc chuyển miền (Domain Shift) &amp; Bẫy học vẹt StartXref</h2>
+            <p>Lý giải nguyên nhân gốc rễ khiến mô hình đạt 99,98% trên dữ liệu thường lại thất bại trước mã độc né tránh.</p>
+          </div>
+        </div>
+
+        <div class="grid-three">
+          <article class="panel red-border">
+            <h3>1. Hiện tượng Đảo ngược Đặc trưng</h3>
+            <p>Khoảng cách phân phối giữa hai tập <strong>MMD = 0,2098</strong>:</p>
+            <ul>
+              <li>Trong <strong>RIT-2026</strong>: Mã độc chứa nhiều <code>/JS</code> (75,9% độc vs 5,8% lành) và <code>/OpenAction</code> (64,2% độc vs 16,7% lành).</li>
+              <li>Trong <strong>CIC-Evasive</strong>: Mã độc cố tình xóa/giấu thẻ <code>/JS</code>, trong khi các biểu mẫu văn phòng lành tính lại chứa JavaScript và OpenAction hợp lệ!</li>
+            </ul>
+          </article>
+
+          <article class="panel amber-border">
+            <h3>2. Bẫy Sụp đổ Né tránh (RIT → CIC)</h3>
+            <p>Mô hình Random Forest đạt 98,44% trên RIT khi đem quét thẳng sang CIC:</p>
+            <ul>
+              <li>Accuracy sụt hơn 10% xuống còn <strong>88,32%</strong>.</li>
+              <li><strong>Malware Recall sụt từ 96,76% xuống 81,88%</strong> — bỏ lọt tới <strong>18,12%</strong> lượng mã độc né tránh thế hệ mới.</li>
+            </ul>
+          </article>
+
+          <article class="panel teal-border">
+            <h3>3. Phá vỡ bẫy StartXref &amp; Deep CORAL</h3>
+            <p>Khi đổi chiều kiểm tra (<code>CIC → 24.337 mẫu RIT</code>):</p>
+            <ul>
+              <li>Phát hiện cột <code>StartXref</code> là lối tắt học vẹt chiếm <strong>35,9% trọng số</strong> trên CIC.</li>
+              <li><strong>Loại bỏ StartXref</strong>, thay bằng các tỷ lệ mật độ vật lý chuẩn hóa + Deep CORAL: chỉ học từ 870 mẫu CIC nhưng nhận diện đúng <strong>93,70% (RF) và 93,38% (Deep CORAL)</strong> trên toàn bộ 24.337 mẫu RIT!</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <!-- 05. EXTRACTOR EVOLUTION -->
+      <section class="slide section-card" id="extractor-evolution" aria-labelledby="extractor-title">
+        <div class="section-head">
+          <span class="number">05</span>
+          <div>
+            <h2 id="extractor-title">Tiến hóa Bộ trích xuất tĩnh (Extractor): Qua 6 thế hệ tới chuẩn 23D</h2>
+            <p>Tái thiết kế toàn bộ tầng trích xuất từ mức đọc byte đến đồ thị dị thể chịu tải cao.</p>
+          </div>
+        </div>
+
+        <div class="takeaway">
+          <strong>Đột phá cốt lõi:</strong> Thay vì để worker bị sập (SIGKILL/OOM) khi gặp bom giải nén, hệ thống áp đặt giới hạn phần cứng nghiêm ngặt và biến chính hành vi gây tràn thành 6 cờ phát hiện né tránh tường minh.
+        </div>
+
+        <div class="attempts">
+          <article class="panel">
+            <div class="attempt-heading">
+              <span class="badge blue">THẾ HỆ 1</span>
+              <h3>Đóng kín hợp đồng 41 đặc trưng RIT (Từ 28/38 FAIL lên 38/38 PASS)</h3>
+            </div>
+            <p>Khắc phục lỗi lệch công thức toán của <code>pypdf</code>: chuẩn hóa <code>pdfsize = int(bytes / 1000)</code>, <code>contains_text = 1</code> khi ký tự > 50, bảo toàn cờ lỗi <code>pdf_ver = 5.0</code> và đếm trùng lặp byte đúng như mã nguồn gốc của bài báo RIT-2026.</p>
+          </article>
+
+          <article class="panel">
+            <div class="attempt-heading">
+              <span class="badge amber">THẾ HỆ 2</span>
+              <h3>Cứu dữ liệu trên 64 file CIC hỏng nặng (Dual-Parser + Checkpoint)</h3>
+            </div>
+            <p>Giải mã tên hex <code>#xx</code>, tự phục hồi bảng chỉ mục <code>startxref</code> bị xóa trong RAM cho 14/14 file, bóc tách JS trong biểu mẫu động XFA và chạy song song <code>pypdf</code> + <code>MuPDF</code> để giảm tỷ lệ lỗi parser từ <strong>28,1% xuống 4,7%</strong>.</p>
+          </article>
+
+          <article class="panel">
+            <div class="attempt-heading">
+              <span class="badge purple">THẾ HỆ 3</span>
+              <h3>Hợp đồng 3-Store &amp; Ba trụ cột phân tích chuyên sâu</h3>
+            </div>
+            <p>Kiểm định bằng JSON Schema 2020-12 xuất ra 6 bảng Parquet. Tích hợp 3 trụ cột: (1) Phân tích khung phân đoạn JBIG2 bắt zero-click exploit; (2) Phát hiện chữ tàng hình <code>Tr 3</code> trong luồng trang; (3) Kiểm định cú pháp chuẩn ISO/Arlington.</p>
+          </article>
+
+          <article class="panel">
+            <div class="attempt-heading">
+              <span class="badge green">THẾ HỆ 4</span>
+              <h3>Chuẩn trích xuất hữu hạn (Bounded Extractor): Chống Bom giải nén &amp; DoS</h3>
+            </div>
+            <p>Áp trần phần cứng cứng cho mỗi worker (1 GiB RAM, trần giải nén 1 MiB/layer, tỷ lệ nở tối đa 100×). Biến sự kiện chạm trần thành <strong>6 cờ phát hiện né tránh</strong> (<code>evasive_timeout_anomaly</code>, <code>flag_decompression_ratio_exceeded</code>, <code>flag_spec_violation_flood</code>...). Chạy hoàn tất <strong>1.452/1.452 mẫu CIC đạt 0 ca sập worker</strong>!</p>
+          </article>
+
+          <article class="panel teal-border">
+            <div class="attempt-heading">
+              <span class="badge green">THẾ HỆ 5 &amp; 6</span>
+              <h3>Graph Projection v2 (23D) &amp; Quét trực tiếp trên RAM (Instant Ingestion)</h3>
+            </div>
+            <p><strong>Loại bỏ 93,17% nút vô danh rác:</strong> Ưu tiên giữ các nút bảo mật nhạy cảm (<code>action</code>, <code>script</code>, <code>stream</code>) → tỷ lệ mất nút bảo mật giảm từ <strong>27,55% về đúng 0,00%</strong>. Rút gọn cạnh xuyên container nối liền mạch Catalog → Action. Vector nút 23 chiều đơn ánh (không gán bừa null thành 0) tích hợp 16 bước bước đi ngẫu nhiên <strong>RWSE</strong>.</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- 06. EXTRACTOR COMPARISON -->
+      <section class="slide section-card" id="extractor-comparison" aria-labelledby="extractor-comp-title">
+        <div class="section-head">
+          <span class="number">06</span>
+          <div>
+            <h2 id="extractor-comp-title">So sánh trực diện: Extractor của Hệ thống vs Extractor bài báo gốc</h2>
+            <p>Đối chiếu toàn diện về cơ chế, biểu diễn cấu trúc, khả năng chịu lỗi và những đánh đổi kỹ thuật thực tế.</p>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <caption>Đối sánh kỹ thuật giữa các công cụ trích xuất</caption>
+            <thead>
+              <tr>
+                <th scope="col">Tiêu chí</th>
+                <th scope="col">CIC-2022 (pdfid / peepdf)</th>
+                <th scope="col">RIT-2026 (PDFMalExtract)</th>
+                <th scope="col">Extractor của Hệ thống (Bounded 23D)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">Cơ chế cốt lõi</th>
+                <td>Quét chuỗi ký tự bề mặt thô.</td>
+                <td>Đếm byte thô + gọi API PyMuPDF đơn giản.</td>
+                <td><strong>Đa tầng:</strong> Quét token + Dual-parser + Giải nén luồng + Cây AST JS + Đồ thị 23D HGT.</td>
+              </tr>
+              <tr>
+                <th scope="row">Biểu diễn cấu trúc</th>
+                <td>Túi từ khóa phẳng (31–37 cột). Mất liên kết đối tượng.</td>
+                <td>Túi từ khóa phẳng (41 cột). Không biết cha–con.</td>
+                <td><strong>Đồ thị có hướng dị thể 9 loại nút, 8 loại cạnh</strong> + 16 bước RWSE + 32 token AST tuần tự.</td>
+              </tr>
+              <tr>
+                <th scope="row">Khi gặp file dị dạng / lỗi</th>
+                <td class="bad">Vỡ cú pháp, ghi đè chuỗi traceback Python vào cột số.</td>
+                <td class="caution">Gán -1; phiên bản mới scrub làm mất chứng cứ JS.</td>
+                <td class="good"><strong>Tự phục hồi startxref trong RAM</strong>, cô lập lỗi theo pha, 0% crash trên 1.452 mẫu.</td>
+              </tr>
+              <tr>
+                <th scope="row">Phòng chống Bom giải nén</th>
+                <td class="bad">Không giới hạn; dễ bị treo máy (DoS).</td>
+                <td class="bad">Phụ thuộc vòng lặp đọc văn bản; dễ treo.</td>
+                <td class="good"><strong>Trần cứng 1 GiB / 100× nở nén</strong>; chuyển hóa sự cố thành 6 cờ phát hiện né tránh.</td>
+              </tr>
+              <tr>
+                <th scope="row">Phân tích nội dung ẩn</th>
+                <td>Chỉ đếm tên thẻ <code>/JS</code>, <code>/XFA</code>.</td>
+                <td>Chỉ đếm chuỗi từ khóa xuất hiện.</td>
+                <td>Giải mã JS rối (eval/unescape), bóc tách XML XFA, kiểm tra JBIG2, phát hiện chữ tàng hình <code>Tr 3</code>.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="grid-two">
+          <div class="panel teal-border">
+            <h4>Ưu điểm vượt trội:</h4>
+            <ul>
+              <li><strong>Chống đòn bơm đối tượng rác:</strong> Cờ <code>is_orphan</code> và 16 bước RWSE từ <code>/Catalog</code> giúp phát hiện và cô lập ngay các đối tượng mồ côi kẻ tấn công chèn vào.</li>
+              <li><strong>Nhìn xuyên nén và mã hóa hex:</strong> Bắt trúng kịch bản ngay cả khi tin tặc dùng <code>/#4a#53</code> hoặc giấu trong <code>/ObjStm</code>.</li>
+              <li><strong>Không học vẹt:</strong> Khử hoàn toàn sự phụ thuộc vào vị trí byte <code>StartXref</code>.</li>
+            </ul>
+          </div>
+          <div class="panel amber-border">
+            <h4>Đánh đổi kỹ thuật (Trade-offs):</h4>
+            <ul>
+              <li><strong>Độ trễ trích xuất cao hơn quét chuỗi đơn thuần:</strong> Mất 60 ms – 120 ms/mẫu (so với vài ms của pdfid) để dựng đồ thị, giải nén và phân tích AST.</li>
+              <li><strong>File khóa mật khẩu mạnh:</strong> Với file bị khóa mật khẩu hoặc dùng mã hóa độc quyền, nhánh AST không lấy được token và hệ thống phải dựa vào nhánh Đồ thị khung bao ngoài + Bảng.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- 07. DATA LABELING -->
+      <section class="slide section-card" id="data-labeling" aria-labelledby="labeling-title">
+        <div class="section-head">
+          <span class="number">07</span>
+          <div>
+            <h2 id="labeling-title">Cơ chế Gắn nhãn: Nhãn Học thuật Nghiêm ngặt &amp; Tự động Gắn 8 Nhãn MITRE ATT&amp;CK</h2>
+            <p>Hệ thống tự động quét và phân loại chi tiết các kỹ thuật tấn công mà không cần người dùng chỉ định nhãn trước.</p>
+          </div>
+        </div>
+
+        <div class="grid-two">
+          <div class="panel blue-border">
+            <h4>1. Gắn nhãn khi Huấn luyện (Ground Truth)</h4>
+            <ul>
+              <li><strong>Không dùng nhãn giả (No Pseudo-Labeling):</strong> Giữ nguyên 100% nhãn gốc đã kiểm toán; 4 file Contagio chưa rõ nhãn được tách riêng.</li>
+              <li><strong>Ghép nhãn 8 hành vi độc hại:</strong> Kết hợp nhãn độc hại gốc với bằng chứng cấu trúc sâu (AST, khóa kích hoạt, luồng nhúng). File lành tính luôn có vector nhãn <code>[0, ..., 0]</code> để tránh báo nhầm file doanh nghiệp có dùng JS hợp lệ.</li>
+              <li><strong>Kỹ thuật trộn vỏ tài liệu (Carrier Mixup):</strong> Ghép vỏ file lành với ruột file độc để ngăn mô hình đoán mò dựa vào kích thước hay số trang.</li>
+            </ul>
+          </div>
+          <div class="panel teal-border">
+            <h4>2. Cơ chế Tự động Sinh nhãn khi Quét Thực tế</h4>
+            <ul>
+              <li>Chạy đồng thời 2 mạng nơ-ron (<code>PDFTransGraph</code> + <code>PDFMultiLabelThreatNet</code>) kết hợp rà soát chữ ký <strong>7 lỗ hổng CVE kinh điển</strong> (CVE-2008-2992, CVE-2009-0927...).</li>
+              <li>Tự động đặt tên theo chuẩn phần mềm diệt virus quốc tế: ví dụ <strong><code>Exploit.PDF.CVE-2008-2992</code></strong> hoặc <strong><code>Trojan.PDFExp.AutoAction.ObfuscatedJS</code></strong>.</li>
+              <li>Nếu cấu trúc dị thường nhưng giấu thẻ: gán <strong><code>HEUR:Trojan.PDF.StructuralAnomaly</code></strong>; nếu an toàn: gán <strong><code>Clean.PDF.Verified</code></strong>.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <caption>Từ điển 8 Nhãn hành vi độc hại của PDFMultiLabelThreatNet và kết quả kiểm định trên REMnux LAB</caption>
+            <thead>
+              <tr>
+                <th scope="col">Mã nhãn</th>
+                <th scope="col">Tên hiển thị Tiếng Việt</th>
+                <th scope="col">MITRE ATT&amp;CK</th>
+                <th scope="col">Dấu hiệu nhận diện</th>
+                <th scope="col" class="numeric">Ngưỡng</th>
+                <th scope="col" class="numeric">ROC-AUC (Test)</th>
+                <th scope="col" class="numeric">F1 (Test)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row"><code>js_script_exec</code></th>
+                <td>Chạy mã JavaScript ngầm</td>
+                <td><code>T1059.007</code></td>
+                <td>Nhúng kịch bản qua <code>/JS</code>, <code>/JavaScript</code> trong cây đối tượng.</td>
+                <td class="numeric">0,30</td>
+                <td class="numeric good">96,97%</td>
+                <td class="numeric">91,45%</td>
+              </tr>
+              <tr>
+                <th scope="row"><code>auto_open_trigger</code></th>
+                <td>Tự động kích hoạt khi mở tệp</td>
+                <td><code>T1204.002</code></td>
+                <td>Cài khóa tự chạy <code>/OpenAction</code> hoặc <code>/AA</code> ngay khi mở file.</td>
+                <td class="numeric">0,68</td>
+                <td class="numeric good">94,81%</td>
+                <td class="numeric">78,26%</td>
+              </tr>
+              <tr>
+                <th scope="row"><code>obfuscated_payload</code></th>
+                <td>Làm rối mã để che giấu hành vi</td>
+                <td><code>T1027</code></td>
+                <td>Dùng <code>eval</code>, <code>unescape</code>, <code>String.fromCharCode</code>, mã hóa <code>#xx</code>.</td>
+                <td class="numeric">0,35</td>
+                <td class="numeric good">95,88%</td>
+                <td class="numeric">90,98%</td>
+              </tr>
+              <tr>
+                <th scope="row"><code>buffer_loop_staging</code></th>
+                <td>Vòng lặp tự nạp dữ liệu bộ nhớ</td>
+                <td><code>T1203</code></td>
+                <td>Vòng lặp <code>For/While</code> trong AST ghép chuỗi nạp bộ nhớ (Heap Spray).</td>
+                <td class="numeric">0,30</td>
+                <td class="numeric good">99,83%</td>
+                <td class="numeric">80,00%</td>
+              </tr>
+              <tr>
+                <th scope="row"><code>active_form_or_exploit</code></th>
+                <td>Lợi dụng biểu mẫu / lỗi trình đọc</td>
+                <td><code>T1203</code></td>
+                <td>Khai thác <code>/XFA</code>, <code>/JBIG2Decode</code>, <code>util.printf</code>, <code>Collab</code>.</td>
+                <td class="numeric">0,30</td>
+                <td class="numeric good">99,23%</td>
+                <td class="numeric">90,20%</td>
+              </tr>
+              <tr>
+                <th scope="row"><code>embedded_dropper_or_launch</code></th>
+                <td>Giấu tệp lạ hoặc tự gọi lệnh máy</td>
+                <td><code>T1027.009</code></td>
+                <td>Đính kèm file ẩn <code>/EmbeddedFile</code> hoặc gọi lệnh hệ điều hành <code>/Launch</code>.</td>
+                <td class="numeric">0,47</td>
+                <td class="numeric good">94,67%</td>
+                <td class="numeric">74,75%</td>
+              </tr>
+              <tr>
+                <th scope="row"><code>suspicious_uri_redirect</code></th>
+                <td>Chuyển hướng đường dẫn web lạ</td>
+                <td><code>T1566.002</code></td>
+                <td>Mở liên kết web <code>/URI</code> hoặc gọi <code>app.launchURL</code>.</td>
+                <td class="numeric">0,69</td>
+                <td class="numeric caution">65,96%</td>
+                <td class="numeric">17,65%</td>
+              </tr>
+              <tr>
+                <th scope="row"><code>structural_parser_evasion</code></th>
+                <td>Biến dạng cấu trúc để né kiểm tra</td>
+                <td><code>T1027.006</code></td>
+                <td>Xung đột parser, vi phạm chuẩn Arlington, luồng nén cụt, nén chồng <code>/ObjStm</code>.</td>
+                <td class="numeric">0,38</td>
+                <td class="numeric good">94,02%</td>
+                <td class="numeric">84,46%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 08. TRANSGRAPH V2 -->
+      <section class="slide section-card" id="transgraph-v2" aria-labelledby="transgraph-title">
+        <div class="section-head">
+          <span class="number">08</span>
+          <div>
+            <h2 id="transgraph-title">Kiến trúc Đột phá PDF-TransGraph v2 (23D) &amp; Kết quả Thực nghiệm</h2>
+            <p>Mạng nơ-ron đa phương thức 808.323 tham số (~3,2 MB) hợp nhất cả 3 chiều thông tin của tệp PDF.</p>
+          </div>
+        </div>
+
+        <div class="flow">
+          <div class="flow-item">
+            <strong>Nhánh 1 · Hetero HGT (23D)</strong>
+            <span>Đồ thị dị thể 9 loại nút, 8 loại cạnh học quan hệ cha–con và cấu trúc tệp.</span>
+          </div>
+          <div class="flow-item">
+            <strong>Nhánh 2 · RoPE AST Transformer</strong>
+            <span>Bộ mã hóa chuỗi 32 token cú pháp JavaScript với nhúng vị trí quay Rotary (RoPE).</span>
+          </div>
+          <div class="flow-item">
+            <strong>Nhánh 3 · Tabular ResNet (38D)</strong>
+            <span>Học các tỷ lệ mật độ vật lý, độ lệch entropy và 6 cờ phát hiện né tránh.</span>
+          </div>
+          <div class="flow-item">
+            <strong>Hợp nhất · Cross-Modal Attention</strong>
+            <span>Dùng vector Tabular truy vấn sang Key/Value của Đồ thị và AST kèm Focal Loss.</span>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <caption>Thực nghiệm Cắt bỏ Thành phần (Ablation Study) trên tập Test CIC (N = 291, Seed 42)</caption>
+            <thead>
+              <tr>
+                <th scope="col">Cấu hình kiến trúc</th>
+                <th scope="col" class="numeric">Bản v1 (19D) Acc</th>
+                <th scope="col" class="numeric">Bản v2 (23D) Acc</th>
+                <th scope="col" class="numeric">Bản v1 (19D) Recall</th>
+                <th scope="col" class="numeric">Bản v2 (23D) Recall</th>
+                <th scope="col" class="numeric">v2 F1</th>
+                <th scope="col" class="numeric">v2 MCC</th>
+                <th scope="col" class="numeric">v2 ROC-AUC</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">1. Tabular ResNet (Chỉ dùng bảng)</th>
+                <td class="numeric">93,47%</td>
+                <td class="numeric">95,88%</td>
+                <td class="numeric">91,25%</td>
+                <td class="numeric">97,50%</td>
+                <td class="numeric">0,9630</td>
+                <td class="numeric">0,9168</td>
+                <td class="numeric">0,9858</td>
+              </tr>
+              <tr>
+                <th scope="row">2. AST Transformer (Chỉ dùng AST)</th>
+                <td class="numeric">54,98%</td>
+                <td class="numeric">54,98%</td>
+                <td class="numeric">100,00%</td>
+                <td class="numeric">100,00%</td>
+                <td class="numeric">0,7095</td>
+                <td class="numeric">0,0000</td>
+                <td class="numeric">0,4810</td>
+              </tr>
+              <tr>
+                <th scope="row">3. Tabular + AST (Không đồ thị)</th>
+                <td class="numeric">94,85%</td>
+                <td class="numeric">95,88%</td>
+                <td class="numeric">95,00%</td>
+                <td class="numeric">96,88%</td>
+                <td class="numeric">0,9627</td>
+                <td class="numeric">0,9167</td>
+                <td class="numeric">0,9848</td>
+              </tr>
+              <tr class="highlight">
+                <th scope="row">4. PDF-TransGraph v2 Full (Seed 42)</th>
+                <td class="numeric">93,81%</td>
+                <td class="numeric good">95,88% <small>(+2,07%)</small></td>
+                <td class="numeric">93,13%</td>
+                <td class="numeric good">97,50% <small>(+4,37%)</small></td>
+                <td class="numeric good">0,9630</td>
+                <td class="numeric good">0,9168</td>
+                <td class="numeric good">0,9860</td>
+              </tr>
+              <tr class="highlight">
+                <th scope="row">5. PDF-TransGraph v2 Full (TB 3 Seeds)</th>
+                <td class="numeric">95,07% ± 0,90%</td>
+                <td class="numeric good">95,99% ± 0,16%</td>
+                <td class="numeric">95,83% ± 2,06%</td>
+                <td class="numeric good">97,92% ± 0,59%</td>
+                <td class="numeric good">0,9641</td>
+                <td class="numeric good">0,9193</td>
+                <td class="numeric good">0,9823</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout">
+          <strong>3 bước tiến vượt bậc của bản v2 (23D) so với v1 (19D):</strong>
+          <br>1. <strong>Giảm 63,6% số mã độc bị bỏ lọt (False Negatives):</strong> từ 11 mẫu sót ở bản v1 xuống chỉ còn <strong>4/160 mẫu (2,5%)</strong> ở bản v2 (và đạt 0 mã độc lọt lưới trên các file trích xuất hoàn chỉnh).
+          <br>2. <strong>Độ ổn định hội tụ tăng 5,6 lần:</strong> độ lệch chuẩn giữa các hạt giống giảm từ <code>±0,90%</code> xuống chỉ còn <code>±0,16%</code>.
+          <br>3. <strong>Xử lý hoàn hảo tài liệu rỗng đồ thị:</strong> tự động chuyển sang nhánh dự phòng <code>tab_ast</code>, đoán đúng 100% tài liệu thiếu đồ thị.
+        </div>
+      </section>
+
+      <!-- 09. ADVERSARIAL & CDR -->
+      <section class="slide section-card" id="adversarial-cdr" aria-labelledby="adv-cdr-title">
+        <div class="section-head">
+          <span class="number">09</span>
+          <div>
+            <h2 id="adv-cdr-title">Phòng thủ Đối kháng, Giải thích XAI &amp; Tẩy độc Nhị phân Tại chỗ (CDR)</h2>
+            <p>Khả năng miễn nhiễm trước đòn tấn công biến dạng cấu trúc và phẫu thuật loại bỏ mã độc giữ nguyên nội dung.</p>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <caption>Thử nghiệm Chịu tải Đối kháng (Adversarial Stress Benchmark) trên 291 mẫu Test CIC (160 mẫu mã độc)</caption>
+            <thead>
+              <tr>
+                <th scope="col">Mô hình phòng thủ</th>
+                <th scope="col" class="numeric">Mẫu sạch (Clean Recall)</th>
+                <th scope="col" class="numeric">Bơm 10–50 đối tượng rác</th>
+                <th scope="col" class="numeric">Làm rối token AST</th>
+                <th scope="col" class="numeric">Tấn công Kết hợp (Recall)</th>
+                <th scope="col" class="numeric">Mã độc lọt lưới (FN)</th>
+                <th scope="col" class="numeric">Độ suy giảm</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">Random Forest (Bài báo gốc)</th>
+                <td class="numeric">99,38%</td>
+                <td class="numeric bad">86,25%</td>
+                <td class="numeric">99,38%</td>
+                <td class="numeric bad">86,25%</td>
+                <td class="numeric bad">22 / 160 mẫu</td>
+                <td class="numeric bad">−13,13%</td>
+              </tr>
+              <tr>
+                <th scope="row">PDF-TransGraph (Huấn luyện thường)</th>
+                <td class="numeric">97,50%</td>
+                <td class="numeric caution">91,25%</td>
+                <td class="numeric">96,88%</td>
+                <td class="numeric caution">85,00%</td>
+                <td class="numeric caution">24 / 160 mẫu</td>
+                <td class="numeric caution">−12,50%</td>
+              </tr>
+              <tr class="highlight">
+                <th scope="row">PDF-TransGraph (Huấn luyện Đối kháng + Consistency Loss)</th>
+                <td class="numeric good">100,00%</td>
+                <td class="numeric good">98,12%</td>
+                <td class="numeric good">100,00%</td>
+                <td class="numeric good">98,12%</td>
+                <td class="numeric good">Chỉ 3 / 160 mẫu</td>
+                <td class="numeric good">−1,88% (Miễn nhiễm)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="grid-two">
+          <div class="panel blue-border">
+            <h4>Giải thích AI Đa phương thức (Multimodal XAI)</h4>
+            <ul>
+              <li><strong>Độ nhạy che khuất theo lô (Batched Occlusion):</strong> Trong 1 lượt chạy batch duy nhất, tính chính xác tỷ lệ đóng góp của Đồ thị HGT (%), Chuỗi AST (%) và Bảng (%).</li>
+              <li><strong>4 chỉ số kiểm định XAI:</strong> Đo lường độ trung thực (Fidelity), độ sụt khi che nút quan trọng (Comprehensiveness), độ tập trung (Sparsity) và độ bền vững trước nhiễu.</li>
+            </ul>
+          </div>
+
+          <div class="panel teal-border">
+            <h4>Phẫu thuật Tẩy độc Nhị phân Tại chỗ (In-Place CDR)</h4>
+            <p>Mở trực tiếp luồng byte bằng <code>pikepdf</code>, phẫu thuật tại chỗ: chỉ cắt đúng khóa kích hoạt độc hại (<code>/OpenAction</code>, <code>/AA</code>, <code>/Names/JavaScript</code>, <code>/Launch</code>) và giữ nguyên 100% <code>/Pages</code>, <code>/Contents</code>, <code>/Resources</code>.</p>
+            <ul>
+              <li><strong>Khẳng định 3 bất biến sau tẩy độc:</strong>
+                <br>• Dung lượng giữ lại <strong>99,84%</strong> (324.431 / 324.957 bytes).
+                <br>• Số trang giữ nguyên <strong>2 / 2 trang</strong>.
+                <br>• Văn bản trích xuất khớp <strong>100% (9.839 / 9.839 ký tự)</strong>, trong khi điểm nguy hiểm giảm từ <strong>92,14% xuống 6,10% (An toàn)</strong>.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- 10. ONNX PRODUCTION -->
+      <section class="slide section-card" id="onnx-production" aria-labelledby="onnx-title">
+        <div class="section-head">
+          <span class="number">10</span>
+          <div>
+            <h2 id="onnx-production-title">Tối ưu Production bằng ONNX Runtime, Triển khai Hugging Face &amp; Đánh giá REMnux</h2>
+            <p>Đóng gói toàn bộ pipeline chạy siêu nhẹ trên CPU, không phụ thuộc PyTorch, tốc độ vài mili-giây.</p>
+          </div>
+        </div>
+
+        <div class="grid-two">
+          <div class="panel teal-border">
+            <h4>Đột phá Chuyển đổi ONNX (Không cần PyTorch)</h4>
+            <ul>
+              <li>Thiết kế lại các lớp truyền thông điệp đồ thị bằng phép nhân ma trận mặt nạ lô <code>torch.matmul(mask_f, x)</code> tương thích 100% với ONNX Opset 17.</li>
+              <li>Chạy độc lập chỉ với <code>onnxruntime</code> + <code>numpy</code> + <code>pikepdf</code> + <code>PyMuPDF</code>; giảm kích thước container đi hàng gigabyte.</li>
+              <li>Tự động gắn decorator <code>@spaces.GPU</code> tương thích phần cứng ZeroGPU lẫn CPU Basic trên Hugging Face Spaces.</li>
+            </ul>
+          </div>
+
+          <div class="panel blue-border">
+            <h4>Kiểm định Thực chiến trên REMnux LAB (Linux VM)</h4>
+            <div class="table-wrap">
+              <table>
+                <caption>So sánh PyTorch CPU vs ONNX Runtime CPU trên 582 mẫu CIC (291 Test + 291 Val)</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Chỉ số đo lường</th>
+                    <th scope="col" class="numeric">PyTorch CPU</th>
+                    <th scope="col" class="numeric">ONNX Runtime CPU</th>
+                    <th scope="col" class="numeric">Kết quả</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Độ khớp phán quyết trên Test</th>
+                    <td class="numeric">291 mẫu</td>
+                    <td class="numeric">291 mẫu</td>
+                    <td class="numeric good">Khớp 100% (0 lệch)</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Sai lệch xác suất tối đa</th>
+                    <td class="numeric">Chuẩn</td>
+                    <td class="numeric">2,50 × 10⁻⁷</td>
+                    <td class="numeric good">Đồng nhất tuyệt đối</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Độ trễ TransGraph (REMnux)</th>
+                    <td class="numeric">7,11 ms</td>
+                    <td class="numeric good">2,21 ms</td>
+                    <td class="numeric good">Nhanh gấp 3,22×</td>
+                  </tr>
+                  <tr class="highlight">
+                    <th scope="row">Độ trễ kép 2 mô hình (Windows)</th>
+                    <td class="numeric">14,24 ms</td>
+                    <td class="numeric good">3,51 ms</td>
+                    <td class="numeric good">Nhanh gấp 4,06×</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-two">
+          <div class="panel purple-border">
+            <h4>4 Cách Triển khai Hệ thống Production:</h4>
+            <ol>
+              <li><strong>Hugging Face Space (Gradio + FastAPI Router):</strong> Chạy song song giao diện web nội bộ và Gradio trên cổng 7860, hỗ trợ ZeroGPU.</li>
+              <li><strong>Hugging Face Space (Docker SDK CPU):</strong> Nhẹ hơn 3 GB, khởi động tức thì, tối ưu nhất cho ONNX Runtime.</li>
+              <li><strong>Máy chủ nội bộ (Windows DEV / Linux On-Premise):</strong> Chạy lệnh <code>uvicorn web_service:app --app-dir production --port 7860</code>.</li>
+              <li><strong>Docker Container độc lập:</strong> Đóng gói qua <code>Dockerfile</code> dựa trên <code>python:3.11-slim</code> + <code>libqpdf</code>.</li>
+            </ol>
+          </div>
+
+          <div class="panel amber-border">
+            <h4>Quy trình Đẩy Code lên Hugging Face Space:</h4>
+            <ol>
+              <li>Đứng tại thư mục gốc: <code>cd C:\Project\MalPDFDeepDetection</code></li>
+              <li>Đóng gói tự động: <code>.\.venv\Scripts\python.exe scripts\deploy\prepare_hf_space.py --target-dir ..\malpdfdetection</code></li>
+              <li>Đến thư mục Space và đẩy lên:
+                <br><code>cd ..\malpdfdetection</code>
+                <br><code>git add -A &amp;&amp; git commit -m "Deploy ONNX production" &amp;&amp; git push origin main</code>
+              </li>
+            </ol>
+          </div>
+        </div>
+
+        <details>
+          <summary>Bảng tra cứu nhanh 5 lỗi triển khai Hugging Face và cách xử lý (Nhấn để mở)</summary>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Hiện tượng lỗi</th>
+                  <th scope="col">Nguyên nhân</th>
+                  <th scope="col">Cách xử lý triệt để</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>No @spaces.GPU function detected</code></td>
+                  <td>Space ZeroGPU yêu cầu hàm gắn decorator <code>@spaces.GPU</code> ở cấp module.</td>
+                  <td>Gắn <code>@spaces.GPU</code> vào hàm kiểm tra phần cứng trong <code>production/app.py</code> trước khi launch Gradio.</td>
+                </tr>
+                <tr>
+                  <td><code>.\.venv\Scripts\python.exe: command not found</code></td>
+                  <td>PowerShell đang đứng ở thư mục <code>malpdfdetection</code> (không có <code>.venv</code>).</td>
+                  <td><code>cd C:\Project\MalPDFDeepDetection</code> rồi mới gọi <code>.\.venv\Scripts\python.exe</code>.</td>
+                </tr>
+                <tr>
+                  <td>Lỗi 404 cho <code>/favicon.ico</code> và <code>/env-config.js</code></td>
+                  <td>Khung iframe Space tự động tìm biểu tượng và biến môi trường.</td>
+                  <td>Thêm 2 route trả về SVG và <code>window.__ENV__ = {};</code> trong <code>production/web_service.py</code>.</td>
+                </tr>
+                <tr>
+                  <td>Lỗi từ chối push file <code>.onnx</code></td>
+                  <td>Hugging Face yêu cầu quản lý file nhị phân lớn bằng Git LFS.</td>
+                  <td>Kịch bản <code>prepare_hf_space.py</code> tự động tạo cấu hình <code>.gitattributes</code> lọc LFS.</td>
+                </tr>
+                <tr>
+                  <td>Lo ngại an toàn khi quét PDF mã độc trên Web</td>
+                  <td>Sợ máy chủ vô tình thực thi mã độc trong file tải lên.</td>
+                  <td>Web chỉ đọc byte nhị phân trong RAM (<code>io.BytesIO</code>), phân tích tĩnh, tuyệt đối không kích hoạt mã độc.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </details>
+      </section>
+
+      <!-- 11. BUG REGISTRY -->
+      <section class="slide section-card" id="bug-registry" aria-labelledby="bug-title">
+        <div class="section-head">
+          <span class="number">11</span>
+          <div>
+            <h2 id="bug-title">Sổ tay 9 Lỗi Kỹ thuật Cốt lõi (Bug Registry) &amp; Hệ thống Bất biến</h2>
+            <p>Triết lý chất lượng: Chữa tận gốc nguyên nhân (5 Whys), ghi nhận bất biến và khóa chặt bằng test tự động.</p>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <caption>Danh mục 9 lỗi kỹ thuật hệ thống đã phát hiện và xử lý bền vững (docs/bugs/)</caption>
+            <thead>
+              <tr>
+                <th scope="col">Mã lỗi</th>
+                <th scope="col">Hiện tượng &amp; Nguyên nhân gốc rễ</th>
+                <th scope="col">Giải pháp khắc phục &amp; Bất biến chống hồi quy</th>
+                <th scope="col">Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row"><code>BUG-001</code></th>
+                <td>Lỗi gọi syscall POSIX <code>os.pidfd_open</code> gây sập khi chạy trên Windows DEV.</td>
+                <td>Tách nhánh quản lý tiến trình tương thích đa nền tảng; chặn mở file PDF trực tiếp trên Windows.</td>
+                <td><span class="badge green">RESOLVED</span></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>BUG-002</code></th>
+                <td>Tràn bộ đệm metadata Arlington (512 KB) do file dị dạng lặp lại vạn lỗi cú pháp.</td>
+                <td>Khử trùng lặp mẫu vi phạm kèm bộ đếm tần suất; bật cờ <code>flag_spec_violation_flood</code>.</td>
+                <td><span class="badge green">RESOLVED</span></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>BUG-003</code></th>
+                <td>Worker bị giết (SIGKILL/OOM) khi gặp bom giải nén (Decompression Bomb).</td>
+                <td>Giới hạn 1 MiB/layer, trần nở nén 100×, cứu hộ từ khóa đầu/cuối luồng và bật cờ né tránh.</td>
+                <td><span class="badge green">RESOLVED</span></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>BUG-004</code></th>
+                <td>Worker sập do file <code>selection.json</code> vượt quá trần đọc mặc định 512 KB.</td>
+                <td>Tách biệt giới hạn tệp cấu hình điều phối khỏi giới hạn bộ đệm phân tích đối tượng PDF.</td>
+                <td><span class="badge green">RESOLVED</span></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>BUG-005</code></th>
+                <td>Nguy cơ sinh dữ liệu giả lập (mock) hoặc suy diễn trường null như bằng chứng thật.</td>
+                <td><strong>Bộ Quy Tắc Thép Zero-Mock:</strong> toàn bộ API bắt buộc xử lý byte thật từ người dùng tải lên.</td>
+                <td><span class="badge green">RESOLVED</span></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>BUG-006</code></th>
+                <td>Tiến trình dừng sớm nhưng giao diện vẫn báo thành công; thiếu kiểm chứng cleanup.</td>
+                <td>Bắt buộc đối chiếu đủ mẫu số cohort (1.452/1.452) và kiểm tra <code>unverified_cleanups == 0</code>.</td>
+                <td><span class="badge green">RESOLVED</span></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>BUG-007</code></th>
+                <td>93,17% nút đồ thị v1 bị chiếm bởi số vô danh làm rớt nút bảo mật ở 27,5% file.</td>
+                <td>Xây dựng <strong>Graph Projection v2 (23D)</strong> loại bỏ số vô danh, rút gọn cạnh xuyên container.</td>
+                <td><span class="badge green">RESOLVED</span></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>BUG-008</code></th>
+                <td>Lỗi sập job khi reboot VM do đối chiếu cứng số byte <code>MemTotal</code> trong <code>/proc/meminfo</code>.</td>
+                <td>Khóa chặt các tham số khoa học, không so khớp cứng thông số RAM vật lý dao động theo phiên boot.</td>
+                <td><span class="badge green">RESOLVED</span></td>
+              </tr>
+              <tr>
+                <th scope="row"><code>BUG-009</code></th>
+                <td>Lỗi <code>read_bytes unfilterable stream</code> trong CDR khi băm luồng ảnh JPEG.</td>
+                <td>Dự phòng <code>read_raw_bytes()</code> khi gặp bộ lọc ảnh chuẩn và reset độ sâu đệ quy đối tượng.</td>
+                <td><span class="badge green">RESOLVED</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout blue">
+          <strong>Tổng kết Giá trị Nghiên cứu &amp; Đóng góp Thực tiễn:</strong>
+          Từ việc kiểm toán vạch rõ các lỗ hổng rò rỉ dữ liệu trong các bài báo chuẩn quốc tế, dự án <strong>MalPDFDeepDetection</strong> đã hoàn thiện một hệ sinh thái phòng thủ mã độc PDF toàn diện:
+          <br><strong>Bộ trích xuất tĩnh chịu tải 0% crash</strong> → <strong>Mạng đồ thị dị thể PDF-TransGraph v2 (23D) đạt 97,92% Recall, miễn nhiễm đối kháng</strong> → <strong>Bộ phân loại đa nhãn 8 hành vi MITRE ATT&amp;CK</strong> → <strong>Phẫu thuật tẩy độc nhị phân tại chỗ pikepdf (giữ nguyên 99,8% dung lượng &amp; 100% văn bản)</strong> → <strong>Động cơ ONNX Runtime Production siêu nhẹ, sẵn sàng ứng dụng thực tế</strong>.
+        </div>
+      </section>
+
+      <footer>
+        <p><strong>MalPDFDeepDetection · Hồ sơ Tổng hợp Nghiên cứu Toàn diện (07/11/2026)</strong> · Trích xuất từ các bản ghi thực nghiệm bất biến (<code>reports/experiments/</code>, <code>reports/progress/</code>, <code>docs/</code>).</p>
+        <p class="footnote">Mẹo điều hướng: Bấm nút <strong>"Trình chiếu"</strong> (hoặc dùng phím mũi tên <code>←</code> / <code>→</code>, <code>Home</code>, <code>End</code>, <code>Esc</code>) để chuyển sang chế độ thuyết trình, hoặc bấm <strong>"In / Xuất PDF"</strong> để in báo cáo.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    (() => {
+      const slides = Array.from(document.querySelectorAll('main > .slide'));
+      const toggle = document.getElementById('presentation-toggle');
+      const controls = document.getElementById('presenter-controls');
+      const previous = document.getElementById('previous-slide');
+      const next = document.getElementById('next-slide');
+      const counter = document.getElementById('slide-counter');
+      const expandAllBtn = document.getElementById('expand-all');
+      let presenting = false;
+      let index = 0;
+      let allExpanded = false;
+
+      function showSlide(position) {
+        index = Math.max(0, Math.min(slides.length - 1, position));
+        slides.forEach((slide, i) => {
+          const active = i === index;
+          slide.classList.toggle('active', active);
+          slide.toggleAttribute('inert', presenting && !active);
+        });
+        counter.textContent = `${index + 1} / ${slides.length}`;
+        previous.disabled = index === 0;
+        next.disabled = index === slides.length - 1;
+        if (presenting) window.scrollTo({ top: 0, behavior: 'instant' });
+      }
+
+      function setPresentation(enabled) {
+        if (enabled) {
+          const nearest = slides.findIndex(slide => slide.getBoundingClientRect().bottom > 110);
+          if (nearest >= 0) index = nearest;
+        }
+        presenting = enabled;
+        document.body.classList.toggle('presenting', enabled);
+        toggle.setAttribute('aria-pressed', String(enabled));
+        toggle.textContent = enabled ? 'Thoát trình chiếu' : 'Trình chiếu';
+        controls.hidden = !enabled;
+        showSlide(index);
+        if (!enabled) slides[index].scrollIntoView({ block: 'start' });
+      }
+
+      toggle.addEventListener('click', () => setPresentation(!presenting));
+      previous.addEventListener('click', () => showSlide(index - 1));
+      next.addEventListener('click', () => showSlide(index + 1));
+      document.getElementById('print-report').addEventListener('click', () => window.print());
+      if (expandAllBtn) {
+        expandAllBtn.addEventListener('click', () => {
+          allExpanded = !allExpanded;
+          document.querySelectorAll('details').forEach(d => { d.open = allExpanded; });
+          expandAllBtn.textContent = allExpanded ? 'Thu gọn chi tiết' : 'Mở rộng chi tiết';
+        });
+      }
+      document.addEventListener('keydown', event => {
+        if (!presenting || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+        if (event.target instanceof Element && event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+        const commands = {
+          ArrowRight: () => showSlide(index + 1),
+          ArrowLeft: () => showSlide(index - 1),
+          Home: () => showSlide(0),
+          End: () => showSlide(slides.length - 1),
+          Escape: () => { setPresentation(false); toggle.focus(); }
+        };
+        if (commands[event.key]) { event.preventDefault(); commands[event.key](); }
+      });
+      showSlide(0);
+      document.getElementById('actions').hidden = false;
+    })();
+  </script>
+</body>
+</html>

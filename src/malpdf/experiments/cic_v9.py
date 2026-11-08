@@ -602,8 +602,8 @@ def run_v9_final(root, prepared_run, *, lab_attested=False):
         records, decisions, paired, regressions = [], [], [], []
         run.state["notes"] = "LAB diagnosis only; fixed original artifacts/173 columns/threshold. No fitting/calibration/tuning/Test."
         try:
-            # Loading and admission precede the sole claim. Failures at this point
-            # still produce an immutable failed run but consume no PDF attempt.
+
+
             models, missingness = load_frozen_models(root, lock["models"], lab_attested=lab_attested)
             _worker_count(1, limits)
             run.state["parser_memory_admission"] = worker_memory_budget(limits)
@@ -635,8 +635,8 @@ def run_v9_final(root, prepared_run, *, lab_attested=False):
                     cache_path = cache / (key + ".json")
                     profile = _profile(root, row, run, cache_path=cache_path if mode == "warm" else None, cache_key=key, cache_mode=mode)
                     profile.update(cache_mode=mode, repeat=0)
-                    # Persist the completed extraction before any model or
-                    # policy operation can fail; it is never rerun for metrics.
+
+
                     records.append(profile)
                     _append_private(run.artifacts / "per_file.jsonl", profile)
                     if mode == "cold":

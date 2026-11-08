@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "generated_utc": "2026-11-02T15:12:06.561971+00:00",
+  "source_job_id": "4cec6c2794967311bc5c55a924933a0b0cbda0529ff31fe1f19de8b4cdcd7b75",
+  "original_status": "partial",
+  "original_pdf_summary": {
+    "bounded_complete": 283,
+    "completed": 1380,
+    "elapsed_ms": 3980880,
+    "failed": 957,
+    "observed": 284,
+    "partial": 139,
+    "peak_rss_bytes": 412389376,
+    "planned": 1452,
+    "primary_available": 1309,
+    "status_counts": {
+      "bounded_complete": 283,
+      "decode_error": 48,
+      "observed": 1,
+      "partial": 139,
+      "timeout": 587,
+      "unsupported": 322
+    },
+    "timeout": 587
+  },
+  "numeric_dataset": "data/processed/runtime_postrun/4cec6c2794967311bc5c55a924933a0b0cbda0529ff31fe1f19de8b4cdcd7b75/a07a82e079974a0e9e7dff2a796d680a311967ff9fc41f3384daef4f704068cd",
+  "exported_selection_records": 1452,
+  "validated_bundles": 1380,
+  "missing_bundles": 72,
+  "invalid_bundles": 0,
+  "graphs_with_observed_nodes": 1305,
+  "graphs_with_unknown_node_sizes": 1305,
+  "model_input_ready": false,
+  "classifier_performance": {
+    "accuracy": null,
+    "f1": null,
+    "mcc": null,
+    "auc": null
+  },
+  "new_classifier_inference_executed": false,
+  "raw_pdf_transferred_to_windows": false,
+  "original_bundles_preserved": true,
+  "recovery": {
+    "job_id": "dfafd888f7a948a87ffac2e0b68ab702fd60dd1dc9bc630fa6cdbe4496e4a06f",
+    "status": "queued",
+    "reused_bundles": 1379,
+    "fresh_samples": 73,
+    "operator_trigger": "lab run",
+    "agent_executed_raw_extraction": false,
+    "performance_benchmark_eligible": false
+  },
+  "verification": {
+    "initial_focused_windows_passed": 107,
+    "initial_focused_lab_passed": 107,
+    "large_manifest_windows_passed": 79,
+    "large_manifest_lab_passed": 79,
+    "python_comments": 0,
+    "python_files_parsed": 365,
+    "git_diff_check_passed": true,
+    "index_content_guard_passed": true,
+    "full_suite_green_not_claimed": true
+  },
+  "final_release": "/home/remnux/malpdf-releases/e90e0340390ddc44ffb3f3ce25dbfb087202ddd6",
+  "source_kind": "isolated_git_snapshot_of_validated_windows_worktree",
+  "main_repository_head_unchanged": true
+}

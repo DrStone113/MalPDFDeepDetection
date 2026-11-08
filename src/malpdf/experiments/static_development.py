@@ -137,10 +137,10 @@ def development_tables(bundle_root):
             or set(folds.sample_id) != set(frame.loc[frame.split.eq("train"), "sample_id"])
             or not frame.parser_failed.isin([0, 1]).all()):
         raise ValueError("Portable feature, cohort or saved five-fold identities differ")
-    # The reuse manifest already identifies the original source cohort. No new
-    # source names, PDF hashes or private ID mappings are uploaded to Kaggle.
+
+
     frame["cohort"] = np.where(frame.sample_id.isin(reuse.sample_id), "source_raw", "cic")
-    # Drop exposed Test rows before any preprocessing, weighting or model work.
+
     frame = frame.loc[frame.split.isin(["train", "validation"])].copy()
     features = features.loc[frame.sample_id].copy()
     frame = frame.merge(roles, on="sample_id", how="left", validate="one_to_one")
@@ -381,8 +381,8 @@ def train_static_development(bundle_root, output_root, configuration, code_commi
             calibrated = platt.predict_proba(meta.predict_proba(combined)[:, 1, None])[:, 1]
             table["stack_probability"] = calibrated
             table.to_csv(directory / f"{scheme}_validation_predictions_calibrated.csv", index=False)
-            # Both fit-role diagnostics and candidate-selection diagnostics are
-            # labelled honestly; no Validation role is an independent final Test.
+
+
             for role in ROLES:
                 for cohort in ("source_raw", "cic"):
                     mask = val.role.eq(role) & val.cohort.eq(cohort)

@@ -44,11 +44,11 @@ def _synthetic_pdf(
         font = DictionaryObject({
             _name("/Type"): _name("/Font"), _name("/Subtype"): _name("/Type1"), _name("/BaseFont"): _name("/Helvetica"),
         })
-        resources[_name("/Font")] = DictionaryObject({_name("/F1"): writer._add_object(font)})  # noqa: SLF001 - fixture-only pypdf API
+        resources[_name("/Font")] = DictionaryObject({_name("/F1"): writer._add_object(font)})
         if text is not None:
             content = DecodedStreamObject()
             content.set_data(f"BT /F1 12 Tf ({text}) Tj ET".encode("ascii"))
-            page[_name("/Contents")] = writer._add_object(content)  # noqa: SLF001 - fixture-only pypdf API
+            page[_name("/Contents")] = writer._add_object(content)
         if include_images:
             if shared_image_reference is None or not shared_image:
                 image = DecodedStreamObject()
@@ -57,11 +57,11 @@ def _synthetic_pdf(
                     _name("/Type"): _name("/XObject"), _name("/Subtype"): _name("/Image"), _name("/Width"): NumberObject(1),
                     _name("/Height"): NumberObject(1), _name("/ColorSpace"): _name("/DeviceRGB"), _name("/BitsPerComponent"): NumberObject(8),
                 })
-                shared_image_reference = writer._add_object(image)  # noqa: SLF001 - fixture-only pypdf API
+                shared_image_reference = writer._add_object(image)
             resources[_name("/XObject")] = DictionaryObject({_name("/Im1"): shared_image_reference})
         page[_name("/Resources")] = resources
     writer.add_metadata({_name("/Title"): "Synthetic benign metadata"})
-    root = writer._root_object  # noqa: SLF001 - fixture-only pypdf API
+    root = writer._root_object
     if active_indicators:
         root[_name("/OpenAction")] = DictionaryObject({_name("/S"): _name("/URI"), _name("/URI"): TextStringObject("https://example.invalid")})
         root[_name("/AA")] = DictionaryObject({_name("/S"): _name("/Launch"), _name("/F"): TextStringObject("not-executed")})
@@ -83,8 +83,8 @@ def _synthetic_pdf(
     with path.open("wb") as handle:
         writer.write(handle)
     if text is not None and not encrypted:
-        # Use the reference parser's own safe document-generation API so the
-        # fixture has a genuine extractable text layer for PyMuPDF tests.
+
+
         document = pymupdf.open(path)
         for page_index in range(document.page_count):
             document[page_index].insert_text((36, 72), text)
@@ -209,8 +209,8 @@ def test_encrypted_fixture_is_detected_without_decryption(tmp_path: Path):
 
     assert result.parser["success"] is True
     assert result.parser["encrypted"] is True
-    # PDFMalExtract skips source rows whose PyMuPDF metadata is unavailable;
-    # the pypdf safety diagnostic still detects encryption without a password.
+
+
     assert result.features["isEncrypted"] is None
     assert result.features["pages"] is None
     assert any(issue.code == "encrypted_pdf_partial_extraction" for issue in result.warnings)
@@ -352,8 +352,8 @@ def test_pages_xref_images_and_attachments_use_reference_counts(tmp_path: Path):
     assert no_image_result.features["images"] == 0
     assert no_image_result.features["embedded files"] == 0
     assert one_image_result.features["images"] == _reference_values(one_image)["images"] == 1
-    # PDFMalExtract sums page.get_images(): one shared image reference on two
-    # pages is counted twice, rather than deduplicated by image object identity.
+
+
     assert repeated_image_result.features["images"] == _reference_values(repeated_image)["images"] == 2
     assert repeated_image_result.features["pages"] == 2
     assert repeated_image_result.features["xref length"] == _reference_values(repeated_image)["xref length"]
@@ -362,8 +362,8 @@ def test_pages_xref_images_and_attachments_use_reference_counts(tmp_path: Path):
 def test_contains_text_distinguishes_threshold_and_failure_sentinel(tmp_path: Path, monkeypatch):
     exact_threshold = tmp_path / "exact-threshold.pdf"
     above_threshold = tmp_path / "above-threshold.pdf"
-    # PyMuPDF appends a line ending for this fixture, so 49/50 source
-    # characters exercise extracted lengths of 50/51 respectively.
+
+
     _reference_fixture(exact_threshold, text="x" * 49)
     _reference_fixture(above_threshold, text="x" * 50)
 

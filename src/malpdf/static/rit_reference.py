@@ -94,8 +94,8 @@ def inspect_rit_reference_features(data: bytes, size_bytes: int, limits: StaticI
         )
         return result
 
-    # PDFMalExtract uses int(os.path.getsize(file) / 1000): decimal kilobytes
-    # truncated toward zero.  File length is non-negative, so // is equivalent.
+
+
     result.features["pdfsize"] = int(size_bytes // 1000)
     document = None
     try:
@@ -118,8 +118,8 @@ def inspect_rit_reference_features(data: bytes, size_bytes: int, limits: StaticI
             )
             return result
 
-        # This intentionally measures the UTF-8 byte length of Python's metadata
-        # dictionary representation, exactly as the published implementation.
+
+
         result.features["metadata size"] = len(str(metadata).encode("utf-8"))
         result.diagnostics["metadata_entry_count"] = len(metadata)
         result.diagnostics["metadata_representation"] = "utf-8 bytes of str(PyMuPDF Document.metadata)"
@@ -173,8 +173,8 @@ def inspect_rit_reference_features(data: bytes, size_bytes: int, limits: StaticI
                     result.diagnostics["page_text_extraction_error_count"] += 1
             embedded_count = int(document.embfile_count())
         except Exception as error:
-            # These are source-defined feature values, not generic replacements:
-            # PDFMalExtract assigns -1 / 0 in this same outer failure path.
+
+
             found = -1
             embedded_count = 0
             result.warnings.append(StructuredExtractionIssue("reference_text_or_attachment_failure", _bounded(error, limits)))
@@ -189,7 +189,7 @@ def inspect_rit_reference_features(data: bytes, size_bytes: int, limits: StaticI
             for page_index in range(page_total):
                 image_count += len(document[page_index].get_images())
         except Exception as error:
-            # PDFMalExtract explicitly uses -1 for this image-extraction state.
+
             image_count = -1
             result.warnings.append(StructuredExtractionIssue("reference_image_count_failure", _bounded(error, limits)))
         result.features["images"] = image_count

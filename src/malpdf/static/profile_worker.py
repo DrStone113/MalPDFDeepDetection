@@ -15,7 +15,19 @@ from malpdf.static.code_inspector import (
 from malpdf.static.profiling import STAGES, StageTimings, PROFILE_VERSION
 from malpdf.static.safety import read_bounded_bytes, StaticInspectionLimits
 from malpdf.static.execution import capacity, is_vm
-from malpdf.extraction.branches import run_branch, restore_failed_prefixes
+from malpdf.extraction.branches import run_branch as _run_branch, restore_failed_prefixes
+from malpdf.static.worker_diagnostics import WorkerDiagnostics, report_exception, report_phase, run_child
+
+
+def run_branch(result, name, operation, limits):
+    report_phase(name)
+    def observed_operation():
+        try:
+            return operation()
+        except Exception as error:
+            report_exception(error)
+            raise
+    return _run_branch(result, name, observed_operation, limits)
 
 
 def _failure(code, status="worker_error"):
@@ -63,6 +75,7 @@ def _profile_child(connection, path, boundary, digest, limits, cache_path, cache
     include_v8 = include_v8 or v9
     output_limit = capacity(limits, 6 * 1024**2 if v9 else 2 * 1024**2)
     def event(kind, name, timings):
+        report_phase(name)
         connection.send_bytes(json.dumps({"event": kind, "stage": name, "timings": timings}).encode())
 
     timings = StageTimings(event)
@@ -73,19 +86,20 @@ def _profile_child(connection, path, boundary, digest, limits, cache_path, cache
     plugin_buffers={}
     def checkpoint(profile):
         if include_v8:
+            report_phase('checkpoint_serialization')
             profile = {**raw_details, 'resource_limits': applied, **profile}
             payload = json.dumps({'event': 'checkpoint', 'profile': profile}, allow_nan=False).encode()
             if len(payload) > output_limit:
                 raise MemoryError('worker_output_limit')
             connection.send_bytes(payload)
     try:
+        report_phase('resource_limits')
         applied = _apply_code_limits(limits)
         if is_vm(limits):
             from malpdf.reproducibility import set_random_seed
             set_random_seed(42 if plugins is None else plugins['seed'])
         with open(os.devnull, "wb") as output:
             os.dup2(output.fileno(), 1)
-            os.dup2(output.fileno(), 2)
         if plugins is not None:
             from malpdf.extraction.plugins import from_wire
             from malpdf.reproducibility import set_random_seed
@@ -307,6 +321,7 @@ def _profile_child(connection, path, boundary, digest, limits, cache_path, cache
         result.update(timings=dict(timings.seconds), resource_limits=applied,
                       peak_rss_bytes=memory, rss_source=source)
     except BaseException as error:
+        report_exception(error)
         name = str(error) if str(error) in {"input_checksum_mismatch", "not_pdf"} else type(error).__name__
         status = ("resource_limit_or_signal" if include_v8 and isinstance(error,MemoryError) else
                   "input_error" if isinstance(error,(OSError,ValueError)) else "worker_error")
@@ -320,6 +335,7 @@ def _profile_child(connection, path, boundary, digest, limits, cache_path, cache
             from malpdf.static.js_ast import reset_tree_observer
             reset_tree_observer(tree_token)
     try:
+        report_phase('result_serialization')
         payload = json.dumps({"event": "result", "profile": result}, allow_nan=False).encode()
         if include_v8 and len(payload) > output_limit:
             payload = json.dumps({'event':'result','profile':_failure('worker_output_limit','resource_limit_or_signal')}).encode()
@@ -330,7 +346,33 @@ def _profile_child(connection, path, boundary, digest, limits, cache_path, cache
 
 def profile_pdf(path, *, boundary, digest, limits=None, cache_path=None, cache_key=None, include_v8=False,
                 analysis_version=None, raw_artifact_dir=None, extraction_profile=None, arlington_catalog=None,plugins=None,
-                cancellation_event=None):
+                cancellation_event=None, run_id=None, sample_id=None, entry_point='profile_pdf'):
+    diagnostic = WorkerDiagnostics(sample_id or digest, run_id, entry_point)
+    try:
+        result = _profile_pdf(path, boundary=boundary, digest=digest, limits=limits, cache_path=cache_path,
+            cache_key=cache_key, include_v8=include_v8, analysis_version=analysis_version,
+            raw_artifact_dir=raw_artifact_dir, extraction_profile=extraction_profile,
+            arlington_catalog=arlington_catalog, plugins=plugins, cancellation_event=cancellation_event,
+            diagnostic=diagnostic)
+    except (OSError, ValueError, RuntimeError, TypeError, MemoryError) as error:
+        if diagnostic.data['last_phase'] == 'validation':
+            raise
+        diagnostic.exception(error)
+        code = 'worker_admission_failed' if diagnostic.data['last_phase'] == 'worker_admission' else 'worker_lifecycle_failed'
+        result = _failure(code)
+        if not diagnostic.data['preserved_before_cleanup']:
+            diagnostic.preserve(result)
+        result['worker_cleanup_complete'] = diagnostic.data.get('cleanup_complete')
+        result['worker_exit_code'] = diagnostic.data['cleanup_exit_code']
+    finally:
+        diagnostic.close()
+    result['diagnostic'] = diagnostic.data
+    return result
+
+
+def _profile_pdf(path, *, boundary, digest, limits, cache_path, cache_key, include_v8,
+                analysis_version, raw_artifact_dir, extraction_profile, arlington_catalog, plugins,
+                cancellation_event, diagnostic):
     """Profile one PDF in a fresh process; preserve completed stages on kill."""
     limits = limits or CodeInspectionLimits(wall_seconds=20, cpu_seconds=12)
     if analysis_version not in (None, 'v8', 'v9'):
@@ -354,9 +396,10 @@ def profile_pdf(path, *, boundary, digest, limits=None, cache_path=None, cache_k
     include_v8 = include_v8 or analysis_version in {'v8', 'v9'}
     if raw_artifact_dir is not None and not v9:
         raise ValueError('Raw evidence storage requires v9 analysis')
+    diagnostic.phase('worker_admission')
     from malpdf.static.evidence_ipc import EvidenceAccumulator, ParentRawStore
     accumulator = EvidenceAccumulator(digest, max_bytes=capacity(limits, 2 * 1024**2)) if v9 else None
-    raw_store = ParentRawStore(raw_artifact_dir, max_bytes=capacity(limits, 10 * 1024**2)) if v9 else None
+    raw_store = None
     if not is_vm(limits):
         for name in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS"):
             os.environ[name] = "1"
@@ -370,15 +413,19 @@ def profile_pdf(path, *, boundary, digest, limits=None, cache_path=None, cache_k
         extra=(analysis_version,extraction_profile,arlington_catalog,plugins.wire())
     elif arlington_catalog is not None:
         extra=extra+(arlington_catalog,)
-    process = context.Process(target=_profile_child, args=arguments + extra)
+    process = context.Process(target=run_child, args=(diagnostic.open_channel(context), _profile_child, arguments + extra))
     started = time.monotonic()
     result, last, observed, peak, family_peak = None, None, {name: None for name in STAGES}, 0, 0
     saved_checkpoint = None
     received_result = False
     try:
+        raw_store = ParentRawStore(raw_artifact_dir, max_bytes=capacity(limits, 10 * 1024**2)) if v9 else None
+        diagnostic.phase('worker_start')
         process.start()
+        diagnostic.sender.close()
         sender.close()
         while result is None:
+            diagnostic.drain()
             if cancellation_event is not None and cancellation_event.is_set():
                 result = _failure('extraction_cancelled')
                 break
@@ -391,7 +438,13 @@ def profile_pdf(path, *, boundary, digest, limits=None, cache_path=None, cache_k
                 family_peak = max(family_peak, resident_bytes(process.pid) + resident_bytes(os.getpid()))
             except (OSError, ValueError):
                 pass
-            ready = receiver.poll()
+            try:
+                ready = receiver.poll()
+            except (OSError, EOFError) as error:
+                diagnostic.exception(error)
+                process.join(timeout=0.05)
+                result = _failure('worker_exit' if not process.is_alive() else 'invalid_worker_response')
+                continue
             exited = not process.is_alive() if not ready else False
             if exited:
                 ready = receiver.poll()
@@ -408,6 +461,7 @@ def profile_pdf(path, *, boundary, digest, limits=None, cache_path=None, cache_k
                             result['analysis_v9'] = accumulator.value
                     elif message.get('event') == 'checkpoint' and include_v8:
                         saved_checkpoint = {**(saved_checkpoint or {}), **message['profile']}
+                        diagnostic.data.update(checkpoint_received=True, checkpoint_status=saved_checkpoint.get('status'))
                     elif message.get('event') == 'evidence_delta' and v9:
                         accumulator.merge(message['delta'])
                     elif message.get('event') in {'raw_begin', 'raw_chunk', 'raw_end'} and v9:
@@ -416,7 +470,8 @@ def profile_pdf(path, *, boundary, digest, limits=None, cache_path=None, cache_k
                         last, observed = message["stage"], message["timings"]
                     else:
                         raise ValueError("invalid_profile_message")
-                except (ValueError, OSError, EOFError, KeyError, TypeError, RecursionError, MemoryError):
+                except (ValueError, OSError, EOFError, KeyError, TypeError, RecursionError, MemoryError) as error:
+                    diagnostic.exception(error)
                     result = _failure("invalid_worker_response")
                     process.join(timeout=0.05)
                     if process.exitcode in (-9, -24):
@@ -484,9 +539,15 @@ def profile_pdf(path, *, boundary, digest, limits=None, cache_path=None, cache_k
         if is_vm(limits):
             result["worker_result_received"] = received_result
         return result
+    except BaseException as error:
+        diagnostic.exception(error)
+        diagnostic.preserve(_failure('worker_lifecycle_failed'), process)
+        raise
     finally:
+        diagnostic.preserve(result, process)
         if process.pid is not None:
             _stop_code_process(process)
+            diagnostic.data.update(cleanup_exit_code=process.exitcode, cleanup_complete=not process.is_alive())
             if result is not None:
                 result['worker_exit_code'] = process.exitcode
                 result['worker_cleanup_complete'] = not process.is_alive()

@@ -158,8 +158,8 @@ def test_zero_counts_are_explicit_and_do_not_change_observations(validators):
 
 def test_json_integer_numeric_equivalence_does_not_relax_runtime_locator_types(validators):
     value=bundle();bad_node(value)['object_number']=1.0
-    # Standard JSON Schema integer means a mathematical integer; the Python
-    # protocol additionally requires an actual int for typed locator columns.
+
+
     assert_standard_valid(value,validators)
     with pytest.raises(ValueError,match='locator'):validate_bundle(value)
 

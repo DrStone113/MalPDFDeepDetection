@@ -1,0 +1,29 @@
+{
+  "job_id": "2bf5db05ec3c905cf4f6a4bc3ff4530ec82fb1f166d7a3dd8571708417369530",
+  "runner": {
+    "api": 1,
+    "installed": true,
+    "host_only_ready": true,
+    "offline_guest_ready": false,
+    "reason": null
+  },
+  "helper_hashes_verified": true,
+  "reuse_progress": {
+    "bytes": 2075187555,
+    "copied": 1375,
+    "planned": 1379
+  },
+  "queued": false,
+  "claim_exists": false,
+  "result_exists": false,
+  "pending_jobs": 0,
+  "gateway_checks": {
+    "configuration": "passed",
+    "helpers": "passed",
+    "policy": "mismatch",
+    "units": "passed",
+    "sshd": "passed",
+    "proof": "passed"
+  },
+  "raw_pdf_processing": false
+}

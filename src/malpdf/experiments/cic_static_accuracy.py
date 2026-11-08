@@ -33,7 +33,7 @@ CIC_FEATURE_ORDER = (*DEPLOYMENT_FEATURE_ORDER, "script_ratio", "ObfuscationCoun
 CIC_FEATURE_SCHEMA = "cic-static-40/v1"
 CIC_MODEL_ID = "xgb-cic-train-static40-v1"
 CIC_RF_MODEL_ID = "rf-cic-train-static40-v1"
-# Same fixed RF budget as the PDF diagnostic pilot, now using all saved Train.
+
 CIC_RF_PARAMETERS = {"max_depth": 12, "min_samples_leaf": 2, "class_weight": "balanced"}
 PROFILE_FEATURE_SCHEMA = "cic-observed-profile/v1"
 PROFILE_VARIANTS = ("P0_rit41_fallback", "P1_observed_static", "P2_observed_plus_status")
@@ -152,9 +152,9 @@ def profile_input_available(row, max_bytes):
             and code.get('content_redacted') is True and code.get('active_content_executed') is False
             and static.get('input', {}).get('sha256') == row.get('pdf_sha256')
             and type(row.get('pdf_sha256')) is str):
-        # A completed primary checkpoint remains measured input for the fixed
-        # experimental fallback. The failed v8 view still makes C1 abstain;
-        # deployment and complete-analysis checks keep their own strict gates.
+
+
+
         status = row['primary_status']
     return bool(status in {"complete", "partial", "parser_error"}
         and type(size) is int and 0 < size <= max_bytes
@@ -420,7 +420,7 @@ def train_cic_static(root, configuration):
         train = frame.split.eq("train").to_numpy()
         validation = frame.split.eq("validation").to_numpy()
         features = frame.loc[:, list(CIC_FEATURE_ORDER)]
-        # Common finite eligibility keeps baseline/candidate denominators equal.
+
         eligible = np.isfinite(features.to_numpy()).all(axis=1)
         baseline_bytes = read_bounded_bytes(root / cfg["baseline_manifest"]["path"],
             boundary=root / "reports/experiments", max_bytes=64 * 1024)

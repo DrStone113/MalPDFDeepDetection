@@ -133,8 +133,8 @@ def collect(root, code_root, launch_run):
         "interpretation": "Validation diagnostics and selection; not independent Test evidence"}, code_root=code_root) as run:
         download = run.artifacts / "kaggle_output"
         download.mkdir(exist_ok=False)
-        # Preserve cloud checkpoints on Kaggle; avoid hundreds of MB of RF
-        # binaries on a nearly full Codespace. Read no pickle/joblib/model here.
+
+
         response = subprocess.run(["kaggle", "kernels", "output", receipt["kernel"], "-p", str(download),
             "--file-pattern", r"\.(json|csv|md|log)$", "-q"], text=True, capture_output=True, timeout=180)
         (run.artifacts / "download_stdout.txt").write_text(response.stdout)

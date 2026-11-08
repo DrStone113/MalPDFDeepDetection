@@ -242,8 +242,13 @@ class ForensicAttributionEngine:
             adjacency.setdefault(edge.get("source"), []).append(edge.get("target"))
         record_map = {record["evidence_id"]: record for record in records if record.get("evidence_id")}
         root = "catalog:root" if "catalog:root" in record_map else None
+        script_parents = {s.get("parent_id") for s in scripts if s.get("parent_id")}
         threat_triggers = [
-            t for t in triggers if t.get("is_threat_trigger") or t.get("kind") in ("script", "filespec")
+            t for t in triggers
+            if t.get("is_threat_trigger")
+            or t.get("kind") in ("script", "filespec")
+            or t.get("object_id") in script_parents
+            or (t.get("kind") == "action" and (malware_prob or 0.0) >= 0.5)
         ]
         default_stream_goal = next(
             (record["evidence_id"] for record in records if record.get("kind") == "stream"),
