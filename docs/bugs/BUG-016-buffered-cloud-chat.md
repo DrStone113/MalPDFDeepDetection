@@ -1,6 +1,6 @@
 # BUG-016 — Cloud answer waits for the entire provider response
 
-Recorded: 2026-11-10. Status: FIXED IN SOURCE; deployment verification pending.
+Recorded: 2026-11-10. Status: RESOLVED; verified on the live Space and browser.
 Severity: MEDIUM. Category: CLOUD_CHAT_LATENCY.
 Affected: cloud adapter, dev/ONNX chat routes, browser chat renderer.
 
@@ -50,4 +50,34 @@ Provider reasoning can still precede the first visible answer token.
   verify explicit errors, premature EOF and reader cancellation.
 - Inverting the new length-exhaustion branch makes both dev/ONNX regression
   cases fail; the original source is restored afterward.
-- Whole-suite and deployed/browser evidence will be recorded after verification.
+- Whole Windows suite: 2148 passed, the same 240 failed IDs as the recorded
+  pre-cloud baseline, 25 skipped. No new failed IDs or skipped cases. The 83
+  additional passing cases since that older baseline include the intervening
+  credential, adapter and proxy work; they are not all from this streaming change.
+- Source commit `2c8af7d`; live Space revision
+  `87b44aa3f3105a3aba3b2c07ff971dbc687c0e7f`, confirmed RUNNING by the Hub API.
+  Only four runtime files were copied from Windows; models and SDK are unchanged.
+- Live approved benign fixture: HTTP 200, 139 final deltas, successful completion.
+  Its first/last deltas arrived close together; this request alone would not
+  establish visibly incremental delivery.
+- Live approved controlled threat fixture: HTTP 200, 396 deltas, first visible
+  content at 46.468 s and completion at 57.078 s (10.610 s between them). Both
+  HTTP smoke-test jobs were removed. These samples are not latency guarantees.
+- Real browser with the same controlled fixture and a separate detailed question:
+  observed Cloud AI text at 462 characters while state was `streaming` and the
+  send button remained disabled. Later samples showed 3502 and 4672 characters
+  before completion at 5260 characters; the send button then re-enabled.
+  Initial text was observed at 20.319 s and completion at 43.215 s. The provider
+  can pause between deltas; continuous fixed-rate typing is not promised.
+- No browser console errors were captured. A screenshot saved while text was
+  incomplete shows the `Đang trả lời…` source label. The browser test record
+  remains available for review; no raw/unreviewed PDFs or real malware were used.
+- Commit checks: 237 passed; repository content gate passed; no Python comments
+  introduced. REMnux SSH health returned Python 3.12.3. This web-only change does
+  not require or trigger a LAB extraction job.
+
+Ignored evidence under `artifacts/tmp/hf-deploy-20261110/`:
+`cloud-stream-tests.xml`, `cloud-stream-full.xml`,
+`cloud-stream-baseline-comparison.json`, `cloud-stream-mutation.txt`,
+`cloud-stream-live-verification.json`, `cloud-streaming-browser-observation.json`,
+`cloud-streaming-browser-partial.png`, `cloud-streaming-browser-final.png`.

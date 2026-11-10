@@ -102,3 +102,37 @@ Safe evidence: ignored `cloud-fix-tests.xml`,
 `cloud-fix-live-verification.json`, `cloud-browser-success.png` under the same
 artifact directory. HTTP test jobs were removed; the browser test result remains
 available for review. No raw malware or unreviewed files were involved.
+
+## Incremental Cloud AI follow-up
+
+The user requested visible text while Cloud AI is generating. Source commit
+`2c8af7d` adds opt-in SSE to the existing owned-scan endpoint and reads final
+provider deltas incrementally. The UI updates each arriving segment and labels
+incomplete/error output explicitly. Reasoning is never forwarded; the existing
+JSON interface, key location and per-session rate limit remain in force.
+
+Space revision `87b44aa3f3105a3aba3b2c07ff971dbc687c0e7f` is confirmed RUNNING.
+Its deployed HTML equals Windows source. Four runtime files changed; model
+binaries, SDK and hardware did not change.
+
+Verification: 107 focused checks passed, including split Vietnamese UTF-8,
+incremental delivery before completion, interruption, stream size bounds,
+ownership, rate limits and resource cleanup. Existing commit gate: 237 passed.
+The full Windows run returned 2148 passed / 240 failed / 25 skipped. All failed
+IDs and skips match the previous 2065-pass baseline; the 83 added passing cases
+also include intervening non-streaming cloud/security changes, so they must not
+be attributed wholly to this follow-up.
+
+Live API checks on the two approved fixtures returned successful SSE completion:
+139 deltas for benign and 396 for the controlled threat fixture. The latter
+delivered final text over 10.610 s before completion. In the real browser, a new
+detailed question visibly grew from 462 to 3502 to 4672 characters while still
+streaming, then completed at 5260 and unlocked the send button. The screenshot
+captured during generation shows `Cloud AI · MiniMax M3.1 Flash · Đang trả lời…`.
+No console errors were captured. These are observed calls, not a guaranteed
+response time or fixed character rate; initial reasoning can still delay text.
+
+Evidence is under the same ignored artifact directory with `cloud-stream-*`
+and `cloud-streaming-browser-*` names. HTTP smoke-test jobs were cleaned up;
+the browser test record remains for review. See BUG-016 for exact timings and
+limits. No unreviewed files, raw malware or LAB extraction jobs were involved.
