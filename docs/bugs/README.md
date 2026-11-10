@@ -36,7 +36,7 @@ Hệ thống lưu trữ, phân tích chuyên sâu nguyên nhân gốc rễ và c
 | BUG-012 | Chèn HTML vào thông báo | RESOLVED | `test_web_notifications.py` | [Hồ sơ](BUG-012-untrusted-notification-html.md) |
 | BUG-013 | Nhãn XAI ONNX sai phương pháp | RESOLVED | `test_xai_provenance.py` | [Hồ sơ](BUG-013-onnx-xai-method-provenance.md) |
 | BUG-014 | Khóa Cloud AI nằm trong mã giao diện công khai | MITIGATED; cần thay khóa cũ | `test_cloud_chat_security.py`, `test_web_notifications.py` | [Hồ sơ](BUG-014-browser-cloud-api-credential.md) |
-| BUG-015 | Mô hình dùng hết giới hạn xử lý trước khi có câu trả lời | FIXED IN SOURCE; đang xác minh triển khai | `test_cloud_chat_adapter.py` | [Hồ sơ](BUG-015-cloud-reasoning-output-budget.md) |
+| BUG-015 | Mô hình dùng hết giới hạn xử lý trước khi có câu trả lời | RESOLVED; đã xác minh trên Space | `test_cloud_chat_adapter.py` | [Hồ sơ](BUG-015-cloud-reasoning-output-budget.md) |
 
 ## 2. Quy trình Ghi nhận & Xử lý Lỗi Chuẩn
 

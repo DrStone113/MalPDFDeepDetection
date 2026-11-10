@@ -1,6 +1,6 @@
 # BUG-015 — Cloud reasoning consumes the final-answer budget
 
-Recorded: 2026-11-10. Status: FIXED IN SOURCE, live verification pending.
+Recorded: 2026-11-10. Status: RESOLVED, verified on the live Space.
 Severity: MEDIUM. Category: CLOUD_PROVIDER_INTEGRATION.
 Affected: `src/malpdf/web/cloud_chat.py`, web chat template.
 
@@ -61,4 +61,27 @@ answer with its actual source: Cloud AI, browser AI or deterministic fallback.
 - `tests/test_cloud_chat_security.py` preserves cross-session isolation,
   missing-secret behavior, input bounds and absence of browser credentials.
 
-Live deployment results will be recorded after the new runtime is verified.
+## Verification
+
+Windows source fix: `078639b`. Space runtime:
+`08ae2fdc811b28d8b742c7c186232450baccd478`, confirmed RUNNING by the Hub API.
+The deployed HTML matches source. Both ONNX model hashes remain unchanged.
+
+- 80 focused adapter, credential, session and ownership checks passed.
+- Commit guard: 237 passed, zero failed/skipped; repository content gate passed.
+- Five live cloud calls passed: benign greeting/summary, controlled threat
+  greeting twice and summary. All returned HTTP 200, `mode=cloud`, the configured
+  model, nonempty final text and no reasoning field. Observed request times were
+  1.266–16.484 s; these are individual calls, not a latency or reliability bound.
+- In the real browser, uploading the same approved threat fixture and sending
+  `hello` produced a final answer labeled `Cloud AI · MiniMax M3.1 Flash`.
+  Both the context and cloud chat requests returned HTTP 200. The screenshot is
+  saved under ignored `artifacts/tmp/hf-deploy-20261110/cloud-browser-success.png`.
+- HTTP smoke-test jobs were removed; the browser test record remains visible
+  for reviewing the result. No raw malware or unreviewed PDFs were processed.
+- REMnux SSH health check returned Python 3.12.3. No LAB extraction was required
+  for this web-provider-only change and no real-sample job was triggered.
+
+The 40 s setting is a socket timeout, not a measured total wall-clock guarantee.
+The previous whole-suite Windows baseline still contains unrelated failures;
+the focused pass result does not claim the entire repository is green.

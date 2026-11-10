@@ -68,3 +68,37 @@ Detailed local evidence is under ignored
 `artifacts/tmp/hf-deploy-20261110/`: `live-verification.json`,
 `application-tests.xml`, `proxy-tests.xml`, `ci-web-security.xml`, and
 `dependency-audit.json`. No secret values are included in this report.
+
+## Cloud credential and greeting repair follow-up
+
+The original missing-secret statements above describe the first deployment.
+The replacement credential supplied by the user is now stored only in Space
+Secrets as `VILAO_API_KEY`; a live cloud request confirmed it works. Revocation
+of the historically exposed old credential is not verified.
+
+An intermittent `hello` failure was independently reproduced in HTTP and the
+real browser. A successful upstream response used all 650 tokens for reasoning
+and returned no final text. Raising the budget to 2048 revealed completed
+requests exceeding the old 12 s timeout. BUG-015 documents the evidence and
+the official model contract.
+
+Source fix `078639b` sets 4096 tokens, supported low reasoning effort and a 40 s
+socket timeout; it classifies exhaustion, timeout and provider failures and
+labels the actual answer source in the browser. It never exposes reasoning.
+The Space was pushed to `08ae2fdc811b28d8b742c7c186232450baccd478`, and the Hub
+API confirms that exact runtime is RUNNING. Only the adapter and template were
+changed in the deployment checkout; models, SDK and hardware are unchanged.
+
+Verification: 80 focused tests pass, plus 237 existing commit-gate checks.
+Five live API calls using the two approved fixtures returned Cloud AI answers
+with HTTP 200 (observed 1.266–16.484 s). In the real browser, the controlled
+threat fixture followed by `hello` now returns a nonempty answer labeled
+`Cloud AI · MiniMax M3.1 Flash`, with HTTP 200 for both chat requests.
+The deployed HTML matches Windows source. These samples verify the reported
+failure path, not general provider reliability, answer quality or model accuracy.
+The 40 s socket setting is not a measured total wall-clock deadline.
+
+Safe evidence: ignored `cloud-fix-tests.xml`,
+`cloud-fix-live-verification.json`, `cloud-browser-success.png` under the same
+artifact directory. HTTP test jobs were removed; the browser test result remains
+available for review. No raw malware or unreviewed files were involved.
