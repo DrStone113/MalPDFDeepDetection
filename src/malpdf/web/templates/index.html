@@ -3400,6 +3400,49 @@
       }).filter(Boolean).join('');
     }
 
+    async function consumeCloudStream(response, onDelta) {
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('cloud_ai_invalid_response');
+      const decoder = new TextDecoder('utf-8', { fatal: true });
+      let pending = '';
+      let fullReply = '';
+      let completed = false;
+      try {
+        while (!completed) {
+          const { value, done } = await reader.read();
+          pending = (pending + decoder.decode(value, { stream: !done })).replace(/\r\n/g, '\n');
+          let boundary;
+          while ((boundary = pending.indexOf('\n\n')) !== -1) {
+            const frame = pending.slice(0, boundary);
+            pending = pending.slice(boundary + 2);
+            const event = frame.match(/^event: ?(.*)$/m)?.[1]?.trim();
+            const fields = frame.split('\n').filter(line => line.startsWith('data:'));
+            if (!fields.length) continue;
+            const data = JSON.parse(fields.map(line => line.slice(5).replace(/^ /, '')).join('\n'));
+            if (!data || typeof data !== 'object') throw new Error('cloud_ai_invalid_response');
+            if (event === 'error') throw new Error(String(data.detail || 'cloud_ai_provider_error'));
+            if (event === 'delta') {
+              if (typeof data.text !== 'string' || fullReply.length + data.text.length > 16000) {
+                throw new Error('cloud_ai_invalid_response');
+              }
+              fullReply += data.text;
+              if (fullReply.trim()) onDelta(fullReply);
+            } else if (event === 'done') {
+              if (data.mode !== 'cloud' || !fullReply.trim()) throw new Error('cloud_ai_invalid_response');
+              completed = true;
+              break;
+            }
+          }
+          if (pending.length > 65536) throw new Error('cloud_ai_invalid_response');
+          if (done && !completed) throw new Error('cloud_ai_stream_interrupted');
+        }
+        return fullReply.trim();
+      } finally {
+        await reader.cancel().catch(() => {});
+        reader.releaseLock();
+      }
+    }
+
     async function sendAIChatMessage() {
       const input = document.getElementById('ai-chat-input');
       const button = document.getElementById('ai-chat-send-btn');
@@ -3458,12 +3501,14 @@
       if (button) button.disabled = true;
       if (input) input.disabled = true;
 
-      function displayFinalAnswer(text, mode = 'deterministic_fallback') {
+      function displayFinalAnswer(text, mode = 'deterministic_fallback', streaming = false) {
         thinkingIndicator.classList.add('hidden');
         responseSource.classList.remove('hidden');
         responseSource.textContent = mode === 'cloud' ? 'Cloud AI · MiniMax M3.1 Flash' :
           mode === 'local' ? 'AI trên trình duyệt' : 'Trả lời dự phòng từ kết quả kiểm tra';
+        if (streaming) responseSource.textContent += ' · Đang trả lời…';
         answer.dataset.responseMode = mode;
+        answer.dataset.streamState = streaming ? 'streaming' : 'complete';
         answer.classList.remove('hidden');
         answer.innerHTML = renderAIChatMarkdown(text);
         messages.scrollTop = messages.scrollHeight;
@@ -3492,19 +3537,26 @@
         }
 
         if (clientAIState.selectedModel === 'cnb/minimax-m3.1-flash') {
+          let cloudReply = '';
           try {
             const response = await fetch('/api/ai/chat', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ scan_id: currentScanResult?.scan_id, question, mode: 'cloud' })
+              body: JSON.stringify({ scan_id: currentScanResult?.scan_id, question, mode: 'cloud', stream: true })
             });
-            const cloud = await response.json();
-            if (!response.ok) throw new Error(String(cloud.detail || 'cloud_ai_provider_error'));
-            if (cloud.mode === 'cloud' && String(cloud.answer || '').trim()) {
-              displayFinalAnswer(String(cloud.answer).trim(), 'cloud');
-              return;
+            if (!response.ok) {
+              const error = await response.json();
+              throw new Error(String(error.detail || 'cloud_ai_provider_error'));
             }
-            throw new Error('cloud_ai_invalid_response');
+            if (!response.headers.get('content-type')?.includes('text/event-stream')) {
+              throw new Error('cloud_ai_invalid_response');
+            }
+            const finalReply = await consumeCloudStream(response, text => {
+              cloudReply = text;
+              displayFinalAnswer(text, 'cloud', true);
+            });
+            displayFinalAnswer(finalReply, 'cloud');
+            return;
           } catch (apiErr) {
             const cloudErrors = {
               cloud_ai_timeout: 'Cloud AI phản hồi quá lâu.',
@@ -3512,8 +3564,16 @@
               cloud_ai_busy: 'Dịch vụ Cloud AI đang bận, bạn có thể thử lại sau.',
               cloud_ai_request_limit: 'Bạn đã gửi nhiều câu hỏi liên tiếp, vui lòng đợi một phút.',
               cloud_ai_authentication_failed: 'Dịch vụ Cloud AI không chấp nhận khóa truy cập hiện tại.',
-              cloud_ai_unavailable: 'Cloud AI chưa được cấu hình trên máy chủ.'
+              cloud_ai_unavailable: 'Cloud AI chưa được cấu hình trên máy chủ.',
+              cloud_ai_stream_interrupted: 'Kết nối Cloud AI bị ngắt trước khi trả lời xong.'
             };
+            if (cloudReply) {
+              answer.dataset.streamState = 'interrupted';
+              responseSource.textContent = 'Cloud AI · Câu trả lời chưa hoàn tất';
+              showToast((cloudErrors[apiErr.message] || 'Cloud AI chưa hoàn thành câu trả lời.') +
+                ' Bạn có thể gửi lại câu hỏi.', 'warning');
+              return;
+            }
             showToast((cloudErrors[apiErr.message] || 'Chưa nhận được câu trả lời hợp lệ từ Cloud AI.') +
               ' Đang dùng câu trả lời dự phòng từ kết quả kiểm tra.', 'warning');
           }

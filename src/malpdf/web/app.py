@@ -31,7 +31,7 @@ from malpdf.scanner.ai_explainer import (
 )
 from malpdf.scanner.engine import MalPDFScannerEngine
 from malpdf.web.store import ScanJob
-from malpdf.web.cloud_chat import CLOUD_MODEL, cloud_answer
+from malpdf.web.cloud_chat import CLOUD_MODEL, cloud_answer, cloud_stream_response
 from malpdf.web.sessions import BrowserSessionRegistry, current_session, optional_session, session_route_class
 
 MAX_UPLOAD_BYTES = 32 * 1024 * 1024
@@ -273,8 +273,8 @@ async def scan_batch_files(files: list[UploadFile] = File(...)) -> list[dict[str
     return results
 
 
-@app.post("/api/ai/chat")
-def ai_chat_about_scan(payload: dict[str, Any]) -> dict[str, Any]:
+@app.post("/api/ai/chat", response_model=None)
+def ai_chat_about_scan(payload: dict[str, Any]) -> dict[str, Any] | Response:
     scan_id = payload.get("scan_id")
     question = str(payload.get("question", "")).strip()
     if not question:
@@ -292,6 +292,11 @@ def ai_chat_about_scan(payload: dict[str, Any]) -> dict[str, Any]:
     answer = ai_explainer.answer_question(scan_dict, question, cdr_audit=cdr_dict)
     compact_ctx = ai_explainer.build_compact_llm_context(scan_dict, cdr_audit=cdr_dict)
     if cloud_requested:
+        if payload.get("stream") is True:
+            stream = cloud_stream_response(question, compact_ctx, CLIENT_LLM_SYSTEM_PROMPT)
+            if stream is None:
+                raise HTTPException(status_code=503, detail="cloud_ai_unavailable")
+            return stream
         answer = cloud_answer(question, compact_ctx, CLIENT_LLM_SYSTEM_PROMPT)
         if answer is None:
             raise HTTPException(status_code=503, detail="cloud_ai_unavailable")

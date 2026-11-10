@@ -47,6 +47,54 @@ minute. When no replacement credential is configured, the UI uses its existing
 fallback; the old publicly embedded credential must be revoked/rotated. See
 [BUG-014](bugs/BUG-014-browser-cloud-api-credential.md).
 
+### Incremental cloud chat
+
+`POST /api/ai/chat` keeps its existing JSON behavior unless the body contains
+both `"mode": "cloud"` and the boolean `"stream": true`. Streaming uses the same
+session ownership, question limit, provider credential and six-per-minute
+budget. Validation and provider connection failures return the usual JSON HTTP
+error before starting a stream. There are no automatic provider retries.
+
+A successful streaming connection returns `text/event-stream`, `Cache-Control:
+no-store` and `X-Accel-Buffering: no`. Frames use UTF-8 and a blank-line separator:
+
+```text
+event: ready
+data: {"mode":"cloud","model":"cnb/minimax-m3.1-flash"}
+
+event: delta
+data: {"text":"Xin chào "}
+
+event: delta
+data: {"text":"bạn!"}
+
+event: done
+data: {"mode":"cloud","model":"cnb/minimax-m3.1-flash"}
+
+```
+
+Only final-answer `content` deltas are forwarded. Reasoning is discarded; safe
+comment heartbeats may keep the connection active during reasoning. That initial
+reasoning phase can still delay the first visible text. The 4096-token cap,
+low effort and 40 s socket timeout remain in force. The adapter bounds a frame
+to 64 KiB, the upstream stream to 2 MiB and final text to 16000 characters.
+
+Completion requires the provider's successful stop marker and nonempty text.
+An incomplete stream emits `event: error` with `{"detail":"<safe_code>"}` and
+never emits `done`; no provider error body or private reasoning is forwarded.
+If no text has arrived, the browser can use the existing labeled fallback.
+If some text is already visible, it remains labeled **Câu trả lời chưa hoàn
+tất**, rather than being silently replaced by a different answer. A closed
+stream without `done` is an interruption. Upstream resources close on completion,
+failure or downstream send/disconnect failure; an active socket read is still
+subject to its configured timeout.
+
+The browser decodes split UTF-8 and split event boundaries incrementally,
+renders each delta through the existing escaped Markdown renderer, and shows
+**Đang trả lời…** until `done`. It cancels/releases the reader after terminal
+events. No artificial typing delay is applied to a buffered full response.
+See [BUG-016](bugs/BUG-016-buffered-cloud-chat.md).
+
 Email inspection recursively preserves the MIME tree and handles a PDF at the
 root, nested multipart PDFs and forwarded `message/rfc822` messages. Empty or
 unreadable PDF candidates are `UNAVAILABLE` and hold the email for review rather
