@@ -19,6 +19,13 @@ cookies must open the direct Space URL. Foreign-origin writes and cross-site
 write requests are refused with 403, including when the browser possesses a
 session cookie. Private responses use `Cache-Control: no-store`.
 
+Behind a TLS-terminating proxy, set the trusted server variable
+`MALPDF_PUBLIC_ORIGIN` to the exact public HTTPS origin (without a path). It
+controls Origin checks and secure cookie flags independently of the internal
+HTTP URL. Invalid path/userinfo configurations fail closed with 503. Arbitrary
+forwarded request headers cannot select the trusted origin. The Space uses
+`https://drstone113-malpdfdetection.hf.space`.
+
 Session state is held in one process. Run one Uvicorn worker; multiple workers
 or replicas need shared session/job storage before they can preserve a browser's
 state. Idle sessions expire after eight hours and process restart clears the

@@ -35,3 +35,15 @@ sessions are retained. Empty page visits create no quarantine directories.
 Session state remains process-local: run one worker. No account login,
 distributed persistence or automatic quarantine deletion is introduced. See
 [the contract and limits](../web_security_and_validation.md).
+
+## Deployment follow-up — TLS termination
+
+Live verification on Hugging Face found same-origin POSTs rejected with 403:
+the external HTTPS Origin differed from the internal HTTP request base URL.
+The same assumption also omitted secure cookie flags behind that proxy. The
+earlier copied-router tests preserved an HTTPS request URL and missed this.
+
+`MALPDF_PUBLIC_ORIGIN` now supplies the trusted external origin for both checks
+and cookie flags. A proxy regression uses an HTTP internal URL, accepts only
+the configured public Origin, requires Secure/HttpOnly/Partitioned cookies and
+rejects malformed configuration. No caller-supplied forwarded header is trusted.

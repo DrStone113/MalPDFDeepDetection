@@ -11,6 +11,18 @@ from malpdf.web.sessions import BrowserSessionRegistry, session_route_class
 from malpdf.web.store import ScanJobStore
 
 
+def _origin_test_app(tmp_path: Path) -> FastAPI:
+    registry = BrowserSessionRegistry(tmp_path / "quarantine")
+    app = FastAPI()
+    app.router.route_class = session_route_class(registry)
+
+    @app.api_route("/probe", methods=["GET", "POST"])
+    def probe() -> dict[str, bool]:
+        return {"ok": True}
+
+    return app
+
+
 def test_registry_refuses_new_sessions_at_capacity_without_evicting_existing_owner(tmp_path: Path) -> None:
     registry = BrowserSessionRegistry(tmp_path, max_sessions=1)
     owner_token, owner_state = registry.acquire(None)
@@ -83,3 +95,68 @@ def test_empty_page_visitors_do_not_exhaust_session_capacity_or_create_quarantin
             assert visitor.cookies
 
     assert not quarantine_root.exists()
+
+
+def test_trusted_public_origin_accepts_browser_mutations_after_tls_termination(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("MALPDF_PUBLIC_ORIGIN", "https://public.example.invalid")
+    client = TestClient(_origin_test_app(tmp_path), base_url="http://internal-proxy")
+
+    response = client.post("/probe", headers={"Origin": "https://public.example.invalid"})
+
+    assert response.status_code == 200
+    assert response.json() == {"ok": True}
+
+
+@pytest.mark.parametrize("origin", ["http://internal-proxy", "https://foreign.example.invalid"])
+def test_trusted_public_origin_rejects_internal_and_foreign_browser_origins(tmp_path: Path, monkeypatch, origin: str) -> None:
+    monkeypatch.setenv("MALPDF_PUBLIC_ORIGIN", "https://public.example.invalid")
+    client = TestClient(_origin_test_app(tmp_path), base_url="http://internal-proxy")
+
+    response = client.post("/probe", headers={"Origin": origin})
+
+    assert response.status_code == 403
+
+
+def test_trusted_https_public_origin_sets_secure_partitioned_cookie_behind_http_proxy(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("MALPDF_PUBLIC_ORIGIN", "https://public.example.invalid")
+    client = TestClient(_origin_test_app(tmp_path), base_url="http://internal-proxy")
+
+    response = client.get("/probe")
+
+    assert response.status_code == 200
+    cookie_headers = [header.lower() for header in response.headers.get_list("set-cookie")]
+    assert any(
+        all(attribute in header for attribute in ("secure", "httponly", "partitioned", "samesite=none"))
+        for header in cookie_headers
+    )
+
+
+@pytest.mark.parametrize("method", ["GET", "POST"])
+@pytest.mark.parametrize(
+    "public_origin",
+    ["https://public.example.invalid/not-an-origin", "https://user@public.example.invalid"],
+    ids=["path", "userinfo"],
+)
+def test_malformed_trusted_public_origin_fails_closed(tmp_path: Path, monkeypatch, method: str, public_origin: str) -> None:
+    monkeypatch.setenv("MALPDF_PUBLIC_ORIGIN", public_origin)
+    client = TestClient(_origin_test_app(tmp_path), base_url="http://internal-proxy")
+
+    response = client.request(method, "/probe")
+
+    assert response.status_code == 503
+    assert "set-cookie" not in response.headers
+
+
+def test_default_origin_validation_uses_request_origin_without_trusting_forwarded_headers(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.delenv("MALPDF_PUBLIC_ORIGIN", raising=False)
+    client = TestClient(_origin_test_app(tmp_path), base_url="http://internal-proxy")
+    forwarded = {"X-Forwarded-Proto": "https", "X-Forwarded-Host": "public.example.invalid"}
+
+    assert client.post("/probe", headers={"Origin": "http://internal-proxy"}).status_code == 200
+    response = client.post("/probe", headers={**forwarded, "Origin": "https://public.example.invalid"})
+    assert response.status_code == 403
+    response = client.get("/probe", headers=forwarded)
+    assert response.status_code == 200
+    cookie_headers = [header.lower() for header in response.headers.get_list("set-cookie")]
+    assert any("httponly" in header and "samesite=lax" in header for header in cookie_headers)
+    assert all("secure" not in header and "partitioned" not in header for header in cookie_headers)

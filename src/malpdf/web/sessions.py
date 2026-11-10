@@ -3,11 +3,13 @@ from __future__ import annotations
 from contextvars import ContextVar
 from dataclasses import dataclass, field
 from pathlib import Path
+import os
 import secrets
 import threading
 import time
 from typing import Any
 from uuid import uuid4
+from urllib.parse import urlsplit
 
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse
@@ -41,6 +43,21 @@ def current_session() -> BrowserSession:
 
 def optional_session() -> BrowserSession | None:
     return _session_context.get()
+
+
+def _public_origin(request: Request) -> str:
+    configured = os.environ.get("MALPDF_PUBLIC_ORIGIN", "").strip().rstrip("/")
+    if not configured:
+        return str(request.base_url).rstrip("/")
+    origin = urlsplit(configured)
+    if (
+        origin.scheme not in {"http", "https"} or not origin.hostname
+        or origin.username is not None or origin.password is not None
+        or origin.path or origin.query or origin.fragment
+    ):
+        raise ValueError("invalid_public_origin_configuration")
+    origin.port
+    return f"{origin.scheme}://{origin.netloc.lower()}"
 
 
 class BrowserSessionRegistry:
@@ -91,10 +108,16 @@ def session_route_class(registry: BrowserSessionRegistry) -> type[APIRoute]:
     class BrowserSessionRoute(APIRoute):
         async def handle(self, scope: Scope, receive: Receive, send: Send) -> None:
             request = Request(scope)
+            try:
+                public_origin = _public_origin(request)
+            except ValueError:
+                response = JSONResponse({"detail": "invalid_public_origin_configuration"}, status_code=503)
+                await response(scope, receive, send)
+                return
             if request.method not in {"GET", "HEAD", "OPTIONS"}:
                 origin = request.headers.get("origin")
                 if (
-                    origin is not None and origin != str(request.base_url).rstrip("/")
+                    origin is not None and origin != public_origin
                     or request.headers.get("sec-fetch-site") == "cross-site"
                 ):
                     response = JSONResponse({"detail": "cross_origin_request_refused"}, status_code=403)
@@ -112,7 +135,7 @@ def session_route_class(registry: BrowserSessionRegistry) -> type[APIRoute]:
             async def send_with_cookie(message: Message) -> None:
                 if message["type"] == "http.response.start" and state is not None:
                     cookie_response = Response()
-                    secure = request.url.scheme == "https"
+                    secure = public_origin.startswith("https://")
                     cookie_response.set_cookie(
                         COOKIE_NAME, token, max_age=registry.idle_seconds,
                         httponly=True, secure=secure, samesite="none" if secure else "lax",
