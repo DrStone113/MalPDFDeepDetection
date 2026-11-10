@@ -1895,10 +1895,11 @@
       toast.className = `glass-card pointer-events-auto p-3.5 rounded-2xl flex items-start gap-3 shadow-2xl border ${borderCol} toast-enter relative overflow-hidden backdrop-blur-xl transition`;
       toast.innerHTML = `
         <span class="material-symbols-outlined ${iconCol} text-[20px] shrink-0 mt-0.5">${iconName}</span>
-        <div class="flex-1 text-xs text-on-surface font-semibold leading-relaxed pr-2">${message}</div>
+        <div data-toast-message class="flex-1 text-xs text-on-surface font-semibold leading-relaxed pr-2"></div>
         <button onclick="this.parentElement.remove()" class="text-outline hover:text-on-surface transition text-[16px] shrink-0 material-symbols-outlined">close</button>
         <div class="absolute bottom-0 left-0 h-0.5 ${bgBar}" style="width: 100%; transition: width ${duration}ms linear;" id="tb-${Date.now()}"></div>
       `;
+      toast.querySelector('[data-toast-message]').textContent = String(message ?? '');
       container.appendChild(toast);
       setTimeout(() => {
         const bar = toast.querySelector('div[style*="transition"]');
@@ -5339,9 +5340,13 @@
         for (const record of data.results) {
           const row = document.createElement('tr');
           row.className = 'hover:bg-surface-container-low/50 transition';
-          const actionVi = record.action === 'SANITIZED_ATTACHMENT'
-            ? 'Đã làm sạch tệp đính kèm'
-            : (record.action === 'DELIVERED_CLEAN' ? 'An toàn — Đã chuyển tiếp' : (record.action || '--'));
+          const actionVi = {
+            SANITIZED_ATTACHMENT: 'Đã làm sạch tệp đính kèm',
+            DISARMED_AND_QUARANTINED: 'Đã làm sạch tệp đính kèm',
+            DELIVERED_CLEAN: 'An toàn — Đã chuyển tiếp',
+            PASSED: 'An toàn — Đã kiểm tra',
+            HELD_FOR_REVIEW: 'Cần kiểm tra thêm',
+          }[record.action] || record.action || '--';
           for (const value of [record.msg_id, record.subject, record.sender_full || record.sender, record.attachment, actionVi, Number(record.latency_ms || 0).toFixed(1) + ' ms']) {
             const cell = document.createElement('td');
             cell.className = 'p-3 text-xs';
@@ -5350,7 +5355,7 @@
           }
           const dlCell = document.createElement('td');
           dlCell.className = 'p-3 text-right';
-          if (record.eml_job_id) {
+          if (record.eml_job_id && record.action !== 'HELD_FOR_REVIEW') {
             dlCell.innerHTML = `<a href="/api/gateway/download/eml/${encodeURIComponent(record.eml_job_id)}" class="px-3 py-1 rounded-full text-[11px] font-bold bg-secondary/15 text-secondary hover:bg-secondary hover:text-white transition inline-flex items-center gap-1"><span class="material-symbols-outlined text-[13px]">download</span><span>Tải .eml sạch</span></a>`;
           } else {
             dlCell.textContent = '--';
@@ -5603,11 +5608,12 @@
 
     function renderEMLInspectionResult(data) {
       if (!data) return;
-      const threatText = data.malicious_attachments > 0
+      const held = (data.unavailable_attachments || 0) > 0 || data.action_taken === 'HELD_FOR_REVIEW';
+      const threatText = held ? 'Có tệp đính kèm chưa xác minh — cần kiểm tra thêm' : data.malicious_attachments > 0
         ? `Đã làm sạch ${data.malicious_attachments} tệp nguy hiểm`
         : 'An toàn (Không có tệp nguy hiểm)';
-      const badgeLabel = data.malicious_attachments > 0 ? 'Đã làm sạch tệp đính kèm' : 'Email an toàn';
-      const badgeCls = data.malicious_attachments > 0 
+      const badgeLabel = held ? 'Cần kiểm tra thêm' : data.malicious_attachments > 0 ? 'Đã làm sạch tệp đính kèm' : 'Email an toàn';
+      const badgeCls = held ? 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800' : data.malicious_attachments > 0
         ? 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-error/15 text-error' 
         : 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-tertiary/15 text-tertiary';
 
@@ -5621,9 +5627,10 @@
         const badge = document.getElementById('eml-action-badge');
         if (badge) { badge.innerText = badgeLabel; badge.className = badgeCls; }
         const dlBtn = document.getElementById('btn-download-eml');
-        if (dlBtn && data.eml_job_id) {
-          dlBtn.href = `/api/gateway/download/eml/${data.eml_job_id}`;
-          dlBtn.classList.remove('hidden');
+        if (dlBtn) {
+          dlBtn.classList.toggle('hidden', held || !data.eml_job_id);
+          if (held || !data.eml_job_id) dlBtn.removeAttribute('href');
+          else dlBtn.href = `/api/gateway/download/eml/${encodeURIComponent(data.eml_job_id)}`;
         }
       }
 
@@ -5637,9 +5644,10 @@
         const tabBadge = document.getElementById('mail-tab-action-badge');
         if (tabBadge) { tabBadge.innerText = badgeLabel; tabBadge.className = badgeCls; }
         const tabDlBtn = document.getElementById('btn-mail-tab-download-eml');
-        if (tabDlBtn && data.eml_job_id) {
-          tabDlBtn.href = `/api/gateway/download/eml/${data.eml_job_id}`;
-          tabDlBtn.classList.remove('hidden');
+        if (tabDlBtn) {
+          tabDlBtn.classList.toggle('hidden', held || !data.eml_job_id);
+          if (held || !data.eml_job_id) tabDlBtn.removeAttribute('href');
+          else tabDlBtn.href = `/api/gateway/download/eml/${encodeURIComponent(data.eml_job_id)}`;
         }
       }
     }
