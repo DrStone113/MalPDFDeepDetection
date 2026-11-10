@@ -236,7 +236,7 @@ class ONNXMalPDFScannerEngine:
         edge_alpha: np.ndarray,
         ast_token_attn: np.ndarray,
         real_edges: bool,
-    ) -> tuple[list[float], list[float], list[float], list[float], dict[str, float]]:
+    ) -> tuple[list[float | None], list[float], list[float], list[float | None], dict[str, float]]:
         n_nodes = nf_np.shape[0]
         priority_nodes: list[int] = []
         other_nodes: list[int] = []
@@ -292,8 +292,7 @@ class ONNXMalPDFScannerEngine:
         if node_imp_sum > 1e-9:
             node_saliency = [round(float(v / node_imp_sum), 4) for v in raw_node_imp.tolist()]
         else:
-            uniform = round(1.0 / max(n_nodes, 1), 4)
-            node_saliency = [uniform for _ in range(n_nodes)]
+            node_saliency = [0.0 for _ in range(n_nodes)]
 
         tabular_grad_importance = [0.0 for _ in range(tab_np.shape[1])]
         for pos, idx_t in enumerate(active_tab_indices):
@@ -353,7 +352,8 @@ class ONNXMalPDFScannerEngine:
         ]
         lipschitz_val = float(sum(lip_ratios) / max(len(lip_ratios), 1))
 
-        all_abs_attr = [abs(x) for x in tabular_grad_importance] + node_saliency
+        all_abs_attr = [abs(tabular_grad_importance[index]) for index in active_tab_indices]
+        all_abs_attr.extend(node_saliency[index] for index in cand_nodes)
         n_dim = len(all_abs_attr)
         if n_dim > 1:
             l1_norm = sum(all_abs_attr)
@@ -396,7 +396,11 @@ class ONNXMalPDFScannerEngine:
             "ast_branch_pct": ast_branch_pct,
             "tabular_branch_pct": tabular_branch_pct,
         }
-        return node_saliency, edge_attention, ast_token_attention, tabular_grad_importance, proof_metrics
+        measured_nodes = set(cand_nodes)
+        measured_tabs = set(active_tab_indices)
+        reported_nodes = [value if index in measured_nodes else None for index, value in enumerate(node_saliency)]
+        reported_tabs = [value if index in measured_tabs else None for index, value in enumerate(tabular_grad_importance)]
+        return reported_nodes, edge_attention, ast_token_attention, reported_tabs, proof_metrics
 
     def scan_bytes(
         self,
@@ -555,6 +559,7 @@ class ONNXMalPDFScannerEngine:
                 ast_token_attention=ast_token_attention,
                 tabular_grad_importance=tabular_grad_importance,
                 xai_proof_metrics=proof_metrics,
+                saliency_method="occlusion",
             )
 
         graph_nodes: list[dict[str, Any]] = []
