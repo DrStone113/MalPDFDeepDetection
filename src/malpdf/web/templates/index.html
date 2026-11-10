@@ -2750,12 +2750,7 @@
       'Sử dụng định dạng Markdown phong phú (in đậm **...**, danh sách đánh số 1. 2., danh sách gạch đầu dòng, khối code `...`) để câu trả lời trực quan, mạch lạc, dễ đọc. ' +
       'Không bao giờ từ chối giải thích báo cáo kiểm tra an toàn của hệ thống.';
 
-    const VILAO_API_CONFIG = {
-      baseUrl: 'https://api.vilao.ai/v1',
-      endpoint: 'https://api.vilao.ai/v1/chat/completions',
-      apiKey: 'sk-4d3c4ccce022ef61fdb2a595f8c2fa5bb9c690f205901a0c633d2f8d9bac9865',
-      model: 'cnb/minimax-m3.1-flash'
-    };
+    const VILAO_API_CONFIG = { model: 'cnb/minimax-m3.1-flash' };
 
     const clientAIState = {
       checked: false,
@@ -3491,63 +3486,19 @@
 
         if (clientAIState.selectedModel === 'cnb/minimax-m3.1-flash') {
           try {
-            const userPrompt = _buildMiniMaxPrompt(question, groundTruthAnswer);
-            const response = await fetch(VILAO_API_CONFIG.endpoint, {
+            const response = await fetch('/api/ai/chat', {
               method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${VILAO_API_CONFIG.apiKey}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                model: VILAO_API_CONFIG.model,
-                messages: [
-                  { role: 'system', content: CLIENT_LLM_SYSTEM_PROMPT },
-                  { role: 'user', content: userPrompt }
-                ],
-                stream: true,
-                temperature: 0.2,
-                max_tokens: 650
-              })
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ scan_id: currentScanResult?.scan_id, question, mode: 'cloud' })
             });
-
-            if (!response.ok) {
-              throw new Error(`Cloud API HTTP ${response.status}`);
-            }
-
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder('utf-8');
-            let fullReply = '';
-            let buffer = '';
-
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-              buffer += decoder.decode(value, { stream: true });
-              const lines = buffer.split('\n');
-              buffer = lines.pop() || '';
-
-              for (const line of lines) {
-                const trimmed = line.trim();
-                if (!trimmed || trimmed === 'data: [DONE]') continue;
-                if (trimmed.startsWith('data: ')) {
-                  try {
-                    const data = JSON.parse(trimmed.slice(6));
-                    const delta = (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) || '';
-                    if (delta) {
-                      fullReply += delta;
-                      displayFinalAnswer(fullReply);
-                    }
-                  } catch (e) {}
-                }
-              }
-            }
-
-            if (fullReply.trim()) {
-              displayFinalAnswer(fullReply.trim());
+            if (!response.ok) throw new Error(`Cloud AI HTTP ${response.status}`);
+            const cloud = await response.json();
+            if (cloud.mode === 'cloud' && String(cloud.answer || '').trim()) {
+              displayFinalAnswer(String(cloud.answer).trim());
               return;
             }
           } catch (apiErr) {
-            console.warn('Cloud API error, auto falling back to backup architecture:', apiErr);
+            showToast('Cloud AI chưa sẵn sàng, đang dùng chế độ trả lời dự phòng.', 'warning');
           }
         }
 

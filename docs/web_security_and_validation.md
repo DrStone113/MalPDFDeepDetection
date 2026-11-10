@@ -33,6 +33,13 @@ quarantined files is outside this change.
 
 ## Email and XAI contracts
 
+Cloud chat uses only the server-side `VILAO_API_KEY` secret. No key is served in
+HTML. Cloud mode requires a session-owned scan, bounds questions to 2000
+characters, refuses redirects, and limits provider calls to six per session per
+minute. When no replacement credential is configured, the UI uses its existing
+fallback; the old publicly embedded credential must be revoked/rotated. See
+[BUG-014](bugs/BUG-014-browser-cloud-api-credential.md).
+
 Email inspection recursively preserves the MIME tree and handles a PDF at the
 root, nested multipart PDFs and forwarded `message/rfc822` messages. Empty or
 unreadable PDF candidates are `UNAVAILABLE` and hold the email for review rather

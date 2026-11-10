@@ -3,6 +3,7 @@ from __future__ import annotations
 from html.parser import HTMLParser
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -16,6 +17,14 @@ class DocumentAttributes(HTMLParser):
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         if tag == "html":
             self.html_attributes = dict(attrs)
+
+
+def test_browser_template_contains_no_provider_credentials() -> None:
+    template = Path(__file__).resolve().parents[1] / "src/malpdf/web/templates/index.html"
+    source = template.read_text(encoding="utf-8")
+    contains_key_literal = re.search(r"\b(?:sk-(?:proj-)?|hf_)[A-Za-z0-9_-]{20,}", source) is not None
+    assert contains_key_literal is False, "Provider credential literals must never be served to browsers"
+    assert "VILAO_API_CONFIG.apiKey" not in source
 
 
 def _browser_attributes(tmp_path: Path, page: str) -> dict[str, str | None]:

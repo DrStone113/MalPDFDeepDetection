@@ -35,6 +35,7 @@ Hệ thống lưu trữ, phân tích chuyên sâu nguyên nhân gốc rễ và c
 | BUG-011 | Bỏ sót PDF trong MIME lồng nhau | RESOLVED | `test_mail_gateway_mime.py` | [Hồ sơ](BUG-011-recursive-email-pdf-inspection.md) |
 | BUG-012 | Chèn HTML vào thông báo | RESOLVED | `test_web_notifications.py` | [Hồ sơ](BUG-012-untrusted-notification-html.md) |
 | BUG-013 | Nhãn XAI ONNX sai phương pháp | RESOLVED | `test_xai_provenance.py` | [Hồ sơ](BUG-013-onnx-xai-method-provenance.md) |
+| BUG-014 | Khóa Cloud AI nằm trong mã giao diện công khai | MITIGATED; cần thay khóa cũ | `test_cloud_chat_security.py`, `test_web_notifications.py` | [Hồ sơ](BUG-014-browser-cloud-api-credential.md) |
 
 ## 2. Quy trình Ghi nhận & Xử lý Lỗi Chuẩn
 

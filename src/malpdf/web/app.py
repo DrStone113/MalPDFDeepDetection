@@ -31,6 +31,7 @@ from malpdf.scanner.ai_explainer import (
 )
 from malpdf.scanner.engine import MalPDFScannerEngine
 from malpdf.web.store import ScanJob
+from malpdf.web.cloud_chat import CLOUD_MODEL, cloud_answer
 from malpdf.web.sessions import BrowserSessionRegistry, current_session, optional_session, session_route_class
 
 MAX_UPLOAD_BYTES = 32 * 1024 * 1024
@@ -278,6 +279,9 @@ def ai_chat_about_scan(payload: dict[str, Any]) -> dict[str, Any]:
     question = str(payload.get("question", "")).strip()
     if not question:
         raise HTTPException(status_code=400, detail="question_empty")
+    cloud_requested = payload.get("mode") == "cloud"
+    if cloud_requested and len(question) > 2000:
+        raise HTTPException(status_code=400, detail="question_too_long")
     job = current_session().store.get_job(scan_id) if scan_id else _get_active_or_latest_job()
     if not job or not job.scan_result:
         raise HTTPException(status_code=404, detail="no_scan_data_for_ai_analysis")
@@ -287,12 +291,17 @@ def ai_chat_about_scan(payload: dict[str, Any]) -> dict[str, Any]:
     )
     answer = ai_explainer.answer_question(scan_dict, question, cdr_audit=cdr_dict)
     compact_ctx = ai_explainer.build_compact_llm_context(scan_dict, cdr_audit=cdr_dict)
+    if cloud_requested:
+        answer = cloud_answer(question, compact_ctx, CLIENT_LLM_SYSTEM_PROMPT)
+        if answer is None:
+            raise HTTPException(status_code=503, detail="cloud_ai_unavailable")
     return {
         "scan_id": job.scan_id,
         "file_name": job.file_name,
         "question": question,
         "answer": answer,
-        "mode": "deterministic_fallback",
+        "mode": "cloud" if cloud_requested else "deterministic_fallback",
+        "model": CLOUD_MODEL if cloud_requested else None,
         "llm_compact_context": compact_ctx,
         "llm_system_prompt": CLIENT_LLM_SYSTEM_PROMPT,
         "preferred_webllm_model": DEFAULT_WEBLLM_MODEL,
