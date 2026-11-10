@@ -3444,8 +3444,11 @@
 
       const answer = document.createElement('div');
       answer.className = 'chat-prose hidden';
+      const responseSource = document.createElement('div');
+      responseSource.className = 'text-[10px] text-outline mb-1 hidden';
 
       bubbleContainer.appendChild(thinkingIndicator);
+      bubbleContainer.appendChild(responseSource);
       bubbleContainer.appendChild(answer);
       aiWrap.appendChild(avatar);
       aiWrap.appendChild(bubbleContainer);
@@ -3455,8 +3458,12 @@
       if (button) button.disabled = true;
       if (input) input.disabled = true;
 
-      function displayFinalAnswer(text) {
+      function displayFinalAnswer(text, mode = 'deterministic_fallback') {
         thinkingIndicator.classList.add('hidden');
+        responseSource.classList.remove('hidden');
+        responseSource.textContent = mode === 'cloud' ? 'Cloud AI · MiniMax M3.1 Flash' :
+          mode === 'local' ? 'AI trên trình duyệt' : 'Trả lời dự phòng từ kết quả kiểm tra';
+        answer.dataset.responseMode = mode;
         answer.classList.remove('hidden');
         answer.innerHTML = renderAIChatMarkdown(text);
         messages.scrollTop = messages.scrollHeight;
@@ -3491,14 +3498,24 @@
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ scan_id: currentScanResult?.scan_id, question, mode: 'cloud' })
             });
-            if (!response.ok) throw new Error(`Cloud AI HTTP ${response.status}`);
             const cloud = await response.json();
+            if (!response.ok) throw new Error(String(cloud.detail || 'cloud_ai_provider_error'));
             if (cloud.mode === 'cloud' && String(cloud.answer || '').trim()) {
-              displayFinalAnswer(String(cloud.answer).trim());
+              displayFinalAnswer(String(cloud.answer).trim(), 'cloud');
               return;
             }
+            throw new Error('cloud_ai_invalid_response');
           } catch (apiErr) {
-            showToast('Cloud AI chưa sẵn sàng, đang dùng chế độ trả lời dự phòng.', 'warning');
+            const cloudErrors = {
+              cloud_ai_timeout: 'Cloud AI phản hồi quá lâu.',
+              cloud_ai_output_limit: 'Cloud AI chưa hoàn thành câu trả lời trong giới hạn xử lý.',
+              cloud_ai_busy: 'Dịch vụ Cloud AI đang bận, bạn có thể thử lại sau.',
+              cloud_ai_request_limit: 'Bạn đã gửi nhiều câu hỏi liên tiếp, vui lòng đợi một phút.',
+              cloud_ai_authentication_failed: 'Dịch vụ Cloud AI không chấp nhận khóa truy cập hiện tại.',
+              cloud_ai_unavailable: 'Cloud AI chưa được cấu hình trên máy chủ.'
+            };
+            showToast((cloudErrors[apiErr.message] || 'Chưa nhận được câu trả lời hợp lệ từ Cloud AI.') +
+              ' Đang dùng câu trả lời dự phòng từ kết quả kiểm tra.', 'warning');
           }
         }
 
@@ -3533,13 +3550,13 @@
                   break;
                 }
                 if (fullReply.trim().length > 0) {
-                  displayFinalAnswer(fullReply);
+                  displayFinalAnswer(fullReply, 'local');
                 }
               }
 
               const cleanedReply = fullReply.trim();
               if (!refusalDetected && !_isRefusalOrBrokenLLMReply(cleanedReply)) {
-                displayFinalAnswer(cleanedReply);
+                displayFinalAnswer(cleanedReply, 'local');
                 return;
               }
             } catch (webllmErr) {

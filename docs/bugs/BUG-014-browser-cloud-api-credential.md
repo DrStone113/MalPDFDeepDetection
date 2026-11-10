@@ -41,3 +41,12 @@ literal does not make that old credential safe, and history was not force-pushed
 
 Only approved PDF fixtures are used in API tests; no live provider request or
 new AI-quality result is claimed without replacement credentials.
+
+## Replacement credential follow-up — 2026-11-10
+
+The user supplied a different replacement credential and authorized its use.
+It was stored only as the Space's server-side `VILAO_API_KEY` secret. A live
+cloud request then returned HTTP 200 and a nonempty final answer. The previous
+paragraphs describe the original deployment state; the Space is now configured.
+Revocation of the historically exposed old credential remains unverified.
+Subsequent intermittent greeting failures are tracked separately as BUG-015.
