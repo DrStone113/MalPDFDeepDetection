@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 import email
+from email import encoders
+from email.message import Message
 from email.mime.application import MIMEApplication
 import hashlib
 from pathlib import Path
@@ -78,84 +80,73 @@ class MailGatewayFilter:
         inspections: list[AttachmentInspection] = []
         malicious_count = 0
         unavailable_count = 0
-        modified = False
+        visited_parts = 0
 
-        if msg.is_multipart():
-            new_payload = []
-            for part in msg.get_payload():
-                content_disposition = str(part.get("Content-Disposition", ""))
-                content_type = str(part.get_content_type())
-                filename = part.get_filename() or ""
-
-                is_pdf = filename.lower().endswith(".pdf") or content_type == "application/pdf"
-                if not is_pdf:
-                    new_payload.append(part)
-                    continue
-
-                pdf_bytes = part.get_payload(decode=True)
+        def inspect_part(part: Message, depth: int = 0) -> Message:
+            nonlocal malicious_count, unavailable_count, visited_parts
+            visited_parts += 1
+            if depth > 64 or visited_parts > 1000:
+                raise ValueError("mime_traversal_limit")
+            if part.is_multipart():
+                part.set_payload([inspect_part(child, depth + 1) for child in part.get_payload()])
+                return part
+            filename = part.get_filename() or ""
+            if not (filename.lower().endswith(".pdf") or part.get_content_type() == "application/pdf"):
+                return part
+            pdf_bytes = part.get_payload(decode=True) or b""
+            sha256 = hashlib.sha256(pdf_bytes).hexdigest()
+            try:
                 if not pdf_bytes:
-                    new_payload.append(part)
-                    continue
-
-                sha256 = hashlib.sha256(pdf_bytes).hexdigest()
+                    raise ValueError("pdf_attachment_payload_missing")
                 scan_res = self.scanner.scan_bytes(pdf_bytes, file_name=filename, explain=True)
+            except (ValueError, RuntimeError):
+                unavailable_count += 1
+                inspections.append(AttachmentInspection(
+                    filename=filename, sha256=sha256, size_bytes=len(pdf_bytes),
+                    verdict="UNAVAILABLE", malware_probability=None, is_ood=None,
+                    disarmed=False, prediction_available=False,
+                    prediction_blockers=["pdf_attachment_unreadable" if pdf_bytes else "pdf_attachment_payload_missing"],
+                ))
+                return part
+            if not scan_res.prediction_available:
+                unavailable_count += 1
+                inspections.append(AttachmentInspection(
+                    filename=filename, sha256=sha256, size_bytes=len(pdf_bytes),
+                    verdict="UNAVAILABLE", malware_probability=None, is_ood=None,
+                    disarmed=False, prediction_available=False,
+                    prediction_blockers=scan_res.prediction_blockers,
+                ))
+                return part
+            audit = None
+            q_path = None
+            if scan_res.verdict == "MALICIOUS":
+                malicious_count += 1
+                q_path = self.quarantine_dir / f"{sha256}.pdf"
+                q_path.write_bytes(pdf_bytes)
+                sanitized_bytes, audit = self.disarmer.sanitize_bytes(pdf_bytes, file_name=filename)
+                replacement = MIMEApplication(sanitized_bytes, _subtype="pdf")
+                for key, value in part.items():
+                    if key.lower() not in {
+                        "content-type", "content-transfer-encoding", "content-disposition", "mime-version",
+                        "x-malpdf-sanitized", "x-malpdf-original-sha256",
+                    }:
+                        replacement[key] = value
+                replacement.add_header("Content-Disposition", "attachment", filename=f"sanitized_{filename or 'attachment.pdf'}")
+                replacement.add_header("X-MalPDF-Sanitized", "TRUE")
+                replacement.add_header("X-MalPDF-Original-SHA256", sha256)
+                part = replacement
+            inspections.append(AttachmentInspection(
+                filename=filename, sha256=sha256, size_bytes=len(pdf_bytes),
+                verdict=scan_res.verdict, malware_probability=scan_res.malware_probability,
+                is_ood=scan_res.is_ood, disarmed=audit is not None,
+                quarantine_path=str(q_path.resolve()) if q_path is not None else None,
+                cdr_audit=audit.to_dict() if audit is not None else None,
+            ))
+            return part
 
-                if not scan_res.prediction_available:
-                    unavailable_count += 1
-                    new_payload.append(part)
-                    inspections.append(AttachmentInspection(
-                        filename=filename, sha256=sha256, size_bytes=len(pdf_bytes),
-                        verdict="UNAVAILABLE", malware_probability=None, is_ood=None,
-                        disarmed=False, prediction_available=False,
-                        prediction_blockers=scan_res.prediction_blockers,
-                    ))
-                    continue
-
-                if scan_res.verdict == "MALICIOUS":
-                    malicious_count += 1
-                    modified = True
-
-                    q_path = self.quarantine_dir / f"{sha256}_{filename}"
-                    q_path.write_bytes(pdf_bytes)
-
-                    sanitized_bytes, audit = self.disarmer.sanitize_bytes(pdf_bytes)
-
-                    sanitized_part = MIMEApplication(sanitized_bytes, _subtype="pdf")
-                    sanitized_name = f"sanitized_{filename}"
-                    sanitized_part.add_header("Content-Disposition", "attachment", filename=sanitized_name)
-                    sanitized_part.add_header("X-MalPDF-Sanitized", "TRUE")
-                    sanitized_part.add_header("X-MalPDF-Original-SHA256", sha256)
-                    new_payload.append(sanitized_part)
-
-                    inspections.append(
-                        AttachmentInspection(
-                            filename=filename,
-                            sha256=sha256,
-                            size_bytes=len(pdf_bytes),
-                            verdict=scan_res.verdict,
-                            malware_probability=scan_res.malware_probability,
-                            is_ood=scan_res.is_ood,
-                            disarmed=True,
-                            quarantine_path=str(q_path.resolve()),
-                            cdr_audit=audit.to_dict(),
-                        )
-                    )
-                else:
-                    new_payload.append(part)
-                    inspections.append(
-                        AttachmentInspection(
-                            filename=filename,
-                            sha256=sha256,
-                            size_bytes=len(pdf_bytes),
-                            verdict=scan_res.verdict,
-                            malware_probability=scan_res.malware_probability,
-                            is_ood=scan_res.is_ood,
-                            disarmed=False,
-                            quarantine_path=None,
-                            cdr_audit=None,
-                        )
-                    )
-            msg.set_payload(new_payload)
+        msg = inspect_part(msg)
+        for header in ("X-MalPDF-Inspection", "X-MalPDF-Unavailable-Count", "X-MalPDF-Malicious-Count", "X-MalPDF-Gateway-Latency-MS"):
+            del msg[header]
 
         latency_ms = round((time.perf_counter() - start_time) * 1000.0, 2)
         action_taken = "HELD_FOR_REVIEW" if unavailable_count else "DISARMED_AND_QUARANTINED" if malicious_count > 0 else "PASSED"
@@ -174,7 +165,15 @@ class MailGatewayFilter:
             for part in msg.walk():
                 if part.get_content_type() == "text/plain":
                     orig_body = part.get_payload(decode=True) or b""
-                    part.set_payload((warning_banner + orig_body.decode(errors="replace")).encode("utf-8"))
+                    charset = part.get_content_charset() or "utf-8"
+                    try:
+                        body_text = orig_body.decode(charset, errors="replace")
+                    except LookupError:
+                        body_text = orig_body.decode("utf-8", errors="replace")
+                    part.set_payload((warning_banner + body_text).encode("utf-8"))
+                    part.set_param("charset", "utf-8")
+                    del part["Content-Transfer-Encoding"]
+                    encoders.encode_base64(part)
                     break
         else:
             msg["X-MalPDF-Inspection"] = "CLEAN"
