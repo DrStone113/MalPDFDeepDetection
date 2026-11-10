@@ -1,5 +1,8 @@
 # Development environment and verification
 
+For browser-session isolation, email MIME coverage, XAI provenance and the
+hosted no-PDF security gate, see [web security and validation](web_security_and_validation.md).
+
 The native MuPDF inventory now has generated-input tests in
 `tests/test_mupdf_adapter.py`. With the dedicated Windows environment:
 

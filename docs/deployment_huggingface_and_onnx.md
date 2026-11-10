@@ -191,15 +191,26 @@ Sau khi lệnh `git push` hoàn tất, mở `https://huggingface.co/spaces/DrSto
 | **3** | `UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True` tại `ast_transformer.py:44`. | PyTorch `nn.TransformerEncoder` mặc định bật `enable_nested_tensor=True` nhưng tính năng này tự tắt khi dùng `norm_first=True` (Pre-LN). | Đã thêm `enable_nested_tensor=False` tường minh trong `src/malpdf/models/ast_transformer.py` và chuyển hoàn toàn sang `ONNX Runtime` trong `production/` (không nạp `torch` khi suy luận). |
 | **4** | `GET /favicon.ico HTTP/1.1 404 Not Found` và `GET /env-config.js HTTP/1.1 404 Not Found` trong Container logs. | Trình duyệt và lớp vỏ iframe của Hugging Face Spaces tự động truy vấn `/favicon.ico` và `/env-config.js` khi mở ứng dụng. | Đã bổ sung 2 endpoint `GET /favicon.ico` (trả về biểu tượng SVG) và `GET /env-config.js` (trả về `window.__ENV__ = {};`) trong `production/web_service.py`. |
 | **5** | Git push bị từ chối với lỗi `remote: error: File models/pdf_transgraph_v2.onnx is binary / offending file`. | Hugging Face từ chối các tệp nhị phân lớn hơn ngưỡng cho phép nếu không được quản lý bởi Git LFS. | Chạy `git lfs install`; script `prepare_hf_space.py` đã tự động ghi `*.onnx filter=lfs diff=lfs merge=lfs -text` vào `.gitattributes`. Nếu đã lỡ commit trước khi bật LFS, chạy `git lfs migrate import --include="*.onnx,*.pt" --everything` rồi push lại. |
-| **6** | Nhiều người dùng truy cập Space cùng lúc thấy lịch sử quét của nhau. | Trạng thái lịch sử quét nếu lưu chung toàn cục sẽ bị chia sẻ giữa các phiên truy cập. | `production/web_service.py` đã cô lập hoàn toàn lịch sử theo khóa phiên `X-MalPDF-Client-ID` riêng biệt của từng trình duyệt và bảo vệ kho cách ly bằng `scan_id` ngẫu nhiên 128-bit. |
+| **6** | Nhiều người dùng truy cập Space cùng lúc thấy lịch sử quét của nhau. | Trạng thái lịch sử quét nếu lưu chung toàn cục sẽ bị chia sẻ giữa các phiên truy cập. | Cả hai API dùng cookie phiên ngẫu nhiên do máy chủ cấp; mỗi phiên có kho scan, email, audit và khu cách ly riêng. Không dùng `X-MalPDF-Client-ID` làm danh tính. Chạy một worker; xem [hợp đồng phiên và kiểm thử](web_security_and_validation.md). |
 
 ---
 
-## 6. Cơ chế An toàn khi Tải Tệp PDF Độc hại lên Giao diện Web
+## 6. Ranh giới xử lý PDF và kiểm chứng
 
-1. **Trên máy tính người dùng (Client Browser):**
-   - Khi người dùng chọn tệp PDF qua hộp thoại `<input type="file">` hoặc kéo-thả vào trang web, trình duyệt chỉ đọc tệp dưới dạng luồng byte thô (`Blob` / `File`) để đóng gói vào gói tin `HTTP POST multipart/form-data`.
-   - Trình duyệt **tuyệt đối không mở hay kết xuất (render)** tệp PDF đó, nên không một đoạn mã JavaScript hay lỗ hổng trình đọc nào trong PDF có thể kích hoạt trên máy người dùng (miễn là người dùng không tự nhấp đúp mở tệp đó bằng Adobe Reader/Foxit trên máy cá nhân).
-2. **Trên máy chủ xử lý (Server / Hugging Face Container):**
-   - Toàn bộ quá trình quét (`/api/scan`) và tẩy độc (`/api/disarm`) xử lý hoàn toàn trên bộ đệm byte trong RAM (`io.BytesIO(raw_bytes)`) bằng bộ phân tích tĩnh hữu hạn (`Bounded Static Extractor`, giới hạn giải nén `16 MB`/stream) và `ONNX Runtime`.
-   - Máy chủ **không bao giờ gọi lệnh hệ thống hay thực thi JavaScript** bên trong PDF. Tệp cách ly chỉ được lưu tạm thời với tên băm vô hại trong `/tmp/malpdf_quarantine` (hoặc tự động xoay vòng tối đa 32 bản ghi trong bộ nhớ) để phục vụ thao tác tải về bản đã làm sạch (`CDR`).
+Windows DEV chỉ dùng fixture PDF đã được duyệt. PDF chưa xác minh hoặc nghi có mã
+độc chỉ được xử lý trong LAB hay môi trường cô lập đã được phê duyệt, theo
+`AGENTS.md`. Không đưa mẫu thật từ LAB về Windows hoặc chạy detonation qua giao diện.
+
+API nhận byte thật từ tệp tải lên và thực hiện phân tích tĩnh; không chạy mã
+JavaScript trong PDF. CDR mở trực tiếp byte gốc bằng `pikepdf`, kiểm tra lại
+trang, luồng nội dung và tài nguyên sau khi bỏ khóa kích hoạt. Bộ phân tích và
+renderer vẫn xử lý dữ liệu không tin cậy; không coi container hay giới hạn dung
+lượng upload là bằng chứng cô lập tài nguyên đầy đủ.
+
+Cookie HTTPS dùng `HttpOnly; Secure; SameSite=None; Partitioned` và API từ chối
+ghi từ origin khác. Trình duyệt chặn cookie nhúng cần mở URL trực tiếp của Space.
+Trạng thái phiên hiện nằm trong một tiến trình và mất sau khi khởi động lại;
+không cấu hình nhiều worker/replica trước khi có kho phiên dùng chung.
+
+Các kiểm thử thực tế, điều kiện fixture/model và giới hạn CI được ghi tại
+[web security and validation](web_security_and_validation.md).
