@@ -320,3 +320,15 @@ def test_profile_worker_include_byte_images_flag_signature() -> None:
     assert inspect.signature(extract_pdf).parameters["include_byte_images"].default is True
     assert inspect.signature(profile_pdf).parameters["include_byte_images"].default is True
     assert inspect.signature(_profile_child).parameters["include_byte_images"].default is True
+
+
+def test_cloud_script_uses_relative_arlington_lock_path() -> None:
+    import importlib.util
+
+    script_path = Path(__file__).resolve().parents[1] / "scripts" / "cloud_bulk_extract.py"
+    spec = importlib.util.spec_from_file_location("cloud_bulk_extract_check", script_path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    assert isinstance(mod.ARLINGTON_LOCK_REL, str)
+    assert not Path(mod.ARLINGTON_LOCK_REL).is_absolute()
+    assert mod.ARLINGTON_LOCK_REL == "configs/arlington.lock.json"

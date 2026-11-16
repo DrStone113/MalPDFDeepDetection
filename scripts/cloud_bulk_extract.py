@@ -31,7 +31,8 @@ from malpdf.extraction.gpu_accel import (
 from malpdf.static.execution import available_cpus
 
 
-ARLINGTON_LOCK_PATH = REPO / "configs" / "arlington.lock.json"
+ARLINGTON_LOCK_REL = "configs/arlington.lock.json"
+ARLINGTON_LOCK_PATH = REPO / ARLINGTON_LOCK_REL
 ARLINGTON_DIR = REPO / "third_party" / "arlington-pdf-model"
 
 
@@ -41,14 +42,14 @@ def setup_arlington() -> dict:
     if not ARLINGTON_DIR.is_dir():
         ARLINGTON_DIR.parent.mkdir(parents=True, exist_ok=True)
         subprocess.run(
-            ["git", "clone", "--filter=blob:none", ARLINGTON_URL, str(ARLINGTON_DIR)],
+            ["git", "clone", ARLINGTON_URL, str(ARLINGTON_DIR)],
             check=True,
         )
     subprocess.run(
         ["git", "-C", str(ARLINGTON_DIR), "checkout", "--detach", target_commit],
         check=True,
     )
-    catalog = load_model(REPO, ARLINGTON_LOCK_PATH)
+    catalog = load_model(REPO, ARLINGTON_LOCK_REL)
     return {"status": "verified", "commit": target_commit, "tables": len(catalog.tables)}
 
 
@@ -178,7 +179,7 @@ def main(argv: list[str] | None = None) -> int:
         if not args.skip_arlington:
             if not ARLINGTON_DIR.is_dir():
                 setup_arlington()
-            catalog = load_model(REPO, ARLINGTON_LOCK_PATH)
+            catalog = load_model(REPO, ARLINGTON_LOCK_REL)
 
         limits = default_bulk_limits(
             wall_seconds=args.wall_seconds,
