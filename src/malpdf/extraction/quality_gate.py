@@ -304,7 +304,7 @@ def evaluate_sample_quality(bundle, expected_sha256, *, node_cap=MAX_NODES):
     return validate_sample_gate_case(result)
 
 
-def evaluate_sample_quality_v2(bundle, expected_sha256, *, node_cap=MAX_NODES):
+def evaluate_sample_quality_v2(bundle, expected_sha256, *, node_cap=MAX_NODES, projected_v2=None):
     if not isinstance(expected_sha256, str) or not HASH_RE.fullmatch(expected_sha256):
         raise ValueError("quality_gate_identity")
     if type(node_cap) is not int or not 1 <= node_cap <= MAX_NODES:
@@ -327,7 +327,9 @@ def evaluate_sample_quality_v2(bundle, expected_sha256, *, node_cap=MAX_NODES):
 
     try:
         proj_v2 = validate_graph_projection_v2(
-            project_graph_bundle_v2(bundle, expected_sha256, node_cap=node_cap),
+            project_graph_bundle_v2(bundle, expected_sha256, node_cap=node_cap)
+            if projected_v2 is None
+            else projected_v2,
             expected_sha256,
         )
     except (ValueError, TypeError, KeyError, RecursionError, OverflowError):

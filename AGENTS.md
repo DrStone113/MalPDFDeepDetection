@@ -6,17 +6,18 @@ Authoritative specification index and operational boundaries for AI agents and d
 
 | Domain | Core Directive | Detailed Specification |
 | --- | --- | --- |
-| **Architecture & Environments** | Windows DEV (`C:\Project\MalPDFDeepDetection`) is source of truth with CUDA. REMnux LAB (`192.168.217.10`) is isolated untrusted analysis VM. Transport via VMnet1 Host-only SSH (`remnux-lab`). | [Architecture & Environments](docs/agent_architecture_and_environments.md) |
+| **Architecture & Environments** | Windows DEV (`C:\Project\MalPDFDeepDetection`) is source of truth with CUDA. REMnux `Lab` (`C:\VirtualMachine\Lab\Lab.vmx`, `192.168.217.10`, Host-only `ens34` / `ethernet1` resolved dynamically; Phase-1 NAT `ens33` / `ethernet0` kept `down` in Phase 2) is isolated untrusted analysis VM. Transport via VMnet1 Host-only SSH (`remnux-lab`) guarded by stateful `iptables` (`scripts/lab/lab_firewall.sh`), with all NICs disconnected for real-PDF `lab run`. | [Architecture & Environments](docs/agent_architecture_and_environments.md) |
 | **Agent Operating Cycle** | 5-phase workflow: Windows baseline → Autonomous SSH staging → Strict human gate → Zero-argument trigger (`lab run`) → Autonomous post-run analysis. | [Workflow & Execution Gates](docs/agent_workflow_and_gates.md) |
 | **Human Gate & Triggers** | Agent autonomously stages manifest & queues jobs under `/var/lib/malpdf/jobs/<job_id>`. Operator executes only `lab run` in REMnux console for real malware runs. | [Workflow & Execution Gates](docs/agent_workflow_and_gates.md) |
-| **Security & Malware Boundaries** | Windows DEV never receives or opens raw PDFs, payloads, or shellcode. Dynamic detonation is prohibited in standard LAB. Untrusted inputs are strictly segregated. | [Security & Safe Corpus](docs/agent_security_and_safe_corpus.md) |
+| **Security & Malware Boundaries** | Windows DEV never receives or opens raw PDFs, payloads, or shellcode. Dynamic detonation is prohibited in standard LAB. Untrusted inputs are strictly segregated; user-authorized cloud ephemeral bulk extraction (`scripts/cloud_bulk_extract.py --execute-cloud-extraction`) fetches sources directly over HTTPS without routing raw PDFs through Windows DEV. | [Security & Safe Corpus](docs/agent_security_and_safe_corpus.md) |
 | **Resilience & Safe Corpus** | Build edge-case PDFs via `scripts/lab/prepare_safe_corpus.py` under `data/safe_samples/`. Safe alerts only (`app.alert`), clean reference corpora (veraPDF, Govdocs1). | [Security & Safe Corpus](docs/agent_security_and_safe_corpus.md) |
-| **Engineering Conventions** | Strict ZERO comments in Python code (`src/malpdf/`, `scripts/`, `tests/`). Document all bugs and anti-regression invariants in `docs/bugs/`. Clean tracking. | [Engineering & Resilience](docs/agent_engineering_and_resilience.md), [Bug Registry](docs/bugs/README.md) |
+| **Engineering Conventions** | Minimal, purposeful comments only in Python (`src/malpdf/`, `scripts/`, `tests/`) when strictly necessary to explain non-obvious *why*; no redundant or arbitrary comments. Document all bugs and anti-regression invariants in `docs/bugs/`. Clean tracking. | [Engineering & Resilience](docs/agent_engineering_and_resilience.md), [Bug Registry](docs/bugs/README.md) |
 | **Extractor Contracts** | Parsers classify outcomes as `complete`, `partial`, or `failed`. Must catch corrupt xref, circular refs, and nested streams without worker crashes. | [Engineering & Resilience](docs/agent_engineering_and_resilience.md) |
 | **Deserialization Security** | Strict ban on `pickle.load`, `joblib.load`, `dill`, and `numpy.load(allow_pickle=True)`. Use safe numpy loading, Parquet/Arrow, and Safetensors. | [Engineering & Resilience](docs/agent_engineering_and_resilience.md) |
 | **Dataset Disciplines** | Protocol G deterministic split (seed `42`). Fit normalizers strictly on train split. Immutable run records in `reports/experiments/` with `locked_methodology.json`. | [Datasets & Provenance](docs/agent_datasets_and_provenance.md) |
 | **Repository Guardrails** | Automated pre-commit hooks and CI guards (`scripts/security/check_repo_content.py`) block untracked/staged PDFs, archives, binaries, and secrets. | [Security & Safe Corpus](docs/agent_security_and_safe_corpus.md) |
-| **Completion Checklist** | Verify zero comments in Python, pass local `pytest tests/`, run autonomous remote checks over SSH, provide structured summary before operator trigger. | [Workflow & Execution Gates](docs/agent_workflow_and_gates.md) |
+| **Status, Progress & Architecture Sync** | Continuously keep `AGENTS.md`, `docs/` architecture specs, dated milestone reports in `reports/progress/`, and append-only `reports/research_log.md` updated whenever LAB/VM topology, corpora, features, or pipeline milestones change. | [Workflow & Execution Gates](docs/agent_workflow_and_gates.md), [Datasets & Provenance](docs/agent_datasets_and_provenance.md) |
+| **Completion Checklist** | Verify clean code without unnecessary comments, pass local `pytest tests/`, run autonomous remote checks over SSH, update status/progress/architecture docs, and provide a structured summary before operator trigger. | [Workflow & Execution Gates](docs/agent_workflow_and_gates.md) |
 
 ## 2. Standing Autonomous SSH Authorizations
 
@@ -31,10 +32,11 @@ The agent connects to REMnux via `ssh remnux-lab` without human confirmation for
 ## 3. Strict Non-Negotiable Invariants
 
 1. **Malware Isolation:** Never open, extract, or preview untrusted/raw PDFs or payloads on Windows DEV.
-2. **Zero Python Comments:** Never write or leave comments in Python code across `src/malpdf/`, `scripts/`, or `tests/`. Intent must be expressed through naming, types, and external markdown documentation.
+2. **Purposeful Comments Only:** Across `src/malpdf/`, `scripts/`, and `tests/`, express normal intent through clear naming, type annotations, and external markdown documentation. Only write a concise comment when strictly necessary to explain a non-obvious *why* (e.g., security invariant, subtle edge case, or workaround) that code cannot show on its own—never leave redundant, narrative, or commented-out code.
 3. **Zero Operator Burden:** Never ask the operator to copy files, install packages, or enter complex arguments. The operator only triggers `lab run` in the REMnux console.
 4. **No Unsafe Deserialization:** Never use `pickle`, `joblib`, `dill`, or `allow_pickle=True`.
 5. **Editing Boundary:** All code editing occurs in the Windows repository; never edit tracked source directly on REMnux.
+6. **Continuous Architecture & Progress Sync:** Never leave infrastructure rebuilds (`Lab` VM, firewall, NIC topology), dataset acquisitions, or research milestones undocumented. Continuously update `AGENTS.md` and `docs/`, record a dated milestone file in `reports/progress/`, and append a verified entry to `reports/research_log.md`.
 
 ## 4. Zero-Mock & In-Place Binary Mutation Policy (Bộ Quy Tắc Thép)
 

@@ -70,7 +70,7 @@ def cached_profile(record, key, digest):
 
 
 def _profile_child(connection, path, boundary, digest, limits, cache_path, cache_key, include_v8=False, analysis_version=None,
-                   extraction_profile=None, arlington_catalog=None,plugins=None):
+                   extraction_profile=None, arlington_catalog=None, plugins=None, include_byte_images=True):
     v9 = analysis_version == 'v9'
     include_v8 = include_v8 or v9
     output_limit = capacity(limits, 6 * 1024**2 if v9 else 2 * 1024**2)
@@ -221,7 +221,7 @@ def _profile_child(connection, path, boundary, digest, limits, cache_path, cache
                     base_raw_sink = WorkerRawSink(connection, max_bytes=capacity(limits, 10 * 1024**2))
                     raw_sink=base_raw_sink
                     byte_images=None
-                    if extraction_profile=='deep-static':
+                    if extraction_profile=='deep-static' and include_byte_images:
                         from malpdf.extraction.byte_images import ByteImages
                         byte_images=ByteImages(actual,limits,retain=base_raw_sink)
                         def raw_sink(raw):
@@ -346,14 +346,15 @@ def _profile_child(connection, path, boundary, digest, limits, cache_path, cache
 
 def profile_pdf(path, *, boundary, digest, limits=None, cache_path=None, cache_key=None, include_v8=False,
                 analysis_version=None, raw_artifact_dir=None, extraction_profile=None, arlington_catalog=None,plugins=None,
-                cancellation_event=None, run_id=None, sample_id=None, entry_point='profile_pdf'):
+                cancellation_event=None, run_id=None, sample_id=None, entry_point='profile_pdf',
+                include_byte_images=True):
     diagnostic = WorkerDiagnostics(sample_id or digest, run_id, entry_point)
     try:
         result = _profile_pdf(path, boundary=boundary, digest=digest, limits=limits, cache_path=cache_path,
             cache_key=cache_key, include_v8=include_v8, analysis_version=analysis_version,
             raw_artifact_dir=raw_artifact_dir, extraction_profile=extraction_profile,
             arlington_catalog=arlington_catalog, plugins=plugins, cancellation_event=cancellation_event,
-            diagnostic=diagnostic)
+            diagnostic=diagnostic, include_byte_images=include_byte_images)
     except (OSError, ValueError, RuntimeError, TypeError, MemoryError) as error:
         if diagnostic.data['last_phase'] == 'validation':
             raise
@@ -372,7 +373,7 @@ def profile_pdf(path, *, boundary, digest, limits=None, cache_path=None, cache_k
 
 def _profile_pdf(path, *, boundary, digest, limits, cache_path, cache_key, include_v8,
                 analysis_version, raw_artifact_dir, extraction_profile, arlington_catalog, plugins,
-                cancellation_event, diagnostic):
+                cancellation_event, diagnostic, include_byte_images=True):
     """Profile one PDF in a fresh process; preserve completed stages on kill."""
     limits = limits or CodeInspectionLimits(wall_seconds=20, cpu_seconds=12)
     if analysis_version not in (None, 'v8', 'v9'):
@@ -409,7 +410,10 @@ def _profile_pdf(path, *, boundary, digest, limits, cache_path, cache_key, inclu
     arguments = (sender, str(path), str(boundary), digest, limits,
         None if cache_path is None else str(cache_path), cache_key, include_v8)
     extra = (analysis_version, extraction_profile) if extraction_profile is not None else ((analysis_version,) if v9 else ())
-    if plugins is not None:
+    if not include_byte_images:
+        extra = (analysis_version, extraction_profile, arlington_catalog,
+                 None if plugins is None else plugins.wire(), False)
+    elif plugins is not None:
         extra=(analysis_version,extraction_profile,arlington_catalog,plugins.wire())
     elif arlington_catalog is not None:
         extra=extra+(arlington_catalog,)

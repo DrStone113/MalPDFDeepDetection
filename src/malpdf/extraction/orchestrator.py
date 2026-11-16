@@ -23,7 +23,7 @@ def profile_pdf(*args, **kwargs):
 
 def extract_pdf(path, *, boundary=None, profile="deep-static", limits=None, expected_sha256=None, raw_artifact_dir=None,
                 arlington_lock=None, repository_root=None,plugins=None,cancellation_event=None,arlington_catalog=None,
-                run_id=None, entry_point='extract_pdf', profile_observer=None):
+                run_id=None, entry_point='extract_pdf', profile_observer=None, include_byte_images=True):
     """Inspect inert bytes only; admission/input failures remain explicit.
 
     An explicitly configured Arlington reference may be loaded locally. No
@@ -80,7 +80,8 @@ def extract_pdf(path, *, boundary=None, profile="deep-static", limits=None, expe
                 analysis_version="v9", extraction_profile=profile, raw_artifact_dir=raw_artifact_dir,
                 **({'cancellation_event':cancellation_event} if cancellation_event is not None else {}),
                 **({'plugins':plugins} if plugins is not None else {}),
-                **({'arlington_catalog':catalog} if catalog is not None else {}))
+                **({'arlington_catalog':catalog} if catalog is not None else {}),
+                **({'include_byte_images':include_byte_images} if not include_byte_images else {}))
         except (OSError, ValueError) as error:
             result = {"status": "worker_error", "errors": ["worker_admission_failed"],
                       "worker_cleanup_complete": None}

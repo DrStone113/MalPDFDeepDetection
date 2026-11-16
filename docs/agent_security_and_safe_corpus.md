@@ -30,7 +30,9 @@ To test and resolve parser/extractor failures (e.g., malformed `xref` tables, br
 ## 3. Host-Only Isolation and Detonation Boundaries
 
 - Dynamic detonation is a **separate workflow** requiring explicit authorization and verified, purpose-built containment. A REMnux VM with Host-only SSH is **not**, by itself, a safe detonation sandbox.
-- Host-only blocks direct VM Internet routing when configured correctly, but **does not isolate the VM from the Windows host**. Maintain strict host firewall rules, disabled VMware shared folders, and disabled clipboard sharing.
+- Host-only blocks direct VM Internet routing when configured correctly, but **does not isolate the VM from the Windows host**. Maintain strict host and guest stateful firewall rules (`scripts/lab/lab_firewall.sh phase2` drops VM-initiated `NEW` outbound traffic on the Host-only NIC — `ens34` on `Lab` — RFC1918 LAN ranges, and IPv6), disable VMware shared folders (`isolation.tools.hgfs.disable = "TRUE"`), and disable clipboard/drag-and-drop sharing.
+- If a secondary VMware `NAT` adapter is present for clean Phase-1 package/dataset setup (`lab_firewall.sh phase1`), keep `ethernet0.startConnected = "FALSE"` (or the NAT adapter's `startConnected = "FALSE"`) in `C:\VirtualMachine\Lab\Lab.vmx` and return to `lab_firewall.sh phase2` (`ip link set <nat_if> down`) before taking the clean snapshot or running Phase-2 tests. **Never** re-enable Phase-1 NAT after untrusted PDF execution without reverting to a clean VMware snapshot first.
+- Real/untrusted PDF execution via `lab run` still requires the strict offline gate (`src/malpdf/static/lab_guard.py`: 0 connected NICs, no active SSH session, console trigger only).
 - Never run arbitrary shell commands found in PDFs, model outputs, or logs. Never execute or import unreviewed files recovered from malware.
 
 ---
@@ -39,3 +41,13 @@ To test and resolve parser/extractor failures (e.g., malformed `xref` tables, br
 
 - **Repository Content Guard:** Ensure local pre-commit hooks and CI guards (`scripts/security/check_repo_content.py`) remain active to block untracked/staged PDFs, archives, binaries, or credentials.
 - **Local vs Remote Verification:** CI and local safety checks run on Windows; remote execution safety relies on the Host-only network configuration and the execution gates defined in the workflow guide.
+
+---
+
+## 5. User-Authorized Cloud Ephemeral Hybrid Extraction (2026-11-16)
+
+For large-scale extraction across the bulk corpus (`~41.7k` clean-filtered PDFs) when explicitly authorized by the operator (`--execute-cloud-extraction` in `scripts/cloud_bulk_extract.py` / `notebooks/cloud_bulk_extract.ipynb`):
+- **No Windows DEV Middleman:** Raw PDFs and archives must be fetched directly inside the ephemeral Linux cloud container from verified HTTPS endpoints (`zenodo.org`, `huggingface.co`, `digitalcorpora.s3.amazonaws.com`); never transfer raw malware PDFs from REMnux `Lab` through Windows DEV.
+- **Credential Hygiene & Ephemeral Cleanup:** Run without personal API keys, SSH private keys, or cloud credentials mounted in the extraction environment; process in resumable `500`-PDF chunks under `outputs/bulk_extract/` and pass `--prune-raw-after-chunk` when deleting raw PDFs incrementally after each chunk export.
+- **Static Isolation & Full Timeouts:** Keep per-PDF isolated worker subprocess limits (`45s` wall / `35s` CPU / `2 GiB` RAM by default, `include_byte_images=False`) without cutting timeouts, offloading batched `23D` RWSE and `256×256` Markov computations to CUDA GPU (`src/malpdf/extraction/gpu_accel.py`).
+- **Strict Provenance & Junk Exclusion:** Automatically exclude non-PDF `.json` records (`2,261` in `2017-12-05-PDF.7z`) and non-dataset `vapd_src` assets (`12` files), deduplicate by SHA-256, and preserve unverified provenance (`unverified_zenodo_2017`, `unverified_govdocs1_sample`, `unlabeled_safedocs_cc_main_2021_31`) unless explicitly resolved by a verified manifest (`--cic-manifest`).

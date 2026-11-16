@@ -1,9 +1,9 @@
 """Bounded lexical measurements, explicitly distinct from parsed PDF facts."""
 
-from collections import Counter
 import hashlib
-import math
 import re
+
+import numpy as np
 
 from malpdf.static.raw_scan import scan_raw_pdf_tokens
 
@@ -15,11 +15,19 @@ _NAME = re.compile(rb"/[^\x00\x09\x0a\x0c\x0d\x20()<>\[\]{}/%]{1,256}")
 _ESCAPE = re.compile(rb"#([a-fA-F0-9]{2})")
 
 
+def _entropy_from_counts(counts: np.ndarray, total: int) -> float:
+    if total <= 0:
+        return 0.0
+    nz = counts[counts > 0]
+    probs = nz.astype(np.float64) / float(total)
+    return float(-(probs * np.log2(probs)).sum())
+
+
 def _entropy(data):
     if not data:
         return 0.0
-    return -sum((count / len(data)) * math.log2(count / len(data))
-                for count in Counter(data).values())
+    counts = np.bincount(np.frombuffer(data, dtype=np.uint8), minlength=256)
+    return _entropy_from_counts(counts, len(data))
 
 
 def _offsets(data, token, maximum=MAX_MARKERS):
@@ -41,7 +49,7 @@ def inspect_raw_layout(data, *, full_scan=False):
     """
     if not isinstance(data, bytes):
         raise ValueError("raw_snapshot_type")
-    counts = Counter(data)
+    hist = np.bincount(np.frombuffer(data, dtype=np.uint8), minlength=256) if data else np.zeros(256, dtype=np.int64)
     header = data.find(b"%PDF-")
     last_eof = data.rfind(b"%%EOF")
     markers = {}
@@ -71,8 +79,8 @@ def inspect_raw_layout(data, *, full_scan=False):
     suffix = data[suffix_start:] if suffix_start is not None else None
     return {"schema_version": "pdf-raw-layout-v1", "scope": "immutable original bytes; lexical hints only",
             "size_bytes": len(data), "sha256": hashlib.sha256(data).hexdigest(),
-            "byte_histogram": [counts.get(value, 0) for value in range(256)],
-            "entropy": _entropy(data), "markers": markers,
+            "byte_histogram": hist.tolist(),
+            "entropy": _entropy_from_counts(hist, len(data)), "markers": markers,
             "header_offset": header if header >= 0 else None,
             "last_eof_offset": last_eof if last_eof >= 0 else None,
             "prefix_bytes": len(prefix) if prefix is not None else None,

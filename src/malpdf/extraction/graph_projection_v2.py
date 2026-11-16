@@ -143,7 +143,7 @@ def _extract_tabular_features(bundle: dict) -> tuple[dict, int]:
     return features, excluded
 
 
-def project_graph_bundle_v2(bundle: dict, expected_sha256: str, *, node_cap: int = MAX_NODES) -> dict:
+def _prepare_graph_projection_v2(bundle: dict, expected_sha256: str, *, node_cap: int = MAX_NODES) -> dict:
     if (
         not isinstance(expected_sha256, str)
         or not HASH_RE.fullmatch(expected_sha256)
@@ -316,7 +316,50 @@ def project_graph_bundle_v2(bundle: dict, expected_sha256: str, *, node_cap: int
     for dst_idx in edge_dst:
         in_deg[dst_idx] += 1
 
-    rwse = compute_rwse_v2(num_nodes, edge_src, edge_dst, steps=RWSE_STEPS)
+    return {
+        "expected_sha256": expected_sha256,
+        "node_cap": node_cap,
+        "status": status,
+        "features": features,
+        "excluded_features": excluded_features,
+        "worker": worker,
+        "decl_index": decl_index,
+        "kept_records": kept_records,
+        "node_types": node_types,
+        "num_nodes": num_nodes,
+        "edge_src": edge_src,
+        "edge_dst": edge_dst,
+        "edge_rel": edge_rel,
+        "in_deg": in_deg,
+        "evidence_nodes": len(records),
+        "excluded_kind": excluded_kind,
+        "excluded_status": excluded_status,
+        "excluded_inline": excluded_inline,
+        "duplicate_ids": duplicate_ids,
+        "eligible_before_cap": eligible_before_cap,
+        "dropped_cap": dropped_cap,
+        "sec_dropped_cap": sec_dropped_cap,
+        "direct_kept_edges": direct_kept_edges,
+        "contracted_container_edges": contracted_container_edges,
+        "excluded_edges": excluded_edges,
+        "excluded_edge_cap": excluded_edge_cap,
+    }
+
+
+def _finalize_graph_projection_v2(prep: dict, rwse: list[list[float]]) -> dict:
+    expected_sha256 = prep["expected_sha256"]
+    node_cap = prep["node_cap"]
+    num_nodes = prep["num_nodes"]
+    kept_records = prep["kept_records"]
+    decl_index = prep["decl_index"]
+    in_deg = prep["in_deg"]
+    node_types = prep["node_types"]
+    edge_src = prep["edge_src"]
+    edge_dst = prep["edge_dst"]
+    edge_rel = prep["edge_rel"]
+    worker = prep["worker"]
+    sec_dropped_cap = prep["sec_dropped_cap"]
+
     verified_spans: list[int | None] = []
     verified_reasons: list[str] = []
     stream_payloads: list[int | None] = []
@@ -362,9 +405,9 @@ def project_graph_bundle_v2(bundle: dict, expected_sha256: str, *, node_cap: int
         "schema_version": SCHEMA_VERSION,
         "projection_contract_version": PROJECTION_CONTRACT_VERSION,
         "sample_sha256": expected_sha256,
-        "status": status,
-        "features": features,
-        "excluded_feature_count": excluded_features,
+        "status": prep["status"],
+        "features": prep["features"],
+        "excluded_feature_count": prep["excluded_features"],
         "graph": {
             "node_cap": node_cap,
             "node_feature_dim": NODE_FEATURE_DIM_V2,
@@ -378,24 +421,49 @@ def project_graph_bundle_v2(bundle: dict, expected_sha256: str, *, node_cap: int
             "edge_src": edge_src,
             "edge_dst": edge_dst,
             "edge_rel": edge_rel,
-            "evidence_nodes": len(records),
-            "excluded_nodes_kind": excluded_kind,
-            "excluded_nodes_status": excluded_status,
-            "excluded_inline_pdf_objects": excluded_inline,
-            "duplicate_eligible_ids": duplicate_ids,
-            "eligible_nodes_before_cap": eligible_before_cap,
-            "dropped_nodes_cap": dropped_cap,
+            "evidence_nodes": prep["evidence_nodes"],
+            "excluded_nodes_kind": prep["excluded_kind"],
+            "excluded_nodes_status": prep["excluded_status"],
+            "excluded_inline_pdf_objects": prep["excluded_inline"],
+            "duplicate_eligible_ids": prep["duplicate_ids"],
+            "eligible_nodes_before_cap": prep["eligible_before_cap"],
+            "dropped_nodes_cap": prep["dropped_cap"],
             "security_sensitive_dropped_cap": sec_dropped_cap,
-            "direct_kept_edges": direct_kept_edges,
-            "contracted_container_edges": contracted_container_edges,
-            "excluded_edges_unresolved_or_unretained": excluded_edges,
-            "excluded_edges_edge_cap": excluded_edge_cap,
+            "direct_kept_edges": prep["direct_kept_edges"],
+            "contracted_container_edges": prep["contracted_container_edges"],
+            "excluded_edges_unresolved_or_unretained": prep["excluded_edges"],
+            "excluded_edges_edge_cap": prep["excluded_edge_cap"],
             "projected_json_storage_bytes_used": False,
             "model_input_ready": model_ready,
         },
         "worker": worker,
     }
     return validate_graph_projection_v2(output, expected_sha256)
+
+
+def project_graph_bundle_v2(bundle: dict, expected_sha256: str, *, node_cap: int = MAX_NODES) -> dict:
+    prep = _prepare_graph_projection_v2(bundle, expected_sha256, node_cap=node_cap)
+    rwse = compute_rwse_v2(prep["num_nodes"], prep["edge_src"], prep["edge_dst"], steps=RWSE_STEPS)
+    return _finalize_graph_projection_v2(prep, rwse)
+
+
+def project_graph_bundles_batch_v2(
+    items: list[tuple[dict, str]],
+    *,
+    node_cap: int = MAX_NODES,
+    device: str = "auto",
+) -> list[dict]:
+    if not items:
+        return []
+    from malpdf.extraction.gpu_accel import compute_rwse_batch_torch
+
+    preps = [_prepare_graph_projection_v2(bundle, sha256, node_cap=node_cap) for bundle, sha256 in items]
+    rwse_batch = compute_rwse_batch_torch(
+        [(p["num_nodes"], p["edge_src"], p["edge_dst"]) for p in preps],
+        steps=RWSE_STEPS,
+        device=device,
+    )
+    return [_finalize_graph_projection_v2(prep, rwse) for prep, rwse in zip(preps, rwse_batch)]
 
 
 def validate_graph_projection_v2(value: dict, expected_sha256: str) -> dict:
