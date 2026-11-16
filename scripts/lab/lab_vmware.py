@@ -11,7 +11,7 @@ import sys
 
 VMRUNS = (Path('C:/Program Files (x86)/VMware/VMware Workstation/vmrun.exe'),
           Path('C:/Program Files/VMware/VMware Workstation/vmrun.exe'))
-VMX = Path('C:/VirtualMachine/Remnux.vmx')
+VMX = Path('C:/VirtualMachine/Lab/Lab.vmx')
 EXPECTED_IP = '192.168.217.10'
 
 
@@ -86,7 +86,22 @@ def configuration_isolation(raw):
     clipboard = [disabled('isolation.tools.' + name + '.disable') for name in ('copy', 'paste')]
     adapters = [key.removesuffix('.present') for key, value in fields.items() if key.startswith('ethernet') and key.endswith('.present') and value == 'true']
     invalid_adapter = any(value not in ('true', 'false') for key, value in fields.items() if key.startswith('ethernet') and key.endswith('.present'))
-    network = 'host_only' if len(adapters) == 1 and not invalid_adapter and fields.get(adapters[0] + '.connectiontype') == 'hostonly' and fields.get(adapters[0] + '.vnet', 'vmnet1') == 'vmnet1' else 'unverified'
+    def valid_start(name):
+        return fields.get(name + '.startconnected') in (None, 'true', 'false')
+    def is_hostonly(name):
+        return (fields.get(name + '.connectiontype') == 'hostonly'
+                and fields.get(name + '.vnet', 'vmnet1') == 'vmnet1'
+                and fields.get(name + '.startconnected', 'true') == 'true')
+    def is_disconnected_nat(name):
+        return fields.get(name + '.connectiontype') == 'nat' and fields.get(name + '.startconnected') == 'false'
+    if invalid_adapter or any(not valid_start(name) for name in adapters):
+        network = 'unverified'
+    elif len(adapters) == 1 and is_hostonly(adapters[0]):
+        network = 'host_only'
+    elif len(adapters) == 2 and any(is_hostonly(a) and is_disconnected_nat(b) for a, b in ((adapters[0], adapters[1]), (adapters[1], adapters[0]))):
+        network = 'host_only_nat_disconnected'
+    else:
+        network = 'unverified'
     shares = disabled('isolation.tools.hgfs.disable')
     if any(value != 'false' for key, value in fields.items() if key.startswith('sharedfolder') and key.endswith(('.present', '.enabled'))):
         shares = 'enabled'

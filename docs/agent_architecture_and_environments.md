@@ -9,8 +9,8 @@ The project researches malicious PDF detection using static, dynamic, tabular, a
 | Role | Environment | Responsibilities |
 | --- | --- | --- |
 | **DEV / source of truth** | Windows 11, `C:\Project\MalPDFDeepDetection` | VS Code, Codex, code changes, local Git, GitHub, safe tests, training on approved safe data, CUDA on the Windows NVIDIA GPU |
-| **LAB / untrusted-input analysis** | REMnux (Ubuntu 24.04), VMware, `/home/remnux/MalPDFDeepDetection` | Isolated inspection of suspicious PDFs, extractor edge-case tests, safe corpus generation, and extraction of controlled diagnostic exports |
-| **Transport** | VMware VMnet1 Host-only, Windows `192.168.217.1` ↔ REMnux `192.168.217.10` | SSH for automated staging, deployment, safe testing, and pre-staged job execution |
+| **LAB / untrusted-input analysis** | REMnux `Lab` (`C:\VirtualMachine\Lab\Lab.vmx`, Ubuntu 24.04.5 LTS, `.venv` Python 3.12.3), VMware, `/home/remnux/MalPDFDeepDetection` | Isolated inspection of suspicious PDFs, extractor edge-case tests, safe corpus generation, and extraction of controlled diagnostic exports |
+| **Transport** | VMware VMnet1 Host-only (`ethernet1` / `ens34` on `Lab`, resolved dynamically by IP), Windows `192.168.217.1` ↔ REMnux `192.168.217.10`; Phase-1 `NAT` adapter (`ethernet0` / `ens33`) kept `down` outside clean Phase-1 installs (`startConnected = "FALSE"` recommended in `Lab.vmx`) | SSH for automated staging, deployment, safe testing, and pre-staged job execution; stateful `iptables` blocks VM-initiated `NEW` outbound connections |
 | **Version control** | Local Git on Windows, GitHub `origin` (`DrStone113/MalPDFDeepDetection`) | Primary source history and collaboration; LAB is not the upstream source of truth |
 
 The SSH alias `remnux-lab` (direct endpoint `remnux@192.168.217.10`) is configured with the dedicated private key `~/.ssh/id_ed25519_remnux` and passwordless `sudo` privileges for all automated staging and remote management operations.
@@ -102,3 +102,14 @@ Only structured, non-executable artifacts may be fetched automatically from REMn
 
 **Strict Negative Invariant:**
 Never export raw PDFs, unpacked payloads, arbitrary memory dumps, or raw binary caches to Windows DEV.
+
+---
+
+## 5. Stateful 1-Way Firewall & Phase 1 / Phase 2 NAT Control
+
+Use `scripts/lab/lab_firewall.sh` on REMnux `Lab` (run as `root` via `sudo`) to enforce stateful 1-way Host-Only SSH (dynamically detecting whichever interface holds `192.168.217.10/24` — `ens34` on `Lab` — and managing secondary `NAT` interface `ens33`; see [2026-11-16 Lab VM rebuild report](../reports/progress/lab_vm_rebuild_and_bulk_corpus_2026-11-16.md)):
+
+- `sudo sh scripts/lab/lab_firewall.sh install-boot` — installs `/usr/local/sbin/malpdf-firewall` and enables `malpdf-firewall.service` so every boot/snapshot revert starts in `phase2`.
+- `sudo /usr/local/sbin/malpdf-firewall phase2` — brings all non-Host-Only (`NAT`) interfaces `down`, flushes their addresses, drops all IPv6 traffic outside `lo`, and applies atomic IPv4 `iptables-restore` rules (`INPUT`/`FORWARD`/`OUTPUT` default `DROP`, `ESTABLISHED,RELATED` allowed, inbound TCP/22 `NEW` allowed only from `192.168.217.1` on the Host-Only NIC, all VM-initiated `NEW` outbound on the Host-Only NIC and RFC1918 LAN ranges dropped).
+- `sudo /usr/local/sbin/malpdf-firewall phase1` — clean-VM setup only: brings up the secondary `NAT` interface via `/etc/netplan/60-malpdf-nat.yaml` (`activation-mode: manual`, `dhcp4: true`) to install packages/datasets while keeping Host-Only and RFC1918 LAN outbound blocked. Return to `phase2` before taking a clean snapshot, and never re-enable `phase1` on a post-PDF VM without reverting to a clean snapshot first.
+- `sudo /usr/local/sbin/malpdf-firewall status` — prints JSON showing `host_only_if`, `nat_ifs`, `nat_up`, chain policies, and active mode (`phase2_locked` / `phase1_nat`).

@@ -50,10 +50,16 @@ không SSH, stage hoặc commit. `runner.installed` trong status là marker củ
 runner console cũ, tách biệt với runner/worker của gateway; không cài thêm luồng
 quản trị cũ chỉ để đổi marker. Xem [ý nghĩa từng trạng thái](lab_gateway.md#ý-nghĩa-trạng-thái-và-kiểm-tra-cấu-hình).
 
-Chế độ A chỉ chấp nhận guest IPv4 `192.168.217.10/24`, một adapter hoạt động,
-route Host-only/loopback, không gateway/default route/IPv6 global hoặc shared
-mount. Host-only vẫn tiếp xúc với Windows; kiểm tra này không thay firewall,
-cấu hình VMware, kiểm tra clipboard của operator hay chứng minh containment.
+Chế độ A chỉ chấp nhận guest IPv4 `192.168.217.10/24` trên card Host-only
+(`ens34` trên `Lab`, tự nhận diện qua IP), một adapter đang hoạt động (card `NAT` `ens33` nếu có phải ở trạng thái
+ngắt `down`/không có carrier, IP hay route), route Host-only/loopback, không
+gateway/default route/IPv6 global hoặc shared mount. Host-only vẫn tiếp xúc với
+Windows; kiểm tra này không thay stateful `iptables` trên guest
+(`scripts/lab/lab_firewall.sh phase2`), cấu hình VMware
+(`isolation.tools.hgfs.disable = "TRUE"`, `ethernet1.startConnected = "FALSE"`),
+kiểm tra clipboard của operator hay chứng minh containment. Nếu cập nhật
+`lab_jobs.py`, cần chạy lại một lần `.\lab.ps1 setup -Gateway -Transfer` (và
+`setup -Mode offline -Transfer`) để khớp policy hash trên LAB.
 
 ## Chuẩn bị rồi chạy khi ngắt toàn bộ mạng
 

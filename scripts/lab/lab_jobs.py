@@ -214,9 +214,15 @@ def route_network(route, version):
     return network
 
 
+def _interface_active(item):
+    if item.get('ifname') == 'lo' or 'UP' not in item.get('flags', []):
+        return False
+    return not (item.get('operstate') == 'DOWN' and 'LOWER_UP' not in item.get('flags', []) and not item.get('addr_info'))
+
+
 def host_only_network():
     addresses = ip_json('address', 'show')
-    active = [item for item in addresses if item.get('ifname') != 'lo' and 'UP' in item.get('flags', [])]
+    active = [item for item in addresses if _interface_active(item)]
     if len(active) != 1:
         raise ValueError('network_blocked')
     v4 = [item for item in active[0].get('addr_info', []) if item.get('family') == 'inet']

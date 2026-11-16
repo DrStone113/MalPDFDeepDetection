@@ -95,7 +95,7 @@ mới hoặc tự kết nối lại VM offline.
 Khi SSH không truy cập được, doctor tự bổ sung trường `host_vmware` từ VMware
 trên Windows: VM có đang chạy, trạng thái Tools và IP guest có khớp endpoint
 dự kiến hay không. Nó chỉ gọi `vmrun list`, `checkToolsState` và
-`getGuestIPAddress` cho VM đã nhận diện tại `C:\VirtualMachine\Remnux.vmx`,
+`getGuestIPAddress` cho VM đã nhận diện tại `C:\VirtualMachine\Lab\Lab.vmx`,
 không truyền guest username/password, chạy program/script, đọc tệp trong guest,
 chuyển tệp, bật VM hoặc đổi mạng. Mỗi query tối đa 3 giây, chỉ chấp nhận output
 tối đa 4 KiB và trả enum/IP đã lọc; không in danh sách VM/path hoặc stderr.

@@ -576,8 +576,13 @@ class OfflineTests(unittest.TestCase):
 
     def test_multiple_nat_unknown_or_duplicate_adapter_configuration_is_not_host_only(self):
         for raw in (self.vmx().replace(b'"hostonly"', b'"nat"'), self.vmx() + b'ethernet1.present = "TRUE"\n',
+                self.vmx() + b'ethernet1.present = "TRUE"\nethernet1.connectionType = "nat"\n',
+                self.vmx() + b'ethernet1.present = "TRUE"\nethernet1.connectionType = "nat"\nethernet1.startConnected = "TRUE"\n',
                 self.vmx().replace(b'present = "TRUE"', b'present = "unknown"')):
             self.assertEqual(vmware.configuration_isolation(raw)['network_configuration'], 'unverified')
+        dual = vmware.configuration_isolation(self.vmx() + b'ethernet1.present = "TRUE"\nethernet1.connectionType = "nat"\nethernet1.startConnected = "FALSE"\n')
+        self.assertEqual(dual['network_configuration'], 'host_only_nat_disconnected')
+        self.assertEqual(dual['configured_adapter_count'], 2)
         for raw in (self.vmx() + b'ethernet0.present = "FALSE"\n', b'x' * 1048577, b'\xff'):
             with self.assertRaises(ValueError):
                 vmware.configuration_isolation(raw)

@@ -25,7 +25,8 @@ reports/experiments/<study>/run_<timestamp>_<commit>/
 
 ---
 
-## 3. Benchmark Logging and Research Provenance
+## 3. Continuous Progress, Infrastructure & Benchmark Logging
 
-- **Append-Only Research Log:** Record verified benchmark outcomes, performance shifts, and model milestones in `reports/research_log.md`.
+- **Append-Only Research Log:** Record verified benchmark outcomes, corpus acquisitions, LAB infrastructure/architecture shifts, and model milestones at the end of `reports/research_log.md`.
+- **Milestone Reports (`reports/progress/`):** Write a dated summary report under `reports/progress/` (and link it in `docs/README.md`) whenever LAB VM architecture, dataset corpora, or pipeline milestones change, reflecting only directly observed paths, counts, and post-edit checks.
 - **Integrity:** Never rewrite past benchmark entries or alter historical results without explicitly documenting the methodology correction.

@@ -75,10 +75,10 @@ lab run
 
 Before concluding any development iteration or handoff:
 
-1. **Verify Windows source state:** Review `git status`, verify changes meet the zero-comment convention, and ensure documentation in `docs/` is up to date.
+1. **Verify Windows source state & architecture sync:** Review `git status`, verify changes contain no redundant or unnecessary comments, ensure `AGENTS.md` and `docs/` accurately reflect the current system architecture and LAB topology (`Lab.vmx`, NICs, firewall, environment paths), and update `reports/progress/` + append-only `reports/research_log.md` for completed milestones.
 2. **Run local safe tests:** Execute `pytest tests/` using synthetic fixtures on Windows.
 3. **Execute autonomous LAB checks:** Deploy the changes to REMnux via SSH, run the safe synthetic/safe-corpus test suite, and verify extractor stability.
 4. **Report status clearly:**
-   - Summarize code changes and local verification results.
-   - Summarize REMnux safe-corpus extraction outcomes and edge-case handling.
+   - Summarize code changes and local verification results (only tests/checks actually run after the final edit).
+   - Summarize REMnux safe-corpus extraction outcomes, current system status, and updated documentation/progress files.
    - If real-sample evaluation is required, pre-load the active job manifest and inform the operator that they only need to run `lab run` in the REMnux console.

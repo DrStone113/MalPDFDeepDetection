@@ -341,8 +341,19 @@ class WorkflowTests(unittest.TestCase):
         safe = [{'dst': '192.168.217.0/24', 'dev': 'ens33'}, {'dst': '127.0.0.0/8', 'dev': 'lo'}]
         with patch.object(jobs, 'ip_json', side_effect=[addresses, safe, []]):
             jobs.host_only_network()
-        for routes in ([{'dst': 'default', 'gateway': '192.168.217.1', 'dev': 'ens33'}], [{'dst': '192.168.217.0/8', 'dev': 'ens33'}], [{'dst': '::/0', 'dev': 'ens33'}]):
-            with patch.object(jobs, 'ip_json', side_effect=[addresses, routes]), self.assertRaisesRegex(ValueError, 'network_blocked'):
+        down_nat = [*addresses, {'ifname': 'ens34', 'flags': ['BROADCAST', 'MULTICAST'], 'operstate': 'DOWN', 'addr_info': []}]
+        no_carrier_nat = [*addresses, {'ifname': 'ens34', 'flags': ['BROADCAST', 'MULTICAST', 'UP'], 'operstate': 'DOWN', 'addr_info': []}]
+        for variant in (down_nat, no_carrier_nat):
+            with patch.object(jobs, 'ip_json', side_effect=[variant, safe, []]):
+                jobs.host_only_network()
+        for active_nat in (
+            [*addresses, {'ifname': 'ens34', 'flags': ['UP', 'LOWER_UP'], 'operstate': 'UP', 'addr_info': []}],
+            [*addresses, {'ifname': 'ens34', 'flags': ['UP'], 'operstate': 'DOWN', 'addr_info': [{'family': 'inet', 'local': '10.0.2.15', 'prefixlen': 24}]}],
+        ):
+            with patch.object(jobs, 'ip_json', return_value=active_nat), self.assertRaisesRegex(ValueError, 'network_blocked'):
+                jobs.host_only_network()
+        for routes in ([{'dst': 'default', 'gateway': '192.168.217.1', 'dev': 'ens33'}], [{'dst': '192.168.217.0/8', 'dev': 'ens33'}], [{'dst': '::/0', 'dev': 'ens33'}], [{'dst': '192.168.152.0/24', 'dev': 'ens34'}]):
+            with patch.object(jobs, 'ip_json', side_effect=[down_nat, routes]), self.assertRaisesRegex(ValueError, 'network_blocked'):
                 jobs.host_only_network()
         with patch.object(jobs, 'ip_json', return_value=addresses + [addresses[-1]]), self.assertRaises(ValueError):
             jobs.host_only_network()

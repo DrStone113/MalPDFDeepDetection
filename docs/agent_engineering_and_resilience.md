@@ -18,7 +18,7 @@ Respect existing project paths and directory ownership:
 
 ## 2. Engineering Rules
 
-- **Strict Zero Comments in Python Code:** Retain the strict no-comment policy across `src/malpdf/`, `scripts/`, and `tests/`. Express intent via explicit variable naming, strict type annotations, focused single-responsibility functions, and external markdown documentation.
+- **Minimal, Necessary Comments Only in Python Code:** Across `src/malpdf/`, `scripts/`, and `tests/`, rely primarily on explicit variable naming, strict type annotations, focused single-responsibility functions, and external markdown documentation. Add a brief inline comment only when strictly necessary to clarify non-obvious *why* (such as security boundaries, parser quirks, invariants, or deliberate `shortcut:` limits); prohibit redundant "what" comments, decorative banners, and commented-out code.
 - **Bug Documentation & Anti-Regression Registry:** When an extractor bug, environment incompatibility, or parser edge case is identified and fixed, record the root cause (5 Whys), deep mechanics, resolution, anti-regression invariant, and regression test contract in the [Bug Knowledge Base](bugs/README.md) using [TEMPLATE.md](bugs/TEMPLATE.md).
 - **Clean Tracking:** Never stage or commit PDFs, binary blobs, pickles, `.npy` arrays, credentials, or runtime artifacts.
 
