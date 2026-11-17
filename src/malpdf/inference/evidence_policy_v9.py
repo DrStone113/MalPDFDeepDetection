@@ -35,7 +35,7 @@ def _id_list(value):
 
 def frozen_feature_order():
     """Reuse the v8 adapter; the graph never adds or redefines model columns."""
-    from malpdf.experiments.cic_v8 import v8_feature_values
+    from malpdf.static.v8_features import v8_feature_values
     return tuple(v8_feature_values({}))
 
 
@@ -145,7 +145,7 @@ def derive_feature_provenance(profile, analysis):
     dependencies are added only when the same original projection is verified;
     cross-backend number/generation equality never establishes identity.
     """
-    from malpdf.experiments.cic_v8 import v8_feature_values
+    from malpdf.static.v8_features import v8_feature_values
     static, code, legacy = profile.get("static") or {}, profile.get("code") or {}, profile.get("analysis_v8")
     serialized = json.dumps({"static": profile.get("static"), "code": profile.get("code"), "analysis_v8": legacy},
                             sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
@@ -266,7 +266,7 @@ def verify_model_inputs(profile, feature_names, analysis, *, missing_supported=N
     No numeric sentinel is silently replaced, and a recorded missing input needs
     both its stage evidence and a frozen imputer column that saw missingness.
     """
-    from malpdf.experiments.cic_v8 import v8_feature_values
+    from malpdf.static.v8_features import v8_feature_values
     names = tuple(feature_names)
     reasons, dependencies, required_ids, required_checks = [], [], set(), set()
     observations, edges, checks, graph_reasons = _index_analysis(analysis)

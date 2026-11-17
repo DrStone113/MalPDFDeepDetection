@@ -24,6 +24,7 @@ Hệ thống lưu trữ, phân tích chuyên sâu nguyên nhân gốc rễ và c
 | `BUG-007B` | Chẩn đoán lại 74 mẫu, phân tích 465 graph bị cap và khóa cổng chất lượng trích xuất | `GRAPH_PROVENANCE` | `HIGH` | `RESOLVED` | `tests/test_diagnostic_replay.py`, `tests/test_graph_truncation_audit.py`, `tests/test_extraction_quality_gate.py` | [Chi tiết](BUG-007B-recovery-and-truncation-analysis.md) |
 | `BUG-008` | Outer shard crash (`worker_failed`) do đối chiếu byte-exact `locked_methodology.json` với `/proc/meminfo` `MemTotal` sau khởi động lại VM | `CROSS_BOOT_PROVENANCE` | `CRITICAL` | `RESOLVED` | `tests/test_diagnostic_replay.py` | [Chi tiết](BUG-008-replay-methodology-boot-memtotal-mismatch.md) |
 | `BUG-009` | Lỗi CDR `read_bytes called on unfilterable stream` khi tài liệu chứa ảnh `/DCTDecode` (JPEG) trong `/Resources/XObject` và chuỗi đối tượng gián tiếp dài | `CDR_BINARY_MUTATION` | `HIGH` | `RESOLVED` | `tests/test_cdr_disarm.py` | [Chi tiết](BUG-009-cdr-unfilterable-stream-read-bytes.md) |
+| `BUG-010` | Nút thắt `O(N²)` deepcopy bounded checkpoint, import ML thừa (`sklearn`/`joblib`) và sai phân loại worker bị kill `(-9/-24)` khi chạy cloud bulk | `RESOURCE_OOM` | `CRITICAL` | `RESOLVED` | `tests/test_hybrid_gpu_extraction.py` | [Chi tiết](BUG-010-cloud-worker-starvation-coalesce-ml-import.md) |
 
 ---
 

@@ -116,6 +116,8 @@ UI_Example/
 
 # Agent internal directories and spreadsheets
 .agents/
+# Local knowledge graph outputs and caches
+graphify-out/
 *.xlsx
 *.docx
 *.pptx

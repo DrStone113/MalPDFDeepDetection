@@ -35,3 +35,11 @@ Implemented a hybrid **CPU + GPU** bulk static extraction and clean corpus curat
 ## Remaining Scope
 
 - Full ~41.7k cloud bulk acquisition & extraction (`scripts/cloud_bulk_extract.py --execute-cloud-extraction --acquire --extract`) is ready to execute in the user's Cloud `GPU · Xsmall` container; real-PDF extraction was not run on Windows DEV.
+
+## 2026-11-17 Update — Cloud Acquisition Complete & `BUG-010` Worker Speed/Stability Fix
+
+- **Camber `--acquire` Completed (`CPU · Xxsmall`, `errors=[]`):** Acquired `19,401,175,744` B (`49,775` extracted records → `41,581` unique SHA-256 PDFs across `zenodo_3464032_malware_2017` `10,500`, `vapd_v5` `19,276`, `govdocs1_sample` `5,000`, and `15` `safedocs` shards).
+- **Diagnosed `chunk_00000`/`chunk_00001` Failure & Fixed `BUG-010`:**
+  - Separated static/v8 feature extraction into [v8_features.py](../../src/malpdf/static/v8_features.py) and converted [inference/__init__.py](../../src/malpdf/inference/__init__.py) to lazy `__getattr__`, cutting `evidence_policy_v9` module load from `1,810` modules down to `623` (`0` `sklearn`/`scipy`/`joblib`/`xgboost`/`lightgbm`/`catboost` imports inside PDF workers, eliminating `joblib` `[Errno 27]` warnings under `RLIMIT_FSIZE=0`).
+  - Enabled coalesced checkpoints (`coalesce_checkpoints=True` / `MALPDF_COALESCE_CHECKPOINTS=1`) for bounded bulk runs in [checkpointing.py](../../src/malpdf/extraction/checkpointing.py), [profile_worker.py](../../src/malpdf/static/profile_worker.py), [orchestrator.py](../../src/malpdf/extraction/orchestrator.py), and [bulk_pipeline.py](../../src/malpdf/extraction/bulk_pipeline.py), preserving `CheckpointScheduler` defaults and dropping local in-process extraction of `tests/fixtures/real_benign_document.pdf` from `14.28s` (`34.73s` with `emit()` callbacks) to `0.688s` (`usable_complete_projection`, `82` GNN nodes).
+  - Deferred parent CUDA initialization until after `extract_pdfs` completes per chunk ([bulk_pipeline.py](../../src/malpdf/extraction/bulk_pipeline.py), [cloud_bulk_extract.py](../../scripts/cloud_bulk_extract.py)), fixed signal `-9`/`-24` classification on silent child exits in [profile_worker.py](../../src/malpdf/static/profile_worker.py), and split [cloud_bulk_extract.ipynb](../../notebooks/cloud_bulk_extract.ipynb) into Phase 1 (`CPU · Xxsmall` `--acquire`) and Phase 2 (`GPU · Xsmall` `--extract`).

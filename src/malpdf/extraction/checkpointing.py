@@ -1,14 +1,25 @@
 """Coalesce VM snapshots while always permitting explicit stage boundaries."""
 
 from collections.abc import Callable
+import os
 from time import perf_counter
 
 from malpdf.static.execution import is_vm
 
 
 class CheckpointScheduler:
-    def __init__(self, limits: object, *, clock: Callable[[], float] = perf_counter) -> None:
-        self.coalesce = is_vm(limits)
+    def __init__(
+        self,
+        limits: object,
+        *,
+        clock: Callable[[], float] = perf_counter,
+        coalesce: bool | None = None,
+    ) -> None:
+        self.coalesce = (
+            is_vm(limits) or os.environ.get("MALPDF_COALESCE_CHECKPOINTS") == "1"
+            if coalesce is None
+            else bool(coalesce)
+        )
         self.clock = clock
         self.next_snapshot = 0.0
         self.started = 0.0

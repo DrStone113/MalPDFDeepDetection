@@ -200,32 +200,7 @@ def audit_v7(run):
     return result
 
 
-def v8_feature_values(row):
-    from malpdf.experiments.cic_static_accuracy import profile_feature_values, PROFILE_VARIANTS
-    values = profile_feature_values(row, PROFILE_VARIANTS[2])
-    values = {name: None if value == -1 else value for name,value in values.items()}
-    evidence = row.get('analysis_v8') or {}
-    names = ['action_'+s for s in ['JavaScript','Launch','URI','SubmitForm','GoToR','GoToE','ImportData']]
-    names += ['embedded_'+s for s in ['pdf','pe','elf','zip','png','jpeg','other']]
-    for name in names:
-        facts = [f for f in evidence.get('features',[]) if f['name']==name and f['status'] in {'observed','absent_after_complete_check'}]
-
-
-        selected = next((f for f in facts if f['source']=='pypdf'), facts[0] if facts else None)
-        values['v8_'+name] = None if selected is None else selected['value']
-
-    from malpdf.static.js_ast import CALL_NAMES
-    for backend in ('pypdf','MuPDF'):
-        view = next((b.get('code') for b in evidence.get('backends',[]) if b['backend']==backend), None) or {}
-        observed = view.get('observed') or {}
-        ast = observed.get('ast') or {}
-        for name in ('node_count','max_depth','loops','computed_members'):
-            values[f'v8_{backend}_ast_{name}'] = ast.get(name)
-        for name in sorted(CALL_NAMES):
-            values[f'v8_{backend}_call_{name}'] = None if not ast else ast.get('named_calls',{}).get(name,0)
-        values[f'v8_{backend}_scripts_parsed'] = view.get('scripts_parsed')
-        values[f'v8_{backend}_scripts_found'] = observed.get('scripts_found')
-    return values
+from malpdf.static.v8_features import v8_feature_values
 
 
 def fit_c1_v8(records, config):

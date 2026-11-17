@@ -271,7 +271,6 @@ def _process_chunk(
         return meta
 
     t0 = time.monotonic()
-    resolved_device = resolve_extraction_device(device)
     entry_by_idx = {e.index: e for e in chunk_entries}
     paths = [e.pdf_path for e in chunk_entries]
     indices = [e.index for e in chunk_entries]
@@ -289,6 +288,7 @@ def _process_chunk(
             "profile": "deep-static",
             "limits": limits,
             "include_byte_images": False,
+            "coalesce_checkpoints": True,
         }
         if arlington_catalog is not None:
             extract_opts["arlington_catalog"] = arlington_catalog
@@ -299,6 +299,7 @@ def _process_chunk(
             bundles_by_idx[idx] = bundle
 
     t_cpu_end = time.monotonic()
+    resolved_device = resolve_extraction_device(device)
     ordered_indices = sorted(entry_by_idx)
     items_for_proj = [(bundles_by_idx[idx], entry_by_idx[idx].sha256) for idx in ordered_indices]
     projected_list = project_graph_bundles_batch_v2(
@@ -545,7 +546,6 @@ def run_hybrid_bulk_extraction(
     output_dir.mkdir(parents=True, exist_ok=True)
     effective_limits = limits or default_bulk_limits()
     effective_workers = available_cpus() if workers is None else max(1, min(workers, available_cpus()))
-    hw_info = hardware_profile(device)
     chunks_root = output_dir / "chunks"
     chunks_root.mkdir(parents=True, exist_ok=True)
 
@@ -571,6 +571,7 @@ def run_hybrid_bulk_extraction(
         if progress is not None:
             progress({"event": "chunk_completed", "chunk_id": chunk_id, "total_chunks": total_chunks, **meta})
 
+    hw_info = hardware_profile(device)
     return merge_bulk_chunks(
         output_dir,
         entries,

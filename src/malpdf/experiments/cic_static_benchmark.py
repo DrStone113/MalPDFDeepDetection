@@ -447,17 +447,7 @@ def compare_saved_baseline(run, records, lock):
                 before_errors=";".join(before[key]["errors"]), after_reasons=";".join(after[key]["reasons"])))
 
 
-def advanced_features(profile):
-    from malpdf.static.js_ast import CALL_NAMES
-    code = profile.get("code")
-    structural = None if code is None else code.get("structural_indicators")
-    ast = None if code is None else code.get("ast")
-    values = {"structure_" + name[1:]: None if structural is None else structural.get(name[1:]) for name in sorted(SECURITY_NAMES)}
-    values.update({"ast_" + name: None if ast is None else ast[name] for name in ("node_count", "max_depth", "loops", "computed_members")})
-    values.update({"call_" + name: None if ast is None else ast["named_calls"][name] for name in sorted(CALL_NAMES)})
-    values["scripts_found"] = None if code is None else code["scripts_found"]
-    values["ast_complete"] = None if code is None else int(code["ast_complete"])
-    return values
+from malpdf.static.v8_features import advanced_features
 
 
 def compare_cic_features(run, records, configuration):

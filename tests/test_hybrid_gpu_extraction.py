@@ -312,7 +312,7 @@ def test_run_hybrid_bulk_extraction_chunks_resumes_and_prunes(tmp_path: Path) ->
     assert summary2["gnn_exported_graphs"] == 4
 
 
-def test_profile_worker_include_byte_images_flag_signature() -> None:
+def test_profile_worker_include_byte_images_and_coalesce_flag_signatures() -> None:
     import inspect
     from malpdf.extraction.orchestrator import extract_pdf
     from malpdf.static.profile_worker import profile_pdf, _profile_child
@@ -320,6 +320,102 @@ def test_profile_worker_include_byte_images_flag_signature() -> None:
     assert inspect.signature(extract_pdf).parameters["include_byte_images"].default is True
     assert inspect.signature(profile_pdf).parameters["include_byte_images"].default is True
     assert inspect.signature(_profile_child).parameters["include_byte_images"].default is True
+    assert inspect.signature(extract_pdf).parameters["coalesce_checkpoints"].default is False
+    assert inspect.signature(profile_pdf).parameters["coalesce_checkpoints"].default is False
+    assert inspect.signature(_profile_child).parameters["coalesce_checkpoints"].default is False
+
+
+def test_checkpoint_scheduler_coalesces_when_enabled(monkeypatch: pytest.MonkeyPatch) -> None:
+    from malpdf.extraction.checkpointing import CheckpointScheduler
+    from malpdf.static.code_inspector import CodeInspectionLimits
+
+    monkeypatch.delenv("MALPDF_COALESCE_CHECKPOINTS", raising=False)
+    default_sched = CheckpointScheduler(CodeInspectionLimits(), clock=lambda: 0.0)
+    assert default_sched.coalesce is False
+
+    monkeypatch.setenv("MALPDF_COALESCE_CHECKPOINTS", "1")
+    coalesced_sched = CheckpointScheduler(CodeInspectionLimits(), clock=lambda: 0.0)
+    assert coalesced_sched.coalesce is True
+    assert coalesced_sched.due() is True
+    coalesced_sched.completed()
+    assert coalesced_sched.due() is False
+    assert coalesced_sched.due(force=True) is True
+
+
+def test_evidence_policy_v9_avoids_heavy_ml_imports() -> None:
+    import subprocess
+    import sys
+
+    probe = (
+        "import sys, malpdf.inference.evidence_policy_v9 as ep; "
+        "ep.derive_feature_provenance({}, {}); "
+        "loaded = [m for m in ('sklearn', 'scipy', 'joblib', 'xgboost', 'lightgbm', 'catboost') if m in sys.modules]; "
+        "assert not loaded, f'Unexpected ML imports: {loaded}'"
+    )
+    subprocess.run([sys.executable, "-c", probe], check=True)
+
+
+def test_bulk_pipeline_enables_coalesced_checkpoints_and_defers_cuda(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import malpdf.extraction.batch as batch_mod
+    import malpdf.extraction.bulk_pipeline as bulk_mod
+
+    payload = b"%PDF-1.4\n%bulk_opts\n%%EOF\n"
+    sha = hashlib.sha256(payload).hexdigest()
+    pdf_path = tmp_path / f"{sha}.pdf"
+    pdf_path.write_bytes(payload)
+    entry = CleanCorpusEntry(
+        index=0,
+        sha256=sha,
+        pdf_path=pdf_path,
+        stored_relpath=f"{sha}.pdf",
+        source="synthetic",
+        label=0,
+        label_source="synthetic_test",
+    )
+
+    events: list[str] = []
+    seen_opts: dict = {}
+
+    def fake_extract_pdfs(paths, **opts):
+        events.append("extract_pdfs")
+        seen_opts.update(opts)
+        yield 0, _synthetic_bundle(sha, with_nodes=True)
+
+    def fake_resolve(device):
+        events.append("resolve_device")
+        return torch.device("cpu")
+
+    def fake_hw(device):
+        events.append("hardware_profile")
+        return {
+            "requested_device": str(device),
+            "resolved_device": "cpu",
+            "cuda_available": False,
+            "cpu_count": 1,
+            "torch_version": torch.__version__,
+            "gpu_name": None,
+            "gpu_memory_bytes": None,
+        }
+
+    monkeypatch.setattr(batch_mod, "extract_pdfs", fake_extract_pdfs)
+    monkeypatch.setattr(bulk_mod, "resolve_extraction_device", fake_resolve)
+    monkeypatch.setattr(bulk_mod, "hardware_profile", fake_hw)
+
+    summary = run_hybrid_bulk_extraction(
+        [entry],
+        base_dir=tmp_path,
+        output_dir=tmp_path / "out",
+        workers=1,
+        chunk_size=1,
+        device="auto",
+        include_markov=False,
+    )
+    assert summary["gnn_exported_graphs"] == 1
+    assert seen_opts["coalesce_checkpoints"] is True
+    assert seen_opts["include_byte_images"] is False
+    assert events == ["extract_pdfs", "resolve_device", "hardware_profile"]
 
 
 def test_cloud_script_uses_relative_arlington_lock_path() -> None:

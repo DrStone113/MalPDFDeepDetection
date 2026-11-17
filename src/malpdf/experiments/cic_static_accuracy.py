@@ -34,57 +34,10 @@ CIC_FEATURE_SCHEMA = "cic-static-40/v1"
 CIC_MODEL_ID = "xgb-cic-train-static40-v1"
 CIC_RF_MODEL_ID = "rf-cic-train-static40-v1"
 
+from malpdf.static.v8_features import AST_NODE_TYPES, PROFILE_VARIANTS, profile_feature_values
+
 CIC_RF_PARAMETERS = {"max_depth": 12, "min_samples_leaf": 2, "class_weight": "balanced"}
 PROFILE_FEATURE_SCHEMA = "cic-observed-profile/v1"
-PROFILE_VARIANTS = ("P0_rit41_fallback", "P1_observed_static", "P2_observed_plus_status")
-AST_NODE_TYPES = ("ArrayExpression", "AssignmentExpression", "BinaryExpression", "BlockStatement",
-    "CallExpression", "ConditionalExpression", "ExpressionStatement", "FunctionDeclaration",
-    "FunctionExpression", "Identifier", "IfStatement", "Literal", "MemberExpression", "NewExpression",
-    "ObjectExpression", "ReturnStatement", "SequenceExpression", "UnaryExpression", "UpdateExpression",
-    "VariableDeclaration", "VariableDeclarator", "WhileStatement", "ForStatement", "ForInStatement",
-    "DoWhileStatement", "SwitchStatement", "TryStatement", "CatchClause", "ThrowStatement")
-
-
-def profile_feature_values(row, variant):
-    """Keep unknown totals separate from lower bounds on actually seen syntax."""
-    if variant not in PROFILE_VARIANTS:
-        raise ValueError("Unknown fixed profile feature variant")
-    static, code = row.get("static") or {}, row.get("code") or {}
-    values = {name: static.get("features", {}).get(name) for name in RIT_FEATURES}
-    if variant != PROFILE_VARIANTS[0]:
-        values.update(advanced_features(row))
-        observed = code.get("observed") or {}
-        ast = observed.get("ast")
-        structure = observed.get("structural_indicators")
-        values.update({"observed_structure_" + name[1:]: None if structure is None else structure.get(name[1:])
-                       for name in sorted(SECURITY_NAMES)})
-        values.update({"observed_ast_" + name: None if ast is None else ast.get(name)
-                       for name in ("node_count", "max_depth", "loops", "computed_members")})
-        values.update({"observed_call_" + name: None if ast is None else ast.get("named_calls", {}).get(name, 0)
-                       for name in sorted(CALL_NAMES)})
-        values.update({"observed_ast_type_" + name: None if ast is None else ast.get("node_types", {}).get(name, 0)
-                       for name in AST_NODE_TYPES})
-        values["observed_scripts_found"] = observed.get("scripts_found")
-        values["observed_scripts_parsed"] = code.get("scripts_parsed")
-        for name in ("traversal_complete", "script_extraction_complete"):
-            value = code.get(name)
-            if value is not None and type(value) is not bool:
-                raise ValueError("Non-boolean profile coverage flag")
-            values[name] = None if value is None else int(value)
-    if variant == PROFILE_VARIANTS[2]:
-        parser = static.get("parser") or {}
-        for prefix, source, names in (("parser_", parser, ("success", "structural_complete", "resource_limit_reached", "encrypted")),
-                                      ("code_", code, ("complete", "parser_recovered"))):
-            for name in names:
-                value = source.get(name)
-                if value is not None and type(value) is not bool:
-                    raise ValueError("Non-boolean profile coverage flag")
-                values[prefix + name] = None if value is None else int(value)
-        values["reference_parser_repaired"] = static.get("reference_parser_repaired")
-    for value in values.values():
-        if value is not None and (type(value) not in (int, float, bool) or not np.isfinite(value)):
-            raise ValueError("Non-finite or nonnumeric saved profile measurement")
-    return values
 
 
 def _profile_content(root, spec, boundary, maximum=32 * 1024**2):

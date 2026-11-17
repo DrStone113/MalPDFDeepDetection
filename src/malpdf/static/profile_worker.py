@@ -70,7 +70,8 @@ def cached_profile(record, key, digest):
 
 
 def _profile_child(connection, path, boundary, digest, limits, cache_path, cache_key, include_v8=False, analysis_version=None,
-                   extraction_profile=None, arlington_catalog=None, plugins=None, include_byte_images=True):
+                   extraction_profile=None, arlington_catalog=None, plugins=None, include_byte_images=True,
+                   coalesce_checkpoints=False):
     v9 = analysis_version == 'v9'
     include_v8 = include_v8 or v9
     output_limit = capacity(limits, 6 * 1024**2 if v9 else 2 * 1024**2)
@@ -84,6 +85,8 @@ def _profile_child(connection, path, boundary, digest, limits, cache_path, cache
     tree_token=None
     semantic_collector=None
     plugin_buffers={}
+    if coalesce_checkpoints:
+        os.environ["MALPDF_COALESCE_CHECKPOINTS"] = "1"
     def checkpoint(profile):
         if include_v8:
             report_phase('checkpoint_serialization')
@@ -347,14 +350,15 @@ def _profile_child(connection, path, boundary, digest, limits, cache_path, cache
 def profile_pdf(path, *, boundary, digest, limits=None, cache_path=None, cache_key=None, include_v8=False,
                 analysis_version=None, raw_artifact_dir=None, extraction_profile=None, arlington_catalog=None,plugins=None,
                 cancellation_event=None, run_id=None, sample_id=None, entry_point='profile_pdf',
-                include_byte_images=True):
+                include_byte_images=True, coalesce_checkpoints=False):
     diagnostic = WorkerDiagnostics(sample_id or digest, run_id, entry_point)
     try:
         result = _profile_pdf(path, boundary=boundary, digest=digest, limits=limits, cache_path=cache_path,
             cache_key=cache_key, include_v8=include_v8, analysis_version=analysis_version,
             raw_artifact_dir=raw_artifact_dir, extraction_profile=extraction_profile,
             arlington_catalog=arlington_catalog, plugins=plugins, cancellation_event=cancellation_event,
-            diagnostic=diagnostic, include_byte_images=include_byte_images)
+            diagnostic=diagnostic, include_byte_images=include_byte_images,
+            coalesce_checkpoints=coalesce_checkpoints)
     except (OSError, ValueError, RuntimeError, TypeError, MemoryError) as error:
         if diagnostic.data['last_phase'] == 'validation':
             raise
@@ -373,7 +377,7 @@ def profile_pdf(path, *, boundary, digest, limits=None, cache_path=None, cache_k
 
 def _profile_pdf(path, *, boundary, digest, limits, cache_path, cache_key, include_v8,
                 analysis_version, raw_artifact_dir, extraction_profile, arlington_catalog, plugins,
-                cancellation_event, diagnostic, include_byte_images=True):
+                cancellation_event, diagnostic, include_byte_images=True, coalesce_checkpoints=False):
     """Profile one PDF in a fresh process; preserve completed stages on kill."""
     limits = limits or CodeInspectionLimits(wall_seconds=20, cpu_seconds=12)
     if analysis_version not in (None, 'v8', 'v9'):
@@ -410,9 +414,9 @@ def _profile_pdf(path, *, boundary, digest, limits, cache_path, cache_key, inclu
     arguments = (sender, str(path), str(boundary), digest, limits,
         None if cache_path is None else str(cache_path), cache_key, include_v8)
     extra = (analysis_version, extraction_profile) if extraction_profile is not None else ((analysis_version,) if v9 else ())
-    if not include_byte_images:
+    if coalesce_checkpoints or not include_byte_images:
         extra = (analysis_version, extraction_profile, arlington_catalog,
-                 None if plugins is None else plugins.wire(), False)
+                 None if plugins is None else plugins.wire(), include_byte_images, coalesce_checkpoints)
     elif plugins is not None:
         extra=(analysis_version,extraction_profile,arlington_catalog,plugins.wire())
     elif arlington_catalog is not None:
@@ -483,7 +487,10 @@ def _profile_pdf(path, *, boundary, digest, limits, cache_path, cache_key, inclu
             elif limits.wall_seconds is not None and time.monotonic() - started >= limits.wall_seconds:
                 result = _failure("wall_timeout", "timeout")
             elif exited:
-                result = _failure("worker_exit", "worker_error")
+                if process.exitcode in (-9, -24):
+                    result = _failure("worker_signal_" + str(-process.exitcode), "resource_limit_or_signal")
+                else:
+                    result = _failure("worker_exit", "worker_error")
             if result is None and not receiver.poll():
                 time.sleep(0.005)
         if (result["status"] in {"worker_error", "timeout", "resource_limit_or_signal"}

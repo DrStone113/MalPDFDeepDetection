@@ -156,7 +156,7 @@ def main(argv: list[str] | None = None) -> int:
     for var in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS"):
         os.environ[var] = "1"
 
-    receipt: dict = {"hardware": hardware_profile(args.device), "available_cpus": available_cpus()}
+    receipt: dict = {"available_cpus": available_cpus()}
     if args.setup_arlington:
         receipt["arlington"] = setup_arlington()
 
@@ -201,6 +201,9 @@ def main(argv: list[str] | None = None) -> int:
             manifest_stats=manifest_stats,
             progress=lambda ev: print(json.dumps(ev), flush=True),
         )
+        receipt["hardware"] = receipt["extraction"]["hardware"]
+    else:
+        receipt["hardware"] = hardware_profile(args.device)
 
     print(json.dumps(receipt, indent=2))
     return 0
