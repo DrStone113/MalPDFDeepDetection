@@ -13,14 +13,7 @@ from pathlib import Path
 import time
 from typing import Callable
 
-import numpy as np
-
 from malpdf.data.graph_contract import NODE_FEATURE_DIM_V2, index_measured_graphs_v2
-from malpdf.extraction.gpu_accel import (
-    byte_transition_matrices_batch,
-    hardware_profile,
-    resolve_extraction_device,
-)
 from malpdf.extraction.graph_audit import canonical_bytes
 from malpdf.extraction.graph_projection_v2 import (
     PROJECTION_CONTRACT_VERSION,
@@ -34,6 +27,24 @@ from malpdf.extraction.quality_gate import (
 )
 from malpdf.static.code_inspector import CodeInspectionLimits
 from malpdf.static.execution import available_cpus
+
+
+def resolve_extraction_device(device: str = "auto"):
+    from malpdf.extraction.gpu_accel import resolve_extraction_device as _impl
+
+    return _impl(device)
+
+
+def hardware_profile(device: str = "auto") -> dict:
+    from malpdf.extraction.gpu_accel import hardware_profile as _impl
+
+    return _impl(device)
+
+
+def byte_transition_matrices_batch(*args, **kwargs):
+    from malpdf.extraction.gpu_accel import byte_transition_matrices_batch as _impl
+
+    return _impl(*args, **kwargs)
 
 
 SKIP_NON_PDF_SUFFIXES = frozenset({
@@ -361,6 +372,8 @@ def _process_chunk(
 
     markov_count = 0
     if include_markov:
+        import numpy as np
+
         raw_bufs: list[bytes] = []
         markov_shas: list[str] = []
         for idx in ordered_indices:

@@ -428,3 +428,40 @@ def test_cloud_script_uses_relative_arlington_lock_path() -> None:
     assert isinstance(mod.ARLINGTON_LOCK_REL, str)
     assert not Path(mod.ARLINGTON_LOCK_REL).is_absolute()
     assert mod.ARLINGTON_LOCK_REL == "configs/arlington.lock.json"
+
+
+def test_cloud_bulk_extract_spawn_worker_avoids_torch_and_ml_imports(tmp_path: Path) -> None:
+    import subprocess
+    import sys
+
+    script_path = Path(__file__).resolve().parents[1] / "scripts" / "cloud_bulk_extract.py"
+    out_file = tmp_path / "spawn_modules.json"
+    child_code = (
+        "import json, sys; from pathlib import Path; "
+        "bad = sorted({'torch', 'numpy', 'scipy', 'sklearn', 'joblib', 'malpdf.extraction.gpu_accel'} & set(sys.modules)); "
+        f"Path({str(out_file)!r}).write_text(json.dumps(bad), encoding='utf-8')"
+    )
+    parent_code = (
+        "import importlib.util, multiprocessing, sys\n"
+        f"spec = importlib.util.spec_from_file_location('cloud_bulk_probe', {str(script_path)!r})\n"
+        "mod = importlib.util.module_from_spec(spec)\n"
+        "spec.loader.exec_module(mod)\n"
+        "assert 'torch' not in sys.modules\n"
+        "assert 'malpdf.extraction.gpu_accel' not in sys.modules\n"
+        f"sys.modules['__main__'].__file__ = {str(script_path)!r}\n"
+        "ctx = multiprocessing.get_context('spawn')\n"
+        f"proc = ctx.Process(target=exec, args=({child_code!r},))\n"
+        "proc.start()\n"
+        "proc.join(timeout=30)\n"
+        "assert proc.exitcode == 0, f'exitcode={proc.exitcode}'\n"
+    )
+    subprocess.run([sys.executable, "-c", parent_code], check=True)
+    loaded = json.loads(out_file.read_text(encoding="utf-8"))
+    assert loaded == [], f"Unexpected heavy modules in spawn worker: {loaded}"
+
+    probe_bp = (
+        "import sys, malpdf.extraction.bulk_pipeline; "
+        "bad = sorted({'torch', 'sklearn', 'scipy', 'joblib', 'malpdf.extraction.gpu_accel'} & set(sys.modules)); "
+        "assert not bad, f'Unexpected heavy imports in bulk_pipeline: {bad}'"
+    )
+    subprocess.run([sys.executable, "-c", probe_bp], check=True)

@@ -10,33 +10,28 @@ import subprocess
 import sys
 import time
 
-import numpy as np
+from pathlib import Path
+import subprocess
+import sys
+import time
 
 REPO = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(REPO / "src"))
-sys.path.insert(1, str(REPO / "scripts" / "lab"))
-
-import acquire_bulk_pdf_corpus as acq
-from malpdf.extraction.arlington_model import SOURCE as ARLINGTON_URL, load_model
-from malpdf.extraction.bulk_pipeline import (
-    build_clean_corpus_manifest,
-    default_bulk_limits,
-    run_hybrid_bulk_extraction,
-)
-from malpdf.extraction.gpu_accel import (
-    byte_transition_matrices_batch,
-    compute_rwse_batch_torch,
-    hardware_profile,
-)
-from malpdf.static.execution import available_cpus
-
-
 ARLINGTON_LOCK_REL = "configs/arlington.lock.json"
 ARLINGTON_LOCK_PATH = REPO / ARLINGTON_LOCK_REL
 ARLINGTON_DIR = REPO / "third_party" / "arlington-pdf-model"
 
 
+def _ensure_repo_paths() -> None:
+    for pos, rel in ((0, REPO / "src"), (1, REPO / "scripts" / "lab")):
+        val = str(rel)
+        if val not in sys.path:
+            sys.path.insert(pos, val)
+
+
 def setup_arlington() -> dict:
+    _ensure_repo_paths()
+    from malpdf.extraction.arlington_model import SOURCE as ARLINGTON_URL, load_model
+
     lock = json.loads(ARLINGTON_LOCK_PATH.read_text(encoding="utf-8"))
     target_commit = lock["commit"]
     if not ARLINGTON_DIR.is_dir():
@@ -54,6 +49,9 @@ def setup_arlington() -> dict:
 
 
 def run_acquire(raw_dir: Path, *, workers: int, include_existing_zenodo: bool, hard_cap_gb: float) -> dict:
+    _ensure_repo_paths()
+    import acquire_bulk_pdf_corpus as acq
+
     hard_cap = int(hard_cap_gb * 1_000_000_000)
     target_bytes = int(hard_cap * 0.975)
     queue_path = raw_dir / "queue_manifest.json"
@@ -71,6 +69,14 @@ def run_acquire(raw_dir: Path, *, workers: int, include_existing_zenodo: bool, h
 
 
 def run_benchmark(device: str) -> dict:
+    _ensure_repo_paths()
+    import numpy as np
+    from malpdf.extraction.gpu_accel import (
+        byte_transition_matrices_batch,
+        compute_rwse_batch_torch,
+        hardware_profile,
+    )
+
     hw = hardware_profile(device)
     rng = np.random.default_rng(42)
     sample_bufs = [rng.integers(0, 256, size=512 * 1024, dtype=np.uint8).tobytes() for _ in range(32)]
@@ -152,6 +158,9 @@ def main(argv: list[str] | None = None) -> int:
     if sys.platform != "linux":
         raise SystemExit("Bulk PDF extraction must run in Linux Cloud/LAB environment, never on Windows DEV")
 
+    _ensure_repo_paths()
+    from malpdf.static.execution import available_cpus
+
     os.environ["MALPDF_LAB_ISOLATED"] = "1"
     for var in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS"):
         os.environ[var] = "1"
@@ -169,6 +178,13 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     if args.extract:
+        from malpdf.extraction.arlington_model import load_model
+        from malpdf.extraction.bulk_pipeline import (
+            build_clean_corpus_manifest,
+            default_bulk_limits,
+            run_hybrid_bulk_extraction,
+        )
+
         manifest_path = args.raw_dir / "manifest.csv"
         entries, manifest_stats = build_clean_corpus_manifest(
             [manifest_path],
@@ -203,6 +219,8 @@ def main(argv: list[str] | None = None) -> int:
         )
         receipt["hardware"] = receipt["extraction"]["hardware"]
     else:
+        from malpdf.extraction.gpu_accel import hardware_profile
+
         receipt["hardware"] = hardware_profile(args.device)
 
     print(json.dumps(receipt, indent=2))
