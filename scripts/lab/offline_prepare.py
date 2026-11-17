@@ -78,6 +78,9 @@ def cohort_contract(kind='pdf-static'):
     if kind == 'pdf-static-cic-full':
         from lab_runner import cic_full_contract
         return cic_full_contract()
+    if kind == 'pdf-static-bulk':
+        from lab_runner import bulk_contract
+        return bulk_contract()
     if kind != 'pdf-static':
         raise ValueError('job_mismatch')
     import yaml

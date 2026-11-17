@@ -25,7 +25,7 @@ API = 1
 JOBS = Path('/var/lib/malpdf/jobs')
 CONFIG = Path('/etc/malpdf/runner.json')
 HEX = re.compile(r'[0-9a-f]{64}\Z')
-PDF_KINDS = {'pdf-static', 'pdf-static-cve', 'pdf-static-cic-full', 'pdf-diagnostic-replay'}
+PDF_KINDS = {'pdf-static', 'pdf-static-cve', 'pdf-static-cic-full', 'pdf-diagnostic-replay', 'pdf-static-bulk'}
 KINDS = {'syntax', 'synthetic', *PDF_KINDS}
 LIMITS = {'wall_seconds': 1800, 'file_wall_seconds': 60, 'file_cpu_seconds': 45,
           'file_memory_bytes': 1073741824, 'file_max_bytes': 10485760,
@@ -87,6 +87,11 @@ def policy(kind):
     if kind == 'pdf-static-cic-full':
         return {**LIMITS, 'samples': 1452, 'wall_seconds': 7200, 'workers': 10,
                 'file_wall_seconds': 35, 'file_cpu_seconds': 30, 'output_bytes': 2 * 1024**3}
+    if kind == 'pdf-static-bulk':
+        return {**LIMITS, 'samples': 0, 'wall_seconds': 86400, 'workers': 5,
+                'file_wall_seconds': 45, 'file_cpu_seconds': 35,
+                'file_memory_bytes': 1536 * 1024**2, 'file_max_bytes': 50 * 1024**2,
+                'output_bytes': 6 * 1024**3}
     if kind == 'pdf-static-cve':
         return {**LIMITS, 'samples': 5, 'wall_seconds': 180, 'output_bytes': 40 * 1024**2}
     return {**LIMITS, 'wall_seconds': 240, 'file_wall_seconds': 90 if kind == 'synthetic' else 60,
@@ -100,9 +105,12 @@ def execution_limits(kind):
     import resource
     import signal
     usage = resource.getrusage(resource.RUSAGE_SELF)
-    bounds = ((resource.RLIMIT_AS, 512 * 1024**2),
-              (resource.RLIMIT_CPU, math.ceil(usage.ru_utime + usage.ru_stime) + 120),
-              (resource.RLIMIT_FSIZE, 64 * 1024**2), (resource.RLIMIT_NOFILE, 64), (resource.RLIMIT_NPROC, 2048))
+    if kind == 'pdf-static-bulk':
+        bounds = ((resource.RLIMIT_FSIZE, 8 * 1024**3), (resource.RLIMIT_NOFILE, 256), (resource.RLIMIT_NPROC, 2048))
+    else:
+        bounds = ((resource.RLIMIT_AS, 512 * 1024**2),
+                  (resource.RLIMIT_CPU, math.ceil(usage.ru_utime + usage.ru_stime) + 120),
+                  (resource.RLIMIT_FSIZE, 64 * 1024**2), (resource.RLIMIT_NOFILE, 64), (resource.RLIMIT_NPROC, 2048))
     old = {name: resource.getrlimit(name) for name, _ in bounds}
     signals = {name: signal.getsignal(name) for name in (signal.SIGALRM, signal.SIGXCPU)}
     def expired(*args):
@@ -327,7 +335,8 @@ def validate_result(value, job):
     if summary is not None:
         if job['kind'] not in PDF_KINDS or not isinstance(summary, dict) or set(summary) - {'bounded_complete'} != SUMMARY_FIELDS or not summary_valid(summary):
             raise ValueError('report_invalid')
-        if summary['planned'] != job['limits']['samples'] or summary['completed'] > summary['planned'] or summary['primary_available'] > summary['completed']:
+        planned_target = summary['planned'] if job['kind'] == 'pdf-static-bulk' and summary['planned'] >= 1 else job['limits']['samples']
+        if summary['planned'] != planned_target or summary['completed'] > summary['planned'] or summary['primary_available'] > summary['completed']:
             raise ValueError('report_invalid')
         if summary['timeout'] > summary['completed'] or summary['elapsed_ms'] > job['limits']['wall_seconds'] * 1000 or summary['peak_rss_bytes'] > 2 * 1024**3:
             raise ValueError('report_invalid')
@@ -466,7 +475,8 @@ def execute(job, *, attested=False, resume=False):
         checks = []
         if job['kind'] in PDF_KINDS:
             summary = pdf_task(job, directory)
-            passed = summary['observed'] == summary['primary_available'] == job['limits']['samples'] and not pdf_halt_records(job, directory)
+            expected_samples = summary['planned'] if job['kind'] == 'pdf-static-bulk' and summary['planned'] >= 1 else job['limits']['samples']
+            passed = summary['observed'] == summary['primary_available'] == expected_samples and not pdf_halt_records(job, directory)
             if job['kind'] == 'pdf-diagnostic-replay':
                 replay_summary = parse_json(side.bounded_read(directory / 'analysis/summary.json', 128 * 1024))
                 passed = passed and replay_summary.get('diagnostic_coverage_complete') is True
@@ -527,8 +537,9 @@ def pdf_bundle_progress_status(path):
 
 def pdf_completion_banner(job, summary, *, elapsed_seconds, workers, halted_shards=0):
     validate_job(job)
+    planned_target = summary['planned'] if isinstance(summary, dict) and job['kind'] == 'pdf-static-bulk' and type(summary.get('planned')) is int and summary['planned'] >= 1 else job['limits']['samples']
     if (not isinstance(summary, dict) or not summary_valid(summary)
-            or summary.get('planned') != job['limits']['samples']
+            or summary.get('planned') != planned_target
             or not 0 <= summary['completed'] <= summary['planned']
             or not 0 <= summary['primary_available'] <= summary['completed']
             or not math.isfinite(elapsed_seconds) or elapsed_seconds < 0
@@ -555,10 +566,35 @@ def pdf_bundle_indices(outputs, planned):
             and path.is_file() and int(path.stem) < planned}
 
 
+def _bulk_task(job, directory, cfg, started):
+    command = [cfg['python'], '-Es', '-B', str(Path(__file__).with_name('lab_runner.py')), 'pdf-bulk', job['job_id']]
+    environment = {'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8', 'HOME': str(Path.home()),
+        'OPENBLAS_NUM_THREADS': '1', 'OMP_NUM_THREADS': '1', 'MKL_NUM_THREADS': '1',
+        'MALPDF_LAB_ISOLATED': '1'}
+    process = subprocess.Popen(command, stdin=subprocess.DEVNULL, start_new_session=True, env=environment)
+    try:
+        code = process.wait(timeout=job['limits']['wall_seconds'])
+    except subprocess.TimeoutExpired:
+        stop_worker(process)
+        raise ValueError('worker_timeout') from None
+    except BaseException:
+        stop_worker(process)
+        raise
+    if code != 0:
+        raise ValueError('worker_failed')
+    summary = parse_json(side.bounded_read(directory / 'pdf_summary.json', 16384))
+    if not summary_valid(summary):
+        raise ValueError('report_invalid')
+    print(pdf_completion_banner(job, summary, elapsed_seconds=time.monotonic() - started, workers=job['limits']['workers']), flush=True)
+    return summary
+
+
 def pdf_task(job, directory):
     cfg = config()
     if shutil.disk_usage(directory).free < job['limits']['output_bytes'] + 256 * 1024**2:
         raise ValueError('resource_unavailable')
+    if job['kind'] == 'pdf-static-bulk':
+        return _bulk_task(job, directory, cfg, time.monotonic())
     count = job['limits']['workers']
     deadline = time.monotonic() + job['limits']['wall_seconds']
     environment = {'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8', 'HOME': str(Path.home()),

@@ -91,7 +91,7 @@ def is_non_dataset_pdf_member(source: str, filename: str) -> bool:
 
 def _classify_row_provenance(source: str, filename: str, raw_label_source: str) -> tuple[int, int | None, str]:
     norm = filename.replace("\\", "/")
-    if source == "zenodo_3464032_clean_9000" or raw_label_source == "publisher_reported_benign":
+    if source in {"zenodo_3464032_clean_9000", "zenodo_clean_pdf_9000"} or raw_label_source == "publisher_reported_benign":
         return 2, 0, "publisher_reported_benign_clean_9000"
     if source == "vapd_v5":
         if "/D1 dataset/" in norm:
@@ -101,7 +101,7 @@ def _classify_row_provenance(source: str, filename: str, raw_label_source: str) 
             if "mal" in parts:
                 return 2, 1, "vapd_v5_d1_malicious"
         return 6, None, "vapd_v5_unverified"
-    if source == "zenodo_3464032_malware_2011" or raw_label_source == "publisher_reported_malicious_virustotal_2011":
+    if source in {"zenodo_3464032_malware_2011", "zenodo_malware_pdf_2011"} or raw_label_source == "publisher_reported_malicious_virustotal_2011":
         return 2, 1, "publisher_reported_malicious_2011"
     if source.startswith("cve_t4pdf") or raw_label_source == "user_requested_malicious":
         return 3, 1, "user_requested_malicious"
@@ -114,18 +114,40 @@ def _classify_row_provenance(source: str, filename: str, raw_label_source: str) 
     return 6, None, raw_label_source or "unlabeled"
 
 
-def _load_cic_overrides(cic_manifest_csv: Path | None) -> dict[str, tuple[int, str | None, str | None]]:
+def _load_cic_overrides(
+    cic_manifest_csv: Path | None,
+    *,
+    cic_split_manifest_csv: Path | None = None,
+) -> dict[str, tuple[int, str | None, str | None]]:
     overrides: dict[str, tuple[int, str | None, str | None]] = {}
     if cic_manifest_csv is None or not cic_manifest_csv.is_file():
         return overrides
+    cic_splits: dict[str, tuple[int, str]] | None = None
+    if cic_split_manifest_csv is not None and cic_split_manifest_csv.is_file():
+        cic_splits = {}
+        with cic_split_manifest_csv.open("r", encoding="utf-8") as sfh:
+            for row in csv.DictReader(sfh):
+                if (row.get("cohort") or "").strip() != "cic":
+                    continue
+                sid = (row.get("sample_id") or "").strip()
+                lbl_raw = (row.get("Label") or row.get("label") or "").strip()
+                split_val = (row.get("split") or "").strip()
+                if sid and lbl_raw in {"0", "1"} and split_val in {"train", "validation", "test"}:
+                    cic_splits[sid] = (int(lbl_raw), split_val)
     with cic_manifest_csv.open("r", encoding="utf-8") as fh:
         for row in csv.DictReader(fh):
             sha = (row.get("pdf_sha256") or row.get("sha256") or "").strip().lower()
+            sample_id = (row.get("sample_id") or "").strip() or None
+            if cic_splits is not None:
+                if sample_id not in cic_splits or len(sha) != 64:
+                    continue
+                lbl, split_val = cic_splits[sample_id]
+                overrides[sha] = (lbl, split_val, sample_id)
+                continue
             lbl_raw = (row.get("Label") or row.get("label") or "").strip()
             if len(sha) != 64 or lbl_raw not in {"0", "1"}:
                 continue
             split_val = (row.get("split") or "").strip() or None
-            sample_id = (row.get("sample_id") or "").strip() or None
             overrides[sha] = (int(lbl_raw), split_val, sample_id)
     return overrides
 
@@ -135,9 +157,10 @@ def build_clean_corpus_manifest(
     *,
     base_dir: Path,
     cic_manifest_csv: Path | None = None,
+    cic_split_manifest_csv: Path | None = None,
     require_magic_offset0: bool = False,
 ) -> tuple[list[CleanCorpusEntry], dict]:
-    cic_overrides = _load_cic_overrides(cic_manifest_csv)
+    cic_overrides = _load_cic_overrides(cic_manifest_csv, cic_split_manifest_csv=cic_split_manifest_csv)
     candidates: dict[str, list[dict]] = {}
     stats = Counter()
 
@@ -163,8 +186,11 @@ def build_clean_corpus_manifest(
                     continue
                 full_path = (base_dir / relpath).resolve()
                 if not full_path.is_file():
-                    stats["skipped_missing_file"] += 1
-                    continue
+                    alt_path = (mpath.parent / relpath).resolve()
+                    if not alt_path.is_file():
+                        stats["skipped_missing_file"] += 1
+                        continue
+                    full_path = alt_path
                 prio, lbl, lbl_src = _classify_row_provenance(src, fname, (row.get("label_source") or "").strip())
                 candidates.setdefault(sha, []).append({
                     "priority": prio,
@@ -288,11 +314,13 @@ def _process_chunk(
     expected_hashes = {e.index: e.sha256 for e in chunk_entries}
 
     bundles_by_idx: dict[int, dict] = {}
+    raw_sub = (boundary / "data" / "raw").resolve()
+    chunk_boundary = raw_sub if raw_sub.is_dir() and paths and all(p.is_relative_to(raw_sub) for p in paths) else boundary
     if extractor_fn is None:
         from malpdf.extraction.batch import extract_pdfs
 
         extract_opts: dict = {
-            "boundary": boundary,
+            "boundary": chunk_boundary,
             "workers": workers,
             "expected_hashes": expected_hashes,
             "input_indices": indices,
@@ -322,12 +350,20 @@ def _process_chunk(
     tabular_records: list[dict] = []
     unavailable_records: list[dict] = []
     status_counts = Counter()
+    primary_available_count = 0
+    timeout_count = 0
+    peak_rss_bytes = 0
 
     for idx, proj in zip(ordered_indices, projected_list):
         entry = entry_by_idx[idx]
         bundle = bundles_by_idx[idx]
         gate = evaluate_sample_quality_v2(bundle, entry.sha256, projected_v2=proj)
         status_counts[proj["status"]] += 1
+        primary_available_count += int(any(r.get("kind") == "primary_checkpoint" for r in bundle.get("evidence_store", {}).get("records", [])))
+        timeout_count += int(proj["status"] == "timeout")
+        worker_rss = (bundle.get("coverage_report", {}).get("worker") or {}).get("peak_rss_bytes")
+        if type(worker_rss) is int and worker_rss > peak_rss_bytes:
+            peak_rss_bytes = worker_rss
 
         tabular_records.append({
             "schema_version": SCHEMA_VERSION,
@@ -409,6 +445,9 @@ def _process_chunk(
         "unavailable_graphs": len(unavailable_records),
         "markov_matrices": markov_count,
         "status_counts": dict(sorted(status_counts.items())),
+        "primary_available": primary_available_count,
+        "timeout": timeout_count,
+        "peak_rss_bytes": peak_rss_bytes,
         "cpu_seconds": round(t_cpu_end - t0, 3),
         "gpu_projection_markov_seconds": round(t_gpu_end - t_cpu_end, 3),
         "total_seconds": round(t_gpu_end - t0, 3),
@@ -437,30 +476,52 @@ def merge_bulk_chunks(
     unavailable_records: list[dict] = []
     markov_shards: list[dict] = []
     status_totals = Counter()
-    all_tabular_rows: list[dict] = []
+    corpus_meta_rows: list[list] = []
+    primary_available_total = 0
+    timeout_total = 0
+    peak_rss_max = 0
 
     graph_out_tmp = final_dir / "hetero_graphs_v2.jsonl.gz.tmp"
     tab_out_tmp = final_dir / "tabular_features_v2.jsonl.gz.tmp"
-    graph_records_check: list[dict] = []
 
     with gzip.open(graph_out_tmp, "wb", compresslevel=6) as g_out, gzip.open(tab_out_tmp, "wb", compresslevel=6) as t_out:
         for meta in chunk_metas:
             cdir = chunks_root / f"chunk_{meta['chunk_id']:05d}"
+            primary_available_total += int(meta.get("primary_available", 0))
+            timeout_total += int(meta.get("timeout", 0))
+            peak_rss_max = max(peak_rss_max, int(meta.get("peak_rss_bytes", 0)))
             for k, v in meta.get("status_counts", {}).items():
                 status_totals[k] += int(v)
+            chunk_graphs: list[dict] = []
+            chunk_shas: set[str] = set()
             with gzip.open(cdir / "hetero_graphs_v2.jsonl.gz", "rt", encoding="utf-8") as gin:
                 for line in gin:
                     if line.strip():
                         rec = json.loads(line)
-                        graph_records_check.append(rec)
-                        expected_gnn_shas.add(rec["sha256"])
+                        sha = rec["sha256"]
+                        if sha in expected_gnn_shas:
+                            raise ValueError("duplicate_measured_graph")
+                        chunk_graphs.append(rec)
+                        chunk_shas.add(sha)
+                        expected_gnn_shas.add(sha)
                         g_out.write(canonical_bytes(rec) + b"\n")
                         total_graphs += 1
+            if chunk_graphs:
+                index_measured_graphs_v2(chunk_graphs, chunk_shas)
             with gzip.open(cdir / "tabular_features_v2.jsonl.gz", "rt", encoding="utf-8") as tin:
                 for line in tin:
                     if line.strip():
                         rec = json.loads(line)
-                        all_tabular_rows.append(rec)
+                        corpus_meta_rows.append([
+                            rec["index"],
+                            rec["sha256"],
+                            rec["source"],
+                            "" if rec["label"] is None else rec["label"],
+                            rec["label_source"],
+                            rec["split"] or "",
+                            rec["status"],
+                            rec["gnn_message_passing_eligible"],
+                        ])
                         t_out.write(canonical_bytes(rec) + b"\n")
             unavail = json.loads((cdir / "unavailable_records.json").read_text(encoding="utf-8"))
             unavailable_records.extend(unavail)
@@ -474,7 +535,6 @@ def merge_bulk_chunks(
 
     graph_out_tmp.replace(final_dir / "hetero_graphs_v2.jsonl.gz")
     tab_out_tmp.replace(final_dir / "tabular_features_v2.jsonl.gz")
-    index_measured_graphs_v2(graph_records_check, expected_gnn_shas)
 
     unavailable_doc = {
         "schema_version": SCHEMA_VERSION,
@@ -489,17 +549,7 @@ def merge_bulk_chunks(
     with (final_dir / "corpus_metadata.csv").open("w", encoding="utf-8", newline="") as fh:
         w = csv.writer(fh)
         w.writerow(["index", "sha256", "source", "label", "label_source", "split", "status", "gnn_eligible"])
-        for row in all_tabular_rows:
-            w.writerow([
-                row["index"],
-                row["sha256"],
-                row["source"],
-                "" if row["label"] is None else row["label"],
-                row["label_source"],
-                row["split"] or "",
-                row["status"],
-                row["gnn_message_passing_eligible"],
-            ])
+        w.writerows(corpus_meta_rows)
 
     (final_dir / "markov_manifest.json").write_bytes(
         canonical_bytes({"schema_version": 1, "shape": [256, 256], "dtype": "float32", "shards": markov_shards}) + b"\n"
@@ -514,6 +564,9 @@ def merge_bulk_chunks(
         "planned_denominator": len(entries),
         "gnn_exported_graphs": total_graphs,
         "unavailable_empty_graphs": len(unavailable_records),
+        "primary_available_count": primary_available_total,
+        "timeout_count": timeout_total,
+        "peak_rss_bytes": peak_rss_max,
         "status_counts": dict(sorted(status_totals.items())),
         "manifest_stats": manifest_stats,
         "hardware": hw_info,

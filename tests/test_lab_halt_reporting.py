@@ -305,3 +305,39 @@ def test_immutable_replay_rejects_changed_large_metadata_without_overwrite(jobs,
     with pytest.raises(ValueError):
         jobs.immutable(path, changed)
     assert path.read_bytes() == original
+
+
+def test_pdf_static_bulk_policy_and_dynamic_summary_validation(jobs, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.syspath_prepend(str(LAB_SCRIPTS))
+    offline = importlib.import_module("offline_prepare")
+    assert "pdf-static-bulk" in jobs.PDF_KINDS
+    policy = jobs.policy("pdf-static-bulk")
+    assert policy["samples"] == 0
+    assert policy["workers"] == 5
+    assert policy["file_wall_seconds"] == 45
+    assert policy["file_cpu_seconds"] == 35
+    contract = offline.cohort_contract("pdf-static-bulk")
+    assert contract["cohort"] == "bulk-corpus-v1"
+    assert contract["device"] == "cpu"
+
+    job = jobs.make_job("2" * 40, "0" * 64, "3" * 64, mode="offline", kind="pdf-static-bulk", attempt="1" * 32)
+    summary = {
+        "planned": 44000,
+        "completed": 44000,
+        "observed": 41000,
+        "bounded_complete": 41000,
+        "partial": 500,
+        "failed": 2500,
+        "primary_available": 42000,
+        "timeout": 100,
+        "elapsed_ms": 120000,
+        "peak_rss_bytes": 512 * 1024**2,
+        "status_counts": {"bounded_complete": 41000, "partial": 500, "unsupported": 2500},
+    }
+    env = {"mode": "offline", "guest_network_checked": True, "stdlib_dependencies_checked": True, "hypervisor_controls_attested": True}
+    validated = jobs.result(job, "partial", summary=summary, environment=env)
+    assert validated["pdf_summary"]["planned"] == 44000
+    banner = jobs.pdf_completion_banner(job, summary, elapsed_seconds=120.0, workers=5)
+    assert "44000" in banner and "PARTIAL" in banner.upper()
+    with pytest.raises(ValueError):
+        jobs.result(job, "partial", summary={**summary, "planned": 0}, environment=env)

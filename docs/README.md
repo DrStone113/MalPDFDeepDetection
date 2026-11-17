@@ -45,6 +45,7 @@ The [project README](../README.md) provides the overview and navigation.
 | [Vietnamese progress report](../reports/progress/progress_report_2026-10-11.html) | Offline presentation with links to saved evidence |
 | [Lab VM rebuild & bulk corpus (2026-11-16)](../reports/progress/lab_vm_rebuild_and_bulk_corpus_2026-11-16.md) | New REMnux `Lab` VM (`Lab.vmx`), 1-way `malpdf-firewall`, gateway/runner setup, and `+22,586` net-new PDF corpus report |
 | [Cloud hybrid CPU+GPU extraction (2026-11-16)](../reports/progress/cloud_hybrid_extraction_2026-11-16.md) | Hybrid CPU+GPU bulk extractor (`gpu_accel.py`, `bulk_pipeline.py`, `cloud_bulk_extract.py`), manifest hygiene, and cloud notebook |
+| [Offline Lab bulk extraction integration (2026-11-17)](../reports/progress/offline_lab_bulk_pipeline_2026-11-17.md) | `pdf-static-bulk` offline `lab run` job kind, combined `44k` manifest deduplication, streaming merge, and chunked checkpoint resume |
 
 Existing analysis and experiment files remain at their recorded paths to preserve
 provenance. Write new technical guidance and development updates in `docs/`;

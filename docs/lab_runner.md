@@ -129,7 +129,7 @@ review/recovery riêng.
 
 Profile `pdf-static` hỗ trợ cohort CIC64 cố định bên dưới. Profile riêng
 `pdf-static-cve` hỗ trợ đúng năm mẫu CVE-T4PDF theo manifest ghim checksum.
-Đường dẫn thư mục do người dùng cung cấp không thay đổi hai cohort này. Với tập
+Profile `pdf-static-bulk` hỗ trợ trích xuất hàng loạt có checkpoint từng chunk 500 PDF (`data/processed/bulk_extract/`, dùng `device="cpu"` trong `Lab` qua `run_hybrid_bulk_extraction`, tự resume nếu gián đoạn) từ tổ hợp manifest sạch đã tải sẵn tại LAB (`source_manifest.csv` + `split_manifest.csv` + `data/raw/bulk_20261116/manifest.csv`). Đường dẫn thư mục do người dùng cung cấp không thay đổi các cohort này. Với tập
 PDF khác, cần xác định thư mục cụ thể, manifest và số mẫu hữu hạn, rồi review
 luồng xử lý tương ứng trước khi queue; không dùng lệnh CIC64 như thể nó đã chọn tập mới.
 Không duyệt đệ quy toàn bộ thư mục `data` hoặc đọc PDF để tự suy ra lựa chọn.

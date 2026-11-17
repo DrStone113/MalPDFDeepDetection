@@ -465,3 +465,63 @@ def test_cloud_bulk_extract_spawn_worker_avoids_torch_and_ml_imports(tmp_path: P
         "assert not bad, f'Unexpected heavy imports in bulk_pipeline: {bad}'"
     )
     subprocess.run([sys.executable, "-c", probe_bp], check=True)
+
+
+def test_build_clean_corpus_manifest_supports_multi_cohort_v4_and_cic_split(tmp_path: Path) -> None:
+    raw_public = tmp_path / "data" / "raw" / "public_pdf_sources"
+    raw_cic = tmp_path / "data" / "raw" / "cic_pdf"
+    raw_bulk = tmp_path / "data" / "raw" / "bulk" / "pdfs"
+    for folder in (raw_public, raw_cic, raw_bulk):
+        folder.mkdir(parents=True)
+
+    def make_file(folder: Path, name: str, body: bytes) -> tuple[str, Path]:
+        sha = hashlib.sha256(body).hexdigest()
+        target = folder / f"{name}.pdf"
+        target.write_bytes(body)
+        return sha, target
+
+    sha_cic, _ = make_file(raw_cic, "cic", b"%PDF-1.4\n%cic\n%%EOF\n")
+    sha_clean, _ = make_file(raw_public, "clean9000", b"%PDF-1.4\n%c9000\n%%EOF\n")
+    sha_mal, _ = make_file(raw_public, "mal2011", b"%PDF-1.4\n%m2011\n%%EOF\n")
+    sha_contagio, _ = make_file(raw_public, "contagio", b"%PDF-1.4\n%contagio\n%%EOF\n")
+    sha_gov, _ = make_file(raw_bulk, "gov", b"%PDF-1.4\n%gov\n%%EOF\n")
+
+    source_csv = tmp_path / "source_manifest.csv"
+    with source_csv.open("w", encoding="utf-8", newline="") as fh:
+        w = csv.writer(fh)
+        w.writerow(["sample_id", "Label", "pdf_relative_path", "pdf_sha256", "label_source", "source"])
+        w.writerow(["cic_0", "1", "data/raw/cic_pdf/cic.pdf", sha_cic, "verified", ""])
+        w.writerow(["pub_c", "0", "data/raw/public_pdf_sources/clean9000.pdf", sha_clean, "publisher_reported_benign_not_independently_verified", "zenodo_clean_pdf_9000"])
+        w.writerow(["pub_m", "1", "data/raw/public_pdf_sources/mal2011.pdf", sha_mal, "publisher_reported_malicious_not_independently_verified", "zenodo_malware_pdf_2011"])
+        w.writerow(["pub_u", "", "data/raw/public_pdf_sources/contagio.pdf", sha_contagio, "unlabeled_public_contagio_archive", "contagio_s3_pdf_sample"])
+
+    split_csv = tmp_path / "split_manifest.csv"
+    with split_csv.open("w", encoding="utf-8", newline="") as fh:
+        w = csv.writer(fh)
+        w.writerow(["sample_id", "duplicate_group_id", "split", "Label", "cohort"])
+        w.writerow(["cic_0", "d0", "test", "1", "cic"])
+        w.writerow(["pub_m", "d1", "train", "1", "source_raw"])
+
+    bulk_csv = tmp_path / "data" / "raw" / "bulk" / "manifest.csv"
+    with bulk_csv.open("w", encoding="utf-8", newline="") as fh:
+        w = csv.writer(fh)
+        w.writerow(["sha256", "source", "filename", "bytes", "label_source", "magic_offset0", "stored_relpath"])
+        w.writerow([sha_gov, "govdocs1_sample", "sample/gov.pdf", 21, "unverified_govdocs1_sample", "True", "pdfs/gov.pdf"])
+
+    entries, _ = build_clean_corpus_manifest(
+        [source_csv, bulk_csv],
+        base_dir=tmp_path,
+        cic_manifest_csv=source_csv,
+        cic_split_manifest_csv=split_csv,
+    )
+    by_sha = {e.sha256: e for e in entries}
+    assert set(by_sha) == {sha_cic, sha_clean, sha_mal, sha_contagio, sha_gov}
+    assert by_sha[sha_cic].label == 1 and by_sha[sha_cic].split == "test"
+    assert by_sha[sha_cic].label_source == "cic_protocol_g_verified"
+    assert by_sha[sha_clean].label == 0
+    assert by_sha[sha_clean].label_source == "publisher_reported_benign_clean_9000"
+    assert by_sha[sha_mal].label == 1
+    assert by_sha[sha_mal].split is None
+    assert by_sha[sha_mal].label_source == "publisher_reported_malicious_2011"
+    assert by_sha[sha_contagio].label is None
+    assert by_sha[sha_gov].label is None
