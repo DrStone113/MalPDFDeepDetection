@@ -18,7 +18,8 @@ from malpdf.data.graph_contract import NODE_FEATURE_DIM_V2, index_measured_graph
 from malpdf.extraction.graph_audit import canonical_bytes
 from malpdf.extraction.normalize import normalize_profile
 from malpdf.extraction.bulk_checkpoint import (
-    CHUNK_FILES, FINAL_FILES, MARKOV_FILES, output_lock, publication, read_chunk, verify_manifest,
+    CHUNK_FILES, FINAL_FILES, MARKOV_FILES, matches_checkpoint, output_lock, publication, read_chunk,
+    replacement_archive, verify_manifest,
 )
 from malpdf.extraction.graph_projection_v2 import (
     PROJECTION_CONTRACT_VERSION,
@@ -633,6 +634,7 @@ def run_hybrid_bulk_extraction(
     progress: Callable[[dict], None] | None = None,
     producer: dict | None = None,
     adopted_checkpoints: tuple[str, ...] = (),
+    replaced_checkpoints: dict[int, str] | None = None,
 ) -> dict:
     if chunk_size < 1:
         raise ValueError("chunk_size must be >= 1")
@@ -641,6 +643,9 @@ def run_hybrid_bulk_extraction(
     chunks_root = output_dir / "chunks"
     chunk_metas: list[dict] = []
     total_chunks = (len(entries) + chunk_size - 1) // chunk_size if entries else 0
+    replacements = replaced_checkpoints or {}
+    if replacements and (producer is None or any(not len(adopted_checkpoints) <= index < total_chunks for index in replacements)):
+        raise ValueError("bulk_checkpoint_replacement_scope")
     with output_lock(output_dir):
         if chunks_root.is_symlink():
             raise ValueError("bulk_chunks_symlink")
@@ -651,9 +656,19 @@ def run_hybrid_bulk_extraction(
             chunk_dir = chunks_root / f"chunk_{chunk_id:05d}"
             if chunk_dir.is_symlink() or (chunk_dir / "chunk_done.json").is_symlink():
                 raise ValueError("bulk_checkpoint_symlink")
-            if (chunk_dir / "chunk_done.json").exists():
+            old_hash = replacements.get(chunk_id)
+            replaced = old_hash is not None and matches_checkpoint(chunk_dir, old_hash)
+            if old_hash is not None:
+                archive = replacement_archive(chunk_dir, old_hash)
+                original = chunk_dir if replaced else archive
+                if not matches_checkpoint(original, old_hash):
+                    raise ValueError("bulk_checkpoint_replacement_missing")
+                if replaced and (archive.exists() or archive.is_symlink()):
+                    raise ValueError("bulk_checkpoint_replacement_conflict")
+                read_chunk(original, chunk_entries, chunk_id=chunk_id, include_markov=include_markov)
+            if (chunk_dir / "chunk_done.json").exists() and not replaced:
                 if (chunk_id < len(adopted_checkpoints)
-                        and _sha256_file(chunk_dir / "chunk_done.json") != adopted_checkpoints[chunk_id]):
+                        and not matches_checkpoint(chunk_dir, adopted_checkpoints[chunk_id])):
                     raise ValueError("bulk_adopted_checkpoint_changed")
                 meta = read_chunk(chunk_dir, chunk_entries, chunk_id=chunk_id, include_markov=include_markov).meta
                 if producer is not None and chunk_id >= len(adopted_checkpoints) and meta.get("producer") != producer:
@@ -662,7 +677,7 @@ def run_hybrid_bulk_extraction(
             else:
                 if chunk_id < len(adopted_checkpoints):
                     raise ValueError("bulk_adopted_checkpoint_missing")
-                with publication(chunk_dir) as staging:
+                with publication(chunk_dir, replace_checkpoint=old_hash) as staging:
                     meta = _process_chunk(
                         chunk_id, chunk_entries, boundary=base_dir, chunk_dir=staging,
                         workers=effective_workers, limits=effective_limits, device=device,

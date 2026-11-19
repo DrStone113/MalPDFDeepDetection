@@ -116,6 +116,102 @@ def test_frame_is_ready_only_after_payload_is_complete():
         handle.close()
 
 
+@pytest.mark.skipif(sys.platform != "linux", reason="Uses Linux socket descriptors")
+def test_frame_drains_large_payload_already_written_before_eof():
+    from multiprocessing.connection import Connection
+    import socket
+    import struct
+    from malpdf.extraction.profile_transport import FramedReader
+
+    left, right = socket.socketpair()
+    payload = b"x" * (257 * 1024)
+    handle = FramedReader(Connection(left.detach(), writable=False), len(payload))
+    try:
+        right.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, len(payload) * 2)
+        right.settimeout(2)
+        right.sendall(struct.pack("!i", len(payload)) + payload)
+        right.close()
+        assert handle.poll()
+        assert handle.recv_bytes() == payload
+        assert not handle.poll()
+    finally:
+        right.close()
+        handle.close()
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="Uses Linux process and pipe descriptors")
+@pytest.mark.parametrize(("mode", "expected"), [
+    ("exit", "worker_exit"), ("signal", "worker_signal_9"),
+    ("oversize", "invalid_worker_response"), ("truncated", "invalid_worker_response"),
+])
+def test_bulk_worker_termination_keeps_verified_prefix(tmp_path, monkeypatch, mode, expected):
+    import subprocess
+    from malpdf.extraction.profile_transport import BulkWorker
+    from malpdf.static import profile_worker
+
+    child = """
+import json, os, signal, struct, sys
+fd, mode = int(sys.argv[1]), sys.argv[2]
+if mode in ('oversize', 'truncated'):
+    checkpoint = json.dumps({'event': 'checkpoint', 'profile': {
+        'status': 'partial', 'errors': [], 'static': {'test_prefix': True}, 'code': None,
+    }}).encode()
+    delta = json.dumps({'event': 'evidence_delta', 'delta': {
+        'observations': [{'id': 'safe-observation'}],
+    }}).encode()
+    os.write(fd, struct.pack('!i', len(checkpoint)) + checkpoint)
+    os.write(fd, struct.pack('!i', len(delta)) + delta)
+    os.write(fd, struct.pack('!i', 7 * 1024**2 if mode == 'oversize' else 40) + b'x')
+elif mode == 'signal':
+    os.kill(os.getpid(), signal.SIGKILL)
+"""
+
+    def start(self):
+        fd = self.config["result_fd"]
+        self.process = subprocess.Popen(
+            [sys.executable, "-I", "-c", child, str(fd), mode], pass_fds=(fd,), start_new_session=True,
+        )
+        self.process.wait(timeout=5)
+
+    monkeypatch.setattr(BulkWorker, "start", start)
+    result = profile_worker.profile_pdf(
+        tmp_path / "untouched.pdf", boundary=tmp_path, digest="b" * 64,
+        analysis_version="v9", extraction_profile="deep-static", bulk_worker=(None, tmp_path),
+    )
+    assert result["errors"] == [expected]
+    assert result["worker_cleanup_complete"] is True
+    if mode in ("oversize", "truncated"):
+        assert result["static"] == {"test_prefix": True}
+        assert result["analysis_v9"]["observations"] == [{"id": "safe-observation"}]
+
+
+@pytest.mark.parametrize("interrupted", [False, True])
+def test_replace_keeps_original_and_resumes_after_publication_interruption(tmp_path, interrupted):
+    from malpdf.extraction.bulk_checkpoint import file_sha256, replacement_archive
+
+    fixture = Path(__file__).parent / "fixtures/real_benign_document.pdf"
+    sha = file_sha256(fixture)
+    entry = bulk_pipeline.CleanCorpusEntry(0, sha, fixture, fixture.name, "reviewed", None, "test")
+    options = dict(
+        base_dir=fixture.parent, output_dir=tmp_path / "bulk", device="cpu",
+        limits=bulk_pipeline.CodeInspectionLimits(max_file_bytes=64), extractor_fn=lambda *a, **k: iter(()),
+    )
+    bulk_pipeline.run_hybrid_bulk_extraction([entry], **options)
+    current = options["output_dir"] / "chunks/chunk_00000"
+    compare = {name.name: file_sha256(name) for name in current.iterdir()}
+    original = compare["chunk_done.json"]
+    archived = replacement_archive(current, original)
+    if interrupted:
+        current.rename(archived)
+    producer = {"commit": "c" * 40}
+    bulk_pipeline.run_hybrid_bulk_extraction([entry], producer=producer, replaced_checkpoints={0: original}, **options)
+    assert {name.name: file_sha256(name) for name in archived.iterdir()} == compare
+    assert json.loads((current / "chunk_done.json").read_bytes())["producer"] == producer
+    current_hash = file_sha256(current / "chunk_done.json")
+    bulk_pipeline.run_hybrid_bulk_extraction([entry], producer=producer, replaced_checkpoints={0: original}, **options)
+    assert file_sha256(current / "chunk_done.json") == current_hash
+
+
 @pytest.mark.skipif(sys.platform != "linux", reason="Bulk runner uses Linux sessions")
 @pytest.mark.parametrize("exit_code", [75, None])
 def test_bulk_session_timeout_records_attempt_without_job_result(tmp_path, monkeypatch, exit_code):

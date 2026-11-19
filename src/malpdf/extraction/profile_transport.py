@@ -27,18 +27,18 @@ class FramedReader:
         return size
 
     def poll(self):
-        size = self._size()
-        if size is not None and len(self.buffer) >= 4 + size:
-            return True
-        if not self.eof:
+        while True:
+            size = self._size()
+            if size is not None and len(self.buffer) >= 4 + size:
+                return True
+            if self.eof:
+                return bool(self.buffer)
             try:
                 payload = os.read(self.fd, 65536)
             except BlockingIOError:
                 return False
             self.eof = not payload
             self.buffer.extend(payload)
-            size = self._size()
-        return self.eof or (size is not None and len(self.buffer) >= 4 + size)
 
     def recv_bytes(self, maxlength=None):
         size = self._size()

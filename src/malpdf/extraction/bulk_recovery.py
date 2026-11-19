@@ -4,21 +4,36 @@ import json
 import tempfile
 from pathlib import Path
 
-from malpdf.extraction.bulk_checkpoint import comparable_rows, different_artifacts, file_sha256, read_chunk
+from malpdf.extraction.bulk_checkpoint import (
+    SHA, comparable_rows, different_artifacts, file_sha256, matches_checkpoint, read_chunk, replacement_archive,
+)
 from malpdf.extraction.graph_audit import canonical_bytes
 
 
 LIFECYCLE_DISPOSITIONS = {"rejected_unverified_cleanup", "unavailable_worker_failure", "unavailable_timeout_no_graph"}
 
 
+def checkpoint_partition(contract):
+    hashes = contract["checkpoint_sha256"]
+    count = contract["adopted_checkpoint_count"]
+    replacements = contract["replaced_checkpoints"]
+    if (not isinstance(hashes, list) or any(not isinstance(h, str) or not SHA.fullmatch(h) for h in hashes)
+            or type(count) is not int or not 0 <= count <= len(hashes)
+            or replacements != {str(i): hashes[i] for i in range(count, len(hashes))}):
+        raise ValueError("bulk_recovery_checkpoint_partition")
+    return tuple(hashes[:count]), {int(i): h for i, h in replacements.items()}
+
+
 def load_baseline(output, entries, contract, selected=()):
+    _, replacements = checkpoint_partition(contract)
     rows = []
     selected = set(selected)
     comparable = {}
     for index, expected in enumerate(contract["checkpoint_sha256"]):
         path = output / "chunks" / f"chunk_{index:05d}"
-        marker = path / "chunk_done.json"
-        if path.is_symlink() or marker.is_symlink() or not marker.is_file() or file_sha256(marker) != expected:
+        if index in replacements and not matches_checkpoint(path, expected):
+            path = replacement_archive(path, expected)
+        if not matches_checkpoint(path, expected):
             raise ValueError("bulk_recovery_baseline_hash")
         chunk = read_chunk(path, entries[index * 500:(index + 1) * 500], chunk_id=index, include_markov=True)
         by_sha = {row["sha256"]: {"dropped_nodes_cap": row["dropped_nodes_cap"]} for row in chunk.graphs}

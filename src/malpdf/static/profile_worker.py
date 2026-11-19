@@ -479,14 +479,18 @@ def _profile_pdf(path, *, boundary, digest, limits, cache_path, cache_key, inclu
                 pass
             try:
                 ready = receiver.poll()
-            except (OSError, EOFError) as error:
+                exited = not ready and not process.is_alive()
+                if exited:
+                    ready = receiver.poll()
+            except (OSError, EOFError, ValueError) as error:
                 diagnostic.exception(error)
                 process.join(timeout=0.05)
-                result = _failure('worker_exit' if not process.is_alive() else 'invalid_worker_response')
+                if process.exitcode in (-9, -24):
+                    result = _failure("worker_signal_" + str(-process.exitcode), "resource_limit_or_signal")
+                else:
+                    invalid = isinstance(error, ValueError) or process.is_alive()
+                    result = _failure("invalid_worker_response" if invalid else "worker_exit")
                 continue
-            exited = not process.is_alive() if not ready else False
-            if exited:
-                ready = receiver.poll()
             if ready:
                 try:
                     message = json.loads(receiver.recv_bytes(maxlength=None if is_vm(limits) else

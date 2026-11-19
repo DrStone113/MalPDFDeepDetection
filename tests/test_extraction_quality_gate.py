@@ -97,6 +97,26 @@ def _write_json(path, value, jobs):
     return hashlib.sha256(payload).hexdigest()
 
 
+@pytest.mark.parametrize("bad", [float("nan"), float("inf"), float("-inf"), {"\ud800": 1}, {1: "non-string"}, "\udfff"])
+def test_v2_gate_keeps_graph_json_rejections(qgate, bad):
+    record = _node("cat", "catalog")
+    record["details"]["nested"] = {"value": [bad]}
+    facts = qgate.prepare_sample_quality_v2(_bundle([record], []), SAMPLE_SHA256)
+    assert facts["rejected"]["sample_disposition"] == "rejected_missing_or_corrupt"
+
+
+def test_v2_gate_preparation_does_not_reserialize_graph(qgate, monkeypatch):
+    record = _node("po1", "parser_object")
+    record["details"]["projection"] = {"name": "Dữ liệu"}
+    bundle = _bundle([record], [])
+
+    def unexpected(value):
+        raise AssertionError("gate preparation reserialized graph")
+
+    monkeypatch.setattr(qgate, "canonical_bytes", unexpected)
+    assert qgate.prepare_sample_quality_v2(bundle, SAMPLE_SHA256)["parser_observed"] == 1
+
+
 def test_sample_gate_blocks_legacy_19d_when_semantic_size_missing_and_never_leaks_private_text(qgate):
     src = _bundle([_node("cat", "catalog", number=1, generation=0, offset_start=10)], [])
     snap = deepcopy(src)

@@ -6,6 +6,10 @@
   "model_lock_sha256": "60387a6c67efe4392ae9e15ac31b78c936bc855c5f3219902b88e31b9d60aab9",
   "job_sha256": "99fd48382a5e15fc497a5d61a51d7342af16fd9b3fc4af9b48d1b22946c561c1",
   "claim_sha256": "2e29995f3e5dcec9c2e682834a5afccc261de5879a385ce2cc9c2dca655e34f1",
+  "adopted_checkpoint_count": 7,
+  "replaced_checkpoints": {
+    "7": "e5e6ca989c5dd20724c7b47ad34e887f2cc1f4277478e5eec155a73e074696d2"
+  },
   "checkpoint_sha256": [
     "1b791db0f56bc19259362bb9df8a645eaee7630aa61a04d17ec6eb1786e7673a",
     "e03d1937fd842a4a1f9ef3dba97ec9b80ec548c05267ef9f83bd8362305c66b4",

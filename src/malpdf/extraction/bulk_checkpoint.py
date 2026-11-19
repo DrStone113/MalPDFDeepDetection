@@ -34,6 +34,18 @@ def file_sha256(path):
         return hashlib.file_digest(handle, "sha256").hexdigest()
 
 
+def matches_checkpoint(directory, expected):
+    marker = directory / "chunk_done.json"
+    return (not directory.is_symlink() and not marker.is_symlink() and marker.is_file()
+            and marker.stat().st_size <= 65536 and file_sha256(marker) == expected)
+
+
+def replacement_archive(destination, expected):
+    if not isinstance(expected, str) or not SHA.fullmatch(expected):
+        raise ValueError("bulk_checkpoint_replacement_hash")
+    return destination.with_name(f".{destination.name}.replaced-{expected}")
+
+
 def verify_manifest(directory, marker, *, allowed):
     path = directory / marker
     if directory.is_symlink() or path.is_symlink() or not path.is_file() or path.stat().st_size > 65536:
@@ -166,11 +178,19 @@ def output_lock(output):
 
 
 @contextmanager
-def publication(destination):
+def publication(destination, *, replace_checkpoint=None):
     if destination.is_symlink():
         raise ValueError("bulk_output_symlink")
     staging = Path(tempfile.mkdtemp(prefix=f".{destination.name}.staging-", dir=destination.parent))
     yield staging
-    if destination.exists():
+    if replace_checkpoint is not None:
+        archive = replacement_archive(destination, replace_checkpoint)
+        if destination.exists():
+            if archive.exists() or archive.is_symlink() or not matches_checkpoint(destination, replace_checkpoint):
+                raise ValueError("bulk_checkpoint_replacement_changed")
+            destination.rename(archive)
+        elif not matches_checkpoint(archive, replace_checkpoint):
+            raise ValueError("bulk_checkpoint_replacement_missing")
+    elif destination.exists():
         destination.rename(destination.with_name(f".{destination.name}.interrupted-{uuid.uuid4().hex}"))
     staging.rename(destination)

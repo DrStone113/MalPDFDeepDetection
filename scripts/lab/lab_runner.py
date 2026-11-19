@@ -535,7 +535,7 @@ def pdf_bulk_worker(job_id):
     from malpdf.extraction.arlington_model import load_model, write_catalog_snapshot
     from malpdf.extraction.batch import extract_pdfs
     from malpdf.extraction.bulk_pipeline import build_clean_corpus_manifest, default_bulk_limits, run_hybrid_bulk_extraction
-    from malpdf.extraction.bulk_recovery import run_pilot
+    from malpdf.extraction.bulk_recovery import checkpoint_partition, run_pilot
     from malpdf.extraction.jobs import require_extraction_lab
     require_extraction_lab(True, repository_root=data_root)
     plan = parse_json(side.bounded_read(directory / 'bulk_plan.json', 65536))
@@ -580,6 +580,7 @@ def pdf_bulk_worker(job_id):
     registry = attempt / 'workers'
     diagnostics = {}
     pilot_shas = {row['sha256'] for row in plan['pilot']}
+    adopted, replacements = checkpoint_partition(plan['baseline'])
 
     def extract(chunk, *, limits, workers):
         from contextlib import closing
@@ -631,7 +632,8 @@ def pdf_bulk_worker(job_id):
                 manifest_stats=manifest_stats if corpus else None,
                 extractor_fn=extract, progress=on_progress,
                 producer={'commit': job['commit'], 'job_id': job_id, 'selection_sha256': sel_digest},
-                adopted_checkpoints=tuple(plan['baseline']['checkpoint_sha256']) if corpus else (),
+                adopted_checkpoints=adopted if corpus else (),
+                replaced_checkpoints=replacements if corpus else None,
             )
         finally:
             stopped.set()

@@ -314,6 +314,23 @@ def evaluate_sample_quality_v2(bundle, expected_sha256, *, node_cap=MAX_NODES, p
     return finish_sample_quality_v2(facts, expected_sha256, projected_v2, node_cap=node_cap)
 
 
+_SURROGATE = re.compile("[\ud800-\udfff]")
+
+
+def _validate_graph_text(store):
+    pending = [store["records"], store["edges"]]
+    while pending:
+        value = pending.pop()
+        if isinstance(value, dict):
+            if any(not key.isascii() and _SURROGATE.search(key) for key in value):
+                raise ValueError("quality_gate_graph_encoding")
+            pending.extend(value.values())
+        elif isinstance(value, (list, tuple)):
+            pending.extend(value)
+        elif isinstance(value, str) and not value.isascii() and _SURROGATE.search(value):
+            raise ValueError("quality_gate_graph_encoding")
+
+
 def prepare_sample_quality_v2(bundle, expected_sha256, *, node_cap=MAX_NODES):
     if not isinstance(expected_sha256, str) or not HASH_RE.fullmatch(expected_sha256):
         raise ValueError("quality_gate_identity")
@@ -325,7 +342,7 @@ def prepare_sample_quality_v2(bundle, expected_sha256, *, node_cap=MAX_NODES):
     try:
         validate_bundle(bundle)
         store = bundle["evidence_store"]
-        canonical_bytes({"nodes": store["records"], "edges": store["edges"]})
+        _validate_graph_text(store)
     except (ValueError, TypeError, KeyError, RecursionError, OverflowError):
         return {"rejected": rejected_sample_gate_v2(expected_sha256, node_cap=node_cap)}
     coverage = bundle["coverage_report"]
