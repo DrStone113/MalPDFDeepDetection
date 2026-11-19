@@ -23,6 +23,6 @@
 
 Candidate `9297f95` đã được đóng gói từ working tree sạch. Windows có 102 test tập trung đạt, 12 skip chỉ chạy Linux và 237/237 kiểm tra synthetic đạt. Full suite có 183 lỗi ở candidate, 187 lỗi ở baseline `ee646d7`, và `new_failures = 0` khi đối chiếu định danh test. REMnux có 387 test liên quan đạt, một skip vì tệp baseline trong `plans/` nằm ngoài allowlist release.
 
-T09 còn chờ đo peak memory và đối chiếu bản ghi trên pilot thực. T10 đã có cảnh báo stall trong runner và còn chờ kiểm chứng telemetry trong phiên offline. T17 đã qua kiểm thử resume với ngân sách rút ngắn. T16–T20 theo dõi các mốc còn lại của đợt chạy thực.
+T16 đã chạy đủ 128 mẫu và dừng ở đối chiếu: 112 khớp, 13 phục hồi có bằng chứng, 3 lệch `excluded_feature_count`. T17 đã qua kiểm thử resume với ngân sách rút ngắn và vẫn chờ pilot đạt để chạy corpus. Đợt pilot đã ghi cảnh báo stall và peak RSS mẫu của cây tiến trình. T09 còn chờ xác minh parity và có số đo bộ nhớ trên workload tương ứng. T10 còn các kiểm tra telemetry theo kế hoạch.
 
 [Kết quả kiểm chứng và job để bàn giao](../../reports/progress/bulk_extractor_recovery_2026-11-19.md)

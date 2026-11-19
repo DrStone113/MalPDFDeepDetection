@@ -6,6 +6,8 @@ The candidate starts a Linux bulk subprocess with small JSON arguments and sends
 
 Resume adopts chunks 0–6 after checking pinned checkpoint hashes and validating numeric output. Chunk 7 has 60 records with unverified cleanup and is reserved for replacement after the pilot. New chunks publish through a temporary directory while holding the output lock. The original chunk 7 is archived by its pinned hash before publication. A budget stop records the attempt and allows a later console session after writer cleanup is confirmed. A malformed committed checkpoint blocks resume.
 
-Regression tests cover snapshot round trip, an incomplete manifest, partial frames, resource limits and cleanup with a reviewed benign fixture, artifact comparison, and timeout handling. Real-corpus parity and throughput await the offline pilot.
+Regression tests cover snapshot round trip, an incomplete manifest, partial frames, resource limits and cleanup with a reviewed benign fixture, artifact comparison, and timeout handling.
 
 The receiver drains a complete already-written frame even if the worker has exited. Empty EOF is classified from the worker's exit code. An oversize or truncated frame leaves the verified checkpoint and evidence prefix available.
+
+The first offline pilot compared all 128 identities and stopped at three strict tabular mismatches. All three differed only in the excluded-feature counter. The console surfaced the generic `worker_failed` reason after the pilot comparison rejected publication. The attempt verified cleanup, and the original chunks, job, and claim retained their hashes. The pilot invariant is that an unexplained counter difference blocks corpus extraction even when projected feature values, graphs, and Markov matrices match. See the [pilot readback](../../reports/progress/bulk_extractor_recovery_2026-11-19.md).
