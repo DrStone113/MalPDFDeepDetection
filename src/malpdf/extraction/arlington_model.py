@@ -26,6 +26,44 @@ class Catalog:
     provenance: dict
 
 
+SNAPSHOT_MAX_BYTES = 16 * 1024**2
+
+
+def write_catalog_snapshot(path, catalog):
+    payload = json.dumps({'tables': catalog.tables, 'provenance': catalog.provenance},
+                         ensure_ascii=False, separators=(',', ':'), allow_nan=False).encode()
+    if len(payload) > SNAPSHOT_MAX_BYTES:
+        raise ModelUnavailable('arlington_snapshot_limit')
+    with Path(path).open('xb') as handle:
+        handle.write(payload)
+    return hashlib.sha256(payload).hexdigest()
+
+
+def read_catalog_snapshot(path, expected_sha256):
+    path = Path(path)
+    payload = _read(path.parent, path.name, SNAPSHOT_MAX_BYTES)
+    if hashlib.sha256(payload).hexdigest() != expected_sha256:
+        raise ModelUnavailable('arlington_snapshot_checksum_mismatch')
+    try:
+        data = json.loads(payload)
+        if set(data) != {'tables', 'provenance'} or not isinstance(data['provenance'], dict):
+            raise ValueError('arlington_snapshot_shape')
+        tables = {}
+        for name, rows in data['tables'].items():
+            if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
+                raise ValueError('arlington_snapshot_rows')
+            for row in rows:
+                if 'loader_notes' in row:
+                    notes = row['loader_notes']
+                    if not isinstance(notes, list) or any(not isinstance(note, str) for note in notes):
+                        raise ValueError('arlington_snapshot_notes')
+                    row['loader_notes'] = tuple(notes)
+            tables[name] = tuple(rows)
+        return Catalog(tables, data['provenance'])
+    except (ValueError, TypeError, AttributeError, KeyError, RecursionError) as error:
+        raise ModelUnavailable('arlington_snapshot_invalid') from error
+
+
 def _read(root, path, cap):
     try:
         return read_bounded_bytes(root/path,boundary=root,max_bytes=cap)

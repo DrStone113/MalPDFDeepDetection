@@ -25,6 +25,7 @@ from malpdf.static.js_ast import CALL_NAMES, CodeInspectionError, inspect_js_syn
 from malpdf.static.safety import read_bounded_bytes
 from malpdf.static.profiling import stage
 from malpdf.static.parser_diagnostics import ParserDiagnostics
+from malpdf.static.worker_limits import apply_code_limits as _apply_code_limits
 from malpdf.static.execution import UNLIMITED, is_vm
 
 SECURITY_NAMES = frozenset({"/JS", "/JavaScript", "/OpenAction", "/AA", "/Launch",
@@ -521,21 +522,6 @@ def _inspect_code_bytes_inner(data, limits, timings, *, supplied_reader=None, ev
             "active_content_executed": False,
             "flag_ast_complexity_truncated": flag_ast_complexity_truncated,
             "flag_excessive_object_graph": flag_excessive_object_graph}
-
-
-def _apply_code_limits(limits):
-    """Apply OS caps before reading input or importing a PDF/JS parser."""
-    import resource
-
-    os.setsid()
-    resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
-    resource.setrlimit(resource.RLIMIT_FSIZE, (0, 0))
-    if not is_vm(limits):
-        resource.setrlimit(resource.RLIMIT_AS, (limits.memory_bytes, limits.memory_bytes))
-        resource.setrlimit(resource.RLIMIT_CPU, (limits.cpu_seconds, limits.cpu_seconds))
-    return {"address_space_bytes": list(resource.getrlimit(resource.RLIMIT_AS)),
-            "cpu_seconds": list(resource.getrlimit(resource.RLIMIT_CPU)),
-            "wall_seconds": limits.wall_seconds, "disposable_process_group": os.getpgrp() == os.getpid()}
 
 
 def _code_child(connection, path, boundary, limits, expected_sha256):

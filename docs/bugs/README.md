@@ -26,6 +26,7 @@ Hệ thống lưu trữ, phân tích chuyên sâu nguyên nhân gốc rễ và c
 | `BUG-009` | Lỗi CDR `read_bytes called on unfilterable stream` khi tài liệu chứa ảnh `/DCTDecode` (JPEG) trong `/Resources/XObject` và chuỗi đối tượng gián tiếp dài | `CDR_BINARY_MUTATION` | `HIGH` | `RESOLVED` | `tests/test_cdr_disarm.py` | [Chi tiết](BUG-009-cdr-unfilterable-stream-read-bytes.md) |
 | `BUG-010` | Nút thắt `O(N²)` deepcopy bounded checkpoint, import ML thừa (`sklearn`/`joblib`) và sai phân loại worker bị kill `(-9/-24)` khi chạy cloud bulk | `RESOURCE_OOM` | `CRITICAL` | `RESOLVED` | `tests/test_hybrid_gpu_extraction.py` | [Chi tiết](BUG-010-cloud-worker-starvation-coalesce-ml-import.md) |
 | `BUG-011` | Worker crash (`471 unavailable_worker_failure` + `29 resource_limit`) do `multiprocessing.spawn` nạp `__mp_main__` chứa `torch`/CUDA trước `RLIMIT_AS = 2 GiB` | `RESOURCE_OOM` | `CRITICAL` | `RESOLVED` | `tests/test_hybrid_gpu_extraction.py` | [Chi tiết](BUG-011-spawn-mp-main-torch-rlimit-as.md) |
+| `BUG-012` | Bulk writer treo trước vòng giám sát, claim mồ côi và checkpoint rỗng | `WORKER_LIFECYCLE` | `HIGH` | `MITIGATED` | `tests/test_bulk_recovery.py` | [Chi tiết](BUG-012-bulk-worker-bootstrap-and-resume.md) |
 
 ---
 

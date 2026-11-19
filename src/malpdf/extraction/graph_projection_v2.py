@@ -323,8 +323,12 @@ def _prepare_graph_projection_v2(bundle: dict, expected_sha256: str, *, node_cap
         "features": features,
         "excluded_features": excluded_features,
         "worker": worker,
-        "decl_index": decl_index,
-        "kept_records": kept_records,
+        "node_provenance": [
+            (*_physical_span_for_node(rec, decl_index),
+             (rec.get("details") or {}).get("raw_bytes") if isinstance(rec.get("details"), dict) else None,
+             _is_indirect_record(rec), rec.get("is_synthetic_repaired") is True)
+            for rec in kept_records
+        ],
         "node_types": node_types,
         "num_nodes": num_nodes,
         "edge_src": edge_src,
@@ -350,8 +354,6 @@ def _finalize_graph_projection_v2(prep: dict, rwse: list[list[float]]) -> dict:
     expected_sha256 = prep["expected_sha256"]
     node_cap = prep["node_cap"]
     num_nodes = prep["num_nodes"]
-    kept_records = prep["kept_records"]
-    decl_index = prep["decl_index"]
     in_deg = prep["in_deg"]
     node_types = prep["node_types"]
     edge_src = prep["edge_src"]
@@ -365,13 +367,10 @@ def _finalize_graph_projection_v2(prep: dict, rwse: list[list[float]]) -> dict:
     stream_payloads: list[int | None] = []
     node_features: list[list[float]] = []
 
-    for idx, rec in enumerate(kept_records):
-        phys_val, phys_reason = _physical_span_for_node(rec, decl_index)
+    for idx, (phys_val, phys_reason, raw_bytes, indirect, repaired) in enumerate(prep["node_provenance"]):
         verified_spans.append(phys_val)
         verified_reasons.append(phys_reason)
 
-        details = rec.get("details") if isinstance(rec.get("details"), dict) else {}
-        raw_bytes = details.get("raw_bytes")
         stream_val = raw_bytes if type(raw_bytes) is int and 0 <= raw_bytes <= 10**12 else None
         stream_payloads.append(stream_val)
 
@@ -379,8 +378,8 @@ def _finalize_graph_projection_v2(prep: dict, rwse: list[list[float]]) -> dict:
         phys_mask = 1.0 if phys_val is not None else 0.0
         stream_log = float(math.log1p(stream_val)) if stream_val is not None else 0.0
         stream_mask = 1.0 if stream_val is not None else 0.0
-        ind_flag = 1.0 if _is_indirect_record(rec) else 0.0
-        rep_flag = 1.0 if rec.get("is_synthetic_repaired") is True else 0.0
+        ind_flag = float(indirect)
+        rep_flag = float(repaired)
         orphan_flag = 1.0 if (in_deg[idx] == 0 and node_types[idx] != 0) else 0.0
 
         row = [
@@ -453,11 +452,15 @@ def project_graph_bundles_batch_v2(
     node_cap: int = MAX_NODES,
     device: str = "auto",
 ) -> list[dict]:
-    if not items:
+    preps = [_prepare_graph_projection_v2(bundle, sha256, node_cap=node_cap) for bundle, sha256 in items]
+    return finalize_graph_batch_v2(preps, device=device)
+
+
+def finalize_graph_batch_v2(preps, *, device):
+    if not preps:
         return []
     from malpdf.extraction.gpu_accel import compute_rwse_batch_torch
 
-    preps = [_prepare_graph_projection_v2(bundle, sha256, node_cap=node_cap) for bundle, sha256 in items]
     rwse_batch = compute_rwse_batch_torch(
         [(p["num_nodes"], p["edge_src"], p["edge_dst"]) for p in preps],
         steps=RWSE_STEPS,

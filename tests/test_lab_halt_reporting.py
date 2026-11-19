@@ -115,6 +115,44 @@ def test_persisted_job_result_respects_halt_markers(jobs, extraction_job: dict, 
     assert json.loads((directory / "result.json").read_bytes())["status"] == "partial"
 
 
+@pytest.mark.skipif(sys.platform != "linux", reason="Uses the Linux bulk session lock")
+def test_bulk_budget_stop_can_be_selected_and_finished_on_second_console(jobs, tmp_path, monkeypatch):
+    monkeypatch.setattr(jobs, "JOBS", tmp_path / "jobs")
+    job = jobs.make_job("a" * 40, "b" * 64, "c" * 64, kind="pdf-static-bulk", mode="offline")
+    directory = jobs.save_job(job)
+    jobs.immutable(directory / "queued.json", jobs.result(job, "queued"))
+    environment = {"mode": "offline", "guest_network_checked": True, "stdlib_dependencies_checked": True,
+                   "hypervisor_controls_attested": True}
+    monkeypatch.setattr(jobs, "config", lambda: {"data_root": str(tmp_path)})
+    monkeypatch.setattr(jobs, "check_credentials", lambda _: None)
+    monkeypatch.setattr(jobs, "preflight", lambda *_, **__: environment)
+    monkeypatch.setattr(jobs.side, "verify_release", lambda *_: {})
+    monkeypatch.setattr(jobs, "verify_helpers", lambda _: None)
+    claims = iter([12, 13, 13])
+    monkeypatch.setattr(jobs, "process_identity", lambda _: next(claims))
+    summary = {"planned": 1, "completed": 1, "observed": 1, "partial": 0, "failed": 0,
+               "primary_available": 1, "timeout": 0, "elapsed_ms": 100, "peak_rss_bytes": 100,
+               "status_counts": {"observed": 1}}
+    outcomes = iter([jobs.BulkInterrupted("worker_timeout"), summary])
+
+    def pdf_task(*_):
+        outcome = next(outcomes)
+        if isinstance(outcome, Exception):
+            raise outcome
+        return outcome
+
+    monkeypatch.setattr(jobs, "pdf_task", pdf_task)
+    assert jobs.execute(job, attested=True)["status"] == "interrupted"
+    assert not (directory / "result.json").exists()
+    original_claim = json.loads((directory / "claim.json").read_bytes())
+    assert jobs.pending() == [job]
+    monkeypatch.setattr(jobs, "process_identity", lambda _: 13)
+    assert jobs.execute(job, attested=True, resume=True)["status"] == "passed"
+    assert json.loads((directory / "result.json").read_bytes())["pdf_summary"] == summary
+    archived, = (directory / "bulk_claims").glob("*.json")
+    assert json.loads(archived.read_bytes()) == original_claim
+
+
 @pytest.mark.parametrize("corruption", ["count_mismatch", "over_planned", "missing_summary"])
 def test_unvalidated_summaries_cannot_reach_a_completion_banner(jobs, extraction_job: dict, corruption: str) -> None:
     summary = _partial_summary()

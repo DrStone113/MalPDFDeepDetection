@@ -1,7 +1,7 @@
 """Installed LAB console and bounded operator transport, with no network changes."""
 
 import argparse
-from contextlib import redirect_stdout
+from contextlib import nullcontext, redirect_stdout
 import csv
 import io
 import json
@@ -48,6 +48,7 @@ BULK_SOURCE_MANIFEST = 'data/processed/multi_cohort_v4/run_20261003T124714720715
 BULK_SPLIT_MANIFEST = 'data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/split_manifest.csv'
 BULK_CORPUS_MANIFEST = 'data/raw/bulk_20261116/manifest.csv'
 BULK_OUTPUT_REL = 'data/processed/bulk_extract'
+BULK_RECOVERY_CONFIG = 'configs/pdf_static_bulk_recovery.json'
 
 
 def bulk_contract():
@@ -156,10 +157,13 @@ def receive(stream, expected_id):
     if (directory / 'queued.json').exists():
         return jobs.read_result(job['job_id'])
     if job['mode'] == 'offline':
-        if job['kind'] in jobs.PDF_KINDS:
-            pdf_prepare(job, directory)
-        value = jobs.result(job, 'queued')
-        jobs.immutable(directory / 'queued.json', value)
+        with (jobs.bulk_session_lock() if job['kind'] == 'pdf-static-bulk' else nullcontext()):
+            if (directory / 'queued.json').is_file():
+                return jobs.read_result(job['job_id'])
+            if job['kind'] in jobs.PDF_KINDS:
+                pdf_prepare(job, directory)
+            value = jobs.result(job, 'queued')
+            jobs.immutable(directory / 'queued.json', value)
         return jobs.read_result(job['job_id'])
     return jobs.execute(job)
 
@@ -361,11 +365,32 @@ def _pdf_worker(job_id, *, prepare=False, shard=0, count=1):
             cic_split_manifest_csv=split_manifest,
         )
         sel_digest = jobs.sha(jobs.encoded([(e.index, e.sha256, e.label, e.label_source, e.split) for e in entries]))
+        from malpdf.extraction.bulk_recovery import load_baseline, select_pilot
+
+        contract = parse_json(side.bounded_read(source / BULK_RECOVERY_CONFIG, 65536))
+        original_job = jobs.load_job(contract['source_job'])
+        original = jobs.job_directory(original_job['job_id'])
+        claim_bytes = side.bounded_read(original / 'claim.json', 4096)
+        if (contract['schema_version'] != 1 or contract['selection_sha256'] != sel_digest
+                or original_job['job_id'] == job_id or original_job['kind'] != job['kind']
+                or original_job['commit'] != contract['source_commit']
+                or jobs.sha(side.bounded_read(original / 'job.json', 65536)) != contract['job_sha256']
+                or jobs.sha(claim_bytes) != contract['claim_sha256']
+                or jobs.sha(side.bounded_read(data_root / 'configs/arlington.lock.json', 2 * 1024**2))
+                != contract['model_lock_sha256']):
+            raise ValueError('manifest_unavailable')
+        claim = parse_json(claim_bytes)
+        if jobs.process_identity(claim['parent_pid']) == claim['start_ticks']:
+            raise ValueError('already_claimed')
+        if any(item['kind'] == 'pdf-static-bulk' and item['job_id'] not in {original_job['job_id'], job_id}
+               for item in jobs.pending()):
+            raise ValueError('already_claimed')
+        output = jobs.trusted_path(data_root / BULK_OUTPUT_REL)
+        baseline_rows, _ = load_baseline(output, entries, contract)
         jobs.immutable(directory / 'bulk_plan.json', {
-            'job_id': job_id,
-            'planned_denominator': len(entries),
-            'manifest_stats': manifest_stats,
-            'selection_sha256': sel_digest,
+            'job_id': job_id, 'planned_denominator': len(entries), 'manifest_stats': manifest_stats,
+            'selection_sha256': sel_digest, 'baseline': contract, 'pilot': select_pilot(baseline_rows),
+            'output_root': BULK_OUTPUT_REL,
         })
         return
     if len(rows) != job['limits']['samples']:
@@ -485,17 +510,32 @@ def pdf_bulk_worker(job_id):
         raise ValueError('job_mismatch')
     jobs.preflight('offline', attested=True)
     directory = jobs.job_directory(job_id)
+    attempt_id = os.environ.get('MALPDF_BULK_ATTEMPT', '')
+    if len(attempt_id) != 32 or not jobs.HEX.fullmatch(attempt_id * 2) or sys.stdin.buffer.read(1) != b'1':
+        raise ValueError('approval_required')
+    attempt = jobs.trusted_path(directory / 'bulk_attempts' / attempt_id)
     claim = parse_json(side.bounded_read(directory / 'claim.json', 4096))
     if claim.get('job_id') != job_id or claim.get('hypervisor_controls_attested') is not True or claim.get('parent_pid') != os.getppid():
         raise ValueError('approval_required')
     started = time.monotonic()
+    deadline = float(os.environ['MALPDF_BULK_DEADLINE'])
+    if not started < deadline <= started + job['limits']['wall_seconds']:
+        raise jobs.BulkInterrupted('worker_timeout')
+
+    def pause_bulk(*_):
+        raise jobs.BulkInterrupted('worker_timeout')
+
+    signal.signal(signal.SIGALRM, pause_bulk)
+    signal.setitimer(signal.ITIMER_REAL, deadline - started)
     os.environ['MALPDF_LAB_ISOLATED'] = '1'
     source, data_root, rows = pdf_metadata(job)
     source_manifest, bulk_manifest, split_manifest = rows
     if parse_json(side.bounded_read(data_root / 'configs/arlington.lock.json', 2 * 1024**2)) != parse_json(side.bounded_read(source / 'configs/arlington.lock.json', 2 * 1024**2)):
         raise ValueError('manifest_unavailable')
-    from malpdf.extraction.arlington_model import load_model
+    from malpdf.extraction.arlington_model import load_model, write_catalog_snapshot
+    from malpdf.extraction.batch import extract_pdfs
     from malpdf.extraction.bulk_pipeline import build_clean_corpus_manifest, default_bulk_limits, run_hybrid_bulk_extraction
+    from malpdf.extraction.bulk_recovery import run_pilot
     from malpdf.extraction.jobs import require_extraction_lab
     require_extraction_lab(True, repository_root=data_root)
     plan = parse_json(side.bounded_read(directory / 'bulk_plan.json', 65536))
@@ -506,7 +546,9 @@ def pdf_bulk_worker(job_id):
         cic_split_manifest_csv=split_manifest,
     )
     sel_digest = jobs.sha(jobs.encoded([(e.index, e.sha256, e.label, e.label_source, e.split) for e in entries]))
-    if plan.get('job_id') != job_id or plan.get('planned_denominator') != len(entries) or plan.get('selection_sha256') != sel_digest:
+    if (plan.get('job_id') != job_id or plan.get('planned_denominator') != len(entries)
+            or plan.get('selection_sha256') != sel_digest or plan.get('output_root') != BULK_OUTPUT_REL
+            or plan.get('baseline') != parse_json(side.bounded_read(source / BULK_RECOVERY_CONFIG, 65536))):
         raise ValueError('manifest_unavailable')
     catalog = load_model(data_root)
     lim = job['limits']
@@ -533,19 +575,72 @@ def pdf_bulk_worker(job_id):
                 flush=True,
             )
 
-    summary_doc = run_hybrid_bulk_extraction(
-        entries,
-        base_dir=data_root,
-        output_dir=output_dir,
-        workers=int(lim['workers']),
-        chunk_size=500,
-        limits=limits,
-        device='cpu',
-        arlington_catalog=catalog,
-        include_markov=True,
-        manifest_stats=manifest_stats,
-        progress=on_progress,
-    )
+    snapshot_path = attempt / 'arlington.json'
+    snapshot = (str(snapshot_path), write_catalog_snapshot(snapshot_path, catalog))
+    registry = attempt / 'workers'
+    diagnostics = {}
+    pilot_shas = {row['sha256'] for row in plan['pilot']}
+
+    def extract(chunk, *, limits, workers):
+        from contextlib import closing
+
+        stream = extract_pdfs(
+            [entry.pdf_path for entry in chunk], boundary=data_root / 'data/raw', workers=workers,
+            expected_hashes={entry.index: entry.sha256 for entry in chunk},
+            input_indices=[entry.index for entry in chunk], profile='deep-static', limits=limits,
+            include_byte_images=False, coalesce_checkpoints=True, arlington_catalog=catalog,
+            bulk_worker=(snapshot, registry),
+        )
+        with closing(stream):
+            for index, bundle in stream:
+                sha = bundle.get('sample_sha256')
+                worker = bundle.get('coverage_report', {}).get('worker', {})
+                diagnostic = worker.get('diagnostic') or {}
+                if sha in pilot_shas:
+                    diagnostics[sha] = {
+                        'cleanup_complete': worker.get('worker_cleanup_complete'),
+                        'result_verified': diagnostic.get('preserved_before_cleanup') is True
+                            and diagnostic.get('failure_kind') is None,
+                    }
+                if diagnostic.get('bulk_stall_observed'):
+                    print(f'Worker stall observed | index={index} | worker={worker.get("status")}', flush=True)
+                yield index, bundle
+
+    def run(selection, output, chunk_size):
+        import threading
+        from malpdf.static.profile_worker import resident_bytes
+
+        corpus = output == output_dir
+        stopped = threading.Event()
+        rss_peak = 0
+
+        def sample():
+            nonlocal rss_peak
+            while not stopped.is_set():
+                pids = (int(path.stem) for path in registry.glob('*.json') if path.stem.isdecimal())
+                rss_peak = max(rss_peak, resident_bytes(os.getpid()) + sum(resident_bytes(pid) for pid in pids))
+                stopped.wait(0.25)
+
+        observer = threading.Thread(target=sample, name='bulk-memory', daemon=True)
+        observer.start()
+        began = time.monotonic()
+        try:
+            summary = run_hybrid_bulk_extraction(
+                selection, base_dir=data_root, output_dir=output, workers=int(lim['workers']),
+                chunk_size=chunk_size, limits=limits, device='cpu', include_markov=True,
+                manifest_stats=manifest_stats if corpus else None,
+                extractor_fn=extract, progress=on_progress,
+                producer={'commit': job['commit'], 'job_id': job_id, 'selection_sha256': sel_digest},
+                adopted_checkpoints=tuple(plan['baseline']['checkpoint_sha256']) if corpus else (),
+            )
+        finally:
+            stopped.set()
+            observer.join()
+        return dict(summary, sampled_process_tree_rss_sum_peak_bytes=rss_peak,
+                    elapsed_seconds=round(time.monotonic() - began, 3))
+
+    run_pilot(directory, output_dir, entries, plan, run, diagnostics, commit=job['commit'])
+    summary_doc = run(entries, output_dir, 500)
     counts = dict(summary_doc['status_counts'])
     completed = sum(counts.values())
     observed = counts.get('observed', 0) + counts.get('bounded_complete', 0)
@@ -564,7 +659,7 @@ def pdf_bulk_worker(job_id):
         'peak_rss_bytes': min(2 * 1024**3, int(summary_doc.get('peak_rss_bytes', 0))),
         'status_counts': counts,
     }
-    jobs.immutable(directory / 'pdf_summary.json', pdf_summary)
+    jobs.immutable(attempt / 'pdf_summary.json', pdf_summary)
 
 
 def historical(job_id):
@@ -733,7 +828,10 @@ def main():
         if args.command in ('pdf-worker', 'pdf-prepare'):
             pdf_worker(args.job_id, prepare=args.command == 'pdf-prepare', shard=args.shard, count=args.of)
         elif args.command == 'pdf-bulk':
-            pdf_bulk_worker(args.job_id)
+            try:
+                pdf_bulk_worker(args.job_id)
+            except jobs.BulkInterrupted:
+                return 75
         elif args.command == 'replay-report':
             print(json.dumps(replay_report(args.job_id), sort_keys=True))
         elif args.command == 'receive':

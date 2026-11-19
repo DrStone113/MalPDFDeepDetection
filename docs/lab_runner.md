@@ -134,6 +134,13 @@ PDF khác, cần xác định thư mục cụ thể, manifest và số mẫu h�
 luồng xử lý tương ứng trước khi queue; không dùng lệnh CIC64 như thể nó đã chọn tập mới.
 Không duyệt đệ quy toàn bộ thư mục `data` hoặc đọc PDF để tự suy ra lựa chọn.
 
+Đợt khôi phục 41.727 PDF sử dụng tám chunk đã niêm phong từ release `7b15cc6`.
+Job kế thừa đối chiếu pilot 128 mẫu với bản ghi đã lưu trước khi ghi tiếp chunk 8.
+Mỗi phiên có trần 86.400 giây. Nếu phiên dừng vì ngân sách, dùng lại `lab run`
+tại console offline để đọc lại checkpoint và tiếp tục. Nếu pilot hoặc checkpoint
+không khớp, giữ nguyên bằng chứng để kiểm tra. Khi thay `lab_jobs.py` hoặc
+`lab_runner.py`, cập nhật và xác minh gateway trước khi cài runner cùng release.
+
 Chỉ khi đã duyệt cohort, môi trường và isolation mới chọn:
 
 ```powershell

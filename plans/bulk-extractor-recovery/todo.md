@@ -1,0 +1,22 @@
+# Checklist bulk extractor
+
+- [x] T01 Khóa baseline và xác nhận manifest, dependency và hash
+- [x] T02 Dừng writer treo đã xác minh và kiểm hash lại
+- [x] T03 Tạo bộ đối chiếu canonical JSON và Markov
+- [x] T04 Snapshot Arlington có tổng kiểm và round trip
+- [ ] T05 Bootstrap Linux và áp dụng resource limits một lần
+- [ ] T06 IPC không chặn và thu hồi cây worker
+- [x] T07 Tái sử dụng raw token counts
+- [ ] T08 Rút gọn quality gate với kiểm chứng parity
+- [ ] T09 Giải phóng bundle sớm và giới hạn Markov buffer
+- [ ] T10 Telemetry tiến độ và stall
+- [ ] T11 Kiểm chứng checkpoint và adoption ledger
+- [ ] T12 Khóa output và commit theo giao dịch
+- [ ] T13 Kiểm thử Windows, review và đóng gói commit sạch
+- [ ] T14 Cài gateway rồi runner và kiểm thử Linux
+- [ ] T15 Kế thừa job, queue candidate
+- [ ] T16 Pilot 128 mẫu đối chiếu với output đã lưu
+- [ ] T17 Resume có giới hạn theo phiên và bàn giao lab run
+- [ ] T18 Readback đầy đủ output cuối
+- [ ] T19 Kiểm kê và cách ly dữ liệu cũ đủ điều kiện
+- [ ] T20 Đồng bộ bug registry, milestone và research log

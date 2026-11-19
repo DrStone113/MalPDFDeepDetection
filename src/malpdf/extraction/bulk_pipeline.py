@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter
+from contextlib import closing, nullcontext
 import csv
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
@@ -15,15 +16,21 @@ from typing import Callable
 
 from malpdf.data.graph_contract import NODE_FEATURE_DIM_V2, index_measured_graphs_v2
 from malpdf.extraction.graph_audit import canonical_bytes
+from malpdf.extraction.normalize import normalize_profile
+from malpdf.extraction.bulk_checkpoint import (
+    CHUNK_FILES, FINAL_FILES, MARKOV_FILES, output_lock, publication, read_chunk, verify_manifest,
+)
 from malpdf.extraction.graph_projection_v2 import (
     PROJECTION_CONTRACT_VERSION,
     SCHEMA_VERSION,
-    project_graph_bundles_batch_v2,
+    _prepare_graph_projection_v2,
+    finalize_graph_batch_v2,
     to_measured_graph_record_v2,
 )
 from malpdf.extraction.quality_gate import (
     GATE_CONTRACT_VERSION_V2,
-    evaluate_sample_quality_v2,
+    prepare_sample_quality_v2,
+    finish_sample_quality_v2,
 )
 from malpdf.static.code_inspector import CodeInspectionLimits
 from malpdf.static.execution import available_cpus
@@ -274,17 +281,10 @@ def _write_gzip_jsonl(path: Path, records: list[dict]) -> None:
 
 def _chunk_is_complete(chunk_dir: Path) -> bool:
     done_file = chunk_dir / "chunk_done.json"
-    if not done_file.is_file():
+    if not done_file.exists() and not done_file.is_symlink():
         return False
-    try:
-        meta = json.loads(done_file.read_text(encoding="utf-8"))
-        for fname, expected in meta.get("files", {}).items():
-            fpath = chunk_dir / fname
-            if not fpath.is_file() or _sha256_file(fpath) != expected:
-                return False
-        return True
-    except (OSError, ValueError, KeyError, TypeError):
-        return False
+    verify_manifest(chunk_dir, "chunk_done.json", allowed=(CHUNK_FILES, CHUNK_FILES | MARKOV_FILES))
+    return True
 
 
 def _process_chunk(
@@ -298,22 +298,17 @@ def _process_chunk(
     device: str,
     arlington_catalog: object | None,
     include_markov: bool,
-    prune_raw_after_chunk: bool,
     extractor_fn: Callable[..., object] | None,
 ) -> dict:
-    chunk_dir.mkdir(parents=True, exist_ok=True)
-    if _chunk_is_complete(chunk_dir):
-        meta = json.loads((chunk_dir / "chunk_done.json").read_text(encoding="utf-8"))
-        meta["resumed_from_checkpoint"] = True
-        return meta
-
     t0 = time.monotonic()
     entry_by_idx = {e.index: e for e in chunk_entries}
-    paths = [e.pdf_path for e in chunk_entries]
-    indices = [e.index for e in chunk_entries]
-    expected_hashes = {e.index: e.sha256 for e in chunk_entries}
+    oversized = [entry for entry in chunk_entries if entry.pdf_path.stat().st_size > limits.max_file_bytes]
+    oversized_indices = {entry.index for entry in oversized}
+    admitted = [entry for entry in chunk_entries if entry.index not in oversized_indices]
+    paths = [e.pdf_path for e in admitted]
+    indices = [e.index for e in admitted]
+    expected_hashes = {e.index: e.sha256 for e in admitted}
 
-    bundles_by_idx: dict[int, dict] = {}
     raw_sub = (boundary / "data" / "raw").resolve()
     chunk_boundary = raw_sub if raw_sub.is_dir() and paths and all(p.is_relative_to(raw_sub) for p in paths) else boundary
     if extractor_fn is None:
@@ -331,37 +326,51 @@ def _process_chunk(
         }
         if arlington_catalog is not None:
             extract_opts["arlington_catalog"] = arlington_catalog
-        for idx, bundle in extract_pdfs(paths, **extract_opts):
-            bundles_by_idx[idx] = bundle
+        results = extract_pdfs(paths, **extract_opts)
     else:
-        for idx, bundle in extractor_fn(chunk_entries, limits=limits, workers=workers):
-            bundles_by_idx[idx] = bundle
+        results = extractor_fn(admitted, limits=limits, workers=workers)
+
+    prepared = {}
+    gate_facts = {}
+    primary_available_count = 0
+    for entry in oversized:
+        bundle = normalize_profile(
+            {"status": "resource_limit_or_signal", "errors": ["file_size_limit"]},
+            entry.sha256, "deep-static", provenance={"input_identity": "manifest_only"},
+        )
+        prepared[entry.index] = _prepare_graph_projection_v2(bundle, entry.sha256)
+        gate_facts[entry.index] = prepare_sample_quality_v2(bundle, entry.sha256)
+    stream = iter(results)
+    with (closing(stream) if hasattr(stream, "close") else nullcontext(stream)):
+        for idx, bundle in stream:
+            if idx not in entry_by_idx or idx in prepared:
+                raise ValueError("bulk_extraction_index")
+            digest = entry_by_idx[idx].sha256
+            prepared[idx] = _prepare_graph_projection_v2(bundle, digest)
+            gate_facts[idx] = prepare_sample_quality_v2(bundle, digest)
+            primary_available_count += int(any(
+                rec.get("kind") == "primary_checkpoint" for rec in bundle.get("evidence_store", {}).get("records", [])
+            ))
+            del bundle
 
     t_cpu_end = time.monotonic()
     resolved_device = resolve_extraction_device(device)
     ordered_indices = sorted(entry_by_idx)
-    items_for_proj = [(bundles_by_idx[idx], entry_by_idx[idx].sha256) for idx in ordered_indices]
-    projected_list = project_graph_bundles_batch_v2(
-        items_for_proj,
-        device=str(resolved_device),
-    )
+    projected_list = finalize_graph_batch_v2([prepared[idx] for idx in ordered_indices], device=str(resolved_device))
 
     graph_records: list[dict] = []
     tabular_records: list[dict] = []
     unavailable_records: list[dict] = []
     status_counts = Counter()
-    primary_available_count = 0
     timeout_count = 0
     peak_rss_bytes = 0
 
     for idx, proj in zip(ordered_indices, projected_list):
         entry = entry_by_idx[idx]
-        bundle = bundles_by_idx[idx]
-        gate = evaluate_sample_quality_v2(bundle, entry.sha256, projected_v2=proj)
+        gate = finish_sample_quality_v2(gate_facts[idx], entry.sha256, proj)
         status_counts[proj["status"]] += 1
-        primary_available_count += int(any(r.get("kind") == "primary_checkpoint" for r in bundle.get("evidence_store", {}).get("records", [])))
         timeout_count += int(proj["status"] == "timeout")
-        worker_rss = (bundle.get("coverage_report", {}).get("worker") or {}).get("peak_rss_bytes")
+        worker_rss = proj["worker"]["peak_rss_bytes"]
         if type(worker_rss) is int and worker_rss > peak_rss_bytes:
             peak_rss_bytes = worker_rss
 
@@ -409,17 +418,30 @@ def _process_chunk(
     markov_count = 0
     if include_markov:
         import numpy as np
+        from malpdf.static.safety import read_bounded_bytes
 
         raw_bufs: list[bytes] = []
         markov_shas: list[str] = []
+        mats = []
+        pending_bytes = 0
         for idx in ordered_indices:
             entry = entry_by_idx[idx]
-            raw = entry.pdf_path.read_bytes()
-            if len(raw) >= 2 and len(raw) <= limits.max_file_bytes:
-                raw_bufs.append(raw)
-                markov_shas.append(entry.sha256)
+            size = entry.pdf_path.stat().st_size
+            if not 2 <= size <= limits.max_file_bytes:
+                continue
+            raw = read_bounded_bytes(entry.pdf_path, boundary=chunk_boundary, max_bytes=limits.max_file_bytes)
+            if len(raw) != size or hashlib.sha256(raw).hexdigest() != entry.sha256:
+                raise ValueError("bulk_markov_input_changed")
+            if raw_bufs and (pending_bytes + len(raw) > 32 * 1024**2 or len(raw_bufs) >= 128):
+                mats.extend(byte_transition_matrices_batch(raw_bufs, device=str(resolved_device)))
+                raw_bufs.clear()
+                pending_bytes = 0
+            raw_bufs.append(raw)
+            pending_bytes += len(raw)
+            markov_shas.append(entry.sha256)
         if raw_bufs:
-            mats = byte_transition_matrices_batch(raw_bufs, device=str(resolved_device))
+            mats.extend(byte_transition_matrices_batch(raw_bufs, device=str(resolved_device)))
+        if mats:
             stacked = np.stack(mats, axis=0).astype(np.float32)
         else:
             stacked = np.zeros((0, 256, 256), dtype=np.float32)
@@ -432,10 +454,6 @@ def _process_chunk(
         markov_count = len(markov_shas)
 
     t_gpu_end = time.monotonic()
-
-    if prune_raw_after_chunk:
-        for entry in chunk_entries:
-            entry.pdf_path.unlink(missing_ok=True)
 
     meta = {
         "schema_version": 1,
@@ -466,8 +484,9 @@ def merge_bulk_chunks(
     *,
     hw_info: dict,
     manifest_stats: dict,
+    final_dir: Path | None = None,
 ) -> dict:
-    final_dir = output_dir / "final"
+    final_dir = output_dir / "final" if final_dir is None else final_dir
     final_dir.mkdir(parents=True, exist_ok=True)
 
     chunks_root = output_dir / "chunks"
@@ -533,6 +552,12 @@ def merge_bulk_chunks(
                     "count": meta["markov_matrices"],
                 })
 
+    if [(row[0], row[1]) for row in corpus_meta_rows] != [(entry.index, entry.sha256) for entry in entries]:
+        raise ValueError("bulk_final_identity")
+    if len({entry.sha256 for entry in entries}) != len(entries):
+        raise ValueError("bulk_duplicate_entry")
+    if total_graphs + len(unavailable_records) != len(entries):
+        raise ValueError("bulk_final_partition")
     graph_out_tmp.replace(final_dir / "hetero_graphs_v2.jsonl.gz")
     tab_out_tmp.replace(final_dir / "tabular_features_v2.jsonl.gz")
 
@@ -606,42 +631,62 @@ def run_hybrid_bulk_extraction(
     manifest_stats: dict | None = None,
     extractor_fn: Callable[..., object] | None = None,
     progress: Callable[[dict], None] | None = None,
+    producer: dict | None = None,
+    adopted_checkpoints: tuple[str, ...] = (),
 ) -> dict:
     if chunk_size < 1:
         raise ValueError("chunk_size must be >= 1")
-    output_dir.mkdir(parents=True, exist_ok=True)
     effective_limits = limits or default_bulk_limits()
     effective_workers = available_cpus() if workers is None else max(1, min(workers, available_cpus()))
     chunks_root = output_dir / "chunks"
-    chunks_root.mkdir(parents=True, exist_ok=True)
-
     chunk_metas: list[dict] = []
     total_chunks = (len(entries) + chunk_size - 1) // chunk_size if entries else 0
-    for chunk_id in range(total_chunks):
-        start = chunk_id * chunk_size
-        chunk_entries = entries[start:start + chunk_size]
-        meta = _process_chunk(
-            chunk_id,
-            chunk_entries,
-            boundary=base_dir,
-            chunk_dir=chunks_root / f"chunk_{chunk_id:05d}",
-            workers=effective_workers,
-            limits=effective_limits,
-            device=device,
-            arlington_catalog=arlington_catalog,
-            include_markov=include_markov,
-            prune_raw_after_chunk=prune_raw_after_chunk,
-            extractor_fn=extractor_fn,
-        )
-        chunk_metas.append(meta)
-        if progress is not None:
-            progress({"event": "chunk_completed", "chunk_id": chunk_id, "total_chunks": total_chunks, **meta})
+    with output_lock(output_dir):
+        if chunks_root.is_symlink():
+            raise ValueError("bulk_chunks_symlink")
+        chunks_root.mkdir(exist_ok=True)
+        for chunk_id in range(total_chunks):
+            start = chunk_id * chunk_size
+            chunk_entries = entries[start:start + chunk_size]
+            chunk_dir = chunks_root / f"chunk_{chunk_id:05d}"
+            if chunk_dir.is_symlink() or (chunk_dir / "chunk_done.json").is_symlink():
+                raise ValueError("bulk_checkpoint_symlink")
+            if (chunk_dir / "chunk_done.json").exists():
+                if (chunk_id < len(adopted_checkpoints)
+                        and _sha256_file(chunk_dir / "chunk_done.json") != adopted_checkpoints[chunk_id]):
+                    raise ValueError("bulk_adopted_checkpoint_changed")
+                meta = read_chunk(chunk_dir, chunk_entries, chunk_id=chunk_id, include_markov=include_markov).meta
+                if producer is not None and chunk_id >= len(adopted_checkpoints) and meta.get("producer") != producer:
+                    raise ValueError("bulk_checkpoint_producer")
+                meta["resumed_from_checkpoint"] = True
+            else:
+                if chunk_id < len(adopted_checkpoints):
+                    raise ValueError("bulk_adopted_checkpoint_missing")
+                with publication(chunk_dir) as staging:
+                    meta = _process_chunk(
+                        chunk_id, chunk_entries, boundary=base_dir, chunk_dir=staging,
+                        workers=effective_workers, limits=effective_limits, device=device,
+                        arlington_catalog=arlington_catalog, include_markov=include_markov,
+                        extractor_fn=extractor_fn,
+                    )
+                    if producer is not None:
+                        meta["producer"] = producer
+                        (staging / "chunk_done.json").write_bytes(canonical_bytes(meta) + b"\n")
+                    read_chunk(staging, chunk_entries, chunk_id=chunk_id, include_markov=include_markov)
+                if prune_raw_after_chunk:
+                    for entry in chunk_entries:
+                        entry.pdf_path.unlink(missing_ok=True)
+            chunk_metas.append(meta)
+            if progress is not None:
+                progress({"event": "chunk_completed", "chunk_id": chunk_id, "total_chunks": total_chunks, **meta})
 
-    hw_info = hardware_profile(device)
-    return merge_bulk_chunks(
-        output_dir,
-        entries,
-        chunk_metas,
-        hw_info=hw_info,
-        manifest_stats=manifest_stats or {"unique_clean_pdfs": len(entries)},
-    )
+        final_dir = output_dir / "final"
+        if (final_dir / "manifest.json").is_file():
+            verify_manifest(final_dir, "manifest.json", allowed=(FINAL_FILES,))
+        with publication(final_dir) as staging:
+            summary = merge_bulk_chunks(
+                output_dir, entries, chunk_metas, hw_info=hardware_profile(device),
+                manifest_stats=manifest_stats or {"unique_clean_pdfs": len(entries)}, final_dir=staging,
+            )
+            verify_manifest(staging, "manifest.json", allowed=(FINAL_FILES,))
+        return summary

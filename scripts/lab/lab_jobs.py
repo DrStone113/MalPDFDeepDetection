@@ -123,8 +123,9 @@ def execution_limits(kind):
             resource.setrlimit(name, (amount if hard == resource.RLIM_INFINITY else min(amount, hard), hard))
         for name in signals:
             signal.signal(name, expired)
-        wall = policy(kind)['wall_seconds'] + 5 if kind in PDF_KINDS else 230
-        signal.setitimer(signal.ITIMER_REAL, min(wall, previous_timer[0]) if previous_timer[0] else wall)
+        if kind != 'pdf-static-bulk':
+            wall = policy(kind)['wall_seconds'] + 5 if kind in PDF_KINDS else 230
+            signal.setitimer(signal.ITIMER_REAL, min(wall, previous_timer[0]) if previous_timer[0] else wall)
         yield
     finally:
         remaining = max(0.001, previous_timer[0] - (time.monotonic() - started)) if previous_timer[0] else 0
@@ -419,8 +420,21 @@ def catalog():
 
 
 def pending():
+    jobs = catalog()
+    superseded = set()
+    for candidate in jobs:
+        if candidate['kind'] != 'pdf-static-bulk':
+            continue
+        directory = job_directory(candidate['job_id'])
+        if not (directory / 'queued.json').is_file():
+            continue
+        selection = bulk_adoption(directory)
+        if selection is not None and selection.get('job_id') == candidate['job_id']:
+            superseded.add(selection['baseline']['source_job'])
     items = []
-    for job in catalog():
+    for job in jobs:
+        if job['job_id'] in superseded:
+            continue
         directory = job_directory(job['job_id'])
         if not (directory / 'queued.json').is_file() or (directory / 'result.json').is_file():
             continue
@@ -439,8 +453,49 @@ def pending():
     return items
 
 
+def bulk_adoption(directory):
+    path = directory / 'bulk_plan.json'
+    if not path.is_file():
+        return None
+    plan = parse_json(side.bounded_read(trusted_path(path), 65536))
+    baseline = plan.get('baseline')
+    if (isinstance(baseline, dict) and isinstance(baseline.get('source_job'), str)
+            and HEX.fullmatch(baseline['source_job'])):
+        return plan
+    return None
+
+
+class BulkInterrupted(ValueError):
+    pass
+
+
+@contextmanager
+def bulk_session_lock():
+    with trusted_path(JOBS / '.bulk-session.lock').open('a+b') as lock:
+        try:
+            if os.name == 'nt':
+                import msvcrt
+                lock.seek(0)
+                msvcrt.locking(lock.fileno(), msvcrt.LK_NBLCK, 1)
+            else:
+                import fcntl
+                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise ValueError('already_claimed') from None
+        yield
+
+
 def execute(job, *, attested=False, resume=False):
     validate_job(job)
+    if job['kind'] != 'pdf-static-bulk':
+        return _execute(job, attested=attested, resume=resume)
+    with bulk_session_lock():
+        if not (job_directory(job['job_id']) / 'result.json').is_file():
+            ensure_bulk_sessions_stopped(job_directory(job['job_id']))
+        return _execute(job, attested=attested, resume=resume)
+
+
+def _execute(job, *, attested=False, resume=False):
     jobs_config = config()
     if job['kind'] in PDF_KINDS:
         check_credentials(Path(jobs_config['data_root']))
@@ -459,6 +514,10 @@ def execute(job, *, attested=False, resume=False):
                 raise ValueError('already_claimed')
         except (OSError, ValueError):
             raise ValueError('already_claimed')
+        if job['kind'] == 'pdf-static-bulk':
+            prior = directory / 'bulk_claims'
+            prior.mkdir(mode=0o700, exist_ok=True)
+            immutable(prior / (sha(encoded(claim)) + '.json'), claim)
     environment = preflight(job['mode'], attested=attested)
     metadata = side.verify_release(job['commit'], job['manifest_sha256'])
     verify_helpers(metadata)
@@ -488,6 +547,8 @@ def execute(job, *, attested=False, resume=False):
                     checks.append(side.synthetic(job['commit']))
             status = 'failed' if any(check['status'] == 'failed' for check in checks) else 'partial' if any(check['status'] == 'partial' for check in checks) else 'passed'
             value = result(job, status, checks=checks, environment=environment)
+    except BulkInterrupted:
+        return result(job, 'interrupted', environment=environment, reason='worker_timeout')
     except (OSError, ValueError, subprocess.SubprocessError, MemoryError) as error:
         value = result(job, 'failed', environment=environment, reason='worker_timeout' if str(error) == 'worker_timeout' else 'worker_failed')
     immutable(directory / 'result.json', value)
@@ -566,23 +627,97 @@ def pdf_bundle_indices(outputs, planned):
             and path.is_file() and int(path.stem) < planned}
 
 
+def bulk_attempt_stopped(attempt, *, terminate=False):
+    import signal
+
+    result_file = attempt / 'result.json'
+    if not terminate and result_file.is_file():
+        prior = parse_json(side.bounded_read(trusted_path(result_file), 2048))
+        return prior.get('cleanup_verified') is True
+    for file in (attempt / 'writer.json', *sorted((attempt / 'workers').glob('*.json'))):
+        if not file.is_file():
+            continue
+        record = parse_json(side.bounded_read(trusted_path(file), 1024))
+        pid, ticks = record['pid'], record['start_ticks']
+        if type(pid) is not int or pid <= 1 or type(ticks) is not int or record['pgid'] != pid:
+            raise ValueError('worker_failed')
+        if terminate and process_identity(pid) == ticks:
+            try:
+                with_pidfd = os.pidfd_open(pid)
+            except ProcessLookupError:
+                continue
+            try:
+                if process_identity(pid) == ticks:
+                    signal.pidfd_send_signal(with_pidfd, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            finally:
+                os.close(with_pidfd)
+        for _ in range(20 if terminate else 1):
+            try:
+                os.killpg(pid, 0)
+            except ProcessLookupError:
+                break
+            if not terminate:
+                return False
+            time.sleep(0.05)
+        else:
+            return False
+    return True
+
+
+def ensure_bulk_sessions_stopped(directory):
+    attempts = trusted_path(directory / 'bulk_attempts')
+    if attempts.is_dir():
+        for attempt in attempts.iterdir():
+            if not attempt.is_dir() or not bulk_attempt_stopped(trusted_path(attempt)):
+                raise ValueError('already_claimed')
+
+
 def _bulk_task(job, directory, cfg, started):
     command = [cfg['python'], '-Es', '-B', str(Path(__file__).with_name('lab_runner.py')), 'pdf-bulk', job['job_id']]
+    attempts = trusted_path(directory / 'bulk_attempts')
+    attempts.mkdir(mode=0o700, exist_ok=True)
+    attempt = attempts / uuid.uuid4().hex
+    attempt.mkdir(mode=0o700)
+    (attempt / 'workers').mkdir(mode=0o700)
+    wall = job['limits']['wall_seconds']
+    reserve = min(600, max(1, wall // 10))
     environment = {'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8', 'HOME': str(Path.home()),
         'OPENBLAS_NUM_THREADS': '1', 'OMP_NUM_THREADS': '1', 'MKL_NUM_THREADS': '1',
-        'MALPDF_LAB_ISOLATED': '1'}
-    process = subprocess.Popen(command, stdin=subprocess.DEVNULL, start_new_session=True, env=environment)
+        'MALPDF_LAB_ISOLATED': '1', 'MALPDF_BULK_ATTEMPT': attempt.name,
+        'MALPDF_BULK_DEADLINE': str(started + wall - reserve)}
+    process = subprocess.Popen(command, stdin=subprocess.PIPE, start_new_session=True, env=environment)
     try:
-        code = process.wait(timeout=job['limits']['wall_seconds'])
+        immutable(attempt / 'writer.json', {
+            'pid': process.pid, 'pgid': process.pid, 'start_ticks': process_identity(process.pid),
+        })
+        with process.stdin:
+            process.stdin.write(b'1')
+        code = process.wait(timeout=max(0, started + wall - time.monotonic()))
     except subprocess.TimeoutExpired:
         stop_worker(process)
-        raise ValueError('worker_timeout') from None
+        code = 75
     except BaseException:
         stop_worker(process)
         raise
+    finally:
+        process.stdin.close()
+        stopped = bulk_attempt_stopped(attempt, terminate=True)
+    if not stopped:
+        immutable(attempt / 'result.json', {'status': 'cleanup_unverified', 'cleanup_verified': False})
+        raise ValueError('worker_failed')
+    immutable(attempt / 'result.json', {
+        'status': 'interrupted' if code == 75 else 'complete' if code == 0 else 'failed',
+        'cleanup_verified': True,
+    })
+    (attempt / 'arlington.json').unlink(missing_ok=True)
+    if code == 75:
+        print('Bulk session paused. Run lab run again to resume verified checkpoints.', flush=True)
+        raise BulkInterrupted('worker_timeout')
     if code != 0:
         raise ValueError('worker_failed')
-    summary = parse_json(side.bounded_read(directory / 'pdf_summary.json', 16384))
+    summary = parse_json(side.bounded_read(attempt / 'pdf_summary.json', 16384))
     if not summary_valid(summary):
         raise ValueError('report_invalid')
     print(pdf_completion_banner(job, summary, elapsed_seconds=time.monotonic() - started, workers=job['limits']['workers']), flush=True)

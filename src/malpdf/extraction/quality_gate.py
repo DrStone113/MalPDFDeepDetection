@@ -305,33 +305,44 @@ def evaluate_sample_quality(bundle, expected_sha256, *, node_cap=MAX_NODES):
 
 
 def evaluate_sample_quality_v2(bundle, expected_sha256, *, node_cap=MAX_NODES, projected_v2=None):
+    facts = prepare_sample_quality_v2(bundle, expected_sha256, node_cap=node_cap)
+    if projected_v2 is None and facts.get("rejected") is None:
+        try:
+            projected_v2 = project_graph_bundle_v2(bundle, expected_sha256, node_cap=node_cap)
+        except (ValueError, TypeError, KeyError, RecursionError, OverflowError):
+            return rejected_sample_gate_v2(expected_sha256, node_cap=node_cap)
+    return finish_sample_quality_v2(facts, expected_sha256, projected_v2, node_cap=node_cap)
+
+
+def prepare_sample_quality_v2(bundle, expected_sha256, *, node_cap=MAX_NODES):
     if not isinstance(expected_sha256, str) or not HASH_RE.fullmatch(expected_sha256):
         raise ValueError("quality_gate_identity")
     if type(node_cap) is not int or not 1 <= node_cap <= MAX_NODES:
         raise ValueError("quality_gate_node_cap")
     if not isinstance(bundle, dict) or bundle.get("sample_sha256") != expected_sha256:
-        return rejected_sample_gate_v2(expected_sha256, node_cap=node_cap)
+        return {"rejected": rejected_sample_gate_v2(expected_sha256, node_cap=node_cap)}
 
     try:
         validate_bundle(bundle)
-        graph_aud = audit_bundle(bundle, expected_sha256, node_cap=node_cap)
-        trunc = audit_truncation_bundle(bundle, expected_sha256, node_cap=node_cap)
+        store = bundle["evidence_store"]
+        canonical_bytes({"nodes": store["records"], "edges": store["edges"]})
     except (ValueError, TypeError, KeyError, RecursionError, OverflowError):
-        return rejected_sample_gate_v2(expected_sha256, node_cap=node_cap)
+        return {"rejected": rejected_sample_gate_v2(expected_sha256, node_cap=node_cap)}
+    coverage = bundle["coverage_report"]
+    status = coverage["worker"].get("status")
+    return {
+        "worker_status": status if isinstance(status, str) else "unknown",
+        "limitations": tuple(coverage["limitations"]),
+        "parser_observed": sum(record["kind"] == "parser_object" and record["observation_status"] == "observed"
+                               and isinstance(record["details"].get("projection"), dict) for record in store["records"]),
+    }
 
-    issues_total = sum(graph_aud["issues"].values())
-    if issues_total > 0:
-        res = rejected_sample_gate_v2(expected_sha256, node_cap=node_cap)
-        res["metrics"]["structural_issues_total"] = issues_total
-        return validate_sample_gate_case_v2(res)
 
+def finish_sample_quality_v2(facts, expected_sha256, projected_v2, *, node_cap=MAX_NODES):
+    if facts.get("rejected") is not None:
+        return facts["rejected"]
     try:
-        proj_v2 = validate_graph_projection_v2(
-            project_graph_bundle_v2(bundle, expected_sha256, node_cap=node_cap)
-            if projected_v2 is None
-            else projected_v2,
-            expected_sha256,
-        )
+        proj_v2 = validate_graph_projection_v2(projected_v2, expected_sha256)
     except (ValueError, TypeError, KeyError, RecursionError, OverflowError):
         return rejected_sample_gate_v2(expected_sha256, node_cap=node_cap)
 
@@ -340,19 +351,14 @@ def evaluate_sample_quality_v2(bundle, expected_sha256, *, node_cap=MAX_NODES, p
         return rejected_sample_gate_v2(expected_sha256, node_cap=node_cap, disposition="rejected_unverified_cleanup")
 
     g = proj_v2["graph"]
-    qg = trunc["quality_gate_view"]
-    coverage = bundle.get("coverage_report") if isinstance(bundle.get("coverage_report"), dict) else {}
-    raw_worker = coverage.get("worker") if isinstance(coverage.get("worker"), dict) else {}
-    worker_status = raw_worker.get("status") if isinstance(raw_worker.get("status"), str) else "unknown"
-    limitations = [x for x in coverage.get("limitations", []) if isinstance(x, str)]
 
     kept = g["num_nodes"]
     dropped_cap = g["dropped_nodes_cap"]
     is_capped = dropped_cap > 0
     sec_drop = g["security_sensitive_dropped_cap"]
     b_status = proj_v2["status"]
-    parser_obs = qg["parser_objects_observed"]
-    g_state = _graph_state(kept, is_capped, parser_obs, b_status, worker_status, limitations)
+    parser_obs = facts["parser_observed"]
+    g_state = _graph_state(kept, is_capped, parser_obs, b_status, facts["worker_status"], facts["limitations"])
 
     phys_known = sum(x is not None for x in g["verified_physical_span_bytes"])
     stream_known = sum(x is not None for x in g["stream_raw_payload_bytes"])
