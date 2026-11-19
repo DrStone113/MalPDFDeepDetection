@@ -2,6 +2,21 @@
 
 The old bulk writer and its two children were stopped after verifying their process identities. All eight checkpoint markers and 40 output files retained their SHA-256 values. The old job and claim files also retained their hashes. The selection has 41,727 documents. The original 4,000 tabular identities match the pinned manifests and still partition into 3,903 graphs and 97 unavailable records.
 
-The native Linux verification exercised the new bounded worker on a reviewed benign fixture under a 256-FD process limit. Baseline readback selected 128 identities from existing structured artifacts. See the linked plan for pilot and resume status.
+All 60 original `rejected_unverified_cleanup` records had zero features and `fail_closed_abort_evaluation`. They were in chunk 7. Chunks 0–6 had zero such records.
+
+## Candidate verification
+
+- Source: `9297f9572528da96a44b87b4e63b0d09a19d7e6c`.
+- The IPC reader drains through one complete frame or a nonblocking read boundary. Empty EOF preserves the worker exit classification. A malformed frame preserves verified checkpoints. The quality gate verifies finite and well-formed evidence without serializing the full evidence twice.
+- Windows DEV, `.venv-windows-dev`: focused suite 102 passed and 12 Linux-only skips. Full baseline `ee646d7`: 2,101 passed, 187 failed, 23 skipped. Full candidate: 2,119 passed, 183 failed, 33 skipped. The set of failed or errored test identities `(file, classname, name)` introduced by the candidate was empty. `check_local.py` passed with 237/237 synthetic checks and `dirty=false`. Repository content and whitespace checks passed.
+- REMnux: the scoped lifecycle, extraction, and runner suites yielded 387 passed and one skip. The skipped planning artifact lies outside the release allowlist. The Linux worker test used a reviewed benign fixture and a 256-FD process limit.
+- Deployment checks and installs passed for the gateway, then the runner. Windows verified the live gateway policy `0ad21f0a09d7017502d9b9101f3186d0a8971a7ed927c9d6189047366e73341f`. Installed `lab_jobs.py` and `lab_runner.py` matched the sealed release and live policy. The deployed gateway passed 409 syntax and 6 synthetic checks. Firewall stayed `phase2_locked`, with NAT down.
+
+## Operator handoff
+
+- The only selectable offline `pdf-static-bulk` job is `0f747ed1359440a57f02c3da52ccce1efc8cf3c117fc5328dbbb3e5e07620ae1`. It uses the pinned 41,727-entry selection `5b6134576e836c5d9f8d8f41a80e3e471806944a4cef6643bca6952a9e8ae3b1`. Post-queue verification confirmed that all eight checkpoints, 40 artifacts, and the original job and claim retained their hashes.
+- The pilot cohort was locked from the eight original chunks. It contains 64 graph, 16 node-cap, 16 other unavailable, 16 large, and 16 worker/cleanup cases. The job is queued and the pilot has yet to run. Disconnect both VM network adapters and invoke `lab run` in the REMnux console.
+- A passing pilot allows adoption of chunks 0–6, covering 3,500 samples. The candidate then rebuilds chunk 7 and processes the remaining chunks, for 38,227 samples total. Publishing the rebuilt chunk preserves the original in `.chunk_00007.replaced-e5e6ca989c5dd20724c7b47ad34e887f2cc1f4277478e5eec155a73e074696d2`. Unexplained pilot differences block corpus processing. If a session stops at its time budget, run `lab run` again under the same offline conditions.
+- Pilot parity, corpus timing, peak memory, and final corpus readback remain pending.
 
 [Recovery plan](../../plans/bulk-extractor-recovery/plan.md)
