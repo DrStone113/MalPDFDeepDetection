@@ -2,8 +2,10 @@
 
 from copy import deepcopy
 import csv
+from functools import partial
 import hashlib
 import io
+from itertools import count
 import json
 from pathlib import Path
 import threading
@@ -50,6 +52,34 @@ def test_bounded_snapshot_cadence_is_preserved() -> None:
         assert schedule.due()
         schedule.completed()
     assert schedule.snapshots == 5
+
+
+def test_parser_inventory_budget_is_independent_of_coalesced_snapshot_clock(monkeypatch) -> None:
+    from malpdf.extraction import parser_views
+    from malpdf.extraction.graph_projection_v2 import _extract_tabular_features
+
+    data = (Path(__file__).parent / "fixtures/real_benign_document.pdf").read_bytes()
+    sha = hashlib.sha256(data).hexdigest()
+    layout = inspect_raw_layout(data)
+    outputs = []
+    fast_ticks = count()
+    slow_ticks = count()
+    for clock in (lambda: next(fast_ticks) / 100_000, lambda: next(slow_ticks) // 2):
+        scheduler = partial(CheckpointScheduler, clock=clock, coalesce=True)
+        monkeypatch.setattr(parser_views, "CheckpointScheduler", scheduler)
+        snapshots = []
+        result = inspect_parser_views(data, CodeInspectionLimits(), max_metadata_bytes=2048,
+                                      checkpoint=snapshots.append)
+        assert result["reason_codes"] == ["inventory_metadata_limit"]
+        assert snapshots[-1] == result
+        assert all(len(json.dumps(item, separators=(",", ":"))) <= 2048 for item in snapshots)
+        bundle = normalize_profile({"status": "partial", "raw_layout": layout, "parser_analysis": result},
+                                   sha, "deep-static")
+        outputs.append((result, _extract_tabular_features(bundle), len(snapshots)))
+    fast, slow = outputs
+    assert fast[:2] == slow[:2]
+    assert fast[0]["views"]
+    assert fast[2] < slow[2]
 
 
 @pytest.mark.parametrize("kind", ["native", "raw"])

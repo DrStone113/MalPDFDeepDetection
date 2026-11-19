@@ -29,6 +29,10 @@ def _hash(value):
     return hashlib.sha256(value).hexdigest()
 
 
+def _json_size(value):
+    return len(json.dumps(value, allow_nan=False, separators=(',', ':')))
+
+
 @dataclass
 class _RawBudget:
     remaining: int
@@ -196,19 +200,41 @@ def inspect_parser_views(data, limits, *, retain=None, checkpoint=None, max_meta
                   'key_details_per_object':capacity(limits,64)},
         'raw_bytes_used':0,'scope':'native xref interpretations; raw forensic/history/orphan proof remains unverified'}
     raw_budget = _RawBudget(limits.max_file_bytes)
-    saved = deepcopy(result)
     snapshots = CheckpointScheduler(limits)
-    def emit(*, force=False):
-        nonlocal saved
-        result['raw_bytes_used'] = limits.max_file_bytes - raw_budget.remaining
-        if not snapshots.due(force=force):
-            return
-        if max_metadata_bytes != UNLIMITED and len(json.dumps(result,allow_nan=False,separators=(',',':')).encode()) > max_metadata_bytes - 512:
-            raise CodeInspectionError('inventory_metadata_limit')
-        if checkpoint:
+    list_bytes = view_header_bytes = 0
+
+    def emit(*, force=False, view=None, new_view=False, node=None, comparison=None, **updates):
+        nonlocal list_bytes, view_header_bytes
+        views, comparisons = result['views'], result['comparisons']
+        updates['raw_bytes_used'] = limits.max_file_bytes - raw_budget.remaining
+        if max_metadata_bytes != UNLIMITED:
+            # Count array entries and their separators once; the headers below contain empty arrays.
+            growth = 0
+            if view is not None:
+                header_bytes = _json_size(dict(view, records=[]))
+                growth = header_bytes + bool(views) if new_view else header_bytes - view_header_bytes
+            elif node is not None:
+                growth = _json_size(node) + bool(views[-1]['records'])
+            elif comparison is not None:
+                growth = _json_size(comparison) + bool(comparisons)
+            root_bytes = _json_size({**result, **updates, 'views': [], 'comparisons': []})
+            if root_bytes + list_bytes + growth > max_metadata_bytes - 512:
+                raise CodeInspectionError('inventory_metadata_limit')
+            list_bytes += growth
+            if view is not None:
+                view_header_bytes = header_bytes
+        result.update(updates)
+        if new_view:
+            views.append(dict(deepcopy(view), records=[]))
+        elif view is not None:
+            views[-1].update(deepcopy(view))
+        elif node is not None:
+            views[-1]['records'].append(node)
+        elif comparison is not None:
+            comparisons.append(comparison)
+        if checkpoint and snapshots.due(force=force):
             checkpoint(deepcopy(result))
-        saved = deepcopy(result)
-        snapshots.completed()
+            snapshots.completed()
     try:
         emit()
         factories=[('pypdf',_PyPDFView,None),('QPDF',QPDFReader,None),('MuPDF',_MuPDFView,None)]
@@ -216,7 +242,7 @@ def inspect_parser_views(data, limits, *, retain=None, checkpoint=None, max_meta
             from malpdf.extraction.plugins import ParserReader
             factories.extend(('plugin:'+spec.plugin_id,None,spec) for spec in plugins.select('parser'))
         for backend,factory,spec in factories:
-            view = {'backend':backend,'version':{},'status':'not_run','complete':False,'records':[],
+            view = {'backend':backend,'version':{},'status':'not_run','complete':False,
                     'reason_codes':[],'warnings':{'count':0,'codes':[]},'generation_available':backend != 'MuPDF',
                     'enumeration_complete':False,'repair_requested':backend != 'QPDF'}
             view['selection_scope'] = {'pypdf':'exposed xref map, including retained generations; active/revision identity unverified',
@@ -225,13 +251,13 @@ def inspect_parser_views(data, limits, *, retain=None, checkpoint=None, max_meta
                     'operator-selected plugin candidates; physical membership/history unverified')
             if spec is not None:
                 view.update(plugin=spec.describe(),version=spec.describe(),generation_available=False,repair_requested=None)
-            result['views'].append(view)
-            emit()
+            emit(view=view,new_view=True)
+            records = result['views'][-1]['records']
             reader = None
             try:
                 reader = ParserReader(spec,data,limits) if spec is not None else factory(data,limits)
                 view.update(version=reader.version,status='partial')
-                emit()
+                emit(view=view)
                 for index,candidate in enumerate(reader.candidates()):
                     if index == limits.max_objects:
                         view['reason_codes'].append('inventory_object_limit')
@@ -264,13 +290,12 @@ def inspect_parser_views(data, limits, *, retain=None, checkpoint=None, max_meta
                     except Exception as error:
                         status,reason = _failure(error)
                         node.update(status=status,reason_codes=[reason])
-                    view['records'].append(node)
-                    emit()
+                    emit(node=node)
                 else:
                     view['enumeration_complete'] = True
-                view['complete'] = bool(view['enumeration_complete'] and all(node['status'] == 'observed' for node in view['records']))
+                view['complete'] = bool(view['enumeration_complete'] and all(node['status'] == 'observed' for node in records))
                 view['status'] = 'observed' if view['complete'] else 'partial'
-                view['reason_codes'] = sorted(set(view['reason_codes']) | {code for node in view['records'] for code in node['reason_codes']})
+                view['reason_codes'] = sorted(set(view['reason_codes']) | {code for node in records for code in node['reason_codes']})
                 view['warnings'] = reader.warnings()
                 if view['warnings']['count']:
                     view['complete'] = False
@@ -291,26 +316,23 @@ def inspect_parser_views(data, limits, *, retain=None, checkpoint=None, max_meta
                     except Exception:
                         view.update(status='partial',complete=False)
                         view['reason_codes'].append('inventory_parser_close_failed' if spec is None else 'plugin_parser_close_failed')
-            emit(force=True)
+            emit(force=True,view=view)
         comparisons, complete = merge_views(result['views'], max_comparisons=capacity(limits,2048))
 
 
         for comparison in comparisons:
             comparison['id'] += ':'+digest
-            result['comparisons'].append(comparison)
-            emit()
-        result['comparisons_complete'] = complete
+            emit(comparison=comparison)
         reasons = {code for view in result['views'] for code in view['reason_codes']}
         if any(not view['complete'] for view in result['views']):
             reasons.add('inventory_view_incomplete')
         if not complete:
             reasons.add('inventory_comparison_limit')
-        result.update(complete=not reasons,status='observed' if not reasons else 'partial',reason_codes=sorted(reasons))
-        emit(force=True)
+        emit(force=True,comparisons_complete=complete,complete=not reasons,
+             status='observed' if not reasons else 'partial',reason_codes=sorted(reasons))
     except CodeInspectionError as error:
         if str(error) != 'inventory_metadata_limit':
             raise
-        result = saved
         result.update(complete=False,status='partial',reason_codes=sorted(set(result['reason_codes']) | {'inventory_metadata_limit'}))
         if checkpoint:
             checkpoint(deepcopy(result))

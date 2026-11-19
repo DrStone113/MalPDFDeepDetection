@@ -595,13 +595,15 @@ def pdf_bulk_worker(job_id):
         with closing(stream):
             for index, bundle in stream:
                 sha = bundle.get('sample_sha256')
-                worker = bundle.get('coverage_report', {}).get('worker', {})
+                coverage = bundle.get('coverage_report') or {}
+                worker = coverage.get('worker', {})
                 diagnostic = worker.get('diagnostic') or {}
                 if sha in pilot_shas:
                     diagnostics[sha] = {
                         'cleanup_complete': worker.get('worker_cleanup_complete'),
                         'result_verified': diagnostic.get('preserved_before_cleanup') is True
                             and diagnostic.get('failure_kind') is None,
+                        'inventory_metadata_limit': 'inventory_metadata_limit' in coverage.get('limitations', []),
                     }
                 if diagnostic.get('bulk_stall_observed'):
                     print(f'Worker stall observed | index={index} | worker={worker.get("status")}', flush=True)

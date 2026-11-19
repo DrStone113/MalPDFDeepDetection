@@ -49,6 +49,55 @@ def test_comparison_checks_each_saved_artifact():
         assert different_artifacts(baseline, dict(baseline, **{name: value})) == [name]
 
 
+@pytest.mark.parametrize("delta", [-12, -6, 6, 12])
+def test_pilot_reports_verified_bounded_inventory_counter_difference(delta):
+    report = compare_bounded_inventory(delta)
+    assert report["counts"] == {
+        "matched": 0, "recovered": 0, "unexplained": 0, "bounded_inventory_excluded_count": 1,
+    }
+    detail, = report["differences"]
+    assert detail["outcome"] == "bounded_inventory_excluded_count"
+    assert (detail["excluded_before"], detail["excluded_after"]) == (118, 118 + delta)
+
+
+@pytest.mark.parametrize(
+    ("delta", "change"),
+    [(0, "feature"), (6, "feature"), (6, "numeric_encoding"), (6, "status"), (6, "both_partial"),
+     (6, "inventory_metadata_limit"), (6, "cleanup_complete"), (6, "result_verified"),
+     (6, "graph"), (6, "unavailable"), (6, "markov"), (5, None), (18, None), (-18, None)],
+)
+def test_pilot_blocks_other_differences_in_bounded_inventory_cases(delta, change):
+    report = compare_bounded_inventory(delta, change)
+    assert report["counts"]["unexplained"] == 1
+    assert report["counts"]["bounded_inventory_excluded_count"] == 0
+
+
+def compare_bounded_inventory(delta, change=None):
+    from malpdf.extraction.bulk_recovery import compare_pilot
+
+    sha = "a" * 64
+    baseline = {"index": 5, "sha256": sha, "source": "test", "label": 1, "label_source": "test",
+                "split": "test", "status": "bounded_complete", "sample_disposition": "usable_complete_projection",
+                "excluded_feature_count": 118, "features": {"raw_size_bytes": {"value": 20, "status": "observed"}}}
+    candidate = dict(baseline, excluded_feature_count=118 + delta)
+    old = {"tabular": baseline, "graph": {"edge_src": [0]}, "unavailable": None, "markov": b"same"}
+    new = dict(old, tabular=candidate)
+    diagnostics = {"inventory_metadata_limit": True, "cleanup_complete": True, "result_verified": True}
+    if change in {"feature", "numeric_encoding"}:
+        candidate["features"] = {"raw_size_bytes": {"value": 20.0 if change == "numeric_encoding" else 21,
+                                                   "status": "observed"}}
+    elif change in {"status", "both_partial"}:
+        candidate["status"] = "partial"
+        if change == "both_partial":
+            baseline["status"] = "partial"
+    elif change in diagnostics:
+        diagnostics.pop(change)
+    elif change in old:
+        new[change] = None if change != "unavailable" else {"index": 5}
+    return compare_pilot([{"index": 5, "sha256": sha, "stratum": "graph"}],
+                         {sha: old}, {sha: new}, {sha: diagnostics})
+
+
 def test_over_cap_document_stays_in_manifest_without_graph_or_markov(tmp_path):
     fixture = Path(__file__).parent / "fixtures/real_benign_document.pdf"
     sha = hashlib.sha256(fixture.read_bytes()).hexdigest()

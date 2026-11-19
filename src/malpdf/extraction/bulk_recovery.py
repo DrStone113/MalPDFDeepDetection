@@ -74,7 +74,7 @@ def select_pilot(rows):
 
 
 def compare_pilot(selection, baseline, candidate, diagnostics):
-    counts = {"matched": 0, "recovered": 0, "unexplained": 0}
+    counts = {"matched": 0, "recovered": 0, "unexplained": 0, "bounded_inventory_excluded_count": 0}
     details = []
     if set(baseline) != set(candidate) or set(baseline) != {row["sha256"] for row in selection}:
         raise ValueError("bulk_recovery_pilot_identities")
@@ -87,14 +87,27 @@ def compare_pilot(selection, baseline, candidate, diagnostics):
             continue
         prev, current = old["tabular"], new["tabular"]
         diagnostic = diagnostics.get(sha, {})
+        verified = diagnostic.get("cleanup_complete") is True and diagnostic.get("result_verified") is True
+        excluded_before, excluded_after = prev["excluded_feature_count"], current["excluded_feature_count"]
+        if (changes == ["tabular"] and prev["status"] == current["status"] == "bounded_complete"
+                and verified and diagnostic.get("inventory_metadata_limit") is True
+                and type(excluded_before) is int and type(excluded_after) is int
+                and excluded_after - excluded_before in {-12, -6, 6, 12}
+                and canonical_bytes({k: v for k, v in prev.items() if k != "excluded_feature_count"})
+                == canonical_bytes({k: v for k, v in current.items() if k != "excluded_feature_count"})):
+            outcome = "bounded_inventory_excluded_count"
+            counts[outcome] += 1
+            details.append({**item, "artifacts": changes, "outcome": outcome, "before": prev["sample_disposition"],
+                            "after": current["sample_disposition"], "cleanup_confirmed": True,
+                            "excluded_before": excluded_before, "excluded_after": excluded_after})
+            continue
         identity_ok = all(prev[key] == current[key] for key in ("index", "sha256", "source", "label", "label_source", "split"))
         measured_ok = all(current["features"].get(key) == value
                           for key, value in prev["features"].items() if value["value"] is not None)
         recovered = (
             item["stratum"] == "worker" and prev["sample_disposition"] in LIFECYCLE_DISPOSITIONS
             and old["graph"] is None and new["graph"] is not None and identity_ok and measured_ok
-            and "markov" not in changes and diagnostic.get("cleanup_complete") is True
-            and diagnostic.get("result_verified") is True
+            and "markov" not in changes and verified
         )
         outcome = "recovered" if recovered else "unexplained"
         counts[outcome] += 1

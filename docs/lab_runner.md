@@ -142,6 +142,10 @@ tại console offline để đọc lại checkpoint và tiếp tục. Nếu pilo
 không khớp, giữ nguyên bằng chứng để kiểm tra. Khi thay `lab_jobs.py` hoặc
 `lab_runner.py`, cập nhật và xác minh gateway trước khi cài runner cùng release.
 
+Pilot ghi riêng `bounded_inventory_excluded_count` khi mẫu có giới hạn parser
+inventory đã xác minh và chỉ lệch bộ đếm loại feature trong phạm vi đã định.
+Báo cáo giữ cả hai giá trị để đối chiếu. Xem [BUG-013](bugs/BUG-013-parser-inventory-checkpoint-jitter.md).
+
 Chỉ khi đã duyệt cohort, môi trường và isolation mới chọn:
 
 ```powershell
