@@ -34,4 +34,12 @@ A benign-fixture probe with a 2,048-byte parser-inventory cap and two synthetic 
 
 The corpus run stayed behind the pilot gate. A readback confirmed that all eight original checkpoint hashes, all 40 artifact hashes, and the original job and claim hashes still match. No new corpus chunk was committed.
 
+## Parser inventory candidate staged
+
+- Release `b5f4f00ee0538dd9c157f467f87287794d46a57e` checks parser-inventory byte limits at each accepted change and coalesces only the IPC snapshots. The pilot reports eligible historical counter differences as `bounded_inventory_excluded_count` with both values. All other unexplained differences still block bulk. [BUG-013](../../docs/bugs/BUG-013-parser-inventory-checkpoint-jitter.md)
+- Windows `.venv-windows-dev`: 2,138 passed, 183 failed, 33 skipped in the full suite. The failing test identity set matched `9297f95` and introduced zero failures relative to `ee646d7`. `check_local.py` passed 237/237 synthetic checks. The reviewed benign fixture matched the previous noncoalesced inventory at 250 cap thresholds.
+- REMnux: 185 related tests passed with the file descriptor limit set to 256. The planning-artifact test was skipped because the release allowlist excludes that artifact. Gateway and runner install checks passed, the installed helper hashes matched the sealed release and active gateway policy, and the live gateway passed 409 syntax and 6 synthetic checks.
+- The only pending job is `980050531188875ca4fc7a1b5d5d53b188b6e532f68bc55fd26f0cbad698f7db`. Its 128-sample pilot is identical to the first job's selection. The first job's terminal result and pilot report are preserved. After staging, all eight original checkpoint hashes and all 40 artifact hashes still matched. Firewall remained `phase2_locked` with NAT down.
+- The candidate awaits `lab run` in the offline REMnux console. A passing pilot allows adoption of chunks 0–6 and a rebuild from chunk 7.
+
 [Recovery plan](../../plans/bulk-extractor-recovery/plan.md)
