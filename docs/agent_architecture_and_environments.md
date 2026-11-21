@@ -113,3 +113,16 @@ Use `scripts/lab/lab_firewall.sh` on REMnux `Lab` (run as `root` via `sudo`) to 
 - `sudo /usr/local/sbin/malpdf-firewall phase2` — brings all non-Host-Only (`NAT`) interfaces `down`, flushes their addresses, drops all IPv6 traffic outside `lo`, and applies atomic IPv4 `iptables-restore` rules (`INPUT`/`FORWARD`/`OUTPUT` default `DROP`, `ESTABLISHED,RELATED` allowed, inbound TCP/22 `NEW` allowed only from `192.168.217.1` on the Host-Only NIC, all VM-initiated `NEW` outbound on the Host-Only NIC and RFC1918 LAN ranges dropped).
 - `sudo /usr/local/sbin/malpdf-firewall phase1` — clean-VM setup only: brings up the secondary `NAT` interface via `/etc/netplan/60-malpdf-nat.yaml` (`activation-mode: manual`, `dhcp4: true`) to install packages/datasets while keeping Host-Only and RFC1918 LAN outbound blocked. Return to `phase2` before taking a clean snapshot, and never re-enable `phase1` on a post-PDF VM without reverting to a clean snapshot first.
 - `sudo /usr/local/sbin/malpdf-firewall status` — prints JSON showing `host_only_if`, `nat_ifs`, `nat_up`, chain policies, and active mode (`phase2_locked` / `phase1_nat`).
+
+## 6. Web runtime assets and cache boundaries
+
+Windows DEV runs `scripts/malpdf_web.py` with the PyTorch entrypoint. The ONNX entrypoint in `production/web_service.py` and the packaged app share the dashboard template and serve the same explicit asset routes. Restart the relevant process after updating Python or rebuilding published runtime files. The ONNX entrypoint also caches the dashboard HTML in its process.
+
+- `/assets/dashboard.css` is the checked-in Tailwind 3 build. After changing utility classes or the theme, regenerate it from the repository root with the command below. Both entrypoints serve it with revalidation.
+- `/assets/vis-network-10.1.5.min.js` is loaded when the graph is first requested. The pinned public asset has immutable caching. To update, verify the upstream npm package integrity, copy its standalone UMD minified build and license notices, and bump the filename in both the client and shared asset route.
+- Shared `/api/` routes return `Cache-Control: no-store`. PDF previews are scoped to the active job in browser memory. Only the comparison display mode uses browser persistent storage.
+- CDR publishes its result after sanitization and the re-scan return. UI requests use `include_preview_images=false` for lighter audit results and fetch page previews separately. The previous API behavior remains the default for other callers.
+
+```powershell
+npx --yes tailwindcss@3.4.17 --config src/malpdf/web/tailwind.config.cjs --input src/malpdf/web/tailwind.input.css --content src/malpdf/web/templates/index.html --output src/malpdf/web/static/dashboard.css --minify
+```

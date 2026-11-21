@@ -28,6 +28,8 @@ Hệ thống lưu trữ, phân tích chuyên sâu nguyên nhân gốc rễ và c
 | `BUG-011` | Worker crash (`471 unavailable_worker_failure` + `29 resource_limit`) do `multiprocessing.spawn` nạp `__mp_main__` chứa `torch`/CUDA trước `RLIMIT_AS = 2 GiB` | `RESOURCE_OOM` | `CRITICAL` | `RESOLVED` | `tests/test_hybrid_gpu_extraction.py` | [Chi tiết](BUG-011-spawn-mp-main-torch-rlimit-as.md) |
 | `BUG-012` | Bulk writer treo trước vòng giám sát, claim mồ côi và checkpoint rỗng | `WORKER_LIFECYCLE` | `HIGH` | `MITIGATED` | `tests/test_bulk_recovery.py` | [Chi tiết](BUG-012-bulk-worker-bootstrap-and-resume.md) |
 | `BUG-013` | Giới hạn parser inventory phụ thuộc nhịp IPC, làm lệch bộ đếm feature bị loại | `PARSER_SYNTAX` | `HIGH` | `MITIGATED` | `tests/test_extraction_performance.py`, `tests/test_bulk_recovery.py` | [Chi tiết](BUG-013-parser-inventory-checkpoint-jitter.md) |
+| `BUG-014` | CDR indirect scalar crash and fragmented assessment badges | `CDR_BINARY_MUTATION / UI_LAYOUT` | `HIGH / LOW` | `RESOLVED` | `tests/test_cdr_disarm.py` | [Details](BUG-014-cdr-indirect-scalars-and-assessment-badges.md) |
+| `BUG-015` | CDR lệch lượt quét và tranh chấp dữ liệu XAI | `WEB_JOB_LIFECYCLE / CONCURRENCY` | `HIGH` | `RESOLVED` | `scripts/verify_web_job_state.cjs` | [Chi tiết](BUG-015-web-cdr-job-scope-and-concurrent-xai.md) |
 
 ---
 

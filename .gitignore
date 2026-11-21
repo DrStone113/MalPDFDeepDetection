@@ -130,3 +130,5 @@ graphify-out/
 .claude/
 .cursor/
 MinhChung_*/
+tasks/
+.kilo/
