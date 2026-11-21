@@ -37,10 +37,13 @@ from malpdf.scanner.ai_explainer import (
     DEFAULT_WEBLLM_MODEL,
     FALLBACK_WEBLLM_MODEL,
 )
+from malpdf.web.http import (
+    GRAPH_ASSET_PATH, PrivateAPIRoute, dashboard_graph, dashboard_styles, omit_preview_images, sanitized_pdf_response,
+)
 from malpdf.web.store import ScanJob, ScanJobStore
 from onnx_engine import ONNXMalPDFScannerEngine
 
-MAX_UPLOAD_BYTES = 32 * 1024 * 1024
+MAX_UPLOAD_BYTES = max(1, int(os.environ.get("MALPDF_MAX_UPLOAD_MB", "100"))) * 1024 * 1024
 PDF_MAGIC = b"%PDF-"
 PDF_MAGIC_SEARCH_WINDOW = 1024
 
@@ -71,7 +74,9 @@ EML_STORE: dict[str, tuple[bytes, EmailInspectionReport]] = {}
 _RENDER_CACHE: dict[tuple[str, int], tuple[str, int]] = {}
 _TEMPLATE_CACHE: str | None = None
 
-production_router = APIRouter()
+production_router = APIRouter(route_class=PrivateAPIRoute)
+production_router.add_api_route("/assets/dashboard.css", dashboard_styles, include_in_schema=False)
+production_router.add_api_route(GRAPH_ASSET_PATH, dashboard_graph, include_in_schema=False)
 
 
 def _resolve_template_path() -> Path:
@@ -227,6 +232,8 @@ def health() -> dict[str, Any]:
         "total_jobs": len(recent_jobs),
         "quarantined_files": len(store.list_quarantine()),
         "events_logged": len(store.get_audit_logs()),
+        "max_upload_bytes": MAX_UPLOAD_BYTES,
+        "max_upload_mb": round(MAX_UPLOAD_BYTES / (1024 * 1024)),
     }
 
 
@@ -269,7 +276,7 @@ def list_scans(batch_id: str | None = None, limit: int = 50) -> list[dict[str, A
 
 
 @production_router.get("/api/scans/{scan_id}")
-def get_scan_detail(scan_id: str) -> dict[str, Any]:
+def get_scan_detail(scan_id: str, include_preview_images: bool = True) -> dict[str, Any]:
     job = store.get_job(scan_id)
     if not job:
         raise HTTPException(status_code=404, detail="scan_job_not_found")
@@ -278,6 +285,8 @@ def get_scan_detail(scan_id: str) -> dict[str, Any]:
     cdr_dict = detail.get("cdr_audit") if isinstance(detail.get("cdr_audit"), dict) else None
     if scan_res and isinstance(scan_res, dict):
         scan_res["ai_threat_explanation"] = ai_explainer.explain_threat(scan_res, cdr_audit=cdr_dict)
+    if cdr_dict is not None and not include_preview_images:
+        omit_preview_images(cdr_dict)
     return detail
 
 
@@ -411,7 +420,9 @@ async def ablate_graph_node(
 
 
 @production_router.post("/api/disarm")
-async def disarm_pdf(file: UploadFile | None = File(default=None)) -> dict[str, Any]:
+async def disarm_pdf(
+    file: UploadFile | None = File(default=None), include_preview_images: bool = True,
+) -> dict[str, Any]:
     global ACTIVE_JOB_ID
     if file is not None:
         content = await file.read()
@@ -421,18 +432,18 @@ async def disarm_pdf(file: UploadFile | None = File(default=None)) -> dict[str, 
         ACTIVE_JOB_ID = job.scan_id
     else:
         job = _get_active_or_latest_job()
-    return await run_in_threadpool(_execute_disarm_for_job, job)
+    return await run_in_threadpool(_execute_disarm_for_job, job, include_preview_images)
 
 
 @production_router.post("/api/disarm/{scan_id}")
-def disarm_specific_job(scan_id: str) -> dict[str, Any]:
+def disarm_specific_job(scan_id: str, include_preview_images: bool = True) -> dict[str, Any]:
     job = store.get_job(scan_id)
     if not job:
         raise HTTPException(status_code=404, detail="scan_job_not_found")
-    return _execute_disarm_for_job(job)
+    return _execute_disarm_for_job(job, include_preview_images)
 
 
-def _execute_disarm_for_job(job: ScanJob) -> dict[str, Any]:
+def _execute_disarm_for_job(job: ScanJob, include_preview_images: bool = True) -> dict[str, Any]:
     raw_bytes = job.raw_bytes
     filename = job.file_name
     if job.scan_result:
@@ -445,12 +456,10 @@ def _execute_disarm_for_job(job: ScanJob) -> dict[str, Any]:
     store.set_status(job.scan_id, "DISARMING")
     try:
         sanitized_bytes, audit = disarmer.sanitize_bytes(raw_bytes, file_name=filename)
+        post_scan = scanner.scan_bytes(sanitized_bytes, file_name=f"sanitized_{filename}", explain=True)
     except Exception as exc:
         store.set_status(job.scan_id, "FAILED", error=str(exc))
         raise HTTPException(status_code=422, detail=str(exc)) from exc
-    store.attach_sanitized(job.scan_id, sanitized_bytes, audit)
-
-    post_scan = scanner.scan_bytes(sanitized_bytes, file_name=f"sanitized_{filename}", explain=True)
     pre_dossier = pre_scan.get("forensic_dossier", {}) or {}
     audit_dict = audit.to_dict()
     audit_dict["scan_id"] = job.scan_id
@@ -474,7 +483,10 @@ def _execute_disarm_for_job(job: ScanJob) -> dict[str, Any]:
             "resources_preserved": audit.resources_preserved,
         },
     }
+    store.attach_sanitized(job.scan_id, sanitized_bytes, audit, audit_dict["post_scan_verification"])
     audit_dict["ai_threat_explanation"] = ai_explainer.explain_threat(pre_scan, cdr_audit=audit_dict)
+    if not include_preview_images:
+        omit_preview_images(audit_dict)
     return audit_dict
 
 
@@ -483,12 +495,7 @@ def download_sanitized() -> Response:
     job = _get_active_or_latest_job()
     if not job.sanitized_bytes:
         raise HTTPException(status_code=409, detail="no_sanitized_output_run_disarm_first")
-    clean_name = f"sanitized_{job.file_name or 'document.pdf'}"
-    return Response(
-        content=job.sanitized_bytes,
-        media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="{clean_name}"'},
-    )
+    return sanitized_pdf_response(job.sanitized_bytes, job.file_name)
 
 
 @production_router.get("/api/download/sanitized/{scan_id}")
@@ -499,12 +506,7 @@ def download_sanitized_by_id(scan_id: str) -> Response:
         raise HTTPException(status_code=404, detail="scan_job_not_found")
     if not job.sanitized_bytes:
         raise HTTPException(status_code=409, detail="no_sanitized_output_run_disarm_first")
-    clean_name = f"sanitized_{job.file_name or 'document.pdf'}"
-    return Response(
-        content=job.sanitized_bytes,
-        media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="{clean_name}"'},
-    )
+    return sanitized_pdf_response(job.sanitized_bytes, job.file_name)
 
 
 @production_router.get("/api/diff/render")

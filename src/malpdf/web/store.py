@@ -28,6 +28,7 @@ class ScanJob:
     scan_result: ScanResult | None = None
     sanitized_bytes: bytes | None = None
     cdr_audit: CDRAuditLog | None = None
+    post_scan_verification: dict[str, Any] | None = None
     error_message: str | None = None
 
     def to_summary(self) -> dict[str, Any]:
@@ -49,17 +50,40 @@ class ScanJob:
         data = self.to_summary()
         data["scan_result"] = self.scan_result.to_dict() if self.scan_result else None
         data["cdr_audit"] = self.cdr_audit.to_dict() if self.cdr_audit else None
+        if data["cdr_audit"] is not None and self.post_scan_verification is not None:
+            data["cdr_audit"]["post_scan_verification"] = self.post_scan_verification
         return data
 
 
 class ScanJobStore:
-    def __init__(self, max_jobs: int = 200, quarantine_dir: Path | str = "data/quarantine") -> None:
+    def __init__(
+        self,
+        max_jobs: int = 200,
+        quarantine_dir: Path | str = "data/quarantine",
+        max_total_bytes: int = 512 * 1024 * 1024,
+    ) -> None:
         self._max_jobs = max_jobs
+        self._max_total_bytes = max_total_bytes
         self._jobs: dict[str, ScanJob] = {}
         self._lock = threading.RLock()
         self._quarantine_dir = Path(quarantine_dir)
         self._quarantine_dir.mkdir(parents=True, exist_ok=True)
         self._audit_logs: deque[dict[str, Any]] = deque(maxlen=500)
+
+    def _enforce_memory_budget(self, reserve_id: str | None = None) -> None:
+        def _job_bytes(item: ScanJob) -> int:
+            return len(item.raw_bytes) + (len(item.sanitized_bytes) if item.sanitized_bytes else 0)
+
+        total = sum(_job_bytes(j) for j in self._jobs.values())
+        if total <= self._max_total_bytes:
+            return
+        for job_id in list(self._jobs.keys()):
+            if total <= self._max_total_bytes or len(self._jobs) <= 1:
+                break
+            if job_id == reserve_id:
+                continue
+            total -= _job_bytes(self._jobs[job_id])
+            del self._jobs[job_id]
 
     def create_job(self, raw_bytes: bytes, file_name: str, batch_id: str | None = None) -> ScanJob:
         with self._lock:
@@ -80,6 +104,7 @@ class ScanJobStore:
                 oldest_id = next(iter(self._jobs))
                 del self._jobs[oldest_id]
             self._jobs[scan_id] = job
+            self._enforce_memory_budget(reserve_id=scan_id)
             self.record_audit("JOB_CREATED", {"scan_id": scan_id, "file_name": file_name, "sha256": sha256})
             return job
 
@@ -132,13 +157,19 @@ class ScanJobStore:
                 if scan_result.verdict == "MALICIOUS":
                     self.quarantine_bytes(job.raw_bytes, job.file_name, job.sha256)
 
-    def attach_sanitized(self, scan_id: str, sanitized_bytes: bytes, cdr_audit: CDRAuditLog) -> None:
+    def attach_sanitized(
+        self, scan_id: str, sanitized_bytes: bytes, cdr_audit: CDRAuditLog,
+        post_scan_verification: dict[str, Any],
+    ) -> None:
         with self._lock:
             job = self._jobs.get(scan_id)
             if job is not None:
                 job.sanitized_bytes = sanitized_bytes
                 job.cdr_audit = cdr_audit
+                job.post_scan_verification = post_scan_verification
                 job.status = "DISARMED"
+                job.error_message = None
+                self._enforce_memory_budget(reserve_id=scan_id)
                 self.record_audit(
                     "DISARM_COMPLETED",
                     {

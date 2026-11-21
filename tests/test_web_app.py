@@ -51,6 +51,8 @@ def test_health_endpoint() -> None:
     assert data["prediction_available"] is True
     assert "PDF-TransGraph" in data["model"]
     assert data["cdr_engine"] == "pikepdf-inplace"
+    assert data["max_upload_bytes"] == 100 * 1024 * 1024
+    assert data["max_upload_mb"] == 100
 
 
 def test_upload_real_benign_and_disarm_preserves_text() -> None:
@@ -283,6 +285,49 @@ def test_webllm_client_ai_and_hardware_fallback_markup_present() -> None:
     assert "_describeGraphNodeVi" in html
     assert "setGraphLayoutMode" in html
     assert "toggleThreatOnlyFilter" in html
+
+
+def test_web_ui_scanning_effect_and_decluttered_markup() -> None:
+    response = client.get("/")
+    assert response.status_code == 200
+    html = response.text
+
+    for expected in (
+        "doc-scan-stage",
+        "scan-laser-line",
+        "docScanSweep",
+        "scanning-overlay",
+        "cdr-disarm-scan-overlay",
+        "ambient-cyber-canvas",
+        "_createTechnicalNodeSvgUri",
+        "_startGraphCanvasAnimation",
+        "cardReveal",
+        "shimmerBar",
+        "vis-stage-wrap",
+        "graph-floating-toolbar",
+        "btn-graph-controls-toggle",
+        "graph-controls-popover",
+        "toggleGraphControlsPopover",
+        "resetGraphViewControls",
+        "scan-phase-badge",
+        "doc-upload-badge",
+        "btn-cancel-scan",
+        "cancelActiveScan",
+        "formatBytesVi",
+        "xhr.upload",
+    ):
+        assert expected in html
+
+    for removed in (
+        "_createCartoonNodeSvgUri",
+        "scanner-empty-state",
+        "cdr-previews-container",
+        "scan-history-ribbon",
+        "eml-result-card",
+        "ai-danger-banner",
+        "xai-entropy",
+    ):
+        assert removed not in html
 
 
 def test_demo_routes_are_absent() -> None:

@@ -37,6 +37,9 @@ malpdf = "malpdf.cli:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+"malpdf.web" = ["templates/*.html", "static/*.css", "static/*.js", "static/*.txt"]
+
 [tool.pytest.ini_options]
 addopts = "-ra"
 testpaths = ["tests"]
