@@ -19,8 +19,7 @@ try:
 except ImportError:
     torch = None
 
-from malpdf.extraction.byte_images import ByteImageLimits, _tile_order, encode_tile
-from malpdf.static.raw_scan import scan_raw_pdf_tokens
+from malpdf.extraction.byte_images import ByteImageLimits, _tile_order
 
 NODE_TYPES: dict[str, int] = {
     "catalog": 0,
@@ -79,6 +78,61 @@ AST_NODE_TYPES: list[str] = [
 
 DEFAULT_SCALER_PATH = Path(__file__).resolve().parents[3] / "configs" / "tabular_scaler.json"
 VERIFIED_CONTRACT_VERSION = "pdf-graph-projection-v2"
+DEFAULT_MAX_PDF_BYTES = 100 * 1024 * 1024
+
+_SCANNER_DIRECT_TOKENS: tuple[tuple[str, bytes], ...] = (
+    ("Encrypt", b"/Encrypt"),
+    ("ObjStm", b"/ObjStm"),
+    ("JS", b"/JS"),
+    ("JavaScript", b"/JavaScript"),
+    ("AA", b"/AA"),
+    ("OpenAction", b"/OpenAction"),
+    ("Acroform", b"/Acroform"),
+    ("JBIG2Decode", b"/JBIG2Decode"),
+    ("RichMedia", b"/RichMedia"),
+    ("Launch", b"/Launch"),
+    ("EmbeddedFile", b"/EmbeddedFile"),
+    ("XFA", b"/XFA"),
+    ("Colors", b"/Colors > 2^24"),
+    ("URI", b"/URI"),
+)
+
+
+def _scan_scanner_raw_tokens(data: bytes) -> dict[str, int]:
+    endobj = data.count(b"endobj")
+    endstream = data.count(b"endstream")
+    counts = {
+        "endobj": endobj,
+        "obj": data.count(b"obj") - endobj,
+        "endstream": endstream,
+        "stream": data.count(b"stream") - endstream,
+        "page_command": data.count(b"/Page") - data.count(b"/Pages"),
+    }
+    for feature, token in _SCANNER_DIRECT_TOKENS:
+        counts[feature] = data.count(token)
+    return counts
+
+
+def _build_xref_offset_map(reader: PdfReader, raw_pdf_bytes: bytes) -> dict[tuple[int, int], int]:
+    offset_map: dict[tuple[int, int], int] = {}
+    xref = getattr(reader, "xref", None)
+    if not isinstance(xref, dict):
+        return offset_map
+    total_len = len(raw_pdf_bytes)
+    for gen, entries in xref.items():
+        if not isinstance(entries, dict):
+            continue
+        gen_int = int(gen)
+        for obj_num, pos in entries.items():
+            if not isinstance(pos, int) or not 0 <= pos < total_len:
+                continue
+            key = (int(obj_num), gen_int)
+            if key in offset_map:
+                continue
+            prefix = f"{key[0]} {gen_int} obj".encode("ascii")
+            if raw_pdf_bytes[pos : pos + 40].lstrip().startswith(prefix):
+                offset_map[key] = pos
+    return offset_map
 
 
 def _shannon_entropy(data: bytes) -> float:
@@ -175,7 +229,7 @@ def _extract_object_metadata(
         if isinstance(raw_stream_buf, (bytes, bytearray)):
             raw_stream_bytes = len(raw_stream_buf)
         if isinstance(raw_stream_buf, (bytes, bytearray)) and len(raw_stream_buf) > 65536:
-            raw_obj_bytes = bytes(raw_stream_buf)
+            raw_obj_bytes = bytes(raw_stream_buf[:65536])
         else:
             try:
                 decoded_buf = resolved.get_data()
@@ -208,7 +262,8 @@ def _extract_object_metadata(
                 dict_keys = " ".join(key_parts)
             else:
                 dict_keys = "Binary Stream"
-            content_preview = f"<< {dict_keys} >>\n[Binary Stream Payload: {len(raw_obj_bytes)} bytes, Filter: {filter_name}]"
+            payload_len = raw_stream_bytes if raw_stream_bytes is not None else len(raw_obj_bytes)
+            content_preview = f"<< {dict_keys} >>\n[Binary Stream Payload: {payload_len} bytes, Filter: {filter_name}]"
     elif isinstance(resolved, DictionaryObject):
         filter_name = "Dictionary"
         pairs: list[str] = []
@@ -260,10 +315,15 @@ def _extract_object_metadata(
         if span_map is not None and (obj_num, generation) in span_map:
             s_pos, e_pos = span_map[(obj_num, generation)]
             phys_span_bytes = e_pos - s_pos
+        elif offset_pos is not None:
+            end_idx = raw_pdf_bytes.find(b"endobj", offset_pos)
+            if end_idx >= offset_pos:
+                phys_span_bytes = (end_idx + 6) - offset_pos
 
     pdf_window = raw_pdf_bytes[offset_pos : offset_pos + 64] if offset_pos is not None else b""
     hex_dump = _build_hex_dump_lines(pdf_window, base_offset=offset_pos or 0, max_lines=4)
-    actual_size = float(phys_span_bytes) if phys_span_bytes is not None and phys_span_bytes > 0 else float(len(raw_obj_bytes))
+    fallback_size = raw_stream_bytes if raw_stream_bytes is not None else len(raw_obj_bytes)
+    actual_size = float(phys_span_bytes) if phys_span_bytes is not None and phys_span_bytes > 0 else float(fallback_size)
     entropy_sample = raw_obj_bytes[:65536] if raw_obj_bytes else pdf_window
     entropy_val = round(_shannon_entropy(entropy_sample), 4)
 
@@ -296,8 +356,6 @@ def _measure_byte_image_file_ratios(data: bytes) -> tuple[float, float]:
     planned_tiles = (total_len + capacity - 1) // capacity
     encoded_bytes = 0
     mapped_pixels_work = 0
-    unique_png_bytes = 0
-    seen_png_digests: set[str] = set()
     attempted = 0
     for tile_idx in _tile_order(planned_tiles):
         if attempted >= limits.max_tiles:
@@ -311,13 +369,6 @@ def _measure_byte_image_file_ratios(data: bytes) -> tuple[float, float]:
         if mapped_pixels_work + pixels > limits.max_mapped_pixels:
             continue
         mapped_pixels_work += pixels
-        block = data[start:end]
-        png, _ = encode_tile(block, width=limits.width, rows=limits.rows_per_tile)
-        digest = hashlib.sha256(png).hexdigest()
-        if digest not in seen_png_digests:
-            if unique_png_bytes + len(png) <= limits.max_png_bytes:
-                unique_png_bytes += len(png)
-            seen_png_digests.add(digest)
         encoded_bytes += count
     return float(encoded_bytes) / float(total_len), 0.0
 
@@ -370,7 +421,7 @@ class InstantPDFIngestion:
         ):
             raise ValueError("invalid_training_scaler")
 
-    def read_bytes(self, source: str | Path | bytes, max_bytes: int = 32 * 1024 * 1024) -> tuple[bytes, str]:
+    def read_bytes(self, source: str | Path | bytes, max_bytes: int = DEFAULT_MAX_PDF_BYTES) -> tuple[bytes, str]:
         if isinstance(source, bytes):
             data = source
             if len(data) > max_bytes:
@@ -390,13 +441,13 @@ class InstantPDFIngestion:
         sha256 = hashlib.sha256(data).hexdigest()
         return data, sha256
 
-    def ingest(self, source: str | Path | bytes, max_bytes: int = 32 * 1024 * 1024) -> dict[str, Any]:
+    def ingest(self, source: str | Path | bytes, max_bytes: int = DEFAULT_MAX_PDF_BYTES) -> dict[str, Any]:
         t0 = time.perf_counter()
         data, sha256 = self.read_bytes(source, max_bytes=max_bytes)
         if b"%PDF-" not in data[:1024]:
             raise ValueError("not_a_pdf_missing_header")
         pdf_size = len(data)
-        raw_tokens = scan_raw_pdf_tokens(data)
+        raw_tokens = _scan_scanner_raw_tokens(data)
         raw_entropy = _shannon_entropy(data)
         header_pos = data.find(b"%PDF-")
         pdf_version = "1.7"
@@ -484,6 +535,7 @@ class InstantPDFIngestion:
             "raw_records": records,
             "raw_edges": raw_edges,
             "extracted_scripts": extracted_scripts,
+            "raw_tokens": raw_tokens,
         }
 
     def _extract_graph_and_scripts(
@@ -495,7 +547,10 @@ class InstantPDFIngestion:
         extracted_scripts: list[dict[str, Any]],
     ) -> None:
         visited_ids: set[str] = set()
-        offset_map, span_map = _index_physical_object_spans(raw_pdf_bytes)
+        offset_map = _build_xref_offset_map(reader, raw_pdf_bytes)
+        span_map: dict[tuple[int, int], tuple[int, int]] = {}
+        if not offset_map and len(raw_pdf_bytes) <= 8 * 1024 * 1024:
+            offset_map, span_map = _index_physical_object_spans(raw_pdf_bytes)
 
         def register_node(
             evidence_id: str,

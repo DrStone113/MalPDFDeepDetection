@@ -5,6 +5,7 @@ import io
 import math
 import os
 from pathlib import Path
+from threading import RLock
 import time
 from typing import Any
 
@@ -82,6 +83,7 @@ class MalPDFScannerEngine:
     ) -> None:
         self.temperature = temperature
         self.ood_threshold = ood_threshold
+        self._model_lock = RLock()
 
         if device == "auto":
             self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -156,7 +158,8 @@ class MalPDFScannerEngine:
         b_cat = torch.arange(len(variants), device=nf_cat.device).repeat_interleave(n_nodes)
         tok_cat = torch.cat([v[1] for v in variants], dim=0)
         tab_cat = torch.cat([v[2] for v in variants], dim=0)
-        logits, _ = self.model(nf_cat, nt_cat, ei_cat, er_cat, b_cat, tok_cat, tab_cat)
+        with self._model_lock:
+            logits, _ = self.model(nf_cat, nt_cat, ei_cat, er_cat, b_cat, tok_cat, tab_cat)
         return [float(p) for p in torch.sigmoid(logits).reshape(-1).cpu().tolist()]
 
     def _compute_xai_signals(
@@ -396,7 +399,7 @@ class MalPDFScannerEngine:
         tok = ingest_data["ast_tokens"].to(self.device)
         tab = ingest_data["tab_features"].to(self.device)
 
-        with torch.no_grad():
+        with self._model_lock, torch.no_grad():
             logits, attn_weights = self.model(nf, nt, ei, er, b, tok, tab)
             prob = torch.sigmoid(logits).item()
             logit_val = logits.item()
@@ -420,23 +423,25 @@ class MalPDFScannerEngine:
         edge_attention: list[float] = []
         forensic_dossier: dict[str, Any] = {}
         if explain:
-            (
-                node_saliency,
-                edge_attention,
-                ast_token_attention,
-                tabular_grad_importance,
-                proof_metrics,
-            ) = self._compute_xai_signals(
-                nf=nf,
-                nt=nt,
-                ei=ei,
-                er=er,
-                b=b,
-                tok=tok,
-                tab=tab,
-                base_prob=prob,
-                attn_weights=attn_weights,
-            )
+            # The encoders record attention on the shared model during a forward pass.
+            with self._model_lock:
+                (
+                    node_saliency,
+                    edge_attention,
+                    ast_token_attention,
+                    tabular_grad_importance,
+                    proof_metrics,
+                ) = self._compute_xai_signals(
+                    nf=nf,
+                    nt=nt,
+                    ei=ei,
+                    er=er,
+                    b=b,
+                    tok=tok,
+                    tab=tab,
+                    base_prob=prob,
+                    attn_weights=attn_weights,
+                )
             forensic_dossier = self.forensic.explain(
                 ingest_data,
                 cross_modal_attn=attn_weights,
@@ -645,7 +650,8 @@ class MalPDFScannerEngine:
         tab = ingest_data["tab_features"].to(self.device)
 
         with torch.no_grad():
-            base_logits, _ = self.model(nf, nt, ei, er, b, tok, tab)
+            with self._model_lock:
+                base_logits, _ = self.model(nf, nt, ei, er, b, tok, tab)
             prob_before = float(torch.sigmoid(base_logits).item())
             logit_before = float(base_logits.item())
 
@@ -810,7 +816,8 @@ class MalPDFScannerEngine:
             ablated_er = er
 
         with torch.no_grad():
-            abl_logits, _ = self.model(ablated_nf, nt, ablated_ei, ablated_er, b, ablated_tok, ablated_tab)
+            with self._model_lock:
+                abl_logits, _ = self.model(ablated_nf, nt, ablated_ei, ablated_er, b, ablated_tok, ablated_tab)
             prob_after = float(torch.sigmoid(abl_logits).item())
             logit_after = float(abl_logits.item())
 

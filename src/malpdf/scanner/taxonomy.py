@@ -14,7 +14,7 @@ from malpdf.models.multilabel_threat_net import (
     PDFMultiLabelThreatNet,
 )
 from malpdf.scanner.forensic import DANGEROUS_PATTERNS, deobfuscate_javascript_static
-from malpdf.static.obfuscation import count_escaped_pdf_names
+from malpdf.static.obfuscation import MAX_PDF_BYTES, count_escaped_pdf_names
 from malpdf.static.raw_scan import scan_raw_pdf_tokens
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -162,7 +162,11 @@ class ThreatTaxonomyClassifier:
             max(int(raw_tokens.get("EmbeddedFile", 0)), 1 if has_embedded_file else 0)
             + max(int(raw_tokens.get("Launch", 0)), 1 if has_launch else 0)
         )
-        escaped_names = float(count_escaped_pdf_names(raw_pdf_bytes)) if raw_pdf_bytes else 0.0
+        escaped_names = (
+            float(count_escaped_pdf_names(raw_pdf_bytes, max_bytes=max(MAX_PDF_BYTES, len(raw_pdf_bytes))))
+            if raw_pdf_bytes
+            else 0.0
+        )
 
         extra_14 = [
             float(raw_tokens.get("AA", 0)),
@@ -235,7 +239,7 @@ class ThreatTaxonomyClassifier:
         verdict: str | None,
         malware_prob: float | None,
     ) -> dict[str, Any]:
-        raw_tokens = scan_raw_pdf_tokens(raw_pdf_bytes) if raw_pdf_bytes else {}
+        raw_tokens = ingest_data.get("raw_tokens") or (scan_raw_pdf_tokens(raw_pdf_bytes) if raw_pdf_bytes else {})
         records = ingest_data.get("raw_records") or []
         scripts = ingest_data.get("extracted_scripts") or []
         ast_stats = ingest_data.get("ast_stats") or {}

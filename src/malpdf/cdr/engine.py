@@ -61,7 +61,11 @@ def _preserved_document_state(pdf: pikepdf.Pdf) -> list[dict[str, Any]]:
 
 
 def _active_keys(pdf: pikepdf.Pdf, *, remove: bool) -> list[str]:
-    pending = [(pdf.Root, "/Root", 0)] + [(obj, f"{obj.objgen[0]} {obj.objgen[1]} R", 0) for obj in pdf.objects]
+    pending = [(pdf.Root, "/Root", 0)] + [
+        (obj, f"{obj.objgen[0]} {obj.objgen[1]} R", 0)
+        for obj in pdf.objects
+        if isinstance(obj, (pikepdf.Dictionary, pikepdf.Stream, pikepdf.Array))
+    ]
     seen = set()
     paths = []
     visited = 0

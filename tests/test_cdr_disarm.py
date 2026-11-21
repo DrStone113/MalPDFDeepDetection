@@ -16,6 +16,36 @@ def _extract_all_text(pdf_bytes: bytes) -> str:
         return "\n".join(page.get_text() for page in doc).strip()
 
 
+def test_cdr_handles_indirect_scalars_in_object_table() -> None:
+    with pikepdf.open(io.BytesIO(load_real_benign_bytes())) as pdf:
+        pdf.Root.TestScalars = pikepdf.Array([
+            pdf.make_indirect(pikepdf.String("scalar-int-marker")),
+            pdf.make_indirect(pikepdf.String("scalar-bool-marker")),
+            pdf.make_indirect(pikepdf.String("reviewed fixture")),
+        ])
+        pdf.Root.TestNested = pikepdf.Dictionary(
+            Next=pikepdf.Dictionary(JS=pikepdf.String("app.alert('controlled-test');")),
+        )
+        buffer = io.BytesIO()
+        pdf.save(buffer)
+        raw = buffer.getvalue()
+        for marker, scalar in ((b"(scalar-int-marker)", b"42"), (b"(scalar-bool-marker)", b"true")):
+            assert raw.count(marker) == 1
+            raw = raw.replace(marker, scalar.ljust(len(marker)))
+    with pikepdf.open(io.BytesIO(raw)) as pdf:
+        assert any(isinstance(obj, int) for obj in pdf.objects)
+
+    cleaned, audit = PDFDisarmer().sanitize_bytes(raw)
+    assert len(cleaned) > 0.8 * len(raw)
+    assert audit.sanitized_pages == audit.original_pages
+    assert len(_extract_all_text(cleaned)) > 0
+    assert _extract_all_text(cleaned) == _extract_all_text(raw)
+    assert audit.content_streams_preserved and audit.resources_preserved
+    with pikepdf.open(io.BytesIO(cleaned)) as pdf:
+        assert list(pdf.Root.TestScalars) == [42, True, "reviewed fixture"]
+        assert "/JS" not in pdf.Root.TestNested.Next
+
+
 def test_cdr_removes_direct_nested_action_without_changing_page_content() -> None:
     original = load_real_benign_bytes()
     with pikepdf.open(io.BytesIO(original)) as pdf:

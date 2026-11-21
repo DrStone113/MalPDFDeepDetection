@@ -175,3 +175,23 @@ def test_zerogpu_entrypoint_decorator_registered() -> None:
     assert "ONNX Runtime" in status_text
     assert "verify" in status_text
 
+
+def test_onnx_engine_scans_pdf_above_legacy_10mib_cap() -> None:
+    import io
+    import os
+    import pikepdf
+
+    with pikepdf.open(io.BytesIO(load_real_benign_bytes())) as pdf:
+        pdf.pages[0]["/Payload"] = pdf.make_stream(os.urandom(12 * 1024 * 1024))
+        buf = io.BytesIO()
+        pdf.save(buf)
+    large_pdf = buf.getvalue()
+    assert len(large_pdf) > 10 * 1024 * 1024
+
+    onnx_engine = ONNXMalPDFScannerEngine()
+    result = onnx_engine.scan_bytes(large_pdf, file_name="large_12mib.pdf", explain=True)
+    assert result.prediction_available is True
+    assert result.prediction_blockers == []
+    assert result.threat_taxonomy["ml_weights_loaded"] is True
+    assert result.file_size_bytes == len(large_pdf)
+
