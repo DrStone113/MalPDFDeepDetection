@@ -33,6 +33,18 @@ Hệ thống lưu trữ, phân tích chuyên sâu nguyên nhân gốc rễ và c
 
 ---
 
+## Lỗi ứng dụng web — 2026-11-10
+
+| Mã | Lỗi | Trạng thái | Kiểm thử | Chi tiết |
+| --- | --- | --- | --- | --- |
+| BUG-010 | Dữ liệu dùng chung giữa các phiên | RESOLVED | `test_web_session_isolation.py`, `test_browser_sessions.py` | [Hồ sơ](BUG-010-browser-session-data-isolation.md) |
+| BUG-011 | Bỏ sót PDF trong MIME lồng nhau | RESOLVED | `test_mail_gateway_mime.py` | [Hồ sơ](BUG-011-recursive-email-pdf-inspection.md) |
+| BUG-012 | Chèn HTML vào thông báo | RESOLVED | `test_web_notifications.py` | [Hồ sơ](BUG-012-untrusted-notification-html.md) |
+| BUG-013 | Nhãn XAI ONNX sai phương pháp | RESOLVED | `test_xai_provenance.py` | [Hồ sơ](BUG-013-onnx-xai-method-provenance.md) |
+| BUG-014 | Khóa Cloud AI nằm trong mã giao diện công khai | MITIGATED; cần thay khóa cũ | `test_cloud_chat_security.py`, `test_web_notifications.py` | [Hồ sơ](BUG-014-browser-cloud-api-credential.md) |
+| BUG-015 | Mô hình dùng hết giới hạn xử lý trước khi có câu trả lời | RESOLVED; đã xác minh trên Space | `test_cloud_chat_adapter.py` | [Hồ sơ](BUG-015-cloud-reasoning-output-budget.md) |
+| BUG-016 | Cloud AI đợi toàn bộ câu trả lời mới hiển thị | RESOLVED; đã xác minh truyền chữ trên Space và giao diện | `test_cloud_chat_streaming.py`, `test_cloud_stream_client.py` | [Hồ sơ](BUG-016-buffered-cloud-chat.md) |
+
 ## 2. Quy trình Ghi nhận & Xử lý Lỗi Chuẩn
 
 Khi phát hiện một bug mới hoặc một parser edge case lạ:

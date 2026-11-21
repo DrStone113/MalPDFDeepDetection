@@ -3634,9 +3634,6 @@
     }
 
 
-    // ==========================================
-    // 7. RECENT QUEUE & EVIDENCE TABLES
-    // ==========================================
     async function deleteScanJob(event, scanId) {
       if (event) { event.stopPropagation(); event.preventDefault(); }
       if (!scanId) return;
@@ -5298,26 +5295,29 @@
         document.getElementById('mail-total').textContent = data.summary.total_emails;
         document.getElementById('mail-quarantined').textContent = data.summary.intercepted_threats;
         document.getElementById('mail-passed').textContent = data.summary.passed_clean;
-        document.getElementById('mail-avg-latency').textContent = Number.isFinite(data.summary.avg_latency_ms) ? data.summary.avg_latency_ms.toFixed(1) + ' ms' : '-- ms';
+        document.getElementById('mail-avg-latency').textContent = Number.isFinite(data.summary.avg_latency_ms) ? data.summary.avg_latency_ms.toFixed(1) + ' ms' : '--';
         const body = document.getElementById('mail-stream-body');
         body.replaceChildren();
         for (const record of data.results) {
           const row = document.createElement('tr');
           row.className = 'hover:bg-surface-container-low/50 transition';
-          const actionVi = record.action === 'SANITIZED_ATTACHMENT'
-            ? 'Đã làm sạch tệp đính kèm'
-            : (record.action === 'DELIVERED_CLEAN' ? 'An toàn — Đã chuyển tiếp' : (record.action || '--'));
-          const cols = [record.msg_id, record.subject, record.sender_full || record.sender, record.attachment, actionVi, Number(record.latency_ms || 0).toFixed(1) + ' ms'];
-          cols.forEach((value, idx) => {
+          const actionVi = {
+            SANITIZED_ATTACHMENT: 'Đã làm sạch tệp đính kèm',
+            DISARMED_AND_QUARANTINED: 'Đã làm sạch tệp đính kèm',
+            DELIVERED_CLEAN: 'An toàn — Đã chuyển tiếp',
+            PASSED: 'An toàn — Đã kiểm tra',
+            HELD_FOR_REVIEW: 'Cần kiểm tra thêm',
+          }[record.action] || record.action || '--';
+          for (const value of [record.msg_id, record.subject, record.sender_full || record.sender, record.attachment, actionVi, Number(record.latency_ms || 0).toFixed(1) + ' ms']) {
             const cell = document.createElement('td');
-            cell.className = idx === 5 ? 'p-3 text-xs text-right font-mono num' : 'p-3 text-xs';
+            cell.className = 'p-3 text-xs';
             cell.textContent = value;
             row.appendChild(cell);
-          });
+          }
           const dlCell = document.createElement('td');
           dlCell.className = 'p-3 text-right';
-          if (record.eml_job_id) {
-            dlCell.innerHTML = `<a href="/api/gateway/download/eml/${encodeURIComponent(record.eml_job_id)}" class="px-3 py-1 rounded-md text-[11px] font-bold bg-blue-50 text-primary-container border border-blue-200 hover:bg-primary-container hover:text-white transition inline-flex items-center gap-1"><span class="material-symbols-outlined text-[13px]">download</span><span>Tải .eml sạch</span></a>`;
+          if (record.eml_job_id && record.action !== 'HELD_FOR_REVIEW') {
+            dlCell.innerHTML = `<a href="/api/gateway/download/eml/${encodeURIComponent(record.eml_job_id)}" class="px-3 py-1 rounded-full text-[11px] font-bold bg-secondary/15 text-secondary hover:bg-secondary hover:text-white transition inline-flex items-center gap-1"><span class="material-symbols-outlined text-[13px]">download</span><span>Tải .eml sạch</span></a>`;
           } else {
             dlCell.textContent = '--';
           }
@@ -5329,7 +5329,7 @@
           const cell = row.insertCell();
           cell.colSpan = 7;
           cell.className = 'p-5 text-center text-outline text-xs';
-          cell.textContent = 'Chưa có email nào được kiểm tra trong phiên này.';
+          cell.textContent = 'Chưa có email nào được kiểm tra trong phiên này. Hãy bấm nút "Tải tệp .eml / .pdf lên kiểm tra" hoặc "Kiểm thử Email với tệp PDF hiện tại" ở góc trên.';
         }
       } catch (error) {
         showToast('Không đọc được lịch sử kiểm tra email: ' + error.message, 'error');
@@ -5580,11 +5580,12 @@
 
     function renderEMLInspectionResult(data) {
       if (!data) return;
-      const threatText = data.malicious_attachments > 0
+      const held = (data.unavailable_attachments || 0) > 0 || data.action_taken === 'HELD_FOR_REVIEW';
+      const threatText = held ? 'Có tệp đính kèm chưa xác minh — cần kiểm tra thêm' : data.malicious_attachments > 0
         ? `Đã làm sạch ${data.malicious_attachments} tệp nguy hiểm`
         : 'An toàn (Không có tệp nguy hiểm)';
-      const badgeLabel = data.malicious_attachments > 0 ? 'Đã làm sạch tệp đính kèm' : 'Email an toàn';
-      const badgeCls = data.malicious_attachments > 0
+      const badgeLabel = held ? 'Cần kiểm tra thêm' : data.malicious_attachments > 0 ? 'Đã làm sạch tệp đính kèm' : 'Email an toàn';
+      const badgeCls = held ? 'px-2.5 py-0.5 rounded-md text-xs font-bold bg-amber-100 text-amber-800' : data.malicious_attachments > 0
         ? 'px-2.5 py-0.5 rounded-md text-xs font-bold bg-red-50 text-error border border-red-200'
         : 'px-2.5 py-0.5 rounded-md text-xs font-bold bg-emerald-50 text-tertiary border border-emerald-200';
 
@@ -5598,9 +5599,10 @@
         const tabBadge = document.getElementById('mail-tab-action-badge');
         if (tabBadge) { tabBadge.textContent = badgeLabel; tabBadge.className = badgeCls; }
         const tabDlBtn = document.getElementById('btn-mail-tab-download-eml');
-        if (tabDlBtn && data.eml_job_id) {
-          tabDlBtn.href = `/api/gateway/download/eml/${encodeURIComponent(data.eml_job_id)}`;
-          tabDlBtn.classList.remove('hidden');
+        if (tabDlBtn) {
+          tabDlBtn.classList.toggle('hidden', held || !data.eml_job_id);
+          if (held || !data.eml_job_id) tabDlBtn.removeAttribute('href');
+          else tabDlBtn.href = `/api/gateway/download/eml/${encodeURIComponent(data.eml_job_id)}`;
         }
       }
     }

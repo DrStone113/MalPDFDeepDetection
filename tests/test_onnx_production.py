@@ -41,7 +41,7 @@ def test_onnx_engine_matches_pytorch_on_real_fixtures() -> None:
     assert ox_threat.threat_taxonomy["ml_weights_loaded"] is True
     assert ox_threat.threat_taxonomy["threat_label"] == pt_threat.threat_taxonomy["threat_label"]
     assert ox_threat.threat_taxonomy["detected_count"] == pt_threat.threat_taxonomy["detected_count"]
-    assert ox_threat.forensic_dossier["cross_attention_matrix_status"] == "measured_gradient_saliency"
+    assert ox_threat.forensic_dossier["cross_attention_matrix_status"] == "measured_occlusion_saliency"
     assert len(ox_threat.forensic_dossier["cross_attention_matrix"]) > 0
 
     pt_benign = pt_engine.scan_bytes(benign_bytes, file_name="real_benign_document.pdf", explain=True)

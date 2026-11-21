@@ -161,11 +161,12 @@ class ForensicAttributionEngine:
         ingest_data: dict[str, Any],
         cross_modal_attn: Any = None,
         malware_prob: float | None = None,
-        node_saliency: list[float] | None = None,
+        node_saliency: list[float | None] | None = None,
         edge_attention: list[float] | None = None,
         ast_token_attention: list[float] | None = None,
-        tabular_grad_importance: list[float] | None = None,
+        tabular_grad_importance: list[float | None] | None = None,
         xai_proof_metrics: dict[str, float] | None = None,
+        saliency_method: str = "gradient_input",
     ) -> dict[str, Any]:
         cross_weights = None
         if cross_modal_attn is not None:
@@ -310,9 +311,11 @@ class ForensicAttributionEngine:
                 scores = tab.reshape(-1).tolist()
             else:
                 scores = []
-            total = sum(abs(value) for value in tabular_grad_importance)
+            total = sum(abs(value) for value in tabular_grad_importance if value is not None)
             for index, name in enumerate(names):
                 value = tabular_grad_importance[index]
+                if value is None:
+                    continue
                 tabular_attributions.append({
                     "feature_name": name,
                     "raw_value": raw_values[index] if index < len(raw_values) else None,
@@ -327,6 +330,7 @@ class ForensicAttributionEngine:
         proof = xai_proof_metrics or {}
         xai_metrics = {key: proof.get(key) for key in ("fidelity_score", "comprehensiveness_drop", "sparsity_index", "lipschitz_stability")}
         xai_metrics.update({
+            "sparsity_scope": "evaluated_inputs" if proof.get("sparsity_index") is not None else None,
             "dag_entropy": ingest_data.get("raw_entropy"),
             "ast_complexity": stats.get("total_nodes"),
             "ast_max_depth": stats.get("max_depth"),
@@ -335,10 +339,11 @@ class ForensicAttributionEngine:
         })
 
         cross_matrix: list[dict[str, Any]] = []
-        has_measured_saliency = node_saliency is not None and len(node_saliency) > 0
+        measured_indices = [index for index, value in enumerate(node_saliency or []) if value is not None]
+        has_measured_saliency = bool(measured_indices)
         if records and has_measured_saliency:
             ranked_indices = sorted(
-                range(min(len(records), len(node_saliency))),
+                (index for index in measured_indices if index < len(records)),
                 key=lambda idx: (
                     1 if records[idx].get("is_threat_trigger") else 0,
                     float(node_saliency[idx]),
@@ -436,7 +441,16 @@ class ForensicAttributionEngine:
             "tabular_attributions": tabular_attributions[:10],
             "tabular_anomalies": tabular_attributions[:10],
             "cross_attention_matrix": cross_matrix,
-            "cross_attention_matrix_status": "measured_gradient_saliency" if has_measured_saliency else "unavailable",
+            "cross_attention_matrix_status": (
+                "measured_occlusion_saliency" if saliency_method == "occlusion" else "measured_gradient_saliency"
+            ) if has_measured_saliency else "unavailable",
+            "xai_method": saliency_method if has_measured_saliency else None,
+            "xai_coverage": {
+                "nodes_total": len(records),
+                "nodes_measured": len(measured_indices),
+                "tabular_features_total": len(names),
+                "tabular_features_measured": sum(value is not None for value in (tabular_grad_importance or [])),
+            },
             "mitre_cascade": observations,
             "xai_metrics": xai_metrics,
             "thesis_synthesis": {

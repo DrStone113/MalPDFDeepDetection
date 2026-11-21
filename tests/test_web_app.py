@@ -8,8 +8,6 @@ import importlib
 import pytest
 from fastapi.testclient import TestClient
 
-from malpdf.web.store import ScanJobStore
-
 from malpdf.cdr.fixtures import load_real_benign_bytes, load_real_threat_bytes
 from malpdf.web.app import app
 
@@ -19,10 +17,8 @@ client = TestClient(app)
 @pytest.fixture(autouse=True)
 def isolated_scan_session(tmp_path, monkeypatch):
     module = importlib.import_module("malpdf.web.app")
-    monkeypatch.setattr(module, "store", ScanJobStore(quarantine_dir=tmp_path / "quarantine"))
-    monkeypatch.setattr(module, "ACTIVE_JOB_ID", None)
-    monkeypatch.setattr(module, "EML_STORE", {})
-    monkeypatch.setattr(module.gateway, "quarantine_dir", tmp_path / "quarantine")
+    monkeypatch.setattr(module.session_registry, "quarantine_root", tmp_path / "quarantine")
+    client.cookies.clear()
 
 
 def _scan_fixture(kind: str):

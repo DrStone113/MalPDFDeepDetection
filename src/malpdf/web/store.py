@@ -67,7 +67,6 @@ class ScanJobStore:
         self._jobs: dict[str, ScanJob] = {}
         self._lock = threading.RLock()
         self._quarantine_dir = Path(quarantine_dir)
-        self._quarantine_dir.mkdir(parents=True, exist_ok=True)
         self._audit_logs: deque[dict[str, Any]] = deque(maxlen=500)
 
     def _enforce_memory_budget(self, reserve_id: str | None = None) -> None:
@@ -196,6 +195,7 @@ class ScanJobStore:
             return False
 
     def quarantine_bytes(self, raw_bytes: bytes, file_name: str, sha256: str) -> Path:
+        self._quarantine_dir.mkdir(parents=True, exist_ok=True)
         safe_name = f"{sha256[:16]}_{Path(file_name).name}"
         target_path = self._quarantine_dir / safe_name
         target_path.write_bytes(raw_bytes)
@@ -234,7 +234,7 @@ class ScanJobStore:
 
     def get_quarantine_bytes(self, stored_name: str) -> bytes | None:
         target = (self._quarantine_dir / stored_name).resolve()
-        if not str(target).startswith(str(self._quarantine_dir.resolve())):
+        if target.parent != self._quarantine_dir.resolve():
             return None
         if target.is_file():
             return target.read_bytes()

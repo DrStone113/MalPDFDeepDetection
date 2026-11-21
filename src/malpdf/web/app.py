@@ -18,6 +18,7 @@ from typing import Any
 from fastapi import FastAPI, File, Form, HTTPException, Query, Response, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import HTMLResponse
+from fastapi.routing import APIRoute
 import pymupdf as fitz
 import torch
 
@@ -31,30 +32,33 @@ from malpdf.scanner.ai_explainer import (
 )
 from malpdf.scanner.engine import MalPDFScannerEngine
 from malpdf.web.http import (
-    GRAPH_ASSET_PATH, PrivateAPIRoute, dashboard_graph, dashboard_styles, omit_preview_images, sanitized_pdf_response,
+    GRAPH_ASSET_PATH, dashboard_graph, dashboard_styles, omit_preview_images, sanitized_pdf_response,
 )
-from malpdf.web.store import ScanJob, ScanJobStore
+from malpdf.web.store import ScanJob
+from malpdf.web.cloud_chat import CLOUD_MODEL, cloud_answer, cloud_stream_response
+from malpdf.web.sessions import BrowserSessionRegistry, current_session, optional_session, session_route_class
 
 MAX_UPLOAD_BYTES = max(1, int(os.environ.get("MALPDF_MAX_UPLOAD_MB", "100"))) * 1024 * 1024
 PDF_MAGIC = b"%PDF-"
 PDF_MAGIC_SEARCH_WINDOW = 1024
 
 app = FastAPI(title="MalPDF DeepDetection Web Service")
-app.router.route_class = PrivateAPIRoute
-app.add_api_route("/assets/dashboard.css", dashboard_styles, include_in_schema=False)
-app.add_api_route(GRAPH_ASSET_PATH, dashboard_graph, include_in_schema=False)
+app.router.add_api_route(
+    "/assets/dashboard.css", dashboard_styles, include_in_schema=False, route_class_override=APIRoute,
+)
+app.router.add_api_route(
+    GRAPH_ASSET_PATH, dashboard_graph, include_in_schema=False, route_class_override=APIRoute,
+)
 
 scanner = MalPDFScannerEngine(device="cpu")
 disarmer = PDFDisarmer()
 ai_explainer = AIThreatExplainer()
 QUARANTINE_DIR = os.environ.get("MALPDF_QUARANTINE_DIR", "data/quarantine")
-store = ScanJobStore(max_jobs=200, quarantine_dir=QUARANTINE_DIR)
-gateway = MailGatewayFilter(scanner_engine=scanner, disarmer=disarmer, quarantine_dir=QUARANTINE_DIR, device="cpu")
+session_registry = BrowserSessionRegistry(QUARANTINE_DIR)
+app.router.route_class = session_route_class(session_registry)
 
 
 SERVICE_STARTED_AT = time.time()
-ACTIVE_JOB_ID: str | None = None
-EML_STORE: dict[str, tuple[bytes, EmailInspectionReport]] = {}
 _RENDER_CACHE: dict[tuple[str, int], tuple[str, int]] = {}
 
 
@@ -68,17 +72,16 @@ def _validate_pdf_bytes(content: bytes) -> None:
 
 
 def _get_active_or_latest_job(scan_id: str | None = None) -> ScanJob:
-    global ACTIVE_JOB_ID
-    target_id = scan_id or ACTIVE_JOB_ID
+    target_id = scan_id or current_session().active_job_id
     if target_id:
-        job = store.get_job(target_id)
+        job = current_session().store.get_job(target_id)
         if job:
             return job
         if scan_id is not None:
             raise HTTPException(status_code=404, detail="scan_job_not_found")
-    jobs = store.list_jobs(limit=1)
+    jobs = current_session().store.list_jobs(limit=1)
     if jobs:
-        ACTIVE_JOB_ID = jobs[0].scan_id
+        current_session().active_job_id = jobs[0].scan_id
         return jobs[0]
     raise HTTPException(status_code=409, detail="no_document_staged_upload_first")
 
@@ -147,7 +150,8 @@ def health() -> dict[str, Any]:
     model = scanner.model
     hgt_layers = sum(1 for name in ("layer1", "layer2", "layer3") if hasattr(model.graph_encoder, name))
     ast_layers = len(getattr(getattr(model.ast_encoder, "encoder", None), "layers", []) or [])
-    recent_jobs = store.list_jobs(limit=10)
+    session = optional_session()
+    recent_jobs = session.store.list_jobs(limit=10) if session is not None else []
     node_dim = getattr(scanner, "node_in_dim", 19)
     model_name = f"PDF-TransGraph v2 ({node_dim}D)" if node_dim == 23 else "PDF-TransGraph"
     return {
@@ -170,8 +174,8 @@ def health() -> dict[str, Any]:
         "python_version": platform.python_version(),
         "uptime_s": round(time.time() - SERVICE_STARTED_AT, 1),
         "total_jobs": len(recent_jobs),
-        "quarantined_files": len(store.list_quarantine()),
-        "events_logged": len(store.get_audit_logs()),
+        "quarantined_files": len(session.store.list_quarantine()) if session is not None else 0,
+        "events_logged": len(session.store.get_audit_logs()) if session is not None else 0,
         "max_upload_bytes": MAX_UPLOAD_BYTES,
         "max_upload_mb": round(MAX_UPLOAD_BYTES / (1024 * 1024)),
     }
@@ -179,13 +183,12 @@ def health() -> dict[str, Any]:
 
 @app.get("/api/session")
 def get_session_state() -> dict[str, Any]:
-    global ACTIVE_JOB_ID
-    if not ACTIVE_JOB_ID:
-        jobs = store.list_jobs(limit=1)
+    if not current_session().active_job_id:
+        jobs = current_session().store.list_jobs(limit=1)
         if jobs:
-            ACTIVE_JOB_ID = jobs[0].scan_id
-    if ACTIVE_JOB_ID:
-        job = store.get_job(ACTIVE_JOB_ID)
+            current_session().active_job_id = jobs[0].scan_id
+    if current_session().active_job_id:
+        job = current_session().store.get_job(current_session().active_job_id)
         if job:
             return {
                 "scan_id": job.scan_id,
@@ -211,13 +214,13 @@ def get_session_state() -> dict[str, Any]:
 
 @app.get("/api/scans")
 def list_scans(batch_id: str | None = None, limit: int = 50) -> list[dict[str, Any]]:
-    jobs = store.list_jobs(batch_id=batch_id, limit=limit)
+    jobs = current_session().store.list_jobs(batch_id=batch_id, limit=limit)
     return [j.to_summary() for j in jobs]
 
 
 @app.get("/api/scans/{scan_id}")
 def get_scan_detail(scan_id: str, include_preview_images: bool = True) -> dict[str, Any]:
-    job = store.get_job(scan_id)
+    job = current_session().store.get_job(scan_id)
     if not job:
         raise HTTPException(status_code=404, detail="scan_job_not_found")
     detail = job.to_detail()
@@ -232,7 +235,7 @@ def get_scan_detail(scan_id: str, include_preview_images: bool = True) -> dict[s
 
 @app.delete("/api/scans/{scan_id}")
 def delete_scan(scan_id: str) -> dict[str, bool]:
-    deleted = store.delete_job(scan_id)
+    deleted = current_session().store.delete_job(scan_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="scan_job_not_found")
     return {"deleted": True}
@@ -240,19 +243,18 @@ def delete_scan(scan_id: str) -> dict[str, bool]:
 
 @app.post("/api/scan")
 async def scan_uploaded_file(file: UploadFile = File(...)) -> dict[str, Any]:
-    global ACTIVE_JOB_ID
     content = await file.read()
     _validate_pdf_bytes(content)
     filename = Path(file.filename or "uploaded_document.pdf").name
-    job = store.create_job(raw_bytes=content, file_name=filename)
-    ACTIVE_JOB_ID = job.scan_id
-    store.set_status(job.scan_id, "SCANNING")
+    job = current_session().store.create_job(raw_bytes=content, file_name=filename)
+    current_session().active_job_id = job.scan_id
+    current_session().store.set_status(job.scan_id, "SCANNING")
     try:
         scan_res = await run_in_threadpool(scanner.scan_bytes, content, filename, True)
     except (ValueError, RuntimeError) as exc:
-        store.set_status(job.scan_id, "FAILED", error=str(exc))
+        current_session().store.set_status(job.scan_id, "FAILED", error=str(exc))
         raise HTTPException(status_code=422 if isinstance(exc, ValueError) else 503, detail=str(exc)) from exc
-    store.attach_scan_result(job.scan_id, scan_res)
+    current_session().store.attach_scan_result(job.scan_id, scan_res)
     res_dict = scan_res.to_dict()
     res_dict["scan_id"] = job.scan_id
     res_dict["ai_threat_explanation"] = ai_explainer.explain_threat(res_dict)
@@ -261,7 +263,6 @@ async def scan_uploaded_file(file: UploadFile = File(...)) -> dict[str, Any]:
 
 @app.post("/api/scan/batch")
 async def scan_batch_files(files: list[UploadFile] = File(...)) -> list[dict[str, Any]]:
-    global ACTIVE_JOB_ID
     results: list[dict[str, Any]] = []
     batch_token = f"batch-{int(time.time())}"
     for f in files:
@@ -270,29 +271,32 @@ async def scan_batch_files(files: list[UploadFile] = File(...)) -> list[dict[str
         try:
             _validate_pdf_bytes(content)
             filename = Path(f.filename or "uploaded_document.pdf").name
-            job = store.create_job(raw_bytes=content, file_name=filename, batch_id=batch_token)
-            ACTIVE_JOB_ID = job.scan_id
-            store.set_status(job.scan_id, "SCANNING")
+            job = current_session().store.create_job(raw_bytes=content, file_name=filename, batch_id=batch_token)
+            current_session().active_job_id = job.scan_id
+            current_session().store.set_status(job.scan_id, "SCANNING")
             scan_res = await run_in_threadpool(scanner.scan_bytes, content, filename, True)
-            store.attach_scan_result(job.scan_id, scan_res)
+            current_session().store.attach_scan_result(job.scan_id, scan_res)
             res_dict = scan_res.to_dict()
             res_dict["scan_id"] = job.scan_id
             res_dict["ai_threat_explanation"] = ai_explainer.explain_threat(res_dict)
             results.append(res_dict)
         except Exception as exc:
             if job is not None:
-                store.set_status(job.scan_id, "FAILED", error=str(exc))
+                current_session().store.set_status(job.scan_id, "FAILED", error=str(exc))
             results.append({"file_name": f.filename, "error": str(exc), "status": "FAILED"})
     return results
 
 
-@app.post("/api/ai/chat")
-def ai_chat_about_scan(payload: dict[str, Any]) -> dict[str, Any]:
+@app.post("/api/ai/chat", response_model=None)
+def ai_chat_about_scan(payload: dict[str, Any]) -> dict[str, Any] | Response:
     scan_id = payload.get("scan_id")
     question = str(payload.get("question", "")).strip()
     if not question:
         raise HTTPException(status_code=400, detail="question_empty")
-    job = store.get_job(scan_id) if scan_id else _get_active_or_latest_job()
+    cloud_requested = payload.get("mode") == "cloud"
+    if cloud_requested and len(question) > 2000:
+        raise HTTPException(status_code=400, detail="question_too_long")
+    job = current_session().store.get_job(scan_id) if scan_id else _get_active_or_latest_job()
     if not job or not job.scan_result:
         raise HTTPException(status_code=404, detail="no_scan_data_for_ai_analysis")
     scan_dict = job.scan_result.to_dict()
@@ -301,12 +305,22 @@ def ai_chat_about_scan(payload: dict[str, Any]) -> dict[str, Any]:
     )
     answer = ai_explainer.answer_question(scan_dict, question, cdr_audit=cdr_dict)
     compact_ctx = ai_explainer.build_compact_llm_context(scan_dict, cdr_audit=cdr_dict)
+    if cloud_requested:
+        if payload.get("stream") is True:
+            stream = cloud_stream_response(question, compact_ctx, CLIENT_LLM_SYSTEM_PROMPT)
+            if stream is None:
+                raise HTTPException(status_code=503, detail="cloud_ai_unavailable")
+            return stream
+        answer = cloud_answer(question, compact_ctx, CLIENT_LLM_SYSTEM_PROMPT)
+        if answer is None:
+            raise HTTPException(status_code=503, detail="cloud_ai_unavailable")
     return {
         "scan_id": job.scan_id,
         "file_name": job.file_name,
         "question": question,
         "answer": answer,
-        "mode": "deterministic_fallback",
+        "mode": "cloud" if cloud_requested else "deterministic_fallback",
+        "model": CLOUD_MODEL if cloud_requested else None,
         "llm_compact_context": compact_ctx,
         "llm_system_prompt": CLIENT_LLM_SYSTEM_PROMPT,
         "preferred_webllm_model": DEFAULT_WEBLLM_MODEL,
@@ -340,7 +354,7 @@ async def ablate_graph_node(
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
-    store.record_audit(
+    current_session().store.record_audit(
         "XAI_ABLATION",
         {
             "scan_id": job.scan_id,
@@ -361,13 +375,12 @@ async def ablate_graph_node(
 async def disarm_pdf(
     file: UploadFile | None = File(default=None), include_preview_images: bool = True,
 ) -> dict[str, Any]:
-    global ACTIVE_JOB_ID
     if file is not None:
         content = await file.read()
         _validate_pdf_bytes(content)
         filename = Path(file.filename or "uploaded_document.pdf").name
-        job = store.create_job(raw_bytes=content, file_name=filename)
-        ACTIVE_JOB_ID = job.scan_id
+        job = current_session().store.create_job(raw_bytes=content, file_name=filename)
+        current_session().active_job_id = job.scan_id
     else:
         job = _get_active_or_latest_job()
 
@@ -376,7 +389,7 @@ async def disarm_pdf(
 
 @app.post("/api/disarm/{scan_id}")
 def disarm_specific_job(scan_id: str, include_preview_images: bool = True) -> dict[str, Any]:
-    job = store.get_job(scan_id)
+    job = current_session().store.get_job(scan_id)
     if not job:
         raise HTTPException(status_code=404, detail="scan_job_not_found")
     return _execute_disarm_for_job(job, include_preview_images)
@@ -389,15 +402,15 @@ def _execute_disarm_for_job(job: ScanJob, include_preview_images: bool = True) -
         pre_scan = job.scan_result.to_dict()
     else:
         scan_res = scanner.scan_bytes(raw_bytes, file_name=filename, explain=True)
-        store.attach_scan_result(job.scan_id, scan_res)
+        current_session().store.attach_scan_result(job.scan_id, scan_res)
         pre_scan = scan_res.to_dict()
 
-    store.set_status(job.scan_id, "DISARMING")
+    current_session().store.set_status(job.scan_id, "DISARMING")
     try:
         sanitized_bytes, audit = disarmer.sanitize_bytes(raw_bytes, file_name=filename)
         post_scan = scanner.scan_bytes(sanitized_bytes, file_name=f"sanitized_{filename}", explain=True)
     except Exception as exc:
-        store.set_status(job.scan_id, "FAILED", error=str(exc))
+        current_session().store.set_status(job.scan_id, "FAILED", error=str(exc))
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     pre_dossier = pre_scan.get("forensic_dossier", {}) or {}
     audit_dict = audit.to_dict()
@@ -422,7 +435,7 @@ def _execute_disarm_for_job(job: ScanJob, include_preview_images: bool = True) -
             "resources_preserved": audit.resources_preserved,
         },
     }
-    store.attach_sanitized(job.scan_id, sanitized_bytes, audit, audit_dict["post_scan_verification"])
+    current_session().store.attach_sanitized(job.scan_id, sanitized_bytes, audit, audit_dict["post_scan_verification"])
     audit_dict["ai_threat_explanation"] = ai_explainer.explain_threat(pre_scan, cdr_audit=audit_dict)
     if not include_preview_images:
         omit_preview_images(audit_dict)
@@ -440,7 +453,7 @@ def download_sanitized() -> Response:
 @app.get("/api/download/sanitized/{scan_id}")
 @app.get("/api/disarm/download/{scan_id}")
 def download_sanitized_by_id(scan_id: str) -> Response:
-    job = store.get_job(scan_id)
+    job = current_session().store.get_job(scan_id)
     if not job:
         raise HTTPException(status_code=404, detail="scan_job_not_found")
     if not job.sanitized_bytes:
@@ -454,7 +467,7 @@ def render_visual_diff(scan_id: str = "latest", page: int = Query(default=0)) ->
     if scan_id == "latest":
         job = _get_active_or_latest_job()
     else:
-        job = store.get_job(scan_id)
+        job = current_session().store.get_job(scan_id)
     if not job:
         raise HTTPException(status_code=404, detail="scan_job_not_found")
     orig_key = f"{job.sha256}:orig"
@@ -487,9 +500,13 @@ def _wrap_pdf_bytes_as_rfc822_eml(pdf_bytes: bytes, pdf_filename: str) -> bytes:
 
 def _process_and_store_eml(raw_eml_bytes: bytes, filename: str) -> dict[str, Any]:
     job_id = f"eml-{int(time.time())}-{hashlib.sha256(raw_eml_bytes).hexdigest()[:8]}"
+    gateway = MailGatewayFilter(
+        scanner_engine=scanner, disarmer=disarmer,
+        quarantine_dir=current_session().quarantine_dir, device=str(scanner.device),
+    )
     sanitized_eml_bytes, report = gateway.process_email_bytes(raw_eml_bytes)
-    EML_STORE[job_id] = (sanitized_eml_bytes, report)
-    store.record_audit(
+    current_session().eml_store[job_id] = (sanitized_eml_bytes, report)
+    current_session().store.record_audit(
         "EML_INSPECTION",
         {
             "job_id": job_id,
@@ -497,7 +514,7 @@ def _process_and_store_eml(raw_eml_bytes: bytes, filename: str) -> dict[str, Any
             "file_name": filename,
             "subject": report.subject,
             "sender": report.sender,
-            "verdict": "MALICIOUS" if report.malicious_attachments > 0 else "BENIGN",
+            "verdict": "UNAVAILABLE" if report.unavailable_attachments else "MALICIOUS" if report.malicious_attachments > 0 else "BENIGN",
             "attachments_count": report.total_attachments,
             "malicious_count": report.malicious_attachments,
             "latency_ms": report.processing_latency_ms,
@@ -507,8 +524,8 @@ def _process_and_store_eml(raw_eml_bytes: bytes, filename: str) -> dict[str, Any
     rep_dict = report.to_dict()
     rep_dict["eml_job_id"] = job_id
     rep_dict["filename"] = filename
-    rep_dict["has_sanitized_eml"] = True
-    rep_dict["action"] = "SANITIZED_ATTACHMENT" if report.malicious_attachments > 0 else "DELIVERED_CLEAN"
+    rep_dict["has_sanitized_eml"] = report.unavailable_attachments == 0
+    rep_dict["action"] = "HELD_FOR_REVIEW" if report.unavailable_attachments else "SANITIZED_ATTACHMENT" if report.malicious_attachments > 0 else "DELIVERED_CLEAN"
     return rep_dict
 
 
@@ -538,10 +555,12 @@ async def inspect_staged_job_as_eml(scan_id: str | None = None) -> dict[str, Any
 
 @app.get("/api/gateway/download/eml/{job_id}")
 def download_sanitized_eml(job_id: str) -> Response:
-    if job_id not in EML_STORE:
+    if job_id not in current_session().eml_store:
         raise HTTPException(status_code=404, detail="eml_job_not_found")
-    eml_bytes, rep = EML_STORE[job_id]
-    safe_name = f"sanitized_{rep.subject[:24].replace(' ', '_')}.eml"
+    eml_bytes, rep = current_session().eml_store[job_id]
+    if rep.unavailable_attachments:
+        raise HTTPException(status_code=409, detail="email_held_for_review")
+    safe_name = f"sanitized_{job_id}.eml"
     return Response(
         content=eml_bytes,
         media_type="message/rfc822",
@@ -553,9 +572,9 @@ def download_sanitized_eml(job_id: str) -> Response:
 def gateway_history() -> dict[str, Any]:
     records = [
         _gateway_record(report, job_id, report.subject, 0)
-        for job_id, (_, report) in EML_STORE.items()
+        for job_id, (_, report) in current_session().eml_store.items()
     ]
-    reports = [report for _, report in EML_STORE.values()]
+    reports = [report for _, report in current_session().eml_store.values()]
     intercepted = sum(report.malicious_attachments > 0 for report in reports)
     held = sum(report.action_taken == "HELD_FOR_REVIEW" for report in reports)
     return {
@@ -572,12 +591,12 @@ def gateway_history() -> dict[str, Any]:
 
 @app.get("/api/quarantine/list")
 def list_quarantine() -> list[dict[str, Any]]:
-    return store.list_quarantine()
+    return current_session().store.list_quarantine()
 
 
 @app.get("/api/quarantine/download/{stored_name}")
 def download_quarantined_file(stored_name: str) -> Response:
-    content = store.get_quarantine_bytes(stored_name)
+    content = current_session().store.get_quarantine_bytes(stored_name)
     if not content:
         raise HTTPException(status_code=404, detail="quarantine_item_not_found")
     return Response(
@@ -589,7 +608,7 @@ def download_quarantined_file(stored_name: str) -> Response:
 
 @app.get("/api/audit/logs")
 def get_siem_audit_logs() -> dict[str, Any]:
-    logs = store.get_audit_logs(limit=200)
+    logs = current_session().store.get_audit_logs(limit=200)
     threats = sum(1 for e in logs if e.get("details", {}).get("verdict") == "MALICIOUS" or e.get("event") == "QUARANTINE_ISOLATED")
     disarmed = sum(1 for e in logs if e.get("event") == "DISARM_COMPLETED")
     avg_lat = None
@@ -628,7 +647,7 @@ def export_forensic_report(scan_id: str | None = None) -> Response:
         "weights_loaded": scanner.weights_loaded,
         "scan_result": job.scan_result.to_dict(),
         "cdr_audit": cdr_export,
-        "recent_audit_events": store.get_audit_logs(limit=20),
+        "recent_audit_events": current_session().store.get_audit_logs(limit=20),
     }
     json_bytes = json.dumps(report_payload, indent=2, ensure_ascii=False).encode("utf-8")
     return Response(
