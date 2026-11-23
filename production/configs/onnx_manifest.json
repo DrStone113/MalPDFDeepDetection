@@ -10,7 +10,7 @@
     "tabular_in_features": 29,
     "node_in_dim": 23,
     "sha256": "3c5c4465473085567fff75065457d5e408ccf9a185ac7fb3f82d13912ada7c96",
-    "contract_sha256": "629b97ba7fd6b35067e9a490f504f7b112e428e4ed9137876bcf420c48a73de0",
+    "contract_sha256": "5dfe6895c2c9287c699bcc3adc24dfb002cd6beda91eafac917c4c57b50b2757",
     "size_bytes": 2157427,
     "parameter_count": 672885,
     "max_logit_abs_diff_vs_pytorch": 1.430511474609375e-06,

@@ -700,7 +700,7 @@ def _export_and_verify(models_dir: Path, configs_dir: Path) -> dict[str, object]
             "tabular_in_features": pt_bin.config.tab_dim,
             "node_in_dim": pt_bin.config.node_dim,
             "sha256": hashlib.sha256(bin_onnx_path.read_bytes()).hexdigest(),
-            "contract_sha256": hashlib.sha256(V3_CONTRACT_PATH.read_bytes()).hexdigest(),
+            "contract_sha256": hashlib.sha256(V3_CONTRACT_PATH.read_bytes().replace(b"\r\n", b"\n")).hexdigest(),
             "size_bytes": bin_onnx_path.stat().st_size,
             "parameter_count": bin_param_count,
             "max_logit_abs_diff_vs_pytorch": max_bin_diff,

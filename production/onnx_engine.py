@@ -136,7 +136,11 @@ class ONNXMalPDFScannerEngine:
             v3_path = REPO_ROOT / "configs" / v3_path.name
         contract_sha = binary_meta.get("contract_sha256")
         if self.is_v3 and use_manifest and contract_sha:
-            if hashlib.sha256(v3_path.read_bytes()).hexdigest() != contract_sha:
+            raw_contract = v3_path.read_bytes()
+            if (
+                hashlib.sha256(raw_contract).hexdigest() != contract_sha
+                and hashlib.sha256(raw_contract.replace(b"\r\n", b"\n")).hexdigest() != contract_sha
+            ):
                 raise ValueError("transgraph_v3_contract_sha256_mismatch")
         self.ingestion = InstantPDFIngestion(
             scaler_path=resolved_scaler,
