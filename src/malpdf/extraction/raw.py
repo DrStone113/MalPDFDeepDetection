@@ -92,4 +92,4 @@ def inspect_raw_layout(data, *, full_scan=False):
             "entropy_windows_complete": full_scan or len(data) <= WINDOW_BYTES * MAX_WINDOWS,
             "name_candidates_seen": names_seen, "escaped_name_candidates": escaped,
             "name_scan_complete": complete, "escaped_name_hints": name_hints,
-            "token_counts": scan_raw_pdf_tokens(data)}
+            "token_counts": scan_raw_pdf_tokens(data, include_acroform=True)}

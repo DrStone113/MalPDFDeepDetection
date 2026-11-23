@@ -14,6 +14,7 @@ import pikepdf
 import torch
 
 from malpdf.models.pdf_transgraph import PDFTransGraph
+from malpdf.cdr.engine import is_navigation_destination
 from malpdf.scanner.forensic import ForensicAttributionEngine
 from malpdf.scanner.ingestion import InstantPDFIngestion
 from malpdf.scanner.taxonomy import ThreatTaxonomyClassifier
@@ -366,9 +367,9 @@ class MalPDFScannerEngine:
                 "obj_ref": record.get("obj_ref_str"),
                 "invoker": record.get("invoker"),
                 "filter": record.get("filter"),
-                "size_bytes": record.get("size_bytes"),
+                **record.get("byte_measurements", {"size_bytes": None, "entropy": None}),
+                "action_role": record.get("action_role"),
                 "has_stream": record.get("has_stream"),
-                "entropy": record.get("entropy"),
                 "offset_hex": record.get("offset_hex"),
                 "hex_dump": record.get("hex_dump", []),
                 "content_preview": record.get("content_preview", ""),
@@ -487,11 +488,11 @@ class MalPDFScannerEngine:
                 "kind": k,
                 "invoker": r.get("invoker", "/Root"),
                 "filter": r.get("filter", "Dictionary"),
-                "size_bytes": round(float(r.get("size_bytes", 0.0)), 1),
+                **r.get("byte_measurements", {"size_bytes": None, "entropy": None}),
+                "action_role": r.get("action_role"),
                 "has_stream": bool(r.get("has_stream", False)),
                 "is_threat": bool(is_threat),
                 "is_threat_trigger": bool(is_threat),
-                "entropy": round(float(r.get("entropy", 0.0)), 4),
                 "offset_hex": r.get("offset_hex"),
                 "hex_dump": r.get("hex_dump", []),
                 "snippet": preview_text,
@@ -575,14 +576,12 @@ class MalPDFScannerEngine:
         want_embedded = excise_all or any("filespec" in t or "embedded" in t or "/EmbeddedFiles" in t for t in target_tokens)
         want_xfa = excise_all or any("xfa" in t or "/XFA" in t for t in target_tokens)
         want_annots = excise_all or any("annot" in t or "/Annot" in t for t in target_tokens)
-        if not (want_open or want_aa or want_names_js or want_embedded or want_xfa or want_annots):
-            want_open = want_aa = want_names_js = want_embedded = want_xfa = want_annots = True
         excised_keys: list[str] = []
         try:
             with pikepdf.open(io.BytesIO(data)) as pdf:
                 mutated = False
                 root = pdf.Root
-                if want_open and "/OpenAction" in root:
+                if want_open and "/OpenAction" in root and not is_navigation_destination(root["/OpenAction"]):
                     del root["/OpenAction"]
                     excised_keys.append("/Root/OpenAction")
                     mutated = True
@@ -614,7 +613,22 @@ class MalPDFScannerEngine:
                         for a_idx, annot in enumerate(p_obj["/Annots"]):
                             if isinstance(annot, pikepdf.Dictionary):
                                 for ak in ("/A", "/AA"):
-                                    if ak in annot:
+                                    if ak not in annot:
+                                        continue
+                                    if ak == "/A":
+                                        action = annot[ak]
+                                        if not isinstance(action, pikepdf.Dictionary) or not (
+                                            str(action.get("/S", "")) in ("/JavaScript", "/Launch", "/SubmitForm", "/ImportData", "/GoToE")
+                                            or "/JS" in action
+                                        ):
+                                            continue
+                                    if excise_all or any(
+                                        token in target_tokens for token in (
+                                            f"action:annot_{p_idx}_{a_idx}",
+                                            f"script:action:annot_{p_idx}_{a_idx}",
+                                            f"/Annot[{p_idx},{a_idx}]/A",
+                                        )
+                                    ):
                                         del annot[ak]
                                         excised_keys.append(f"/Page[{p_idx}]/Annots[{a_idx}]{ak}")
                                         mutated = True
@@ -676,7 +690,7 @@ class MalPDFScannerEngine:
 
         target_eid = str(target_rec.get("evidence_id", target_node_id))
         target_kind = str(target_rec.get("kind", "pdf_object"))
-        is_trigger_node = bool(target_rec.get("is_threat_trigger", False)) or target_kind in ("action", "script", "filespec")
+        is_trigger_node = bool(target_rec.get("is_threat_trigger"))
 
         extra_ids = [str(x).strip() for x in (exclude_node_ids or []) if str(x).strip()]
         for ex_id in extra_ids:
@@ -713,7 +727,10 @@ class MalPDFScannerEngine:
             else:
                 res_full = res_surgical
 
-            if res_surgical is not None and res_full is not None:
+            if (
+                res_surgical is not None and res_surgical.malware_probability is not None
+                and res_full is not None and res_full.malware_probability is not None
+            ):
                 after_surg_ids = {str(n.get("id")) for n in res_surgical.graph_nodes}
                 surg_excised_nodes = [nid for nid in before_eids if nid not in after_surg_ids]
                 surg_remaining_threats = [
@@ -736,14 +753,16 @@ class MalPDFScannerEngine:
                 chosen_excised_nodes = surg_excised_nodes if use_surgical else full_excised_nodes
                 chosen_remaining_threats = surg_remaining_threats if use_surgical else full_remaining_threats
 
-                prob_after = float(chosen_res.malware_probability or 0.0)
+                if chosen_res.malware_probability is None:
+                    raise RuntimeError("Ablation rescoring unavailable")
+                prob_after = float(chosen_res.malware_probability)
                 verdict_after = chosen_res.verdict
                 energy_after = chosen_res.ood_score
                 bounded_prob = min(max(prob_after, 1e-7), 1.0 - 1e-7)
                 logit_after = math.log(bounded_prob / (1.0 - bounded_prob))
                 prob_delta = round(prob_after - prob_before, 4)
                 latency_ms = round((time.perf_counter() - start_time) * 1000.0, 2)
-                actual_excised_nodes = max(1, len(chosen_excised_nodes))
+                actual_excised_nodes = len(chosen_excised_nodes)
 
                 surg_prob = float(res_surgical.malware_probability or 0.0)
                 full_prob = float(res_full.malware_probability or 0.0)
@@ -751,7 +770,7 @@ class MalPDFScannerEngine:
                 return {
                     "file_name": file_name,
                     "target_node_id": target_eid,
-                    "obj_ref": target_rec.get("obj_ref_str", "obj_1 0 R"),
+                    "obj_ref": target_rec.get("obj_ref_str"),
                     "kind": target_kind,
                     "invoker": target_rec.get("invoker", "/Root"),
                     "is_threat_trigger": is_trigger_node,
@@ -760,7 +779,9 @@ class MalPDFScannerEngine:
                     "excised_keys": chosen_keys,
                     "excised_node_ids": chosen_excised_nodes,
                     "remaining_threat_node_ids": chosen_remaining_threats,
-                    "masked_node_count": actual_excised_nodes,
+                    "excised_node_count": actual_excised_nodes,
+                    "masked_node_count": 0,
+                    "masked_node_ids": [],
                     "prob_before": round(prob_before, 4),
                     "prob_after": round(prob_after, 4),
                     "prob_delta": prob_delta,
@@ -833,22 +854,23 @@ class MalPDFScannerEngine:
         ]
         remaining_threats = [
             str(r.get("evidence_id"))
-            for i, r in enumerate(raw_recs)
-            if i not in masked_indices
-            and (r.get("is_threat_trigger") or r.get("kind") in ("action", "script", "filespec"))
+            for r in raw_recs
+            if r.get("is_threat_trigger")
         ]
         return {
             "file_name": file_name,
             "target_node_id": target_eid,
-            "obj_ref": target_rec.get("obj_ref_str", "obj_1 0 R"),
+            "obj_ref": target_rec.get("obj_ref_str"),
             "kind": target_kind,
             "invoker": target_rec.get("invoker", "/Root"),
             "is_threat_trigger": is_trigger_node,
             "ablation_method": "graph_tensor_counterfactual_mask",
             "ablate_mode": ablate_mode,
             "excised_keys": [],
-            "excised_node_ids": masked_eids,
+            "excised_node_ids": [],
+            "masked_node_ids": masked_eids,
             "remaining_threat_node_ids": remaining_threats,
+            "excised_node_count": 0,
             "masked_node_count": len(masked_indices),
             "prob_before": round(prob_before, 4),
             "prob_after": round(prob_after, 4),
@@ -864,7 +886,7 @@ class MalPDFScannerEngine:
             "surgical_prob_delta": prob_delta,
             "surgical_verdict_after": verdict_after,
             "surgical_excised_keys": [],
-            "surgical_excised_node_ids": masked_eids,
+            "surgical_excised_node_ids": [],
             "surgical_remaining_threat_node_ids": remaining_threats,
             "latency_ms": latency_ms,
         }

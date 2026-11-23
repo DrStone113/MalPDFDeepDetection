@@ -1,2 +1,0 @@
-model,partition,f1_malicious,mcc,ece,brier_score,status,reason
-N/A,N/A,N/A,N/A,N/A,N/A,not_evaluated,Static cache preparation; no model or calibration evaluation

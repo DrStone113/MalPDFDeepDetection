@@ -69,6 +69,15 @@ def make_job(commit, manifest, metadata, kind):
 
 
 def cohort_contract(kind='pdf-static'):
+    if kind in jobs.BENIGN_OOD_KINDS:
+        from lab_runner import publisher_module
+        return publisher_module(kind).contract()
+    if kind == jobs.POOLED_TLSH_KIND:
+        from malpdf.extraction.pooled_fingerprint_job import contract as pooled_contract
+        return pooled_contract()
+    if kind == jobs.HOLDOUT_TLSH_KIND:
+        from malpdf.extraction.holdout_fingerprint_job import contract as holdout_contract
+        return holdout_contract()
     if kind == 'pdf-diagnostic-replay':
         from malpdf.extraction.diagnostic_replay import cohort_contract as replay_contract
         return replay_contract(ctl.REPO)

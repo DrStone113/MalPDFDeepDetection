@@ -61,38 +61,13 @@ wandb/
 *.rar
 *.part
 
-# Generated reports and notebook state
-reports/figures/**
-reports/tables/**
-!reports/figures/.gitkeep
-!reports/tables/.gitkeep
-!reports/figures/protocol_p_vs_g/
-!reports/figures/protocol_p_vs_g/**
-!reports/figures/multiseed/
-!reports/figures/multiseed/**
-!reports/figures/explainability/
-!reports/figures/explainability/**
-!reports/figures/deep_learning/
-!reports/figures/deep_learning/**
-!reports/figures/selective_ensemble/
-!reports/figures/selective_ensemble/**
-!reports/tables/protocol_p_vs_g/
-!reports/tables/protocol_p_vs_g/**
-!reports/tables/metric_semantics/
-!reports/tables/metric_semantics/**
-!reports/tables/cic_audit/
-!reports/tables/cic_audit/**
-!reports/tables/rit_cic_alignment/
-!reports/tables/rit_cic_alignment/**
-!reports/tables/cic_source_fidelity/
-!reports/tables/cic_source_fidelity/**
-!reports/tables/rit_cic_alignment_v2/
-!reports/tables/rit_cic_alignment_v2/**
-!reports/tables/static_extractor/
-!reports/tables/static_extractor/**
-reports/*.md
-reports/*.json
-!reports/research_log.md
+# Documentation, technical guides, plans, and generated reports (kept local only)
+/AGENTS.md
+/INSTALL.md
+/docs/
+/plans/
+/reports/
+/scripts/codex_workspace.ps1
 .ipynb_checkpoints/
 # Per-run generated notebooks stay local; reusable templates remain versioned.
 notebooks/generated/

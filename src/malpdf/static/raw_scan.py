@@ -8,6 +8,14 @@ not parser-confirmed semantics: a literal inside a PDF string still counts.
 from __future__ import annotations
 
 from collections.abc import Mapping
+import re
+
+
+_ACROFORM_NAME = re.compile(rb"/AcroForm(?=$|[\x00\x09\x0a\x0c\x0d\x20()<>\[\]{}/%])")
+
+
+def count_acroform_names(data: bytes) -> int:
+    return sum(1 for _ in _ACROFORM_NAME.finditer(data))
 
 
 RAW_DIRECT_TOKENS: Mapping[str, bytes] = {
@@ -25,7 +33,7 @@ RAW_DIRECT_TOKENS: Mapping[str, bytes] = {
 }
 
 
-def scan_raw_pdf_tokens(data: bytes) -> dict[str, int]:
+def scan_raw_pdf_tokens(data: bytes, *, include_acroform: bool = False) -> dict[str, int]:
     """Return deterministic raw counts with PDFMalExtract's overlap rules."""
     endobj = data.count(b"endobj")
     endstream = data.count(b"endstream")
@@ -40,4 +48,6 @@ def scan_raw_pdf_tokens(data: bytes) -> dict[str, int]:
         "page_command": data.count(b"/Page") - data.count(b"/Pages"),
     }
     counts.update({feature: data.count(token) for feature, token in RAW_DIRECT_TOKENS.items()})
+    if include_acroform:
+        counts['AcroForm'] = count_acroform_names(data)
     return counts

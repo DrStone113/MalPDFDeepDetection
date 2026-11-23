@@ -201,6 +201,20 @@ def pdf_prepare(job, directory):
             raise ValueError('worker_failed')
 
 
+def publisher_module(kind):
+    if kind == jobs.BENIGN_V32_COHORT_KIND:
+        from malpdf.extraction import benign_v32_cohort_job
+        return benign_v32_cohort_job
+    if kind == jobs.BENIGN_OOD_DIVERSE_KIND:
+        from malpdf.extraction import benign_ood_diverse_job
+        return benign_ood_diverse_job
+    if kind == jobs.BENIGN_OOD_EXPANDED_KIND:
+        from malpdf.extraction import benign_ood_expanded_job
+        return benign_ood_expanded_job
+    from malpdf.extraction import benign_ood_job
+    return benign_ood_job
+
+
 def pdf_metadata(job):
     source = source_imports(job)
     cfg = jobs.config()
@@ -213,6 +227,8 @@ def pdf_metadata(job):
         raise ValueError('dependency_mismatch') from None
     import yaml
     data_root = Path(cfg['data_root'])
+    if job['kind'] in jobs.BENIGN_OOD_KINDS:
+        return source, data_root, publisher_module(job['kind']).load_rows(data_root)
     if job['kind'] == 'pdf-diagnostic-replay':
         from malpdf.extraction.diagnostic_replay import load_replay
         rows = load_replay(source, jobs.JOBS)[1]
@@ -252,11 +268,11 @@ def pdf_metadata(job):
     return source, data_root, rows
 
 
-def worker_limits(*, prepare=False, wall_seconds=1800):
+def worker_limits(*, prepare=False, wall_seconds=1800, fsize_bytes=8 * 1024**2):
     import resource
     resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
     for name, amount in ((resource.RLIMIT_CPU, 120 if prepare else min(1700, wall_seconds - 10)), (resource.RLIMIT_AS, 2 * 1024**3),
-                         (resource.RLIMIT_FSIZE, 32 * 1024**2 if prepare else 8 * 1024**2), (resource.RLIMIT_NOFILE, 64), (resource.RLIMIT_NPROC, 2048)):
+                         (resource.RLIMIT_FSIZE, 32 * 1024**2 if prepare else fsize_bytes), (resource.RLIMIT_NOFILE, 64), (resource.RLIMIT_NPROC, 2048)):
         resource.setrlimit(name, (amount, amount))
 
 
@@ -313,6 +329,31 @@ def reusable_pdf_bundle(bundle, expected_sha256):
         return False
 
 
+def pdf_inspection_limits(job):
+    from malpdf.static.code_inspector import CodeInspectionLimits
+
+    limits = job['limits']
+    wall = min(60, int(limits.get('file_wall_seconds', 60)))
+    cpu = min(wall, int(limits.get('file_cpu_seconds', 45)))
+    if job['kind'] in jobs.BENIGN_OOD_KINDS:
+        return CodeInspectionLimits(wall_seconds=wall, cpu_seconds=cpu, max_file_bytes=limits['file_max_bytes'])
+    return CodeInspectionLimits(wall_seconds=wall, cpu_seconds=cpu)
+
+
+def publisher_bundle_budget(bundle, payload, expected_sha256, limit):
+    if len(payload) <= limit or bundle.get('sample_sha256') != expected_sha256:
+        return bundle, payload
+    worker = bundle['coverage_report']['worker']
+    if worker.get('worker_cleanup_complete') is not True:
+        return bundle, payload
+    from malpdf.extraction.normalize import normalize_profile
+
+    bounded = normalize_profile({**worker, 'status': 'resource_limit_or_signal', 'errors': ['bundle_size_limit']},
+                                expected_sha256, bundle['extraction_profile'],
+                                provenance={'input_identity': 'verified_original', 'full_evidence_bytes': len(payload)})
+    return bounded, jobs.encoded(bounded)
+
+
 def pdf_worker(job_id, *, prepare=False, shard=0, count=1):
     if sys.platform != 'linux':
         raise ValueError('runtime_unavailable')
@@ -337,6 +378,67 @@ def pdf_worker(job_id, *, prepare=False, shard=0, count=1):
         raise
 
 
+def fingerprint_module(kind):
+    if kind == jobs.POOLED_TLSH_KIND:
+        from malpdf.extraction import pooled_fingerprint_job
+        return pooled_fingerprint_job
+    from malpdf.extraction import holdout_fingerprint_job
+    return holdout_fingerprint_job
+
+
+def holdout_fingerprint_worker(job, directory, *, prepare=False):
+    source_imports(job)
+    fingerprint = fingerprint_module(job['kind'])
+
+    inputs = fingerprint.load_inputs(Path(jobs.config()['data_root']))
+    if prepare:
+        return
+
+    started = time.monotonic()
+    def progress(completed):
+        temporary = jobs.trusted_path(directory / 'fingerprint_progress.json.tmp')
+        temporary.write_text(json.dumps(completed), encoding='ascii')
+        os.replace(temporary, directory / 'fingerprint_progress.json')
+
+    output = jobs.trusted_path(directory / 'holdout_fingerprints.json')
+    if output.exists():
+        report = parse_json(side.bounded_read(output, job['limits']['output_bytes']))
+    else:
+        progress(0)
+        report = fingerprint.fingerprint_plan(inputs, timeout=job['limits']['file_wall_seconds'], progress=progress)
+        import resource
+        counts = report['fingerprint_status_counts']
+        measured = counts.get('measured', 0)
+        missing = counts.get('tlsh_unavailable', 0)
+        unavailable = counts.get('input_unavailable', 0)
+        mismatches = counts.get('sha256_mismatch', 0) + counts.get('publisher_sha1_mismatch', 0)
+        report['runner_summary'] = {
+            'planned': job['limits']['samples'], 'completed': sum(counts.values()),
+            'observed': measured, 'partial': missing, 'failed': unavailable + mismatches,
+            'primary_available': measured + missing, 'timeout': 0,
+            'elapsed_ms': int((time.monotonic() - started) * 1000),
+            'peak_rss_bytes': int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) * 1024,
+            'status_counts': {name: amount for name, amount in (
+                ('observed', measured), ('partial', missing), ('not_run', unavailable),
+                ('decode_error', mismatches)) if amount},
+        }
+        payload = jobs.encoded(report) + b'\n'
+        if len(payload) > job['limits']['output_bytes']:
+            raise ValueError('report_invalid')
+        with tempfile.NamedTemporaryFile(dir=directory, prefix='.holdout-', delete=False) as stream:
+            temporary_path = Path(stream.name)
+            stream.write(payload)
+        os.replace(temporary_path, output)
+
+    summary = report['runner_summary']
+    if (report.get('inputs') != fingerprint.contract() or report.get('new_malware_labels') != 0
+            or {row['sha256'] for row in report['fingerprints']} != {row['sha256'] for row in inputs[1]}
+            or not jobs.summary_valid(summary) or summary['completed'] != job['limits']['samples']):
+        raise ValueError('report_invalid')
+    progress(summary['completed'])
+    jobs.immutable(directory / 'pdf_summary.0.json', {**summary, 'shard': 0, 'shards': 1})
+
+
 def _pdf_worker(job_id, *, prepare=False, shard=0, count=1):
     if sys.platform != 'linux':
         raise ValueError('runtime_unavailable')
@@ -348,7 +450,14 @@ def _pdf_worker(job_id, *, prepare=False, shard=0, count=1):
         claim = parse_json(side.bounded_read(jobs.job_directory(job_id) / 'claim.json', 4096))
         if claim.get('job_id') != job_id or claim.get('hypervisor_controls_attested') is not True or claim.get('parent_pid') != os.getppid():
             raise ValueError('approval_required')
-    worker_limits(prepare=prepare, wall_seconds=job['limits']['wall_seconds'])
+        if job['kind'] in jobs.FINGERPRINT_KINDS | jobs.BENIGN_OOD_KINDS and (
+                claim.get('start_ticks') is None or jobs.process_identity(os.getppid()) != claim['start_ticks']):
+            raise ValueError('approval_required')
+    worker_limits(prepare=prepare, wall_seconds=job['limits']['wall_seconds'], fsize_bytes=jobs.pdf_worker_fsize_limit(job['kind']))
+    if job['kind'] in jobs.FINGERPRINT_KINDS:
+        if (shard, count) != (0, 1):
+            raise ValueError('job_mismatch')
+        return holdout_fingerprint_worker(job, jobs.job_directory(job_id), prepare=prepare)
     source, data_root, rows = pdf_metadata(job)
     directory = jobs.job_directory(job_id)
     if job['kind'] == 'pdf-static-bulk':
@@ -411,11 +520,9 @@ def _pdf_worker(job_id, *, prepare=False, shard=0, count=1):
     from malpdf.extraction.orchestrator import extract_pdf
     from malpdf.extraction.arlington_model import load_model
     from malpdf.extraction.jobs import require_extraction_lab
-    from malpdf.static.code_inspector import CodeInspectionLimits, _worker_count
+    from malpdf.static.code_inspector import _worker_count
     require_extraction_lab(True, repository_root=data_root)
-    file_wall = min(60, int(job['limits'].get('file_wall_seconds', 60)))
-    file_cpu = min(file_wall, int(job['limits'].get('file_cpu_seconds', 45)))
-    limits = CodeInspectionLimits(wall_seconds=file_wall, cpu_seconds=file_cpu)
+    limits = pdf_inspection_limits(job)
     _worker_count(1, limits)
     if parse_json(side.bounded_read(data_root / 'configs/arlington.lock.json', 2 * 1024**2)) != parse_json(side.bounded_read(source / 'configs/arlington.lock.json', 2 * 1024**2)):
         raise ValueError('manifest_unavailable')
@@ -433,15 +540,28 @@ def _pdf_worker(job_id, *, prepare=False, shard=0, count=1):
     outputs.mkdir(mode=0o700, exist_ok=True)
     total = 0
     os.environ['MALPDF_LAB_ISOLATED'] = '1'
+    cohort_args = {}
+    boundary = 'data/raw/cve_t4pdf' if job['kind'] == 'pdf-static-cve' else 'data/raw/cic_pdf'
+    publisher = None
+    if job['kind'] in jobs.BENIGN_OOD_KINDS:
+        publisher = publisher_module(job['kind'])
+        boundary = publisher.RAW_ROOT
+        cohort_args = {'include_byte_images': False, 'coalesce_checkpoints': True}
+    bundle_limit = jobs.pdf_bundle_limit(job['kind'])
     for index, row in rows:
         if time.monotonic() - started > job['limits']['wall_seconds'] - 25:
             jobs.write_pdf_halt(job, directory, shard=shard, index=index, reason='wall_limit')
             break
         target = outputs / f'{index:04d}.json'
         target_tmp = outputs / f'{index:04d}.json.tmp'
+        if publisher is not None:
+            measurement = directory / f'benign_tls.{index}.json'
+            if not measurement.is_file():
+                require_extraction_lab(True, repository_root=data_root)
+                jobs.immutable(measurement, publisher.fingerprint(data_root, row))
         if target.is_file():
             try:
-                existing = parse_json(side.bounded_read(target, 8 * 1024**2 + 1024))
+                existing = parse_json(side.bounded_read(target, bundle_limit + 1024))
                 if reusable_pdf_bundle(existing, row['pdf_sha256']):
                     summary['completed'] += 1
                     summary['bounded_complete'] += (existing['status'] == 'bounded_complete')
@@ -462,12 +582,11 @@ def _pdf_worker(job_id, *, prepare=False, shard=0, count=1):
             except OSError:
                 pass
         require_extraction_lab(True, repository_root=data_root)
-        boundary = 'data/raw/cve_t4pdf' if job['kind'] == 'pdf-static-cve' else 'data/raw/cic_pdf'
         deadline = started + job['limits']['wall_seconds'] - 25
         _wait_for_memory_headroom(deadline)
         bundle = extract_pdf(data_root / row['pdf_relative_path'], boundary=data_root / boundary,
             expected_sha256=row['pdf_sha256'], limits=limits, arlington_catalog=catalog,
-            run_id=job['job_id'], entry_point='lab_runner.pdf_static_worker')
+            run_id=job['job_id'], entry_point='lab_runner.pdf_static_worker', **cohort_args)
         for delay in (1.0, 2.0, 4.0):
             if not _is_prespawn_admission_failure(bundle) or time.monotonic() + delay >= deadline:
                 break
@@ -475,9 +594,11 @@ def _pdf_worker(job_id, *, prepare=False, shard=0, count=1):
             _wait_for_memory_headroom(deadline)
             bundle = extract_pdf(data_root / row['pdf_relative_path'], boundary=data_root / boundary,
                 expected_sha256=row['pdf_sha256'], limits=limits, arlington_catalog=catalog,
-                run_id=job['job_id'], entry_point='lab_runner.pdf_static_worker')
+                run_id=job['job_id'], entry_point='lab_runner.pdf_static_worker', **cohort_args)
         payload = jobs.encoded(bundle)
-        if len(payload) > 8 * 1024**2:
+        if publisher is not None:
+            bundle, payload = publisher_bundle_budget(bundle, payload, row['pdf_sha256'], bundle_limit)
+        if len(payload) > bundle_limit:
             jobs.write_pdf_halt(job, directory, shard=shard, index=index, reason='bundle_size_limit')
             break
         if total + len(payload) > job['limits']['output_bytes']:
@@ -690,10 +811,10 @@ def replay_report(job_id):
     return finalize_report(job, jobs.job_directory(job_id), lock, jobs)
 
 
-def bundle_view(directory, index):
+def bundle_view(directory, index, limit=8 * 1024**2 + 1024):
     path = directory / 'private_bundles' / f'{index:04d}.json'
     try:
-        value = parse_json(side.bounded_read(path, 8 * 1024**2 + 1024))
+        value = parse_json(side.bounded_read(path, limit))
     except OSError:
         return None
     if not isinstance(value, dict) or not isinstance(value.get('status'), str) or value['status'] not in jobs.PDF_STATUSES:
@@ -717,8 +838,10 @@ def compare(left_id, right_id):
         raise ValueError('job_mismatch')
     identical = status_mismatch = feature_mismatch = missing = 0
     first_mismatch = None
+    left_limit = jobs.pdf_bundle_limit(left_job['kind']) + 1024
+    right_limit = jobs.pdf_bundle_limit(right_job['kind']) + 1024
     for index in range(samples):
-        one, two = bundle_view(left, index), bundle_view(right, index)
+        one, two = bundle_view(left, index, left_limit), bundle_view(right, index, right_limit)
         if one is not None and two is not None and one == two:
             identical += 1
             continue
@@ -789,6 +912,12 @@ def console_run():
         print(json.dumps(cohort_contract(source), sort_keys=True))
     if job['kind'] == 'pdf-static-bulk':
         print(json.dumps(bulk_contract(), sort_keys=True))
+    if job['kind'] in jobs.BENIGN_OOD_KINDS:
+        source_imports(job)
+        print(json.dumps(publisher_module(job['kind']).contract(), sort_keys=True))
+    if job['kind'] in jobs.FINGERPRINT_KINDS:
+        source_imports(job)
+        print(json.dumps(fingerprint_module(job['kind']).contract(), sort_keys=True))
     print(json.dumps({'limits': job['limits'], 'lab_output_directory': str(jobs.job_directory(job['job_id']))}, sort_keys=True))
     print('Xac nhan snapshot/recovery, tat clipboard/drag-drop/shared folders, khong credentials; NIC da ngat.')
     print('PDF/blob/ket qua chi luu tai LAB. Khong tu ket noi lai Windows.')

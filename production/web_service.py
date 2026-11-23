@@ -423,7 +423,11 @@ async def ablate_graph_node(
             "prob_after": res["prob_after"],
             "prob_delta": res["prob_delta"],
             "latency_ms": res["latency_ms"],
-            "action": f"Gỡ thử {res['target_node_id']} ({res['prob_delta'] * 100:+.1f}%)",
+            "ablation_method": res["ablation_method"],
+            "action": (
+                f"{'Gỡ khóa trên bản sao' if res['ablation_method'] == 'pikepdf_binary_excision' else 'Che đặc trưng'} "
+                f"{res['target_node_id']} ({res['prob_delta'] * 100:+.2f} điểm %)"
+            ),
         },
     )
     return res
@@ -475,12 +479,12 @@ def _execute_disarm_for_job(job: ScanJob, include_preview_images: bool = True) -
     audit_dict["post_scan_verification"] = {
         "verdict_before": pre_scan.get("verdict", "UNKNOWN"),
         "verdict_after": post_scan.verdict,
-        "prob_before": pre_scan.get("malware_probability", 0.0),
+        "prob_before": pre_scan.get("malware_probability"),
         "prob_after": post_scan.malware_probability,
         "scripts_before": len(pre_dossier.get("threat_scripts", [])),
         "scripts_after": len(post_scan.forensic_dossier.get("threat_scripts", [])),
-        "triggers_before": len(pre_dossier.get("trigger_objects", [])),
-        "triggers_after": len(post_scan.forensic_dossier.get("trigger_objects", [])),
+        "triggers_before": sum(bool(item.get("is_threat_trigger")) for item in pre_dossier.get("trigger_objects", [])),
+        "triggers_after": sum(bool(item.get("is_threat_trigger")) for item in post_scan.forensic_dossier.get("trigger_objects", [])),
         "ood_before": pre_scan.get("ood_score", 0.0),
         "ood_after": post_scan.ood_score,
         "rescan_latency_ms": post_scan.latency_ms,

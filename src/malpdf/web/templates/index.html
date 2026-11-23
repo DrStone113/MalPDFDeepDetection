@@ -660,16 +660,9 @@
                 </div>
                 <div id="scan-step-2" class="flex items-center gap-1.5 text-outline transition-colors">
                   <span class="material-symbols-outlined text-[15px]">radio_button_unchecked</span>
-                  <span class="truncate">2. Đọc cấu trúc &amp; mã ẩn</span>
+                  <span class="truncate">2. Chờ máy chủ trả kết quả</span>
                 </div>
-                <div id="scan-step-3" class="flex items-center gap-1.5 text-outline transition-colors">
-                  <span class="material-symbols-outlined text-[15px]">radio_button_unchecked</span>
-                  <span class="truncate">3. Phân tích mô hình AI</span>
-                </div>
-                <div id="scan-step-4" class="flex items-center gap-1.5 text-outline transition-colors">
-                  <span class="material-symbols-outlined text-[15px]">radio_button_unchecked</span>
-                  <span class="truncate">4. Hoàn tất báo cáo an toàn</span>
-                </div>
+
               </div>
             </div>
           </div>
@@ -727,23 +720,23 @@
         <div class="glass-card rounded-xl overflow-hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-200 reveal-stagger-2">
           <div class="p-4 sm:p-5 flex flex-col justify-between">
             <div class="flex items-center justify-between gap-2">
-              <span class="text-xs font-semibold text-outline">Kết luận kiểm tra</span>
+              <span class="text-xs font-semibold text-outline">Kết quả mô hình</span>
               <span id="badge-verdict-tag" class="px-2 py-0.5 rounded-md text-[10px] font-bold"></span>
             </div>
             <div class="my-2">
               <span id="card-verdict" class="text-2xl font-bold tracking-tight text-on-surface">--</span>
             </div>
             <div class="flex items-center justify-between text-xs text-on-surface-variant">
-              <span>Độ chắc chắn:</span>
+              <span>Độ tách biệt của điểm</span>
               <span id="card-confidence" class="font-bold text-on-surface">--</span>
             </div>
           </div>
 
           <div class="p-4 sm:p-5 flex flex-col justify-between">
-            <span class="text-xs font-semibold text-outline">Mức độ rủi ro</span>
+            <span class="text-xs font-semibold text-outline">Điểm mô hình</span>
             <div class="my-2 flex items-baseline gap-2">
               <span id="card-prob" class="text-3xl font-extrabold font-mono num">--%</span>
-              <span class="text-xs text-on-surface-variant">khả năng độc hại</span>
+              <span class="text-xs text-on-surface-variant">ngưỡng cảnh báo 50%</span>
             </div>
             <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
               <div id="bar-prob" class="h-2 rounded-full shimmer-bar transition-all duration-700" style="width: 0%;"></div>
@@ -752,7 +745,7 @@
 
           <div class="p-4 sm:p-5 flex flex-col justify-between">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-semibold text-outline">Cấu trúc tài liệu</span>
+              <span class="text-xs font-semibold text-outline">Tín hiệu lưỡng lự</span>
               <span class="w-2 h-2 rounded-full bg-slate-400"></span>
             </div>
             <div class="my-2 flex items-baseline gap-2">
@@ -768,7 +761,7 @@
             <span class="text-xs font-semibold text-outline">Thông tin tệp &amp; Tốc độ</span>
             <div class="my-2 flex items-baseline gap-2">
               <span id="card-latency" class="text-2xl font-bold text-primary-container font-mono num">-- ms</span>
-              <span class="text-xs text-on-surface-variant">thời gian quét</span>
+              <span class="text-xs text-on-surface-variant">xử lý trên máy chủ</span>
             </div>
             <div class="flex items-center justify-between text-xs text-on-surface-variant num">
               <span id="card-size">-- KB</span>
@@ -781,8 +774,8 @@
         <div id="ood-alert-banner" class="hidden glass-card rounded-xl p-4 border-l-4 border-accent-warning bg-amber-50/70 text-on-surface flex items-center gap-3">
           <span class="material-symbols-outlined text-[24px] text-accent-warning shrink-0">warning</span>
           <div>
-            <p class="font-bold text-sm text-amber-900">Lưu ý: Tệp này có cấu trúc khá lạ so với tài liệu PDF thông thường</p>
-            <p id="ood-banner-text" class="text-xs text-on-surface-variant">Để đảm bảo an toàn, bạn nên bấm "Làm sạch tệp ngay" trước khi mở đọc.</p>
+            <p class="font-bold text-sm text-amber-900">Điểm mô hình ở vùng lưỡng lự</p>
+            <p id="ood-banner-text" class="text-xs text-on-surface-variant">Chỉ báo này được tính từ đầu ra mô hình.</p>
           </div>
         </div>
 
@@ -797,7 +790,7 @@
               <div class="flex flex-wrap items-center justify-between gap-3">
                 <div class="flex items-center gap-3 min-w-0">
                   <div id="tax-score-ring" class="w-14 h-14 rounded-lg flex flex-col items-center justify-center font-extrabold text-xs shrink-0 border border-error/40 bg-error/10 text-error">
-                    <span id="tax-detected-ratio" class="text-sm font-mono num leading-none">0/8</span>
+                    <span id="tax-detected-ratio" class="text-sm font-mono num leading-none">--</span>
                     <span class="text-[9px] font-semibold opacity-80 mt-0.5">NHÃN AI</span>
                   </div>
                   <div class="min-w-0">
@@ -1031,7 +1024,7 @@
                       <span>Lời khuyên an toàn</span>
                     </div>
                     <p id="ai-remediation-text" class="text-[11px] text-on-surface-variant leading-relaxed">
-                      Nếu tệp có cảnh báo nguy hiểm, hãy bấm nút "Làm sạch tệp ngay" để tải bản an toàn.
+                      Nếu tệp có cảnh báo nguy hiểm, hãy bấm nút "Làm sạch tệp ngay" để tạo bản đã xử lý.
                     </p>
                   </div>
                 </div>
@@ -1171,7 +1164,7 @@
                 <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>Khung gốc PDF (/Catalog)
               </span>
               <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-50 text-red-800 border border-red-200 font-semibold whitespace-nowrap shrink-0">
-                <span class="w-2.5 h-2.5 rounded-full bg-red-600"></span>Lệnh tự chạy &amp; Mã độc JS
+                <span class="w-2.5 h-2.5 rounded-full bg-red-600"></span>Đối tượng hoạt động &amp; JavaScript
               </span>
               <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold whitespace-nowrap shrink-0">
                 <span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>Danh sách trang &amp; Trang văn bản
@@ -1348,7 +1341,7 @@
                 <span class="font-semibold text-on-surface font-mono num" id="hud-node-entropy">-</span>
               </div>
               <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200/80 flex flex-col">
-                <span class="text-[11px] text-outline">Trọng số AI chú ý</span>
+                <span class="text-[11px] text-outline">Ảnh hưởng lên điểm (XAI)</span>
                 <span class="font-semibold text-on-surface font-mono num" id="hud-node-saliency">-</span>
               </div>
             </div>
@@ -1368,7 +1361,7 @@
               <div class="flex items-center justify-between gap-2">
                 <div class="flex items-center gap-1.5">
                   <span class="material-symbols-outlined text-primary-container text-[18px]">tune</span>
-                  <span class="text-xs font-bold text-on-surface">Kiểm tra giả định: Gỡ thử thành phần này</span>
+                  <span class="text-xs font-bold text-on-surface">Kiểm tra giả định</span>
                 </div>
                 <button id="btn-reset-ablation" onclick="resetGraphAblationState()" class="hidden px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-100 hover:bg-slate-200 text-on-surface transition flex items-center gap-1 active:scale-95">
                   <span class="material-symbols-outlined text-[13px]">restart_alt</span>
@@ -1377,17 +1370,17 @@
               </div>
 
               <p class="text-xs text-on-surface-variant leading-relaxed">
-                Phẫu thuật cắt đúng khóa PDF của thành phần đang chọn ra khỏi tệp nhị phân gốc và chấm điểm AI lại ngay lập tức.
+                Chấm điểm lại sau khi gỡ khóa trên bản sao hoặc che đặc trưng trong mô hình.
               </p>
 
               <button id="btn-ablate-node" onclick="executeNodeAblation('surgical')" class="w-full py-2.5 px-4 rounded-lg text-xs font-bold bg-primary-container text-white hover:bg-primary shadow-sm transition flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
                 <span class="material-symbols-outlined text-[16px]" id="ablate-icon">content_cut</span>
-                <span id="ablate-text">Thử gỡ bỏ thành phần đang chọn</span>
+                <span id="ablate-text">Chạy phép thử</span>
               </button>
 
               <div id="ablation-result-box" class="hidden p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-2.5 text-xs">
                 <div class="flex items-center justify-between gap-2">
-                  <span class="font-bold text-on-surface">Kết quả sau khi phẫu thuật gỡ thử:</span>
+                  <span class="font-bold text-on-surface">Điểm sau phép thử</span>
                   <span id="ablation-res-verdict" class="px-2 py-0.5 rounded-md text-[10px] font-bold"></span>
                 </div>
                 <div class="p-2 rounded-md bg-white border border-slate-200 text-[11px] text-on-surface-variant flex items-start gap-1.5">
@@ -1395,15 +1388,15 @@
                   <span id="ablation-excised-keys" class="font-medium leading-snug">Đã cắt khóa: --</span>
                 </div>
                 <div class="flex justify-between items-center text-on-surface-variant">
-                  <span>Mức rủi ro ban đầu:</span>
+                  <span>Điểm ban đầu</span>
                   <span id="ablation-prob-before" class="font-bold text-on-surface font-mono num">--%</span>
                 </div>
                 <div class="flex justify-between items-center text-on-surface-variant">
-                  <span>Mức rủi ro sau khi gỡ nhánh này:</span>
+                  <span>Điểm sau phép thử</span>
                   <span id="ablation-prob-after" class="font-bold text-tertiary font-mono num">--%</span>
                 </div>
                 <div class="flex justify-between items-center pt-1 border-t border-slate-200">
-                  <span class="font-bold text-on-surface">Mức thay đổi rủi ro:</span>
+                  <span class="font-bold text-on-surface">Chênh lệch điểm</span>
                   <span id="ablation-prob-delta" class="text-sm font-extrabold text-tertiary font-mono num">--%</span>
                 </div>
 
@@ -1411,7 +1404,7 @@
                   <p id="ablation-remaining-text" class="leading-relaxed font-medium"></p>
                   <button type="button" onclick="executeNodeAblation('all_triggers')" class="w-full py-1.5 px-3 rounded-md bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] transition flex items-center justify-center gap-1.5 shadow-2xs active:scale-95">
                     <span class="material-symbols-outlined text-[15px]">cleaning_services</span>
-                    <span>Gỡ thử tất cả nhánh độc hại cùng lúc</span>
+                    <span>Gỡ thử các khóa còn lại</span>
                   </button>
                 </div>
 
@@ -1443,7 +1436,7 @@
             <h2 class="font-bold text-lg sm:text-xl text-on-surface">Làm sạch tệp PDF — Giữ nguyên chữ viết &amp; hình ảnh</h2>
           </div>
           <p class="text-xs text-on-surface-variant leading-relaxed">
-            Hệ thống tự động gỡ bỏ các lệnh tự động chạy và đoạn mã ẩn nguy hiểm bên trong tệp, đồng thời giữ nguyên vẹn 100% văn bản, phông chữ, hình ảnh và số trang để bạn mở đọc an toàn.
+            Hệ thống gỡ khóa thuộc chính sách làm sạch và đối chiếu số trang, nội dung và tài nguyên trước khi xuất PDF.
           </p>
         </div>
 
@@ -1534,7 +1527,7 @@
                 </span>
                 <button id="btn-download-sanitized" disabled onclick="downloadSanitizedPDF()" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-tertiary hover:bg-emerald-700 text-white shadow-xs transition flex items-center gap-1.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
                   <span class="material-symbols-outlined text-[15px]">download</span>
-                  <span>Tải PDF an toàn</span>
+                  <span>Tải PDF đã xử lý</span>
                 </button>
               </div>
             </div>
@@ -2313,9 +2306,7 @@
       const step1Label = document.getElementById('scan-step-1-label');
       const steps = [
         document.getElementById('scan-step-1'),
-        document.getElementById('scan-step-2'),
-        document.getElementById('scan-step-3'),
-        document.getElementById('scan-step-4')
+        document.getElementById('scan-step-2')
       ];
 
       const setStepState = (activeIdx) => {
@@ -2336,8 +2327,6 @@
         });
       };
 
-      const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const timers = [];
       let elapsedInterval = null;
       let currentPhase = 'uploading';
       const uploadStartedAt = performance.now();
@@ -2372,7 +2361,7 @@
         if (scanToken !== activeScanToken || currentPhase === 'scanning') return;
         currentPhase = 'scanning';
         scanStartedAt = performance.now();
-        uploadSec = Math.max(0.1, (scanStartedAt - uploadStartedAt) / 1000);
+        uploadSec = (scanStartedAt - uploadStartedAt) / 1000;
         if (scanStage) scanStage.dataset.phase = 'scanning';
         if (uploadBadge) { uploadBadge.classList.add('hidden'); uploadBadge.classList.remove('flex'); }
         if (laser) laser.classList.remove('hidden');
@@ -2392,10 +2381,6 @@
         }
         if (step1Label) step1Label.textContent = `1. Đã tải lên (${uploadSec.toFixed(1)}s)`;
         setStepState(1);
-        if (!reducedMotion) {
-          timers.push(setTimeout(() => { if (scanToken === activeScanToken) setStepState(2); }, 450));
-          timers.push(setTimeout(() => { if (scanToken === activeScanToken) setStepState(3); }, 1100));
-        }
         elapsedInterval = setInterval(() => {
           if (scanToken !== activeScanToken) return;
           const elapsedS = (performance.now() - scanStartedAt) / 1000;
@@ -2457,10 +2442,10 @@
       try {
         const data = await uploadAndScan;
         if (scanToken !== activeScanToken) return null;
-        const scanSec = Math.max(0.05, (performance.now() - scanStartedAt) / 1000);
+        const scanSec = (performance.now() - scanStartedAt) / 1000;
         renderScanResult(data);
-        const verdictVi = data.verdict === 'MALICIOUS' ? 'Phát hiện nguy hiểm' : 'Tài liệu an toàn';
-        showToast(`Đã kiểm tra xong "${data.file_name}": ${verdictVi} (tải ${uploadSec.toFixed(1)}s • quét ${scanSec.toFixed(1)}s)`, data.verdict === 'MALICIOUS' ? 'warning' : 'success');
+        const verdictVi = !data.prediction_available ? 'Chưa có điểm mô hình' : data.verdict === 'MALICIOUS' ? 'Điểm vượt ngưỡng' : 'Điểm dưới ngưỡng';
+        showToast(`Đã kiểm tra xong "${data.file_name}": ${verdictVi} (tải ${uploadSec.toFixed(1)}s • chờ kết quả ${scanSec.toFixed(1)}s)`, data.verdict === 'MALICIOUS' ? 'warning' : 'success');
         return data.scan_id;
       } catch (err) {
         if (err && err._cancelled) {
@@ -2470,7 +2455,6 @@
         }
         return null;
       } finally {
-        timers.forEach(t => clearTimeout(t));
         if (elapsedInterval) clearInterval(elapsedInterval);
         if (scanToken === activeScanToken) {
           if (dropzone) delete dropzone.dataset.scanning;
@@ -2509,7 +2493,7 @@
       if (upper === 'HIGH') return 'Cao';
       if (upper === 'MEDIUM') return 'Trung bình';
       if (upper === 'LOW') return 'Thấp';
-      return conf || '--';
+      return '--';
     }
 
     function _cleanEvidenceTextVi(rawText) {
@@ -2576,7 +2560,7 @@
       if (s.includes('action:open_action/JS') || s.includes('script:action:open_action')) return 'Mã JavaScript tự chạy (/OpenAction ➔ /JS)';
       if (s.includes('action:aa/JS') || s.includes('script:action:aa')) return 'Mã JavaScript tự động (/AA ➔ /JS)';
       if (s.includes('/Names/JavaScript') || s.includes('names_js')) return 'Kho mã kịch bản ngầm (/Names/JavaScript)';
-      if (s.includes('/OpenAction') || s.includes('open_action')) return isMal ? 'Lệnh tự chạy ngay khi mở (/OpenAction)' : 'Điều hướng mở trang đầu (/OpenAction)';
+      if (s.includes('/OpenAction') || s.includes('open_action')) return 'Hành động khi mở (/OpenAction)';
       if (s.includes('/Catalog/AA') || s.includes('Action (/AA)') || s === 'action:aa') return isMal ? 'Hành động kích hoạt tự động (/AA)' : 'Thiết lập sự kiện trang (/AA)';
       if (s.includes('Annot') || s.includes('annot_')) return 'Vùng tương tác / Liên kết trên trang';
       if (s.startsWith('Script (')) return _cleanEvidenceTextVi(s.replace('Script (', 'Mã kịch bản ẩn ('));
@@ -2600,8 +2584,8 @@
       }
       card.classList.remove('hidden');
 
-      const detCnt = Number(tax.detected_count || 0);
-      const totCnt = Number(tax.total_analyzers || 8);
+      const detCnt = (tax.ml_label_predictions || []).filter(h => h.evidence_status === 'observed').length;
+      const totCnt = Number(tax.total_analyzers || 0);
       const isFlagged = detCnt > 0 || data.verdict === 'MALICIOUS';
 
       const ring = document.getElementById('tax-score-ring');
@@ -2612,12 +2596,12 @@
           ? 'w-14 h-14 rounded-lg flex flex-col items-center justify-center font-extrabold text-xs shrink-0 border border-error/40 bg-error/10 text-error'
           : 'w-14 h-14 rounded-lg flex flex-col items-center justify-center font-extrabold text-xs shrink-0 border border-tertiary/40 bg-tertiary/10 text-tertiary';
         const subSpans = ring.querySelectorAll('span');
-        if (subSpans.length > 1) subSpans[1].textContent = isFlagged ? 'NHÃN AI' : 'AN TOÀN';
+        if (subSpans.length > 1) subSpans[1].textContent = 'DẤU HIỆU';
       }
 
       const titleViEl = document.getElementById('tax-threat-title-vi');
       if (titleViEl) {
-        titleViEl.textContent = tax.threat_title_vi || (isFlagged ? 'Phát hiện dấu hiệu mã độc trong tệp PDF' : 'Tài liệu PDF an toàn');
+        titleViEl.textContent = tax.ml_label_predictions?.some(head => head.evidence_status) ? tax.threat_title_vi : 'Kết quả quét đã lưu';
         titleViEl.className = isFlagged ? 'font-bold text-sm sm:text-base text-error' : 'font-bold text-sm sm:text-base text-tertiary';
       }
 
@@ -2630,19 +2614,20 @@
       }
 
       const sumEl = document.getElementById('tax-summary-vi');
-      if (sumEl) sumEl.textContent = _cleanEvidenceTextVi(tax.summary_vi || '');
+      if (sumEl) sumEl.textContent = tax.ml_label_predictions?.some(head => head.evidence_status) ? _cleanEvidenceTextVi(tax.summary_vi || '') : 'Quét lại để cập nhật bằng chứng.';
 
       const btnLabel = document.getElementById('btn-toggle-analyzers-label');
       if (btnLabel) {
         btnLabel.textContent = detCnt > 0
-          ? `Xem ${totCnt} nhãn AI (${detCnt}/${totCnt} phát hiện)`
-          : `Xem ${totCnt} nhãn AI (0/${totCnt} nguy cơ)`;
+          ? `Xem ${totCnt} nhãn AI (${detCnt}/${totCnt} có dấu hiệu tĩnh)`
+          : `Xem ${totCnt} nhãn AI (0/${totCnt} có dấu hiệu tĩnh)`;
       }
 
-      const catsVi = Array.isArray(tax.categories_vi) ? tax.categories_vi : [];
-      const famsVi = Array.isArray(tax.families_vi) ? tax.families_vi : [];
-      const btagsVi = Array.isArray(tax.behavior_tags_vi) ? tax.behavior_tags_vi : [];
-      const mitre = Array.isArray(tax.mitre_attack) ? tax.mitre_attack : [];
+      const hasProvenance = tax.ml_label_predictions?.some(head => head.evidence_status);
+      const catsVi = hasProvenance && Array.isArray(tax.categories_vi) ? tax.categories_vi : [];
+      const famsVi = hasProvenance && Array.isArray(tax.families_vi) ? tax.families_vi : [];
+      const btagsVi = hasProvenance && Array.isArray(tax.behavior_tags_vi) ? tax.behavior_tags_vi : [];
+      const mitre = hasProvenance && Array.isArray(tax.mitre_attack) ? tax.mitre_attack : [];
 
       const tagsStrip = document.getElementById('tax-tags-strip');
       const hasSubstantiveTags = isFlagged || famsVi.length > 0 || mitre.length > 0 || btagsVi.some(t => t.is_risk);
@@ -2676,7 +2661,7 @@
       if (mitreEl) {
         mitreEl.innerHTML = mitre.length
           ? mitre.map(m => `<span title="${_escTax((m.tactic || '') + ' — ' + _cleanEvidenceTextVi(m.evidence || ''))}" class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-800 text-white cursor-help">${_escTax(m.name)} (${_escTax(m.id)})</span>`).join('')
-          : '<span class="text-outline italic text-[11px]">Không có hành vi tấn công</span>';
+          : '<span class="text-outline italic text-[11px]">Chưa ghi nhận ánh xạ</span>';
       }
 
       const wrapEl = document.getElementById('tax-analyzers-wrap');
@@ -2688,23 +2673,19 @@
           ? tax.ml_label_predictions
           : (Array.isArray(tax.analyzer_detections) ? tax.analyzer_detections : []);
         gridEl.innerHTML = heads.map(h => {
-          const det = Boolean(h.detected);
-          const pct = Number.isFinite(Number(h.probability_pct)) ? Number(h.probability_pct) : 0;
+          const det = h.evidence_status === 'observed';
+          const score = h.evidence_status && Number.isFinite(h.probability_pct)
+            ? h.probability_pct.toFixed(2) + '%' : 'chưa có';
           const name = h.label_vi || h.analyzer || '';
-          const cleanEv = _cleanEvidenceTextVi(h.evidence || '');
-          const badge = det
-            ? `<span class="inline-flex items-center gap-1 text-error font-bold shrink-0 font-mono num text-[11px]"><span class="material-symbols-outlined text-[15px]">error</span>${pct.toFixed(1)}%</span>`
-            : `<span class="inline-flex items-center gap-1 text-tertiary font-semibold shrink-0 font-mono num text-[11px]"><span class="material-symbols-outlined text-[15px]">check_circle</span>${pct.toFixed(1)}%</span>`;
-          const barCls = det ? 'bg-error' : 'bg-tertiary/60';
+          const cleanEv = _cleanEvidenceTextVi(h.evidence_status ? h.evidence : 'Dữ liệu từ lần quét trước');
+          const status = det ? 'Có dấu hiệu tĩnh' : h.model_flagged ? 'Tín hiệu mô hình' : 'Chưa ghi nhận';
           return `
             <div class="p-3 rounded-lg border ${det ? 'border-error/30 bg-red-50/40' : 'border-slate-200 bg-white'} flex flex-col gap-1.5">
               <div class="flex items-center justify-between gap-2">
                 <span class="font-bold text-on-surface truncate">${_escTax(name)}</span>
-                ${badge}
+                <span class="text-[11px] text-outline shrink-0">Điểm mô hình ${score}</span>
               </div>
-              <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                <div class="h-1.5 rounded-full ${barCls}" style="width: ${Math.min(100, Math.max(0, pct))}%;"></div>
-              </div>
+              <span class="font-semibold text-[11px]">${status}</span>
               <div class="text-[11px] text-on-surface-variant leading-snug" title="${_escTax(cleanEv)}">${_escTax(cleanEv)}</div>
             </div>
           `;
@@ -2739,7 +2720,8 @@
       const quickDisarmBtn = document.getElementById('btn-quick-disarm');
 
       const taxData = data.threat_taxonomy || (data.forensic_dossier && data.forensic_dossier.threat_taxonomy) || {};
-      const friendlyThreatTitle = taxData.threat_title_vi || (isMal ? 'Phát hiện dấu hiệu mã độc trong tệp PDF' : 'Tài liệu PDF an toàn');
+      const observed = taxData.ml_label_predictions?.some(head => head.evidence_status === 'observed');
+      const friendlyThreatTitle = observed ? taxData.threat_title_vi : 'Điểm mô hình vượt ngưỡng cảnh báo';
 
       if (!data.prediction_available) {
         ribbon.className = 'glass-card rounded-xl p-4 flex flex-wrap items-center justify-between gap-4 border-l-4 border-slate-400 reveal-stagger-1';
@@ -2753,28 +2735,28 @@
         ribbon.className = 'glass-card rounded-xl p-4 flex flex-wrap items-center justify-between gap-4 border-l-4 border-error bg-red-50/40 reveal-stagger-1';
         icon.textContent = 'security_update_warning';
         icon.className = 'material-symbols-outlined text-[28px] text-error shrink-0 mt-0.5 sm:mt-0';
-        headline.textContent = `PHÁT HIỆN NGUY HIỂM: ${friendlyThreatTitle}`;
+        headline.textContent = friendlyThreatTitle;
         headline.className = 'font-bold text-sm sm:text-base text-error leading-snug break-words';
-        subtext.textContent = `Tệp: ${data.file_name} • Không nên mở trực tiếp mà hãy bấm "Làm sạch tệp ngay" để lấy bản an toàn.`;
+        subtext.textContent = `Tệp: ${data.file_name} • Không nên mở trực tiếp mà hãy bấm "Làm sạch tệp ngay" để tạo bản đã xử lý.`;
         quickDisarmBtn.classList.remove('hidden');
       } else {
         ribbon.className = 'glass-card rounded-xl p-4 flex flex-wrap items-center justify-between gap-4 border-l-4 border-tertiary bg-emerald-50/40 reveal-stagger-1';
         icon.textContent = 'verified';
         icon.className = 'material-symbols-outlined text-[28px] text-tertiary shrink-0 mt-0.5 sm:mt-0';
-        headline.textContent = 'TÀI LIỆU AN TOÀN — Không phát hiện mã độc';
+        headline.textContent = observed ? taxData.threat_title_vi : 'Điểm mô hình dưới ngưỡng cảnh báo';
         headline.className = 'font-bold text-sm sm:text-base text-tertiary leading-snug break-words';
-        subtext.textContent = `Tệp: ${data.file_name} • Không có lệnh tự chạy hay kịch bản ẩn nguy hiểm, bạn có thể mở đọc bình thường.`;
+        subtext.textContent = `Tệp: ${data.file_name} • Kết quả dựa trên phân tích tĩnh và điểm mô hình.`;
         quickDisarmBtn.classList.remove('hidden');
       }
 
       renderThreatTaxonomy(data);
 
       const verdictEl = document.getElementById('card-verdict');
-      verdictEl.textContent = !data.prediction_available ? 'CẦN LƯU Ý' : (isMal ? 'NGUY HIỂM' : 'AN TOÀN');
+      verdictEl.textContent = !data.prediction_available ? 'CẦN LƯU Ý' : (isMal ? 'VƯỢT NGƯỠNG' : 'DƯỚI NGƯỠNG');
       verdictEl.className = isMal ? 'text-2xl font-bold tracking-tight text-error' : 'text-2xl font-bold tracking-tight text-tertiary';
 
       const tagEl = document.getElementById('badge-verdict-tag');
-      tagEl.textContent = isMal ? 'KHÔNG NÊN MỞ NGAY' : (data.prediction_available ? 'CÓ THỂ MỞ ĐỌC' : 'NÊN LÀM SẠCH');
+      tagEl.textContent = isMal ? 'KHÔNG NÊN MỞ NGAY' : (data.prediction_available ? 'NGƯỠNG 50%' : 'NÊN LÀM SẠCH');
       tagEl.className = isMal ? 'px-2 py-0.5 rounded-md text-[10px] font-bold bg-red-50 text-error border border-red-200' : 'px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-tertiary border border-emerald-200';
 
       document.getElementById('card-confidence').textContent = _confidenceVi(data.confidence);
@@ -2789,25 +2771,16 @@
       barProb.style.width = (probPct ?? 0) + '%';
       barProb.className = isMal ? 'bg-error shimmer-bar h-2 rounded-full transition-all duration-700' : 'bg-tertiary shimmer-bar h-2 rounded-full transition-all duration-700';
 
+      const oodAvailable = Number.isFinite(data.ood_score);
       const cardOodEl = document.getElementById('card-ood');
-      if (cardOodEl) {
-        cardOodEl.textContent = data.is_ood ? 'Cấu trúc lạ' : (data.prediction_available ? 'Bình thường' : 'Chưa rõ');
-        cardOodEl.className = data.is_ood ? 'text-xl font-bold text-amber-600' : 'text-xl font-bold text-on-surface';
-      }
-      const oodThreshEl = document.getElementById('ood-threshold-label');
-      if (oodThreshEl) oodThreshEl.textContent = data.is_ood ? 'Khác với tài liệu thông thường' : 'Giống tài liệu PDF phổ biến';
-      const oodBadge = document.getElementById('badge-ood');
-      if (data.is_ood) {
-        oodBadge.textContent = 'Cần lưu ý';
-        oodBadge.className = 'px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200';
-        document.getElementById('ood-alert-banner').classList.remove('hidden');
-      } else {
-        oodBadge.textContent = data.prediction_available ? 'Quen thuộc' : 'Chưa đo';
-        oodBadge.className = 'px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-tertiary border border-emerald-200';
-        document.getElementById('ood-alert-banner').classList.add('hidden');
-      }
+      cardOodEl.textContent = !oodAvailable ? 'Chưa đo' : data.is_ood ? 'Trong vùng lưỡng lự' : 'Ngoài vùng lưỡng lự';
+      cardOodEl.className = data.is_ood ? 'text-xl font-bold text-amber-600' : 'text-xl font-bold text-on-surface';
+      document.getElementById('ood-threshold-label').textContent = 'Từ đầu ra mô hình';
+      document.getElementById('badge-ood').textContent = oodAvailable ? data.ood_score.toFixed(3) : '--';
+      document.getElementById('ood-alert-banner').classList.toggle('hidden', !data.is_ood);
 
-      animateValue('card-latency', 0, data.latency_ms || 0, 500, 1, ' ms');
+      if (Number.isFinite(data.latency_ms)) animateValue('card-latency', 0, data.latency_ms, 500, 1, ' ms');
+      else document.getElementById('card-latency').textContent = '--';
       document.getElementById('card-size').textContent = ((data.file_size_bytes || 0) / 1024).toFixed(1) + ' KB';
       const modelTypeEl = document.getElementById('card-model-type');
       if (modelTypeEl) {
@@ -2826,14 +2799,15 @@
         document.getElementById('xai-ast-bar').style.width = (aw ?? 0) + '%';
 
         const pathLabelEl = document.getElementById('attack-path-label');
-        if (pathLabelEl) pathLabelEl.textContent = isMal ? 'Trình tự tự động kích hoạt khi mở tệp' : 'Cấu trúc trang của tài liệu';
+        const activePath = data.forensic_dossier.attack_path_kind === 'observed_active_object';
+        if (pathLabelEl) pathLabelEl.textContent = activePath ? 'Đường tham chiếu đến đối tượng đã ghi nhận' : 'Đường tham chiếu cấu trúc PDF';
         const pathFlowEl = document.getElementById('attack-path-flow');
         pathFlowEl.innerHTML = '';
         const pathItems = (data.forensic_dossier && data.forensic_dossier.attack_path && data.forensic_dossier.attack_path.length > 0)
           ? data.forensic_dossier.attack_path
           : [];
         if (pathItems.length === 0) {
-          pathFlowEl.innerHTML = '<span class="text-xs text-on-surface-variant italic">Không có chuỗi lệnh tự chạy bất thường nào trong tệp.</span>';
+          pathFlowEl.innerHTML = '<span class="text-xs text-on-surface-variant italic">Chưa có đường tham chiếu để hiển thị.</span>';
         } else {
           pathItems.forEach((p, idx) => {
             if (idx > 0) {
@@ -2847,7 +2821,7 @@
               ? 'px-2.5 py-1 rounded-md bg-red-50 text-error text-xs font-semibold border border-red-200'
               : 'px-2.5 py-1 rounded-md bg-emerald-50 text-tertiary text-xs font-semibold border border-emerald-200';
             badge.title = _cleanEvidenceTextVi(p);
-            badge.textContent = _formatAttackPathStepVi(p, isMal);
+            badge.textContent = _formatAttackPathStepVi(p, activePath);
             pathFlowEl.appendChild(badge);
           });
         }
@@ -3082,7 +3056,7 @@
       const prob = Number.isFinite(scanResult.malware_probability) ? Number((scanResult.malware_probability * 100).toFixed(2)) : null;
       const dossier = scanResult.forensic_dossier || {};
       const taxonomy = scanResult.threat_taxonomy || dossier.threat_taxonomy || {};
-      const triggers = (dossier.trigger_objects || []).slice(0, 5).map(t => `${t.invoker || '/Unknown'} (${t.obj_ref_str || t.object_id || ''})`);
+      const triggers = (dossier.trigger_objects || []).filter(t => t.is_threat_trigger).slice(0, 5).map(t => `${t.invoker || '/Unknown'} (${t.obj_ref_str || t.object_id || ''})`);
       const scripts = (dossier.threat_scripts || []).slice(0, 3).map(s => ({
         script_id: s.script_id || 'script',
         indicators: (s.dangerous_indicators || []).slice(0, 5),
@@ -3102,7 +3076,7 @@
         file_name: scanResult.file_name || 'document.pdf',
         pages_count: scanResult.pages_count || 1,
         file_size_kb: Number(((scanResult.file_size_bytes || 0) / 1024).toFixed(2)),
-        attack_path: (dossier.attack_path_string || 'Catalog (/Root)').slice(0, 180),
+        attack_path: (dossier.attack_path_string || '').slice(0, 180),
         triggers,
         scripts,
         cdr_sanitization: cdrAudit && cdrAudit.is_sanitized ? {
@@ -3254,7 +3228,7 @@
       if (chatBox && chatBox.dataset.scanId !== chatScanId) {
         chatBox.dataset.scanId = chatScanId;
         const fileName = (fullScanResult && fullScanResult.file_name) || 'PDF';
-        const verdict = isMal ? 'Phát hiện nguy hiểm — không nên mở trực tiếp' : 'Tài liệu an toàn';
+        const verdict = isMal ? 'Điểm mô hình vượt ngưỡng' : 'Điểm mô hình dưới ngưỡng';
         chatBox.innerHTML = `
           <div class="flex items-start gap-2.5">
             <div class="w-6 h-6 rounded-md bg-primary-container text-white flex items-center justify-center shrink-0 text-[10px] font-bold mt-0.5">AI</div>
@@ -3674,7 +3648,7 @@
         const isPending = j.verdict === 'PENDING' || j.status === 'SCANNING';
         const isDisarmed = j.status === 'DISARMED' || j.has_sanitized_pdf;
         const isActive = currentScanResult?.scan_id === j.scan_id;
-        const probStr = j.malware_probability !== null ? `${Math.round(j.malware_probability * 100)}%` : '';
+        const probStr = Number.isFinite(j.malware_probability) ? `${(j.malware_probability * 100).toFixed(2)}%` : '';
         const sizeKb = j.file_size_bytes ? `${Math.round(j.file_size_bytes / 1024)} KB` : '-- KB';
         const statusVi = isDisarmed ? 'Đã làm sạch' : (isPending ? 'Đang kiểm tra' : 'Đã kiểm tra');
         const pillText = isMal ? `Nguy hiểm${probStr ? ' ' + probStr : ''}` : (isPending ? 'Đang quét' : 'An toàn');
@@ -3929,20 +3903,21 @@
       beforeCard.className = isMal
         ? 'glass-card rounded-xl p-4 sm:p-5 border-l-4 border-error flex flex-col justify-between'
         : 'glass-card rounded-xl p-4 sm:p-5 border-l-4 border-tertiary flex flex-col justify-between';
-      badgeBefore.textContent = isMal ? 'CÓ MÃ ĐỘC CẦN GỠ BỎ' : 'TÀI LIỆU SẠCH';
+      badgeBefore.textContent = !data.prediction_available ? 'CHƯA CÓ ĐIỂM' : isMal ? 'ĐIỂM VƯỢT NGƯỠNG' : 'ĐIỂM DƯỚI NGƯỠNG';
       badgeBefore.className = isMal
         ? 'px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-red-50 text-error border border-red-200'
         : 'px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-tertiary border border-emerald-200';
 
       document.getElementById('cdr-orig-filename').textContent = data.file_name;
-      const verdictVi = !data.prediction_available ? 'Cần lưu ý' : (isMal ? 'Nguy hiểm' : 'An toàn');
+      const verdictVi = !data.prediction_available ? 'Cần lưu ý' : (isMal ? 'Điểm vượt ngưỡng' : 'Điểm dưới ngưỡng');
       document.getElementById('cdr-orig-verdict').textContent = Number.isFinite(data.malware_probability)
         ? `${verdictVi} (${(data.malware_probability * 100).toFixed(1)}% rủi ro)`
         : verdictVi;
       document.getElementById('cdr-orig-verdict').className = isMal ? 'font-bold text-error text-right' : 'font-bold text-tertiary text-right';
 
       const scripts = (data.forensic_dossier && data.forensic_dossier.threat_scripts) ? data.forensic_dossier.threat_scripts.length : 0;
-      document.getElementById('cdr-orig-triggers').textContent = isMal ? `${scripts} đoạn mã ẩn & lệnh tự chạy` : 'Không có lệnh nguy hiểm';
+      const observedObjects = (data.forensic_dossier?.trigger_objects || []).filter(item => item.is_threat_trigger).length;
+      document.getElementById('cdr-orig-triggers').textContent = `${observedObjects} đối tượng có dấu hiệu · ${scripts} đoạn JavaScript`;
       document.getElementById('cdr-orig-pages').textContent = `${((data.file_size_bytes || 0) / 1024).toFixed(1)} KB`;
       document.getElementById('cdr-clean-filename').textContent = `sanitized_${data.file_name}`;
 
@@ -4066,8 +4041,8 @@
       const snippet = String(n.snippet || '');
       const rawLabel = String(n.label || '');
       const isAnnotKind = kind === 'annot' || kind === 'annotation' || id.startsWith('annot:') || id.startsWith('annotation:');
-      const isUriLink = !n.is_threat && (snippet.includes('/URI') || (/annot_/i.test(id) && kind === 'action' && !snippet.includes('/JS') && !snippet.includes('/JavaScript')));
-      const isThreat = Boolean(n.is_threat || n.is_threat_trigger || kind === 'js' || kind === 'script' || kind === 'filespec');
+      const isUriLink = !n.is_threat_trigger && !n.is_threat && snippet.includes('/URI');
+      const isThreat = Boolean(n.is_threat_trigger ?? n.is_threat);
 
       let title = 'Thành phần PDF';
       let subtitle = id;
@@ -4120,7 +4095,7 @@
         const pageNum = pIdx !== null ? (pIdx + 1) : null;
         pageIndex = pIdx;
         title = pageNum ? `Nội dung chữ & hình (Trang ${pageNum})` : 'Luồng nội dung hiển thị';
-        subtitle = `/Contents • ${n.size_bytes || 0} byte`;
+        subtitle = '/Contents';
         shortLabel = pageNum ? `Chữ & Hình\n(Trang ${pageNum})` : 'Luồng chữ & hình';
         badgeText = 'CHỮ';
         roleVi = 'Luồng nội dung văn bản & hình ảnh (/Contents)';
@@ -4154,20 +4129,25 @@
         shortLabel = `Liên kết Web\n(Trang ${pIdx + 1})`;
         badgeText = 'WEB';
         roleVi = 'Liên kết mở trang Web (/URI)';
-        plainExplain = 'Đây chỉ là một đường dẫn liên kết web (/URI) thông thường đính kèm trên trang tài liệu. Thành phần này hoàn toàn không phải mã độc tự chạy.';
+        plainExplain = 'Parser ghi nhận liên kết web (/URI) trên trang tài liệu.';
         nodeKind = 'uri_link';
         borderHex = '#0284C7';
         nodeSize = 21;
-      } else if ((kind === 'action' || id.startsWith('action:')) && !isThreat) {
-        title = 'Điều hướng mở trang đầu';
-        subtitle = '/OpenAction • Khung nhìn trang (An toàn)';
-        shortLabel = 'Mở trang đầu\n(/OpenAction)';
+      } else if (n.action_role === 'destination') {
+        title = 'Điều hướng khi mở tài liệu';
+        subtitle = '/OpenAction • Đích điều hướng';
+        shortLabel = 'Điều hướng\n(/OpenAction)';
         badgeText = 'Đ.HƯỚNG';
         roleVi = 'Thiết lập khung nhìn trang khi mở (/OpenAction)';
-        plainExplain = 'Đây chỉ là thiết lập điều hướng khung nhìn tiêu chuẩn của tệp PDF. Thành phần này hoàn toàn an toàn, không chứa mã kịch bản thực thi.';
+        plainExplain = 'Parser ghi nhận đích điều hướng dùng để chọn trang hoặc khung nhìn khi mở PDF.';
         nodeKind = 'uri_link';
         borderHex = '#0284C7';
         nodeSize = 23;
+      } else if ((kind === 'action' || id.startsWith('action:')) && !isThreat) {
+        title = 'Hành động PDF';
+        shortLabel = 'Hành động PDF';
+        roleVi = 'Hành động trong cấu trúc PDF';
+        plainExplain = 'Phân tích tĩnh chưa ghi nhận dấu hiệu kích hoạt cần xem xét ở đối tượng này.';
       } else if (kind === 'action' || id.startsWith('action:')) {
         if (id.includes('open_action')) {
           title = 'Lệnh tự chạy khi mở';
@@ -4197,14 +4177,14 @@
           shortLabel = 'Kho mã JS ẩn\n(/Names/JS)';
           plainExplain = 'NGUY HIỂM CAO: Danh mục lưu trữ các đoạn mã kịch bản JavaScript ẩn sâu bên trong cấu trúc tệp PDF để phục vụ hành vi độc hại.';
         } else if (id.includes('open_action')) {
-          title = 'Mã độc JavaScript';
+          title = 'JavaScript nhúng';
           subtitle = 'Chạy tự động qua /OpenAction';
-          shortLabel = 'Mã độc JS ẩn\n(Qua /OpenAction)';
-          plainExplain = 'NGUY HIỂM CAO: Đoạn mã kịch bản JavaScript độc hại được gắn trực tiếp vào lệnh tự chạy khi mở tệp (/OpenAction). Cần làm sạch và gỡ bỏ ngay.';
+          shortLabel = 'JavaScript nhúng\n(Qua /OpenAction)';
+          plainExplain = 'NGUY HIỂM CAO: Parser ghi nhận JavaScript gắn với hành động mở tài liệu.';
         } else if (id.includes('aa')) {
-          title = 'Mã độc JavaScript';
+          title = 'JavaScript nhúng';
           subtitle = 'Chạy tự động qua /AA';
-          shortLabel = 'Mã độc JS ẩn\n(Qua /AA)';
+          shortLabel = 'JavaScript nhúng\n(Qua /AA)';
           plainExplain = 'NGUY HIỂM CAO: Đoạn mã kịch bản JavaScript ẩn được kích hoạt qua khóa hành động tự động (/AA) khi người dùng thao tác với trang.';
         } else if (kind === 'filespec' || id.includes('embedded')) {
           title = 'Tệp đính kèm nhúng ngầm';
@@ -4213,8 +4193,8 @@
           plainExplain = 'NGUY HIỂM: Tệp đính kèm được giấu bên trong cấu trúc tài liệu PDF.';
         } else {
           title = 'Đoạn mã JavaScript ẩn';
-          subtitle = `/JS • ${n.size_bytes || 0} byte`;
-          shortLabel = 'Mã độc JS ẩn\n(/JS)';
+          subtitle = 'JavaScript nhúng';
+          shortLabel = 'JavaScript nhúng\n(/JS)';
           plainExplain = 'NGUY HIỂM CAO: Đoạn mã kịch bản thực thi nhúng ngầm bên trong tệp PDF.';
         }
         badgeText = 'MÃ ẨN';
@@ -4277,47 +4257,17 @@
       const pageNodes = mappedNodes.filter(n => n.rawMeta && n.rawMeta.kind === 'page');
       const streamNodes = mappedNodes.filter(n => n.rawMeta && n.rawMeta.kind === 'stream');
 
-      if (threatNodes.length > 0) {
-        barEl.className = 'mb-3 p-3 rounded-xl bg-red-50/75 border border-red-200 space-y-2';
-        badgeEl.textContent = `Phát hiện ${threatNodes.length} mắt xích tự chạy / mã độc cần gỡ bỏ`;
-        badgeEl.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-md bg-red-100 text-error border border-red-200';
-
-        const catalogNode = mappedNodes.find(n => n.id === 'catalog:root') || mappedNodes[0];
-        const triggerNode = threatNodes.find(n => n.rawMeta && n.rawMeta.kind === 'action') || threatNodes[0];
-        const scriptNode = threatNodes.find(n => n.rawMeta && (n.rawMeta.kind === 'js' || n.rawMeta.kind === 'script' || String(n.id).startsWith('script:'))) || threatNodes[threatNodes.length - 1];
-
-        const chainItems = [];
-        if (catalogNode) chainItems.push({ id: catalogNode.id, step: 'Bước 1', label: 'Mở tệp (/Catalog)', cls: 'bg-white text-primary-container border-blue-200 hover:bg-blue-50' });
-        if (triggerNode) chainItems.push({ id: triggerNode.id, step: 'Bước 2', label: triggerNode.desc.title, cls: 'bg-white text-error border-red-200 hover:bg-red-50' });
-        if (scriptNode && (!triggerNode || scriptNode.id !== triggerNode.id)) {
-          chainItems.push({ id: scriptNode.id, step: 'Bước 3', label: `${scriptNode.desc.title} (${scriptNode.desc.subtitle})`, cls: 'bg-white text-rose-900 border-rose-300 hover:bg-rose-50' });
-        }
-        chainItems.push({
-          id: pageNodes[0] ? pageNodes[0].id : (catalogNode ? catalogNode.id : ''),
-          step: 'Nhánh nội dung',
-          label: `${pageNodes.length || 1} trang văn bản & ${streamNodes.length || 1} luồng chữ (An toàn — giữ nguyên khi làm sạch)`,
-          cls: 'bg-white text-emerald-800 border-emerald-200 hover:bg-emerald-50'
-        });
-
-        stepsEl.innerHTML = chainItems.map((item, idx) => `
-          <button type="button" onclick="inspectAndAblateNode('${_escTax(item.id)}')" class="px-2.5 py-1.5 rounded-lg border text-xs font-bold transition flex items-center gap-1.5 shadow-2xs ${item.cls}">
-            <span class="text-[10px] uppercase tracking-wider opacity-75 font-extrabold">${_escTax(item.step)}:</span>
-            <span>${_escTax(item.label)}</span>
-          </button>
-          ${idx < chainItems.length - 1 ? '<span class="material-symbols-outlined text-slate-400 text-[16px]">arrow_forward</span>' : ''}
-        `).join('');
-      } else {
-        barEl.className = 'mb-3 p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 space-y-2';
-        badgeEl.textContent = 'Sơ đồ sạch — Không có nhánh mã độc tự kích hoạt';
-        badgeEl.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-md bg-emerald-100 text-tertiary border border-emerald-200';
-
-        stepsEl.innerHTML = `
-          <span class="px-2.5 py-1.5 rounded-lg border border-blue-200 bg-white text-primary-container text-xs font-bold">1. Khung gốc tài liệu (/Catalog)</span>
-          <span class="material-symbols-outlined text-slate-400 text-[16px]">arrow_forward</span>
-          <span class="px-2.5 py-1.5 rounded-lg border border-emerald-200 bg-white text-emerald-800 text-xs font-bold">2. Danh sách ${pageNodes.length || 1} trang văn bản (/Pages)</span>
-          <span class="material-symbols-outlined text-slate-400 text-[16px]">arrow_forward</span>
-          <span class="px-2.5 py-1.5 rounded-lg border border-amber-200 bg-white text-amber-900 text-xs font-bold">3. Hiển thị ${streamNodes.length || 1} luồng chữ &amp; hình ảnh bình thường</span>
-        `;
+      barEl.className = 'mb-3 p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2';
+      badgeEl.textContent = `${pageNodes.length} nút trang · ${streamNodes.length} nút nội dung · ${threatNodes.length} đối tượng có dấu hiệu tĩnh`;
+      badgeEl.className = 'text-[11px] font-bold text-on-surface-variant';
+      stepsEl.replaceChildren();
+      for (const node of threatNodes) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'px-2.5 py-1.5 rounded-lg border border-red-200 bg-white text-error text-xs font-semibold';
+        button.textContent = node.desc.title;
+        button.addEventListener('click', () => inspectAndAblateNode(node.id));
+        stepsEl.appendChild(button);
       }
     }
 
@@ -4362,7 +4312,7 @@
         threatBtn.className = graphThreatOnlyFilter ? rowDanger : rowIdle;
         threatBtn.setAttribute('aria-checked', graphThreatOnlyFilter ? 'true' : 'false');
       }
-      if (threatLbl) threatLbl.textContent = graphThreatOnlyFilter ? 'Đang lọc • Chỉ giữ nhánh mã độc' : 'Hiển thị tất cả thành phần';
+      if (threatLbl) threatLbl.textContent = graphThreatOnlyFilter ? 'Đang lọc • Chỉ hiện đối tượng có dấu hiệu' : 'Hiển thị tất cả thành phần';
       if (threatTrack) threatTrack.className = graphThreatOnlyFilter ? 'graph-switch-track is-danger' : 'graph-switch-track';
 
       const physicsBtn = document.getElementById('btn-graph-physics');
@@ -4382,7 +4332,7 @@
       if (statusPill) {
         const layoutText = isHierarchical ? 'Phân tầng' : 'Mạng lưới';
         if (graphThreatOnlyFilter) {
-          statusPill.textContent = `${layoutText} · Chỉ mã độc`;
+          statusPill.textContent = `${layoutText} · Chỉ dấu hiệu tĩnh`;
           statusPill.className = 'px-1.5 py-0.5 rounded-md bg-red-50 text-error border border-red-200 text-[11px] font-bold whitespace-nowrap';
         } else if (!graphCompactPages) {
           statusPill.textContent = `${layoutText} · Đủ trang`;
@@ -4506,7 +4456,7 @@
               hover: { border: '#0071E3', background: '#EFF6FF' },
             },
             font: desc.fontObj,
-            title: `${desc.title} — ${desc.subtitle} (${n.size_bytes || 0} byte)`,
+            title: `${desc.title} — ${desc.subtitle}`,
             rawMeta: n,
             desc,
           };
@@ -4518,24 +4468,7 @@
         const nodeById = {};
         allMapped.forEach(item => { nodeById[item.id] = item; });
 
-        const rawEdges = (data.graph_edges || []).slice();
-        const hasIncoming = new Set(rawEdges.map(e => e.to));
-        const hasOutgoing = new Set(rawEdges.map(e => e.from));
-
-        allMapped.forEach(item => {
-          if (item.desc.isAnnotKind && !hasIncoming.has(item.id) && !hasOutgoing.has(item.id)) {
-            const pIdx = item.desc.pageIndex !== null ? item.desc.pageIndex : 0;
-            const parentPageId = nodeById[`page:${pIdx}`] ? `page:${pIdx}` : (nodeById['pages:root'] ? 'pages:root' : 'catalog:root');
-            const suffix = item.id.split(':')[1] || '';
-            const correspondingActionId = `action:annot_${suffix}`;
-            if (nodeById[correspondingActionId]) {
-              rawEdges.push({ from: parentPageId, to: item.id });
-              rawEdges.push({ from: item.id, to: correspondingActionId });
-            } else {
-              rawEdges.push({ from: parentPageId, to: item.id });
-            }
-          }
-        });
+        const rawEdges = data.graph_edges || [];
 
         const pageItems = allMapped.filter(item => (item.rawMeta && item.rawMeta.kind === 'page') || String(item.id).startsWith('page:'));
         const maxVisiblePages = 4;
@@ -4558,7 +4491,6 @@
 
           let clusteredPageCount = 0;
           let clusteredStreamCount = 0;
-          let clusteredTotalBytes = 0;
 
           allMapped.forEach(item => {
             const pIdx = item.desc.pageIndex;
@@ -4566,7 +4498,6 @@
               hiddenByClusterIds.add(item.id);
               if (item.rawMeta && item.rawMeta.kind === 'page') clusteredPageCount++;
               if (item.rawMeta && item.rawMeta.kind === 'stream') clusteredStreamCount++;
-              clusteredTotalBytes += Number((item.rawMeta && item.rawMeta.size_bytes) || 0);
             }
           });
 
@@ -4582,7 +4513,7 @@
             const clusterDesc = {
               title: `Cụm ${clusteredPageCount} trang văn bản tiếp theo`,
               subtitle: `Trang 4 → ${pageItems.length} • Đã gộp gọn để sơ đồ dễ nhìn`,
-              shortLabel: `+${clusteredPageCount} Trang khác\n(Tr.4 → ${pageItems.length} • An toàn)`,
+              shortLabel: `+${clusteredPageCount} Trang khác\n(Tr.4 → ${pageItems.length})`,
               badgeText: `+${clusteredPageCount}`,
               roleVi: `Cụm ${clusteredPageCount} trang văn bản & ${clusteredStreamCount} luồng nội dung (An toàn)`,
               plainExplain: `Tài liệu PDF này dài ${pageItems.length} trang. Hệ thống đã tự động gộp ${clusteredPageCount} trang văn bản lặp lại (từ Trang 4 đến Trang ${pageItems.length}) vào biểu tượng này để sơ đồ không bị rối. Bạn có thể bấm nút "Tự gộp trang dài" để bung toàn bộ ${allMapped.length} thành phần.`,
@@ -4617,14 +4548,14 @@
                 hover: { border: '#059669', background: '#D1FAE5' },
               },
               font: clusterDesc.fontObj,
-              title: `${clusterDesc.title} (${Math.round(clusteredTotalBytes / 1024)} KB)`,
+              title: clusterDesc.title,
               rawMeta: {
                 id: 'cluster:extra_pages',
                 kind: 'pages',
-                size_bytes: Math.round(clusteredTotalBytes),
-                entropy: 4.2,
-                saliency: 0.0,
-                snippet: `Đã gộp gọn ${clusteredPageCount} trang văn bản (Trang 4 -> Trang ${pageItems.length}) và ${clusteredStreamCount} luồng nội dung (/Contents) hoàn toàn bình thường.`,
+                size_bytes: null,
+                entropy: null,
+                saliency: null,
+                snippet: `Đã gộp gọn ${clusteredPageCount} trang văn bản (Trang 4 -> Trang ${pageItems.length}) và ${clusteredStreamCount} luồng nội dung (/Contents).`,
               },
               desc: clusterDesc,
             };
@@ -4646,10 +4577,6 @@
 
         rawEdges.forEach(e => {
           if (!visibleIds.has(e.from) || !visibleIds.has(e.to)) return;
-          if (e.from === 'page:0' && String(e.to).startsWith('action:annot_')) {
-            const suffix = String(e.to).replace('action:annot_', '');
-            if (visibleIds.has(`annotation:${suffix}`)) return;
-          }
           const key = `${e.from}->${e.to}`;
           if (dedupEdgeSet.has(key)) return;
           dedupEdgeSet.add(key);
@@ -4670,7 +4597,8 @@
           });
         });
 
-        if (clusterNodeObj && visibleIds.has('pages:root')) {
+        if (clusterNodeObj && visibleIds.has('pages:root') &&
+          rawEdges.some(edge => edge.from === 'pages:root' && hiddenByClusterIds.has(edge.to) && nodeById[edge.to]?.rawMeta.kind === 'page')) {
           edgesArray.push({
             from: 'pages:root',
             to: 'cluster:extra_pages',
@@ -4885,7 +4813,7 @@
       const desc = nodeObj.desc || _describeGraphNodeVi(meta);
 
       document.getElementById('graph-node-details').textContent =
-        `Đang xem: ${desc.title} (${desc.subtitle}) • Vai trò: ${desc.roleVi} • Kích thước: ${meta.size_bytes || 0} byte`;
+        `Đang xem: ${desc.title} (${desc.subtitle}) • Vai trò: ${desc.roleVi}`;
 
       document.getElementById('hud-node-title').textContent = desc.title;
       document.getElementById('hud-node-subtitle').textContent = `${desc.subtitle} • Mã định danh: ${nodeObj.id}`;
@@ -4904,27 +4832,34 @@
 
       const statusTag = document.getElementById('hud-node-status-tag');
       if (desc.isAblated) {
-        statusTag.textContent = 'ĐÃ GỠ THỬ • AN TOÀN';
+        statusTag.textContent = 'ĐÃ GỠ TRÊN BẢN THỬ';
         statusTag.className = 'px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0';
       } else if (desc.isThreat) {
-        statusTag.textContent = 'NGUY HIỂM • MÃ TỰ CHẠY';
+        statusTag.textContent = 'CÓ DẤU HIỆU TĨNH';
         statusTag.className = 'px-2.5 py-1 rounded-md text-xs font-bold bg-red-50 text-error border border-red-200 shrink-0';
       } else if (desc.isUriLink || desc.isAnnotKind) {
-        statusTag.textContent = 'AN TOÀN • LIÊN KẾT / GHI CHÚ';
+        statusTag.textContent = 'LIÊN KẾT / GHI CHÚ';
         statusTag.className = 'px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0';
       } else {
-        statusTag.textContent = 'AN TOÀN • BÌNH THƯỜNG';
+        statusTag.textContent = 'CẤU TRÚC PDF';
         statusTag.className = 'px-2.5 py-1 rounded-md text-xs font-bold bg-slate-100 text-on-surface-variant border border-slate-200 shrink-0';
       }
 
       document.getElementById('hud-node-type').textContent = desc.roleVi;
-      document.getElementById('hud-node-size').textContent = `${meta.size_bytes || 0} byte`;
-      document.getElementById('hud-node-entropy').textContent = Number.isFinite(meta.entropy) ? `${meta.entropy.toFixed(2)} / 8.0` : '--';
-      document.getElementById('hud-node-saliency').textContent = Number.isFinite(meta.saliency) ? `${(meta.saliency * 100).toFixed(1)}%` : '--';
+      const measureSource = source => source === 'pdf_object_span' ? 'byte đối tượng' : 'luồng mã hóa';
+      document.getElementById('hud-node-size').textContent = meta.size_source && Number.isFinite(meta.size_bytes)
+        ? `${meta.size_bytes} byte · ${measureSource(meta.size_source)}` : 'Chưa đo';
+      document.getElementById('hud-node-entropy').textContent = meta.entropy_source && Number.isFinite(meta.entropy)
+        ? `${meta.entropy.toFixed(2)} / 8 · ${measureSource(meta.entropy_source)}` : 'Chưa đo';
+      const influence = meta.xai_saliency ?? meta.saliency;
+      document.getElementById('hud-node-saliency').textContent = Number.isFinite(influence)
+        ? `${(influence * 100).toFixed(1)}%` : 'Chưa đo';
+      document.getElementById('ablate-text').textContent = desc.isCluster ? 'Mở cụm trang'
+        : desc.isThreat ? 'Thử gỡ trên bản sao' : 'Thử che đặc trưng trong mô hình';
 
       const snippetEl = document.getElementById('hud-snippet-code');
       const rawSnippet = meta.snippet || '';
-      snippetEl.textContent = rawSnippet ? _formatReadableCodeSnippet(rawSnippet) : 'Thành phần cấu trúc này không chứa đoạn mã kịch bản ẩn.';
+      snippetEl.textContent = rawSnippet ? _formatReadableCodeSnippet(rawSnippet) : 'Chưa có bản xem trước cho đối tượng này.';
 
       if (!preserveAblationBox) document.getElementById('ablation-result-box').classList.add('hidden');
     }
@@ -4991,7 +4926,7 @@
 
       icon.textContent = 'progress_activity';
       icon.classList.add('animate-spin');
-      text.textContent = mode === 'all_triggers' ? 'Đang phẫu thuật gỡ toàn bộ nhánh độc hại...' : 'Đang phẫu thuật cắt nhánh đang chọn...';
+      text.textContent = 'Đang chạy phép thử…';
       btn.disabled = true;
 
       const formData = new FormData();
@@ -5008,7 +4943,8 @@
         }
         const abl = await res.json();
 
-        const excisedNodes = Array.isArray(abl.excised_node_ids) ? abl.excised_node_ids : [];
+        const binary = abl.ablation_method === 'pikepdf_binary_excision';
+        const excisedNodes = binary && Array.isArray(abl.excised_node_ids) ? abl.excised_node_ids : [];
         excisedNodes.forEach(nid => ablatedGraphNodeIds.add(nid));
         if (excisedNodes.length > 0 && currentScanResult) {
           const resetBtn = document.getElementById('btn-reset-ablation');
@@ -5021,7 +4957,7 @@
 
         const vAfter = abl.verdict_after;
         const vBadge = document.getElementById('ablation-res-verdict');
-        vBadge.textContent = vAfter === 'MALICIOUS' ? 'CÒN NHÁNH ĐỘC KHÁC' : 'TRỞ NÊN AN TOÀN';
+        vBadge.textContent = vAfter === 'MALICIOUS' ? 'VƯỢT NGƯỠNG' : vAfter === 'BENIGN' ? 'DƯỚI NGƯỠNG' : 'CHƯA CÓ ĐIỂM';
         vBadge.className = vAfter === 'MALICIOUS'
           ? 'px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200'
           : 'px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-tertiary border border-emerald-200';
@@ -5029,9 +4965,9 @@
         const excisedKeysEl = document.getElementById('ablation-excised-keys');
         if (excisedKeysEl) {
           const keysList = Array.isArray(abl.excised_keys) ? abl.excised_keys : [];
-          excisedKeysEl.textContent = keysList.length > 0
-            ? `Đã cắt khóa PDF nhị phân: ${keysList.join(', ')}`
-            : `Thành phần (${selectedGraphNode.id}) là trang/nội dung chuẩn nên không có khóa kích hoạt độc hại nào bị cắt.`;
+          excisedKeysEl.textContent = binary
+            ? `Khóa gỡ trên bản sao PDF: ${keysList.join(', ')}`
+            : `Đã che ${abl.masked_node_count} nút trong đầu vào mô hình. Tệp PDF giữ nguyên.`;
         }
 
         document.getElementById('ablation-prob-before').textContent = (abl.prob_before * 100).toFixed(2) + '%';
@@ -5039,31 +4975,27 @@
 
         const delta = abl.prob_delta * 100;
         const deltaEl = document.getElementById('ablation-prob-delta');
-        deltaEl.textContent = `${delta >= 0 ? '+' : ''}${delta.toFixed(2)}%`;
+        deltaEl.textContent = `${delta >= 0 ? '+' : ''}${delta.toFixed(2)} điểm %`;
         deltaEl.className = delta <= 0 ? 'text-sm font-extrabold text-tertiary font-mono num' : 'text-sm font-extrabold text-error font-mono num';
 
         const remBox = document.getElementById('ablation-remaining-box');
         const remText = document.getElementById('ablation-remaining-text');
         const remNodes = Array.isArray(abl.remaining_threat_node_ids) ? abl.remaining_threat_node_ids : [];
         if (remBox && remText) {
-          if (remNodes.length > 0) {
-            const fullAfterPct = Number.isFinite(abl.full_chain_prob_after) ? (abl.full_chain_prob_after * 100).toFixed(2) + '%' : 'An toàn';
-            const friendlyRem = remNodes.map(id => _formatAttackPathStepVi(id, true)).join(', ');
-            remText.textContent = `Lưu ý: Tệp này vẫn còn ${remNodes.length} mắt xích độc hại dự phòng khác chưa gỡ (${friendlyRem}). Bạn có thể gỡ thêm hoặc gỡ tất cả cùng lúc (rủi ro giảm còn ${fullAfterPct}).`;
-            remBox.classList.remove('hidden');
-          } else {
-            remBox.classList.add('hidden');
+          remBox.classList.toggle('hidden', !binary || remNodes.length === 0);
+          if (binary && remNodes.length) {
+            remText.textContent = `Bản thử còn ${remNodes.length} đối tượng có dấu hiệu tĩnh.`;
           }
         }
 
         document.getElementById('ablation-latency-tag').textContent =
-          `Đã phẫu thuật gỡ ${abl.masked_node_count || excisedNodes.length || 0} mắt xích • Chấm điểm lại mất ${abl.latency_ms.toFixed(1)} ms`;
+          Number.isFinite(abl.latency_ms) ? `Thời gian phép thử ${abl.latency_ms.toFixed(1)} ms` : '';
       } catch (err) {
         showToast('Không thể thử gỡ thành phần này: ' + err.message, 'error');
       } finally {
         icon.textContent = 'content_cut';
         icon.classList.remove('animate-spin');
-        text.textContent = 'Thử gỡ bỏ thành phần đang chọn';
+        text.textContent = selectedGraphNode?.desc?.isThreat ? 'Thử gỡ trên bản sao' : 'Thử che đặc trưng trong mô hình';
         btn.disabled = false;
       }
     }
@@ -5138,7 +5070,7 @@
       const ratioPct = audit.size_before > 0 ? ((audit.size_after / audit.size_before) * 100).toFixed(1) : '--';
       const badgeAfter = document.getElementById('badge-cdr-after');
       if (badgeAfter) {
-        badgeAfter.textContent = audit.is_sanitized ? 'ĐÃ LÀM SẠCH AN TOÀN' : 'CẦN KIỂM TRA LẠI';
+        badgeAfter.textContent = audit.is_sanitized ? 'ĐÃ KIỂM TRA SAU LÀM SẠCH' : 'CẦN KIỂM TRA LẠI';
         badgeAfter.className = 'px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-tertiary border border-emerald-200';
       }
       const cleanNameEl = document.getElementById('cdr-clean-filename');
@@ -5146,15 +5078,15 @@
       const psv = audit.post_scan_verification || {};
       const cleanVerdictEl = document.getElementById('cdr-clean-verdict');
       if (cleanVerdictEl) {
-        const vAfterVi = psv.verdict_after === 'MALICIOUS' ? 'Cần lưu ý' :
-          psv.verdict_after === 'BENIGN' ? 'An toàn' : 'Chưa có kết luận quét lại';
+        const vAfterVi = psv.verdict_after === 'MALICIOUS' ? 'Điểm vượt ngưỡng' :
+          psv.verdict_after === 'BENIGN' ? 'Điểm dưới ngưỡng' : 'Chưa có điểm quét lại';
         cleanVerdictEl.textContent = Number.isFinite(psv.prob_after)
-          ? `${vAfterVi} (chỉ còn ${(psv.prob_after * 100).toFixed(2)}% rủi ro)`
+          ? `${vAfterVi} (${(psv.prob_after * 100).toFixed(2)}%)`
           : vAfterVi;
       }
       const remCount = Array.isArray(audit.removed_triggers) ? audit.removed_triggers.length : 0;
       const strippedEl = document.getElementById('cdr-stripped-count');
-      if (strippedEl) strippedEl.textContent = `Đã gỡ bỏ ${remCount} mục nguy hiểm`;
+      if (strippedEl) strippedEl.textContent = `Đã gỡ ${remCount} mục theo chính sách`;
       const pagesEl = document.getElementById('cdr-pages-preserved');
       if (pagesEl) pagesEl.textContent = `Giữ nguyên ${audit.sanitized_pages}/${audit.original_pages} trang (${ratioPct}% dung lượng)`;
       const suffix = audit.text_integrity_verified === true ? ' ký tự (giữ nguyên 100% chữ)' : ' ký tự';

@@ -60,6 +60,27 @@ def _preserved_document_state(pdf: pikepdf.Pdf) -> list[dict[str, Any]]:
     return states
 
 
+def is_navigation_destination(value: Any) -> bool:
+    if isinstance(value, pikepdf.Dictionary):
+        if str(value.get("/S", "")) != "/GoTo" or "/D" not in value:
+            return False
+        if any(key in value for key in ("/Next", "/JS", "/JavaScript")):
+            return False
+        value = value["/D"]
+        if isinstance(value, (pikepdf.Name, pikepdf.String)):
+            return True
+    if not isinstance(value, pikepdf.Array):
+        return False
+    return (
+        len(value) >= 2 and isinstance(value[0], pikepdf.Dictionary)
+        and str(value[0].get("/Type", "")) == "/Page"
+        and isinstance(value[1], pikepdf.Name) and all(
+            not isinstance(item, (pikepdf.Dictionary, pikepdf.Array, pikepdf.Stream))
+            for item in list(value)[1:]
+        )
+    )
+
+
 def _active_keys(pdf: pikepdf.Pdf, *, remove: bool) -> list[str]:
     pending = [(pdf.Root, "/Root", 0)] + [
         (obj, f"{obj.objgen[0]} {obj.objgen[1]} R", 0)
@@ -95,7 +116,8 @@ def _active_keys(pdf: pikepdf.Pdf, *, remove: bool) -> list[str]:
         for key in list(value.keys()):
             child = value[key]
             active = str(key) in forbidden or str(key) == "/S" and str(child) in {"/JavaScript", "/Launch", "/ImportData", "/SubmitForm", "/GoToE"}
-            if active:
+            navigation = str(key) == "/OpenAction" and is_navigation_destination(child)
+            if active and not navigation:
                 paths.append(f"{location}{key}")
                 if remove:
                     del value[key]
@@ -187,7 +209,7 @@ class PDFDisarmer:
             pdf_version = str(pdf.pdf_version)
             root = pdf.Root
 
-            if "/OpenAction" in root:
+            if "/OpenAction" in root and not is_navigation_destination(root["/OpenAction"]):
                 del root["/OpenAction"]
                 removed_triggers.append("catalog_OpenAction")
                 object_diff_matrix.append({
@@ -267,7 +289,7 @@ class PDFDisarmer:
                         "status": "Đã gỡ bỏ",
                         "visual_impact": None,
                     })
-                if "/OpenAction" in page_obj:
+                if "/OpenAction" in page_obj and not is_navigation_destination(page_obj["/OpenAction"]):
                     del page_obj["/OpenAction"]
                     removed_triggers.append(f"page_{page_idx}_OpenAction")
                 if "/Annots" in page_obj and isinstance(page_obj["/Annots"], pikepdf.Array):
@@ -301,7 +323,7 @@ class PDFDisarmer:
             for obj_idx, obj in enumerate(pdf.objects, start=1):
                 if not isinstance(obj, pikepdf.Dictionary):
                     continue
-                if "/OpenAction" in obj:
+                if "/OpenAction" in obj and not is_navigation_destination(obj["/OpenAction"]):
                     del obj["/OpenAction"]
                     removed_triggers.append(f"obj_{obj_idx}_OpenAction")
                 if "/AA" in obj:
@@ -360,6 +382,7 @@ class PDFDisarmer:
             sanitized_pages = len(verify_pdf.pages)
             objects_after = len(verify_pdf.objects)
             has_oa_after = "/OpenAction" in verify_pdf.Root
+            navigation_preserved = has_oa_after and is_navigation_destination(verify_pdf.Root["/OpenAction"])
             has_aa_after = "/AA" in verify_pdf.Root
             has_names_js_after = "/Names" in verify_pdf.Root and "/JavaScript" in verify_pdf.Root["/Names"]
             root_reference = f"{verify_pdf.Root.objgen[0]} {verify_pdf.Root.objgen[1]} R"
@@ -460,7 +483,7 @@ class PDFDisarmer:
             "objects_before": objects_before,
             "objects_after": objects_after,
             "root_status": root_reference,
-            "open_action_status": "NULL (Scrubbed)" if not has_oa_after else "Present",
+            "open_action_status": "Navigation destination" if navigation_preserved else "Absent after reparse",
             "additional_actions_status": "NULL (Scrubbed)" if not has_aa_after else "Present",
             "names_js_status": "Present" if has_names_js_after else "Absent after reparse",
             "content_streams_status": "decoded_content_and_resources_equal" if content_preserved and resources_preserved else "changed",
@@ -474,7 +497,7 @@ class PDFDisarmer:
             removed_triggers=removed_triggers,
             neutralized_scripts=neutralized_scripts,
             preserved_pages=preserved_pages,
-            is_sanitized=not (has_oa_after or has_aa_after or has_names_js_after),
+            is_sanitized=not ((has_oa_after and not navigation_preserved) or has_aa_after or has_names_js_after),
             file_name=file_name,
             original_pages=preserved_pages,
             sanitized_pages=sanitized_pages,

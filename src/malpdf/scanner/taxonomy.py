@@ -243,58 +243,37 @@ class ThreatTaxonomyClassifier:
         records = ingest_data.get("raw_records") or []
         scripts = ingest_data.get("extracted_scripts") or []
         ast_stats = ingest_data.get("ast_stats") or {}
-        ast_counts = ingest_data.get("ast_node_counts") or {}
         raw_entropy = float(ingest_data.get("raw_entropy") or 0.0)
-        script_findings = forensic_dossier.get("script_findings") or []
+        script_findings = forensic_dossier.get("threat_scripts") or []
 
         is_malicious_verdict = verdict == "MALICIOUS" or (malware_prob is not None and malware_prob >= 0.5)
         prob_val = float(malware_prob) if malware_prob is not None else 0.0
 
-        has_open_action = (
-            any(r.get("evidence_id") == "action:open_action" and r.get("is_threat_trigger") for r in records)
-            or raw_tokens.get("OpenAction", 0) > 0
-        )
-        has_aa = (
-            any(r.get("evidence_id") == "action:aa" and r.get("is_threat_trigger") for r in records)
-            or raw_tokens.get("AA", 0) > 0
-        )
-        has_autoaction_trigger = any(
-            r.get("evidence_id") in ("action:open_action", "action:aa") and r.get("is_threat_trigger")
-            for r in records
-        ) or (is_malicious_verdict and (has_open_action or has_aa))
+        autoaction_records = [
+            record for record in records
+            if record.get("is_threat_trigger")
+            and record.get("evidence_id") in ("action:open_action", "action:aa")
+        ]
+        has_autoaction_trigger = bool(autoaction_records)
         has_names_js = any(r.get("evidence_id") == "script:names_js" for r in records)
-        has_js = (
-            len(scripts) > 0
-            or has_names_js
-            or any(
-                r.get("kind") == "script"
-                or "/JS" in str(r.get("content_preview", ""))
-                or "/JavaScript" in str(r.get("content_preview", ""))
-                for r in records
-            )
-            or (is_malicious_verdict and (raw_tokens.get("JS", 0) > 0 or raw_tokens.get("JavaScript", 0) > 0))
+        has_js = bool(scripts) or has_names_js or any(
+            r.get("evidence_id", "").startswith("script:action:") for r in records
         )
-        has_launch = any(
-            "/Launch" in str(r.get("content_preview", "")) for r in records
-        ) or (is_malicious_verdict and raw_tokens.get("Launch", 0) > 0)
+        has_launch = any(r.get("action_type") == "/Launch" for r in records)
         has_embedded_file = (
             any(r.get("kind") == "filespec" for r in records)
             or b"/EmbeddedFiles" in raw_pdf_bytes
-            or (is_malicious_verdict and raw_tokens.get("EmbeddedFile", 0) > 0)
+            or raw_tokens.get("EmbeddedFile", 0) > 0
         )
-        has_xfa = any(r.get("evidence_id") == "script:acroform_xfa" for r in records) or (
-            is_malicious_verdict and raw_tokens.get("XFA", 0) > 0
-        )
+        has_xfa = any(r.get("evidence_id") == "script:acroform_xfa" for r in records)
         has_acroform = raw_tokens.get("Acroform", 0) > 0 or b"/AcroForm" in raw_pdf_bytes
-        has_jbig2 = raw_tokens.get("JBIG2Decode", 0) > 0
-        has_richmedia = raw_tokens.get("RichMedia", 0) > 0
         has_encrypt = raw_tokens.get("Encrypt", 0) > 0
         structural_uri_count = sum(
             1 for r in records if "/URI" in str(r.get("content_preview", "")) or "Annot" in str(r.get("invoker", ""))
         )
         has_uri = raw_tokens.get("URI", 0) > 0 or structural_uri_count > 0
         has_objstm = raw_tokens.get("ObjStm", 0) > 0
-        has_submit_form = b"/SubmitForm" in raw_pdf_bytes or b"submitForm" in raw_pdf_bytes
+        has_submit_form = any(r.get("action_type") == "/SubmitForm" for r in records)
 
         all_indicators: set[str] = set()
         deobf_techniques: list[str] = []
@@ -330,12 +309,6 @@ class ThreatTaxonomyClassifier:
             all_indicators.intersection({"unescape_decode", "from_char_code", "eval_exec"})
         )
         loops_count = int(ast_stats.get("loops") or 0)
-        array_expr_count = int(ast_counts.get("ArrayExpression") or 0)
-        binary_expr_count = int(ast_counts.get("BinaryExpression") or 0)
-        has_heap_or_buffer_staging = (
-            "heap_spray_pattern" in all_indicators
-            or (has_js and loops_count >= 1 and (array_expr_count >= 1 or binary_expr_count >= 1))
-        )
         has_export_dropper = "export_data_object" in all_indicators or bool(
             re.search(r"\bexportDataObject\s*\(|\bimportDataObject\s*\(", combined_js, re.IGNORECASE)
         )
@@ -344,66 +317,47 @@ class ThreatTaxonomyClassifier:
         for cve_id, pattern, desc in CVE_EXPLOIT_SIGNATURES:
             if re.search(pattern, combined_js, re.IGNORECASE):
                 matched_cves.append((cve_id, desc))
-        if has_jbig2 and is_malicious_verdict:
-            matched_cves.append(("CVE-2009-0658", "Suspicious JBIG2Decode Compressed Stream Filter"))
-        if has_richmedia and is_malicious_verdict:
-            matched_cves.append(("CVE-2011-0611", "Embedded RichMedia/Flash Object Trigger"))
-
         stream_decode_failures = sum(1 for r in records if r.get("stream_decode_failed"))
         decomp_exceeded = any(bool(r.get("decompression_ratio_exceeded")) for r in records)
-        stream_mismatch = abs(raw_tokens.get("stream", 0) - raw_tokens.get("endstream", 0)) > 0
-        has_stream_anomaly = decomp_exceeded or stream_decode_failures > 0 or (stream_mismatch and is_malicious_verdict)
+        has_stream_anomaly = decomp_exceeded or stream_decode_failures > 0
 
         autoaction_sources = [
-            f"{r.get('invoker')} ({r.get('obj_ref_str') or r.get('evidence_id')})"
-            for r in records
-            if r.get("evidence_id") in ("action:open_action", "action:aa") and r.get("is_threat_trigger")
+            str(r.get("invoker") or r["evidence_id"]) for r in autoaction_records
         ]
-
-        evidence_by_head: dict[str, tuple[str, str]] = {
+        observations = {
             "js_script_exec": (
-                f"Trích xuất được {len(scripts)} đoạn mã kịch bản chạy ngầm trong tệp"
-                if scripts
-                else "Ghi nhận khóa /JavaScript hoặc /JS nhúng trong cấu trúc đối tượng",
-                "Không có đoạn mã kịch bản JavaScript chạy ngầm",
+                f"Trích xuất được {len(scripts)} đoạn JavaScript"
+                if scripts else "Ghi nhận cấu trúc JavaScript trong cây đối tượng" if has_js else None
             ),
             "auto_open_trigger": (
-                "Cài sẵn khóa tự kích hoạt ngay khi mở: " + ", ".join(autoaction_sources)
-                if autoaction_sources
-                else "Ghi nhận khóa tự động kích hoạt (/OpenAction hoặc /AA) trong tệp",
-                "Không có lệnh tự động chạy khi mở tài liệu",
+                "Hành động tự động ghi nhận trong cấu trúc: " + ", ".join(autoaction_sources)
+                if autoaction_sources else None
             ),
             "obfuscated_payload": (
-                "Phát hiện kỹ thuật làm rối / mã hóa chuỗi ẩn ("
-                + ", ".join(deobf_techniques or sorted(all_indicators) or ["escaped_tokens"])
-                + ")",
-                "Không thấy đoạn mã bị làm rối hay che giấu ký tự",
+                "Dấu hiệu làm rối trong JavaScript: " + ", ".join(deobf_techniques or sorted(
+                    all_indicators.intersection({"unescape_decode", "from_char_code", "eval_exec"})
+                ))
+                if has_obfuscated_js else None
             ),
             "buffer_loop_staging": (
-                f"Cây cú pháp AST ghi nhận {max(loops_count, 1)} vòng lặp tự ghép/nạp dữ liệu vào bộ nhớ",
-                "Không có vòng lặp nạp dữ liệu bất thường vào bộ nhớ",
+                f"AST ghi nhận {loops_count} vòng lặp trong JavaScript"
+                if loops_count > 0 and has_js else None
             ),
             "active_form_or_exploit": (
-                "; ".join(f"{cid}: {cdesc}" for cid, cdesc in matched_cves)
-                if matched_cves
-                else "Phát hiện thành phần biểu mẫu động XFA / bộ giải mã đặc biệt đáng ngờ",
-                "Không thấy dấu hiệu khai thác biểu mẫu động hay lỗi phần mềm đọc PDF",
+                "Dấu hiệu tĩnh khớp mẫu tham chiếu: " + ", ".join(cid for cid, _ in matched_cves)
+                if matched_cves else None
             ),
             "embedded_dropper_or_launch": (
-                "Phát hiện khóa gọi lệnh máy tính (/Launch) bên trong tệp"
-                if has_launch
-                else "Phát hiện tệp đính kèm ẩn (/EmbeddedFiles) hoặc lệnh tự bung tệp ra máy",
-                "Không có tệp lạ đính kèm ẩn hay lệnh gọi chương trình ngoài",
+                "Ghi nhận hành động /Launch" if has_launch else
+                "Ghi nhận lời gọi liên quan đến xuất hoặc nhập tệp trong JavaScript" if has_export_dropper else None
             ),
             "suspicious_uri_redirect": (
-                f"Phát hiện {max(raw_tokens.get('URI', 0), structural_uri_count, 1)} liên kết chuyển hướng / biểu mẫu gửi dữ liệu đáng ngờ",
-                "Các liên kết (nếu có) đều ở trạng thái bình thường, không có dấu hiệu dẫn dụ độc hại",
+                "Ghi nhận hành động gửi biểu mẫu" if has_submit_form else
+                None
             ),
             "structural_parser_evasion": (
-                "Luồng dữ liệu nén có dấu hiệu lỗi giải nén hoặc tỷ lệ nén bất thường"
-                if has_stream_anomaly
-                else "Mô hình đồ thị ghi nhận cách bố trí đối tượng và luồng tham chiếu khác thường giống mã độc",
-                "Cấu trúc đối tượng và luồng dữ liệu các trang hoàn toàn bình thường",
+                f"Lỗi giải mã luồng: {stream_decode_failures}. Vượt giới hạn giải nén: {'có' if decomp_exceeded else 'chưa ghi nhận'}."
+                if has_stream_anomaly else None
             ),
         }
 
@@ -413,131 +367,59 @@ class ThreatTaxonomyClassifier:
             ingest_data=ingest_data,
             has_obfuscated_js=has_obfuscated_js,
             has_embedded_file=has_embedded_file or has_export_dropper,
-            has_launch=has_launch,
+            has_launch=has_launch or raw_tokens.get("Launch", 0) > 0,
             structural_uri_count=structural_uri_count,
         )
 
-        explicit_critical = bool(
-            matched_cves
-            or has_launch
-            or has_export_dropper
-            or (has_autoaction_trigger and has_obfuscated_js)
-        )
-
+        raw_probs, aux_mal_prob = ml_out if ml_out is not None else (None, None)
+        classification_source = "multilabel_neural_model_v2" if raw_probs is not None else "structural_fallback"
         ml_label_predictions: list[dict[str, Any]] = []
         analyzer_detections: list[dict[str, Any]] = []
 
-        if ml_out is not None:
-            raw_probs, aux_mal_prob = ml_out
-            classification_source = "multilabel_neural_model_v2"
-            if verdict in ("MALICIOUS", "BENIGN"):
-                gate_open = bool(is_malicious_verdict or explicit_critical)
-            else:
-                gate_open = bool(is_malicious_verdict or (aux_mal_prob >= 0.50) or explicit_critical)
-
-            fallback_overrides = {
-                "active_form_or_exploit": bool(matched_cves),
-                "embedded_dropper_or_launch": bool(has_launch or has_export_dropper),
-                "auto_open_trigger": bool(has_autoaction_trigger and (is_malicious_verdict or has_obfuscated_js)),
-                "obfuscated_payload": bool(has_obfuscated_js and (is_malicious_verdict or has_autoaction_trigger)),
-                "js_script_exec": bool(has_js and (is_malicious_verdict or has_obfuscated_js)),
+        observed_label_names = {
+            "js_script_exec": "JavaScript nhúng",
+            "auto_open_trigger": "Hành động tự động",
+            "obfuscated_payload": "Dấu hiệu làm rối JavaScript",
+            "buffer_loop_staging": "Vòng lặp trong JavaScript",
+            "active_form_or_exploit": "Dấu hiệu khớp mẫu khai thác",
+            "embedded_dropper_or_launch": "Hành động mở hoặc xuất tệp",
+            "suspicious_uri_redirect": "Hành động gửi biểu mẫu",
+            "structural_parser_evasion": "Bất thường khi giải mã luồng",
+        }
+        for idx, definition in enumerate(self.label_defs):
+            lid = str(definition["id"])
+            score = float(raw_probs[idx]) if raw_probs is not None else None
+            threshold = float(definition.get("threshold", 0.50)) if score is not None else None
+            evidence = observations.get(lid)
+            model_flagged = score is not None and threshold is not None and score >= threshold
+            observed = evidence is not None
+            status = "observed" if observed else "model_signal" if model_flagged else "not_observed"
+            details = evidence or (
+                "Điểm mô hình vượt ngưỡng. Phân tích tĩnh chưa ghi nhận bằng chứng tương ứng."
+                if model_flagged else "Phân tích tĩnh chưa ghi nhận bằng chứng tương ứng."
+            )
+            assessment = {
+                "probability": round(score, 4) if score is not None else None,
+                "probability_pct": round(score * 100.0, 2) if score is not None else None,
+                "threshold": round(threshold, 3) if threshold is not None else None,
+                "detected": observed,
+                "evidence_status": status,
+                "model_flagged": model_flagged,
+                "evidence": details,
             }
-
-            for idx, defn in enumerate(self.label_defs):
-                lid = str(defn["id"])
-                prob_k = float(raw_probs[idx])
-                thr_k = float(defn.get("threshold", 0.50))
-                det_k = bool(gate_open and (prob_k >= thr_k or fallback_overrides.get(lid, False)))
-                if det_k and prob_k < thr_k:
-                    display_prob = max(prob_k, thr_k)
-                elif not gate_open:
-                    display_prob = min(prob_k * max(prob_val * 1.5, 0.05), thr_k * 0.45)
-                else:
-                    display_prob = prob_k
-                pct_k = round(display_prob * 100.0, 1)
-                pos_ev, neg_ev = evidence_by_head.get(lid, (defn["desc_vi"], "Không phát hiện dấu hiệu rủi ro"))
-                ev_text = pos_ev if det_k else neg_ev
-
-                entry = {
-                    "id": lid,
-                    "code_name": defn["code_name"],
-                    "label_vi": defn["label_vi"],
-                    "category_code": defn["category_code"],
-                    "category_vi": defn["category_vi"],
-                    "family_code": defn["family_code"],
-                    "family_vi": defn["family_vi"],
-                    "behavior_tag": defn["behavior_tag"],
-                    "mitre_id": defn["mitre_id"],
-                    "mitre_name_vi": defn["mitre_name_vi"],
-                    "mitre_tactic_vi": defn["mitre_tactic_vi"],
-                    "desc_vi": defn["desc_vi"],
-                    "probability": round(display_prob, 4),
-                    "probability_pct": pct_k,
-                    "threshold": round(thr_k, 3),
-                    "detected": det_k,
-                    "evidence": ev_text,
-                }
-                ml_label_predictions.append(entry)
-                analyzer_detections.append({
-                    "id": lid,
-                    "analyzer": defn["label_vi"],
-                    "engine_type": "Mô hình AI đa nhãn",
-                    "detected": det_k,
-                    "probability": round(display_prob, 4),
-                    "probability_pct": pct_k,
-                    "threshold": round(thr_k, 3),
-                    "result": f"AI dự đoán: {pct_k:.1f}%" if det_k else f"An toàn ({pct_k:.1f}%)",
-                    "evidence": ev_text,
-                })
-        else:
-            classification_source = "structural_fallback"
-            aux_mal_prob = prob_val
-            heuristic_flags = {
-                "js_script_exec": bool(has_js and (is_malicious_verdict or has_autoaction_trigger or has_obfuscated_js)),
-                "auto_open_trigger": bool(has_autoaction_trigger),
-                "obfuscated_payload": bool(has_obfuscated_js),
-                "buffer_loop_staging": bool(has_heap_or_buffer_staging and (is_malicious_verdict or has_obfuscated_js)),
-                "active_form_or_exploit": bool(matched_cves or (has_xfa and is_malicious_verdict)),
-                "embedded_dropper_or_launch": bool(has_launch or has_export_dropper or (has_embedded_file and is_malicious_verdict)),
-                "suspicious_uri_redirect": bool((has_submit_form or has_uri) and is_malicious_verdict and not has_js),
-                "structural_parser_evasion": bool(has_stream_anomaly and is_malicious_verdict),
-            }
-            for defn in self.label_defs:
-                lid = str(defn["id"])
-                det_k = heuristic_flags.get(lid, False)
-                pct_k = round((prob_val if det_k else 0.0) * 100.0, 1)
-                pos_ev, neg_ev = evidence_by_head.get(lid, (defn["desc_vi"], "Không phát hiện dấu hiệu rủi ro"))
-                ev_text = pos_ev if det_k else neg_ev
-                ml_label_predictions.append({
-                    "id": lid,
-                    "code_name": defn["code_name"],
-                    "label_vi": defn["label_vi"],
-                    "category_code": defn["category_code"],
-                    "category_vi": defn["category_vi"],
-                    "family_code": defn["family_code"],
-                    "family_vi": defn["family_vi"],
-                    "behavior_tag": defn["behavior_tag"],
-                    "mitre_id": defn["mitre_id"],
-                    "mitre_name_vi": defn["mitre_name_vi"],
-                    "mitre_tactic_vi": defn["mitre_tactic_vi"],
-                    "desc_vi": defn["desc_vi"],
-                    "probability": round(prob_val if det_k else 0.0, 4),
-                    "probability_pct": pct_k,
-                    "threshold": 0.5,
-                    "detected": det_k,
-                    "evidence": ev_text,
-                })
-                analyzer_detections.append({
-                    "id": lid,
-                    "analyzer": defn["label_vi"],
-                    "engine_type": "Phân tích nội bộ",
-                    "detected": det_k,
-                    "probability": round(prob_val if det_k else 0.0, 4),
-                    "probability_pct": pct_k,
-                    "threshold": 0.5,
-                    "result": "Phát hiện rủi ro" if det_k else "An toàn",
-                    "evidence": ev_text,
-                })
+            label = observed_label_names.get(lid, definition["label_vi"]) if observed else definition["label_vi"]
+            ml_label_predictions.append({**definition, "label_vi": label, **assessment})
+            analyzer_detections.append({
+                "id": lid,
+                "analyzer": label,
+                "engine_type": "PyTorch Multi-Label AI" if score is not None else "Phân tích tĩnh",
+                **assessment,
+                "result": {
+                    "observed": "Có dấu hiệu tĩnh",
+                    "model_signal": "Tín hiệu mô hình",
+                    "not_observed": "Chưa ghi nhận dấu hiệu",
+                }[status],
+            })
 
         active_heads = [h for h in ml_label_predictions if h["detected"]]
         active_by_id = {h["id"]: h for h in active_heads}
@@ -550,7 +432,7 @@ class ThreatTaxonomyClassifier:
                 behavior_tags.append(btag)
         if has_js and "js-embedded" not in behavior_tags:
             behavior_tags.append("js-embedded")
-        if (has_open_action or has_aa) and is_malicious_verdict and "autoaction" not in behavior_tags:
+        if has_autoaction_trigger and "autoaction" not in behavior_tags:
             behavior_tags.append("autoaction")
         if has_names_js and "names-js" not in behavior_tags:
             behavior_tags.append("names-js")
@@ -595,7 +477,7 @@ class ThreatTaxonomyClassifier:
                     "id": mid,
                     "name": str(h["mitre_name_vi"]),
                     "tactic": str(h["mitre_tactic_vi"]),
-                    "evidence": f"{h['evidence']} (AI: {h['probability_pct']:.1f}%)",
+                    "evidence": h["evidence"],
                 })
 
         predicted_labels_vi = [
@@ -604,13 +486,13 @@ class ThreatTaxonomyClassifier:
                 "label_vi": h["label_vi"],
                 "probability_pct": h["probability_pct"],
             }
-            for h in sorted(active_heads, key=lambda x: float(x["probability"]), reverse=True)
+            for h in sorted(active_heads, key=lambda x: x["probability"] or 0.0, reverse=True)
         ]
 
         if matched_cves:
             primary_cve = matched_cves[0][0]
             threat_label = f"Exploit.PDF.{primary_cve}"
-            threat_title_vi = f"Mã độc khai thác lỗi trình đọc PDF ({primary_cve})"
+            threat_title_vi = f"Dấu hiệu tĩnh khớp mẫu {primary_cve}"
             threat_categories = ["exploit", "cve-targeted", "pdf-reader"]
             categories_vi = [
                 {"code": "exploit", "label_vi": "Khai thác trình đọc PDF"},
@@ -618,14 +500,11 @@ class ThreatTaxonomyClassifier:
             ]
             family_labels = ["pdfexp", primary_cve.lower()]
             families_vi = [
-                {"code": h["id"], "label_vi": f"{h['label_vi']} ({h['probability_pct']:.0f}%)"}
+                {"code": h["id"], "label_vi": str(h["label_vi"])}
                 for h in predicted_labels_vi[:4]
             ] or [{"code": primary_cve.lower(), "label_vi": f"Khai thác {primary_cve}"}]
             severity = "CRITICAL"
-            summary_vi = (
-                f"Mô hình AI đa nhãn và bộ quét cấu trúc phát hiện dấu hiệu lợi dụng lỗi bảo mật {primary_cve} "
-                f"của phần mềm đọc PDF."
-            )
+            summary_vi = f"Dấu hiệu tĩnh trong tệp khớp mẫu tham chiếu {primary_cve}."
         elif active_heads:
             active_ids = set(active_by_id.keys())
             if "active_form_or_exploit" in active_ids and "auto_open_trigger" not in active_ids:
@@ -648,6 +527,8 @@ class ThreatTaxonomyClassifier:
                 for hid in CODE_PRIORITY_ORDER
                 if hid in active_by_id
             ]
+            if not is_malicious_verdict:
+                prefix = "Indicators.PDF"
             if has_launch and "LaunchCommand" not in ordered_codes:
                 ordered_codes.insert(0, "LaunchCommand")
             top_codes = ordered_codes[:2] if ordered_codes else ["Heuristic"]
@@ -679,12 +560,12 @@ class ThreatTaxonomyClassifier:
             families_vi = [
                 {
                     "code": h["id"],
-                    "label_vi": f"{h['label_vi']} ({h['probability_pct']:.0f}%)",
+                    "label_vi": str(h["label_vi"]),
                 }
                 for h in predicted_labels_vi[:4]
             ]
 
-            top_sorted = sorted(active_heads, key=lambda x: float(x["probability"]), reverse=True)
+            top_sorted = sorted(active_heads, key=lambda x: x["probability"] or 0.0, reverse=True)
             lowered_top = [
                 (str(h["label_vi"])[0].lower() + str(h["label_vi"])[1:])
                 if str(h["label_vi"])
@@ -692,47 +573,45 @@ class ThreatTaxonomyClassifier:
                 for h in top_sorted[:2]
             ]
             top_two_names = " & ".join(x for x in lowered_top if x)
-            threat_title_vi = f"AI phát hiện {detected_count} hành vi nguy hiểm: {top_two_names}"
+            threat_title_vi = f"Ghi nhận {detected_count} nhóm dấu hiệu tĩnh: {top_two_names}"
             detail_parts = [
-                f"{h['label_vi']} ({h['probability_pct']:.1f}%)"
+                str(h["label_vi"])
                 for h in top_sorted[:4]
             ]
-            summary_vi = (
-                f"Mô hình AI đa nhãn tự quét đặc trưng tệp và nhận diện {detected_count}/8 nhóm hành vi độc hại: "
-                + ", ".join(detail_parts)
-                + "."
-            )
+            summary_vi = "Phân tích tĩnh ghi nhận: " + ", ".join(detail_parts) + "."
             severity = "CRITICAL" if (is_malicious_verdict and detected_count >= 3) else "HIGH"
         elif is_malicious_verdict:
             threat_label = "HEUR:Trojan.PDF.StructuralAnomaly"
-            threat_title_vi = "AI phát hiện cấu trúc tệp bất thường giống mã độc"
+            threat_title_vi = "Điểm mô hình vượt ngưỡng cảnh báo"
             threat_categories = ["trojan", "structural-evasion"]
             categories_vi = [{"code": "structural-evasion", "label_vi": "Cấu trúc PDF dị thường"}]
             family_labels = ["pdfheur", "gnn-structural"]
             families_vi = [{"code": "gnn-structural", "label_vi": f"Cấu trúc đáng ngờ ({prob_val * 100:.0f}%)"}]
             severity = "HIGH"
             summary_vi = (
-                f"Mô hình AI ghi nhận {prob_val * 100:.1f}% dấu hiệu cấu trúc bên trong tệp trùng khớp với mẫu PDF độc hại."
+                f"Điểm mô hình {prob_val * 100:.2f}%. "
+                "Phân tích tĩnh chưa ghi nhận dấu hiệu cụ thể thuộc các nhóm trên."
             )
         else:
-            threat_label = "Clean.PDF.Verified"
-            threat_title_vi = "Tài liệu PDF an toàn — Không phát hiện hành vi độc hại"
-            threat_categories = ["clean"]
-            categories_vi = [{"code": "clean", "label_vi": "An toàn"}]
+            threat_label = "Clean.PDF.Verified" if verdict == "BENIGN" else "Analysis.Unavailable"
+            threat_title_vi = (
+                "Mô hình xếp tệp dưới ngưỡng cảnh báo" if verdict == "BENIGN" else "Chưa có điểm đánh giá tệp"
+            )
+            threat_categories = []
+            categories_vi = []
             family_labels = []
             families_vi = []
-            severity = "SAFE"
-            summary_vi = (
-                "Mô hình AI đa nhãn đã tự kiểm tra toàn bộ 8 nhóm hành vi nguy hiểm trên tệp này và không phát hiện dấu hiệu mã độc."
-            )
+            severity = "SAFE" if verdict == "BENIGN" else "UNAVAILABLE"
+            summary_vi = "Phân tích tĩnh chưa ghi nhận dấu hiệu cụ thể thuộc các nhóm trên."
 
         return {
             "classification_source": classification_source,
             "model_name": "PDFMultiLabelThreatNet" if self.ml_weights_loaded else "StructuralFallback",
             "ml_weights_loaded": self.ml_weights_loaded,
-            "aux_malware_probability": round(float(aux_mal_prob), 4),
+            "aux_malware_probability": round(float(aux_mal_prob), 4) if aux_mal_prob is not None else None,
             "threat_label": threat_label,
             "threat_title_vi": threat_title_vi,
+            "evidence_scope": "static_analysis",
             "severity": severity,
             "summary_vi": summary_vi,
             "threat_categories": threat_categories,
@@ -745,6 +624,7 @@ class ThreatTaxonomyClassifier:
             "mitre_attack": mitre_attack,
             "matched_cves": [{"cve_id": c, "description": d} for c, d in matched_cves],
             "detected_count": detected_count,
+            "model_flagged_count": sum(h["model_flagged"] for h in ml_label_predictions),
             "total_analyzers": len(analyzer_detections),
             "ml_label_predictions": ml_label_predictions,
             "analyzer_detections": analyzer_detections,

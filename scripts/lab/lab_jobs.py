@@ -25,7 +25,16 @@ API = 1
 JOBS = Path('/var/lib/malpdf/jobs')
 CONFIG = Path('/etc/malpdf/runner.json')
 HEX = re.compile(r'[0-9a-f]{64}\Z')
-PDF_KINDS = {'pdf-static', 'pdf-static-cve', 'pdf-static-cic-full', 'pdf-diagnostic-replay', 'pdf-static-bulk'}
+HOLDOUT_TLSH_KIND = 'pdf-tlsh-holdout'
+POOLED_TLSH_KIND = 'pdf-tlsh-pooled'
+BENIGN_OOD_KIND = 'pdf-benign-ood'
+BENIGN_OOD_EXPANDED_KIND = 'pdf-benign-ood-expanded'
+BENIGN_OOD_DIVERSE_KIND = 'pdf-benign-ood-diverse'
+BENIGN_V32_COHORT_KIND = 'pdf-benign-v32-cohort'
+BENIGN_OOD_KINDS = {BENIGN_OOD_KIND, BENIGN_OOD_EXPANDED_KIND, BENIGN_OOD_DIVERSE_KIND, BENIGN_V32_COHORT_KIND}
+FINGERPRINT_KINDS = {HOLDOUT_TLSH_KIND, POOLED_TLSH_KIND}
+PDF_KINDS = {'pdf-static', 'pdf-static-cve', 'pdf-static-cic-full', 'pdf-diagnostic-replay',
+             'pdf-static-bulk', *BENIGN_OOD_KINDS, *FINGERPRINT_KINDS}
 KINDS = {'syntax', 'synthetic', *PDF_KINDS}
 LIMITS = {'wall_seconds': 1800, 'file_wall_seconds': 60, 'file_cpu_seconds': 45,
           'file_memory_bytes': 1073741824, 'file_max_bytes': 10485760,
@@ -80,6 +89,20 @@ def summary_valid(summary):
 
 
 def policy(kind):
+    if kind == BENIGN_V32_COHORT_KIND:
+        return {**policy(BENIGN_OOD_KIND), 'samples': 974, 'workers': 5, 'wall_seconds': 21600, 'output_bytes': 1024**3}
+    if kind == BENIGN_OOD_DIVERSE_KIND:
+        return {**policy(BENIGN_OOD_KIND), 'samples': 477, 'workers': 5, 'wall_seconds': 14400}
+    if kind == BENIGN_OOD_EXPANDED_KIND:
+        return {**policy(BENIGN_OOD_KIND), 'samples': 379, 'workers': 5, 'wall_seconds': 14400}
+    if kind == BENIGN_OOD_KIND:
+        return {**LIMITS, 'samples': 83, 'workers': 3, 'wall_seconds': 7200, 'file_max_bytes': 12 * 1024**2}
+    if kind == POOLED_TLSH_KIND:
+        return {**policy(HOLDOUT_TLSH_KIND), 'samples': 20166, 'wall_seconds': 14400}
+    if kind == HOLDOUT_TLSH_KIND:
+        return {**LIMITS, 'samples': 21559, 'workers': 1, 'wall_seconds': 1800,
+                'file_wall_seconds': 10, 'file_cpu_seconds': 10,
+                'file_max_bytes': 50 * 1024**2, 'output_bytes': 16 * 1024**2}
     if kind == 'pdf-diagnostic-replay':
         return {**policy('pdf-static-cic-full'), 'samples': 74}
     if kind == 'pdf-static':
@@ -98,6 +121,14 @@ def policy(kind):
             'file_cpu_seconds': 60 if kind == 'synthetic' else 30,
             'file_memory_bytes': 256 * 1024**2 if kind == 'synthetic' else 512 * 1024**2,
             'file_max_bytes': 2 * 1024**2, 'samples': 1, 'output_bytes': 2 * 1024**2}
+
+
+def pdf_bundle_limit(kind):
+    return 16 * 1024**2 if kind in BENIGN_OOD_KINDS else 8 * 1024**2
+
+
+def pdf_worker_fsize_limit(kind):
+    return max(pdf_bundle_limit(kind), policy(kind)['output_bytes'] if kind in FINGERPRINT_KINDS else 8 * 1024**2)
 
 
 @contextmanager
@@ -585,9 +616,9 @@ def pdf_halt_records(job, directory):
     return records
 
 
-def pdf_bundle_progress_status(path):
+def pdf_bundle_progress_status(path, *, max_bytes=16 * 1024**2 + 1024):
     try:
-        value = parse_json(side.bounded_read(path, 8 * 1024**2 + 1024))
+        value = parse_json(side.bounded_read(path, max_bytes))
     except (OSError, ValueError):
         return 'unreadable'
     if (not isinstance(value, dict) or not isinstance(value.get('status'), str)
@@ -751,8 +782,15 @@ def pdf_task(job, directory):
                 stderr=stderr, start_new_session=True, env=environment))
         while True:
             alive = [process for process in processes if process.poll() is None]
-            present = pdf_bundle_indices(outputs, planned)
-            completed = len(present)
+            if job['kind'] in FINGERPRINT_KINDS:
+                present = set()
+                progress = directory / 'fingerprint_progress.json'
+                completed = parse_json(side.bounded_read(trusted_path(progress), 64)) if progress.is_file() else 0
+                if type(completed) is not int or not 0 <= completed <= planned:
+                    raise ValueError('report_invalid')
+            else:
+                present = pdf_bundle_indices(outputs, planned)
+                completed = len(present)
             for idx in sorted(present - seen_bundles):
                 seen_bundles.add(idx)
                 b_status = pdf_bundle_progress_status(outputs / f'{idx:04d}.json')

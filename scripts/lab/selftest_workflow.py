@@ -5,6 +5,7 @@ import copy
 import io
 import json
 from pathlib import Path
+import subprocess
 import sys
 import tempfile
 import types
@@ -147,6 +148,17 @@ class WorkflowTests(unittest.TestCase):
             side.verify_release('d' * 40, job['manifest_sha256'])
         (side.RELEASES / job['commit'] / 'src/extra.py').write_text('pass\n')
         with self.assertRaises(ValueError):
+            side.verify_release(job['commit'], job['manifest_sha256'])
+
+    def test_release_diagnostic_import_requires_bytecode_writes_disabled(self):
+        job = self.installed()
+        package = side.RELEASES / job['commit'] / 'src/malpdf'
+        command = "import sys; sys.path.insert(0, sys.argv[1]); import inert; assert inert.value == 42"
+        subprocess.run([sys.executable, '-Es', '-B', '-c', command, str(package)], check=True)
+        side.verify_release(job['commit'], job['manifest_sha256'])
+
+        subprocess.run([sys.executable, '-Es', '-c', command, str(package)], check=True)
+        with self.assertRaisesRegex(ValueError, 'release_mismatch'):
             side.verify_release(job['commit'], job['manifest_sha256'])
 
     def test_receiver_queues_offline_job_without_running_it(self):

@@ -7,7 +7,6 @@ import json
 import math
 from pathlib import Path
 import re
-import time
 from typing import Any
 
 import numpy as np
@@ -20,6 +19,7 @@ except ImportError:
     torch = None
 
 from malpdf.extraction.byte_images import ByteImageLimits, _tile_order
+from malpdf.static.raw_scan import count_acroform_names
 
 NODE_TYPES: dict[str, int] = {
     "catalog": 0,
@@ -110,6 +110,7 @@ def _scan_scanner_raw_tokens(data: bytes) -> dict[str, int]:
     }
     for feature, token in _SCANNER_DIRECT_TOKENS:
         counts[feature] = data.count(token)
+    counts['AcroForm'] = count_acroform_names(data)
     return counts
 
 
@@ -327,12 +328,33 @@ def _extract_object_metadata(
     entropy_sample = raw_obj_bytes[:65536] if raw_obj_bytes else pdf_window
     entropy_val = round(_shannon_entropy(entropy_sample), 4)
 
+    physical_bytes = (
+        raw_pdf_bytes[offset_pos : offset_pos + min(phys_span_bytes, 65536)]
+        if offset_pos is not None and phys_span_bytes and 0 <= offset_pos < len(raw_pdf_bytes)
+        and offset_pos + phys_span_bytes <= len(raw_pdf_bytes) else None
+    )
+    if physical_bytes is not None:
+        measured_size, size_source = phys_span_bytes, "pdf_object_span"
+        measured_entropy, entropy_source = round(_shannon_entropy(physical_bytes), 4), "pdf_object_span"
+    elif is_stream and isinstance(raw_stream_buf, (bytes, bytearray)):
+        measured_size, size_source = len(raw_stream_buf), "encoded_stream"
+        measured_entropy = round(_shannon_entropy(bytes(raw_stream_buf[:65536])), 4)
+        entropy_source = "encoded_stream"
+    else:
+        measured_size = size_source = measured_entropy = entropy_source = None
+
     return {
         "obj_ref_str": obj_ref_str,
         "obj_num": obj_num,
         "generation": generation,
         "filter": filter_name,
         "size_bytes": actual_size,
+        "byte_measurements": {
+            "size_bytes": measured_size,
+            "size_source": size_source,
+            "entropy": measured_entropy,
+            "entropy_source": entropy_source,
+        },
         "phys_span_bytes": phys_span_bytes,
         "raw_stream_bytes": raw_stream_bytes,
         "decoded_stream_bytes": decoded_stream_bytes,
@@ -442,7 +464,6 @@ class InstantPDFIngestion:
         return data, sha256
 
     def ingest(self, source: str | Path | bytes, max_bytes: int = DEFAULT_MAX_PDF_BYTES) -> dict[str, Any]:
-        t0 = time.perf_counter()
         data, sha256 = self.read_bytes(source, max_bytes=max_bytes)
         if b"%PDF-" not in data[:1024]:
             raise ValueError("not_a_pdf_missing_header")
@@ -493,7 +514,6 @@ class InstantPDFIngestion:
 
         graph_data = self._build_hetero_graph(records, raw_edges)
         ast_tokens, ast_stats, ast_node_counts = self._extract_ast_stream(extracted_scripts)
-        elapsed_sec = time.perf_counter() - t0
         tab_features, raw_feature_vec = self._build_tabular_features(
             data=data,
             raw_tokens=raw_tokens,
@@ -505,7 +525,6 @@ class InstantPDFIngestion:
             ast_stats=ast_stats,
             records=records,
             extracted_scripts=extracted_scripts,
-            elapsed_sec=elapsed_sec,
         )
 
         return {
@@ -579,6 +598,19 @@ class InstantPDFIngestion:
                 "evidence_id": evidence_id,
                 "kind": kind,
                 "size_bytes": final_size,
+                "byte_measurements": meta["byte_measurements"],
+                "action_type": (
+                    str(obj_ref.get("/S") or "") if kind == "action" and isinstance(obj_ref, DictionaryObject)
+                    else None
+                ),
+                "action_role": (
+                    "destination" if evidence_id == "action:open_action" and (
+                        isinstance(obj_ref, ArrayObject) or (
+                            isinstance(obj_ref, DictionaryObject) and str(obj_ref.get("/S")) == "/GoTo"
+                            and "/D" in obj_ref and not any(key in obj_ref for key in ("/Next", "/JS", "/JavaScript"))
+                        )
+                    ) else None
+                ),
                 "phys_span_bytes": meta["phys_span_bytes"],
                 "raw_stream_bytes": meta["raw_stream_bytes"],
                 "decoded_stream_bytes": meta["decoded_stream_bytes"],
@@ -698,7 +730,8 @@ class InstantPDFIngestion:
                                 act_type = ""
                                 if isinstance(a_act, DictionaryObject):
                                     act_type = str(a_act.get("/S", ""))
-                                is_threat_act = act_type in ("/JavaScript", "/Launch", "/ImportData")
+                                is_threat_act = act_type in ("/JavaScript", "/Launch", "/ImportData", "/GoToE", "/SubmitForm")
+                                is_threat_act = is_threat_act or (isinstance(a_act, DictionaryObject) and "/JS" in a_act)
                                 register_node(
                                     act_id,
                                     "action",
@@ -746,7 +779,7 @@ class InstantPDFIngestion:
                         sub = aa_resolved[k]
                         if isinstance(sub, IndirectObject):
                             sub = sub.get_object()
-                        if isinstance(sub, DictionaryObject) and (str(sub.get("/S", "")) in ("/JavaScript", "/Launch") or "/JS" in sub):
+                        if isinstance(sub, DictionaryObject) and (str(sub.get("/S", "")) in ("/JavaScript", "/Launch", "/ImportData", "/GoToE", "/SubmitForm") or "/JS" in sub):
                             is_threat_aa = True
                 register_node(
                     aa_id,
@@ -1137,7 +1170,6 @@ class InstantPDFIngestion:
         ast_stats: dict[str, float],
         records: list[dict[str, Any]] | None = None,
         extracted_scripts: list[dict[str, Any]] | None = None,
-        elapsed_sec: float = 0.0,
     ) -> tuple[torch.Tensor | None, list[float | None]]:
         size_kb = len(data) / 1024.0
         ast_total = max(ast_stats["total_nodes"], 1.0)
@@ -1203,13 +1235,13 @@ class InstantPDFIngestion:
             spec_flood = abs(object_count - endobj_count) > 50.0 or abs(stream_count - endstream_count) > 50.0
             excessive_graph = object_count > 10000.0 or len(obs_records) >= 200
             ast_truncated = ast_stats["total_nodes"] >= 50000.0 or ast_stats["max_depth"] >= 128.0
-            timeout_flag = elapsed_sec >= 30.0
 
             measured.update({
                 "byte_image_file_encoded_ratio": byte_img_encoded,
                 "byte_image_file_persisted_ratio": byte_img_persisted,
                 "stream_truncation_ratio": stream_trunc_ratio,
-                "evasive_timeout_anomaly": 1.0 if timeout_flag else 0.0,
+                # A completed synchronous ingest has no parser timeout event.
+                "evasive_timeout_anomaly": 0.0,
                 "flag_decompression_ratio_exceeded": 1.0 if decomp_exceeded else 0.0,
                 "is_truncated_stream": 1.0 if is_truncated_stream else 0.0,
                 "flag_spec_violation_flood": 1.0 if spec_flood else 0.0,

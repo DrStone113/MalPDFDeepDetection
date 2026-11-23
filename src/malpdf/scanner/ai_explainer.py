@@ -38,15 +38,13 @@ class AIThreatExplainer:
             "HEUR:Trojan.PDF.Generic" if verdict == "MALICIOUS" else "Clean.PDF.Verified"
         )
         threat_title_vi = taxonomy.get("threat_title_vi") or (
-            "Tệp PDF có dấu hiệu chứa mã độc" if verdict == "MALICIOUS" else "Tài liệu PDF an toàn"
+            "Điểm mô hình vượt ngưỡng cảnh báo" if verdict == "MALICIOUS" else "Điểm mô hình dưới ngưỡng cảnh báo"
         )
         all_triggers = dossier.get("trigger_objects", []) or dossier.get("suspicious_triggers", []) or []
         active_triggers = [t for t in all_triggers if t.get("is_threat_trigger") or t.get("kind") in ("script", "filespec")]
-        triggers = active_triggers if (active_triggers or verdict == "BENIGN") else all_triggers
+        triggers = active_triggers
         scripts = dossier.get("threat_scripts", []) or dossier.get("script_findings", []) or []
-        attack_path_str = dossier.get("attack_path_string") or " -> ".join(
-            dossier.get("attack_path") or ["Catalog (/Root)"]
-        )
+        attack_path_str = dossier.get("attack_path_string") or " -> ".join(dossier.get("attack_path") or [])
 
         trigger_items = [
             f"{t.get('invoker', '/Unknown')} ({t.get('obj_ref_str') or t.get('object_id')})"
@@ -73,15 +71,11 @@ class AIThreatExplainer:
         if trigger_items:
             detail_parts.append(f"Triggers: {', '.join(trigger_items)}")
         if not detail_parts:
-            detail_parts.append(
-                "No embedded JavaScript or automatic execution triggers detected."
-                if verdict == "BENIGN"
-                else f"Detected {threat_label} via attack path {attack_path_str}"
-            )
+            detail_parts.append("Static scan did not observe JavaScript or active objects in the analyzed structure.")
 
         status_str = "Malicious" if verdict == "MALICIOUS" else ("Benign" if verdict == "BENIGN" else "Unavailable")
         threat_type_str = (
-            "Embedded Javascript / AutoAction"
+            "Embedded JavaScript observed"
             if scripts
             else (threat_label if verdict == "MALICIOUS" else "None")
         )
@@ -130,51 +124,30 @@ class AIThreatExplainer:
         verdict = scan_result.get("verdict", "UNAVAILABLE")
         prob = scan_result.get("malware_probability")
         prob_pct = round(prob * 100, 2) if isinstance(prob, (int, float)) else None
-        confidence = scan_result.get("confidence", "UNAVAILABLE")
-        ood_score = scan_result.get("ood_score")
-        ood_threshold = scan_result.get("ood_threshold", -0.85)
-        is_ood = scan_result.get("is_ood")
         pages = scan_result.get("pages_count", 1)
         size_kb = round(scan_result.get("file_size_bytes", 0) / 1024.0, 2)
-        pdf_version = scan_result.get("pdf_version", "1.7")
-        raw_entropy = scan_result.get("raw_entropy", 0.0)
         file_name = scan_result.get("file_name", "document.pdf")
         dossier = scan_result.get("forensic_dossier", {}) or {}
         taxonomy = scan_result.get("threat_taxonomy") or dossier.get("threat_taxonomy") or {}
-        threat_label = taxonomy.get("threat_label") or ("HEUR:Trojan.PDF.Generic" if verdict == "MALICIOUS" else "Clean.PDF.Verified")
         threat_title_vi = taxonomy.get("threat_title_vi") or (
-            "Tệp PDF có dấu hiệu chứa mã độc" if verdict == "MALICIOUS" else "Tài liệu PDF an toàn"
+            "Điểm mô hình vượt ngưỡng cảnh báo" if verdict == "MALICIOUS" else "Điểm mô hình dưới ngưỡng cảnh báo"
         )
-        threat_cats = taxonomy.get("threat_categories") or []
-        behavior_tags = taxonomy.get("behavior_tags") or []
-        mitre_list = taxonomy.get("mitre_attack") or []
         detected_cnt = taxonomy.get("detected_count", 0)
-        total_analyzers = taxonomy.get("total_analyzers", 8)
+        total_analyzers = taxonomy.get("total_analyzers", 0)
         all_triggers = dossier.get("trigger_objects", []) or dossier.get("suspicious_triggers", []) or []
         active_triggers = [t for t in all_triggers if t.get("is_threat_trigger") or t.get("kind") in ("script", "filespec")]
-        triggers = active_triggers if (active_triggers or verdict == "BENIGN") else all_triggers
+        triggers = active_triggers
         scripts = dossier.get("threat_scripts", []) or dossier.get("script_findings", []) or []
-        attack_path_str = dossier.get("attack_path_string") or " -> ".join(dossier.get("attack_path") or ["Catalog (/Root)"])
+        attack_path_str = dossier.get("attack_path_string") or " -> ".join(dossier.get("attack_path") or [])
 
-        indicators: list[str] = []
-        deobf_techniques: list[str] = []
-        for s in scripts:
-            indicators.extend(s.get("dangerous_indicators", []))
-            for tech in s.get("deobfuscation_techniques", []):
-                if tech not in deobf_techniques:
-                    deobf_techniques.append(tech)
-        unique_indicators = list(dict.fromkeys(indicators))
         trigger_names = [
             f"{t.get('invoker', '/Unknown')} ({t.get('obj_ref_str') or t.get('object_id')})"
             for t in triggers
         ]
-        trigger_summary = ", ".join(trigger_names[:4]) if trigger_names else "không có lệnh tự động chạy"
+        trigger_summary = ", ".join(trigger_names[:4]) if trigger_names else "chưa ghi nhận đối tượng nào"
 
-        cdr_status_text = (
-            f"Bạn có thể bấm 'Làm sạch tệp' ngay trên web để gỡ bỏ {len(triggers)} thành phần tự chạy ({trigger_summary}) mà vẫn giữ nguyên vẹn toàn bộ chữ viết và hình ảnh của {pages} trang tài liệu."
-            if triggers
-            else "Tệp không có lệnh tự chạy nguy hiểm. Nếu muốn cẩn thận hơn khi nhận tệp từ người lạ, bạn vẫn có thể bấm 'Làm sạch tệp' trước khi xem."
-        )
+        cdr_status_text = "Mục Làm sạch tệp cho phép tạo bản PDF đã xử lý và xem báo cáo kiểm tra lại."
+
         if isinstance(cdr_audit, dict) and cdr_audit.get("is_sanitized"):
             removed = cdr_audit.get("removed_triggers", [])
             post_ver = cdr_audit.get("post_scan_verification") or {}
@@ -182,7 +155,9 @@ class AIThreatExplainer:
             p_after = post_ver.get("prob_after")
             if isinstance(p_before, (int, float)) and isinstance(p_after, (int, float)):
                 cdr_status_text = (
-                    f"Tệp đã được làm sạch an toàn: đã gỡ bỏ {len(removed)} lệnh kích hoạt ngầm, mức rủi ro giảm từ {p_before * 100:.2f}% xuống còn {p_after * 100:.2f}%, giữ nguyên đủ {cdr_audit.get('sanitized_pages', pages)}/{cdr_audit.get('original_pages', pages)} trang."
+                    f"Đã gỡ {len(removed)} khóa theo chính sách làm sạch. "
+                    f"Điểm mô hình trước và sau xử lý: {p_before * 100:.2f}% → {p_after * 100:.2f}%. "
+                    f"Số trang: {cdr_audit.get('sanitized_pages', pages)}/{cdr_audit.get('original_pages', pages)}."
                 )
 
         compact_ctx = self.build_compact_llm_context(scan_result, cdr_audit=cdr_audit)
@@ -231,100 +206,30 @@ class AIThreatExplainer:
                 "fallback_webllm_model": FALLBACK_WEBLLM_MODEL,
             }
 
-        if verdict == "MALICIOUS":
-            danger_level = "CRITICAL" if prob_pct >= 85 else "HIGH"
-            deobf_note = (
-                " Đoạn mã này đã bị cố tình viết rối chữ để che giấu nội dung thật."
-                if deobf_techniques
-                else ""
-            )
-            mitre_str = ", ".join(f"{m['name']} ({m['id']})" for m in mitre_list[:3]) if mitre_list else "Thực thi mã ngầm"
-            cats_str = ", ".join(threat_cats) if threat_cats else "trojan"
-            breakdown = [
-                f"Loại mối đe dọa: {threat_title_vi} (mã nhận diện: {threat_label}).",
-                f"Kết quả rà soát: {detected_cnt}/{total_analyzers} hạng mục kiểm tra phát hiện dấu hiệu nguy hiểm.",
-                f"Hành vi ghi nhận: {mitre_str}.",
-                f"Vị trí gắn lệnh tự chạy trong tệp: {trigger_summary}.",
-                f"Đoạn mã ẩn bên trong: phát hiện {len(scripts)} đoạn mã JavaScript.{deobf_note}",
-                f"Trình tự kích hoạt khi mở tệp: {attack_path_str}.",
-            ]
-            return {
-                "explanation_method": "deterministic_evidence_summary",
-                "danger_level": danger_level,
-                "danger_score": prob_pct,
-                "headline": f"{threat_title_vi} — Mức độ rủi ro {prob_pct}%",
-                "executive_summary": (
-                    f"Tệp '{file_name}' ({pages} trang, {size_kb} KB) có dấu hiệu nguy hiểm rất rõ ràng ({prob_pct}% rủi ro). "
-                    f"Bên cạnh nội dung văn bản thông thường, tệp này bị cài sẵn {len(triggers)} lệnh tự động kích hoạt và {len(scripts)} đoạn mã ẩn. "
-                    f"Nếu bạn mở tệp trực tiếp, đoạn mã ngầm sẽ tự động chạy ngay lập tức mà không hỏi ý kiến. "
-                    f"Hãy bấm 'Làm sạch tệp' để gỡ bỏ phần mã độc trước khi đọc."
-                ),
-                "danger_analysis": [
-                    {
-                        "title": "Tệp này là loại gì?",
-                        "severity": "critical",
-                        "detail": (
-                            f"{threat_title_vi} ({threat_label}, nhóm: {cats_str}). "
-                            f"Có {detected_cnt}/{total_analyzers} hạng mục kiểm tra phát hiện bất thường."
-                        ),
-                    },
-                    {
-                        "title": "Điều gì xảy ra nếu mở tệp?",
-                        "severity": "high",
-                        "detail": (
-                            f"Khi vừa mở tài liệu, lệnh tự động ({trigger_summary}) sẽ âm thầm kích hoạt {len(scripts)} đoạn mã JavaScript ẩn bên trong."
-                        ),
-                    },
-                    {
-                        "title": "Cách đọc nội dung an toàn",
-                        "severity": "info",
-                        "detail": cdr_status_text,
-                    },
-                ],
-                "technical_breakdown": breakdown,
-                "remediation": (
-                    f"Không mở trực tiếp tệp gốc trên máy tính. Hãy bấm nút 'Làm sạch tệp' để hệ thống tự động gỡ bỏ "
-                    f"{len(triggers)} lệnh chạy ngầm nhưng vẫn giữ nguyên chữ và hình ảnh, sau đó tải bản PDF an toàn về xem."
-                ),
-                "llm_compact_context": compact_ctx,
-                "llm_system_prompt": CLIENT_LLM_SYSTEM_PROMPT,
-                "preferred_webllm_model": DEFAULT_WEBLLM_MODEL,
-                "fallback_webllm_model": FALLBACK_WEBLLM_MODEL,
-            }
-
+        above_threshold = verdict == "MALICIOUS"
+        point_summary = f"Điểm mô hình: {prob_pct:.2f}%."
+        signal_summary = (
+            f"Phân tích tĩnh ghi nhận {detected_cnt}/{total_analyzers} nhóm dấu hiệu, "
+            f"{len(triggers)} đối tượng cần xem xét và {len(scripts)} đoạn JavaScript."
+        )
+        breakdown = [point_summary, signal_summary]
+        if triggers:
+            breakdown.append(f"Đối tượng đã ghi nhận: {trigger_summary}.")
+        if attack_path_str and dossier.get("attack_path_kind") == "observed_active_object":
+            breakdown.append(f"Đường tham chiếu tĩnh: {attack_path_str}.")
         return {
             "explanation_method": "deterministic_evidence_summary",
-            "danger_level": "SAFE",
+            "danger_level": "HIGH" if above_threshold or triggers or scripts else "SAFE",
             "danger_score": prob_pct,
-            "headline": f"Tài liệu an toàn — Không phát hiện mã độc (rủi ro thấp {prob_pct}%)",
-            "executive_summary": (
-                f"Tệp '{file_name}' ({pages} trang, {size_kb} KB) đã vượt qua cả {total_analyzers} hạng mục kiểm tra an toàn. "
-                f"Hệ thống không tìm thấy mã độc, lệnh tự động chạy hay đoạn mã ẩn đáng ngờ nào bên trong tài liệu này. "
-                f"Bạn có thể yên tâm mở đọc bình thường."
-            ),
+            "headline": threat_title_vi,
+            "executive_summary": f"Tệp '{file_name}' ({pages} trang, {size_kb} KB). {point_summary} {signal_summary}",
             "danger_analysis": [
-                {
-                    "title": "Kết quả kiểm tra",
-                    "severity": "safe",
-                    "detail": f"Tài liệu sạch ({threat_label}), mức rủi ro rất thấp ({prob_pct}%), không có cảnh báo nào từ {total_analyzers} hạng mục.",
-                },
-                {
-                    "title": "Thành phần bên trong",
-                    "severity": "safe",
-                    "detail": f"Không có lệnh tự động chạy khi mở tệp và không có mã kịch bản ẩn trong {pages} trang tài liệu.",
-                },
-                {
-                    "title": "Hướng dẫn sử dụng",
-                    "severity": "info",
-                    "detail": cdr_status_text,
-                },
+                {"title": "Kết quả mô hình", "severity": "warning" if above_threshold else "info", "detail": point_summary},
+                {"title": "Dấu hiệu tĩnh", "severity": "warning" if triggers or scripts else "info", "detail": signal_summary},
+                {"title": "Làm sạch tệp", "severity": "info", "detail": cdr_status_text},
             ],
-            "technical_breakdown": [
-                f"Thông tin tệp: {pages} trang, dung lượng {size_kb} KB, phiên bản PDF {pdf_version}.",
-                f"Đánh giá an toàn: {threat_title_vi} ({detected_cnt}/{total_analyzers} hạng mục cảnh báo).",
-                "Lệnh tự động kích hoạt & mã ẩn: Không phát hiện.",
-            ],
-            "remediation": "Tài liệu an toàn, bạn có thể mở xem bình thường. Nếu tệp nhận từ nguồn lạ, bạn vẫn có thể bấm 'Làm sạch tệp' để loại bỏ toàn bộ thành phần tương tác phụ.",
+            "technical_breakdown": breakdown,
+            "remediation": cdr_status_text,
             "llm_compact_context": compact_ctx,
             "llm_system_prompt": CLIENT_LLM_SYSTEM_PROMPT,
             "preferred_webllm_model": DEFAULT_WEBLLM_MODEL,
@@ -340,7 +245,7 @@ class AIThreatExplainer:
         explanation = self.explain_threat(scan_result, cdr_audit=cdr_audit)
         query = question.lower().strip()
         verdict = scan_result.get("verdict", "UNAVAILABLE")
-        verdict_vi = "NGUY HIỂM" if verdict == "MALICIOUS" else ("AN TOÀN" if verdict == "BENIGN" else "CHƯA XÁC ĐỊNH")
+        verdict_vi = "VƯỢT NGƯỠNG" if verdict == "MALICIOUS" else ("DƯỚI NGƯỠNG" if verdict == "BENIGN" else "CHƯA CÓ ĐIỂM")
         prob = scan_result.get("malware_probability")
         prob_str = f"{prob * 100:.2f}%" if isinstance(prob, (int, float)) else "Chưa rõ"
         file_name = scan_result.get("file_name", "document.pdf")
@@ -356,9 +261,9 @@ class AIThreatExplainer:
         taxonomy = scan_result.get("threat_taxonomy") or dossier.get("threat_taxonomy") or {}
         all_triggers = dossier.get("trigger_objects", []) or dossier.get("suspicious_triggers", []) or []
         active_triggers = [t for t in all_triggers if t.get("is_threat_trigger") or t.get("kind") in ("script", "filespec")]
-        triggers = active_triggers if (active_triggers or verdict == "BENIGN") else all_triggers
+        triggers = active_triggers
         scripts = dossier.get("threat_scripts", []) or dossier.get("script_findings", []) or []
-        attack_path = dossier.get("attack_path_string") or " -> ".join(dossier.get("attack_path") or ["Catalog (/Root)"])
+        attack_path = dossier.get("attack_path_string") or " -> ".join(dossier.get("attack_path") or [])
         modality = dossier.get("modality_breakdown") or {}
         xai_metrics = dossier.get("xai_metrics") or {}
         tab_anomalies = dossier.get("tabular_attributions") or dossier.get("tabular_anomalies") or []
@@ -422,9 +327,9 @@ class AIThreatExplainer:
                 f"- **Mã phân loại kỹ thuật:** `{t_label}` (nhóm: {cats})\n"
                 f"- **Đặc điểm phát hiện trong tệp:** {tags}\n"
                 f"- **Giải thích:** {taxonomy.get('summary_vi', '')}\n"
-                f"- **Số hạng mục phát hiện bất thường:** `{taxonomy.get('detected_count', 0)}/{taxonomy.get('total_analyzers', 8)}`\n"
+                f"- **Số hạng mục phát hiện bất thường:** `{taxonomy.get('detected_count', 0)}/{taxonomy.get('total_analyzers', 0)}`\n"
                 + ("\n".join(det_rows) + "\n" if det_rows else "")
-                + ("- **Hành vi tương ứng (MITRE ATT&CK):**\n" + "\n".join(mitre_rows) if mitre_rows else "- **Hành vi tấn công:** Không phát hiện.")
+                + ("- **Hành vi tương ứng (MITRE ATT&CK):**\n" + "\n".join(mitre_rows) if mitre_rows else "- **Ánh xạ dấu hiệu tĩnh:** Chưa ghi nhận.")
             )
 
         if obj_match or any(w in query for w in ("đối tượng", "object", "node", "nút", "offset", "hex", "catalog", "openaction", "/aa", "/xfa", "đồ thị", "cấu trúc", "dag", "adobe", "reader")):
@@ -437,8 +342,10 @@ class AIThreatExplainer:
                 nid = str(n.get("id") or "")
                 if target_num and f"obj_{target_num} " not in oref and f":{target_num}" not in nid:
                     continue
+                size = n.get("size_bytes")
+                size_text = f"{size} byte" if size is not None and n.get("size_source") else "chưa đo"
                 node_lines.append(
-                    f"- Thành phần `{nid}` (`{oref or 'trực tiếp'}` | vị trí `{inv}` | kích thước `{n.get('size_bytes', 0)} byte`)"
+                    f"- Thành phần `{nid}` (`{oref or 'trực tiếp'}` | vị trí `{inv}` | kích thước `{size_text}`)"
                 )
             if not node_lines and graph_nodes:
                 for n in graph_nodes[:5]:
@@ -446,9 +353,9 @@ class AIThreatExplainer:
                         f"- Thành phần `{n.get('id')}` (`{n.get('obj_ref') or 'trực tiếp'}` | vị trí `{n.get('invoker')}`)"
                     )
             open_effect = (
-                f"Nếu mở trực tiếp bằng phần mềm đọc PDF (như Adobe Reader), tệp sẽ đi theo đường dẫn `{attack_path}` để tự động kích hoạt lệnh ngầm mà bạn không biết."
-                if verdict == "MALICIOUS"
-                else "Khi mở bằng phần mềm đọc PDF, tệp chỉ hiển thị các trang văn bản bình thường, không tự chạy lệnh ngầm nào."
+                f"Phân tích tĩnh ghi nhận đường tham chiếu tới đối tượng cần xem xét: {attack_path}."
+                if dossier.get("attack_path_kind") == "observed_active_object" and attack_path
+                else "Đồ thị hiển thị các tham chiếu cấu trúc trích xuất được từ PDF."
             )
             sections.append(
                 "Cấu trúc bên trong & điều gì xảy ra khi mở tệp:\n"
@@ -493,9 +400,9 @@ class AIThreatExplainer:
                 else ""
             )
             why_line = (
-                "- **Vì sao cần chú ý?** Nhiều tệp PDF độc hại cố tình làm rối chữ trong đoạn mã để tránh bị phát hiện theo chữ ký cố định, nhưng vẫn phải gắn lệnh tự chạy vào khung tài liệu — đó là điểm hệ thống này kiểm tra trực tiếp.\n"
+                "- Điểm mô hình vượt ngưỡng cảnh báo. Các quan sát tĩnh của tệp được liệt kê riêng.\n"
                 if verdict == "MALICIOUS"
-                else "- **Vì sao tệp an toàn?** Cả bố cục trang lẫn các thành phần bên trong đều là nội dung hiển thị tiêu chuẩn, không có dấu hiệu giấu mã.\n"
+                else "- Điểm mô hình dưới ngưỡng cảnh báo của bộ phân loại.\n"
             )
             tab_lines = [
                 f"- Thông số `{item.get('feature_name')}` có giá trị `{item.get('raw_value'):.2f}` (khác biệt so với mức thông thường `{item.get('train_mean'):.2f}`)"
@@ -517,9 +424,9 @@ class AIThreatExplainer:
             spar = xai_metrics.get("sparsity_index")
             lip = xai_metrics.get("lipschitz_stability")
             ood_line = (
-                f"- **Độ quen thuộc cấu trúc (OOD):** điểm đo `{ood_score:.4f}` so với ngưỡng `{ood_threshold:.2f}` -> **{'Cấu trúc lạ cần lưu ý (OOD)' if is_ood else 'Cấu trúc quen thuộc bình thường'}**\n"
+                f"- **Tín hiệu lưỡng lự từ điểm mô hình:** điểm đo `{ood_score:.4f}` so với ngưỡng `{ood_threshold:.2f}` -> **{'Trong vùng lưỡng lự' if is_ood else 'Ngoài vùng lưỡng lự'}**\n"
                 if isinstance(ood_score, (int, float))
-                else "- **Độ quen thuộc cấu trúc (OOD):** Chưa có số đo.\n"
+                else "- **Tín hiệu lưỡng lự từ điểm mô hình:** Chưa có số đo.\n"
             )
             proof_line = (
                 f"- **Độ sát thực tế của giải thích (Fidelity):** `{fid:.4f}`\n"

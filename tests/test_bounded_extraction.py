@@ -140,6 +140,50 @@ def test_timeout_partial_status_when_primary_available():
     validate_bundle(bundle)
 
 
+@pytest.mark.parametrize("signal_number", [9, 24])
+def test_worker_signal_keeps_checkpoint_without_reporting_bounded_complete(signal_number):
+    digest, profile = _base_profile()
+    reason = f"worker_signal_{signal_number}"
+    profile.update(
+        status="resource_limit_or_signal",
+        errors=[reason],
+        worker_exit_code=-signal_number,
+        worker_result_received=False,
+    )
+    profile["stream_analysis"] = {
+        "document_sha256": digest,
+        "status": "partial",
+        "complete": False,
+        "discovered_streams": 38,
+        "truncated_stream_count": 1,
+        "flag_decompression_ratio_exceeded": True,
+        "is_truncated_stream": True,
+        "reason_codes": ["decoded_byte_or_expansion_limit"],
+        "worker_failure_codes": [reason],
+    }
+
+    bundle = normalize_profile(profile, digest, "deep-static")
+
+    assert bundle["extraction_status"] == ExtractionStatus.FAILED.value
+    assert bundle["status"] == ObservationStatus.RESOURCE_LIMIT.value
+    assert bundle["coverage_report"]["worker"]["worker_cleanup_complete"] is True
+    assert reason in bundle["coverage_report"]["limitations"]
+    assert any(row["kind"] == "primary_checkpoint" for row in bundle["evidence_store"]["records"])
+    features = {row["feature_name"]: row["value"] for row in bundle["feature_store"]["records"]}
+    assert features["stream_truncation_ratio"] == pytest.approx(0.0263)
+    assert features["flag_decompression_ratio_exceeded"] == 1
+
+
+def test_completed_report_with_cleanup_signal_remains_bounded_complete():
+    digest, profile = _base_profile()
+    profile.update(worker_exit_code=-9, errors=["decoded_byte_or_expansion_limit"])
+
+    bundle = normalize_profile(profile, digest, "deep-static")
+
+    assert bundle["status"] == ObservationStatus.BOUNDED_COMPLETE.value
+    assert bundle["extraction_status"] == ExtractionStatus.BOUNDED_COMPLETE.value
+
+
 def test_failed_status_when_primary_missing():
     digest = hashlib.sha256(b"dummy").hexdigest()
     profile = {

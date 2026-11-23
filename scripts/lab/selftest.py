@@ -358,10 +358,10 @@ class SecurityTests(unittest.TestCase):
                 self.invoke(ctl.prepare)
             self.invoke(ctl.prepare, commit)
             (root / "scripts/forged.py").write_bytes(key_header() + b"\n")
-            rejected = subprocess.run([sys.executable, str(root / "scripts/security/check_repo_content.py"), "--worktree"], cwd=root, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            rejected = subprocess.run([sys.executable, str(root / "scripts/security/check_repo_content.py"), "--worktree"], cwd=root, env=clean_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             self.assertEqual(rejected.returncode, 1)
             git("add", "scripts/forged.py")
-            rejected = subprocess.run([sys.executable, str(root / "scripts/security/check_repo_content.py")], cwd=root, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            rejected = subprocess.run([sys.executable, str(root / "scripts/security/check_repo_content.py")], cwd=root, env=clean_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             self.assertEqual(rejected.returncode, 1)
 
     def test_legacy_artifact_identity_and_placeholder_rules(self):

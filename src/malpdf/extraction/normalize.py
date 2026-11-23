@@ -131,6 +131,7 @@ def normalize_profile(profile, digest, extraction_profile, *, provenance=None):
     for name, value in raw_values.items():
         features.append(feature("lexical_" + name, _group(name), value,
             "observed" if value else "absent_within_scope", [original_id],
+            "case-sensitive PDF name bytes" if name == "AcroForm" else
             "exact PDFMalExtract raw byte-count convention; no semantic absence claim", complete=True))
     ledger = analysis.get("feature_provenance", {})
     for name, raw_value in canonical.items():
@@ -422,10 +423,13 @@ def normalize_profile(profile, digest, extraction_profile, *, provenance=None):
         state=failure_status(reasons)
     has_primary = bool(static)
     is_timeout = "timeout" in reasons or state == "timeout"
-    is_failed = not has_primary or "sigkill" in " ".join(reasons).lower() or (profile.get("worker_exit_code") not in (0, None) and not has_primary)
+    worker_interrupted = bool({"worker_signal_9", "worker_signal_24"}.intersection(reasons))
+    is_failed = not has_primary or worker_interrupted or "sigkill" in " ".join(reasons).lower()
     has_bounded_defense = any(evasion_flags.values()) or state == "resource_limit" or any("limit" in r or "budget" in r for r in reasons)
     if is_failed:
         extraction_status = "failed"
+        if worker_interrupted:
+            state = "resource_limit"
     elif is_timeout:
         extraction_status = "timeout_partial" if has_primary else "failed"
     elif has_bounded_defense and has_primary:

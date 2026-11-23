@@ -188,8 +188,8 @@ class ForensicAttributionEngine:
                     "kind": record.get("kind"),
                     "invoker": record.get("invoker"),
                     "filter": record.get("filter"),
-                    "size_bytes": record.get("size_bytes"),
-                    "entropy": record.get("entropy"),
+                    **record.get("byte_measurements", {"size_bytes": None, "entropy": None}),
+                    "action_role": record.get("action_role"),
                     "has_stream": record.get("has_stream"),
                     "is_threat_trigger": bool(record.get("is_threat_trigger")),
                     "xai_saliency": node_saliency[index] if node_saliency and index < len(node_saliency) else None,
@@ -249,7 +249,6 @@ class ForensicAttributionEngine:
             if t.get("is_threat_trigger")
             or t.get("kind") in ("script", "filespec")
             or t.get("object_id") in script_parents
-            or (t.get("kind") == "action" and (malware_prob or 0.0) >= 0.5)
         ]
         default_stream_goal = next(
             (record["evidence_id"] for record in records if record.get("kind") == "stream"),
@@ -356,7 +355,7 @@ class ForensicAttributionEngine:
                 rec = records[idx]
                 eid = str(rec.get("evidence_id", f"node:{idx}"))
                 sal = float(node_saliency[idx])
-                is_trig = bool(rec.get("is_threat_trigger")) or rec.get("kind") in ("action", "script")
+                is_trig = bool(rec.get("is_threat_trigger"))
                 if is_trig and active_ast:
                     ast_item = active_ast[rank_pos % len(active_ast)]
                     target_tok = f"AST::{ast_item['token_type']}"
@@ -398,38 +397,17 @@ class ForensicAttributionEngine:
                     "title": f"Điểm kiểm tra {index + 1}: {inv} ({trigger.get('obj_ref_str') or trigger.get('object_id')})",
                     "object_ref": trigger.get("obj_ref_str"),
                     "node_id": trigger.get("object_id"),
-                    "risk_score": sal_str if is_crit else "An toàn",
+                    "risk_score": sal_str if is_crit else "Cấu trúc PDF",
                     "severity": "critical" if is_crit else "normal",
                     "description": (
-                        f"Thành phần {inv} được cài đặt để tự động chạy mã ẩn ngay khi người dùng mở xem tài liệu."
+                        f"Phân tích tĩnh ghi nhận thành phần cần xem xét tại {inv}."
                         if is_crit
-                        else f"Thiết lập điều hướng trang hoặc đường dẫn liên kết thông thường ({inv}), không chứa mã độc thực thi."
+                        else f"Đối tượng PDF tại {inv}. Phân tích tĩnh chưa ghi nhận dấu hiệu kích hoạt tại đây."
                     ),
-                    "tags": ["Tự chạy khi mở" if is_crit else "Điều hướng / Liên kết", inv],
+                    "tags": ["Dấu hiệu tĩnh" if is_crit else "Cấu trúc PDF", inv],
                 })
         else:
-            observations = [
-                {
-                    "stage_num": 1,
-                    "title": "Điểm kiểm tra 1: Khung tài liệu gốc (/Catalog & /Pages)",
-                    "object_ref": "obj_1 0 R",
-                    "node_id": "catalog:root",
-                    "risk_score": "An toàn",
-                    "severity": "normal",
-                    "description": "Khung tài liệu chỉ chứa bố cục trang bình thường, không có lệnh tự động chạy khi mở tệp.",
-                    "tags": ["Bố cục trang", "Không có lệnh ngầm"],
-                },
-                {
-                    "stage_num": 2,
-                    "title": "Điểm kiểm tra 2: Nội dung chữ viết & hình ảnh (/Contents)",
-                    "object_ref": "stream:page_0",
-                    "node_id": "stream:page_0",
-                    "risk_score": "An toàn",
-                    "severity": "normal",
-                    "description": "Các trang chỉ chứa văn bản và phông chữ hiển thị tiêu chuẩn, không nhúng mã ẩn.",
-                    "tags": ["Nội dung sạch", "Không có JavaScript"],
-                },
-            ]
+            observations = []
 
         return {
             "cross_modal_weights": cross_weights,
@@ -455,7 +433,7 @@ class ForensicAttributionEngine:
             "xai_metrics": xai_metrics,
             "thesis_synthesis": {
                 "headline": (
-                    f"Kết luận kiểm tra: {'Nguy hiểm' if (malware_prob or 0.0) >= 0.5 else 'An toàn'} ({malware_prob:.2%})"
+                    f"Điểm mô hình: {malware_prob:.2%}"
                     if malware_prob is not None
                     else "Chưa có kết luận tự động"
                 ),
@@ -465,6 +443,7 @@ class ForensicAttributionEngine:
                 "proof_statement": "Kết luận dựa trên các thành phần thực tế tìm thấy bên trong tệp.",
             },
             "attack_path": attack_path,
+            "attack_path_kind": "observed_active_object" if threat_triggers and path_ids[-1:] == [goal] else "document_structure",
             "attack_path_string": " -> ".join(attack_path),
             "attack_path_status": "observed" if path_ids and path_ids[-1] == goal else "unreachable_in_observed_graph",
             "suspicious_object_count": len(triggers),
