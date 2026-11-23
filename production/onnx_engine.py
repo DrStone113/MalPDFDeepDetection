@@ -67,6 +67,7 @@ class ScanResult:
     pages_count: int = 1
     raw_entropy: float = 0.0
     ood_threshold: float = -0.85
+    decision_threshold: float = 0.057277
     prediction_available: bool = True
     prediction_blockers: list[str] = field(default_factory=list)
     threat_taxonomy: dict[str, Any] = field(default_factory=dict)
@@ -510,6 +511,7 @@ class ONNXMalPDFScannerEngine:
                 pages_count=pages_count,
                 raw_entropy=raw_entropy,
                 ood_threshold=self.ood_threshold,
+                decision_threshold=round(self.decision_threshold, 6),
                 prediction_available=False,
                 prediction_blockers=ingest_data["prediction_blockers"],
                 threat_taxonomy=taxonomy_info,
@@ -708,6 +710,7 @@ class ONNXMalPDFScannerEngine:
             pages_count=pages_count,
             raw_entropy=raw_entropy,
             ood_threshold=self.ood_threshold,
+            decision_threshold=round(self.decision_threshold, 6),
             threat_taxonomy=taxonomy_info,
         )
 

@@ -736,7 +736,7 @@
             <span class="text-xs font-semibold text-outline">Điểm mô hình</span>
             <div class="my-2 flex items-baseline gap-2">
               <span id="card-prob" class="text-3xl font-extrabold font-mono num">--%</span>
-              <span class="text-xs text-on-surface-variant">ngưỡng cảnh báo 50%</span>
+              <span id="card-threshold-label" class="text-xs text-on-surface-variant">ngưỡng cảnh báo 5.73%</span>
             </div>
             <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
               <div id="bar-prob" class="h-2 rounded-full shimmer-bar transition-all duration-700" style="width: 0%;"></div>
@@ -2755,8 +2755,11 @@
       verdictEl.textContent = !data.prediction_available ? 'CẦN LƯU Ý' : (isMal ? 'VƯỢT NGƯỠNG' : 'DƯỚI NGƯỠNG');
       verdictEl.className = isMal ? 'text-2xl font-bold tracking-tight text-error' : 'text-2xl font-bold tracking-tight text-tertiary';
 
+      const thrPct = Number.isFinite(data.decision_threshold) ? Number((data.decision_threshold * 100).toFixed(2)) : 5.73;
+      const thrLabelEl = document.getElementById('card-threshold-label');
+      if (thrLabelEl) thrLabelEl.textContent = `ngưỡng cảnh báo ${thrPct}%`;
       const tagEl = document.getElementById('badge-verdict-tag');
-      tagEl.textContent = isMal ? 'KHÔNG NÊN MỞ NGAY' : (data.prediction_available ? 'NGƯỠNG 50%' : 'NÊN LÀM SẠCH');
+      tagEl.textContent = isMal ? 'KHÔNG NÊN MỞ NGAY' : (data.prediction_available ? `NGƯỠNG ${thrPct}%` : 'NÊN LÀM SẠCH');
       tagEl.className = isMal ? 'px-2 py-0.5 rounded-md text-[10px] font-bold bg-red-50 text-error border border-red-200' : 'px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-tertiary border border-emerald-200';
 
       document.getElementById('card-confidence').textContent = _confidenceVi(data.confidence);
