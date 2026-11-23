@@ -1,5 +1,7 @@
 # MalPDF DeepDetection — Thư mục Triển khai Production (ONNX Runtime)
 
+> Ứng viên PDF-TransGraph v3.2b đã qua kiểm tra tương đương PyTorch/ONNX trong bản dựng riêng. Manifest production tiếp tục trỏ tới v2 trong lúc chờ xác nhận SHA-256 và nhiệt độ của checkpoint v3.2b. [Kết quả kiểm tra và đối chiếu nguồn](../reports/progress/transgraph_v32b_runtime_candidate_2026-11-23.md)
+
 Thư mục `production/` đóng gói toàn bộ hệ thống quét PDF đa phương thức (**PDF-TransGraph v2 23D** + **PDFMultiLabelThreatNet v2 8 nhãn**), giải thích XAI, làm sạch tệp tại chỗ (**In-Place CDR với `pikepdf`**) và cổng kiểm duyệt Email (`.eml`) chạy hoàn toàn trên **ONNX Runtime** tốc độ cao, không phụ thuộc PyTorch nặng khi chạy độc lập.
 
 > 📖 **Tài liệu hướng dẫn triển khai đầy đủ (Step-by-step & Xử lý lỗi):** Xem tại [`docs/deployment_huggingface_and_onnx.md`](../docs/deployment_huggingface_and_onnx.md).

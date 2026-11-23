@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
+import hashlib
 import io
 import math
 import os
@@ -14,36 +15,23 @@ import pikepdf
 import torch
 
 from malpdf.models.pdf_transgraph import PDFTransGraph
+from malpdf.models.pdf_transgraph_v3 import PDFTransGraphV3, TransGraphV3Config, _segment_softmax, load_v3_weights_npz
 from malpdf.cdr.engine import is_navigation_destination
-from malpdf.scanner.forensic import ForensicAttributionEngine
+from malpdf.scanner.forensic import ForensicAttributionEngine, TRIGGER_FEATURES_V3, observed_ast_distribution
 from malpdf.scanner.ingestion import InstantPDFIngestion
 from malpdf.scanner.taxonomy import ThreatTaxonomyClassifier
 
-CANONICAL_V2_MODEL_PATH = (
-    Path(__file__).resolve().parents[3]
-    / "artifacts"
-    / "models"
-    / "pdf_transgraph_v2"
-    / "pdf_transgraph_v2_23d_best.pt"
+REPO_ROOT = Path(__file__).resolve().parents[3]
+CANONICAL_V3_MODEL_PATH = REPO_ROOT / "artifacts/models/pdf_transgraph_v3/pdf_transgraph_v32b_regime_b_seed42.npz"
+CANONICAL_V2_MODEL_PATH = REPO_ROOT / "artifacts/models/pdf_transgraph_v2/pdf_transgraph_v2_23d_best.pt"
+FALLBACK_V3_MODEL_PATH = (
+    REPO_ROOT / "data/processed/pooled_bulk/transgraph_v3"
+    / "run_20261122T123421Z_16abd6134688/regime_b/v3_tab_graph_ssl_inv.npz"
 )
 DEFAULT_MODEL_PATH = Path(os.environ["MALPDF_MODEL_PATH"]) if "MALPDF_MODEL_PATH" in os.environ else (
-    CANONICAL_V2_MODEL_PATH
-    if CANONICAL_V2_MODEL_PATH.is_file()
-    else (
-        Path(__file__).resolve().parents[3]
-        / "reports"
-        / "experiments"
-        / "adversarial_defense"
-        / "pdf_transgraph_adv_trained.pt"
-    )
+    CANONICAL_V3_MODEL_PATH if CANONICAL_V3_MODEL_PATH.is_file() else FALLBACK_V3_MODEL_PATH
 )
-FALLBACK_MODEL_PATH = (
-    Path(__file__).resolve().parents[3]
-    / "reports"
-    / "experiments"
-    / "pdf_transgraph"
-    / "pdf_transgraph_best.pt"
-)
+FALLBACK_MODEL_PATH = FALLBACK_V3_MODEL_PATH
 
 
 @dataclass
@@ -79,10 +67,10 @@ class MalPDFScannerEngine:
         model_path: Path | str | None = None,
         scaler_path: Path | str | None = None,
         device: str = "auto",
-        temperature: float = 1.0,
+        temperature: float | None = None,
         ood_threshold: float = -0.85,
+        decision_threshold: float | None = None,
     ) -> None:
-        self.temperature = temperature
         self.ood_threshold = ood_threshold
         self._model_lock = RLock()
 
@@ -94,40 +82,84 @@ class MalPDFScannerEngine:
         resolved_path = None
         if model_path is not None:
             resolved_path = Path(model_path)
-        elif DEFAULT_MODEL_PATH.exists():
+        elif (
+            "MALPDF_MODEL_PATH" not in os.environ
+            and DEFAULT_MODEL_PATH == FALLBACK_V3_MODEL_PATH
+            and not (REPO_ROOT / "configs/transgraph_v3_contract.json").is_file()
+            and not (REPO_ROOT / "production/configs/transgraph_v3_contract.json").is_file()
+            and CANONICAL_V2_MODEL_PATH.is_file()
+        ):
+            resolved_path = CANONICAL_V2_MODEL_PATH
+        elif "MALPDF_MODEL_PATH" in os.environ or DEFAULT_MODEL_PATH.exists():
             resolved_path = DEFAULT_MODEL_PATH
         elif FALLBACK_MODEL_PATH.exists():
             resolved_path = FALLBACK_MODEL_PATH
 
         if resolved_path is None or not resolved_path.is_file():
             raise FileNotFoundError(f"Trained model checkpoint unavailable: {resolved_path}")
-        if not math.isfinite(temperature) or temperature <= 0:
+        self.is_v3 = resolved_path.suffix.lower() == ".npz"
+        self.model_version = "PDF-TransGraph v3.2b" if self.is_v3 else "PDF-TransGraph v2"
+        if self.is_v3:
+            self.ingestion = InstantPDFIngestion(scaler_path=scaler_path)
+            contract = self.ingestion.v3_contract
+            if not contract:
+                raise FileNotFoundError("TransGraph v3 inference contract unavailable")
+            if hashlib.sha256(resolved_path.read_bytes()).hexdigest() != contract["weights_npz_sha256"]:
+                raise ValueError("binary_npz_sha256_mismatch")
+            config = TransGraphV3Config(**contract["model_config"])
+            self.node_in_dim = config.node_dim
+            self.tabular_in_features = config.tab_dim
+            self.model = PDFTransGraphV3(config).to(self.device)
+            load_v3_weights_npz(self.model, resolved_path, map_location=self.device)
+            feature_names = self.ingestion.v3_feature_names
+        else:
+            contract = {}
+            state_dict = torch.load(resolved_path, map_location=self.device, weights_only=True)
+            self.node_in_dim = int(state_dict["graph_encoder.node_feat_proj.weight"].size(1))
+            self.tabular_in_features = int(state_dict["tabular_encoder.input_layer.weight"].size(1))
+            self.model = PDFTransGraph(
+                node_in_dim=self.node_in_dim,
+                num_node_types=9,
+                num_relations=8,
+                ast_vocab_size=64,
+                tabular_in_features=self.tabular_in_features,
+                hidden_dim=128,
+            ).to(self.device)
+            self.model.load_state_dict(state_dict)
+            self.ingestion = InstantPDFIngestion(scaler_path=scaler_path, node_in_dim=self.node_in_dim)
+            feature_names = self.ingestion.feature_names
+        self.temperature = float(contract.get("temperature", 1.0) if temperature is None else temperature)
+        self.decision_threshold = float(contract.get("decision_threshold", 0.5) if decision_threshold is None else decision_threshold)
+        if not math.isfinite(self.temperature) or self.temperature <= 0:
             raise ValueError("temperature_must_be_positive_and_finite")
-        state_dict = torch.load(resolved_path, map_location=self.device, weights_only=True)
-        tab_dim = int(state_dict["tabular_encoder.input_layer.weight"].size(1))
-        node_in_dim = int(state_dict["graph_encoder.node_feat_proj.weight"].size(1))
-        self.node_in_dim: int = node_in_dim
-
-        self.model = PDFTransGraph(
-            node_in_dim=node_in_dim,
-            num_node_types=9,
-            num_relations=8,
-            ast_vocab_size=64,
-            tabular_in_features=tab_dim,
-            hidden_dim=128,
-        ).to(self.device)
-
-        self.model.load_state_dict(state_dict)
+        if not 0.0 < self.decision_threshold < 1.0:
+            raise ValueError("decision_threshold_must_be_between_zero_and_one")
         self.model.eval()
         self.model_path: Path | None = resolved_path
-        self.weights_loaded: bool = state_dict is not None
+        self.weights_loaded = True
         self.parameter_count: int = int(sum(p.numel() for p in self.model.parameters()))
 
-        self.ingestion = InstantPDFIngestion(scaler_path=scaler_path, node_in_dim=node_in_dim)
-        if len(self.ingestion.feature_names) != tab_dim:
+        if len(feature_names) != self.tabular_in_features:
             raise ValueError("checkpoint_scaler_feature_count_mismatch")
         self.forensic = ForensicAttributionEngine()
         self.taxonomy = ThreatTaxonomyClassifier(device=self.device)
+
+    def _forward_v3(
+        self, nf: torch.Tensor, nt: torch.Tensor, ei: torch.Tensor, er: torch.Tensor,
+        b: torch.Tensor, tab: torch.Tensor, graph_present: bool,
+    ) -> dict[str, torch.Tensor]:
+        if graph_present:
+            return self.model(tab, node_x=nf, node_type=nt, edge_index=ei, edge_rel=er, graph_batch=b)
+        return self.model(tab)
+
+    def _forward(
+        self, nf: torch.Tensor, nt: torch.Tensor, ei: torch.Tensor, er: torch.Tensor,
+        b: torch.Tensor, tok: torch.Tensor, tab: torch.Tensor, graph_present: bool,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        if self.is_v3:
+            output = self._forward_v3(nf, nt, ei, er, b, tab, graph_present)
+            return output["logits"], output["weights"]
+        return self.model(nf, nt, ei, er, b, tok, tab)
 
     def calculate_energy_ood(self, logit: float) -> tuple[float, bool]:
         t = self.temperature
@@ -146,6 +178,7 @@ class MalPDFScannerEngine:
         nt: torch.Tensor,
         ei: torch.Tensor,
         er: torch.Tensor,
+        graph_present: bool,
     ) -> list[float]:
         n_nodes = variants[0][0].size(0)
         nf_cat = torch.cat([v[0] for v in variants], dim=0)
@@ -160,8 +193,8 @@ class MalPDFScannerEngine:
         tok_cat = torch.cat([v[1] for v in variants], dim=0)
         tab_cat = torch.cat([v[2] for v in variants], dim=0)
         with self._model_lock:
-            logits, _ = self.model(nf_cat, nt_cat, ei_cat, er_cat, b_cat, tok_cat, tab_cat)
-        return [float(p) for p in torch.sigmoid(logits).reshape(-1).cpu().tolist()]
+            logits, _ = self._forward(nf_cat, nt_cat, ei_cat, er_cat, b_cat, tok_cat, tab_cat, graph_present)
+        return torch.sigmoid(logits / self.temperature).reshape(-1).cpu().tolist()
 
     def _compute_xai_signals(
         self,
@@ -174,19 +207,34 @@ class MalPDFScannerEngine:
         tab: torch.Tensor,
         base_prob: float,
         attn_weights: torch.Tensor,
+        graph_present: bool,
+        observed_ast: list[float],
     ) -> tuple[list[float], list[float], list[float], list[float], dict[str, float]]:
         nf_grad = nf.clone().detach().requires_grad_(True)
         tab_grad = tab.clone().detach().requires_grad_(True)
 
         self.model.zero_grad(set_to_none=True)
-        h_graph = self.model.graph_encoder(nf_grad, nt, ei, er, b)
-        h_seq = self.model.ast_encoder(tok)
-        h_tab = self.model.tabular_encoder(tab_grad)
-        h_graph.retain_grad()
-        h_seq.retain_grad()
-        h_tab.retain_grad()
-        z_final, fused_attn = self.model.fusion(h_graph, h_seq, h_tab)
-        logits_g = self.model.classifier(z_final).squeeze(-1)
+        forward_edge_attn = []
+        if self.is_v3:
+            layer = self.model.graph_encoder.layers[-1]
+            hook = layer.attn_proj.register_forward_hook(
+                lambda _module, _inputs, output: forward_edge_attn.append(output.detach().squeeze(-1))
+            )
+            try:
+                result = self._forward_v3(nf_grad, nt, ei, er, b, tab_grad, graph_present)
+            finally:
+                hook.remove()
+            h_tab, h_graph, h_seq = (result[key] for key in ("tab_emb", "graph_emb", "ast_emb"))
+            fused_attn, logits_g = result["weights"], result["logits"]
+        else:
+            h_graph = self.model.graph_encoder(nf_grad, nt, ei, er, b)
+            h_seq = self.model.ast_encoder(tok)
+            h_tab = self.model.tabular_encoder(tab_grad)
+            z_final, fused_attn = self.model.fusion(h_graph, h_seq, h_tab)
+            logits_g = self.model.classifier(z_final).squeeze(-1)
+        for embedding in (h_graph, h_seq, h_tab):
+            if embedding.requires_grad:
+                embedding.retain_grad()
         score = logits_g.sum()
         score.backward()
 
@@ -205,17 +253,19 @@ class MalPDFScannerEngine:
             tabular_grad_importance = [round(float(x), 5) for x in t_attr.cpu().tolist()]
 
         edge_attention: list[float] = []
-        alpha_t = getattr(self.model.graph_encoder.layer2, "last_edge_alpha", None)
-        if isinstance(alpha_t, torch.Tensor) and alpha_t.numel() > 0:
-            mean_alpha = alpha_t.mean(dim=-1)
-            edge_attention = [round(float(x), 4) for x in mean_alpha.cpu().tolist()]
-
-        ast_token_attention: list[float] = []
-        tok_attn = getattr(self.model.ast_encoder, "last_token_attn", None)
-        if isinstance(tok_attn, torch.Tensor) and tok_attn.numel() > 0:
-            flat_tok = tok_attn.squeeze().cpu().tolist()
-            if isinstance(flat_tok, list):
-                ast_token_attention = [round(float(x), 4) for x in flat_tok]
+        ast_token_attention = observed_ast
+        if self.is_v3:
+            if forward_edge_attn:
+                dst = torch.cat((ei[1], ei[0]))
+                alpha = _segment_softmax(forward_edge_attn[0], dst, nf.size(0))[:ei.size(1)]
+                edge_attention = [round(float(x), 4) for x in alpha.cpu().tolist()]
+        else:
+            alpha_t = getattr(self.model.graph_encoder.layer2, "last_edge_alpha", None)
+            if isinstance(alpha_t, torch.Tensor) and alpha_t.numel() > 0:
+                edge_attention = [round(float(x), 4) for x in alpha_t.mean(dim=-1).cpu().tolist()]
+            tok_attn = getattr(self.model.ast_encoder, "last_token_attn", None)
+            if isinstance(tok_attn, torch.Tensor) and tok_attn.numel() > 0:
+                ast_token_attention = [round(float(x), 4) for x in tok_attn.reshape(-1).cpu().tolist()]
 
         with torch.no_grad():
             kept_nf = nf.clone()
@@ -259,7 +309,7 @@ class MalPDFScannerEngine:
                     math.sqrt(float(noise_nf.norm(p=2).item()) ** 2 + float(noise_tab.norm(p=2).item()) ** 2)
                 )
 
-            batch_probs = self._batched_probs(variants, nt, ei, er)
+            batch_probs = self._batched_probs(variants, nt, ei, er, graph_present)
             suff_prob = batch_probs[0]
             occ_prob = batch_probs[1]
             fidelity_score = max(0.0, 1.0 - abs(base_prob - suff_prob))
@@ -283,14 +333,14 @@ class MalPDFScannerEngine:
         else:
             sparsity_index = 0.0
 
-        gw = 0.5
-        aw = 0.5
+        tw, gw, aw = 0.0, 0.5, 0.5
         active_attn = fused_attn if fused_attn is not None else attn_weights
         if active_attn is not None and active_attn.numel() >= 2:
             w_flat = active_attn.squeeze().detach().cpu().tolist()
-            if isinstance(w_flat, list) and len(w_flat) >= 2:
-                gw = float(w_flat[0])
-                aw = float(w_flat[1])
+            if len(w_flat) == 3:
+                tw, gw, aw = map(float, w_flat)
+            elif len(w_flat) == 2:
+                gw, aw = map(float, w_flat)
 
         g_latent = (
             float((h_graph.grad.detach() * h_graph.detach()).norm(p=2).item())
@@ -309,7 +359,7 @@ class MalPDFScannerEngine:
         )
         weighted_g = g_latent * (0.5 + gw)
         weighted_a = a_latent * (0.5 + aw)
-        weighted_t = t_latent
+        weighted_t = t_latent * (0.5 + tw) if self.is_v3 else t_latent
         total_latent = weighted_g + weighted_a + weighted_t
         if total_latent > 1e-9:
             graph_branch_pct = round((weighted_g / total_latent) * 100.0, 1)
@@ -318,7 +368,7 @@ class MalPDFScannerEngine:
         else:
             graph_branch_pct = round(gw * 100.0, 1)
             ast_branch_pct = round(aw * 100.0, 1)
-            tabular_branch_pct = 0.0
+            tabular_branch_pct = round(tw * 100.0, 1)
 
         proof_metrics = {
             "fidelity_score": round(fidelity_score, 4),
@@ -398,15 +448,16 @@ class MalPDFScannerEngine:
         er = ingest_data["edge_rel"].to(self.device)
         b = ingest_data["batch"].to(self.device)
         tok = ingest_data["ast_tokens"].to(self.device)
-        tab = ingest_data["tab_features"].to(self.device)
+        tab = ingest_data["v3_tab_features" if self.is_v3 else "tab_features"].to(self.device)
+        graph_present = ingest_data.get("graph_present", True)
 
         with self._model_lock, torch.no_grad():
-            logits, attn_weights = self.model(nf, nt, ei, er, b, tok, tab)
-            prob = torch.sigmoid(logits).item()
+            logits, attn_weights = self._forward(nf, nt, ei, er, b, tok, tab, graph_present)
+            prob = torch.sigmoid(logits / self.temperature).item()
             logit_val = logits.item()
 
         raw_recs = ingest_data.get("raw_records", [])
-        verdict = "MALICIOUS" if prob >= 0.50 else "BENIGN"
+        verdict = "MALICIOUS" if prob >= self.decision_threshold else "BENIGN"
         energy_score, is_ood = self.calculate_energy_ood(logit_val)
 
         ood_warning = None
@@ -442,6 +493,8 @@ class MalPDFScannerEngine:
                     tab=tab,
                     base_prob=prob,
                     attn_weights=attn_weights,
+                    graph_present=graph_present,
+                    observed_ast=observed_ast_distribution(ingest_data) if self.is_v3 else [],
                 )
             forensic_dossier = self.forensic.explain(
                 ingest_data,
@@ -661,16 +714,17 @@ class MalPDFScannerEngine:
         er = ingest_data["edge_rel"].to(self.device)
         b = ingest_data["batch"].to(self.device)
         tok = ingest_data["ast_tokens"].to(self.device)
-        tab = ingest_data["tab_features"].to(self.device)
+        tab = ingest_data["v3_tab_features" if self.is_v3 else "tab_features"].to(self.device)
+        graph_present = ingest_data.get("graph_present", True)
 
         with torch.no_grad():
             with self._model_lock:
-                base_logits, _ = self.model(nf, nt, ei, er, b, tok, tab)
-            prob_before = float(torch.sigmoid(base_logits).item())
+                base_logits, _ = self._forward(nf, nt, ei, er, b, tok, tab, graph_present)
+            prob_before = float(torch.sigmoid(base_logits / self.temperature).item())
             logit_before = float(base_logits.item())
 
         energy_before, _ = self.calculate_energy_ood(logit_before)
-        verdict_before = "MALICIOUS" if prob_before >= 0.50 else "BENIGN"
+        verdict_before = "MALICIOUS" if prob_before >= self.decision_threshold else "BENIGN"
 
         target_idx = None
         target_rec: dict[str, Any] = {}
@@ -816,6 +870,11 @@ class MalPDFScannerEngine:
             scaler_mean = ingest_data.get("scaler_mean", [])
             scaler_scale = ingest_data.get("scaler_scale", [])
             trigger_cols = {"JS", "Javascript", "OpenAction", "AA", "Launch", "EmbeddedFiles", "XFA"}
+            if self.is_v3:
+                feature_names = ingest_data["v3_feature_names"]
+                scaler_mean = ingest_data["v3_scaler_center"]
+                scaler_scale = ingest_data["v3_scaler_scale"]
+                trigger_cols = TRIGGER_FEATURES_V3
             for f_idx, fname in enumerate(feature_names):
                 if fname in trigger_cols or fname.startswith("ast_"):
                     if f_idx < ablated_tab.size(1) and f_idx < len(scaler_mean) and f_idx < len(scaler_scale):
@@ -838,12 +897,12 @@ class MalPDFScannerEngine:
 
         with torch.no_grad():
             with self._model_lock:
-                abl_logits, _ = self.model(ablated_nf, nt, ablated_ei, ablated_er, b, ablated_tok, ablated_tab)
-            prob_after = float(torch.sigmoid(abl_logits).item())
+                abl_logits, _ = self._forward(ablated_nf, nt, ablated_ei, ablated_er, b, ablated_tok, ablated_tab, graph_present)
+            prob_after = float(torch.sigmoid(abl_logits / self.temperature).item())
             logit_after = float(abl_logits.item())
 
         energy_after, _ = self.calculate_energy_ood(logit_after)
-        verdict_after = "MALICIOUS" if prob_after >= 0.50 else "BENIGN"
+        verdict_after = "MALICIOUS" if prob_after >= self.decision_threshold else "BENIGN"
         prob_delta = round(prob_after - prob_before, 4)
         latency_ms = round((time.perf_counter() - start_time) * 1000.0, 2)
 

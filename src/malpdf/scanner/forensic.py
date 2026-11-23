@@ -10,6 +10,20 @@ import numpy as np
 
 from malpdf.scanner.ingestion import AST_NODE_TYPES
 
+TRIGGER_FEATURES_V3 = {
+    "lexical_JS", "lexical_JavaScript", "lexical_OpenAction", "lexical_AA",
+    "lexical_Launch", "lexical_EmbeddedFile", "lexical_XFA", "js_per_obj",
+}
+
+
+def observed_ast_distribution(ingest_data: dict[str, Any]) -> list[float]:
+    if not ingest_data.get("extracted_scripts"):
+        return []
+    counts = ingest_data.get("ast_node_counts") or {}
+    values = [counts.get(name, 0) for name in AST_NODE_TYPES]
+    total = sum(values)
+    return [value / total for value in values] if total else []
+
 DANGEROUS_PATTERNS: list[tuple[str, str, str]] = [
     ("eval_exec", r"\beval\s*\(", "Dynamic Code Execution (eval)"),
     ("unescape_decode", r"\bunescape\s*\(", "Observed unescape call"),
@@ -174,8 +188,15 @@ class ForensicAttributionEngine:
             weights = weights.squeeze()
             if weights.ndim == 1 and len(weights) == 2:
                 cross_weights = {"graph_weight": round(float(weights[0]), 4), "ast_weight": round(float(weights[1]), 4)}
+            elif weights.ndim == 1 and len(weights) == 3:
+                cross_weights = {
+                    "tabular_weight": round(float(weights[0]), 4),
+                    "graph_weight": round(float(weights[1]), 4),
+                    "ast_weight": round(float(weights[2]), 4),
+                }
 
         records = ingest_data.get("raw_records", [])
+        v3_evidence = cross_weights is not None and "tabular_weight" in cross_weights
         scripts = ingest_data.get("extracted_scripts", [])
         stats = ingest_data.get("ast_stats") or {}
         counts = ingest_data.get("ast_node_counts") or {}
@@ -303,6 +324,15 @@ class ForensicAttributionEngine:
         raw_values = ingest_data.get("raw_feature_vec", [])
         means = ingest_data.get("scaler_mean", [])
         tab = ingest_data.get("tab_features")
+        v3_names = ingest_data.get("v3_feature_names", [])
+        use_v3_features = bool(v3_names) and (
+            len(tabular_grad_importance or []) == len(v3_names) or (v3_evidence and tabular_grad_importance is None)
+        )
+        if use_v3_features:
+            names = v3_names
+            raw_values = ingest_data.get("v3_raw_feature_vec", [])
+            means = ingest_data.get("v3_scaler_center", [])
+            tab = ingest_data.get("v3_tab_features")
         if tabular_grad_importance and len(tabular_grad_importance) == len(names):
             if hasattr(tab, "detach"):
                 scores = tab.squeeze(0).detach().cpu().tolist()
@@ -349,7 +379,7 @@ class ForensicAttributionEngine:
                 ),
                 reverse=True,
             )
-            active_ast = [a for a in ast_attributions if (a.get("count") or 0) > 0]
+            active_ast = [a for a in ast_attributions if (a.get("count") or 0) > 0] if not v3_evidence else []
             top_tabs = tabular_attributions[:6]
             for rank_pos, idx in enumerate(ranked_indices[:6]):
                 rec = records[idx]
@@ -416,7 +446,10 @@ class ForensicAttributionEngine:
             "threat_scripts": threat_scripts,
             "ast_token_attributions": ast_attributions[:10],
             "ast_token_importance": ast_attributions[:10],
-            "tabular_attributions": tabular_attributions[:10],
+            "ast_token_attribution_source": (
+                "observed_node_frequency" if v3_evidence else "model_attention"
+            ) if ast_attributions else None,
+            "tabular_attributions": tabular_attributions if use_v3_features else tabular_attributions[:10],
             "tabular_anomalies": tabular_attributions[:10],
             "cross_attention_matrix": cross_matrix,
             "cross_attention_matrix_status": (
@@ -504,6 +537,10 @@ class ForensicAttributionEngine:
             return out
         weights = [cross_modal_weights["graph_weight"], cross_modal_weights["ast_weight"]]
         bar_colors = ["#1f77b4", "#ff7f0e"]
+        if "tabular_weight" in cross_modal_weights:
+            labels.insert(0, "Tabular")
+            weights.insert(0, cross_modal_weights["tabular_weight"])
+            bar_colors.insert(0, "#2ca02c")
         bars = ax_attn.bar(labels, weights, color=bar_colors, width=0.45, edgecolor="#222222")
         ax_attn.set_ylim(0, 1.05)
         ax_attn.set_ylabel("Attention Weight", fontsize=9, fontweight="bold")

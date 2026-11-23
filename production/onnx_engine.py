@@ -24,17 +24,18 @@ if str(PROD_ROOT) not in sys.path:
     sys.path.insert(0, str(PROD_ROOT))
 
 from malpdf.cdr.engine import is_navigation_destination
-from malpdf.scanner.forensic import ForensicAttributionEngine
+from malpdf.scanner.forensic import ForensicAttributionEngine, TRIGGER_FEATURES_V3, observed_ast_distribution
 from malpdf.scanner.ingestion import InstantPDFIngestion
 from onnx_taxonomy import ONNXThreatTaxonomyClassifier
 
 DEFAULT_ONNX_MODEL_PATH = (
     Path(os.environ["MALPDF_ONNX_MODEL_PATH"])
     if "MALPDF_ONNX_MODEL_PATH" in os.environ
-    else PROD_ROOT / "models" / "pdf_transgraph_v2.onnx"
+    else PROD_ROOT / "models" / "pdf_transgraph_v3.onnx"
 )
 DEFAULT_SCALER_PATH = PROD_ROOT / "configs" / "tabular_scaler.json"
 DEFAULT_MANIFEST_PATH = PROD_ROOT / "configs" / "onnx_manifest.json"
+DEFAULT_V3_CONTRACT_PATH = PROD_ROOT / "configs" / "transgraph_v3_contract.json"
 
 
 def _sigmoid_scalar(x: float) -> float:
@@ -80,33 +81,26 @@ class ONNXMalPDFScannerEngine:
         model_path: Path | str | None = None,
         scaler_path: Path | str | None = None,
         manifest_path: Path | str | None = None,
-        temperature: float = 1.0,
+        temperature: float | None = None,
         ood_threshold: float = -0.85,
         intra_op_threads: int = 2,
+        decision_threshold: float | None = None,
     ) -> None:
-        if not math.isfinite(temperature) or temperature <= 0:
-            raise ValueError("temperature_must_be_positive_and_finite")
-
-        self.temperature = temperature
         self.ood_threshold = ood_threshold
         self.device = "onnxruntime-cpu"
-        self.node_in_dim = 23
-        self.tabular_in_features = 38
-
-        resolved_model = Path(model_path) if model_path is not None else DEFAULT_ONNX_MODEL_PATH
-        if not resolved_model.is_file():
-            raise FileNotFoundError(f"ONNX model checkpoint unavailable: {resolved_model}")
 
         resolved_manifest = Path(manifest_path) if manifest_path is not None else DEFAULT_MANIFEST_PATH
-        manifest_data: dict[str, Any] = {}
-        if resolved_manifest.is_file():
-            manifest_data = json.loads(resolved_manifest.read_text(encoding="utf-8"))
-            if model_path is None and "MALPDF_ONNX_MODEL_PATH" not in os.environ:
-                expected_sha = (manifest_data.get("binary_model") or {}).get("sha256")
-                if expected_sha:
-                    actual_sha = hashlib.sha256(resolved_model.read_bytes()).hexdigest()
-                    if actual_sha != expected_sha:
-                        raise ValueError("binary_onnx_sha256_mismatch")
+        manifest_data = json.loads(resolved_manifest.read_text(encoding="utf-8")) if resolved_manifest.is_file() else {}
+        binary_meta = manifest_data.get("binary_model") or {}
+        use_manifest = model_path is None and "MALPDF_ONNX_MODEL_PATH" not in os.environ
+        resolved_model = Path(model_path) if model_path is not None else DEFAULT_ONNX_MODEL_PATH
+        if use_manifest and binary_meta.get("filename") == "pdf_transgraph_v2.onnx":
+            resolved_model = resolved_model.with_name(binary_meta["filename"])
+        if not resolved_model.is_file():
+            raise FileNotFoundError(f"ONNX model checkpoint unavailable: {resolved_model}")
+        expected_sha = binary_meta.get("sha256")
+        if use_manifest and expected_sha and hashlib.sha256(resolved_model.read_bytes()).hexdigest() != expected_sha:
+            raise ValueError("binary_onnx_sha256_mismatch")
 
         opts = ort.SessionOptions()
         opts.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
@@ -119,11 +113,16 @@ class ONNXMalPDFScannerEngine:
             sess_options=opts,
             providers=["CPUExecutionProvider"],
         )
+        input_shapes = {item.name: item.shape for item in self.bin_session.get_inputs()}
+        self.node_in_dim = input_shapes["node_features"][-1]
+        self.tabular_in_features = input_shapes["tabular_features"][-1]
+        self.is_v3 = self.tabular_in_features == 29
+        self.model_version = "PDF-TransGraph v3.2b" if self.is_v3 else "PDF-TransGraph v2"
         self.model_path: Path | None = resolved_model
         self.weights_loaded: bool = True
-        self.parameter_count: int = int(
-            (manifest_data.get("binary_model") or {}).get("parameter_count", 828674)
-        )
+        self.parameter_count = 672885 if self.is_v3 else 808323
+        if binary_meta.get("filename") == resolved_model.name:
+            self.parameter_count = int(binary_meta.get("parameter_count", self.parameter_count))
 
         resolved_scaler = Path(scaler_path) if scaler_path is not None else DEFAULT_SCALER_PATH
         if not resolved_scaler.is_file():
@@ -131,14 +130,30 @@ class ONNXMalPDFScannerEngine:
             if fallback_scaler.is_file():
                 resolved_scaler = fallback_scaler
 
+        v3_path = DEFAULT_V3_CONTRACT_PATH
+        if not v3_path.is_file():
+            v3_path = REPO_ROOT / "configs" / v3_path.name
+        contract_sha = binary_meta.get("contract_sha256")
+        if self.is_v3 and use_manifest and contract_sha:
+            if hashlib.sha256(v3_path.read_bytes()).hexdigest() != contract_sha:
+                raise ValueError("transgraph_v3_contract_sha256_mismatch")
         self.ingestion = InstantPDFIngestion(
             scaler_path=resolved_scaler,
             node_in_dim=self.node_in_dim,
             as_numpy=True,
+            v3_contract_path=v3_path if self.is_v3 else None,
         )
-        if len(self.ingestion.feature_names) != self.tabular_in_features:
+        feature_names = self.ingestion.v3_feature_names if self.is_v3 else self.ingestion.feature_names
+        if len(feature_names) != self.tabular_in_features:
             raise ValueError("checkpoint_scaler_feature_count_mismatch")
 
+        contract = self.ingestion.v3_contract if self.is_v3 else {}
+        self.temperature = float(contract.get("temperature", 1.0) if temperature is None else temperature)
+        self.decision_threshold = float(contract.get("decision_threshold", 0.5) if decision_threshold is None else decision_threshold)
+        if not math.isfinite(self.temperature) or self.temperature <= 0:
+            raise ValueError("temperature_must_be_positive_and_finite")
+        if not 0.0 < self.decision_threshold < 1.0:
+            raise ValueError("decision_threshold_must_be_between_zero_and_one")
         self.forensic = ForensicAttributionEngine()
         self.taxonomy = ONNXThreatTaxonomyClassifier(manifest_path=resolved_manifest)
 
@@ -182,6 +197,7 @@ class ONNXMalPDFScannerEngine:
         nt_np: np.ndarray,
         ei_np: np.ndarray,
         er_np: np.ndarray,
+        graph_present: bool,
     ) -> np.ndarray:
         batch_size = len(variants)
         n_nodes = variants[0][0].shape[0]
@@ -205,7 +221,7 @@ class ONNXMalPDFScannerEngine:
         tok_cat = np.ascontiguousarray(np.concatenate([v[1] for v in variants], axis=0), dtype=np.int64)
         tab_cat = np.ascontiguousarray(np.concatenate([v[2] for v in variants], axis=0), dtype=np.float32)
 
-        logits_out = self.bin_session.run(
+        logits_out = self._run_binary(
             ["logits"],
             {
                 "node_features": nf_cat,
@@ -216,11 +232,21 @@ class ONNXMalPDFScannerEngine:
                 "edge_mask": em_cat,
                 "has_edges": he_val,
                 "batch": b_cat,
-                "ast_tokens": tok_cat,
                 "tabular_features": tab_cat,
             },
+            tok_cat,
+            graph_present,
         )[0]
         return np.asarray(logits_out, dtype=np.float32).reshape(-1)
+
+    def _run_binary(
+        self, outputs: list[str] | None, feed: dict[str, np.ndarray], tokens: np.ndarray, graph_present: bool,
+    ) -> list[np.ndarray]:
+        if self.is_v3:
+            feed["use_graph_flag"] = np.full((feed["tabular_features"].shape[0], 1), graph_present, dtype=np.float32)
+        else:
+            feed["ast_tokens"] = tokens
+        return self.bin_session.run(outputs, feed)
 
     def _compute_xai_signals_ort(
         self,
@@ -237,6 +263,8 @@ class ONNXMalPDFScannerEngine:
         edge_alpha: np.ndarray,
         ast_token_attn: np.ndarray,
         real_edges: bool,
+        graph_present: bool,
+        observed_ast: list[float],
     ) -> tuple[list[float | None], list[float], list[float], list[float | None], dict[str, float]]:
         n_nodes = nf_np.shape[0]
         priority_nodes: list[int] = []
@@ -248,7 +276,7 @@ class ONNXMalPDFScannerEngine:
             else:
                 other_nodes.append(idx_n)
         other_nodes.sort(key=lambda idx_n: float(np.linalg.norm(nf_np[idx_n])), reverse=True)
-        cand_nodes = (priority_nodes + other_nodes)[: min(n_nodes, 24)]
+        cand_nodes = (priority_nodes + other_nodes)[:24] if graph_present or not self.is_v3 else []
 
         abs_z = np.abs(tab_np[0])
         active_tab_indices = [int(i) for i in np.argsort(abs_z)[::-1] if float(abs_z[i]) > 0.03][:16]
@@ -283,8 +311,8 @@ class ONNXMalPDFScannerEngine:
                 math.sqrt(float(np.sum(noise_nf * noise_nf)) + float(np.sum(noise_tab * noise_tab)))
             )
 
-        batch_logits = self._batched_ort_logits(variants, nt_np, ei_np, er_np)
-        batch_probs = _sigmoid_array(batch_logits)
+        batch_logits = self._batched_ort_logits(variants, nt_np, ei_np, er_np, graph_present)
+        batch_probs = _sigmoid_array(batch_logits / self.temperature)
 
         raw_node_imp = np.zeros((n_nodes,), dtype=np.float64)
         for pos, idx_n in enumerate(cand_nodes):
@@ -304,8 +332,8 @@ class ONNXMalPDFScannerEngine:
         if real_edges and edge_alpha.size > 0:
             edge_attention = [round(float(x), 4) for x in edge_alpha.reshape(-1).tolist()]
 
-        ast_token_attention: list[float] = []
-        if ast_token_attn.size > 0:
+        ast_token_attention = observed_ast
+        if not self.is_v3 and ast_token_attn.size > 0:
             ast_token_attention = [round(float(x), 4) for x in ast_token_attn.reshape(-1).tolist()]
 
         kept_nf = nf_np.copy()
@@ -340,8 +368,9 @@ class ONNXMalPDFScannerEngine:
             nt_np,
             ei_np,
             er_np,
+            graph_present,
         )
-        fid_probs = _sigmoid_array(fid_logits)
+        fid_probs = _sigmoid_array(fid_logits / self.temperature)
         suff_prob = float(fid_probs[0])
         occ_prob = float(fid_probs[1])
         fidelity_score = max(0.0, 1.0 - abs(base_prob - suff_prob))
@@ -368,16 +397,18 @@ class ONNXMalPDFScannerEngine:
         else:
             sparsity_index = 0.0
 
-        gw = 0.5
-        aw = 0.5
+        tw, gw, aw = 0.0, 0.5, 0.5
         flat_attn = attn_weights.reshape(-1)
-        if flat_attn.size >= 2:
-            gw = float(flat_attn[0])
-            aw = float(flat_attn[1])
+        if flat_attn.size == 3:
+            tw, gw, aw = map(float, flat_attn)
+        elif flat_attn.size == 2:
+            gw, aw = map(float, flat_attn)
 
         g_latent = abs(base_logit - float(batch_logits[mod_offset])) * (0.5 + gw)
-        a_latent = abs(base_logit - float(batch_logits[mod_offset + 1])) * (0.5 + aw)
+        a_latent = 0.0 if self.is_v3 else abs(base_logit - float(batch_logits[mod_offset + 1])) * (0.5 + aw)
         t_latent = abs(base_logit - float(batch_logits[mod_offset + 2]))
+        if self.is_v3:
+            t_latent *= 0.5 + tw
         total_latent = g_latent + a_latent + t_latent
         if total_latent > 1e-9:
             graph_branch_pct = round((g_latent / total_latent) * 100.0, 1)
@@ -386,7 +417,7 @@ class ONNXMalPDFScannerEngine:
         else:
             graph_branch_pct = round(gw * 100.0, 1)
             ast_branch_pct = round(aw * 100.0, 1)
-            tabular_branch_pct = 0.0
+            tabular_branch_pct = round(tw * 100.0, 1)
 
         proof_metrics = {
             "fidelity_score": round(fidelity_score, 4),
@@ -490,10 +521,11 @@ class ONNXMalPDFScannerEngine:
         er_np = np.asarray(ingest_data["edge_rel"], dtype=np.int64)
         b_np = np.ascontiguousarray(ingest_data["batch"], dtype=np.int64)
         tok_np = np.ascontiguousarray(ingest_data["ast_tokens"], dtype=np.int64)
-        tab_np = np.ascontiguousarray(ingest_data["tab_features"], dtype=np.float32)
+        tab_np = np.ascontiguousarray(ingest_data["v3_tab_features" if self.is_v3 else "tab_features"], dtype=np.float32)
 
+        graph_present = ingest_data.get("graph_present", True)
         es_np, ed_np, er_feed, em_np, he_np, real_edges = self._prepare_single_edges(ei_np, er_np)
-        logits_arr, attn_weights_arr, edge_alpha_arr, ast_token_attn_arr = self.bin_session.run(
+        logits_arr, attn_weights_arr, edge_alpha_arr, ast_token_attn_arr = self._run_binary(
             None,
             {
                 "node_features": nf_np,
@@ -504,15 +536,16 @@ class ONNXMalPDFScannerEngine:
                 "edge_mask": em_np,
                 "has_edges": he_np,
                 "batch": b_np,
-                "ast_tokens": tok_np,
                 "tabular_features": tab_np,
             },
+            tok_np,
+            graph_present,
         )
         logit_val = float(np.asarray(logits_arr).reshape(-1)[0])
-        prob = _sigmoid_scalar(logit_val)
+        prob = _sigmoid_scalar(logit_val / self.temperature)
 
         raw_recs = ingest_data.get("raw_records", [])
-        verdict = "MALICIOUS" if prob >= 0.50 else "BENIGN"
+        verdict = "MALICIOUS" if prob >= self.decision_threshold else "BENIGN"
         energy_score, is_ood = self.calculate_energy_ood(logit_val)
 
         ood_warning = None
@@ -550,6 +583,8 @@ class ONNXMalPDFScannerEngine:
                 edge_alpha=np.asarray(edge_alpha_arr),
                 ast_token_attn=np.asarray(ast_token_attn_arr),
                 real_edges=real_edges,
+                graph_present=graph_present,
+                observed_ast=observed_ast_distribution(ingest_data) if self.is_v3 else [],
             )
             forensic_dossier = self.forensic.explain(
                 ingest_data,
@@ -783,10 +818,11 @@ class ONNXMalPDFScannerEngine:
         er_np = np.asarray(ingest_data["edge_rel"], dtype=np.int64)
         b_np = np.ascontiguousarray(ingest_data["batch"], dtype=np.int64)
         tok_np = np.ascontiguousarray(ingest_data["ast_tokens"], dtype=np.int64)
-        tab_np = np.ascontiguousarray(ingest_data["tab_features"], dtype=np.float32)
+        tab_np = np.ascontiguousarray(ingest_data["v3_tab_features" if self.is_v3 else "tab_features"], dtype=np.float32)
 
+        graph_present = ingest_data.get("graph_present", True)
         es_np, ed_np, er_feed, em_np, he_np, _ = self._prepare_single_edges(ei_np, er_np)
-        base_logits = self.bin_session.run(
+        base_logits = self._run_binary(
             ["logits"],
             {
                 "node_features": nf_np,
@@ -797,14 +833,15 @@ class ONNXMalPDFScannerEngine:
                 "edge_mask": em_np,
                 "has_edges": he_np,
                 "batch": b_np,
-                "ast_tokens": tok_np,
                 "tabular_features": tab_np,
             },
+            tok_np,
+            graph_present,
         )[0]
         logit_before = float(np.asarray(base_logits).reshape(-1)[0])
-        prob_before = _sigmoid_scalar(logit_before)
+        prob_before = _sigmoid_scalar(logit_before / self.temperature)
         energy_before, _ = self.calculate_energy_ood(logit_before)
-        verdict_before = "MALICIOUS" if prob_before >= 0.50 else "BENIGN"
+        verdict_before = "MALICIOUS" if prob_before >= self.decision_threshold else "BENIGN"
 
         target_idx = None
         target_rec: dict[str, Any] = {}
@@ -952,6 +989,11 @@ class ONNXMalPDFScannerEngine:
             scaler_mean = ingest_data.get("scaler_mean", [])
             scaler_scale = ingest_data.get("scaler_scale", [])
             trigger_cols = {"JS", "Javascript", "OpenAction", "AA", "Launch", "EmbeddedFiles", "XFA"}
+            if self.is_v3:
+                feature_names = ingest_data["v3_feature_names"]
+                scaler_mean = ingest_data["v3_scaler_center"]
+                scaler_scale = ingest_data["v3_scaler_scale"]
+                trigger_cols = TRIGGER_FEATURES_V3
             for f_idx, fname in enumerate(feature_names):
                 if fname in trigger_cols or fname.startswith("ast_"):
                     if f_idx < ablated_tab.shape[1] and f_idx < len(scaler_mean) and f_idx < len(scaler_scale):
@@ -973,7 +1015,7 @@ class ONNXMalPDFScannerEngine:
             ablated_er = er_np
 
         a_es, a_ed, a_er, a_em, a_he, _ = self._prepare_single_edges(ablated_ei, ablated_er)
-        abl_logits = self.bin_session.run(
+        abl_logits = self._run_binary(
             ["logits"],
             {
                 "node_features": ablated_nf,
@@ -984,14 +1026,15 @@ class ONNXMalPDFScannerEngine:
                 "edge_mask": a_em,
                 "has_edges": a_he,
                 "batch": b_np,
-                "ast_tokens": ablated_tok,
                 "tabular_features": ablated_tab,
             },
+            ablated_tok,
+            graph_present,
         )[0]
         logit_after = float(np.asarray(abl_logits).reshape(-1)[0])
-        prob_after = _sigmoid_scalar(logit_after)
+        prob_after = _sigmoid_scalar(logit_after / self.temperature)
         energy_after, _ = self.calculate_energy_ood(logit_after)
-        verdict_after = "MALICIOUS" if prob_after >= 0.50 else "BENIGN"
+        verdict_after = "MALICIOUS" if prob_after >= self.decision_threshold else "BENIGN"
         prob_delta = round(prob_after - prob_before, 4)
         latency_ms = round((time.perf_counter() - start_time) * 1000.0, 2)
 

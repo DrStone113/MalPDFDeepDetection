@@ -148,17 +148,20 @@ def index() -> str:
 @app.get("/api/health")
 def health() -> dict[str, Any]:
     model = scanner.model
-    hgt_layers = sum(1 for name in ("layer1", "layer2", "layer3") if hasattr(model.graph_encoder, name))
+    hgt_layers = len(model.graph_encoder.layers) if scanner.is_v3 else sum(
+        1 for name in ("layer1", "layer2", "layer3") if hasattr(model.graph_encoder, name)
+    )
     ast_layers = len(getattr(getattr(model.ast_encoder, "encoder", None), "layers", []) or [])
     session = optional_session()
     recent_jobs = session.store.list_jobs(limit=10) if session is not None else []
     node_dim = getattr(scanner, "node_in_dim", 19)
-    model_name = f"PDF-TransGraph v2 ({node_dim}D)" if node_dim == 23 else "PDF-TransGraph"
     return {
         "status": "healthy" if scanner.weights_loaded else "unavailable",
         "prediction_available": bool(scanner.weights_loaded),
         "prediction_blockers": [],
-        "model": model_name,
+        "model": f"{scanner.model_version} ({node_dim}D)",
+        "temperature": round(scanner.temperature, 6),
+        "decision_threshold": round(scanner.decision_threshold, 6),
         "node_in_dim": node_dim,
         "ood_threshold": scanner.ood_threshold,
         "cdr_engine": "pikepdf-inplace",
@@ -169,7 +172,7 @@ def health() -> dict[str, Any]:
         "parameter_count": scanner.parameter_count,
         "hgt_layers": hgt_layers,
         "ast_encoder_layers": ast_layers,
-        "tabular_features": int(model.tabular_encoder.input_layer.in_features),
+        "tabular_features": scanner.tabular_in_features,
         "torch_version": torch.__version__,
         "python_version": platform.python_version(),
         "uptime_s": round(time.time() - SERVICE_STARTED_AT, 1),

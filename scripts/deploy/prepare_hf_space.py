@@ -26,10 +26,11 @@ def copy_clean_tree(src: Path, dst: Path) -> None:
 
 
 def ensure_onnx_models_exported() -> None:
-    bin_onnx = PROD_DIR / "models" / "pdf_transgraph_v2.onnx"
+    bin_onnx = PROD_DIR / "models" / "pdf_transgraph_v3.onnx"
     ml_onnx = PROD_DIR / "models" / "multilabel_threat_net_v2.onnx"
     manifest = PROD_DIR / "configs" / "onnx_manifest.json"
-    if bin_onnx.is_file() and ml_onnx.is_file() and manifest.is_file():
+    contract = PROD_DIR / "configs" / "transgraph_v3_contract.json"
+    if all(path.is_file() for path in (bin_onnx, ml_onnx, manifest, contract)):
         return
     deploy_dir = str(Path(__file__).resolve().parent)
     if deploy_dir not in sys.path:

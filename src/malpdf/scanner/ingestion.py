@@ -19,7 +19,8 @@ except ImportError:
     torch = None
 
 from malpdf.extraction.byte_images import ByteImageLimits, _tile_order
-from malpdf.static.raw_scan import count_acroform_names
+from malpdf.features.contract_v3 import DERIVED, FEATURES, LEXICAL, RAW, log_matrix
+from malpdf.static.raw_scan import count_acroform_names, scan_raw_pdf_tokens
 
 NODE_TYPES: dict[str, int] = {
     "catalog": 0,
@@ -76,7 +77,11 @@ AST_NODE_TYPES: list[str] = [
     "ThrowStatement",
 ]
 
-DEFAULT_SCALER_PATH = Path(__file__).resolve().parents[3] / "configs" / "tabular_scaler.json"
+REPO_ROOT = Path(__file__).resolve().parents[3]
+DEFAULT_SCALER_PATH = REPO_ROOT / "configs" / "tabular_scaler.json"
+DEFAULT_V3_CONTRACT_PATH = REPO_ROOT / "configs" / "transgraph_v3_contract.json"
+REGIME_B_NAMES = tuple(name for name in LEXICAL if name != "lexical_AcroForm") + RAW[:3] + DERIVED[:4]
+REGIME_B_INDICES = tuple(FEATURES.index(name) for name in REGIME_B_NAMES)
 VERIFIED_CONTRACT_VERSION = "pdf-graph-projection-v2"
 DEFAULT_MAX_PDF_BYTES = 100 * 1024 * 1024
 
@@ -419,6 +424,7 @@ class InstantPDFIngestion:
         scaler_path: Path | str | None = None,
         node_in_dim: int = 23,
         as_numpy: bool = False,
+        v3_contract_path: Path | str | None = None,
     ) -> None:
         if node_in_dim not in (19, 23):
             raise ValueError("unsupported_node_in_dim")
@@ -442,6 +448,49 @@ class InstantPDFIngestion:
             or not (self.scaler_scale > 0).all()
         ):
             raise ValueError("invalid_training_scaler")
+
+        self.v3_contract: dict[str, Any] = {}
+        self.v3_feature_names: list[str] = []
+        self.v3_center = np.empty(0, dtype=np.float64)
+        self.v3_scale = np.empty(0, dtype=np.float64)
+        v3_path = DEFAULT_V3_CONTRACT_PATH
+        if not v3_path.is_file():
+            v3_path = REPO_ROOT / "production" / "configs" / v3_path.name
+        if v3_contract_path is not None or v3_path.is_file():
+            if v3_contract_path is not None:
+                v3_path = Path(v3_contract_path)
+            self.v3_contract = json.loads(v3_path.read_text(encoding="utf-8"))
+            self.v3_feature_names = self.v3_contract["feature_names"]
+            self.v3_center = np.asarray(self.v3_contract["center"], dtype=np.float64)
+            self.v3_scale = np.asarray(self.v3_contract["scale"], dtype=np.float64)
+            if (
+                tuple(self.v3_feature_names) != REGIME_B_NAMES
+                or tuple(self.v3_contract["feature_indices_73"]) != REGIME_B_INDICES
+                or self.v3_center.shape != (29,)
+                or self.v3_scale.shape != (29,)
+                or not np.isfinite(self.v3_center).all()
+                or not np.isfinite(self.v3_scale).all()
+                or np.any(self.v3_scale == 0)
+            ):
+                raise ValueError("invalid_transgraph_v3_contract")
+
+    def _build_v3_tabular_features(self, data: bytes, raw_entropy: float, header_pos: int) -> tuple[list[float], Any]:
+        if not self.v3_contract:
+            return [], None
+        tok = scan_raw_pdf_tokens(data)
+        denom = max(float(tok["obj"]), 1.0)
+        raw = [float(tok[name.removeprefix("lexical_")]) for name in REGIME_B_NAMES if name.startswith("lexical_")]
+        raw.extend((
+            float(len(data)), raw_entropy, float(max(header_pos, 0)),
+            float(tok["JS"] + tok["JavaScript"]) / denom,
+            float(tok["stream"]) / denom,
+            float(tok["obj"] - tok["endobj"]),
+            float(tok["stream"] - tok["endstream"]),
+        ))
+        if not self.contract_verified:
+            return raw, None
+        scaled = ((log_matrix([raw]) - self.v3_center) / self.v3_scale).astype(np.float32)
+        return raw, scaled if self.as_numpy else torch.from_numpy(scaled)
 
     def read_bytes(self, source: str | Path | bytes, max_bytes: int = DEFAULT_MAX_PDF_BYTES) -> tuple[bytes, str]:
         if isinstance(source, bytes):
@@ -526,23 +575,25 @@ class InstantPDFIngestion:
             records=records,
             extracted_scripts=extracted_scripts,
         )
+        v3_raw, v3_tab = self._build_v3_tabular_features(data, raw_entropy, header_pos)
 
         return {
+            **graph_data,
             "sha256": sha256,
             "size_bytes": pdf_size,
             "pdf_version": pdf_version,
             "pages_count": pages_count,
             "raw_entropy": round(raw_entropy, 4),
-            "node_features": graph_data["node_features"],
-            "node_types": graph_data["node_types"],
-            "edge_index": graph_data["edge_index"],
-            "edge_rel": graph_data["edge_rel"],
-            "batch": graph_data["batch"],
             "ast_tokens": ast_tokens,
             "ast_stats": ast_stats,
             "ast_node_counts": ast_node_counts,
             "tab_features": tab_features,
             "raw_feature_vec": raw_feature_vec,
+            "v3_feature_names": self.v3_feature_names,
+            "v3_raw_feature_vec": v3_raw,
+            "v3_tab_features": v3_tab,
+            "v3_scaler_center": self.v3_center.tolist(),
+            "v3_scaler_scale": self.v3_scale.tolist(),
             "prediction_blockers": [
                 f"feature_not_observed:{name}"
                 for name, value in zip(self.feature_names, raw_feature_vec)
@@ -981,7 +1032,7 @@ class InstantPDFIngestion:
                         "code": code,
                     })
 
-    def _build_hetero_graph(self, records: list[dict[str, Any]], raw_edges: list[dict[str, Any]]) -> dict[str, torch.Tensor]:
+    def _build_hetero_graph(self, records: list[dict[str, Any]], raw_edges: list[dict[str, Any]]) -> dict[str, Any]:
         id_map: dict[str, int] = {}
         node_types: list[int] = []
         node_raw_features: list[list[float]] = []
@@ -1014,6 +1065,7 @@ class InstantPDFIngestion:
         if num_nodes == 0:
             if self.as_numpy or torch is None:
                 return {
+                    "graph_present": False,
                     "node_features": np.zeros((1, self.node_in_dim), dtype=np.float32),
                     "node_types": np.array([8], dtype=np.int64),
                     "edge_index": np.zeros((2, 0), dtype=np.int64),
@@ -1021,6 +1073,7 @@ class InstantPDFIngestion:
                     "batch": np.zeros((1,), dtype=np.int64),
                 }
             return {
+                "graph_present": False,
                 "node_features": torch.zeros((1, self.node_in_dim), dtype=torch.float32),
                 "node_types": torch.tensor([8], dtype=torch.long),
                 "edge_index": torch.zeros((2, 0), dtype=torch.long),
@@ -1070,6 +1123,7 @@ class InstantPDFIngestion:
                 edge_rel_np = np.zeros((0,), dtype=np.int64)
             batch_np = np.zeros((num_nodes,), dtype=np.int64)
             return {
+                "graph_present": True,
                 "node_features": node_feat_np,
                 "node_types": node_types_np,
                 "edge_index": edge_index_np,
@@ -1091,6 +1145,7 @@ class InstantPDFIngestion:
 
         batch_tensor = torch.zeros(num_nodes, dtype=torch.long)
         return {
+            "graph_present": True,
             "node_features": node_feat_tensor,
             "node_types": node_types_tensor,
             "edge_index": edge_index_tensor,

@@ -86,7 +86,7 @@ def test_onnx_reports_occlusion_and_keeps_unmeasured_saliency_unknown() -> None:
     assert coverage["nodes_total"] == len(result.graph_nodes)
     assert coverage["nodes_measured"] == min(24, len(result.graph_nodes))
     assert coverage["tabular_features_measured"] <= 16
-    assert coverage["tabular_features_total"] == 38
+    assert coverage["tabular_features_total"] == 29
     measured_nodes = {node["id"] for node in result.graph_nodes if node["xai_saliency"] is not None}
     assert len(measured_nodes) == coverage["nodes_measured"]
     assert all(row["node_id"] in measured_nodes for row in dossier["cross_attention_matrix"])
@@ -99,7 +99,9 @@ def test_pytorch_reports_its_actual_gradient_method() -> None:
     assert dossier["cross_attention_matrix_status"] == "measured_gradient_saliency"
     assert dossier["xai_method"] == "gradient_input"
     assert dossier["xai_coverage"]["nodes_measured"] == len(result.graph_nodes)
-    assert dossier["xai_coverage"]["tabular_features_measured"] == 38
+    assert dossier["xai_coverage"]["tabular_features_measured"] == 29
+    assert len(dossier["tabular_attributions"]) == 29
+    assert dossier["cross_modal_weights"]["ast_weight"] == 0.0
 
 
 def test_onnx_sparsity_uses_only_evaluated_attribution_values() -> None:

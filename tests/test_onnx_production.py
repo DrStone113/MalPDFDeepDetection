@@ -5,6 +5,7 @@ import sys
 
 from fastapi.testclient import TestClient
 import pymupdf as fitz
+import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PROD_DIR = REPO_ROOT / "production"
@@ -12,6 +13,7 @@ if str(PROD_DIR) not in sys.path:
     sys.path.insert(0, str(PROD_DIR))
 
 from malpdf.cdr.fixtures import load_real_benign_bytes, load_real_threat_bytes
+from malpdf.cdr.engine import PDFDisarmer
 from malpdf.scanner.engine import MalPDFScannerEngine
 import app as prod_entrypoint
 from onnx_engine import ONNXMalPDFScannerEngine
@@ -31,30 +33,69 @@ def test_onnx_engine_matches_pytorch_on_real_fixtures() -> None:
 
     pt_engine = MalPDFScannerEngine(device="cpu")
     onnx_engine = ONNXMalPDFScannerEngine()
+    for scanner in (pt_engine, onnx_engine):
+        assert scanner.tabular_in_features == 29
+        assert scanner.decision_threshold == pytest.approx(0.057277346, abs=1e-6)
 
     pt_threat = pt_engine.scan_bytes(threat_bytes, file_name="real_threat_document.pdf", explain=True)
     ox_threat = onnx_engine.scan_bytes(threat_bytes, file_name="real_threat_document.pdf", explain=True)
 
     assert ox_threat.verdict == pt_threat.verdict == "MALICIOUS"
     assert ox_threat.malware_probability is not None and pt_threat.malware_probability is not None
-    assert abs(ox_threat.malware_probability - pt_threat.malware_probability) <= 1e-3
+    assert abs(ox_threat.malware_probability - pt_threat.malware_probability) <= 1e-4
     assert ox_threat.threat_taxonomy["ml_weights_loaded"] is True
     assert ox_threat.threat_taxonomy["threat_label"] == pt_threat.threat_taxonomy["threat_label"]
     assert ox_threat.threat_taxonomy["detected_count"] == pt_threat.threat_taxonomy["detected_count"]
     assert ox_threat.forensic_dossier["cross_attention_matrix_status"] == "measured_occlusion_saliency"
     assert len(ox_threat.forensic_dossier["cross_attention_matrix"]) > 0
+    assert ox_threat.forensic_dossier["ast_token_attribution_source"] == "observed_node_frequency"
 
     pt_benign = pt_engine.scan_bytes(benign_bytes, file_name="real_benign_document.pdf", explain=True)
     ox_benign = onnx_engine.scan_bytes(benign_bytes, file_name="real_benign_document.pdf", explain=True)
 
     assert ox_benign.verdict == pt_benign.verdict == "BENIGN"
     assert ox_benign.malware_probability is not None and pt_benign.malware_probability is not None
-    assert abs(ox_benign.malware_probability - pt_benign.malware_probability) <= 1e-3
+    assert abs(ox_benign.malware_probability - pt_benign.malware_probability) <= 1e-4
     assert ox_benign.threat_taxonomy["detected_count"] == 0
     assert ox_benign.threat_taxonomy["severity"] == "SAFE"
     assert ox_benign.threat_taxonomy["threat_label"] == "Clean.PDF.Verified"
     assert all(not h["detected"] and h["probability_pct"] < 25.0 for h in ox_benign.threat_taxonomy["ml_label_predictions"])
     assert all(not h["detected"] and h["probability_pct"] < 25.0 for h in pt_benign.threat_taxonomy["ml_label_predictions"])
+
+    cleaned, audit = PDFDisarmer().sanitize_bytes(threat_bytes)
+    assert audit.is_sanitized
+    assert len(cleaned) > 0.8 * len(threat_bytes)
+    pages, content = _extract_pdf_text_and_pages(cleaned)
+    assert content and (pages, content) == _extract_pdf_text_and_pages(threat_bytes)
+    pt_cleaned = pt_engine.scan_bytes(cleaned, explain=False)
+    ox_cleaned = onnx_engine.scan_bytes(cleaned, explain=False)
+    assert ox_cleaned.verdict == pt_cleaned.verdict
+    assert ox_cleaned.malware_probability == pytest.approx(pt_cleaned.malware_probability, abs=1e-4)
+
+
+def test_onnx_logits_match_pytorch_on_phase_2_byte_stress() -> None:
+    from scripts.deploy.export_onnx_models import verify_stress_parity
+
+    pt_engine = MalPDFScannerEngine(device="cpu")
+    onnx_engine = ONNXMalPDFScannerEngine()
+    assert verify_stress_parity(pt_engine.model, onnx_engine.bin_session, pt_engine.ingestion) < 1e-5
+
+
+def test_explicit_legacy_checkpoints_keep_their_feature_contract() -> None:
+    pytorch = MalPDFScannerEngine(
+        model_path=REPO_ROOT / "artifacts/models/pdf_transgraph_v2/pdf_transgraph_v2_23d_best.pt",
+        device="cpu",
+    )
+    onnx = ONNXMalPDFScannerEngine(model_path=PROD_DIR / "models/pdf_transgraph_v2.onnx")
+    for scanner in (pytorch, onnx):
+        assert scanner.tabular_in_features == 38
+        assert scanner.temperature == 1.0
+        assert scanner.decision_threshold == 0.5
+    benign = load_real_benign_bytes()
+    pt_result = pytorch.scan_bytes(benign, explain=False)
+    ort_result = onnx.scan_bytes(benign, explain=False)
+    assert pt_result.verdict == ort_result.verdict == "BENIGN"
+    assert ort_result.malware_probability == pytest.approx(pt_result.malware_probability, abs=1e-4)
 
 
 def test_production_web_service_endpoints_and_cdr_integrity() -> None:
@@ -86,6 +127,9 @@ def test_production_web_service_endpoints_and_cdr_integrity() -> None:
     assert r_health.status_code == 200
     health_json = r_health.json()
     assert health_json["runtime"] == "onnxruntime"
+    assert health_json["model"] == "PDF-TransGraph v3.2b (23D ONNX)"
+    assert health_json["temperature"] == pytest.approx(0.888401)
+    assert health_json["decision_threshold"] == pytest.approx(0.057277)
     assert health_json["prediction_available"] is True
     assert health_json["multilabel_weights_loaded"] is True
     assert health_json["cdr_engine"] == "pikepdf-inplace"
