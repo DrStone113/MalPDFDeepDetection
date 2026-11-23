@@ -239,3 +239,26 @@ def test_onnx_engine_scans_pdf_above_legacy_10mib_cap() -> None:
     assert result.threat_taxonomy["ml_weights_loaded"] is True
     assert result.file_size_bytes == len(large_pdf)
 
+
+def test_onnx_engine_accepts_crlf_and_lf_v3_contract_digest(tmp_path: Path, monkeypatch) -> None:
+    import onnx_engine as oe
+    import pytest
+
+    contract_path = PROD_DIR / "configs" / "transgraph_v3_contract.json"
+    lf_bytes = contract_path.read_bytes().replace(b"\r\n", b"\n")
+    crlf_bytes = lf_bytes.replace(b"\n", b"\r\n")
+
+    tmp_contract = tmp_path / "transgraph_v3_contract.json"
+    monkeypatch.setattr(oe, "DEFAULT_V3_CONTRACT_PATH", tmp_contract)
+
+    for raw_variant in (lf_bytes, crlf_bytes):
+        tmp_contract.write_bytes(raw_variant)
+        scanner = ONNXMalPDFScannerEngine()
+        assert scanner.is_v3 is True
+        assert scanner.tabular_in_features == 29
+
+    tmp_contract.write_bytes(lf_bytes + b"\n ")
+    with pytest.raises(ValueError, match="transgraph_v3_contract_sha256_mismatch"):
+        ONNXMalPDFScannerEngine()
+
+
