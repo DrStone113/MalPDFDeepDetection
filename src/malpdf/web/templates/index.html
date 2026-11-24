@@ -721,22 +721,22 @@
         <div class="glass-card rounded-xl overflow-hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-200 reveal-stagger-2">
           <div class="p-4 sm:p-5 flex flex-col justify-between">
             <div class="flex items-center justify-between gap-2">
-              <span class="text-xs font-semibold text-outline">Phân loại của mô hình</span>
+              <span class="text-xs font-semibold text-outline">Kết quả phân loại</span>
             </div>
             <div class="my-2">
               <span id="card-verdict" class="text-2xl font-bold tracking-tight text-on-surface">--</span>
             </div>
             <div class="flex items-center justify-between text-xs text-on-surface-variant">
-              <span>Mức chắc chắn của mô hình</span>
+              <span>Độ tin cậy</span>
               <span id="card-confidence" class="font-bold text-on-surface">--</span>
             </div>
           </div>
 
           <div class="p-4 sm:p-5 flex flex-col justify-between">
-            <span class="text-xs font-semibold text-outline">Điểm cảnh báo của mô hình</span>
+            <span class="text-xs font-semibold text-outline">Mức độ nguy hiểm</span>
             <div class="my-2 flex items-baseline gap-2">
               <span id="card-prob" class="text-3xl font-extrabold font-mono num">--%</span>
-              <span id="card-threshold-label" class="text-xs text-on-surface-variant">ngưỡng cảnh báo --%</span>
+              <span id="card-threshold-label" class="text-xs text-on-surface-variant">Ngưỡng nguy hiểm --%</span>
             </div>
             <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
               <div id="bar-prob" class="h-2 rounded-full shimmer-bar transition-all duration-700" style="width: 0%;"></div>
@@ -745,14 +745,14 @@
 
           <div class="p-4 sm:p-5 flex flex-col justify-between">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-semibold text-outline">Độ rõ của đầu ra</span>
+              <span class="text-xs font-semibold text-outline">Độ quen thuộc mẫu</span>
               <span id="ood-status-dot" class="w-2 h-2 rounded-full bg-slate-400"></span>
             </div>
             <div class="my-2 flex items-baseline gap-2">
               <span id="card-ood" class="text-xl font-bold text-on-surface">--</span>
             </div>
             <div class="flex items-center justify-between text-xs">
-              <span id="ood-threshold-label" class="text-outline">Chỉ số năng lượng</span>
+              <span id="ood-threshold-label" class="text-outline">Chỉ số OOD</span>
               <span id="badge-ood" class="px-2 py-0.5 rounded-md text-[10px] font-bold">--</span>
             </div>
           </div>
@@ -2856,15 +2856,24 @@
       renderThreatTaxonomy(data);
 
       const verdictEl = document.getElementById('card-verdict');
-      verdictEl.textContent = !data.prediction_available ? 'Chưa phân loại' : (isMal ? 'Có cảnh báo' : 'Không có cảnh báo');
-      verdictEl.className = !data.prediction_available
-        ? 'text-2xl font-bold tracking-tight text-amber-700'
-        : (isMal ? 'text-2xl font-bold tracking-tight text-error' : 'text-2xl font-bold tracking-tight text-tertiary');
+      if (!data.prediction_available) {
+        verdictEl.textContent = 'Chưa xác định';
+        verdictEl.className = 'text-2xl font-bold tracking-tight text-amber-700';
+      } else if (isMal) {
+        verdictEl.textContent = 'Nguy hiểm';
+        verdictEl.className = 'text-2xl font-bold tracking-tight text-error';
+      } else if (assessment.tone === 'clear') {
+        verdictEl.textContent = 'An toàn';
+        verdictEl.className = 'text-2xl font-bold tracking-tight text-tertiary';
+      } else {
+        verdictEl.textContent = 'Cần kiểm tra';
+        verdictEl.className = 'text-2xl font-bold tracking-tight text-amber-700';
+      }
 
       const thrPct = Number.isFinite(data.decision_threshold) ? Number((data.decision_threshold * 100).toFixed(2)) : null;
       const thrLabelEl = document.getElementById('card-threshold-label');
       if (thrLabelEl) {
-        thrLabelEl.textContent = thrPct === null ? 'Chưa có ngưỡng cảnh báo' : `Ngưỡng cảnh báo ${thrPct}%`;
+        thrLabelEl.textContent = thrPct === null ? 'Chưa có ngưỡng' : `Ngưỡng nguy hiểm ${thrPct}%`;
       }
       document.getElementById('card-confidence').textContent = _confidenceVi(data.confidence);
 
@@ -2891,9 +2900,9 @@
           : (data.is_ood ? 'w-2 h-2 rounded-full bg-amber-500 animate-pulse' : 'w-2 h-2 rounded-full bg-tertiary');
       }
       const cardOodEl = document.getElementById('card-ood');
-      cardOodEl.textContent = !oodAvailable ? 'Chưa đo' : data.is_ood ? 'Điểm chưa rõ ràng' : 'Điểm tách biệt rõ';
+      cardOodEl.textContent = !oodAvailable ? 'Chưa đo' : data.is_ood ? 'Mẫu lạ (OOD)' : 'Mẫu quen thuộc';
       cardOodEl.className = !oodAvailable ? 'text-xl font-bold text-outline' : (data.is_ood ? 'text-xl font-bold text-amber-600' : 'text-xl font-bold text-on-surface');
-      document.getElementById('ood-threshold-label').textContent = oodAvailable && oodThr !== null ? `Chỉ số năng lượng (ngưỡng ${oodThr})` : 'Chỉ số năng lượng';
+      document.getElementById('ood-threshold-label').textContent = oodAvailable && oodThr !== null ? `Chỉ số OOD (ngưỡng ${oodThr})` : 'Chỉ số OOD';
       document.getElementById('badge-ood').textContent = oodAvailable ? data.ood_score.toFixed(3) : '--';
 
       if (Number.isFinite(data.latency_ms)) animateValue('card-latency', 0, data.latency_ms, 500, 1, ' ms');
@@ -3790,14 +3799,15 @@
         const isDisarmed = j.status === 'DISARMED' || j.has_sanitized_pdf;
         const isActive = currentScanResult?.scan_id === j.scan_id;
         const sizeLabel = j.file_size_bytes ? `${Math.round(j.file_size_bytes / 1024).toLocaleString('vi-VN')} KB` : '-- KB';
-        const pillText = isMal ? 'Có cảnh báo' : (isPending ? 'Đang kiểm tra' : (isUnavail ? 'Chưa kết luận' : 'Đã kiểm tra'));
+        const pillText = isMal ? 'Nguy hiểm' : (isPending ? 'Đang quét' : (isUnavail ? 'Chưa xác định' : 'An toàn'));
         const iconWrapClass = isMal
           ? 'bg-red-50 text-error'
-          : (isUnavail ? 'bg-amber-50 text-amber-800' : 'bg-slate-100 text-outline');
+          : (isUnavail ? 'bg-amber-50 text-amber-800' : (isPending ? 'bg-slate-100 text-outline' : 'bg-emerald-50 text-tertiary'));
         const iconName = isMal ? 'gpp_maybe' : (isPending ? 'pending' : (isUnavail ? 'help' : 'check_circle'));
         const pillClass = isMal
           ? 'bg-red-50 text-error border border-red-200'
-          : (isUnavail ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-slate-100 text-outline');
+          : (isUnavail ? 'bg-amber-50 text-amber-800 border border-amber-200'
+            : (isPending ? 'bg-slate-100 text-outline' : 'bg-emerald-50 text-tertiary border border-emerald-200'));
 
         const item = document.createElement('div');
         item.className = `p-2.5 rounded-lg border transition cursor-pointer flex items-center justify-between gap-2 active:scale-98 group ${

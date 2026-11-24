@@ -716,7 +716,7 @@ class AIThreatExplainer:
             spar = xai_metrics.get("sparsity_index")
             lip = xai_metrics.get("lipschitz_stability")
             ood_line = (
-                f"- **Chỉ số năng lượng (OOD):** điểm đo `{ood_score:.4f}` (ngưỡng `{ood_threshold:.2f}`) -> **{'Điểm chưa rõ ràng' if is_ood else 'Điểm tách biệt rõ'}**\n"
+                f"- **Chỉ số năng lượng (OOD):** điểm đo `{ood_score:.4f}` (ngưỡng `{ood_threshold:.2f}`) -> **{'Mẫu lạ (OOD)' if is_ood else 'Mẫu quen thuộc'}**\n"
                 if isinstance(ood_score, (int, float))
                 else "- **Chỉ số năng lượng (OOD):** Chưa đo.\n"
             )
