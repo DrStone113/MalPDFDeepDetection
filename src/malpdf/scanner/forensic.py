@@ -31,6 +31,9 @@ TRIGGER_FEATURES_V3 = {
     "lexical_XFA",
     "js_per_obj",
 }
+_NON_THREAT_AUDIT_MARKERS = frozenset({"action_inspection_limit", "codec_inspection_limit"})
+_BENIGN_CATALOG_ACTION_ROLES = frozenset({"destination", "benign_navigation", "empty_aa"})
+_CATALOG_ACTION_TOKENS = {"action:open_action": "OpenAction", "action:aa": "AA"}
 
 
 def observed_ast_distribution(ingest_data: dict[str, Any]) -> list[float]:
@@ -68,6 +71,10 @@ DANGEROUS_PATTERNS: list[tuple[str, str, str]] = [
 def _describe_trigger_cascade(inv: str, knd: str, action_role: str | None, is_crit: bool) -> str:
     if action_role == "destination":
         return "Khóa /OpenAction thiết lập trang đích điều hướng khi mở tài liệu."
+    if action_role == "benign_navigation":
+        return "Hành động điều hướng trình xem an toàn (chuyển trang/đích hiển thị)."
+    if action_role == "empty_aa":
+        return "Khóa /AA rỗng không chứa hành động thực thi."
     if action_role == "remote_goto":
         return "Hành động /GoToR tham chiếu tài liệu bên ngoài."
     if action_role == "file_attachment":
@@ -619,6 +626,17 @@ def is_suspicious_uri(uri: str, *, lure_phrases: set[str] | frozenset[str] = fro
     return bool(reasons), reasons
 
 
+def _is_benign_catalog_action(record: dict[str, Any]) -> bool:
+    return not record.get("is_threat_trigger") and record.get("action_role") in _BENIGN_CATALOG_ACTION_ROLES
+
+
+def _catalog_action_tokens_accounted_for(raw_tokens: dict[str, int], reconciled_ids: set[str]) -> bool:
+    return all(
+        (count := raw_tokens.get(token, 0)) == 0 or (count == 1 and evidence_id in reconciled_ids)
+        for evidence_id, token in _CATALOG_ACTION_TOKENS.items()
+    )
+
+
 def _reconcile_semantic_verdict(
     ingest_data: dict[str, Any],
     logit: float,
@@ -631,6 +649,7 @@ def _reconcile_semantic_verdict(
     phishing = ingest_data["phishing_analysis"]["has_phishing_threat"]
     codec = bool(ingest_data["codec_anomalies"])
     non_js = set(ingest_data["non_js_triggers"])
+    threat_non_js = non_js - _NON_THREAT_AUDIT_MARKERS
     hardening_reasons = non_js.intersection(
         {"/GoToR", "/FileAttachment", "/3D", "/U3D", "/PRC", "gotor_unc_ntlm_risk", "xfa_formcalc_network_call"}
     )
@@ -646,7 +665,7 @@ def _reconcile_semantic_verdict(
     js = ingest_data["js_semantics"]
     raw_tokens = ingest_data["raw_tokens"]
     has_non_js_threat = bool(
-        non_js
+        threat_non_js
         or any(raw_tokens.get(key) for key in ("Launch", "EmbeddedFile", "XFA", "RichMedia"))
         or any(
             record["kind"] == "filespec"
@@ -701,39 +720,71 @@ def _reconcile_semantic_verdict(
         return math.log(
             uninspected_probability / (1.0 - uninspected_probability)
         ) * temperature, uninspected_probability
-    if probability < threshold or not js["is_verified_benign_js"] or has_non_js_threat:
+    if probability < threshold or has_non_js_threat:
         return logit, probability
 
-    script_parents = {script["parent_id"] for script in ingest_data["extracted_scripts"]}
-    node_indices = [
-        index
-        for index, record in enumerate(records)
-        if record["kind"] == "script"
-        or record["action_type"] == "/JavaScript"
-        or record["evidence_id"] in script_parents
+    catalog_action_records = [
+        (index, record) for index, record in enumerate(records) if record.get("evidence_id") in _CATALOG_ACTION_TOKENS
     ]
+    benign_nav_indices = [index for index, record in catalog_action_records if _is_benign_catalog_action(record)]
+    reconciled_ids = {records[index]["evidence_id"] for index in benign_nav_indices}
+    if js["is_verified_benign_js"]:
+        script_parents = {script["parent_id"] for script in ingest_data["extracted_scripts"]}
+        node_indices = [
+            index
+            for index, record in enumerate(records)
+            if record["kind"] == "script"
+            or record["action_type"] == "/JavaScript"
+            or record["evidence_id"] in script_parents
+        ]
+        drop_indices = sorted(set(node_indices) | set(benign_nav_indices))
+        if len(drop_indices) >= len(records):
+            drop_indices = node_indices
+        trigger_columns = TRIGGER_FEATURES_V3 if is_v3 else {"JS", "Javascript", "OpenAction", "AA"}
+    else:
+        if (
+            js["has_scripts"]
+            or ingest_data.get("extracted_scripts")
+            or ingest_data.get("xfa_analysis", {}).get("present")
+            or ingest_data.get("qr_analysis", {}).get("suspicious_uris")
+            or ingest_data.get("signature_matches")
+            or ingest_data.get("evasion_unpack_audit", {}).get("hex_escaped_names_decoded")
+            or any(record.get("is_threat_trigger") for record in records)
+            or len(benign_nav_indices) != len(catalog_action_records)
+            or not 0 < len(benign_nav_indices) < len(records)
+            or not _catalog_action_tokens_accounted_for(raw_tokens, reconciled_ids)
+        ):
+            return logit, probability
+        drop_indices = benign_nav_indices
+        prefix = "lexical_" if is_v3 else ""
+        trigger_columns = {prefix + _CATALOG_ACTION_TOKENS[evidence_id] for evidence_id in reconciled_ids}
     if is_v3:
         names = ingest_data["v3_feature_names"]
         center, scale = ingest_data["v3_scaler_center"], ingest_data["v3_scaler_scale"]
-        trigger_columns = TRIGGER_FEATURES_V3
     else:
         names = ingest_data["feature_names"]
         center, scale = ingest_data["scaler_mean"], ingest_data["scaler_scale"]
-        trigger_columns = {"JS", "Javascript", "OpenAction", "AA"}
     column_indices = [index for index, name in enumerate(names) if name in trigger_columns]
     baselines = [-center[index] / scale[index] for index in column_indices]
-    cf_logit = counterfactual(node_indices, column_indices, baselines)
+    cf_logit = counterfactual(drop_indices, column_indices, baselines)
     cf_prob = _calibrated_probability(cf_logit, temperature)
     if cf_prob >= threshold:
         return logit, probability
-    for index in node_indices:
-        records[index].update(is_threat_trigger=False, action_role="verified_benign_js")
-    ingest_data["ast_semantic_calibration"] = {
+    calibration = {
         "applied": True,
         "raw_prob": round(probability, 4),
         "calibrated_prob": round(cf_prob, 4),
-        "reason": "verified_benign_js_counterfactual",
     }
+    if js["is_verified_benign_js"]:
+        for index in node_indices:
+            records[index].update(is_threat_trigger=False, action_role="verified_benign_js")
+        ingest_data["ast_semantic_calibration"] = {**calibration, "reason": "verified_benign_js_counterfactual"}
+    else:
+        ingest_data["navigation_semantic_calibration"] = {
+            **calibration,
+            "reconciled_nodes": sorted(reconciled_ids),
+            "reason": "benign_catalog_navigation_counterfactual",
+        }
     return cf_logit, cf_prob
 
 
@@ -774,7 +825,10 @@ def reconcile_taxonomy_observations(
     verdict: str,
 ) -> set[str]:
     suppressed = set()
-    if verdict == "BENIGN" and ingest_data.get("js_semantics", {}).get("is_verified_benign_js"):
+    triggers = set(ingest_data.get("non_js_triggers", ()))
+    password_locked = ingest_data.get("encryption_analysis", {}).get("password_locked")
+    js_semantics = ingest_data.get("js_semantics", {})
+    if verdict == "BENIGN" and not triggers and not password_locked and js_semantics.get("is_verified_benign_js"):
         suppressed = {"js_script_exec", "auto_open_trigger"}
         for label in suppressed:
             observations[label] = None
@@ -783,7 +837,6 @@ def reconcile_taxonomy_observations(
         urls = phishing.get("suspicious_uris", [])
         reasons = sorted({reason for url in urls for reason in url["reasons"]})
         observations["suspicious_uri_redirect"] = f"Ghi nhận {len(urls)} URL đáng ngờ ({', '.join(reasons)})."
-    triggers = set(ingest_data.get("non_js_triggers", ()))
     if "/GoToR" in triggers:
         redirect = "Ghi nhận hành động mở tài liệu từ xa (/GoToR)."
         observations["suspicious_uri_redirect"] = " ".join(
@@ -797,8 +850,21 @@ def reconcile_taxonomy_observations(
     codec_reasons = sorted(
         {f"{item['codec']}: {', '.join(item['reason_codes'])}" for item in ingest_data.get("codec_anomalies", [])}
     )
-    recovered = ingest_data.get("evasion_unpack_audit", {}).get("recovered_hidden_triggers", [])
-    structural = observations["structural_parser_evasion"]
+    evasion_audit = ingest_data.get("evasion_unpack_audit", {})
+    effective_recovered = list(evasion_audit.get("recovered_hidden_triggers", []))
+    records = ingest_data.get("raw_records") or []
+    raw_tokens = ingest_data.get("raw_tokens") or {}
+    scripts = ingest_data.get("extracted_scripts") or []
+    catalog_actions = [record for record in records if record.get("evidence_id") in _CATALOG_ACTION_TOKENS]
+    benign_catalog_ids = {record["evidence_id"] for record in catalog_actions if _is_benign_catalog_action(record)}
+    if (
+        "OpenAction" in effective_recovered
+        and not evasion_audit.get("hex_escaped_names_decoded")
+        and raw_tokens.get("OpenAction", 0) <= 1
+        and "action:open_action" in benign_catalog_ids
+    ):
+        effective_recovered.remove("OpenAction")
+    structural = observations.get("structural_parser_evasion")
     details = [structural] if structural else []
     differential = ingest_data.get("differential_analysis", {})
     if differential.get("has_differential_evasion"):
@@ -814,9 +880,67 @@ def reconcile_taxonomy_observations(
     media = triggers.intersection({"/3D", "/U3D", "/PRC"})
     if media:
         details.append("Ghi nhận cấu trúc 3D (" + ", ".join(sorted(media)) + ").")
-    if recovered and verdict == "MALICIOUS":
-        details.append("Tên PDF khôi phục (" + ", ".join("/" + name for name in recovered) + ").")
+    if effective_recovered and verdict == "MALICIOUS":
+        details.append("Tên PDF khôi phục (" + ", ".join("/" + name for name in effective_recovered) + ").")
     observations["structural_parser_evasion"] = " ".join(details) or None
+
+    qr = ingest_data.get("qr_analysis", {})
+    if (
+        verdict != "BENIGN"
+        or not records
+        or not raw_tokens
+        or not ingest_data.get("graph_present", True)
+        or password_locked
+        or triggers
+        or ingest_data.get("codec_anomalies")
+        or phishing.get("has_phishing_threat")
+        or qr.get("has_qr_threat")
+        or qr.get("suspicious_uris")
+        or differential.get("has_differential_evasion")
+        or polyglot.get("has_polyglot_payload")
+        or xfa_anomalies
+        or ingest_data.get("threat_intel", {}).get("hit")
+        or ingest_data.get("signature_matches")
+        or js_semantics.get("malicious_indicator_count")
+        or any(record.get("is_threat_trigger") for record in records)
+    ):
+        return suppressed
+
+    no_js = (
+        not scripts
+        and raw_tokens.get("JS", 0) == raw_tokens.get("JavaScript", 0) == 0
+        and not any(record.get("kind") == "script" for record in records)
+    )
+    verified_navigation_js = (
+        bool(benign_catalog_ids)
+        and js_semantics.get("is_verified_benign_js")
+        and ingest_data.get("ast_semantic_calibration", {}).get("applied")
+    )
+    disproven = {
+        "js_script_exec": no_js,
+        "obfuscated_payload": no_js or verified_navigation_js,
+        "buffer_loop_staging": no_js,
+        "auto_open_trigger": not scripts
+        and all(_is_benign_catalog_action(record) for record in catalog_actions)
+        and _catalog_action_tokens_accounted_for(raw_tokens, benign_catalog_ids),
+        "active_form_or_exploit": not scripts
+        and not ingest_data.get("xfa_analysis", {}).get("present")
+        and all(raw_tokens.get(token, 0) == 0 for token in ("XFA", "AcroForm", "Acroform")),
+        "embedded_dropper_or_launch": not scripts
+        and raw_tokens.get("Launch", 0) == raw_tokens.get("EmbeddedFile", 0) == 0
+        and not any(record.get("kind") == "filespec" or record.get("action_type") == "/Launch" for record in records),
+        "suspicious_uri_redirect": not phishing.get("suspicious_uris")
+        and not any(record.get("action_type") in {"/SubmitForm", "/GoToR"} for record in records)
+        and len(ingest_data.get("extracted_uris", [])) >= raw_tokens.get("URI", 0),
+        "structural_parser_evasion": not evasion_audit.get("hex_escaped_names_decoded")
+        and not effective_recovered
+        and not any(
+            record.get("stream_decode_failed") or record.get("decompression_ratio_exceeded") for record in records
+        )
+        and raw_tokens.get("obj", 0) == raw_tokens.get("endobj", 0)
+        and raw_tokens.get("stream", 0) == raw_tokens.get("endstream", 0),
+    }
+    suppressed.update(head for head, disproved in disproven.items() if disproved and observations.get(head) is None)
     return suppressed
 
 
@@ -1284,6 +1408,7 @@ class ForensicAttributionEngine:
                     "non_js_triggers",
                     "evasion_unpack_audit",
                     "ast_semantic_calibration",
+                    "navigation_semantic_calibration",
                     "semantic_verdict_enforcement",
                     "anti_padding_subgraph_reconciliation",
                     "graph_byte_source",

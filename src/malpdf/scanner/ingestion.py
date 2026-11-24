@@ -173,11 +173,7 @@ _RECOVERABLE_TOKENS = {
     "Launch",
     "EmbeddedFile",
     "XFA",
-    "URI",
     "Encrypt",
-    "Resources",
-    "Root",
-    "page_command",
 }
 _STATIC_BYTE_LIMIT = 4 * 1024**2
 _STATIC_FILTER_LIMITS = FilterLimits(max_input_bytes=_STATIC_BYTE_LIMIT, max_stage_bytes=_STATIC_BYTE_LIMIT)
@@ -231,8 +227,12 @@ def normalize_pdf_hex_names(raw_bytes: bytes) -> tuple[bytes, int]:
 
     def decode_name(match: re.Match[bytes]) -> bytes:
         nonlocal decoded
-        name = _HEX_ESCAPE.sub(decode_escape, match[0])
-        decoded += name != match[0]
+        raw_name = match[0]
+        # ASCII indicator names cannot contain raw binary bytes from a compressed stream.
+        if any(byte < 0x21 or byte > 0x7E for byte in raw_name):
+            return raw_name
+        name = _HEX_ESCAPE.sub(decode_escape, raw_name)
+        decoded += name != raw_name
         return name
 
     return _PDF_NAME.sub(decode_name, raw_bytes), decoded
@@ -664,6 +664,10 @@ def inspect_polyglot_and_revisions(
     }
 
 
+_DISALLOWED_NAV_KEYS = ("/Next", "/JS", "/JavaScript", "/URI", "/F", "/UF", "/Launch", "/AA")
+_BENIGN_NAMED_ACTIONS = frozenset({"/FirstPage", "/PrevPage", "/NextPage", "/LastPage"})
+
+
 def is_navigation_destination(value: Any) -> bool:
     dictionaries = (DictionaryObject, pikepdf.Dictionary)
     arrays = (ArrayObject, pikepdf.Array)
@@ -671,9 +675,9 @@ def is_navigation_destination(value: Any) -> bool:
     if isinstance(value, dictionaries):
         if str(value.get("/S", "")) != "/GoTo" or "/D" not in value:
             return False
-        if any(key in value for key in ("/Next", "/JS", "/JavaScript")):
+        if any(key in value for key in _DISALLOWED_NAV_KEYS):
             return False
-        value = value["/D"]
+        value = _resolve_pdf_object(value["/D"])
         if isinstance(value, (pikepdf.Name, pikepdf.String, NameObject, TextStringObject)):
             return True
     if not isinstance(value, arrays) or len(value) < 2:
@@ -690,6 +694,25 @@ def is_navigation_destination(value: Any) -> bool:
     )
 
 
+def is_benign_catalog_navigation(value: Any) -> bool:
+    if is_navigation_destination(value):
+        return True
+    resolved = _resolve_pdf_object(value)
+    return (
+        isinstance(resolved, (DictionaryObject, pikepdf.Dictionary))
+        and str(resolved.get("/S", "")) == "/Named"
+        and str(_resolve_pdf_object(resolved.get("/N", ""))) in _BENIGN_NAMED_ACTIONS
+        and not any(key in resolved for key in (*_DISALLOWED_NAV_KEYS, "/D"))
+    )
+
+
+def is_benign_catalog_aa(value: Any) -> bool:
+    resolved = _resolve_pdf_object(value)
+    return isinstance(resolved, (DictionaryObject, pikepdf.Dictionary)) and all(
+        is_benign_catalog_navigation(entry) for entry in resolved.values()
+    )
+
+
 def _catalog_trigger_keys(root: Any) -> set[str]:
     keys = set()
     for name in ("/OpenAction", "/AA", "/Names/JavaScript", "/AcroForm/XFA"):
@@ -702,7 +725,8 @@ def _catalog_trigger_keys(root: Any) -> set[str]:
             if (
                 value is not None
                 and not isinstance(value, NullObject)
-                and not (name == "/OpenAction" and is_navigation_destination(value))
+                and not (name == "/OpenAction" and is_benign_catalog_navigation(value))
+                and not (name == "/AA" and is_benign_catalog_aa(value))
             ):
                 keys.add(name)
     return keys
@@ -981,9 +1005,11 @@ def _analyze_phishing(
                     "reasons": reasons,
                 }
             )
+    qr_suspicious = [item for item in suspicious if item.get("source") == "qr_image"]
+    qr_analysis.update(has_qr_threat=bool(qr_suspicious), suspicious_uris=qr_suspicious)
     return {
         "has_phishing_threat": bool(suspicious),
-        "has_qr_phishing": any(item.get("source") == "qr_image" for item in suspicious),
+        "has_qr_phishing": bool(qr_suspicious),
         "suspicious_uris": suspicious,
         "lure_phrases": sorted(phrases),
         "image_only_lure": image_only_lure,
@@ -1203,6 +1229,8 @@ def _inspect_additional_evidence(
                 action = str(value.get("/S") or "")
                 subtype = str(value.get("/Subtype") or "")
                 non_js.update(_NON_JS_KEYS.intersection(value.keys()))
+                if "/Next" in value and (path == "/Root/OpenAction" or path.startswith("/Root/AA/")):
+                    non_js.add("catalog_action_chain")
                 if subtype in _EXTERNAL_ANNOTATIONS:
                     non_js.add(subtype)
                 if subtype == "/FileAttachment":
@@ -2024,6 +2052,16 @@ class InstantPDFIngestion:
                         if uri["is_suspicious"]:
                             is_threat_trigger = True
                             action_role = "suspicious_uri"
+            if action_role is None and not is_threat_trigger:
+                if evidence_id == "action:open_action":
+                    if is_navigation_destination(obj_ref):
+                        action_role = "destination"
+                    elif is_benign_catalog_navigation(obj_ref):
+                        action_role = "benign_navigation"
+                elif evidence_id == "action:aa":
+                    resolved_aa = _resolve_pdf_object(obj_ref)
+                    if is_benign_catalog_aa(resolved_aa):
+                        action_role = "empty_aa" if len(resolved_aa) == 0 else "benign_navigation"
             records.append(
                 {
                     "evidence_id": evidence_id,
@@ -2031,23 +2069,7 @@ class InstantPDFIngestion:
                     "size_bytes": final_size,
                     "byte_measurements": meta["byte_measurements"],
                     "action_type": action_type,
-                    "action_role": (
-                        action_role
-                        or (
-                            "destination"
-                            if evidence_id == "action:open_action"
-                            and (
-                                isinstance(obj_ref, ArrayObject)
-                                or (
-                                    isinstance(obj_ref, DictionaryObject)
-                                    and str(obj_ref.get("/S")) == "/GoTo"
-                                    and "/D" in obj_ref
-                                    and not any(key in obj_ref for key in ("/Next", "/JS", "/JavaScript"))
-                                )
-                            )
-                            else None
-                        )
-                    ),
+                    "action_role": action_role,
                     "phys_span_bytes": meta["phys_span_bytes"],
                     "raw_stream_bytes": meta["raw_stream_bytes"],
                     "decoded_stream_bytes": meta["decoded_stream_bytes"],
@@ -2334,7 +2356,8 @@ class InstantPDFIngestion:
                     raw_edges.append({"source": root_id, "target": xfa_id, "relation": ("catalog", "script")})
 
         if (
-            not any(
+            incremental_eof_count <= 1
+            and not any(
                 raw_tokens.get(key)
                 for key in (
                     "JavaScript",
@@ -2352,14 +2375,37 @@ class InstantPDFIngestion:
                 )
             )
             and not any(
-                token in raw_pdf_bytes for token in (b"/JB2", b"/JPXDecode", b"/FontFile2", b"/FontFile3", b"/XFA")
+                token in raw_pdf_bytes
+                for token in (
+                    b"/JB2",
+                    b"/JPXDecode",
+                    b"/FontFile",
+                    b"/FontFile2",
+                    b"/FontFile3",
+                    b"/XFA",
+                    b"/Image",
+                    b"/DCTDecode",
+                    b"/CCITTFaxDecode",
+                    b"/ICCBased",
+                    b"/GoToR",
+                    b"/FileAttachment",
+                    b"/3D",
+                    b"/U3D",
+                    b"/PRC",
+                    b"/SubmitForm",
+                    b"/ImportData",
+                    b"/GoToE",
+                    b"/Movie",
+                    b"/Sound",
+                    b"/Rendition",
+                )
             )
             and _JBIG2_MAGIC not in raw_pdf_bytes
             and not recovered
             and not extracted_scripts
             and not _PDF_NAME.search(raw_pdf_bytes)
         ):
-            return set()
+            return set(), empty_qr_analysis(), _differential_summary()
 
         def register_supplemental(
             evidence_id: str,
