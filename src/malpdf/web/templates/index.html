@@ -745,7 +745,7 @@
 
           <div class="p-4 sm:p-5 flex flex-col justify-between">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-semibold text-outline">Độ quen thuộc mẫu</span>
+              <span class="text-xs font-semibold text-outline">Độ phổ biến</span>
               <span id="ood-status-dot" class="w-2 h-2 rounded-full bg-slate-400"></span>
             </div>
             <div class="my-2 flex items-baseline gap-2">
@@ -2900,7 +2900,7 @@
           : (data.is_ood ? 'w-2 h-2 rounded-full bg-amber-500 animate-pulse' : 'w-2 h-2 rounded-full bg-tertiary');
       }
       const cardOodEl = document.getElementById('card-ood');
-      cardOodEl.textContent = !oodAvailable ? 'Chưa đo' : data.is_ood ? 'Mẫu lạ (OOD)' : 'Mẫu quen thuộc';
+      cardOodEl.textContent = !oodAvailable ? 'Chưa đo' : data.is_ood ? 'Mẫu lạ (OOD)' : 'Mẫu phổ biến';
       cardOodEl.className = !oodAvailable ? 'text-xl font-bold text-outline' : (data.is_ood ? 'text-xl font-bold text-amber-600' : 'text-xl font-bold text-on-surface');
       document.getElementById('ood-threshold-label').textContent = oodAvailable && oodThr !== null ? `Chỉ số OOD (ngưỡng ${oodThr})` : 'Chỉ số OOD';
       document.getElementById('badge-ood').textContent = oodAvailable ? data.ood_score.toFixed(3) : '--';
