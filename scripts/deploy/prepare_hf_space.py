@@ -63,6 +63,9 @@ def prepare_bundle(target_dir: Path) -> None:
         shutil.copy2(src_file, target_dir / fname)
 
     copy_clean_tree(PROD_DIR / "configs", target_dir / "configs")
+    shutil.copy2(
+        REPO_ROOT / "configs" / "pdf_signature_rules.json", target_dir / "configs" / "pdf_signature_rules.json"
+    )
     copy_clean_tree(PROD_DIR / "models", target_dir / "models")
     copy_clean_tree(REPO_ROOT / "src" / "malpdf", target_dir / "src" / "malpdf")
 

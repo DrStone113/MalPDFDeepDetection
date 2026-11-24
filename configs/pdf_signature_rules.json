@@ -1,0 +1,74 @@
+[
+  {
+    "id": "CVE-2010-0188",
+    "name": "TIFF SubIFD script indicator",
+    "severity": "critical",
+    "target": "script",
+    "pattern": "\\bTIFF\\b[^\\r\\n]{0,120}\\bSubIFD\\b",
+    "description_vi": "Mã nhúng chứa dấu hiệu TIFF/SubIFD tương ứng với mẫu nhận diện tĩnh CVE-2010-0188."
+  },
+  {
+    "id": "CVE-2013-2729",
+    "name": "BMP RLE script indicator",
+    "severity": "critical",
+    "target": "script",
+    "pattern": "\\bBMP\\b[^\\r\\n]{0,120}\\bRLE\\b",
+    "description_vi": "Mã nhúng chứa dấu hiệu BMP/RLE tương ứng với mẫu nhận diện tĩnh CVE-2013-2729."
+  },
+  {
+    "id": "CVE-2018-4990",
+    "name": "Adobe Reader CVE-2018-4990",
+    "severity": "critical",
+    "target": "anomaly",
+    "anomaly_tag": "cve_2018_4990",
+    "description_vi": "Nguồn phân tích ghi nhận dấu hiệu cụ thể của lỗi giải phóng bộ nhớ hai lần CVE-2018-4990."
+  },
+  {
+    "id": "CVE-2023-21608",
+    "name": "Adobe Reader CVE-2023-21608",
+    "severity": "critical",
+    "target": "anomaly",
+    "anomaly_tag": "cve_2023_21608",
+    "description_vi": "Nguồn phân tích ghi nhận dấu hiệu cụ thể của lỗi dùng vùng nhớ đã giải phóng CVE-2023-21608."
+  },
+  {
+    "id": "CVE-2023-26369",
+    "name": "Adobe Reader CVE-2023-26369",
+    "severity": "critical",
+    "target": "anomaly",
+    "anomaly_tag": "cve_2023_26369",
+    "description_vi": "Nguồn phân tích ghi nhận dấu hiệu cụ thể của lỗi ghi ngoài vùng nhớ CVE-2023-26369."
+  },
+  {
+    "id": "GOTOR_UNC_NTLM",
+    "name": "GoToR UNC target",
+    "severity": "critical",
+    "target": "anomaly",
+    "anomaly_tag": "gotor_unc_ntlm_risk",
+    "description_vi": "Hành động GoToR trỏ tới đường dẫn mạng UNC có thể làm lộ thông tin xác thực NTLM."
+  },
+  {
+    "id": "XFA_XML_DTD_XXE",
+    "name": "XFA XML DTD",
+    "severity": "critical",
+    "target": "anomaly",
+    "anomaly_tag": "xfa_xml_dtd_unsupported",
+    "description_vi": "XFA chứa khai báo DTD mà bộ phân tích XML chặn để phòng thực thể ngoài."
+  },
+  {
+    "id": "POLYGLOT_ACTIVE_PAYLOAD",
+    "name": "Active polyglot payload",
+    "severity": "critical",
+    "target": "anomaly",
+    "anomaly_tag": "polyglot_active_payload",
+    "description_vi": "Phát hiện chữ ký của kiểu dữ liệu khác ở ngoài cấu trúc PDF."
+  },
+  {
+    "id": "JS_MULTILAYER_DROPPER",
+    "name": "Multilayer JavaScript dropper indicator",
+    "severity": "critical",
+    "target": "anomaly",
+    "anomaly_tag": "js_multilayer_dropper",
+    "description_vi": "JavaScript dùng nhiều lớp che giấu và có dấu hiệu gọi thực thi động hoặc dẫn tới tệp nguy hiểm."
+  }
+]

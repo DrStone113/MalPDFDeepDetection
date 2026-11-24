@@ -3,10 +3,13 @@ from __future__ import annotations
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import pymupdf as fitz
+import gzip
+from hashlib import sha256
 import importlib
-import pytest
+
 from fastapi.testclient import TestClient
+import pymupdf as fitz
+import pytest
 
 from malpdf.cdr.fixtures import load_real_benign_bytes, load_real_threat_bytes
 from malpdf.web.app import app
@@ -49,6 +52,7 @@ def test_health_endpoint() -> None:
     assert data["cdr_engine"] == "pikepdf-inplace"
     assert data["max_upload_bytes"] == 100 * 1024 * 1024
     assert data["max_upload_mb"] == 100
+    assert data["gzip_scan_upload"] is True
 
 
 def test_upload_real_benign_and_disarm_preserves_text() -> None:
@@ -80,6 +84,38 @@ def test_upload_real_benign_and_disarm_preserves_text() -> None:
     clean_pages, clean_text = _extract_pdf_text(cleaned_bytes)
     assert clean_pages == orig_pages
     assert clean_text == orig_text
+
+
+def test_compressed_scan_preserves_the_original_pdf_bytes() -> None:
+    raw_bytes = load_real_benign_bytes()
+    response = client.post(
+        "/api/scan",
+        headers={"X-MalPDF-Upload-Encoding": "gzip"},
+        files={"file": ("reviewed.pdf", gzip.compress(raw_bytes), "application/pdf")},
+    )
+    assert response.status_code == 200, response.text
+    result = response.json()
+    assert result["sha256"] == sha256(raw_bytes).hexdigest()
+    assert result["file_size_bytes"] == len(raw_bytes)
+    stored = client.get(f"/api/scans/{result['scan_id']}").json()["scan_result"]
+    assert stored["sha256"] == result["sha256"]
+
+
+@pytest.mark.parametrize(("oversized", "expected_status"), [(False, 400), (True, 413)])
+def test_rejected_compressed_scan_creates_no_job(monkeypatch, oversized: bool, expected_status: int) -> None:
+    raw_bytes = load_real_benign_bytes()
+    compressed = gzip.compress(raw_bytes)
+    if oversized:
+        monkeypatch.setattr(importlib.import_module("malpdf.web.app"), "MAX_UPLOAD_BYTES", len(compressed))
+    else:
+        compressed = compressed[:-1]
+    response = client.post(
+        "/api/scan",
+        headers={"X-MalPDF-Upload-Encoding": "gzip"},
+        files={"file": ("reviewed.pdf", compressed, "application/pdf")},
+    )
+    assert response.status_code == expected_status, response.text
+    assert client.get("/api/scans").json() == []
 
 
 def test_upload_real_threat_and_disarm_strips_triggers_preserves_text() -> None:
@@ -372,4 +408,3 @@ def test_surgical_cumulative_ablation_and_mail_gateway_inspect_job() -> None:
     dl_eml = client.get(f"/api/gateway/download/eml/{gw_json['eml_job_id']}")
     assert dl_eml.status_code == 200
     assert len(dl_eml.content) > 500
-

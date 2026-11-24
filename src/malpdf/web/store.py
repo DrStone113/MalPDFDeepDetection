@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import deque
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 import hashlib
 from pathlib import Path
@@ -53,6 +53,16 @@ class ScanJob:
         if data["cdr_audit"] is not None and self.post_scan_verification is not None:
             data["cdr_audit"]["post_scan_verification"] = self.post_scan_verification
         return data
+
+
+_STATUS_LABELS_VI: dict[str, str] = {
+    "QUEUED": "Đang chờ kiểm tra",
+    "SCANNING": "Đang kiểm tra tệp",
+    "SCANNED": "Đã kiểm tra xong",
+    "DISARMING": "Đang làm sạch tệp",
+    "DISARMED": "Đã làm sạch xong",
+    "FAILED": "Xử lý thất bại",
+}
 
 
 class ScanJobStore:
@@ -131,7 +141,7 @@ class ScanJobStore:
                         "scan_id": scan_id,
                         "file_name": job.file_name,
                         "status": status,
-                        "action": f"Trạng thái: {status}",
+                        "action": _STATUS_LABELS_VI.get(status, f"Trạng thái: {status}"),
                         "error": error,
                     },
                 )
@@ -142,6 +152,11 @@ class ScanJobStore:
             if job is not None:
                 job.scan_result = scan_result
                 job.status = "SCANNED"
+                scan_action = (
+                    "Vượt ngưỡng cảnh báo"
+                    if scan_result.verdict == "MALICIOUS"
+                    else ("Dưới ngưỡng cảnh báo" if scan_result.verdict == "BENIGN" else "Chưa có điểm đánh giá")
+                )
                 self.record_audit(
                     "SCAN_COMPLETED",
                     {
@@ -150,35 +165,48 @@ class ScanJobStore:
                         "malware_probability": scan_result.malware_probability,
                         "latency_ms": scan_result.latency_ms,
                         "file_name": job.file_name,
-                        "action": "Phát hiện mã độc" if scan_result.verdict == "MALICIOUS" else "Kiểm tra an toàn",
+                        "action": scan_action,
                     },
                 )
                 if scan_result.verdict == "MALICIOUS":
                     self.quarantine_bytes(job.raw_bytes, job.file_name, job.sha256)
 
     def attach_sanitized(
-        self, scan_id: str, sanitized_bytes: bytes, cdr_audit: CDRAuditLog,
+        self,
+        scan_id: str,
+        sanitized_bytes: bytes,
+        cdr_audit: CDRAuditLog,
         post_scan_verification: dict[str, Any],
     ) -> None:
         with self._lock:
             job = self._jobs.get(scan_id)
             if job is not None:
-                job.sanitized_bytes = sanitized_bytes
                 job.cdr_audit = cdr_audit
                 job.post_scan_verification = post_scan_verification
+                if not cdr_audit.is_sanitized or cdr_audit.quarantine_recommended:
+                    job.sanitized_bytes = None
+                    self.set_status(scan_id, "FAILED", error="cdr_output_requires_quarantine")
+                    return
+                job.sanitized_bytes = sanitized_bytes
                 job.status = "DISARMED"
                 job.error_message = None
                 self._enforce_memory_budget(reserve_id=scan_id)
+                removed_cnt = len(cdr_audit.removed_triggers)
+                disarm_action = (
+                    f"Đã gỡ {removed_cnt} khóa kích hoạt"
+                    if removed_cnt > 0
+                    else "Không có khóa cần gỡ; đã xuất lại bản sạch"
+                )
                 self.record_audit(
                     "DISARM_COMPLETED",
                     {
                         "scan_id": scan_id,
                         "file_name": job.file_name,
-                        "verdict": "BENIGN",
+                        "verdict": str(post_scan_verification.get("verdict_after") or "UNAVAILABLE"),
                         "sanitized_pages": cdr_audit.sanitized_pages,
                         "neutralized_scripts": cdr_audit.neutralized_scripts,
                         "latency_ms": cdr_audit.disarm_latency_ms,
-                        "action": f"Đã gỡ {len(cdr_audit.removed_triggers)} thành phần nguy hiểm",
+                        "action": disarm_action,
                     },
                 )
 
@@ -221,14 +249,16 @@ class ScanJobStore:
                 parts = p.name.split("_", 1)
                 sha_prefix = parts[0] if len(parts) > 1 else ""
                 orig_name = parts[1] if len(parts) > 1 else p.name
-                entries.append({
-                    "file_name": orig_name,
-                    "stored_name": p.name,
-                    "sha256_prefix": sha_prefix,
-                    "size_bytes": stat.st_size,
-                    "quarantined_at": datetime.fromtimestamp(stat.st_ctime, tz=timezone.utc).isoformat(),
-                    "path": str(p),
-                })
+                entries.append(
+                    {
+                        "file_name": orig_name,
+                        "stored_name": p.name,
+                        "sha256_prefix": sha_prefix,
+                        "size_bytes": stat.st_size,
+                        "quarantined_at": datetime.fromtimestamp(stat.st_ctime, tz=timezone.utc).isoformat(),
+                        "path": str(p),
+                    }
+                )
         entries.sort(key=lambda x: x["quarantined_at"], reverse=True)
         return entries
 
@@ -252,4 +282,3 @@ class ScanJobStore:
     def get_audit_logs(self, limit: int = 100) -> list[dict[str, Any]]:
         with self._lock:
             return list(self._audit_logs)[:limit]
-

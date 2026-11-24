@@ -14,22 +14,32 @@ import numpy as np
 import pikepdf
 import torch
 
+from malpdf.cdr.engine import is_navigation_destination
 from malpdf.models.pdf_transgraph import PDFTransGraph
 from malpdf.models.pdf_transgraph_v3 import PDFTransGraphV3, TransGraphV3Config, _segment_softmax, load_v3_weights_npz
-from malpdf.cdr.engine import is_navigation_destination
-from malpdf.scanner.forensic import ForensicAttributionEngine, TRIGGER_FEATURES_V3, observed_ast_distribution
+from malpdf.scanner.forensic import (
+    TRIGGER_FEATURES_V3,
+    ForensicAttributionEngine,
+    _reconcile_semantic_verdict,
+    observed_ast_distribution,
+    semantic_graph_selection,
+)
 from malpdf.scanner.ingestion import InstantPDFIngestion
 from malpdf.scanner.taxonomy import ThreatTaxonomyClassifier
+from malpdf.scanner.threat_intel import ThreatIntelProvider, inspect_threat_intel
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CANONICAL_V3_MODEL_PATH = REPO_ROOT / "artifacts/models/pdf_transgraph_v3/pdf_transgraph_v32b_regime_b_seed42.npz"
 CANONICAL_V2_MODEL_PATH = REPO_ROOT / "artifacts/models/pdf_transgraph_v2/pdf_transgraph_v2_23d_best.pt"
 FALLBACK_V3_MODEL_PATH = (
-    REPO_ROOT / "data/processed/pooled_bulk/transgraph_v3"
+    REPO_ROOT
+    / "data/processed/pooled_bulk/transgraph_v3"
     / "run_20261122T123421Z_16abd6134688/regime_b/v3_tab_graph_ssl_inv.npz"
 )
-DEFAULT_MODEL_PATH = Path(os.environ["MALPDF_MODEL_PATH"]) if "MALPDF_MODEL_PATH" in os.environ else (
-    CANONICAL_V3_MODEL_PATH if CANONICAL_V3_MODEL_PATH.is_file() else FALLBACK_V3_MODEL_PATH
+DEFAULT_MODEL_PATH = (
+    Path(os.environ["MALPDF_MODEL_PATH"])
+    if "MALPDF_MODEL_PATH" in os.environ
+    else (CANONICAL_V3_MODEL_PATH if CANONICAL_V3_MODEL_PATH.is_file() else FALLBACK_V3_MODEL_PATH)
 )
 FALLBACK_MODEL_PATH = FALLBACK_V3_MODEL_PATH
 
@@ -71,9 +81,11 @@ class MalPDFScannerEngine:
         temperature: float | None = None,
         ood_threshold: float = -0.85,
         decision_threshold: float | None = None,
+        threat_intel: ThreatIntelProvider | None = None,
     ) -> None:
         self.ood_threshold = ood_threshold
         self._model_lock = RLock()
+        self.threat_intel = threat_intel
 
         if device == "auto":
             self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -130,7 +142,9 @@ class MalPDFScannerEngine:
             self.ingestion = InstantPDFIngestion(scaler_path=scaler_path, node_in_dim=self.node_in_dim)
             feature_names = self.ingestion.feature_names
         self.temperature = float(contract.get("temperature", 1.0) if temperature is None else temperature)
-        self.decision_threshold = float(contract.get("decision_threshold", 0.5) if decision_threshold is None else decision_threshold)
+        self.decision_threshold = float(
+            contract.get("decision_threshold", 0.5) if decision_threshold is None else decision_threshold
+        )
         if not math.isfinite(self.temperature) or self.temperature <= 0:
             raise ValueError("temperature_must_be_positive_and_finite")
         if not 0.0 < self.decision_threshold < 1.0:
@@ -146,16 +160,29 @@ class MalPDFScannerEngine:
         self.taxonomy = ThreatTaxonomyClassifier(device=self.device)
 
     def _forward_v3(
-        self, nf: torch.Tensor, nt: torch.Tensor, ei: torch.Tensor, er: torch.Tensor,
-        b: torch.Tensor, tab: torch.Tensor, graph_present: bool,
+        self,
+        nf: torch.Tensor,
+        nt: torch.Tensor,
+        ei: torch.Tensor,
+        er: torch.Tensor,
+        b: torch.Tensor,
+        tab: torch.Tensor,
+        graph_present: bool,
     ) -> dict[str, torch.Tensor]:
         if graph_present:
             return self.model(tab, node_x=nf, node_type=nt, edge_index=ei, edge_rel=er, graph_batch=b)
         return self.model(tab)
 
     def _forward(
-        self, nf: torch.Tensor, nt: torch.Tensor, ei: torch.Tensor, er: torch.Tensor,
-        b: torch.Tensor, tok: torch.Tensor, tab: torch.Tensor, graph_present: bool,
+        self,
+        nf: torch.Tensor,
+        nt: torch.Tensor,
+        ei: torch.Tensor,
+        er: torch.Tensor,
+        b: torch.Tensor,
+        tok: torch.Tensor,
+        tab: torch.Tensor,
+        graph_present: bool,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         if self.is_v3:
             output = self._forward_v3(nf, nt, ei, er, b, tab, graph_present)
@@ -258,7 +285,7 @@ class MalPDFScannerEngine:
         if self.is_v3:
             if forward_edge_attn:
                 dst = torch.cat((ei[1], ei[0]))
-                alpha = _segment_softmax(forward_edge_attn[0], dst, nf.size(0))[:ei.size(1)]
+                alpha = _segment_softmax(forward_edge_attn[0], dst, nf.size(0))[: ei.size(1)]
                 edge_attention = [round(float(x), 4) for x in alpha.cpu().tolist()]
         else:
             alpha_t = getattr(self.model.graph_encoder.layer2, "last_edge_alpha", None)
@@ -285,7 +312,7 @@ class MalPDFScannerEngine:
 
             masked_nf = nf.clone()
             if len(node_saliency) > 1:
-                top_n_indices = np.argsort(node_saliency)[-max(1, len(node_saliency) // 4):]
+                top_n_indices = np.argsort(node_saliency)[-max(1, len(node_saliency) // 4) :]
                 for idx_n in top_n_indices:
                     masked_nf[int(idx_n)] = 0.0
             masked_tok = torch.zeros_like(tok)
@@ -344,20 +371,10 @@ class MalPDFScannerEngine:
                 gw, aw = map(float, w_flat)
 
         g_latent = (
-            float((h_graph.grad.detach() * h_graph.detach()).norm(p=2).item())
-            if h_graph.grad is not None
-            else 0.0
+            float((h_graph.grad.detach() * h_graph.detach()).norm(p=2).item()) if h_graph.grad is not None else 0.0
         )
-        a_latent = (
-            float((h_seq.grad.detach() * h_seq.detach()).norm(p=2).item())
-            if h_seq.grad is not None
-            else 0.0
-        )
-        t_latent = (
-            float((h_tab.grad.detach() * h_tab.detach()).norm(p=2).item())
-            if h_tab.grad is not None
-            else 0.0
-        )
+        a_latent = float((h_seq.grad.detach() * h_seq.detach()).norm(p=2).item()) if h_seq.grad is not None else 0.0
+        t_latent = float((h_tab.grad.detach() * h_tab.detach()).norm(p=2).item()) if h_tab.grad is not None else 0.0
         weighted_g = g_latent * (0.5 + gw)
         weighted_a = a_latent * (0.5 + aw)
         weighted_t = t_latent * (0.5 + tw) if self.is_v3 else t_latent
@@ -387,12 +404,21 @@ class MalPDFScannerEngine:
         data: bytes,
         file_name: str = "in_memory_sample.pdf",
         explain: bool = True,
+        *,
+        password: str | None = None,
     ) -> ScanResult:
         if not self.weights_loaded:
             raise RuntimeError("Trained model weights unavailable")
         start_time = time.perf_counter()
 
-        ingest_data = self.ingestion.ingest(data)
+        ingest_data = self.ingestion.ingest(data, password=password)
+        static_dossier = {
+            name: ingest_data[name] for name in ("encryption_analysis", "qr_analysis", "differential_analysis")
+        }
+        if self.threat_intel is not None:
+            intel = ingest_data["threat_intel"] = inspect_threat_intel(self.threat_intel, ingest_data)
+            if intel["hit"]:
+                static_dossier["threat_intel"] = intel
         sha256 = ingest_data["sha256"]
         file_size = ingest_data["size_bytes"]
         pdf_version = ingest_data.get("pdf_version", "1.7")
@@ -400,7 +426,7 @@ class MalPDFScannerEngine:
         raw_entropy = float(ingest_data.get("raw_entropy", 0.0))
 
         if ingest_data.get("prediction_blockers"):
-            dossier = self.forensic.explain(ingest_data, malware_prob=None) if explain else {}
+            dossier = self.forensic.explain(ingest_data, malware_prob=None) if explain else static_dossier
             taxonomy_info = self.taxonomy.classify(
                 raw_pdf_bytes=data,
                 ingest_data=ingest_data,
@@ -411,36 +437,56 @@ class MalPDFScannerEngine:
             if explain:
                 dossier["threat_taxonomy"] = taxonomy_info
             records = ingest_data["raw_records"]
-            nodes = [{
-                "id": record["evidence_id"],
-                "label": record["kind"].capitalize(),
-                "kind": record["kind"],
-                "obj_ref": record.get("obj_ref_str"),
-                "invoker": record.get("invoker"),
-                "filter": record.get("filter"),
-                **record.get("byte_measurements", {"size_bytes": None, "entropy": None}),
-                "action_role": record.get("action_role"),
-                "has_stream": record.get("has_stream"),
-                "offset_hex": record.get("offset_hex"),
-                "hex_dump": record.get("hex_dump", []),
-                "content_preview": record.get("content_preview", ""),
-                "is_threat_trigger": record.get("is_threat_trigger", False),
-                "xai_saliency": None,
-            } for record in records]
-            edges = [{
-                "from": edge["source"], "to": edge["target"], "arrows": "to",
-                "relation": "->".join(edge.get("relation", ())), "hgt_attention": None,
-            } for edge in ingest_data["raw_edges"]]
+            nodes = [
+                {
+                    "id": record["evidence_id"],
+                    "label": record["kind"].capitalize(),
+                    "kind": record["kind"],
+                    "obj_ref": record.get("obj_ref_str"),
+                    "invoker": record.get("invoker"),
+                    "filter": record.get("filter"),
+                    **record.get("byte_measurements", {"size_bytes": None, "entropy": None}),
+                    "action_role": record.get("action_role"),
+                    "has_stream": record.get("has_stream"),
+                    "offset_hex": record.get("offset_hex"),
+                    "hex_dump": record.get("hex_dump", []),
+                    "content_preview": record.get("content_preview", ""),
+                    "is_threat_trigger": record.get("is_threat_trigger", False),
+                    "xai_saliency": None,
+                }
+                for record in records
+            ]
+            edges = [
+                {
+                    "from": edge["source"],
+                    "to": edge["target"],
+                    "arrows": "to",
+                    "relation": "->".join(edge.get("relation", ())),
+                    "hgt_attention": None,
+                }
+                for edge in ingest_data["raw_edges"]
+            ]
             return ScanResult(
-                sha256=sha256, file_name=file_name, file_size_bytes=file_size,
-                verdict="UNAVAILABLE", malware_probability=None, confidence="UNAVAILABLE",
-                ood_score=None, is_ood=None, ood_warning="feature_contract_unverified",
+                sha256=sha256,
+                file_name=file_name,
+                file_size_bytes=file_size,
+                verdict="UNAVAILABLE",
+                malware_probability=None,
+                confidence="UNAVAILABLE",
+                ood_score=None,
+                is_ood=None,
+                ood_warning="feature_contract_unverified",
                 latency_ms=round((time.perf_counter() - start_time) * 1000, 2),
-                forensic_dossier=dossier, graph_nodes=nodes, graph_edges=edges,
-                pdf_version=pdf_version, pages_count=pages_count, raw_entropy=raw_entropy,
+                forensic_dossier=dossier,
+                graph_nodes=nodes,
+                graph_edges=edges,
+                pdf_version=pdf_version,
+                pages_count=pages_count,
+                raw_entropy=raw_entropy,
                 ood_threshold=self.ood_threshold,
                 decision_threshold=round(self.decision_threshold, 6),
-                prediction_available=False, prediction_blockers=ingest_data["prediction_blockers"],
+                prediction_available=False,
+                prediction_blockers=ingest_data["prediction_blockers"],
                 threat_taxonomy=taxonomy_info,
             )
 
@@ -453,10 +499,35 @@ class MalPDFScannerEngine:
         tab = ingest_data["v3_tab_features" if self.is_v3 else "tab_features"].to(self.device)
         graph_present = ingest_data.get("graph_present", True)
 
+        def counterfactual(nodes: list[int], columns: list[int], baselines: list[float]) -> float:
+            kept_nodes, kept_edges, edge_index = semantic_graph_selection(len(nf), ei.cpu().numpy(), nodes)
+            node_mask = torch.as_tensor(kept_nodes, device=self.device)
+            edge_mask = torch.as_tensor(kept_edges, device=self.device)
+            cf_tab = tab.clone()
+            cf_tab[:, columns] = tab.new_tensor(baselines)
+            return self._forward(
+                nf[node_mask],
+                nt[node_mask],
+                torch.as_tensor(edge_index, device=self.device),
+                er[edge_mask],
+                b[node_mask],
+                torch.zeros_like(tok) if columns else tok,
+                cf_tab,
+                graph_present,
+            )[0].item()
+
         with self._model_lock, torch.no_grad():
             logits, attn_weights = self._forward(nf, nt, ei, er, b, tok, tab, graph_present)
-            prob = torch.sigmoid(logits / self.temperature).item()
-            logit_val = logits.item()
+            raw_prob = torch.sigmoid(logits / self.temperature).item()
+            logit_val, prob = _reconcile_semantic_verdict(
+                ingest_data,
+                logits.item(),
+                raw_prob,
+                self.decision_threshold,
+                self.temperature,
+                self.is_v3,
+                counterfactual,
+            )
 
         raw_recs = ingest_data.get("raw_records", [])
         verdict = "MALICIOUS" if prob >= self.decision_threshold else "BENIGN"
@@ -475,7 +546,7 @@ class MalPDFScannerEngine:
 
         node_saliency: list[float] = []
         edge_attention: list[float] = []
-        forensic_dossier: dict[str, Any] = {}
+        forensic_dossier: dict[str, Any] = static_dossier
         if explain:
             # The encoders record attention on the shared model during a forward pass.
             with self._model_lock:
@@ -493,7 +564,7 @@ class MalPDFScannerEngine:
                     b=b,
                     tok=tok,
                     tab=tab,
-                    base_prob=prob,
+                    base_prob=raw_prob,
                     attn_weights=attn_weights,
                     graph_present=graph_present,
                     observed_ast=observed_ast_distribution(ingest_data) if self.is_v3 else [],
@@ -515,7 +586,7 @@ class MalPDFScannerEngine:
             eid = r.get("evidence_id", "")
             is_threat = r.get("is_threat_trigger", False)
             sal_val = node_saliency[idx] if idx < len(node_saliency) else None
-            if is_threat or k == "script":
+            if is_threat or k == "script" and r.get("action_role") != "verified_benign_js":
                 color = "#FF3B30"
                 shape = "star" if k == "action" else "hexagon"
             elif k == "catalog":
@@ -533,32 +604,36 @@ class MalPDFScannerEngine:
             base_sz = 26 if k == "catalog" else 22 if is_threat else 20 if k == "pages" else 16
             sal_rounded = round(float(sal_val), 4) if sal_val is not None else None
             preview_text = r.get("content_preview", "")
-            graph_nodes.append({
-                "id": eid,
-                "label": f"{k.capitalize()}\n({eid.split(':')[-1]})",
-                "obj_ref": r.get("obj_ref_str"),
-                "color": color,
-                "shape": shape,
-                "size": base_sz,
-                "kind": k,
-                "invoker": r.get("invoker", "/Root"),
-                "filter": r.get("filter", "Dictionary"),
-                **r.get("byte_measurements", {"size_bytes": None, "entropy": None}),
-                "action_role": r.get("action_role"),
-                "has_stream": bool(r.get("has_stream", False)),
-                "is_threat": bool(is_threat),
-                "is_threat_trigger": bool(is_threat),
-                "offset_hex": r.get("offset_hex"),
-                "hex_dump": r.get("hex_dump", []),
-                "snippet": preview_text,
-                "content_preview": preview_text,
-                "saliency": sal_rounded,
-                "xai_saliency": sal_rounded,
-            })
+            graph_nodes.append(
+                {
+                    "id": eid,
+                    "label": f"{k.capitalize()}\n({eid.split(':')[-1]})",
+                    "obj_ref": r.get("obj_ref_str"),
+                    "color": color,
+                    "shape": shape,
+                    "size": base_sz,
+                    "kind": k,
+                    "invoker": r.get("invoker", "/Root"),
+                    "filter": r.get("filter", "Dictionary"),
+                    **r.get("byte_measurements", {"size_bytes": None, "entropy": None}),
+                    "action_role": r.get("action_role"),
+                    "has_stream": bool(r.get("has_stream", False)),
+                    "is_threat": bool(is_threat),
+                    "is_threat_trigger": bool(is_threat),
+                    "offset_hex": r.get("offset_hex"),
+                    "hex_dump": r.get("hex_dump", []),
+                    "snippet": preview_text,
+                    "content_preview": preview_text,
+                    "saliency": sal_rounded,
+                    "xai_saliency": sal_rounded,
+                }
+            )
 
         graph_edges: list[dict[str, Any]] = []
         raw_eds = ingest_data.get("raw_edges", [])
-        threat_node_ids = {r["evidence_id"] for r in raw_recs if r.get("is_threat_trigger", False) or r.get("kind") == "script"}
+        threat_node_ids = {
+            r["evidence_id"] for r in raw_recs if r.get("is_threat_trigger", False) or r.get("kind") == "script"
+        }
         for e_idx, e in enumerate(raw_eds):
             s = e.get("source", "")
             t = e.get("target", "")
@@ -566,16 +641,18 @@ class MalPDFScannerEngine:
             rel_label = f"{rel_pair[0]}->{rel_pair[1]}" if isinstance(rel_pair, tuple) and len(rel_pair) == 2 else "ref"
             is_threat_edge = s in threat_node_ids or t in threat_node_ids
             edge_alpha = edge_attention[e_idx] if e_idx < len(edge_attention) else None
-            graph_edges.append({
-                "from": s,
-                "to": t,
-                "arrows": "to",
-                "relation": rel_label,
-                "is_threat_edge": is_threat_edge,
-                "hgt_attention": round(float(edge_alpha), 4) if edge_alpha is not None else None,
-                "color": {"color": "#FF3B30" if is_threat_edge else "#CBD5E1"},
-                "width": 3.2 if is_threat_edge else 1.6,
-            })
+            graph_edges.append(
+                {
+                    "from": s,
+                    "to": t,
+                    "arrows": "to",
+                    "relation": rel_label,
+                    "is_threat_edge": is_threat_edge,
+                    "hgt_attention": round(float(edge_alpha), 4) if edge_alpha is not None else None,
+                    "color": {"color": "#FF3B30" if is_threat_edge else "#CBD5E1"},
+                    "width": 3.2 if is_threat_edge else 1.6,
+                }
+            )
 
         taxonomy_info = self.taxonomy.classify(
             raw_pdf_bytes=data,
@@ -594,7 +671,7 @@ class MalPDFScannerEngine:
             file_name=file_name,
             file_size_bytes=file_size,
             verdict=verdict,
-            malware_probability=round(prob, 4),
+            malware_probability=prob,
             confidence=confidence,
             ood_score=energy_score,
             is_ood=is_ood,
@@ -627,9 +704,13 @@ class MalPDFScannerEngine:
         excise_all: bool = False,
     ) -> tuple[bytes | None, list[str]]:
         want_open = excise_all or any("open_action" in t or "/OpenAction" in t for t in target_tokens)
-        want_aa = excise_all or any(t in ("action:aa", "script:action:aa") or ":aa" in t or "/AA" in t for t in target_tokens)
+        want_aa = excise_all or any(
+            t in ("action:aa", "script:action:aa") or ":aa" in t or "/AA" in t for t in target_tokens
+        )
         want_names_js = excise_all or any("names_js" in t or "/Names/JavaScript" in t for t in target_tokens)
-        want_embedded = excise_all or any("filespec" in t or "embedded" in t or "/EmbeddedFiles" in t for t in target_tokens)
+        want_embedded = excise_all or any(
+            "filespec" in t or "embedded" in t or "/EmbeddedFiles" in t for t in target_tokens
+        )
         want_xfa = excise_all or any("xfa" in t or "/XFA" in t for t in target_tokens)
         want_annots = excise_all or any("annot" in t or "/Annot" in t for t in target_tokens)
         excised_keys: list[str] = []
@@ -674,12 +755,14 @@ class MalPDFScannerEngine:
                                     if ak == "/A":
                                         action = annot[ak]
                                         if not isinstance(action, pikepdf.Dictionary) or not (
-                                            str(action.get("/S", "")) in ("/JavaScript", "/Launch", "/SubmitForm", "/ImportData", "/GoToE")
+                                            str(action.get("/S", ""))
+                                            in ("/JavaScript", "/Launch", "/SubmitForm", "/ImportData", "/GoToE")
                                             or "/JS" in action
                                         ):
                                             continue
                                     if excise_all or any(
-                                        token in target_tokens for token in (
+                                        token in target_tokens
+                                        for token in (
                                             f"action:annot_{p_idx}_{a_idx}",
                                             f"script:action:annot_{p_idx}_{a_idx}",
                                             f"/Annot[{p_idx},{a_idx}]/A",
@@ -764,12 +847,8 @@ class MalPDFScannerEngine:
             for ex_id in extra_ids:
                 target_tokens.add(ex_id)
 
-            surgical_bytes, surgical_keys = self._excise_pdf_triggers_pikepdf(
-                data, target_tokens, excise_all=False
-            )
-            full_bytes, full_keys = self._excise_pdf_triggers_pikepdf(
-                data, target_tokens, excise_all=True
-            )
+            surgical_bytes, surgical_keys = self._excise_pdf_triggers_pikepdf(data, target_tokens, excise_all=False)
+            full_bytes, full_keys = self._excise_pdf_triggers_pikepdf(data, target_tokens, excise_all=True)
 
             before_eids = [str(r.get("evidence_id")) for r in raw_recs]
             res_surgical = (
@@ -785,8 +864,10 @@ class MalPDFScannerEngine:
                 res_full = res_surgical
 
             if (
-                res_surgical is not None and res_surgical.malware_probability is not None
-                and res_full is not None and res_full.malware_probability is not None
+                res_surgical is not None
+                and res_surgical.malware_probability is not None
+                and res_full is not None
+                and res_full.malware_probability is not None
             ):
                 after_surg_ids = {str(n.get("id")) for n in res_surgical.graph_nodes}
                 surg_excised_nodes = [nid for nid in before_eids if nid not in after_surg_ids]
@@ -900,7 +981,9 @@ class MalPDFScannerEngine:
 
         with torch.no_grad():
             with self._model_lock:
-                abl_logits, _ = self._forward(ablated_nf, nt, ablated_ei, ablated_er, b, ablated_tok, ablated_tab, graph_present)
+                abl_logits, _ = self._forward(
+                    ablated_nf, nt, ablated_ei, ablated_er, b, ablated_tok, ablated_tab, graph_present
+                )
             prob_after = float(torch.sigmoid(abl_logits / self.temperature).item())
             logit_after = float(abl_logits.item())
 
@@ -910,15 +993,9 @@ class MalPDFScannerEngine:
         latency_ms = round((time.perf_counter() - start_time) * 1000.0, 2)
 
         masked_eids = [
-            str(raw_recs[i].get("evidence_id", target_eid))
-            for i in sorted(masked_indices)
-            if i < len(raw_recs)
+            str(raw_recs[i].get("evidence_id", target_eid)) for i in sorted(masked_indices) if i < len(raw_recs)
         ]
-        remaining_threats = [
-            str(r.get("evidence_id"))
-            for r in raw_recs
-            if r.get("is_threat_trigger")
-        ]
+        remaining_threats = [str(r.get("evidence_id")) for r in raw_recs if r.get("is_threat_trigger")]
         return {
             "file_name": file_name,
             "target_node_id": target_eid,

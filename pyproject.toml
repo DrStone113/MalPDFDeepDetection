@@ -19,6 +19,7 @@ dependencies = [
     "pikepdf==10.17.0",
     "pyarrow>=14,<20",
     "PyMuPDF==1.26.7",
+    "zxing-cpp>=2.2,<3",
     "pypdf==6.18.1",
     "pyyaml>=6.0,<7",
     "scikit-learn>=1.3,<2",
@@ -44,3 +45,22 @@ where = ["src"]
 addopts = "-ra"
 testpaths = ["tests"]
 pythonpath = ["src"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+src = ["src", "scripts", "tests", "production"]
+extend-exclude = ["data", "artifacts", "checkpoints", "graphify-out", ".venv*"]
+
+[tool.ruff.lint]
+select = ["E9", "F", "I", "W291", "W292", "W293", "S301", "B006"]
+ignore = ["F403", "F405"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["malpdf"]
+force-sort-within-sections = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"

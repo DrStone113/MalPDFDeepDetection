@@ -1,26 +1,64 @@
 from __future__ import annotations
 
-from collections import Counter
+from copy import copy
+from functools import partial
 import hashlib
 import io
+from itertools import islice
 import json
 import math
 from pathlib import Path
 import re
 from typing import Any
+import zlib
 
 import numpy as np
+import pikepdf
 import pypdf
 from pypdf import PdfReader
-from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject, StreamObject
+from pypdf.generic import (
+    ArrayObject,
+    ContentStream,
+    DecodedStreamObject,
+    DictionaryObject,
+    IndirectObject,
+    NameObject,
+    NullObject,
+    StreamObject,
+    TextStringObject,
+    read_object,
+)
+
 try:
     import torch
 except ImportError:
     torch = None
 
 from malpdf.extraction.byte_images import ByteImageLimits, _tile_order
+from malpdf.extraction.filters import DecodeBudget, FilterLimits, _parameters, _predict, _Stopped, decode_filters
+from malpdf.extraction.font_containers import inspect_cff, inspect_type1, inspect_woff
+from malpdf.extraction.media import (
+    MediaIssue,
+    inspect_flash,
+    inspect_font,
+    jbig2_structure,
+    jpeg_structure,
+    jpx_structure,
+)
 from malpdf.features.contract_v3 import DERIVED, FEATURES, LEXICAL, RAW, log_matrix
+from malpdf.scanner.forensic import (
+    _strip_diacritics,
+    evaluate_javascript_semantics,
+    is_risky_remote_target,
+    is_suspicious_uri,
+    is_untrusted_http_uri,
+    phishing_lure_phrases,
+)
+from malpdf.scanner.qr_scan import empty_qr_analysis, page_has_image_xobject, scan_pdf_qr_codes
+from malpdf.scanner.signatures import match_pdf_signatures
+from malpdf.static.js_ast import CodeInspectionError
 from malpdf.static.raw_scan import count_acroform_names, scan_raw_pdf_tokens
+from malpdf.static.xfa_xml import inspect_xfa_xml
 
 NODE_TYPES: dict[str, int] = {
     "catalog": 0,
@@ -112,11 +150,1204 @@ def _scan_scanner_raw_tokens(data: bytes) -> dict[str, int]:
         "endstream": endstream,
         "stream": data.count(b"stream") - endstream,
         "page_command": data.count(b"/Page") - data.count(b"/Pages"),
+        "Resources": data.count(b"/Resources"),
+        "Root": data.count(b"/Root"),
     }
     for feature, token in _SCANNER_DIRECT_TOKENS:
         counts[feature] = data.count(token)
-    counts['AcroForm'] = count_acroform_names(data)
+    counts["AcroForm"] = count_acroform_names(data)
     return counts
+
+
+_PDF_NAME = re.compile(rb"/[^\x00\s()<>\[\]{}/%]*#[0-9a-fA-F]{2}[^\x00\s()<>\[\]{}/%]*")
+_HEX_ESCAPE = re.compile(rb"#([0-9a-fA-F]{2})")
+_RECOVERABLE_TOKENS = {
+    "JS",
+    "JavaScript",
+    "AA",
+    "OpenAction",
+    "AcroForm",
+    "Acroform",
+    "JBIG2Decode",
+    "RichMedia",
+    "Launch",
+    "EmbeddedFile",
+    "XFA",
+    "URI",
+    "Encrypt",
+    "Resources",
+    "Root",
+    "page_command",
+}
+_STATIC_BYTE_LIMIT = 4 * 1024**2
+_STATIC_FILTER_LIMITS = FilterLimits(max_input_bytes=_STATIC_BYTE_LIMIT, max_stage_bytes=_STATIC_BYTE_LIMIT)
+_NON_JS_ACTIONS = {
+    "/Launch",
+    "/ImportData",
+    "/GoToE",
+    "/GoToR",
+    "/SubmitForm",
+    "/Rendition",
+    "/Movie",
+    "/Sound",
+    "/RichMediaExecute",
+}
+_NON_JS_KEYS = {
+    "/Launch",
+    "/EmbeddedFiles",
+    "/XFA",
+    "/RichMedia",
+    "/Movie",
+    "/Sound",
+    "/Rendition",
+    "/3D",
+    "/U3D",
+    "/PRC",
+}
+_EXTERNAL_ANNOTATIONS = {"/FileAttachment", "/3D", "/U3D", "/PRC"}
+VISUAL_LURE_SUBTYPES = {"/Link", "/Widget"}
+IMAGE_LURE_MIN_AREA = 2500.0
+VECTOR_LURE_MIN_AREA = 10000.0
+_JBIG2_FILTERS = {"/JBIG2Decode", "/JB2"}
+_JBIG2_MAGIC = b"\x97JB2\r\n\x1a\n"
+_IMAGE_CODEC_FILTERS = {**dict.fromkeys(_JBIG2_FILTERS, "JBIG2"), "/JPXDecode": "JPX", "/DCTDecode": "JPEG"}
+_SFNT_SIGNATURES = {b"\x00\x01\x00\x00", b"OTTO", b"true", b"typ1"}
+_SWF_SIGNATURES = (b"FWS", b"CWS", b"ZWS")
+_CRITICAL_FONT_REASONS = frozenset(
+    {"font_directory_truncated", "font_table_bounds_invalid", "font_table_overlap", "font_duplicate_table"}
+)
+_CODEC_OBJECT_LIMIT = 10_000
+_inspect_font_directory = partial(inspect_font, inspect_table_data=False)
+_TYPE1_REASONS = {"type1_segment_header_invalid", "type1_segment_truncated", "type1_end_marker_missing"}
+_WOFF_REASONS = {"woff_header_invalid", "woff_directory_truncated", "woff_table_bounds_invalid", "woff_table_overlap"}
+
+
+def normalize_pdf_hex_names(raw_bytes: bytes) -> tuple[bytes, int]:
+    decoded = 0
+
+    def decode_escape(match: re.Match[bytes]) -> bytes:
+        value = int(match[1], 16)
+        return bytes([value]) if 0x21 <= value <= 0x7E else match[0]
+
+    def decode_name(match: re.Match[bytes]) -> bytes:
+        nonlocal decoded
+        name = _HEX_ESCAPE.sub(decode_escape, match[0])
+        decoded += name != match[0]
+        return name
+
+    return _PDF_NAME.sub(decode_name, raw_bytes), decoded
+
+
+def _stream_filters(value: Any) -> list[str]:
+    if isinstance(value, IndirectObject):
+        value = value.get_object()
+    if isinstance(value, (pikepdf.Array, ArrayObject)):
+        return [str(item.get_object() if isinstance(item, IndirectObject) else item) for item in value]
+    return [str(value)] if value is not None else []
+
+
+def _pypdf_script_text(value: Any) -> str:
+    if not isinstance(value, StreamObject):
+        return str(value)
+    if _JBIG2_FILTERS.intersection(_stream_filters(value.get("/Filter"))):
+        return ""
+    try:
+        return value.get_data().decode("utf-8", errors="replace")
+    except (pypdf.errors.PyPdfError, ValueError, TypeError):
+        return ""
+
+
+def _bounded_stream_bytes(
+    stream: pikepdf.Stream,
+    filters: list[str],
+    budget: DecodeBudget,
+    *,
+    allow_flate_padding: bool = False,
+    raw: bytes | None = None,
+) -> tuple[bytes | None, list[str]]:
+    if int(stream.get("/Length") or 0) > _STATIC_BYTE_LIMIT or not budget.remaining:
+        return None, ["decoded_byte_or_expansion_limit"]
+    if raw is None:
+        raw = stream.read_raw_bytes()
+    parms = stream.get("/DecodeParms")
+    if isinstance(parms, pikepdf.Array):
+        parms = list(parms)[: len(filters)]
+    if isinstance(parms, list):
+        parms = [dict(item) if isinstance(item, pikepdf.Dictionary) else None for item in parms]
+    elif isinstance(parms, pikepdf.Dictionary):
+        parms = dict(parms)
+    result = decode_filters(
+        raw,
+        filters,
+        decode_parms=parms if filters else None,
+        limits=_STATIC_FILTER_LIMITS,
+        budget=budget,
+        recover_trailing=allow_flate_padding,
+    )
+    reasons = result.metadata["reason_codes"]
+    if result.trailing_spans:
+        if any(suffix.strip(b" \t\r\n\v\f") for _, suffix in result.trailing_spans):
+            return None, ["trailing_flate_data", *reasons]
+        reasons = [reason for reason in reasons if reason != "filter_trailing_data_preserved"]
+    return result.data, reasons
+
+
+def _codec_reasons(inspect, body: bytes, *, include_unsupported: bool = False) -> list[str]:
+    try:
+        return inspect(body)["reason_codes"]
+    except MediaIssue as exc:
+        if exc.status == "unsupported" and not include_unsupported:
+            return []
+        return exc.details.get("reason_codes") or [exc.code]
+
+
+def _font_anomaly_reasons(body: bytes, key: str, subtype: str) -> list[str]:
+    signature = body[:4]
+    if key == "/FontFile":
+        return sorted(_TYPE1_REASONS.intersection(_codec_reasons(inspect_type1, body)))
+    if key == "/FontFile3" and signature in {b"wOFF", b"wOF2"}:
+        inspect = partial(inspect_woff, budget=DecodeBudget(_STATIC_BYTE_LIMIT), max_expansion_ratio=20)
+        return sorted(_WOFF_REASONS.intersection(_codec_reasons(inspect, body)))
+    if signature in _SFNT_SIGNATURES:
+        return sorted(_CRITICAL_FONT_REASONS.intersection(_codec_reasons(_inspect_font_directory, body)))
+    if key == "/FontFile2":
+        if signature == b"ttcf":
+            return ["font_directory_truncated"] if len(body) < 12 else []
+        return ["fontfile2_signature_invalid"] if body else []
+    if subtype in {"/Type1C", "/CIDFontType0C"}:
+        if body.startswith(b"\x02"):
+            return ["cff2_header_invalid"] if len(body) < 5 or not 5 <= body[2] <= len(body) else []
+        if len(body) <= 4:
+            invalid = len(body) < 4 or body[0] != 1 or body[2] != 4 or not 1 <= body[3] <= 4
+            return ["cff_header_invalid"] if invalid else []
+        return [
+            "cff_header_invalid" if code == "cff_header_unsupported" else code
+            for code in _codec_reasons(inspect_cff, body, include_unsupported=True)
+        ]
+    return []
+
+
+def _inspect_icc_profile(body: bytes) -> list[str]:
+    if len(body) < 132 or body[36:40] != b"acsp" or int.from_bytes(body[:4], "big") < 128:
+        return ["icc_header_invalid"]
+    tag_count = int.from_bytes(body[128:132], "big")
+    table_end = 132 + tag_count * 12
+    if tag_count > 2048 or table_end > len(body):
+        return ["icc_tag_table_truncated"]
+    for entry in range(132, table_end, 12):
+        offset = int.from_bytes(body[entry + 4 : entry + 8], "big")
+        size = int.from_bytes(body[entry + 8 : entry + 12], "big")
+        if offset < table_end or offset + size > len(body):
+            return ["icc_tag_bounds_invalid"]
+    return []
+
+
+def _invalid_ccitt_parameters(stream: pikepdf.Stream, index: int) -> bool:
+    parms = stream.get("/DecodeParms")
+    if isinstance(parms, pikepdf.Array):
+        parms = parms[index] if index < len(parms) else None
+    if not isinstance(parms, pikepdf.Dictionary):
+        return False
+    cols, rows, k = parms.get("/Columns", 1728), parms.get("/Rows", 0), parms.get("/K", 0)
+    return any(type(value) is not int for value in (cols, rows, k)) or cols <= 0 or rows < 0 or not -1 <= k <= 1000000
+
+
+def _inspect_swf(body: bytes) -> list[str]:
+    def inspect(data: bytes) -> dict[str, Any]:
+        result = inspect_flash(data, budget=DecodeBudget(_STATIC_BYTE_LIMIT), max_expansion_ratio=20)
+        if result.get("script_tag_count", 0):
+            result["reason_codes"].append("flash_script_embedded")
+        return result
+
+    return _codec_reasons(inspect, body, include_unsupported=True)
+
+
+def _might_decode_to_swf(stream: pikepdf.Stream, raw: bytes, filters: list[str]) -> bool:
+    if filters not in (["/FlateDecode"], ["/Fl"]):
+        return True
+    parms = stream.get("/DecodeParms")
+    if isinstance(parms, pikepdf.Array):
+        parms = parms[0] if len(parms) else None
+    try:
+        parameters = _parameters("/FlateDecode", dict(parms) if isinstance(parms, pikepdf.Dictionary) else None)
+        predictor = parameters.get("/Predictor", 1)
+        prefix_size = 3
+        if predictor != 1:
+            row_bits = (
+                parameters.get("/Columns", 1) * parameters.get("/Colors", 1) * parameters.get("/BitsPerComponent", 8)
+            )
+            row_bytes = (row_bits + 7) // 8
+            rows = (3 + row_bytes - 1) // row_bytes
+            prefix_size = rows * (row_bytes + (predictor >= 10))
+            if prefix_size > 64 * 1024:
+                return True
+        prefix = zlib.decompressobj().decompress(raw, prefix_size)
+        return _predict(prefix, parameters, prefix_size).startswith(_SWF_SIGNATURES)
+    except (zlib.error, _Stopped):
+        return False
+
+
+def inspect_pdf_codec_anomalies(pdf: pikepdf.Pdf, *, has_jbig2_magic: bool = False) -> list[dict[str, Any]]:
+    budget = DecodeBudget(_STATIC_BYTE_LIMIT)
+    anomalies = []
+    font_streams: dict[tuple[int, int], tuple[str, pikepdf.Stream]] = {}
+    icc_streams: dict[tuple[int, int], pikepdf.Stream] = {}
+    inspected_bodies: dict[tuple, list[str]] = {}
+    flash_candidates = []
+    direct_objects = []
+
+    def record_anomaly(stream: pikepdf.Stream, codec: str, filter_name: str, stream_size: int | None, reasons) -> None:
+        if not reasons:
+            return
+        object_number, generation = stream.objgen
+        anomalies.append(
+            {
+                "object_number": object_number,
+                "generation": generation,
+                "codec": codec,
+                "filter": filter_name,
+                "stream_size": stream_size,
+                "reason_codes": reasons,
+                "stream": stream,
+            }
+        )
+
+    def inspect_stream(stream: pikepdf.Stream, codec: str, codec_filter: str, wrappers: list[str]) -> None:
+        stream_size = None
+        identity = None
+        try:
+            stream_size = int(stream.get("/Length") or 0)
+            if codec_filter == "Uncompressed" and stream_size > budget.remaining:
+                return
+            subtype = str(stream.get("/Subtype") or "") if codec == "FONT" else ""
+            raw = None
+            if stream_size <= _STATIC_BYTE_LIMIT:
+                raw = stream.read_raw_bytes()
+                if codec_filter == "Uncompressed" and not raw.startswith(_JBIG2_MAGIC):
+                    return
+                identity = (
+                    codec,
+                    codec_filter,
+                    subtype,
+                    tuple(wrappers),
+                    str(stream.get("/DecodeParms")) if wrappers else "",
+                    hashlib.sha256(raw).digest(),
+                )
+                if identity in inspected_bodies:
+                    record_anomaly(stream, codec, codec_filter, stream_size, inspected_bodies[identity])
+                    return
+            body, reasons = _bounded_stream_bytes(stream, wrappers, budget, allow_flate_padding=codec == "ICC", raw=raw)
+        except (pikepdf.PdfError, ValueError, TypeError, OverflowError):
+            body, reasons = None, ["stream_decode_failed"]
+        if codec_filter == "Uncompressed" and (body is None or not body.startswith(_JBIG2_MAGIC)):
+            return
+        if body is not None:
+            if codec == "JBIG2":
+                reasons = _codec_reasons(jbig2_structure, body, include_unsupported=True)
+            elif codec == "JPX":
+                reasons = _codec_reasons(jpx_structure, body)
+            elif codec == "JPEG":
+                reasons = [code for code in _codec_reasons(jpeg_structure, body) if code != "image_trailing_data"]
+            elif codec == "ICC":
+                reasons = _inspect_icc_profile(body)
+            else:
+                reasons = _font_anomaly_reasons(body, codec_filter, subtype)
+        if identity is not None:
+            inspected_bodies[identity] = reasons
+        record_anomaly(stream, codec, codec_filter, stream_size, reasons)
+
+    for obj in islice(pdf.objects, _CODEC_OBJECT_LIMIT):
+        if isinstance(obj, pikepdf.Stream):
+            filters = _stream_filters(obj.get("/Filter"))
+            inspected_image = False
+            for index, name in enumerate(filters):
+                if name == "/CCITTFaxDecode":
+                    if _invalid_ccitt_parameters(obj, index):
+                        record_anomaly(obj, "CCITT", name, obj.get("/Length"), ["ccitt_decode_parms_invalid"])
+                    inspected_image = True
+                elif name in _IMAGE_CODEC_FILTERS and not inspected_image:
+                    inspect_stream(obj, _IMAGE_CODEC_FILTERS[name], name, filters[:index])
+                    inspected_image = True
+            if not inspected_image:
+                if has_jbig2_magic and not filters:
+                    inspect_stream(obj, "JBIG2", "Uncompressed", [])
+                flash_candidates.append((obj, filters))
+        if isinstance(obj, (pikepdf.Dictionary, pikepdf.Stream)):
+            direct_objects.extend(
+                value
+                for value in obj.values()
+                if isinstance(value, (pikepdf.Array, pikepdf.Dictionary)) and not value.is_indirect
+            )
+        elif isinstance(obj, pikepdf.Array):
+            direct_objects.append(obj)
+        if not isinstance(obj, pikepdf.Dictionary):
+            continue
+        for descriptor in (obj, obj.get("/FontDescriptor")):
+            if not isinstance(descriptor, pikepdf.Dictionary):
+                continue
+            for key in ("/FontFile", "/FontFile2", "/FontFile3"):
+                stream = descriptor.get(key)
+                if isinstance(stream, pikepdf.Stream):
+                    identity = stream.objgen
+                    if identity not in font_streams or key == "/FontFile2":
+                        font_streams[identity] = (key, stream)
+    for key, stream in font_streams.values():
+        inspect_stream(stream, "FONT", key, _stream_filters(stream.get("/Filter")))
+    for _ in range(_CODEC_OBJECT_LIMIT):
+        if not direct_objects:
+            break
+        value = direct_objects.pop()
+        if isinstance(value, pikepdf.Array):
+            if len(value) >= 2 and value[0] == pikepdf.Name.ICCBased and isinstance(value[1], pikepdf.Stream):
+                icc_streams[value[1].objgen] = value[1]
+            children = value
+        else:
+            children = value.values()
+        direct_objects.extend(
+            child
+            for child in children
+            if isinstance(child, (pikepdf.Array, pikepdf.Dictionary)) and not child.is_indirect
+        )
+    for stream in icc_streams.values():
+        inspect_stream(stream, "ICC", "/ICCBased", _stream_filters(stream.get("/Filter")))
+
+    flash_budget = DecodeBudget(_STATIC_BYTE_LIMIT)
+    flash_candidates.sort(key=lambda candidate: candidate[0].get("/Type") != pikepdf.Name.EmbeddedFile)
+    for stream, filters in flash_candidates:
+        if not flash_budget.remaining:
+            break
+        if stream.objgen in font_streams or stream.objgen in icc_streams:
+            continue
+        try:
+            size = int(stream.get("/Length") or 0)
+            if size < 3 or size > flash_budget.remaining:
+                continue
+            raw = stream.read_raw_bytes()
+            if len(raw) > flash_budget.remaining:
+                continue
+            if raw.startswith(_SWF_SIGNATURES):
+                body = raw
+                flash_budget.remaining -= len(raw)
+            elif filters and _might_decode_to_swf(stream, raw, filters):
+                body, _ = _bounded_stream_bytes(stream, filters, flash_budget, raw=raw)
+            else:
+                flash_budget.remaining -= len(raw)
+                continue
+        except (pikepdf.PdfError, ValueError, TypeError, OverflowError):
+            continue
+        if body and body.startswith(_SWF_SIGNATURES):
+            record_anomaly(stream, "SWF", "/SWF", size, _inspect_swf(body))
+    return anomalies
+
+
+def _recover_hidden_evasion_tokens(data: bytes, base_tokens: dict[str, int]) -> tuple[dict[str, int], dict[str, Any]]:
+    audit = {
+        "hex_escaped_names_decoded": 0,
+        "objstm_streams_unpacked": 0,
+        "objstm_decoded_bytes": 0,
+        "recovered_hidden_triggers": [],
+    }
+    has_objstm = b"/ObjStm" in data
+    if not has_objstm and not _PDF_NAME.search(data):
+        return base_tokens, audit
+    normalized, audit["hex_escaped_names_decoded"] = normalize_pdf_hex_names(data)
+    counts = _scan_scanner_raw_tokens(normalized)
+    if has_objstm or b"/ObjStm" in normalized:
+        budget = DecodeBudget(_STATIC_BYTE_LIMIT)
+        try:
+            with pikepdf.open(io.BytesIO(data)) as pdf:
+                attempted = 0
+                for obj in pdf.objects:
+                    if not isinstance(obj, pikepdf.Stream) or obj.get("/Type") != pikepdf.Name.ObjStm:
+                        continue
+                    attempted += 1
+                    if attempted > 64 or not budget.remaining:
+                        break
+                    try:
+                        body, _ = _bounded_stream_bytes(obj, _stream_filters(obj.get("/Filter")), budget)
+                    except (pikepdf.PdfError, ValueError, TypeError):
+                        continue
+                    if body is None:
+                        continue
+                    audit["objstm_streams_unpacked"] += 1
+                    audit["objstm_decoded_bytes"] += len(body)
+                    body, decoded = normalize_pdf_hex_names(body)
+                    audit["hex_escaped_names_decoded"] += decoded
+                    unpacked = _scan_scanner_raw_tokens(body)
+                    for key in _RECOVERABLE_TOKENS:
+                        counts[key] += unpacked[key]
+        except pikepdf.PdfError:
+            pass
+    merged = base_tokens.copy()
+    for key in sorted(_RECOVERABLE_TOKENS):
+        if counts[key] > base_tokens.get(key, 0):
+            merged[key] = counts[key]
+            audit["recovered_hidden_triggers"].append(key)
+    return merged, audit
+
+
+def annotation_rect_area(rect: Any) -> float:
+    if not isinstance(rect, (ArrayObject, pikepdf.Array)) or len(rect) != 4:
+        return 0.0
+    try:
+        x0, y0, x1, y1 = (float(value) for value in rect)
+        area = abs(x1 - x0) * abs(y1 - y0)
+    except (TypeError, ValueError, OverflowError):
+        return 0.0
+    return area if math.isfinite(area) else 0.0
+
+
+def page_box_area(page: Any) -> float:
+    if not isinstance(page, (DictionaryObject, pikepdf.Dictionary)):
+        return 0.0
+    for key in ("/CropBox", "/MediaBox"):
+        if key in page:
+            return annotation_rect_area(_resolve_pdf_object(page.get(key)))
+    for _ in range(8):
+        page = _resolve_pdf_object(page.get("/Parent"))
+        if not isinstance(page, (DictionaryObject, pikepdf.Dictionary)):
+            break
+        if "/MediaBox" in page:
+            return annotation_rect_area(_resolve_pdf_object(page.get("/MediaBox")))
+    return 0.0
+
+
+def inspect_polyglot_and_revisions(
+    data: bytes, header_pos: int | None = None, last_eof: int | None = None
+) -> dict[str, Any]:
+    window = 64 * 1024
+    if header_pos is None:
+        header_pos = data.find(b"%PDF-")
+    if last_eof is None:
+        last_eof = data.rfind(b"%%EOF")
+
+    def signatures(chunk: bytes) -> list[str]:
+        chunk = chunk.lstrip(b" \t\r\n\v\f\0")
+        found = [
+            name
+            for magic, name in (
+                (b"\x7fELF", "elf"),
+                (b"PK\x03\x04", "zip"),
+                (b"Rar!\x1a\x07", "rar"),
+                (b"7z\xbc\xaf\x27\x1c", "7z"),
+            )
+            if chunk.startswith(magic)
+        ]
+        if chunk.startswith(b"MZ"):
+            pe_offset = int.from_bytes(chunk[60:64], "little")
+            if chunk[pe_offset : pe_offset + 4] == b"PE\0\0" or any(
+                marker in chunk[:4096] for marker in (b"PE\0\0", b"This program")
+            ):
+                found.append("pe")
+        lower = chunk.lower()
+        for markers, name in (
+            ((b"<!doctype html", b"<html", b"<script"), "html_script"),
+            ((b"<?php",), "php"),
+            ((b"#!/",), "shebang"),
+        ):
+            if any(marker in lower for marker in markers):
+                found.append(name)
+        return found
+
+    prefix = signatures(data[: min(header_pos, window)]) if header_pos > 0 else []
+    suffix = signatures(data[last_eof + 5 : last_eof + 5 + window]) if last_eof >= 0 else []
+    return {
+        "has_polyglot_payload": bool(prefix or suffix),
+        "prefix_signatures": prefix,
+        "suffix_signatures": suffix,
+        "incremental_eof_count": data.count(b"%%EOF"),
+        "anomalies": [
+            f"polyglot_{location}_{name}"
+            for location, names in (("prefix", prefix), ("suffix", suffix))
+            for name in names
+        ],
+    }
+
+
+def is_navigation_destination(value: Any) -> bool:
+    dictionaries = (DictionaryObject, pikepdf.Dictionary)
+    arrays = (ArrayObject, pikepdf.Array)
+    value = _resolve_pdf_object(value)
+    if isinstance(value, dictionaries):
+        if str(value.get("/S", "")) != "/GoTo" or "/D" not in value:
+            return False
+        if any(key in value for key in ("/Next", "/JS", "/JavaScript")):
+            return False
+        value = value["/D"]
+        if isinstance(value, (pikepdf.Name, pikepdf.String, NameObject, TextStringObject)):
+            return True
+    if not isinstance(value, arrays) or len(value) < 2:
+        return False
+    page = _resolve_pdf_object(value[0])
+    return (
+        isinstance(page, dictionaries)
+        and str(page.get("/Type", "")) == "/Page"
+        and isinstance(value[1], (pikepdf.Name, NameObject))
+        and all(
+            not isinstance(_resolve_pdf_object(item), (*dictionaries, *arrays, pikepdf.Stream))
+            for item in list(value)[1:]
+        )
+    )
+
+
+def _catalog_trigger_keys(root: Any) -> set[str]:
+    keys = set()
+    for name in ("/OpenAction", "/AA", "/Names/JavaScript", "/AcroForm/XFA"):
+        value = root
+        for key in name[1:].split("/"):
+            if not isinstance(value, (DictionaryObject, pikepdf.Dictionary)):
+                break
+            value = _resolve_pdf_object(value.get("/" + key))
+        else:
+            if (
+                value is not None
+                and not isinstance(value, NullObject)
+                and not (name == "/OpenAction" and is_navigation_destination(value))
+            ):
+                keys.add(name)
+    return keys
+
+
+_REVISION_OBJECT = re.compile(rb"\b(\d{1,12})\s+(\d{1,8})\s+obj\b")
+_REVISION_TRIGGER = re.compile(
+    rb"/(?:JS|JavaScript|OpenAction|AA|Launch|GoToR|XFA|EmbeddedFiles)"
+    rb"(?=[\s/<>()\[\]%]|$)(?!\s+null\b)"
+)
+_REVISION_OBJECT_END = re.compile(rb"(?m)^[ \t]*stream\b|(?<![^\s>])endobj\b")
+_REVISION_LITERAL = re.compile(rb"\((?:\\[\s\S]|[^\\()])*\)|(?<!<)<[0-9a-fA-F\s]*>|%[^\r\n]*")
+_REVISION_LIMIT = 512 * 1024
+
+
+def _revision_trigger_updates(data: bytes, mismatch: bool) -> tuple[list[str], list[str]]:
+    anomalies = []
+    shadowed = []
+    base_end = data.find(b"%%EOF")
+    base_tokens: set[bytes] = set()
+    object_tokens: dict[tuple[bytes, bytes], set[bytes]] = {}
+    start = 0
+    end = base_end
+    for revision in range(6):
+        if end < 0:
+            break
+        chunk = data[start : min(end, start + _REVISION_LIMIT)]
+        added_tokens: set[bytes] = set()
+        shadowed_here = False
+        objects = list(_REVISION_OBJECT.finditer(chunk))
+        for index, match in enumerate(objects):
+            next_offset = objects[index + 1].start() if index + 1 < len(objects) else len(chunk)
+            boundary = _REVISION_OBJECT_END.search(chunk, match.end(), next_offset)
+            if boundary is None:
+                continue
+            header = _REVISION_LITERAL.sub(b" ", chunk[match.end() : boundary.start()])
+            current = set(_REVISION_TRIGGER.findall(header))
+            identity = match.groups()
+            previous = object_tokens.pop(identity, set())
+            if current:
+                object_tokens[identity] = current
+            if revision == 0:
+                base_tokens.update(current)
+                continue
+            removed = previous - current
+            if removed:
+                shadowed_here = True
+                if len(shadowed) < 32:
+                    label = b" ".join(identity).decode("ascii")
+                    shadowed.append(f"{label} R: " + ", ".join(token.decode("ascii") for token in sorted(removed)))
+            added_tokens.update(current - base_tokens)
+        if shadowed_here and "incremental_shadow_trigger_update" not in anomalies:
+            anomalies.append("incremental_shadow_trigger_update")
+        if added_tokens and (mismatch or shadowed_here) and "incremental_hidden_trigger_revision" not in anomalies:
+            anomalies.append("incremental_hidden_trigger_revision")
+        start = end + len(b"%%EOF")
+        end = data.find(b"%%EOF", start)
+    return anomalies, shadowed
+
+
+def _differential_summary() -> dict[str, Any]:
+    return {
+        "has_differential_evasion": False,
+        "pypdf_pages": 0,
+        "pikepdf_pages": 0,
+        "anomalies": [],
+        "shadowed_triggers": [],
+    }
+
+
+def inspect_parser_differential(
+    data: bytes, reader: PdfReader, pdf: pikepdf.Pdf, incremental_eof_count: int
+) -> dict[str, Any]:
+    result = _differential_summary()
+    result.update(pypdf_pages=len(reader.pages), pikepdf_pages=len(pdf.pages))
+    anomalies = result["anomalies"]
+    if result["pypdf_pages"] != result["pikepdf_pages"]:
+        anomalies.append("parser_page_count_mismatch")
+    if _catalog_trigger_keys(reader.trailer["/Root"]) != _catalog_trigger_keys(pdf.Root):
+        anomalies.append("parser_trigger_visibility_mismatch")
+    if incremental_eof_count >= 2:
+        revision_anomalies, shadowed = _revision_trigger_updates(data, bool(anomalies))
+        anomalies.extend(revision_anomalies)
+        result["shadowed_triggers"] = shadowed
+    result["has_differential_evasion"] = bool(anomalies)
+    return result
+
+
+def _uri_evidence(
+    uri: str,
+    evidence_id: str,
+    invoker: str,
+    page_index: int | None = None,
+    rect_area: float = 0.0,
+    page_area: float = 0.0,
+) -> dict[str, Any] | None:
+    if not uri.strip():
+        return None
+    suspicious, reasons = is_suspicious_uri(uri)
+    return {
+        "uri": uri,
+        "evidence_id": evidence_id,
+        "invoker": invoker,
+        "page_index": page_index,
+        "rect_area": rect_area,
+        "page_area": page_area,
+        "is_suspicious": suspicious,
+        "reasons": reasons,
+    }
+
+
+_LURE_TEXT_LIMIT = 128 * 1024
+_LURE_FILTER_LIMITS = FilterLimits(
+    max_input_bytes=_LURE_TEXT_LIMIT,
+    max_stage_bytes=_LURE_TEXT_LIMIT,
+    max_total_bytes=_LURE_TEXT_LIMIT,
+)
+
+
+def _page_lure_text(page: Any, budget: DecodeBudget) -> str | None:
+    contents = page.get("/Contents")
+    if contents is None:
+        return ""
+    contents = contents.get_object()
+    streams = contents if isinstance(contents, ArrayObject) else [contents]
+    bodies = []
+    for stream_ref in streams:
+        stream = stream_ref.get_object()
+        raw = getattr(stream, "_data", None)
+        if not isinstance(raw, bytes) or len(raw) > budget.remaining:
+            return None
+        filters = _stream_filters(stream.get("/Filter"))
+        decoded = decode_filters(raw, filters, limits=_LURE_FILTER_LIMITS, budget=budget)
+        if decoded.data is None:
+            return None
+        bodies.append(decoded.data)
+    page_snapshot = copy(page)
+    decoded_contents = DecodedStreamObject()
+    decoded_contents.set_data(b"\n".join(bodies))
+    text_content = ContentStream(decoded_contents, page.pdf, "bytes")
+    text_content.operations = [(args, op) for args, op in text_content.operations if op != b"Do"]
+    page_snapshot[NameObject("/Contents")] = text_content
+    return page_snapshot.extract_text()
+
+
+def _resolve_pdf_object(value: Any) -> Any:
+    return value.get_object() if isinstance(value, IndirectObject) else value
+
+
+def page_has_vector_overlay_surface(page: Any) -> bool:
+    contents = _resolve_pdf_object(page.get("/Contents"))
+    streams = contents if isinstance(contents, (ArrayObject, pikepdf.Array)) else (contents,)
+    budget = DecodeBudget(_LURE_TEXT_LIMIT)
+    for ref in islice(iter(streams), 64):
+        stream = _resolve_pdf_object(ref)
+        try:
+            if isinstance(stream, pikepdf.Stream):
+                body, _ = _bounded_stream_bytes(stream, _stream_filters(stream.get("/Filter")), budget)
+            elif isinstance(stream, StreamObject):
+                body = decode_filters(
+                    stream._data, _stream_filters(stream.get("/Filter")), limits=_LURE_FILTER_LIMITS, budget=budget
+                ).data
+            else:
+                continue
+        except (pikepdf.PdfError, pypdf.errors.PyPdfError, ValueError, TypeError, OverflowError):
+            continue
+        if body:
+            return True
+    return False
+
+
+def visual_lure_kind(
+    page: Any,
+    page_text: str | None,
+    *,
+    pages_count: int,
+    page_area: float,
+    rect_area: float,
+    uri: str,
+) -> str | None:
+    if page_text is None or rect_area < IMAGE_LURE_MIN_AREA or not is_untrusted_http_uri(uri):
+        return None
+    text_chars = len(page_text.strip())
+    if pages_count <= 2 and text_chars < 40:
+        if page_has_image_xobject(page):
+            return "image"
+        if rect_area >= VECTOR_LURE_MIN_AREA and page_has_vector_overlay_surface(page):
+            return "vector"
+    if pages_count <= 10 and page_area >= 10000.0:
+        coverage = rect_area / page_area
+        if coverage >= 0.35 and (text_chars < 400 or coverage >= 0.45 and page_has_image_xobject(page)):
+            return "overlay"
+    return None
+
+
+def lure_phrases_for_pages(texts: dict[int, str]) -> tuple[set[str], set[str]]:
+    phrases: set[str] = set()
+    corroborated: set[str] = set()
+    for text in texts.values():
+        page_phrases = phishing_lure_phrases(text)
+        phrases.update(page_phrases)
+        # Overlapping QR phrases describe the same cue.
+        normalized = {_strip_diacritics(phrase) for phrase in page_phrases}
+        independent = {
+            phrase for phrase in normalized if not any(phrase != other and phrase in other for other in normalized)
+        }
+        if len(independent) >= 2:
+            corroborated.update(page_phrases)
+    return phrases, corroborated
+
+
+def qr_phishing_reasons(
+    uri: str, texts: dict[int, str], pages_count: int, phrases: set[str], corroborated: set[str]
+) -> list[str]:
+    suspicious, reasons = is_suspicious_uri(uri, lure_phrases=corroborated)
+    short_document = (
+        pages_count <= 2 and len(texts) == pages_count and sum(len(text.strip()) for text in texts.values()) < 200
+    )
+    qr_lure = any(any(cue in _strip_diacritics(phrase) for cue in ("qr", "scan", "quet")) for phrase in phrases)
+    if suspicious or (short_document or qr_lure) and is_untrusted_http_uri(uri):
+        reasons.append("qr_code_phishing_uri")
+    return reasons
+
+
+def _analyze_phishing(
+    reader: PdfReader | None,
+    uris: list[dict[str, Any]],
+    pages_count: int,
+    records: list[dict[str, Any]],
+    qr_analysis: dict[str, Any],
+) -> dict[str, Any]:
+    qr_uris = qr_analysis["decoded_uris"]
+    overlay_pages = {item["page_index"] for item in uris if item["rect_area"] >= IMAGE_LURE_MIN_AREA}
+    texts = (
+        bounded_lure_page_text(reader, pages_count, overlay_pages) if reader is not None and (uris or qr_uris) else {}
+    )
+    phrases, corroborated = lure_phrases_for_pages(texts)
+    image_only_lure = False
+    if corroborated or overlay_pages and texts:
+        records_by_id = {record["evidence_id"]: record for record in records}
+        for item in uris:
+            suspicious, reasons = is_suspicious_uri(item["uri"], lure_phrases=corroborated)
+            index = item["page_index"]
+            visual_lure = None
+            if reader is not None and index in texts and item["rect_area"] >= IMAGE_LURE_MIN_AREA:
+                try:
+                    visual_lure = visual_lure_kind(
+                        reader.pages[index],
+                        texts[index],
+                        pages_count=pages_count,
+                        page_area=item["page_area"],
+                        rect_area=item["rect_area"],
+                        uri=item["uri"],
+                    )
+                except (pypdf.errors.PyPdfError, ValueError, TypeError):
+                    pass
+            if visual_lure:
+                reasons.append("large_overlay_visual_lure" if visual_lure == "overlay" else "image_only_visual_lure")
+                suspicious = image_only_lure = True
+            if suspicious:
+                item.update(is_suspicious=True, reasons=list(dict.fromkeys([*item["reasons"], *reasons])))
+                record = records_by_id.get(item["evidence_id"])
+                if record is not None and record["action_role"] != "remote_goto":
+                    record.update(is_threat_trigger=True, action_role="suspicious_uri")
+    suspicious = [item for item in uris if item["is_suspicious"]]
+    for index, uri in enumerate(qr_uris):
+        reasons = qr_phishing_reasons(uri, texts, pages_count, phrases, corroborated)
+        if reasons:
+            suspicious.append(
+                {
+                    "uri": uri,
+                    "evidence_id": f"qr:image_{index}",
+                    "invoker": "/Resources/XObject",
+                    "source": "qr_image",
+                    "is_suspicious": True,
+                    "reasons": reasons,
+                }
+            )
+    return {
+        "has_phishing_threat": bool(suspicious),
+        "has_qr_phishing": any(item.get("source") == "qr_image" for item in suspicious),
+        "suspicious_uris": suspicious,
+        "lure_phrases": sorted(phrases),
+        "image_only_lure": image_only_lure,
+    }
+
+
+def _open_scanner_reader(data: bytes) -> tuple[PdfReader, int]:
+    reader = PdfReader(io.BytesIO(data), strict=False)
+    pages = len(reader.pages)
+    reader.trailer["/Root"]
+    return reader, pages
+
+
+def bounded_lure_page_text(reader: PdfReader, pages_count: int, overlay_pages: set[int]) -> dict[int, str]:
+    if pages_count > 10 or pages_count > 3 and not overlay_pages:
+        return {}
+    first_pages = set(range(min(pages_count, 3)))
+    indices = sorted(overlay_pages) + sorted(first_pages - overlay_pages)
+    budget = DecodeBudget(_LURE_TEXT_LIMIT)
+    texts = {}
+    for index in indices:
+        if index >= pages_count:
+            continue
+        try:
+            text = _page_lure_text(reader.pages[index], budget)
+        except (pypdf.errors.PyPdfError, ValueError, TypeError):
+            continue
+        if text is not None:
+            texts[index] = text
+    return texts
+
+
+def read_lure_page_text(data: bytes, overlay_pages: set[int]) -> dict[int, str]:
+    try:
+        reader, pages_count = _open_scanner_reader(data)
+    except (pypdf.errors.PyPdfError, ValueError, TypeError):
+        return {}
+    return bounded_lure_page_text(reader, pages_count, overlay_pages)
+
+
+_CATALOG_EVIDENCE = {
+    "/Root/OpenAction": ("OpenAction", "action:open_action", "action"),
+    "/Root/AA": ("AA", "action:aa", "action"),
+    "/Root/Names/JavaScript": ("JavaScript", "script:names_js", "script"),
+    "/Root/Names/EmbeddedFiles": ("EmbeddedFile", "filespec:embedded_files", "filespec"),
+    "/Root/AcroForm/XFA": ("XFA", "script:acroform_xfa", "script"),
+}
+_FORMCALC_NETWORK_CALL = re.compile(
+    rb"""\b(?:Get|Post|Put)\s*\(\s*(?:["']|&quot;|&apos;)https?://|\bxfa\s*\.\s*host\s*\.\s*gotoURL\s*\(""",
+    re.IGNORECASE,
+)
+
+
+def _inspect_xfa_payload(xfa_obj: Any, budget: DecodeBudget) -> dict[str, Any]:
+    chunks = []
+    anomalies = set()
+    streams = (
+        (xfa_obj[index] for index in range(1, min(len(xfa_obj), 64), 2))
+        if isinstance(xfa_obj, pikepdf.Array)
+        else (xfa_obj,)
+    )
+    for index, stream in enumerate(streams):
+        if not isinstance(stream, pikepdf.Stream):
+            continue
+        try:
+            body, reasons = _bounded_stream_bytes(stream, _stream_filters(stream.get("/Filter")), budget)
+        except (pikepdf.PdfError, ValueError, TypeError, OverflowError):
+            body, reasons = None, ["stream_decode_failed"]
+        anomalies.update(reasons)
+        if body is not None:
+            chunks.append((body, {"packet_index": index}))
+    if isinstance(xfa_obj, pikepdf.Array) and len(xfa_obj) > 64:
+        anomalies.add("xfa_packet_limit")
+
+    scripts: list[str] = []
+    xml_nodes = 0
+    non_js = 0
+
+    def count_node() -> None:
+        nonlocal xml_nodes
+        xml_nodes += 1
+
+    def parse(xml_chunks) -> int:
+        result = inspect_xfa_xml(
+            xml_chunks,
+            start_script=dict,
+            finish_script=lambda _, code: scripts.append(code),
+            problem=anomalies.add,
+            node_observed=count_node,
+            max_nodes=5000,
+            max_depth=64,
+            max_script_bytes=262144,
+        )
+        return result["non_javascript_scripts"]
+
+    if chunks:
+        try:
+            non_js = parse(chunks)
+        except CodeInspectionError as exc:
+            reason = str(exc)
+            if reason == "xfa_xml_parse_error" and len(chunks) > 1:
+                if b"<!DOCTYPE" in b"".join(body for body, _ in chunks).upper():
+                    anomalies.update({reason, "xfa_xml_dtd_unsupported"})
+                else:
+                    scripts.clear()
+                    xml_nodes = 0
+                    prefix = (b'<xdp:xdp xmlns:xdp="http://ns.adobe.com/xdp/">', chunks[0][1])
+                    suffix = (b"</xdp:xdp>", chunks[-1][1])
+                    try:
+                        non_js = parse([prefix, *chunks, suffix])
+                    except CodeInspectionError as wrapped_exc:
+                        anomalies.add(str(wrapped_exc))
+            else:
+                anomalies.add(reason)
+    if non_js:
+        remaining = 512 * 1024
+        inspected = bytearray()
+        for body, _ in chunks:
+            inspected.extend(body[:remaining])
+            remaining -= min(len(body), remaining)
+            if not remaining:
+                break
+        if _FORMCALC_NETWORK_CALL.search(inspected):
+            anomalies.add("xfa_formcalc_network_call")
+    return {
+        "present": True,
+        "javascript_scripts": scripts,
+        "javascript_count": len(scripts),
+        "formcalc_count": non_js,
+        "xml_nodes": xml_nodes,
+        "anomalies": sorted(anomalies),
+    }
+
+
+def _inspect_additional_evidence(
+    data: bytes,
+    reader: PdfReader,
+    original_data: bytes,
+    incremental_eof_count: int,
+    records: list[dict[str, Any]],
+    scripts: list[dict[str, Any]],
+    uris: list[dict[str, Any]],
+    codec_anomalies: list[dict[str, Any]],
+    xfa_analysis: dict[str, Any],
+    recovered: list[str],
+    register: Any,
+) -> tuple[set[str], dict[str, Any], dict[str, Any]]:
+    non_js: set[str] = set()
+    differential = _differential_summary()
+    qr_analysis = empty_qr_analysis()
+    script_codes = {item["code"] for item in scripts}
+    seen_uris = {item["uri"] for item in uris}
+    budget = DecodeBudget(_STATIC_BYTE_LIMIT)
+    xfa_budget = DecodeBudget(_STATIC_BYTE_LIMIT)
+    seen_xfa = set()
+    xfa_script_index = 0
+    attachment_index = 0
+    gotor_index = 0
+    has_jbig2_magic = _JBIG2_MAGIC in data
+    try:
+        with pikepdf.open(io.BytesIO(data)) as pdf:
+            known_uri_ids = {item["evidence_id"] for item in uris}
+            annotations_left = 1024
+            for page_index, page in enumerate(islice(pdf.pages, 64)):
+                annotations = page.obj.get("/Annots")
+                if not isinstance(annotations, pikepdf.Array):
+                    continue
+                for index, annotation in enumerate(islice(annotations, annotations_left)):
+                    evidence_id = f"action:annot_{page_index}_{index}"
+                    if evidence_id in known_uri_ids or not isinstance(annotation, pikepdf.Dictionary):
+                        continue
+                    if str(annotation.get("/Subtype")) not in VISUAL_LURE_SUBTYPES:
+                        continue
+                    action_obj = annotation.get("/A")
+                    uri = action_obj.get("/URI") if isinstance(action_obj, pikepdf.Dictionary) else None
+                    if isinstance(uri, pikepdf.String):
+                        invoker = f"/Annot[{page_index},{index}]/A"
+                        evidence = _uri_evidence(
+                            str(uri),
+                            evidence_id,
+                            invoker,
+                            page_index,
+                            annotation_rect_area(annotation.get("/Rect")),
+                            page_box_area(page.obj),
+                        )
+                        if evidence:
+                            seen_uris.add(evidence["uri"])
+                            uris.append(evidence)
+                annotations_left -= min(annotations_left, len(annotations))
+                if not annotations_left:
+                    break
+            pending = [(pdf.Root, "/Root", ""), (pdf.Root.get("/AcroForm"), "/Root/AcroForm", "")]
+            seen_objects = set()
+            for _ in range(10000):
+                if not pending:
+                    break
+                value, path, parent_id = pending.pop()
+                if not isinstance(value, (pikepdf.Dictionary, pikepdf.Stream, pikepdf.Array)):
+                    continue
+                if len(path) > 1024 or len(pending) > 10000:
+                    non_js.add("action_inspection_limit")
+                    break
+                fallback = _CATALOG_EVIDENCE.get(path)
+                if fallback and fallback[0] in recovered and not isinstance(value, pikepdf.Array):
+                    _, parent_id, kind = fallback
+                    register(parent_id, kind, value, path)
+                if value.is_indirect:
+                    if value.objgen in seen_objects:
+                        continue
+                    seen_objects.add(value.objgen)
+                if isinstance(value, pikepdf.Array):
+                    if len(value) > 10000:
+                        non_js.add("action_inspection_limit")
+                        continue
+                    pending.extend((item, f"{path}[{idx}]", parent_id) for idx, item in enumerate(value))
+                    continue
+                action = str(value.get("/S") or "")
+                subtype = str(value.get("/Subtype") or "")
+                non_js.update(_NON_JS_KEYS.intersection(value.keys()))
+                if subtype in _EXTERNAL_ANNOTATIONS:
+                    non_js.add(subtype)
+                if subtype == "/FileAttachment":
+                    filespec = value.get("/FS")
+                    register(
+                        f"filespec:annot_file_attachment_{attachment_index}",
+                        "filespec",
+                        filespec if isinstance(filespec, pikepdf.Dictionary) else value,
+                        f"{path}/FS" if filespec is not None else path,
+                        action_role="file_attachment",
+                    )
+                    attachment_index += 1
+                if "/XFA" in value:
+                    xfa_obj = value["/XFA"]
+                    identity = getattr(xfa_obj, "objgen", (0, 0))
+                    if identity == (0, 0) or identity not in seen_xfa:
+                        seen_xfa.add(identity)
+                        xfa_path = f"{path}/XFA"
+                        xfa_id = "script:acroform_xfa"
+                        register(xfa_id, "script", xfa_obj, xfa_path)
+                        observed = _inspect_xfa_payload(xfa_obj, xfa_budget)
+                        xfa_analysis["present"] = True
+                        for key in ("javascript_count", "formcalc_count", "xml_nodes"):
+                            xfa_analysis[key] += observed[key]
+                        anomalies = set(observed["anomalies"])
+                        xfa_analysis["anomalies"] = sorted(anomalies.union(xfa_analysis["anomalies"]))
+                        if anomalies.intersection({"xfa_xml_dtd_unsupported", "xfa_reference_unsupported"}):
+                            non_js.add("xfa_xml_anomaly")
+                        if "xfa_formcalc_network_call" in anomalies:
+                            non_js.add("xfa_formcalc_network_call")
+                        if "xfa_xml_dtd_unsupported" in anomalies:
+                            codec_anomalies.append(
+                                {
+                                    "evidence_id": xfa_id,
+                                    "object_number": identity[0],
+                                    "generation": identity[1],
+                                    "codec": "XFA_XML",
+                                    "reason_codes": ["xfa_xml_dtd_unsupported"],
+                                }
+                            )
+                        for code in observed["javascript_scripts"]:
+                            if code.strip() and code not in script_codes:
+                                script_codes.add(code)
+                                script_id = f"script:xfa_{xfa_script_index}"
+                                xfa_script_index += 1
+                                scripts.append({"script_id": script_id, "parent_id": xfa_id, "code": code})
+                if action in _NON_JS_ACTIONS:
+                    non_js.add(action)
+                if action == "/GoToR":
+                    evidence_id = f"action:gotor_{gotor_index}"
+                    gotor_index += 1
+                    register(evidence_id, "action", value, path, action_role="remote_goto")
+                    for key in ("/UF", "/F"):
+                        target_obj = value.get(key)
+                        targets = (
+                            (target_obj.get("/UF"), target_obj.get("/F"))
+                            if isinstance(target_obj, pikepdf.Dictionary)
+                            else (target_obj,)
+                        )
+                        for target in targets:
+                            if isinstance(target, pikepdf.String) and is_risky_remote_target(str(target)):
+                                non_js.add("gotor_unc_ntlm_risk")
+                                uris.append(
+                                    {
+                                        "uri": str(target),
+                                        "evidence_id": evidence_id,
+                                        "invoker": path,
+                                        "page_index": None,
+                                        "rect_area": 0.0,
+                                        "is_suspicious": True,
+                                        "reasons": ["gotor_remote_unc_target"],
+                                    }
+                                )
+                                break
+                        else:
+                            continue
+                        break
+                uri_value = value.get("/URI")
+                if isinstance(uri_value, pikepdf.String):
+                    target = str(uri_value)
+                    if target not in seen_uris:
+                        evidence_id = f"action:uri_{len(uris)}"
+                        evidence = _uri_evidence(target, evidence_id, path)
+                        if evidence:
+                            seen_uris.add(target)
+                            suspicious = evidence["is_suspicious"]
+                            uris.append(evidence)
+                            if suspicious:
+                                register(evidence_id, "action", value, path, action_role="suspicious_uri")
+                if "/JS" in value or action == "/JavaScript":
+                    code_value = value.get("/JS")
+                    code = None
+                    if isinstance(code_value, pikepdf.String):
+                        code = str(code_value)
+                    elif isinstance(code_value, pikepdf.Stream):
+                        filters = _stream_filters(code_value.get("/Filter"))
+                        decoded, _ = _bounded_stream_bytes(code_value, filters, budget)
+                        if decoded is not None:
+                            code = decoded.decode("utf-8", errors="replace")
+                    if not code:
+                        non_js.add("javascript_body_unavailable")
+                    elif code not in script_codes:
+                        script_codes.add(code)
+                        script_parent = parent_id or f"action:script_{len(scripts)}"
+                        if not parent_id:
+                            register(script_parent, "action", value, path)
+                        script_id = parent_id if parent_id.startswith("script:") else f"script:{script_parent}"
+                        register(script_id, "script", code_value, f"{path}/JS", parent_id=script_parent)
+                        scripts.append({"script_id": script_id, "parent_id": script_parent, "code": code})
+                pending.extend(
+                    (child, f"{path}{key}", parent_id)
+                    for key, child in value.items()
+                    if key != "/Parent" and (path != "/Root" or key != "/AcroForm")
+                )
+            else:
+                non_js.add("action_inspection_limit")
+
+            if len(pdf.objects) > _CODEC_OBJECT_LIMIT:
+                non_js.add("codec_inspection_limit")
+            stream_records = {(r["obj_num"], r["generation"]): r for r in reversed(records) if r["has_stream"]}
+            for anomaly in inspect_pdf_codec_anomalies(pdf, has_jbig2_magic=has_jbig2_magic):
+                stream = anomaly.pop("stream")
+                object_number, generation = anomaly["object_number"], anomaly["generation"]
+                evidence_id = f"stream:{anomaly['codec'].lower()}_{object_number}_{generation}"
+                existing = stream_records.get((object_number, generation))
+                if existing is not None:
+                    evidence_id = existing["evidence_id"]
+                    existing["is_threat_trigger"] = True
+                else:
+                    register(evidence_id, "stream", stream, f"/Object[{object_number}]/Filter")
+                    if records and records[-1]["evidence_id"] == evidence_id:
+                        records[-1].update(filter=anomaly["filter"], raw_stream_bytes=anomaly["stream_size"])
+                codec_anomalies.append({"evidence_id": evidence_id, **anomaly})
+            differential = inspect_parser_differential(original_data, reader, pdf, incremental_eof_count)
+            if (
+                not codec_anomalies
+                and "codec_inspection_limit" not in non_js
+                and not any(
+                    record["stream_decode_failed"] or record["decompression_ratio_exceeded"] for record in records
+                )
+            ):
+                qr_analysis = scan_pdf_qr_codes(data, pdf, pages_count=len(pdf.pages), codec_anomalies=codec_anomalies)
+    except (pikepdf.PdfError, pypdf.errors.PyPdfError, ValueError, TypeError):
+        non_js.add("supplemental_inspection_incomplete")
+    return non_js, qr_analysis, differential
 
 
 def _build_xref_offset_map(reader: PdfReader, raw_pdf_bytes: bytes) -> dict[tuple[int, int], int]:
@@ -180,7 +1411,9 @@ def _safe_raw_get(obj: Any, key: str) -> Any:
     return None
 
 
-def _index_physical_object_spans(raw_pdf_bytes: bytes) -> tuple[dict[tuple[int, int], int], dict[tuple[int, int], tuple[int, int]]]:
+def _index_physical_object_spans(
+    raw_pdf_bytes: bytes,
+) -> tuple[dict[tuple[int, int], int], dict[tuple[int, int], tuple[int, int]]]:
     offset_map: dict[tuple[int, int], int] = {}
     span_map: dict[tuple[int, int], tuple[int, int]] = {}
     endobj_pattern = re.compile(rb"\bendobj\b")
@@ -234,7 +1467,10 @@ def _extract_object_metadata(
         raw_stream_buf = getattr(resolved, "_data", None)
         if isinstance(raw_stream_buf, (bytes, bytearray)):
             raw_stream_bytes = len(raw_stream_buf)
-        if isinstance(raw_stream_buf, (bytes, bytearray)) and len(raw_stream_buf) > 65536:
+        is_jbig2 = isinstance(resolved, DictionaryObject) and _JBIG2_FILTERS.intersection(
+            _stream_filters(resolved.get("/Filter"))
+        )
+        if isinstance(raw_stream_buf, (bytes, bytearray)) and (is_jbig2 or len(raw_stream_buf) > 65536):
             raw_obj_bytes = bytes(raw_stream_buf[:65536])
         else:
             try:
@@ -251,7 +1487,9 @@ def _extract_object_metadata(
                 stream_decode_failed = True
                 raw_obj_bytes = bytes(raw_stream_buf) if isinstance(raw_stream_buf, (bytes, bytearray)) else b""
         decoded_text = raw_obj_bytes[:1200].decode("utf-8", errors="replace").strip()
-        printable_ratio = sum(1 for c in decoded_text[:200] if c.isprintable() or c in "\r\n\t") / max(len(decoded_text[:200]), 1)
+        printable_ratio = sum(1 for c in decoded_text[:200] if c.isprintable() or c in "\r\n\t") / max(
+            len(decoded_text[:200]), 1
+        )
         if printable_ratio > 0.75 and decoded_text:
             content_preview = decoded_text[:600]
         else:
@@ -269,7 +1507,7 @@ def _extract_object_metadata(
             else:
                 dict_keys = "Binary Stream"
             payload_len = raw_stream_bytes if raw_stream_bytes is not None else len(raw_obj_bytes)
-            content_preview = f"<< {dict_keys} >>\n[Binary Stream Payload: {payload_len} bytes, Filter: {filter_name}]"
+            content_preview = f"<< {dict_keys} >>\n[Luồng nhị phân: {payload_len} byte, bộ lọc: {filter_name}]"
     elif isinstance(resolved, DictionaryObject):
         filter_name = "Dictionary"
         pairs: list[str] = []
@@ -312,7 +1550,10 @@ def _extract_object_metadata(
         if offset_map is not None:
             offset_pos = offset_map.get((obj_num, generation))
         else:
-            marker = re.search(rb"(?m)(?:^|[\r\n])(" + str(obj_num).encode() + rb"\s+" + str(generation).encode() + rb"\s+obj\b)", raw_pdf_bytes)
+            marker = re.search(
+                rb"(?m)(?:^|[\r\n])(" + str(obj_num).encode() + rb"\s+" + str(generation).encode() + rb"\s+obj\b)",
+                raw_pdf_bytes,
+            )
             if marker is not None:
                 offset_pos = marker.start(1)
                 end_m = re.search(rb"\bendobj\b", raw_pdf_bytes[marker.end(1) :])
@@ -329,14 +1570,19 @@ def _extract_object_metadata(
     pdf_window = raw_pdf_bytes[offset_pos : offset_pos + 64] if offset_pos is not None else b""
     hex_dump = _build_hex_dump_lines(pdf_window, base_offset=offset_pos or 0, max_lines=4)
     fallback_size = raw_stream_bytes if raw_stream_bytes is not None else len(raw_obj_bytes)
-    actual_size = float(phys_span_bytes) if phys_span_bytes is not None and phys_span_bytes > 0 else float(fallback_size)
+    actual_size = (
+        float(phys_span_bytes) if phys_span_bytes is not None and phys_span_bytes > 0 else float(fallback_size)
+    )
     entropy_sample = raw_obj_bytes[:65536] if raw_obj_bytes else pdf_window
     entropy_val = round(_shannon_entropy(entropy_sample), 4)
 
     physical_bytes = (
         raw_pdf_bytes[offset_pos : offset_pos + min(phys_span_bytes, 65536)]
-        if offset_pos is not None and phys_span_bytes and 0 <= offset_pos < len(raw_pdf_bytes)
-        and offset_pos + phys_span_bytes <= len(raw_pdf_bytes) else None
+        if offset_pos is not None
+        and phys_span_bytes
+        and 0 <= offset_pos < len(raw_pdf_bytes)
+        and offset_pos + phys_span_bytes <= len(raw_pdf_bytes)
+        else None
     )
     if physical_bytes is not None:
         measured_size, size_source = phys_span_bytes, "pdf_object_span"
@@ -434,7 +1680,9 @@ class InstantPDFIngestion:
         with path.open("r", encoding="utf-8") as stream:
             scaler_data = json.load(stream)
         self.contract_version: str | None = scaler_data.get("contract_version") or scaler_data.get("fitted_on")
-        self.contract_verified: bool = bool(self.contract_version and VERIFIED_CONTRACT_VERSION in str(self.contract_version))
+        self.contract_verified: bool = bool(
+            self.contract_version and VERIFIED_CONTRACT_VERSION in str(self.contract_version)
+        )
         self.feature_names: list[str] = scaler_data["feature_names"]
         self.scaler_mean: np.ndarray = np.array(scaler_data["mean"], dtype=np.float32)
         self.scaler_scale: np.ndarray = np.array(scaler_data["scale"], dtype=np.float32)
@@ -474,19 +1722,32 @@ class InstantPDFIngestion:
             ):
                 raise ValueError("invalid_transgraph_v3_contract")
 
-    def _build_v3_tabular_features(self, data: bytes, raw_entropy: float, header_pos: int) -> tuple[list[float], Any]:
+    def _build_v3_tabular_features(
+        self,
+        data: bytes,
+        raw_entropy: float,
+        header_pos: int,
+        recovered_tokens: dict[str, int] | None = None,
+    ) -> tuple[list[float], Any]:
         if not self.v3_contract:
             return [], None
         tok = scan_raw_pdf_tokens(data)
+        for key, count in (recovered_tokens or {}).items():
+            if key in tok:
+                tok[key] = max(tok[key], count)
         denom = max(float(tok["obj"]), 1.0)
         raw = [float(tok[name.removeprefix("lexical_")]) for name in REGIME_B_NAMES if name.startswith("lexical_")]
-        raw.extend((
-            float(len(data)), raw_entropy, float(max(header_pos, 0)),
-            float(tok["JS"] + tok["JavaScript"]) / denom,
-            float(tok["stream"]) / denom,
-            float(tok["obj"] - tok["endobj"]),
-            float(tok["stream"] - tok["endstream"]),
-        ))
+        raw.extend(
+            (
+                float(len(data)),
+                raw_entropy,
+                float(max(header_pos, 0)),
+                float(tok["JS"] + tok["JavaScript"]) / denom,
+                float(tok["stream"]) / denom,
+                float(tok["obj"] - tok["endobj"]),
+                float(tok["stream"] - tok["endstream"]),
+            )
+        )
         if not self.contract_verified:
             return raw, None
         scaled = ((log_matrix([raw]) - self.v3_center) / self.v3_scale).astype(np.float32)
@@ -512,12 +1773,14 @@ class InstantPDFIngestion:
         sha256 = hashlib.sha256(data).hexdigest()
         return data, sha256
 
-    def ingest(self, source: str | Path | bytes, max_bytes: int = DEFAULT_MAX_PDF_BYTES) -> dict[str, Any]:
+    def ingest(
+        self, source: str | Path | bytes, max_bytes: int = DEFAULT_MAX_PDF_BYTES, *, password: str | None = None
+    ) -> dict[str, Any]:
         data, sha256 = self.read_bytes(source, max_bytes=max_bytes)
         if b"%PDF-" not in data[:1024]:
             raise ValueError("not_a_pdf_missing_header")
         pdf_size = len(data)
-        raw_tokens = _scan_scanner_raw_tokens(data)
+        raw_tokens, evasion_unpack_audit = _recover_hidden_evasion_tokens(data, _scan_scanner_raw_tokens(data))
         raw_entropy = _shannon_entropy(data)
         header_pos = data.find(b"%PDF-")
         pdf_version = "1.7"
@@ -535,34 +1798,93 @@ class InstantPDFIngestion:
         records: list[dict[str, Any]] = []
         raw_edges: list[dict[str, Any]] = []
         extracted_scripts: list[dict[str, Any]] = []
-        reader = None
-        pages_count = 0
+        extracted_uris: list[dict[str, Any]] = []
+        codec_anomalies: list[dict[str, Any]] = []
+        xfa_analysis = {"present": False, "javascript_count": 0, "formcalc_count": 0, "xml_nodes": 0, "anomalies": []}
+        graph_bytes = data
         metadata_size = 0.0
+        encrypted = bool(raw_tokens.get("Encrypt"))
+        password_locked = unlocked_with_password = unlocked_empty_password = False
+        inspection_warnings: list[str] = []
 
         try:
-            reader = PdfReader(io.BytesIO(data), strict=False)
-            pages_count = len(reader.pages)
-            if reader.metadata:
-                metadata_bytes = str(reader.metadata).encode("utf-8", errors="ignore")
-                metadata_size = float(len(metadata_bytes))
-            trailer = getattr(reader, "trailer", None) or {}
-            root = trailer.get("/Root")
-            if isinstance(root, IndirectObject):
-                root = root.get_object()
-            if isinstance(root, DictionaryObject) and "/Metadata" in root:
-                meta_stream = root.get("/Metadata")
-                if isinstance(meta_stream, IndirectObject):
-                    meta_stream = meta_stream.get_object()
-                if hasattr(meta_stream, "get_data"):
+            reader, pages_count = _open_scanner_reader(data)
+        except Exception:
+            reader, pages_count = None, max(raw_tokens["page_command"], 1)
+
+        if reader is None or (encrypted and reader.is_encrypted):
+            try:
+                with pikepdf.open(io.BytesIO(data), password=password or "") as pdf:
+                    unlocked = io.BytesIO()
+                    pdf.save(unlocked, encryption=False)
+                    unlocked_with_password = pdf.is_encrypted and password is not None
+                    unlocked_empty_password = pdf.is_encrypted and password is None
+                graph_bytes = unlocked.getvalue()
+                reader, pages_count = _open_scanner_reader(graph_bytes)
+            except pikepdf.PasswordError as exc:
+                if not encrypted:
+                    raise ValueError("pdf_parse_failed") from exc
+                reader, pages_count = None, max(raw_tokens["page_command"], 1)
+                password_locked = True
+                inspection_warnings.append(
+                    "encrypted_pdf_structure_hidden_password_required"
+                    if password is None
+                    else "encrypted_pdf_incorrect_password"
+                )
+            except Exception as exc:
+                raise ValueError("pdf_parse_failed") from exc
+        non_js_triggers = set()
+        qr_analysis = empty_qr_analysis()
+        differential_analysis = _differential_summary()
+        polyglot_analysis = inspect_polyglot_and_revisions(data, header_pos, last_eof)
+        recovered = evasion_unpack_audit["recovered_hidden_triggers"]
+        try:
+            if reader is not None:
+                if reader.metadata:
+                    metadata_size = float(len(str(reader.metadata).encode("utf-8", errors="ignore")))
+                root = reader.trailer["/Root"]
+                meta_stream = root["/Metadata"] if isinstance(root, DictionaryObject) and "/Metadata" in root else None
+                if isinstance(meta_stream, StreamObject) and not _JBIG2_FILTERS.intersection(
+                    _stream_filters(meta_stream.get("/Filter"))
+                ):
                     metadata_size = max(float(len(meta_stream.get_data())), metadata_size)
         except Exception as exc:
             raise ValueError("pdf_parse_failed") from exc
-
         if reader is not None:
-            self._extract_graph_and_scripts(reader, data, records, raw_edges, extracted_scripts)
+            non_js_triggers, qr_analysis, differential_analysis = self._extract_graph_and_scripts(
+                reader,
+                graph_bytes,
+                records,
+                raw_edges,
+                extracted_scripts,
+                extracted_uris,
+                codec_anomalies,
+                xfa_analysis,
+                raw_tokens,
+                recovered,
+                data,
+                polyglot_analysis["incremental_eof_count"],
+            )
 
+        codec_records = {anomaly["evidence_id"] for anomaly in codec_anomalies}
+        for record in records:
+            reasons = [key for key in ("stream_decode_failed", "decompression_ratio_exceeded") if record[key]]
+            if reasons and record["evidence_id"] not in codec_records:
+                record["is_threat_trigger"] = True
+                codec_anomalies.append(
+                    {
+                        "evidence_id": record["evidence_id"],
+                        "object_number": record["obj_num"],
+                        "generation": record["generation"],
+                        "codec": record["filter"],
+                        "reason_codes": reasons,
+                    }
+                )
+
+        phishing_analysis = _analyze_phishing(reader, extracted_uris, pages_count, records, qr_analysis)
         graph_data = self._build_hetero_graph(records, raw_edges)
-        ast_tokens, ast_stats, ast_node_counts = self._extract_ast_stream(extracted_scripts)
+        ast_tokens, ast_stats, ast_node_counts = self._extract_ast_stream(extracted_scripts, xfa_analysis["anomalies"])
+        js_semantics = evaluate_javascript_semantics(extracted_scripts, ast_stats, ast_node_counts)
         tab_features, raw_feature_vec = self._build_tabular_features(
             data=data,
             raw_tokens=raw_tokens,
@@ -575,14 +1897,30 @@ class InstantPDFIngestion:
             records=records,
             extracted_scripts=extracted_scripts,
         )
-        v3_raw, v3_tab = self._build_v3_tabular_features(data, raw_entropy, header_pos)
+        v3_raw, v3_tab = self._build_v3_tabular_features(
+            data,
+            raw_entropy,
+            header_pos,
+            {key: raw_tokens[key] for key in recovered},
+        )
 
-        return {
+        ingest_data = {
             **graph_data,
             "sha256": sha256,
             "size_bytes": pdf_size,
             "pdf_version": pdf_version,
             "pages_count": pages_count,
+            "encryption_analysis": {
+                "encrypted": encrypted,
+                "password_locked": password_locked,
+                "unlocked_with_password": unlocked_with_password,
+                "unlocked_empty_password": unlocked_empty_password,
+                "graph_inspected": reader is not None,
+                "inspection_warnings": inspection_warnings,
+            },
+            "graph_byte_source": (
+                "unlocked_pdf_copy" if graph_bytes is not data else "original_pdf" if reader is not None else None
+            ),
             "raw_entropy": round(raw_entropy, 4),
             "ast_tokens": ast_tokens,
             "ast_stats": ast_stats,
@@ -605,8 +1943,20 @@ class InstantPDFIngestion:
             "raw_records": records,
             "raw_edges": raw_edges,
             "extracted_scripts": extracted_scripts,
+            "js_semantics": js_semantics,
+            "extracted_uris": extracted_uris,
+            "phishing_analysis": phishing_analysis,
+            "qr_analysis": qr_analysis,
+            "differential_analysis": differential_analysis,
+            "polyglot_analysis": polyglot_analysis,
+            "codec_anomalies": codec_anomalies,
+            "xfa_analysis": xfa_analysis,
+            "evasion_unpack_audit": evasion_unpack_audit,
+            "non_js_triggers": sorted(non_js_triggers),
             "raw_tokens": raw_tokens,
         }
+        ingest_data["signature_matches"] = match_pdf_signatures(data, ingest_data)
+        return ingest_data
 
     def _extract_graph_and_scripts(
         self,
@@ -615,8 +1965,16 @@ class InstantPDFIngestion:
         records: list[dict[str, Any]],
         raw_edges: list[dict[str, Any]],
         extracted_scripts: list[dict[str, Any]],
-    ) -> None:
+        extracted_uris: list[dict[str, Any]],
+        codec_anomalies: list[dict[str, Any]],
+        xfa_analysis: dict[str, Any],
+        raw_tokens: dict[str, int],
+        recovered: list[str],
+        original_data: bytes,
+        incremental_eof_count: int,
+    ) -> tuple[set[str], dict[str, Any], dict[str, Any]]:
         visited_ids: set[str] = set()
+        node_limit = 200
         offset_map = _build_xref_offset_map(reader, raw_pdf_bytes)
         span_map: dict[tuple[int, int], tuple[int, int]] = {}
         if not offset_map and len(raw_pdf_bytes) <= 8 * 1024 * 1024:
@@ -631,8 +1989,13 @@ class InstantPDFIngestion:
             is_threat_trigger: bool = False,
             invoker: str = "/Root",
             indirect_id: int | None = None,
+            action_type: str | None = None,
+            action_role: str | None = None,
+            page_index: int | None = None,
+            rect_area: float = 0.0,
+            page_area: float = 0.0,
         ) -> None:
-            if evidence_id in visited_ids or len(records) >= 200:
+            if evidence_id in visited_ids or len(records) >= node_limit:
                 return
             visited_ids.add(evidence_id)
             seq_idx = len(records) + 1
@@ -645,42 +2008,66 @@ class InstantPDFIngestion:
                 span_map=span_map,
             )
             final_size = size if size is not None and meta["phys_span_bytes"] is None else meta["size_bytes"]
-            records.append({
-                "evidence_id": evidence_id,
-                "kind": kind,
-                "size_bytes": final_size,
-                "byte_measurements": meta["byte_measurements"],
-                "action_type": (
-                    str(obj_ref.get("/S") or "") if kind == "action" and isinstance(obj_ref, DictionaryObject)
-                    else None
-                ),
-                "action_role": (
-                    "destination" if evidence_id == "action:open_action" and (
-                        isinstance(obj_ref, ArrayObject) or (
-                            isinstance(obj_ref, DictionaryObject) and str(obj_ref.get("/S")) == "/GoTo"
-                            and "/D" in obj_ref and not any(key in obj_ref for key in ("/Next", "/JS", "/JavaScript"))
+            if kind == "action" and isinstance(obj_ref, DictionaryObject):
+                action_type = action_type or str(obj_ref.get("/S") or "")
+                if action_role is None and (action_type == "/URI" or "/URI" in obj_ref):
+                    target = obj_ref["/URI"] if "/URI" in obj_ref else ""
+                    if isinstance(target, bytes):
+                        target = target.decode("utf-8", errors="ignore")
+                    uri = (
+                        _uri_evidence(target, evidence_id, invoker, page_index, rect_area, page_area)
+                        if isinstance(target, str)
+                        else None
+                    )
+                    if uri:
+                        extracted_uris.append(uri)
+                        if uri["is_suspicious"]:
+                            is_threat_trigger = True
+                            action_role = "suspicious_uri"
+            records.append(
+                {
+                    "evidence_id": evidence_id,
+                    "kind": kind,
+                    "size_bytes": final_size,
+                    "byte_measurements": meta["byte_measurements"],
+                    "action_type": action_type,
+                    "action_role": (
+                        action_role
+                        or (
+                            "destination"
+                            if evidence_id == "action:open_action"
+                            and (
+                                isinstance(obj_ref, ArrayObject)
+                                or (
+                                    isinstance(obj_ref, DictionaryObject)
+                                    and str(obj_ref.get("/S")) == "/GoTo"
+                                    and "/D" in obj_ref
+                                    and not any(key in obj_ref for key in ("/Next", "/JS", "/JavaScript"))
+                                )
+                            )
+                            else None
                         )
-                    ) else None
-                ),
-                "phys_span_bytes": meta["phys_span_bytes"],
-                "raw_stream_bytes": meta["raw_stream_bytes"],
-                "decoded_stream_bytes": meta["decoded_stream_bytes"],
-                "stream_decode_failed": meta["stream_decode_failed"],
-                "decompression_ratio_exceeded": meta["decompression_ratio_exceeded"],
-                "has_stream": bool(has_stream or meta["has_stream"]),
-                "obj_ref": obj_ref,
-                "obj_ref_str": meta["obj_ref_str"],
-                "obj_num": meta["obj_num"],
-                "generation": meta["generation"],
-                "invoker": invoker,
-                "filter": meta["filter"],
-                "entropy": meta["entropy"],
-                "offset_hex": meta["offset_hex"],
-                "hex_dump": meta["hex_dump"],
-                "content_preview": meta["content_preview"],
-                "is_threat_trigger": is_threat_trigger,
-                "is_repaired": False,
-            })
+                    ),
+                    "phys_span_bytes": meta["phys_span_bytes"],
+                    "raw_stream_bytes": meta["raw_stream_bytes"],
+                    "decoded_stream_bytes": meta["decoded_stream_bytes"],
+                    "stream_decode_failed": meta["stream_decode_failed"],
+                    "decompression_ratio_exceeded": meta["decompression_ratio_exceeded"],
+                    "has_stream": bool(has_stream or meta["has_stream"]),
+                    "obj_ref": obj_ref,
+                    "obj_ref_str": meta["obj_ref_str"],
+                    "obj_num": meta["obj_num"],
+                    "generation": meta["generation"],
+                    "invoker": invoker,
+                    "filter": meta["filter"],
+                    "entropy": meta["entropy"],
+                    "offset_hex": meta["offset_hex"],
+                    "hex_dump": meta["hex_dump"],
+                    "content_preview": meta["content_preview"],
+                    "is_threat_trigger": is_threat_trigger,
+                    "is_repaired": False,
+                }
+            )
 
         trailer = getattr(reader, "trailer", None) or {}
         raw_root_ref = _safe_raw_get(trailer, "/Root")
@@ -717,8 +2104,9 @@ class InstantPDFIngestion:
             )
             raw_edges.append({"source": root_id, "target": pages_id, "relation": ("catalog", "pages")})
 
+            node_limit = 180
             for p_idx, page in enumerate(reader.pages):
-                if len(records) >= 200:
+                if len(records) >= node_limit:
                     break
                 page_id = f"page:{p_idx}"
                 page_ind = getattr(page, "indirect_reference", None)
@@ -756,7 +2144,7 @@ class InstantPDFIngestion:
                     annots = annots.get_object()
                 if isinstance(annots, ArrayObject):
                     for a_idx, annot in enumerate(annots):
-                        if len(records) >= 200:
+                        if len(records) >= node_limit:
                             break
                         a_idnum = annot.idnum if isinstance(annot, IndirectObject) else None
                         annot_resolved = annot.get_object() if isinstance(annot, IndirectObject) else annot
@@ -781,8 +2169,19 @@ class InstantPDFIngestion:
                                 act_type = ""
                                 if isinstance(a_act, DictionaryObject):
                                     act_type = str(a_act.get("/S", ""))
-                                is_threat_act = act_type in ("/JavaScript", "/Launch", "/ImportData", "/GoToE", "/SubmitForm")
-                                is_threat_act = is_threat_act or (isinstance(a_act, DictionaryObject) and "/JS" in a_act)
+                                is_threat_act = act_type in (
+                                    "/JavaScript",
+                                    "/Launch",
+                                    "/ImportData",
+                                    "/GoToE",
+                                    "/SubmitForm",
+                                )
+                                is_threat_act = is_threat_act or (
+                                    isinstance(a_act, DictionaryObject) and "/JS" in a_act
+                                )
+                                rect = annot_resolved.get("/Rect")
+                                if isinstance(rect, IndirectObject):
+                                    rect = rect.get_object()
                                 register_node(
                                     act_id,
                                     "action",
@@ -791,10 +2190,24 @@ class InstantPDFIngestion:
                                     is_threat_trigger=is_threat_act,
                                     invoker=f"/Annot[{p_idx},{a_idx}]/A",
                                     indirect_id=act_idnum,
+                                    page_index=p_idx,
+                                    rect_area=annotation_rect_area(rect)
+                                    if str(annot_resolved.get("/Subtype")) in VISUAL_LURE_SUBTYPES
+                                    else 0.0,
+                                    page_area=page_box_area(page)
+                                    if str(annot_resolved.get("/Subtype")) in VISUAL_LURE_SUBTYPES
+                                    else 0.0,
                                 )
                                 raw_edges.append({"source": page_id, "target": act_id, "relation": ("page", "action")})
-                                self._check_action_for_script(a_act, act_id, records, raw_edges, extracted_scripts, register_node)
+                                self._check_action_for_script(
+                                    a_act, act_id, records, raw_edges, extracted_scripts, register_node
+                                )
 
+            node_limit = 200
+            if len(records) >= 180:
+                raw_edges[:] = [
+                    edge for edge in raw_edges if edge["source"] in visited_ids and edge["target"] in visited_ids
+                ]
             raw_oa = _safe_raw_get(root, "/OpenAction")
             oa_idnum = raw_oa.idnum if isinstance(raw_oa, IndirectObject) else None
             open_action = root.get("/OpenAction")
@@ -804,7 +2217,10 @@ class InstantPDFIngestion:
                 is_threat_oa = False
                 if isinstance(oa_resolved, DictionaryObject):
                     s_type = str(oa_resolved.get("/S", ""))
-                    if s_type in ("/JavaScript", "/Launch", "/ImportData", "/GoToE", "/SubmitForm") or "/JS" in oa_resolved:
+                    if (
+                        s_type in ("/JavaScript", "/Launch", "/ImportData", "/GoToE", "/SubmitForm")
+                        or "/JS" in oa_resolved
+                    ):
                         is_threat_oa = True
                 register_node(
                     oa_id,
@@ -822,7 +2238,11 @@ class InstantPDFIngestion:
             aa_idnum = raw_aa.idnum if isinstance(raw_aa, IndirectObject) else None
             additional_actions = root.get("/AA")
             if additional_actions is not None:
-                aa_resolved = additional_actions.get_object() if isinstance(additional_actions, IndirectObject) else additional_actions
+                aa_resolved = (
+                    additional_actions.get_object()
+                    if isinstance(additional_actions, IndirectObject)
+                    else additional_actions
+                )
                 aa_id = "action:aa"
                 is_threat_aa = False
                 if isinstance(aa_resolved, DictionaryObject):
@@ -830,7 +2250,10 @@ class InstantPDFIngestion:
                         sub = aa_resolved[k]
                         if isinstance(sub, IndirectObject):
                             sub = sub.get_object()
-                        if isinstance(sub, DictionaryObject) and (str(sub.get("/S", "")) in ("/JavaScript", "/Launch", "/ImportData", "/GoToE", "/SubmitForm") or "/JS" in sub):
+                        if isinstance(sub, DictionaryObject) and (
+                            str(sub.get("/S", "")) in ("/JavaScript", "/Launch", "/ImportData", "/GoToE", "/SubmitForm")
+                            or "/JS" in sub
+                        ):
                             is_threat_aa = True
                 register_node(
                     aa_id,
@@ -910,6 +2333,81 @@ class InstantPDFIngestion:
                     )
                     raw_edges.append({"source": root_id, "target": xfa_id, "relation": ("catalog", "script")})
 
+        if (
+            not any(
+                raw_tokens.get(key)
+                for key in (
+                    "JavaScript",
+                    "JS",
+                    "AA",
+                    "AcroForm",
+                    "URI",
+                    "JBIG2Decode",
+                    "ObjStm",
+                    "OpenAction",
+                    "Launch",
+                    "EmbeddedFile",
+                    "XFA",
+                    "RichMedia",
+                )
+            )
+            and not any(
+                token in raw_pdf_bytes for token in (b"/JB2", b"/JPXDecode", b"/FontFile2", b"/FontFile3", b"/XFA")
+            )
+            and _JBIG2_MAGIC not in raw_pdf_bytes
+            and not recovered
+            and not extracted_scripts
+            and not _PDF_NAME.search(raw_pdf_bytes)
+        ):
+            return set()
+
+        def register_supplemental(
+            evidence_id: str,
+            kind: str,
+            obj: Any,
+            path: str,
+            threat: bool = True,
+            parent_id: str = "catalog:root",
+            action_role: str | None = None,
+        ) -> None:
+            if evidence_id in visited_ids:
+                return
+            object_id = getattr(obj, "objgen", (0, 0))[0]
+            obj_ref = None
+            if isinstance(obj, pikepdf.Dictionary):
+                try:
+                    obj_ref = read_object(io.BytesIO(obj.unparse(resolved=True)), reader)
+                except (pypdf.errors.PyPdfError, ValueError):
+                    pass
+            register_node(
+                evidence_id,
+                kind,
+                obj_ref=obj_ref,
+                is_threat_trigger=threat,
+                invoker=path,
+                indirect_id=object_id or None,
+                has_stream=isinstance(obj, pikepdf.Stream),
+                action_type=str(obj.get("/S") or "") if kind == "action" else None,
+                action_role=action_role,
+            )
+            if evidence_id in visited_ids:
+                parent_kind = "action" if parent_id.startswith("action:") else "catalog"
+                raw_edges.append({"source": parent_id, "target": evidence_id, "relation": (parent_kind, kind)})
+
+        return _inspect_additional_evidence(
+            raw_pdf_bytes,
+            reader,
+            original_data,
+            incremental_eof_count,
+            records,
+            extracted_scripts,
+            extracted_uris,
+            codec_anomalies,
+            xfa_analysis,
+            recovered,
+            register_supplemental,
+        )
+
     def _check_action_for_script(
         self,
         action_obj: Any,
@@ -934,14 +2432,7 @@ class InstantPDFIngestion:
                 js_idnum = js_entry.idnum
                 js_entry = js_entry.get_object()
             script_id = f"script:{action_id}"
-            script_text = ""
-            if hasattr(js_entry, "get_data"):
-                try:
-                    script_text = js_entry.get_data().decode("utf-8", errors="ignore")
-                except Exception:
-                    script_text = str(js_entry)
-            else:
-                script_text = str(js_entry)
+            script_text = _pypdf_script_text(js_entry)
             register_node(
                 script_id,
                 "script",
@@ -956,14 +2447,37 @@ class InstantPDFIngestion:
                 if rec["evidence_id"] == script_id and script_text:
                     rec["content_preview"] = script_text[:600]
             raw_edges.append({"source": action_id, "target": script_id, "relation": ("action", "script")})
-            extracted_scripts.append({
-                "script_id": script_id,
-                "parent_id": action_id,
-                "code": script_text,
-            })
+            extracted_scripts.append(
+                {
+                    "script_id": script_id,
+                    "parent_id": action_id,
+                    "code": script_text,
+                }
+            )
 
         for k in list(action_obj.keys()):
-            if str(k) in ("/O", "/C", "/E", "/X", "/D", "/U", "/Fo", "/Bl", "/PO", "/PC", "/PV", "/PI", "/K", "/F", "/V", "/WC", "/WS", "/DS", "/WP", "/DP"):
+            if str(k) in (
+                "/O",
+                "/C",
+                "/E",
+                "/X",
+                "/D",
+                "/U",
+                "/Fo",
+                "/Bl",
+                "/PO",
+                "/PC",
+                "/PV",
+                "/PI",
+                "/K",
+                "/F",
+                "/V",
+                "/WC",
+                "/WS",
+                "/DS",
+                "/WP",
+                "/DP",
+            ):
                 sub_act = action_obj.get(k)
                 if sub_act is not None:
                     self._check_action_for_script(
@@ -1019,18 +2533,14 @@ class InstantPDFIngestion:
                     js_obj = val.get("/JS")
                     if isinstance(js_obj, IndirectObject):
                         js_obj = js_obj.get_object()
-                    if hasattr(js_obj, "get_data"):
-                        try:
-                            code = js_obj.get_data().decode("utf-8", errors="ignore")
-                        except Exception:
-                            code = str(js_obj)
-                    else:
-                        code = str(js_obj)
-                    extracted_scripts.append({
-                        "script_id": f"{script_id}_{i}",
-                        "parent_id": script_id,
-                        "code": code,
-                    })
+                    code = _pypdf_script_text(js_obj)
+                    extracted_scripts.append(
+                        {
+                            "script_id": f"{script_id}_{i}",
+                            "parent_id": script_id,
+                            "code": code,
+                        }
+                    )
 
     def _build_hetero_graph(self, records: list[dict[str, Any]], raw_edges: list[dict[str, Any]]) -> dict[str, Any]:
         id_map: dict[str, int] = {}
@@ -1051,7 +2561,9 @@ class InstantPDFIngestion:
                 if self.node_in_dim == 23:
                     phys_mask = 1.0 if size_val > 0.0 else 0.0
                     raw_stream = r.get("raw_stream_bytes")
-                    stream_bytes_val = float(raw_stream) if isinstance(raw_stream, int) and raw_stream >= 0 else size_val
+                    stream_bytes_val = (
+                        float(raw_stream) if isinstance(raw_stream, int) and raw_stream >= 0 else size_val
+                    )
                     stream_log = float(np.log1p(max(0.0, stream_bytes_val))) if has_stream_val > 0.0 else 0.0
                     stream_mask = has_stream_val
                     ind_flag = 1.0
@@ -1113,10 +2625,12 @@ class InstantPDFIngestion:
             node_feat_np = np.asarray(full_node_features, dtype=np.float32)
             node_types_np = np.asarray(node_types, dtype=np.int64)
             if len(edge_src) > 0:
-                edge_index_np = np.vstack([
-                    np.asarray(edge_src, dtype=np.int64),
-                    np.asarray(edge_dst, dtype=np.int64),
-                ])
+                edge_index_np = np.vstack(
+                    [
+                        np.asarray(edge_src, dtype=np.int64),
+                        np.asarray(edge_dst, dtype=np.int64),
+                    ]
+                )
                 edge_rel_np = np.asarray(edge_rel, dtype=np.int64)
             else:
                 edge_index_np = np.zeros((2, 0), dtype=np.int64)
@@ -1134,10 +2648,13 @@ class InstantPDFIngestion:
         node_feat_tensor = torch.tensor(full_node_features, dtype=torch.float32)
         node_types_tensor = torch.tensor(node_types, dtype=torch.long)
         if len(edge_src) > 0:
-            edge_index_tensor = torch.stack([
-                torch.tensor(edge_src, dtype=torch.long),
-                torch.tensor(edge_dst, dtype=torch.long),
-            ], dim=0)
+            edge_index_tensor = torch.stack(
+                [
+                    torch.tensor(edge_src, dtype=torch.long),
+                    torch.tensor(edge_dst, dtype=torch.long),
+                ],
+                dim=0,
+            )
             edge_rel_tensor = torch.tensor(edge_rel, dtype=torch.long)
         else:
             edge_index_tensor = torch.zeros((2, 0), dtype=torch.long)
@@ -1154,7 +2671,7 @@ class InstantPDFIngestion:
         }
 
     def _extract_ast_stream(
-        self, extracted_scripts: list[dict[str, Any]]
+        self, extracted_scripts: list[dict[str, Any]], xfa_anomalies: list[str]
     ) -> tuple[torch.Tensor, dict[str, float], dict[str, int]]:
         counts: dict[str, int] = {k: 0 for k in AST_NODE_TYPES}
         total_nodes = 0
@@ -1163,10 +2680,12 @@ class InstantPDFIngestion:
         loops = 0
 
         if extracted_scripts:
-            full_js = "\n".join(item["code"] for item in extracted_scripts)
+            xfa_sources = [item["code"] for item in extracted_scripts if item["script_id"].startswith("script:xfa_")]
+            other_sources = [
+                item["code"] for item in extracted_scripts if not item["script_id"].startswith("script:xfa_")
+            ]
             try:
                 import esprima
-                tree = esprima.parseScript(full_js, tolerant=True)
 
                 def walk(node: Any, depth: int) -> None:
                     nonlocal total_nodes, max_depth, computed_members, loops
@@ -1189,7 +2708,17 @@ class InstantPDFIngestion:
                         elif hasattr(v, "type"):
                             walk(v, depth + 1)
 
-                walk(tree, 1)
+                if other_sources:
+                    walk(esprima.parseScript("\n".join(other_sources), tolerant=True), 1)
+                for code in xfa_sources:
+                    try:
+                        tree = esprima.parseScript(code, tolerant=True)
+                    except Exception:
+                        if "xfa_javascript_parse_error" not in xfa_anomalies:
+                            xfa_anomalies.append("xfa_javascript_parse_error")
+                            xfa_anomalies.sort()
+                        continue
+                    walk(tree, 1)
             except Exception as exc:
                 raise ValueError("javascript_ast_parse_failed") from exc
 
@@ -1235,7 +2764,9 @@ class InstantPDFIngestion:
         structural_js_count = float(len(extracted_scripts or []))
         has_names_js = any(r.get("evidence_id") == "script:names_js" for r in (records or []))
         structural_javascript_count = structural_js_count + (1.0 if has_names_js else 0.0)
-        js_full_count = max(float(raw_tokens.get("JavaScript", raw_tokens.get("Javascript", 0))), structural_javascript_count)
+        js_full_count = max(
+            float(raw_tokens.get("JavaScript", raw_tokens.get("Javascript", 0))), structural_javascript_count
+        )
         js_short_count = max(float(raw_tokens.get("JS", 0)), structural_js_count)
         page_cmd_count = float(raw_tokens.get("page_command", pages_count))
         images_count = float(data.count(b"/Image"))
@@ -1291,30 +2822,34 @@ class InstantPDFIngestion:
             excessive_graph = object_count > 10000.0 or len(obs_records) >= 200
             ast_truncated = ast_stats["total_nodes"] >= 50000.0 or ast_stats["max_depth"] >= 128.0
 
-            measured.update({
-                "byte_image_file_encoded_ratio": byte_img_encoded,
-                "byte_image_file_persisted_ratio": byte_img_persisted,
-                "stream_truncation_ratio": stream_trunc_ratio,
-                # A completed synchronous ingest has no parser timeout event.
-                "evasive_timeout_anomaly": 0.0,
-                "flag_decompression_ratio_exceeded": 1.0 if decomp_exceeded else 0.0,
-                "is_truncated_stream": 1.0 if is_truncated_stream else 0.0,
-                "flag_spec_violation_flood": 1.0 if spec_flood else 0.0,
-                "flag_excessive_object_graph": 1.0 if excessive_graph else 0.0,
-                "flag_ast_complexity_truncated": 1.0 if ast_truncated else 0.0,
-            })
+            measured.update(
+                {
+                    "byte_image_file_encoded_ratio": byte_img_encoded,
+                    "byte_image_file_persisted_ratio": byte_img_persisted,
+                    "stream_truncation_ratio": stream_trunc_ratio,
+                    # A completed synchronous ingest has no parser timeout event.
+                    "evasive_timeout_anomaly": 0.0,
+                    "flag_decompression_ratio_exceeded": 1.0 if decomp_exceeded else 0.0,
+                    "is_truncated_stream": 1.0 if is_truncated_stream else 0.0,
+                    "flag_spec_violation_flood": 1.0 if spec_flood else 0.0,
+                    "flag_excessive_object_graph": 1.0 if excessive_graph else 0.0,
+                    "flag_ast_complexity_truncated": 1.0 if ast_truncated else 0.0,
+                }
+            )
         else:
-            measured.update({
-                "byte_image_file_encoded_ratio": None,
-                "byte_image_file_persisted_ratio": None,
-                "stream_truncation_ratio": None,
-                "evasive_timeout_anomaly": None,
-                "flag_decompression_ratio_exceeded": None,
-                "is_truncated_stream": None,
-                "flag_spec_violation_flood": None,
-                "flag_excessive_object_graph": None,
-                "flag_ast_complexity_truncated": None,
-            })
+            measured.update(
+                {
+                    "byte_image_file_encoded_ratio": None,
+                    "byte_image_file_persisted_ratio": None,
+                    "stream_truncation_ratio": None,
+                    "evasive_timeout_anomaly": None,
+                    "flag_decompression_ratio_exceeded": None,
+                    "is_truncated_stream": None,
+                    "flag_spec_violation_flood": None,
+                    "flag_excessive_object_graph": None,
+                    "flag_ast_complexity_truncated": None,
+                }
+            )
 
         raw_vec: list[float | None] = [measured.get(name) for name in self.feature_names]
         if any(v is None for v in raw_vec):

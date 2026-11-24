@@ -24,8 +24,15 @@ if str(PROD_ROOT) not in sys.path:
     sys.path.insert(0, str(PROD_ROOT))
 
 from malpdf.cdr.engine import is_navigation_destination
-from malpdf.scanner.forensic import ForensicAttributionEngine, TRIGGER_FEATURES_V3, observed_ast_distribution
+from malpdf.scanner.forensic import (
+    TRIGGER_FEATURES_V3,
+    ForensicAttributionEngine,
+    _reconcile_semantic_verdict,
+    observed_ast_distribution,
+    semantic_graph_selection,
+)
 from malpdf.scanner.ingestion import InstantPDFIngestion
+from malpdf.scanner.threat_intel import ThreatIntelProvider, inspect_threat_intel
 from onnx_taxonomy import ONNXThreatTaxonomyClassifier
 
 DEFAULT_ONNX_MODEL_PATH = (
@@ -86,9 +93,11 @@ class ONNXMalPDFScannerEngine:
         ood_threshold: float = -0.85,
         intra_op_threads: int = 2,
         decision_threshold: float | None = None,
+        threat_intel: ThreatIntelProvider | None = None,
     ) -> None:
         self.ood_threshold = ood_threshold
         self.device = "onnxruntime-cpu"
+        self.threat_intel = threat_intel
 
         resolved_manifest = Path(manifest_path) if manifest_path is not None else DEFAULT_MANIFEST_PATH
         manifest_data = json.loads(resolved_manifest.read_text(encoding="utf-8")) if resolved_manifest.is_file() else {}
@@ -154,7 +163,9 @@ class ONNXMalPDFScannerEngine:
 
         contract = self.ingestion.v3_contract if self.is_v3 else {}
         self.temperature = float(contract.get("temperature", 1.0) if temperature is None else temperature)
-        self.decision_threshold = float(contract.get("decision_threshold", 0.5) if decision_threshold is None else decision_threshold)
+        self.decision_threshold = float(
+            contract.get("decision_threshold", 0.5) if decision_threshold is None else decision_threshold
+        )
         if not math.isfinite(self.temperature) or self.temperature <= 0:
             raise ValueError("temperature_must_be_positive_and_finite")
         if not 0.0 < self.decision_threshold < 1.0:
@@ -245,7 +256,11 @@ class ONNXMalPDFScannerEngine:
         return np.asarray(logits_out, dtype=np.float32).reshape(-1)
 
     def _run_binary(
-        self, outputs: list[str] | None, feed: dict[str, np.ndarray], tokens: np.ndarray, graph_present: bool,
+        self,
+        outputs: list[str] | None,
+        feed: dict[str, np.ndarray],
+        tokens: np.ndarray,
+        graph_present: bool,
     ) -> list[np.ndarray]:
         if self.is_v3:
             feed["use_graph_flag"] = np.full((feed["tabular_features"].shape[0], 1), graph_present, dtype=np.float32)
@@ -312,9 +327,7 @@ class ONNXMalPDFScannerEngine:
             noise_nf = rng.standard_normal(nf_np.shape, dtype=np.float32) * 0.05
             noise_tab = rng.standard_normal(tab_np.shape, dtype=np.float32) * 0.05
             variants.append((nf_np + noise_nf, tok_np, tab_np + noise_tab))
-            noise_norms.append(
-                math.sqrt(float(np.sum(noise_nf * noise_nf)) + float(np.sum(noise_tab * noise_tab)))
-            )
+            noise_norms.append(math.sqrt(float(np.sum(noise_nf * noise_nf)) + float(np.sum(noise_tab * noise_tab))))
 
         batch_logits = self._batched_ort_logits(variants, nt_np, ei_np, er_np, graph_present)
         batch_probs = _sigmoid_array(batch_logits / self.temperature)
@@ -436,7 +449,9 @@ class ONNXMalPDFScannerEngine:
         measured_nodes = set(cand_nodes)
         measured_tabs = set(active_tab_indices)
         reported_nodes = [value if index in measured_nodes else None for index, value in enumerate(node_saliency)]
-        reported_tabs = [value if index in measured_tabs else None for index, value in enumerate(tabular_grad_importance)]
+        reported_tabs = [
+            value if index in measured_tabs else None for index, value in enumerate(tabular_grad_importance)
+        ]
         return reported_nodes, edge_attention, ast_token_attention, reported_tabs, proof_metrics
 
     def scan_bytes(
@@ -444,12 +459,21 @@ class ONNXMalPDFScannerEngine:
         data: bytes,
         file_name: str = "in_memory_sample.pdf",
         explain: bool = True,
+        *,
+        password: str | None = None,
     ) -> ScanResult:
         if not self.weights_loaded:
             raise RuntimeError("ONNX model weights unavailable")
         start_time = time.perf_counter()
 
-        ingest_data = self.ingestion.ingest(data)
+        ingest_data = self.ingestion.ingest(data, password=password)
+        static_dossier = {
+            name: ingest_data[name] for name in ("encryption_analysis", "qr_analysis", "differential_analysis")
+        }
+        if self.threat_intel is not None:
+            intel = ingest_data["threat_intel"] = inspect_threat_intel(self.threat_intel, ingest_data)
+            if intel["hit"]:
+                static_dossier["threat_intel"] = intel
         sha256 = ingest_data["sha256"]
         file_size = ingest_data["size_bytes"]
         pdf_version = ingest_data.get("pdf_version", "1.7")
@@ -457,7 +481,7 @@ class ONNXMalPDFScannerEngine:
         raw_entropy = float(ingest_data.get("raw_entropy", 0.0))
 
         if ingest_data.get("prediction_blockers"):
-            dossier = self.forensic.explain(ingest_data, malware_prob=None) if explain else {}
+            dossier = self.forensic.explain(ingest_data, malware_prob=None) if explain else static_dossier
             taxonomy_info = self.taxonomy.classify(
                 raw_pdf_bytes=data,
                 ingest_data=ingest_data,
@@ -527,28 +551,66 @@ class ONNXMalPDFScannerEngine:
         er_np = np.asarray(ingest_data["edge_rel"], dtype=np.int64)
         b_np = np.ascontiguousarray(ingest_data["batch"], dtype=np.int64)
         tok_np = np.ascontiguousarray(ingest_data["ast_tokens"], dtype=np.int64)
-        tab_np = np.ascontiguousarray(ingest_data["v3_tab_features" if self.is_v3 else "tab_features"], dtype=np.float32)
+        tab_np = np.ascontiguousarray(
+            ingest_data["v3_tab_features" if self.is_v3 else "tab_features"], dtype=np.float32
+        )
 
         graph_present = ingest_data.get("graph_present", True)
         es_np, ed_np, er_feed, em_np, he_np, real_edges = self._prepare_single_edges(ei_np, er_np)
+        model_inputs = {
+            "node_features": nf_np,
+            "node_types": nt_np,
+            "edge_src": es_np,
+            "edge_dst": ed_np,
+            "edge_rel": er_feed,
+            "edge_mask": em_np,
+            "has_edges": he_np,
+            "batch": b_np,
+            "tabular_features": tab_np,
+        }
+
+        def counterfactual(nodes: list[int], columns: list[int], baselines: list[float]) -> float:
+            kept_nodes, kept_edges, edge_index = semantic_graph_selection(len(nf_np), ei_np, nodes)
+            edge_src, edge_dst, edge_rel, edge_mask, has_edges, _ = self._prepare_single_edges(
+                edge_index, er_np[kept_edges]
+            )
+            cf_tab = tab_np.copy()
+            cf_tab[:, columns] = baselines
+            logits = self._run_binary(
+                ["logits"],
+                {
+                    "node_features": nf_np[kept_nodes],
+                    "node_types": nt_np[kept_nodes],
+                    "edge_src": edge_src,
+                    "edge_dst": edge_dst,
+                    "edge_rel": edge_rel,
+                    "edge_mask": edge_mask,
+                    "has_edges": has_edges,
+                    "batch": b_np[kept_nodes],
+                    "tabular_features": cf_tab,
+                },
+                np.zeros_like(tok_np) if columns else tok_np,
+                graph_present,
+            )[0]
+            return float(logits.reshape(-1)[0])
+
         logits_arr, attn_weights_arr, edge_alpha_arr, ast_token_attn_arr = self._run_binary(
             None,
-            {
-                "node_features": nf_np,
-                "node_types": nt_np,
-                "edge_src": es_np,
-                "edge_dst": ed_np,
-                "edge_rel": er_feed,
-                "edge_mask": em_np,
-                "has_edges": he_np,
-                "batch": b_np,
-                "tabular_features": tab_np,
-            },
+            model_inputs,
             tok_np,
             graph_present,
         )
-        logit_val = float(np.asarray(logits_arr).reshape(-1)[0])
-        prob = _sigmoid_scalar(logit_val / self.temperature)
+        raw_logit = float(np.asarray(logits_arr).reshape(-1)[0])
+        raw_prob = _sigmoid_scalar(raw_logit / self.temperature)
+        logit_val, prob = _reconcile_semantic_verdict(
+            ingest_data,
+            raw_logit,
+            raw_prob,
+            self.decision_threshold,
+            self.temperature,
+            self.is_v3,
+            counterfactual,
+        )
 
         raw_recs = ingest_data.get("raw_records", [])
         verdict = "MALICIOUS" if prob >= self.decision_threshold else "BENIGN"
@@ -567,7 +629,7 @@ class ONNXMalPDFScannerEngine:
 
         node_saliency: list[float] = []
         edge_attention: list[float] = []
-        forensic_dossier: dict[str, Any] = {}
+        forensic_dossier: dict[str, Any] = static_dossier
         if explain:
             (
                 node_saliency,
@@ -583,8 +645,8 @@ class ONNXMalPDFScannerEngine:
                 tok_np=tok_np,
                 tab_np=tab_np,
                 raw_recs=raw_recs,
-                base_logit=logit_val,
-                base_prob=prob,
+                base_logit=raw_logit,
+                base_prob=raw_prob,
                 attn_weights=np.asarray(attn_weights_arr),
                 edge_alpha=np.asarray(edge_alpha_arr),
                 ast_token_attn=np.asarray(ast_token_attn_arr),
@@ -610,7 +672,7 @@ class ONNXMalPDFScannerEngine:
             eid = r.get("evidence_id", "")
             is_threat = r.get("is_threat_trigger", False)
             sal_val = node_saliency[idx] if idx < len(node_saliency) else None
-            if is_threat or k == "script":
+            if is_threat or k == "script" and r.get("action_role") != "verified_benign_js":
                 color = "#FF3B30"
                 shape = "star" if k == "action" else "hexagon"
             elif k == "catalog":
@@ -656,19 +718,13 @@ class ONNXMalPDFScannerEngine:
         graph_edges: list[dict[str, Any]] = []
         raw_eds = ingest_data.get("raw_edges", [])
         threat_node_ids = {
-            r["evidence_id"]
-            for r in raw_recs
-            if r.get("is_threat_trigger", False) or r.get("kind") == "script"
+            r["evidence_id"] for r in raw_recs if r.get("is_threat_trigger", False) or r.get("kind") == "script"
         }
         for e_idx, e in enumerate(raw_eds):
             s = e.get("source", "")
             t = e.get("target", "")
             rel_pair = e.get("relation", ("pdf_object", "pdf_object"))
-            rel_label = (
-                f"{rel_pair[0]}->{rel_pair[1]}"
-                if isinstance(rel_pair, tuple) and len(rel_pair) == 2
-                else "ref"
-            )
+            rel_label = f"{rel_pair[0]}->{rel_pair[1]}" if isinstance(rel_pair, tuple) and len(rel_pair) == 2 else "ref"
             is_threat_edge = s in threat_node_ids or t in threat_node_ids
             edge_alpha_val = edge_attention[e_idx] if e_idx < len(edge_attention) else None
             graph_edges.append(
@@ -701,7 +757,7 @@ class ONNXMalPDFScannerEngine:
             file_name=file_name,
             file_size_bytes=file_size,
             verdict=verdict,
-            malware_probability=round(prob, 4),
+            malware_probability=prob,
             confidence=confidence,
             ood_score=energy_score,
             is_ood=is_ood,
@@ -734,9 +790,13 @@ class ONNXMalPDFScannerEngine:
         excise_all: bool = False,
     ) -> tuple[bytes | None, list[str]]:
         want_open = excise_all or any("open_action" in t or "/OpenAction" in t for t in target_tokens)
-        want_aa = excise_all or any(t in ("action:aa", "script:action:aa") or ":aa" in t or "/AA" in t for t in target_tokens)
+        want_aa = excise_all or any(
+            t in ("action:aa", "script:action:aa") or ":aa" in t or "/AA" in t for t in target_tokens
+        )
         want_names_js = excise_all or any("names_js" in t or "/Names/JavaScript" in t for t in target_tokens)
-        want_embedded = excise_all or any("filespec" in t or "embedded" in t or "/EmbeddedFiles" in t for t in target_tokens)
+        want_embedded = excise_all or any(
+            "filespec" in t or "embedded" in t or "/EmbeddedFiles" in t for t in target_tokens
+        )
         want_xfa = excise_all or any("xfa" in t or "/XFA" in t for t in target_tokens)
         want_annots = excise_all or any("annot" in t or "/Annot" in t for t in target_tokens)
         excised_keys: list[str] = []
@@ -781,12 +841,14 @@ class ONNXMalPDFScannerEngine:
                                     if ak == "/A":
                                         action = annot[ak]
                                         if not isinstance(action, pikepdf.Dictionary) or not (
-                                            str(action.get("/S", "")) in ("/JavaScript", "/Launch", "/SubmitForm", "/ImportData", "/GoToE")
+                                            str(action.get("/S", ""))
+                                            in ("/JavaScript", "/Launch", "/SubmitForm", "/ImportData", "/GoToE")
                                             or "/JS" in action
                                         ):
                                             continue
                                     if excise_all or any(
-                                        token in target_tokens for token in (
+                                        token in target_tokens
+                                        for token in (
                                             f"action:annot_{p_idx}_{a_idx}",
                                             f"script:action:annot_{p_idx}_{a_idx}",
                                             f"/Annot[{p_idx},{a_idx}]/A",
@@ -825,7 +887,9 @@ class ONNXMalPDFScannerEngine:
         er_np = np.asarray(ingest_data["edge_rel"], dtype=np.int64)
         b_np = np.ascontiguousarray(ingest_data["batch"], dtype=np.int64)
         tok_np = np.ascontiguousarray(ingest_data["ast_tokens"], dtype=np.int64)
-        tab_np = np.ascontiguousarray(ingest_data["v3_tab_features" if self.is_v3 else "tab_features"], dtype=np.float32)
+        tab_np = np.ascontiguousarray(
+            ingest_data["v3_tab_features" if self.is_v3 else "tab_features"], dtype=np.float32
+        )
 
         graph_present = ingest_data.get("graph_present", True)
         es_np, ed_np, er_feed, em_np, he_np, _ = self._prepare_single_edges(ei_np, er_np)
@@ -885,12 +949,8 @@ class ONNXMalPDFScannerEngine:
             for ex_id in extra_ids:
                 target_tokens.add(ex_id)
 
-            surgical_bytes, surgical_keys = self._excise_pdf_triggers_pikepdf(
-                data, target_tokens, excise_all=False
-            )
-            full_bytes, full_keys = self._excise_pdf_triggers_pikepdf(
-                data, target_tokens, excise_all=True
-            )
+            surgical_bytes, surgical_keys = self._excise_pdf_triggers_pikepdf(data, target_tokens, excise_all=False)
+            full_bytes, full_keys = self._excise_pdf_triggers_pikepdf(data, target_tokens, excise_all=True)
 
             before_eids = [str(r.get("evidence_id")) for r in raw_recs]
             res_surgical = (
@@ -906,8 +966,10 @@ class ONNXMalPDFScannerEngine:
                 res_full = res_surgical
 
             if (
-                res_surgical is not None and res_surgical.malware_probability is not None
-                and res_full is not None and res_full.malware_probability is not None
+                res_surgical is not None
+                and res_surgical.malware_probability is not None
+                and res_full is not None
+                and res_full.malware_probability is not None
             ):
                 after_surg_ids = {str(n.get("id")) for n in res_surgical.graph_nodes}
                 surg_excised_nodes = [nid for nid in before_eids if nid not in after_surg_ids]
@@ -987,9 +1049,7 @@ class ONNXMalPDFScannerEngine:
         if is_trigger_node:
             for idx, rec in enumerate(raw_recs[: nf_np.shape[0]]):
                 eid = rec.get("evidence_id", "")
-                if eid.startswith(f"script:{target_eid}") or (
-                    target_kind == "action" and rec.get("kind") == "script"
-                ):
+                if eid.startswith(f"script:{target_eid}") or (target_kind == "action" and rec.get("kind") == "script"):
                     masked_indices.add(idx)
             ablated_tok = np.zeros_like(tok_np)
             feature_names = ingest_data.get("feature_names", [])
@@ -1046,15 +1106,9 @@ class ONNXMalPDFScannerEngine:
         latency_ms = round((time.perf_counter() - start_time) * 1000.0, 2)
 
         masked_eids = [
-            str(raw_recs[i].get("evidence_id", target_eid))
-            for i in sorted(masked_indices)
-            if i < len(raw_recs)
+            str(raw_recs[i].get("evidence_id", target_eid)) for i in sorted(masked_indices) if i < len(raw_recs)
         ]
-        remaining_threats = [
-            str(r.get("evidence_id"))
-            for r in raw_recs
-            if r.get("is_threat_trigger")
-        ]
+        remaining_threats = [str(r.get("evidence_id")) for r in raw_recs if r.get("is_threat_trigger")]
         return {
             "file_name": file_name,
             "target_node_id": target_eid,
@@ -1088,4 +1142,3 @@ class ONNXMalPDFScannerEngine:
             "surgical_remaining_threat_node_ids": remaining_threats,
             "latency_ms": latency_ms,
         }
-

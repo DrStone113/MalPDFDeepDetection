@@ -16,9 +16,17 @@ def digest(data: bytes | memoryview) -> str:
 
 
 def jpeg_structure(data: bytes) -> dict:
-    result = {"format": "jpeg", "width": None, "height": None, "components": None,
-              "bits_per_component": None, "segments": [], "scan_count": 0,
-              "complete": False, "reason_codes": []}
+    result = {
+        "format": "jpeg",
+        "width": None,
+        "height": None,
+        "components": None,
+        "bits_per_component": None,
+        "segments": [],
+        "scan_count": 0,
+        "complete": False,
+        "reason_codes": [],
+    }
     if not data.startswith(b"\xff\xd8"):
         raise MediaIssue("jpeg_signature_invalid")
     offset, entropy = 2, False
@@ -46,8 +54,12 @@ def jpeg_structure(data: bytes) -> dict:
                     raise MediaIssue("jpeg_image_structure_incomplete")
                 result.update(complete=True, end_offset=offset)
                 if offset < len(data):
-                    result.update(complete=False, reason_codes=["image_trailing_data"],
-                                  trailing_bytes=len(data) - offset, trailing_sha256=digest(data[offset:]))
+                    result.update(
+                        complete=False,
+                        reason_codes=["image_trailing_data"],
+                        trailing_bytes=len(data) - offset,
+                        trailing_sha256=digest(data[offset:]),
+                    )
                 return result
             if code in {0, 0xD8} or 0xD0 <= code <= 0xD7:
                 raise MediaIssue("jpeg_marker_invalid")
@@ -55,12 +67,11 @@ def jpeg_structure(data: bytes) -> dict:
                 continue
             if offset + 2 > len(data):
                 break
-            length = int.from_bytes(data[offset:offset + 2], "big")
+            length = int.from_bytes(data[offset : offset + 2], "big")
             if length < 2 or offset + length > len(data):
                 raise MediaIssue("jpeg_segment_truncated")
-            body = memoryview(data)[offset + 2:offset + length]
-            result["segments"].append({"marker": code, "offset": start, "size_bytes": length,
-                                       "sha256": digest(body)})
+            body = memoryview(data)[offset + 2 : offset + length]
+            result["segments"].append({"marker": code, "offset": start, "size_bytes": length, "sha256": digest(body)})
             if code in {0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7, 0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF}:
                 if len(body) < 6 or len(body) != 6 + 3 * body[5]:
                     raise MediaIssue("jpeg_frame_invalid")
@@ -91,13 +102,13 @@ def png_structure(data: bytes) -> dict:
     while offset < len(data):
         if offset + 12 > len(data):
             raise MediaIssue("png_chunk_truncated", details=result)
-        length = int.from_bytes(data[offset:offset + 4], "big")
-        kind = data[offset + 4:offset + 8]
+        length = int.from_bytes(data[offset : offset + 4], "big")
+        kind = data[offset + 4 : offset + 8]
         end = offset + 12 + length
         if end > len(data) or any(not (65 <= char <= 90 or 97 <= char <= 122) for char in kind):
             raise MediaIssue("png_chunk_invalid", details=result)
-        body = memoryview(data)[offset + 8:end - 4]
-        expected = int.from_bytes(data[end - 4:end], "big")
+        body = memoryview(data)[offset + 8 : end - 4]
+        expected = int.from_bytes(data[end - 4 : end], "big")
         if zlib.crc32(body, zlib.crc32(kind)) & 0xFFFFFFFF != expected:
             raise MediaIssue("png_crc_mismatch", details=result)
         chunks.append({"type": kind.decode("ascii"), "offset": offset, "size_bytes": length, "sha256": digest(body)})
@@ -108,10 +119,23 @@ def png_structure(data: bytes) -> dict:
                 raise MediaIssue("png_header_invalid", details=result)
             width, height, bits, color, compression, filtering, interlace = struct.unpack(">IIBBBBB", body)
             allowed = {0: {1, 2, 4, 8, 16}, 2: {8, 16}, 3: {1, 2, 4, 8}, 4: {8, 16}, 6: {8, 16}}
-            if not width or not height or bits not in allowed.get(color, set()) or compression or filtering or interlace not in (0, 1):
+            if (
+                not width
+                or not height
+                or bits not in allowed.get(color, set())
+                or compression
+                or filtering
+                or interlace not in (0, 1)
+            ):
                 raise MediaIssue("png_header_invalid", details=result)
-            result.update(width=width, height=height, bits_per_component=bits, color_type=color,
-                          components={0: 1, 2: 3, 3: 1, 4: 2, 6: 4}[color], interlaced=bool(interlace))
+            result.update(
+                width=width,
+                height=height,
+                bits_per_component=bits,
+                color_type=color,
+                components={0: 1, 2: 3, 3: 1, 4: 2, 6: 4}[color],
+                interlaced=bool(interlace),
+            )
         if kind == b"IEND":
             if length or b"IDAT" not in seen:
                 raise MediaIssue("png_end_invalid", details=result)
@@ -125,46 +149,53 @@ def png_structure(data: bytes) -> dict:
 def jpx_structure(data: bytes) -> dict:
     boxes = []
     codestream = memoryview(data)
-    if data.startswith(b'\x00\x00\x00\x0cjP  \r\n\x87\n'):
+    if data.startswith(b"\x00\x00\x00\x0cjP  \r\n\x87\n"):
         offset, streams = 0, []
         while offset < len(data):
             if offset + 8 > len(data):
-                raise MediaIssue('jpx_box_truncated')
-            length, kind = struct.unpack_from('>I4s', data, offset)
+                raise MediaIssue("jpx_box_truncated")
+            length, kind = struct.unpack_from(">I4s", data, offset)
             header = 8
             if length == 1:
                 if offset + 16 > len(data):
-                    raise MediaIssue('jpx_box_truncated')
-                length = int.from_bytes(data[offset + 8:offset + 16], 'big')
+                    raise MediaIssue("jpx_box_truncated")
+                length = int.from_bytes(data[offset + 8 : offset + 16], "big")
                 header = 16
             if length == 0:
                 length = len(data) - offset
             if length < header or offset + length > len(data):
-                raise MediaIssue('jpx_box_bounds_invalid')
-            boxes.append({'type_hex': kind.hex(), 'offset': offset, 'size_bytes': length})
-            if kind == b'jp2c':
-                streams.append(memoryview(data)[offset + header:offset + length])
+                raise MediaIssue("jpx_box_bounds_invalid")
+            boxes.append({"type_hex": kind.hex(), "offset": offset, "size_bytes": length})
+            if kind == b"jp2c":
+                streams.append(memoryview(data)[offset + header : offset + length])
             offset += length
         if len(streams) != 1:
-            raise MediaIssue('jpx_codestream_count_unsupported', 'unsupported')
+            raise MediaIssue("jpx_codestream_count_unsupported", "unsupported")
         codestream = streams[0]
-    if len(codestream) < 42 or codestream[:4] != b'\xff\x4f\xff\x51':
-        raise MediaIssue('jpx_signature_invalid')
-    length = int.from_bytes(codestream[4:6], 'big')
-    width, height, x_offset, y_offset = struct.unpack_from('>IIII', codestream, 8)
-    components = int.from_bytes(codestream[40:42], 'big')
+    if len(codestream) < 42 or codestream[:4] != b"\xff\x4f\xff\x51":
+        raise MediaIssue("jpx_signature_invalid")
+    length = int.from_bytes(codestream[4:6], "big")
+    width, height, x_offset, y_offset = struct.unpack_from(">IIII", codestream, 8)
+    components = int.from_bytes(codestream[40:42], "big")
     if not components or length != 38 + components * 3 or 4 + length > len(codestream):
-        raise MediaIssue('jpx_size_marker_invalid')
+        raise MediaIssue("jpx_size_marker_invalid")
     precisions = [int(codestream[42 + index * 3]) for index in range(components)]
     if width <= x_offset or height <= y_offset:
-        raise MediaIssue('jpx_geometry_invalid')
-    if codestream[-2:] != b'\xff\xd9':
-        raise MediaIssue('jpx_end_marker_missing')
-    return {'format': 'jpx', 'width': width - x_offset, 'height': height - y_offset, 'components': components,
-            'bits_per_component': (precisions[0] & 127) + 1 if len(set(precisions)) == 1 else None,
-            'signed_components': any(value & 128 for value in precisions), 'boxes': boxes,
-            'complete': True, 'reason_codes': [], 'scope': 'JP2 box bounds and codestream SIZ/EOC framing; entropy data validated separately'}
-
+        raise MediaIssue("jpx_geometry_invalid")
+    if codestream[-2:] != b"\xff\xd9":
+        raise MediaIssue("jpx_end_marker_missing")
+    return {
+        "format": "jpx",
+        "width": width - x_offset,
+        "height": height - y_offset,
+        "components": components,
+        "bits_per_component": (precisions[0] & 127) + 1 if len(set(precisions)) == 1 else None,
+        "signed_components": any(value & 128 for value in precisions),
+        "boxes": boxes,
+        "complete": True,
+        "reason_codes": [],
+        "scope": "JP2 box bounds and codestream SIZ/EOC framing; entropy data validated separately",
+    }
 
 
 JBIG2_SEGMENT_TYPES = {
@@ -239,7 +270,7 @@ def jbig2_structure(data: bytes) -> dict:
             reasons.add("jbig2_segment_header_truncated")
             result["reason_codes"] = sorted(reasons)
             raise MediaIssue("jbig2_segment_header_truncated", details=result)
-        seg_number = int.from_bytes(data[offset:offset + 4], "big")
+        seg_number = int.from_bytes(data[offset : offset + 4], "big")
         if seg_number in seen_numbers:
             reasons.add("jbig2_duplicate_segment_number")
         seen_numbers.add(seg_number)
@@ -261,7 +292,7 @@ def jbig2_structure(data: bytes) -> dict:
                 reasons.add("jbig2_segment_header_truncated")
                 result["reason_codes"] = sorted(reasons)
                 raise MediaIssue("jbig2_segment_header_truncated", details=result)
-            ref_count = int.from_bytes(data[cur:cur + 4], "big")
+            ref_count = int.from_bytes(data[cur : cur + 4], "big")
             cur += 4
             if ref_count > 65536:
                 reasons.add("jbig2_excessive_reference_count")
@@ -278,7 +309,7 @@ def jbig2_structure(data: bytes) -> dict:
             raise MediaIssue("jbig2_segment_header_truncated", details=result)
         referred_segments = []
         for _ in range(ref_count):
-            ref_target = int.from_bytes(data[cur:cur + ref_num_size], "big")
+            ref_target = int.from_bytes(data[cur : cur + ref_num_size], "big")
             cur += ref_num_size
             if ref_target >= seg_number:
                 reasons.add("jbig2_forward_segment_reference")
@@ -287,13 +318,13 @@ def jbig2_structure(data: bytes) -> dict:
             reasons.add("jbig2_segment_header_truncated")
             result["reason_codes"] = sorted(reasons)
             raise MediaIssue("jbig2_segment_header_truncated", details=result)
-        page_assoc = int.from_bytes(data[cur:cur + page_assoc_size], "big")
+        page_assoc = int.from_bytes(data[cur : cur + page_assoc_size], "big")
         cur += page_assoc_size
         if cur + 4 > len(data):
             reasons.add("jbig2_segment_header_truncated")
             result["reason_codes"] = sorted(reasons)
             raise MediaIssue("jbig2_segment_header_truncated", details=result)
-        data_length = int.from_bytes(data[cur:cur + 4], "big")
+        data_length = int.from_bytes(data[cur : cur + 4], "big")
         cur += 4
         if data_length == 0xFFFFFFFF:
             reasons.add("jbig2_unknown_data_length")
@@ -304,7 +335,7 @@ def jbig2_structure(data: bytes) -> dict:
                 reasons.add("jbig2_segment_truncated")
                 result["reason_codes"] = sorted(reasons)
                 raise MediaIssue("jbig2_segment_truncated", details=result)
-            seg_body = memoryview(data)[cur:cur + data_length]
+            seg_body = memoryview(data)[cur : cur + data_length]
             cur += data_length
         if seg_type == 48 and len(seg_body) >= 8:
             page_width, page_height = struct.unpack_from(">II", seg_body, 0)
@@ -347,39 +378,57 @@ def inspect_image(data: bytes, context: dict | None = None) -> dict:
         result = jpeg_structure(data)
     elif data.startswith(b"\x89PNG\r\n\x1a\n"):
         result = png_structure(data)
-    elif data.startswith((b'\x00\x00\x00\x0cjP  \r\n\x87\n', b'\xff\x4f\xff\x51')):
+    elif data.startswith((b"\x00\x00\x00\x0cjP  \r\n\x87\n", b"\xff\x4f\xff\x51")):
         result = jpx_structure(data)
     elif data.startswith(b"\x97JB2\r\n\x1a\n") or context.get("codec") in {"/JBIG2Decode", "/JB2"}:
         result = jbig2_structure(data)
     elif all(type(context.get(key)) is int for key in ("width", "height", "components", "bits_per_component")):
-
-        width, height, components, bits = (context[key] for key in ("width", "height", "components", "bits_per_component"))
+        width, height, components, bits = (
+            context[key] for key in ("width", "height", "components", "bits_per_component")
+        )
         if min(width, height, components) < 1 or bits not in (1, 2, 4, 8, 16):
             raise MediaIssue("raster_geometry_invalid")
         expected = ((width * components * bits + 7) // 8) * height
-        result = {"format": "raw_raster", "width": width, "height": height, "components": components,
-                  "bits_per_component": bits, "expected_bytes": expected, "observed_bytes": len(data),
-                  "complete": expected == len(data), "reason_codes": [] if expected == len(data) else ["raster_size_mismatch"]}
+        result = {
+            "format": "raw_raster",
+            "width": width,
+            "height": height,
+            "components": components,
+            "bits_per_component": bits,
+            "expected_bytes": expected,
+            "observed_bytes": len(data),
+            "complete": expected == len(data),
+            "reason_codes": [] if expected == len(data) else ["raster_size_mismatch"],
+        }
     else:
         raise MediaIssue("image_format_or_context_unavailable", "unsupported")
-    result.update(scope="encoded image structure or declared raster geometry only; no page rendering or exploit verdict",
-                  rendering_performed=False, pixel_decode_performed=False)
+    result.update(
+        scope="encoded image structure or declared raster geometry only; no page rendering or exploit verdict",
+        rendering_performed=False,
+        pixel_decode_performed=False,
+    )
     return result
 
 
 def table_checksum(data: bytes | memoryview, *, head: bool = False) -> int:
     aligned = len(data) // 4 * 4
-    total = sum(word[0] for word in struct.iter_unpack('>I', memoryview(data)[:aligned]))
-    total += int.from_bytes(bytes(data[aligned:]).ljust(4, b'\0'), 'big') if aligned < len(data) else 0
+    total = sum(word[0] for word in struct.iter_unpack(">I", memoryview(data)[:aligned]))
+    total += int.from_bytes(bytes(data[aligned:]).ljust(4, b"\0"), "big") if aligned < len(data) else 0
     if head and len(data) > 8:
-        total -= int.from_bytes(bytes(data[8:12]).ljust(4, b'\0'), 'big')
+        total -= int.from_bytes(bytes(data[8:12]).ljust(4, b"\0"), "big")
     return total & 0xFFFFFFFF
 
 
-def inspect_font(data: bytes) -> dict:
-    result = {"format": "sfnt", "complete": False, "reason_codes": [], "tables": [],
-              "scope": "font directory, bounds, checksums and selected scalar metadata; glyph programs never executed",
-              "font_execution_performed": False, "font_validity_verified": False}
+def inspect_font(data: bytes, *, inspect_table_data: bool = True) -> dict:
+    result = {
+        "format": "sfnt",
+        "complete": False,
+        "reason_codes": [],
+        "tables": [],
+        "scope": "font directory, bounds, checksums and selected scalar metadata; glyph programs never executed",
+        "font_execution_performed": False,
+        "font_validity_verified": False,
+    }
     if data[:4] not in {b"\x00\x01\x00\x00", b"OTTO", b"true", b"typ1"}:
         raise MediaIssue("font_container_unsupported", "unsupported", result)
     if len(data) < 12:
@@ -398,18 +447,25 @@ def inspect_font(data: bytes) -> dict:
         if tag in seen:
             reasons.add("font_duplicate_table")
         seen.add(tag)
-        item = {"tag_hex": tag.hex(), "offset": offset, "size_bytes": length, "checksum_declared": checksum,
-                "bounds_verified": offset >= 12 + count * 16 and offset + length <= len(data), "checksum_verified": False}
+        item = {
+            "tag_hex": tag.hex(),
+            "offset": offset,
+            "size_bytes": length,
+            "checksum_declared": checksum,
+            "bounds_verified": offset >= 12 + count * 16 and offset + length <= len(data),
+            "checksum_verified": False,
+        }
         result["tables"].append(item)
         if not item["bounds_verified"]:
             reasons.add("font_table_bounds_invalid")
             continue
         if offset % 4:
             reasons.add("font_table_alignment_invalid")
-        body = memoryview(data)[offset:offset + length]
-        item.update(sha256=digest(body), checksum_verified=table_checksum(body, head=tag == b"head") == checksum)
-        if not item["checksum_verified"]:
-            reasons.add("font_table_checksum_mismatch")
+        body = memoryview(data)[offset : offset + length]
+        if inspect_table_data:
+            item.update(sha256=digest(body), checksum_verified=table_checksum(body, head=tag == b"head") == checksum)
+            if not item["checksum_verified"]:
+                reasons.add("font_table_checksum_mismatch")
         if length:
             ranges.append((offset, offset + length))
         if tag == b"head" and length >= 54:
@@ -422,17 +478,28 @@ def inspect_font(data: bytes) -> dict:
     ranges.sort()
     if any(left[1] > right[0] for left, right in zip(ranges, ranges[1:])):
         reasons.add("font_table_overlap")
-    result.update(table_count=count, complete=not reasons, reason_codes=sorted(reasons),
-                  instruction_tables_present=bool(seen & {b"fpgm", b"prep", b"cvt "}),
-                  svg_table_present=b"SVG " in seen, cff_table_present=bool(seen & {b"CFF ", b"CFF2"}))
+    result.update(
+        table_count=count,
+        complete=not reasons,
+        reason_codes=sorted(reasons),
+        instruction_tables_present=bool(seen & {b"fpgm", b"prep", b"cvt "}),
+        svg_table_present=b"SVG " in seen,
+        cff_table_present=bool(seen & {b"CFF ", b"CFF2"}),
+    )
     return result
 
 
 def inspect_flash(data: bytes, *, budget, max_expansion_ratio: int, retain=None) -> dict:
-    from malpdf.extraction.filters import _Stopped, _flate
-    result = {"format": "swf", "complete": False, "reason_codes": [], "tags": [],
-              "scope": "SWF header and tag boundaries/hashes only; no ActionScript or playback execution",
-              "execution_performed": False}
+    from malpdf.extraction.filters import _flate, _Stopped
+
+    result = {
+        "format": "swf",
+        "complete": False,
+        "reason_codes": [],
+        "tags": [],
+        "scope": "SWF header and tag boundaries/hashes only; no ActionScript or playback execution",
+        "execution_performed": False,
+    }
     if len(data) < 8 or data[:3] not in {b"FWS", b"CWS", b"ZWS"}:
         raise MediaIssue("flash_header_invalid", details=result)
     declared = int.from_bytes(data[4:8], "little")
@@ -462,32 +529,43 @@ def inspect_flash(data: bytes, *, budget, max_expansion_ratio: int, retain=None)
     offset = (5 + 4 * rectangle_bits + 7) // 8
     if not rectangle_bits or offset + 4 > len(body):
         raise MediaIssue("flash_movie_header_truncated", details=result)
-    result.update(frame_rate_fixed=int.from_bytes(body[offset:offset + 2], "little"),
-                  declared_frames=int.from_bytes(body[offset + 2:offset + 4], "little"))
+    result.update(
+        frame_rate_fixed=int.from_bytes(body[offset : offset + 2], "little"),
+        declared_frames=int.from_bytes(body[offset + 2 : offset + 4], "little"),
+    )
     offset += 4
     while offset < len(body):
         start = offset
         if offset + 2 > len(body):
             raise MediaIssue("flash_tag_header_truncated", details=result)
-        header = int.from_bytes(body[offset:offset + 2], "little")
+        header = int.from_bytes(body[offset : offset + 2], "little")
         offset += 2
         code, length = header >> 6, header & 63
         if length == 63:
             if offset + 4 > len(body):
                 raise MediaIssue("flash_tag_header_truncated", details=result)
-            length = int.from_bytes(body[offset:offset + 4], "little")
+            length = int.from_bytes(body[offset : offset + 4], "little")
             offset += 4
         if offset + length > len(body):
             raise MediaIssue("flash_tag_body_truncated", details=result)
-        result["tags"].append({"code": code, "decoded_offset": start, "size_bytes": length,
-                               "sha256": digest(memoryview(body)[offset:offset + length]),
-                               "script_candidate": code in {12, 59, 72, 82}})
+        result["tags"].append(
+            {
+                "code": code,
+                "decoded_offset": start,
+                "size_bytes": length,
+                "sha256": digest(memoryview(body)[offset : offset + length]),
+                "script_candidate": code in {12, 59, 72, 82},
+            }
+        )
         offset += length
         if code == 0:
             if length:
                 raise MediaIssue("flash_end_tag_invalid", details=result)
-            result.update(complete=offset == len(body), reason_codes=[] if offset == len(body) else ["flash_trailing_data"],
-                          tag_counts={str(key): value for key, value in Counter(tag["code"] for tag in result["tags"]).items()},
-                          script_tag_count=sum(tag["script_candidate"] for tag in result["tags"]))
+            result.update(
+                complete=offset == len(body),
+                reason_codes=[] if offset == len(body) else ["flash_trailing_data"],
+                tag_counts={str(key): value for key, value in Counter(tag["code"] for tag in result["tags"]).items()},
+                script_tag_count=sum(tag["script_candidate"] for tag in result["tags"]),
+            )
             return result
     raise MediaIssue("flash_end_tag_missing", details=result)

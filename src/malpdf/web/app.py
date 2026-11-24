@@ -6,16 +6,14 @@ from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import hashlib
-import io
 import json
 import os
 from pathlib import Path
 import platform
-import re
 import time
-from typing import Any
+from typing import Annotated, Any
 
-from fastapi import FastAPI, File, Form, HTTPException, Query, Response, UploadFile
+from fastapi import FastAPI, File, Form, Header, HTTPException, Query, Response, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import HTMLResponse
 from fastapi.routing import APIRoute
@@ -25,18 +23,23 @@ import torch
 from malpdf.cdr.engine import PDFDisarmer
 from malpdf.gateway.mail_filter import EmailInspectionReport, MailGatewayFilter
 from malpdf.scanner.ai_explainer import (
-    AIThreatExplainer,
     CLIENT_LLM_SYSTEM_PROMPT,
     DEFAULT_WEBLLM_MODEL,
     FALLBACK_WEBLLM_MODEL,
+    AIThreatExplainer,
 )
 from malpdf.scanner.engine import MalPDFScannerEngine
-from malpdf.web.http import (
-    GRAPH_ASSET_PATH, dashboard_graph, dashboard_styles, omit_preview_images, sanitized_pdf_response,
-)
-from malpdf.web.store import ScanJob
 from malpdf.web.cloud_chat import CLOUD_MODEL, cloud_answer, cloud_stream_response
+from malpdf.web.http import (
+    GRAPH_ASSET_PATH,
+    dashboard_graph,
+    dashboard_styles,
+    omit_preview_images,
+    read_scan_upload,
+    sanitized_pdf_response,
+)
 from malpdf.web.sessions import BrowserSessionRegistry, current_session, optional_session, session_route_class
+from malpdf.web.store import ScanJob
 
 MAX_UPLOAD_BYTES = max(1, int(os.environ.get("MALPDF_MAX_UPLOAD_MB", "100"))) * 1024 * 1024
 PDF_MAGIC = b"%PDF-"
@@ -44,10 +47,16 @@ PDF_MAGIC_SEARCH_WINDOW = 1024
 
 app = FastAPI(title="MalPDF DeepDetection Web Service")
 app.router.add_api_route(
-    "/assets/dashboard.css", dashboard_styles, include_in_schema=False, route_class_override=APIRoute,
+    "/assets/dashboard.css",
+    dashboard_styles,
+    include_in_schema=False,
+    route_class_override=APIRoute,
 )
 app.router.add_api_route(
-    GRAPH_ASSET_PATH, dashboard_graph, include_in_schema=False, route_class_override=APIRoute,
+    GRAPH_ASSET_PATH,
+    dashboard_graph,
+    include_in_schema=False,
+    route_class_override=APIRoute,
 )
 
 scanner = MalPDFScannerEngine(device="cpu")
@@ -123,7 +132,7 @@ def _gateway_record(rep: EmailInspectionReport, msg_id: str, subject: str, fallb
         "sender": rep.sender.split("@")[0],
         "sender_full": rep.sender,
         "recipient": rep.recipient,
-        "attachment": att.filename if att else "None",
+        "attachment": att.filename if att else "Không có",
         "sha256": att.sha256 if att else "",
         "size_bytes": att.size_bytes if att else fallback_size,
         "verdict": att.verdict if att else "NOT_SCANNED",
@@ -148,8 +157,10 @@ def index() -> str:
 @app.get("/api/health")
 def health() -> dict[str, Any]:
     model = scanner.model
-    hgt_layers = len(model.graph_encoder.layers) if scanner.is_v3 else sum(
-        1 for name in ("layer1", "layer2", "layer3") if hasattr(model.graph_encoder, name)
+    hgt_layers = (
+        len(model.graph_encoder.layers)
+        if scanner.is_v3
+        else sum(1 for name in ("layer1", "layer2", "layer3") if hasattr(model.graph_encoder, name))
     )
     ast_layers = len(getattr(getattr(model.ast_encoder, "encoder", None), "layers", []) or [])
     session = optional_session()
@@ -180,6 +191,7 @@ def health() -> dict[str, Any]:
         "quarantined_files": len(session.store.list_quarantine()) if session is not None else 0,
         "events_logged": len(session.store.get_audit_logs()) if session is not None else 0,
         "max_upload_bytes": MAX_UPLOAD_BYTES,
+        "gzip_scan_upload": True,
         "max_upload_mb": round(MAX_UPLOAD_BYTES / (1024 * 1024)),
     }
 
@@ -245,18 +257,23 @@ def delete_scan(scan_id: str) -> dict[str, bool]:
 
 
 @app.post("/api/scan")
-async def scan_uploaded_file(file: UploadFile = File(...)) -> dict[str, Any]:
-    content = await file.read()
+async def scan_uploaded_file(
+    file: UploadFile = File(...),
+    upload_encoding: Annotated[str | None, Header(alias="X-MalPDF-Upload-Encoding")] = None,
+    password: Annotated[str | None, Form()] = None,
+) -> dict[str, Any]:
+    content = await read_scan_upload(file, MAX_UPLOAD_BYTES, upload_encoding)
     _validate_pdf_bytes(content)
     filename = Path(file.filename or "uploaded_document.pdf").name
     job = current_session().store.create_job(raw_bytes=content, file_name=filename)
     current_session().active_job_id = job.scan_id
     current_session().store.set_status(job.scan_id, "SCANNING")
     try:
-        scan_res = await run_in_threadpool(scanner.scan_bytes, content, filename, True)
+        scan_res = await run_in_threadpool(scanner.scan_bytes, content, filename, True, password=password)
     except (ValueError, RuntimeError) as exc:
-        current_session().store.set_status(job.scan_id, "FAILED", error=str(exc))
-        raise HTTPException(status_code=422 if isinstance(exc, ValueError) else 503, detail=str(exc)) from exc
+        detail = str(exc).replace(password, "[redacted]") if password else str(exc)
+        current_session().store.set_status(job.scan_id, "FAILED", error=detail)
+        raise HTTPException(status_code=422 if isinstance(exc, ValueError) else 503, detail=detail) from None
     current_session().store.attach_scan_result(job.scan_id, scan_res)
     res_dict = scan_res.to_dict()
     res_dict["scan_id"] = job.scan_id
@@ -303,8 +320,10 @@ def ai_chat_about_scan(payload: dict[str, Any]) -> dict[str, Any] | Response:
     if not job or not job.scan_result:
         raise HTTPException(status_code=404, detail="no_scan_data_for_ai_analysis")
     scan_dict = job.scan_result.to_dict()
-    cdr_dict = job.cdr_audit.to_dict() if job.cdr_audit is not None and hasattr(job.cdr_audit, "to_dict") else (
-        job.cdr_audit if isinstance(job.cdr_audit, dict) else None
+    cdr_dict = (
+        job.cdr_audit.to_dict()
+        if job.cdr_audit is not None and hasattr(job.cdr_audit, "to_dict")
+        else (job.cdr_audit if isinstance(job.cdr_audit, dict) else None)
     )
     answer = ai_explainer.answer_question(scan_dict, question, cdr_audit=cdr_dict)
     compact_ctx = ai_explainer.build_compact_llm_context(scan_dict, cdr_audit=cdr_dict)
@@ -339,11 +358,7 @@ async def ablate_graph_node(
     exclude_node_ids: str | None = Form(default=None),
 ) -> dict[str, Any]:
     job = _get_active_or_latest_job(scan_id)
-    parsed_excludes = (
-        [x.strip() for x in exclude_node_ids.split(",") if x.strip()]
-        if exclude_node_ids
-        else None
-    )
+    parsed_excludes = [x.strip() for x in exclude_node_ids.split(",") if x.strip()] if exclude_node_ids else None
     try:
         res = await run_in_threadpool(
             scanner.ablate_node,
@@ -370,7 +385,7 @@ async def ablate_graph_node(
             "latency_ms": res["latency_ms"],
             "ablation_method": res["ablation_method"],
             "action": (
-                f"{'Gỡ khóa trên bản sao' if res['ablation_method'] == 'pikepdf_binary_excision' else 'Che đặc trưng'} "
+                f"{'Gỡ thử trên bản sao' if res['ablation_method'] == 'pikepdf_binary_excision' else 'Che nút trong mô hình'}: "
                 f"{res['target_node_id']} ({res['prob_delta'] * 100:+.2f} điểm %)"
             ),
         },
@@ -380,7 +395,9 @@ async def ablate_graph_node(
 
 @app.post("/api/disarm")
 async def disarm_pdf(
-    file: UploadFile | None = File(default=None), include_preview_images: bool = True,
+    file: UploadFile | None = File(default=None),
+    include_preview_images: bool = True,
+    password: Annotated[str | None, Form()] = None,
 ) -> dict[str, Any]:
     if file is not None:
         content = await file.read()
@@ -391,34 +408,39 @@ async def disarm_pdf(
     else:
         job = _get_active_or_latest_job()
 
-    return await run_in_threadpool(_execute_disarm_for_job, job, include_preview_images)
+    return await run_in_threadpool(_execute_disarm_for_job, job, include_preview_images, password=password)
 
 
 @app.post("/api/disarm/{scan_id}")
-def disarm_specific_job(scan_id: str, include_preview_images: bool = True) -> dict[str, Any]:
+def disarm_specific_job(
+    scan_id: str, include_preview_images: bool = True, password: Annotated[str | None, Form()] = None
+) -> dict[str, Any]:
     job = current_session().store.get_job(scan_id)
     if not job:
         raise HTTPException(status_code=404, detail="scan_job_not_found")
-    return _execute_disarm_for_job(job, include_preview_images)
+    return _execute_disarm_for_job(job, include_preview_images, password=password)
 
 
-def _execute_disarm_for_job(job: ScanJob, include_preview_images: bool = True) -> dict[str, Any]:
+def _execute_disarm_for_job(
+    job: ScanJob, include_preview_images: bool = True, *, password: str | None = None
+) -> dict[str, Any]:
     raw_bytes = job.raw_bytes
     filename = job.file_name
-    if job.scan_result:
-        pre_scan = job.scan_result.to_dict()
-    else:
-        scan_res = scanner.scan_bytes(raw_bytes, file_name=filename, explain=True)
-        current_session().store.attach_scan_result(job.scan_id, scan_res)
-        pre_scan = scan_res.to_dict()
-
-    current_session().store.set_status(job.scan_id, "DISARMING")
+    scan_res = job.scan_result
     try:
-        sanitized_bytes, audit = disarmer.sanitize_bytes(raw_bytes, file_name=filename)
+        if scan_res is None or (
+            password is not None and scan_res.forensic_dossier.get("encryption_analysis", {}).get("password_locked")
+        ):
+            scan_res = scanner.scan_bytes(raw_bytes, file_name=filename, explain=True, password=password)
+            current_session().store.attach_scan_result(job.scan_id, scan_res)
+        pre_scan = scan_res.to_dict()
+        current_session().store.set_status(job.scan_id, "DISARMING")
+        sanitized_bytes, audit = disarmer.sanitize_bytes(raw_bytes, file_name=filename, password=password)
         post_scan = scanner.scan_bytes(sanitized_bytes, file_name=f"sanitized_{filename}", explain=True)
     except Exception as exc:
-        current_session().store.set_status(job.scan_id, "FAILED", error=str(exc))
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        detail = str(exc).replace(password, "[redacted]") if password else str(exc)
+        current_session().store.set_status(job.scan_id, "FAILED", error=detail)
+        raise HTTPException(status_code=422, detail=detail) from None
     pre_dossier = pre_scan.get("forensic_dossier", {}) or {}
     audit_dict = audit.to_dict()
     audit_dict["scan_id"] = job.scan_id
@@ -430,7 +452,9 @@ def _execute_disarm_for_job(job: ScanJob, include_preview_images: bool = True) -
         "scripts_before": len(pre_dossier.get("threat_scripts", [])),
         "scripts_after": len(post_scan.forensic_dossier.get("threat_scripts", [])),
         "triggers_before": sum(bool(item.get("is_threat_trigger")) for item in pre_dossier.get("trigger_objects", [])),
-        "triggers_after": sum(bool(item.get("is_threat_trigger")) for item in post_scan.forensic_dossier.get("trigger_objects", [])),
+        "triggers_after": sum(
+            bool(item.get("is_threat_trigger")) for item in post_scan.forensic_dossier.get("trigger_objects", [])
+        ),
         "ood_before": pre_scan.get("ood_score", 0.0),
         "ood_after": post_scan.ood_score,
         "rescan_latency_ms": post_scan.latency_ms,
@@ -494,10 +518,10 @@ def render_visual_diff(scan_id: str = "latest", page: int = Query(default=0)) ->
 
 def _wrap_pdf_bytes_as_rfc822_eml(pdf_bytes: bytes, pdf_filename: str) -> bytes:
     msg = MIMEMultipart()
-    msg["From"] = "sender.document@mail-gateway.enterprise"
-    msg["To"] = "recipient.inbox@mail-gateway.enterprise"
+    msg["From"] = "sender@local.invalid"
+    msg["To"] = "recipient@local.invalid"
     msg["Subject"] = f"[Kiểm tra đính kèm PDF] {pdf_filename}"
-    msg["Message-ID"] = f"<eml-{hashlib.sha256(pdf_bytes).hexdigest()[:12]}@malpdf.gateway>"
+    msg["Message-ID"] = f"<eml-{hashlib.sha256(pdf_bytes).hexdigest()[:12]}@malpdf.local.invalid>"
     msg.attach(MIMEText(f"Email đính kèm tài liệu PDF: {pdf_filename}", "plain", "utf-8"))
     part = MIMEApplication(pdf_bytes, _subtype="pdf")
     part.add_header("Content-Disposition", "attachment", filename=pdf_filename)
@@ -508,8 +532,10 @@ def _wrap_pdf_bytes_as_rfc822_eml(pdf_bytes: bytes, pdf_filename: str) -> bytes:
 def _process_and_store_eml(raw_eml_bytes: bytes, filename: str) -> dict[str, Any]:
     job_id = f"eml-{int(time.time())}-{hashlib.sha256(raw_eml_bytes).hexdigest()[:8]}"
     gateway = MailGatewayFilter(
-        scanner_engine=scanner, disarmer=disarmer,
-        quarantine_dir=current_session().quarantine_dir, device=str(scanner.device),
+        scanner_engine=scanner,
+        disarmer=disarmer,
+        quarantine_dir=current_session().quarantine_dir,
+        device=str(scanner.device),
     )
     sanitized_eml_bytes, report = gateway.process_email_bytes(raw_eml_bytes)
     current_session().eml_store[job_id] = (sanitized_eml_bytes, report)
@@ -521,7 +547,11 @@ def _process_and_store_eml(raw_eml_bytes: bytes, filename: str) -> dict[str, Any
             "file_name": filename,
             "subject": report.subject,
             "sender": report.sender,
-            "verdict": "UNAVAILABLE" if report.unavailable_attachments else "MALICIOUS" if report.malicious_attachments > 0 else "BENIGN",
+            "verdict": "UNAVAILABLE"
+            if report.unavailable_attachments
+            else "MALICIOUS"
+            if report.malicious_attachments > 0
+            else "BENIGN",
             "attachments_count": report.total_attachments,
             "malicious_count": report.malicious_attachments,
             "latency_ms": report.processing_latency_ms,
@@ -532,7 +562,15 @@ def _process_and_store_eml(raw_eml_bytes: bytes, filename: str) -> dict[str, Any
     rep_dict["eml_job_id"] = job_id
     rep_dict["filename"] = filename
     rep_dict["has_sanitized_eml"] = report.unavailable_attachments == 0
-    rep_dict["action"] = "HELD_FOR_REVIEW" if report.unavailable_attachments else "SANITIZED_ATTACHMENT" if report.malicious_attachments > 0 else "DELIVERED_CLEAN"
+    rep_dict["action"] = (
+        "HELD_FOR_REVIEW"
+        if report.unavailable_attachments
+        else report.action_taken
+        if report.action_taken == "QUARANTINED_PASSWORD_LOCKED"
+        else "SANITIZED_ATTACHMENT"
+        if report.malicious_attachments > 0
+        else "DELIVERED_CLEAN"
+    )
     return rep_dict
 
 
@@ -582,7 +620,9 @@ def gateway_history() -> dict[str, Any]:
         for job_id, (_, report) in current_session().eml_store.items()
     ]
     reports = [report for _, report in current_session().eml_store.values()]
-    intercepted = sum(report.malicious_attachments > 0 for report in reports)
+    intercepted = sum(
+        report.malicious_attachments > 0 or report.action_taken == "QUARANTINED_PASSWORD_LOCKED" for report in reports
+    )
     held = sum(report.action_taken == "HELD_FOR_REVIEW" for report in reports)
     return {
         "results": records,
@@ -591,7 +631,9 @@ def gateway_history() -> dict[str, Any]:
             "intercepted_threats": intercepted,
             "passed_clean": sum(report.action_taken == "PASSED" for report in reports),
             "held_for_review": held,
-            "avg_latency_ms": round(sum(report.processing_latency_ms for report in reports) / len(reports), 2) if reports else None,
+            "avg_latency_ms": round(sum(report.processing_latency_ms for report in reports) / len(reports), 2)
+            if reports
+            else None,
         },
     }
 
@@ -616,10 +658,16 @@ def download_quarantined_file(stored_name: str) -> Response:
 @app.get("/api/audit/logs")
 def get_siem_audit_logs() -> dict[str, Any]:
     logs = current_session().store.get_audit_logs(limit=200)
-    threats = sum(1 for e in logs if e.get("details", {}).get("verdict") == "MALICIOUS" or e.get("event") == "QUARANTINE_ISOLATED")
+    threats = sum(
+        1 for e in logs if e.get("details", {}).get("verdict") == "MALICIOUS" or e.get("event") == "QUARANTINE_ISOLATED"
+    )
     disarmed = sum(1 for e in logs if e.get("event") == "DISARM_COMPLETED")
     avg_lat = None
-    latencies = [e.get("details", {}).get("latency_ms") for e in logs if isinstance(e.get("details", {}).get("latency_ms"), (int, float))]
+    latencies = [
+        e.get("details", {}).get("latency_ms")
+        for e in logs
+        if isinstance(e.get("details", {}).get("latency_ms"), (int, float))
+    ]
     if latencies:
         avg_lat = round(sum(latencies) / len(latencies), 2)
     return {

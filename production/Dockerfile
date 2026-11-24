@@ -17,6 +17,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 COPY src/malpdf /app/src/malpdf
 COPY production/configs /app/configs
+COPY configs/pdf_signature_rules.json /app/configs/pdf_signature_rules.json
 COPY production/models /app/models
 COPY production/__init__.py production/onnx_taxonomy.py production/onnx_engine.py production/web_service.py production/app.py /app/
 
