@@ -701,24 +701,21 @@
               <p id="status-action" class="text-sm text-on-surface leading-relaxed mt-1.5"></p>
             </div>
           </div>
-          <button id="btn-quick-disarm" type="button" onclick="quickSwitchAndDisarm()" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-white hover:bg-slate-50 text-on-surface border border-slate-200 transition flex items-center gap-1.5 active:scale-95">
-            <span class="material-symbols-outlined text-[16px]" aria-hidden="true">healing</span>
-            <span>Làm sạch tệp</span>
-          </button>
-        </div>
-
-        <details id="scan-details" class="space-y-4">
-          <summary class="glass-card rounded-xl p-4 cursor-pointer text-sm font-semibold text-on-surface">Xem chi tiết kết quả và hỏi đáp</summary>
           <div class="flex items-center flex-wrap gap-2 w-full lg:w-auto">
-            <button onclick="switchTab('graph')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white hover:bg-slate-50 text-on-surface border border-slate-200 transition flex items-center gap-1.5 active:scale-95">
-              <span class="material-symbols-outlined text-[16px] text-primary-container">hub</span>
+            <button id="btn-quick-disarm" type="button" onclick="quickSwitchAndDisarm()" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-white hover:bg-slate-50 text-on-surface border border-slate-200 transition flex items-center gap-1.5 active:scale-95">
+              <span class="material-symbols-outlined text-[16px]" aria-hidden="true">healing</span>
+              <span>Làm sạch tệp</span>
+            </button>
+            <button type="button" onclick="switchTab('graph')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white hover:bg-slate-50 text-on-surface border border-slate-200 transition flex items-center gap-1.5 active:scale-95">
+              <span class="material-symbols-outlined text-[16px] text-primary-container" aria-hidden="true">hub</span>
               <span>Mở sơ đồ cấu trúc</span>
             </button>
-            <button onclick="exportForensicJSON()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-on-surface transition flex items-center gap-1.5 active:scale-95">
-              <span class="material-symbols-outlined text-[16px]">download</span>
+            <button type="button" onclick="exportForensicJSON()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-on-surface transition flex items-center gap-1.5 active:scale-95">
+              <span class="material-symbols-outlined text-[16px]" aria-hidden="true">download</span>
               <span>Tải báo cáo (.json)</span>
             </button>
           </div>
+        </div>
 
         <!-- Divided 4-Column Executive Metric Strip -->
         <div class="glass-card rounded-xl overflow-hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-200 reveal-stagger-2">
@@ -1112,7 +1109,6 @@
           </div>
 
         </div>
-        </details>
 
       </div>
 
@@ -2815,7 +2811,6 @@
     function renderScanResult(data, cdrAudit = null) {
       if (data.scan_id !== currentScanResult?.scan_id) {
         cancelActiveChat();
-        document.getElementById('scan-details').open = false;
       }
       clearVisualDiff();
       currentScanResult = data;

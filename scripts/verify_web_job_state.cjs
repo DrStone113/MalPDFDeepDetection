@@ -33,8 +33,7 @@ async function scan(page, name) {
       /^(Chưa thấy dấu hiệu nguy hiểm|Chưa đủ căn cứ để kết luận|Có dấu hiệu đáng ngờ|Có cảnh báo mã độc)$/,
     );
     assert.ok(await page.locator("#status-action").innerText());
-    assert.equal(await page.locator("#card-prob").isVisible(), false);
-    await page.locator("#scan-details summary").press("Enter");
+    assert.equal(await page.locator("#scan-details").count(), 0);
     assert.equal(await page.locator("#card-prob").isVisible(), true);
     await page.locator("#tab-cdr").click();
     const url = origin + "/api/disarm/" + first + "?include_preview_images=false";
@@ -53,7 +52,7 @@ async function scan(page, name) {
     assert.equal(await page.locator("#btn-execute-disarm").isDisabled(), true);
     await page.locator("#tab-scan").click();
     const second = await scan(page, "Bản B.pdf");
-    assert.equal(await page.locator("#card-prob").isVisible(), false);
+    assert.equal(await page.locator("#card-prob").isVisible(), true);
     const firstResponse = page.waitForResponse((r) => r.url() === url);
     release();
     assert.equal((await firstResponse).status(), 200);
