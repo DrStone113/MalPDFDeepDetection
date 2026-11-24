@@ -1,28 +1,26 @@
 # MalPDF DeepDetection — Thư mục Triển khai Production (ONNX Runtime)
 
-> Ứng viên PDF-TransGraph v3.2b đã qua kiểm tra tương đương PyTorch/ONNX trong bản dựng riêng. Manifest production tiếp tục trỏ tới v2 trong lúc chờ xác nhận SHA-256 và nhiệt độ của checkpoint v3.2b. [Kết quả kiểm tra và đối chiếu nguồn](../reports/progress/transgraph_v32b_runtime_candidate_2026-11-23.md)
+Thư mục `production/` đóng gói dịch vụ kiểm tra PDF (**PDF-TransGraph v3.2b** + **PDFMultiLabelThreatNet v2** 8 nhãn), giải thích XAI, làm sạch tệp tại chỗ với `pikepdf` (CDR) và cổng kiểm tra Email (`.eml`) chạy trên ONNX Runtime.
 
-Thư mục `production/` đóng gói toàn bộ hệ thống quét PDF đa phương thức (**PDF-TransGraph v2 23D** + **PDFMultiLabelThreatNet v2 8 nhãn**), giải thích XAI, làm sạch tệp tại chỗ (**In-Place CDR với `pikepdf`**) và cổng kiểm duyệt Email (`.eml`) chạy hoàn toàn trên **ONNX Runtime** tốc độ cao, không phụ thuộc PyTorch nặng khi chạy độc lập.
-
-> 📖 **Tài liệu hướng dẫn triển khai đầy đủ (Step-by-step & Xử lý lỗi):** Xem tại [`docs/deployment_huggingface_and_onnx.md`](../docs/deployment_huggingface_and_onnx.md).
+> Tài liệu hướng dẫn triển khai và xử lý sự cố: [`docs/deployment_huggingface_and_onnx.md`](../docs/deployment_huggingface_and_onnx.md).
 
 ## 1. Cấu trúc thư mục
 
-- `models/pdf_transgraph_v2.onnx`: Mô hình nhị phân đa phương thức (Hetero-HGT 23D + AST RoPE Transformer + Tabular ResNet 38 chiều, Opset 17).
-- `models/multilabel_threat_net_v2.onnx`: Mô hình phân loại đa nhãn 8 nhóm hành vi độc hại (52 đặc trưng cấu trúc/AST + đồ thị 23D, Opset 17).
-- `configs/onnx_manifest.json`: Bảng đối chiếu SHA-256, sai số logit so với PyTorch (`< 2e-5`) và số liệu đo tốc độ thực tế.
-- `configs/tabular_scaler.json` & `configs/multilabel_threat_contract.json`: Bộ chuẩn hóa Z-score và ngưỡng quyết định của 8 đầu dự đoán.
-- `onnx_engine.py`: Bộ máy suy luận `ONNXMalPDFScannerEngine` (tích hợp tính toán XAI theo lô trên ONNX Runtime và cắt bỏ đối tượng đối chứng bằng `pikepdf`).
-- `onnx_taxonomy.py`: Bộ phân loại hành vi nguy hiểm 8 nhãn `ONNXThreatTaxonomyClassifier`.
-- `web_service.py`: Dịch vụ FastAPI (`production_router` & `app`) cung cấp giao diện tiếng Việt thân thiện cùng đầy đủ API `/api/scan`, `/api/disarm`, `/api/xai/ablate`, `/api/gateway/inspect-eml`, `/favicon.ico`, `/env-config.js`.
-- `app.py`: Điểm khởi chạy tương thích đồng thời với **Hugging Face Spaces (ZeroGPU & CPU Basic)** và máy chủ Uvicorn độc lập.
-- `Dockerfile` & `requirements.txt`: Cấu hình đóng gói container siêu gọn chỉ dùng `onnxruntime`.
+- `models/pdf_transgraph_v3.onnx`: Mô hình nhị phân chính **PDF-TransGraph v3.2b** (`Opset 17`, 23 chiều đặc trưng nút HGT và 29 đặc trưng cấu trúc/tệp).
+- `models/multilabel_threat_net_v2.onnx`: Mô hình phân loại đa nhãn 8 nhóm hành vi (`Opset 17`, 52 đặc trưng bảng/từ khóa và đồ thị 23 chiều).
+- `configs/transgraph_v3_contract.json`: Khóa toàn vẹn mô hình v3.2b (SHA-256 chuẩn hóa `LF`, `temperature = 0.8884`, `decision_threshold = 0.0573`, danh sách 29 đặc trưng).
+- `configs/onnx_manifest.json`: Bảng đối chiếu SHA-256 mô hình/hợp đồng, sai số logit so với PyTorch và số liệu suy luận thực tế.
+- `configs/tabular_scaler.json` & `configs/multilabel_threat_contract.json`: Bộ chuẩn hóa Z-score và ngưỡng của 8 đầu dự đoán.
+- `onnx_engine.py`: Bộ máy suy luận `ONNXMalPDFScannerEngine` (tính XAI occlusion trên ONNX Runtime và cắt bỏ khóa kích hoạt đối chứng bằng `pikepdf`).
+- `onnx_taxonomy.py`: Bộ phân loại hành vi 8 nhãn `ONNXThreatTaxonomyClassifier`.
+- `web_service.py`: Dịch vụ FastAPI (`production_router` và `app`) phục vụ giao diện web và API `/api/scan`, `/api/disarm`, `/api/xai/ablate`, `/api/gateway/inspect-eml`, `/favicon.ico`, `/env-config.js`.
+- `app.py`: Điểm khởi chạy tương thích với **Hugging Face Spaces (ZeroGPU & CPU)** và Uvicorn độc lập.
+- `Dockerfile` & `requirements.txt`: Cấu hình đóng gói container chỉ dùng `onnxruntime`.
 
-## 2. Hiệu năng ONNX Runtime so với PyTorch CPU
+## 2. Hiệu năng & Độ khớp ONNX Runtime (`v3.2b`)
 
-- **Trên Windows DEV (Median 2 mô hình):** giảm từ **`14.24 ms`** (PyTorch CPU) xuống **`3.51 ms`** (ONNX Runtime CPU) — **nhanh gấp `4.06x`**.
-- **Trên REMnux LAB Linux 6.8 (582 mẫu thực tế — 291 Test + 291 Val):** giảm từ **`9.40 ms`** xuống **`3.46 ms`** (nhanh gấp **`2.72x`**; riêng `PDFTransGraph` nhanh gấp **`3.22x`**, đạt **`453.4 mẫu/giây`**).
-- **Độ khớp số học (Numerical Parity):** `100%` trùng khớp phán quyết trên toàn bộ `291/291` mẫu Test và `289/289` mẫu Val (`max_abs_prob_diff = 2.50e-07`).
+- **So với PyTorch CPU:** thời gian suy luận trung vị giảm từ `4.455 ms` xuống `1.452 ms` (nhanh hơn `3.07x`).
+- **Độ khớp số học (27 mẫu Phase 2 & fixture thật):** sai lệch logit tối đa `1.43e-6`, trùng khớp phán quyết trên toàn bộ mẫu kiểm tra.
 
 ## 3. Chạy thử trực tiếp tại máy (Local)
 

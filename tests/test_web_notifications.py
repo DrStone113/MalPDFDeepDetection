@@ -3,8 +3,8 @@ from __future__ import annotations
 from html.parser import HTMLParser
 import json
 import os
-import re
 from pathlib import Path
+import re
 import shutil
 import subprocess
 
@@ -29,18 +29,32 @@ def test_browser_template_contains_no_provider_credentials() -> None:
 
 def _browser_attributes(tmp_path: Path, page: str) -> dict[str, str | None]:
     candidates = [
-        os.environ.get("MALPDF_TEST_BROWSER"), shutil.which("google-chrome"), shutil.which("chromium"),
-        shutil.which("chromium-browser"), r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+        os.environ.get("MALPDF_TEST_BROWSER"),
+        shutil.which("google-chrome"),
+        shutil.which("chromium"),
+        shutil.which("chromium-browser"),
+        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
     ]
     browser = next((str(path) for path in candidates if path and Path(path).is_file()), None)
     assert browser is not None, "Chrome/Chromium is required; set MALPDF_TEST_BROWSER to its executable"
     target = tmp_path / "notification.html"
     target.write_text(page, encoding="utf-8")
     result = subprocess.run(
-        [browser, "--headless=new", "--disable-gpu", "--disable-background-networking", "--no-first-run",
-         f"--user-data-dir={tmp_path / 'browser-profile'}", "--dump-dom", "--timeout=10000",
-         "--virtual-time-budget=1000", target.as_uri()],
-        capture_output=True, timeout=30, check=True,
+        [
+            browser,
+            "--headless=new",
+            "--disable-gpu",
+            "--disable-background-networking",
+            "--no-first-run",
+            f"--user-data-dir={tmp_path / 'browser-profile'}",
+            "--dump-dom",
+            "--timeout=10000",
+            "--virtual-time-budget=1000",
+            target.as_uri(),
+        ],
+        capture_output=True,
+        timeout=30,
+        check=True,
         creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
     )
     dom = DocumentAttributes()
@@ -55,11 +69,15 @@ def test_notification_displays_untrusted_subject_as_text_in_real_browser(tmp_pat
     end = source.index("\n    }", start) + len("\n    }")
     escape_start = source.index("    function _escTax(")
     escape_end = source.index("\n    }", escape_start) + len("\n    }")
-    payload = '<svg onload="document.documentElement.setAttribute(\'data-review-xss\',\'executed\')"></svg>'
+    payload = "<svg onload=\"document.documentElement.setAttribute('data-review-xss','executed')\"></svg>"
     page = (
         '<!doctype html><html><head><meta charset="utf-8"></head><body><div id="toast-container"></div><script>\n'
-        + source[escape_start:escape_end] + "\n" + source[start:end]
-        + "\nconst subject = " + json.dumps(payload) + ";\nshowToast(subject, 'success', 300000);"
+        + source[escape_start:escape_end]
+        + "\n"
+        + source[start:end]
+        + "\nconst subject = "
+        + json.dumps(payload)
+        + ";\nshowToast(subject, 'success', 300000);"
         + "\ndocument.documentElement.setAttribute('data-review-literal-message',"
         + "String(document.getElementById('toast-container').textContent.includes(subject)));"
         + "\n</script></body></html>"
@@ -74,14 +92,32 @@ def test_held_email_is_not_labeled_safe_or_offered_as_clean_download(tmp_path: P
     source = template.read_text(encoding="utf-8")
     start = source.index("    function renderEMLInspectionResult(")
     end = source.index("\n    }", start) + len("\n    }")
-    ids = ["mail-tab-result-card", "mail-tab-res-subject", "mail-tab-res-sender", "mail-tab-res-attachments",
-           "mail-tab-res-threats", "mail-tab-action-badge", "btn-mail-tab-download-eml"]
+    ids = [
+        "mail-tab-result-card",
+        "mail-tab-res-subject",
+        "mail-tab-res-sender",
+        "mail-tab-res-attachments",
+        "mail-tab-res-threats",
+        "mail-tab-action-badge",
+        "btn-mail-tab-download-eml",
+    ]
     markup = "".join(f'<div id="{name}"></div>' for name in ids)
-    data = {"subject": "Needs review", "total_attachments": 1, "malicious_attachments": 0,
-            "unavailable_attachments": 1, "action_taken": "HELD_FOR_REVIEW", "eml_job_id": "held-email"}
+    data = {
+        "subject": "Needs review",
+        "total_attachments": 1,
+        "malicious_attachments": 0,
+        "unavailable_attachments": 1,
+        "action_taken": "HELD_FOR_REVIEW",
+        "eml_job_id": "held-email",
+    }
     page = (
-        '<!doctype html><html><head><meta charset="utf-8"></head><body>' + markup + "<script>" + source[start:end]
-        + "\nrenderEMLInspectionResult(" + json.dumps(data) + ");"
+        '<!doctype html><html><head><meta charset="utf-8"></head><body>'
+        + markup
+        + "<script>"
+        + source[start:end]
+        + "\nrenderEMLInspectionResult("
+        + json.dumps(data)
+        + ");"
         + "document.documentElement.setAttribute('data-review-badge',document.getElementById('mail-tab-action-badge').innerText);"
         + "document.documentElement.setAttribute('data-review-download-hidden',String(document.getElementById('btn-mail-tab-download-eml').classList.contains('hidden')));"
         + "</script></body></html>"
@@ -89,3 +125,50 @@ def test_held_email_is_not_labeled_safe_or_offered_as_clean_download(tmp_path: P
     attributes = _browser_attributes(tmp_path, page)
     assert attributes.get("data-review-badge") == "Cần kiểm tra thêm"
     assert attributes.get("data-review-download-hidden") == "true"
+
+
+def test_scan_guidance_distinguishes_warnings_and_unresolved_results(tmp_path: Path) -> None:
+    template = Path(__file__).resolve().parents[1] / "src/malpdf/web/templates/index.html"
+    source = template.read_text(encoding="utf-8")
+    start = source.index("    function scanAssessment(")
+    end = source.index("\n    }", start) + len("\n    }")
+    benign = {
+        "verdict": "BENIGN",
+        "prediction_available": True,
+        "is_ood": False,
+        "threat_taxonomy": {"ml_label_predictions": [{"evidence_status": "not_observed"}]},
+    }
+    observed = {"ml_label_predictions": [{"evidence_status": "observed"}]}
+    cases = [
+        (benign, "Chưa thấy dấu hiệu nguy hiểm", "Chỉ mở nếu bạn tin nguồn gửi."),
+        ({**benign, "is_ood": True}, "Chưa đủ căn cứ để kết luận", "Tạm thời đừng mở bản gốc"),
+        ({**benign, "is_ood": None}, "Chưa đủ căn cứ để kết luận", "Tạm thời đừng mở bản gốc"),
+        ({**benign, "prediction_available": False}, "Chưa đủ căn cứ để kết luận", "Tạm thời đừng mở bản gốc"),
+        ({**benign, "threat_taxonomy": {}}, "Chưa đủ căn cứ để kết luận", "Tạm thời đừng mở bản gốc"),
+        (
+            {**benign, "threat_taxonomy": {"ml_label_predictions": [{"evidence_status": "model_signal"}]}},
+            "Chưa đủ căn cứ để kết luận",
+            "Tạm thời đừng mở bản gốc",
+        ),
+        ({**benign, "threat_taxonomy": observed}, "Có dấu hiệu đáng ngờ", "Tránh mở bản gốc"),
+        (
+            {"verdict": "UNAVAILABLE", "forensic_dossier": {"threat_taxonomy": observed}},
+            "Có dấu hiệu đáng ngờ",
+            "Tránh mở bản gốc",
+        ),
+        ({**benign, "verdict": "MALICIOUS", "is_ood": True}, "Có cảnh báo mã độc", "Đừng mở bản gốc"),
+    ]
+    page = (
+        '<!doctype html><html><head><meta charset="utf-8"></head><body><script>\n'
+        + source[start:end]
+        + "\nconst cases = "
+        + json.dumps([data for data, _, _ in cases])
+        + ";\n"
+        + "document.documentElement.setAttribute('data-review-results',JSON.stringify(cases.map(scanAssessment)));"
+        + "</script></body></html>"
+    )
+    attributes = _browser_attributes(tmp_path, page)
+    results = json.loads(attributes["data-review-results"])
+    for result, (_, title, guidance) in zip(results, cases, strict=True):
+        assert result["title"] == title
+        assert result["guidance"].startswith(guidance)
