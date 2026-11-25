@@ -420,7 +420,8 @@ class MalPDFScannerEngine:
 
         ingest_data = self.ingestion.ingest(data, password=password)
         static_dossier = {
-            name: ingest_data[name] for name in ("encryption_analysis", "qr_analysis", "differential_analysis")
+            name: ingest_data[name]
+            for name in ("encryption_analysis", "qr_analysis", "differential_analysis", "js_semantics")
         }
         if self.threat_intel is not None:
             intel = ingest_data["threat_intel"] = inspect_threat_intel(self.threat_intel, ingest_data)
@@ -639,7 +640,10 @@ class MalPDFScannerEngine:
         graph_edges: list[dict[str, Any]] = []
         raw_eds = ingest_data.get("raw_edges", [])
         threat_node_ids = {
-            r["evidence_id"] for r in raw_recs if r.get("is_threat_trigger", False) or r.get("kind") == "script"
+            r["evidence_id"]
+            for r in raw_recs
+            if r.get("is_threat_trigger", False)
+            or (r.get("kind") == "script" and r.get("action_role") != "verified_benign_js")
         }
         for e_idx, e in enumerate(raw_eds):
             s = e.get("source", "")

@@ -861,25 +861,51 @@ function applyJsThreatHighlights(container, extraIndicators = []) {
   if (useHighlight && ranges.length > 0) CSS.highlights.set("malpdf-js-threat", new Highlight(...ranges));
 }
 
-function renderThreatSnippet(threats) {
-  const threat = threats[0];
+function renderThreatSnippet(threats, jsSemantics = null) {
   const snippetEl = document.getElementById("threat-code-snippet");
-  document.getElementById("js-threat-count").textContent = threats.length + " đoạn mã";
+  const indicatorsEl = document.getElementById("threat-indicators");
+  const isVerifiedBenign = (script) =>
+    (Boolean(jsSemantics?.is_verified_benign_js) || Boolean(script.is_verified_benign)) &&
+    (script.dangerous_indicators || []).length === 0;
+  const threat = threats.find((script) => !isVerifiedBenign(script)) || threats[0];
+  const allVerifiedBenign = threats.length > 0 && threats.every(isVerifiedBenign);
+  document.getElementById("js-threat-count").textContent =
+    `${threats.length} đoạn mã${allVerifiedBenign ? " hợp lệ" : ""}`;
   document.getElementById("threat-code-empty").classList.toggle("hidden", Boolean(threat));
   document.getElementById("threat-code-box").classList.toggle("hidden", !threat);
   if (threat) {
-    const indicators = threat.dangerous_indicators || [];
     snippetEl.textContent = _formatReadableCodeSnippet(threat.code_snippet || threat.snippet);
-    applyJsThreatHighlights(snippetEl, indicators);
     document.getElementById("threat-entropy").textContent = (threat.entropy || 0).toFixed(2);
-    document.getElementById("threat-indicators").textContent = indicators.length
-      ? indicators.map((ind) => _INDICATOR_VI[ind] || ind).join(", ")
-      : "Không có dấu hiệu rủi ro cụ thể";
+    if (isVerifiedBenign(threat)) {
+      CSS.highlights?.clear();
+      const intent =
+        threat.intent_label_vi ||
+        jsSemantics?.intent_summary_vi ||
+        "Mã JavaScript hợp lệ (không có hành vi khai thác hay làm rối)";
+      indicatorsEl.replaceChildren(
+        dom(
+          "span",
+          {
+            class:
+              "inline-block px-2 py-0.5 rounded-md font-semibold bg-emerald-50 text-tertiary border border-emerald-200",
+          },
+          "Đã xác minh hợp lệ",
+        ),
+        " ",
+        dom("span", { class: "font-medium text-tertiary" }, intent),
+      );
+    } else {
+      const indicators = threat.dangerous_indicators || [];
+      applyJsThreatHighlights(snippetEl, indicators);
+      indicatorsEl.textContent = indicators.length
+        ? indicators.map((ind) => _INDICATOR_VI[ind] || ind).join(", ")
+        : "Không có dấu hiệu rủi ro cụ thể";
+    }
   } else {
     CSS.highlights?.clear();
     snippetEl.textContent = "";
     document.getElementById("threat-entropy").textContent = "--";
-    document.getElementById("threat-indicators").textContent = "Không có";
+    indicatorsEl.textContent = "Không có";
   }
 }
 
@@ -1060,7 +1086,7 @@ function renderScanResult(data, cdrAudit = null) {
       });
     }
   }
-  renderThreatSnippet(data.forensic_dossier?.threat_scripts || []);
+  renderThreatSnippet(data.forensic_dossier?.threat_scripts || [], data.forensic_dossier?.js_semantics || null);
   renderMitreCascade(data.forensic_dossier?.mitre_cascade || [], isMal);
   renderCrossAttentionTable(data.forensic_dossier?.cross_attention_matrix || []);
 

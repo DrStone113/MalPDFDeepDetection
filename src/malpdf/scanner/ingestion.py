@@ -49,6 +49,7 @@ from malpdf.features.contract_v3 import DERIVED, FEATURES, LEXICAL, RAW, log_mat
 from malpdf.scanner.forensic import (
     _strip_diacritics,
     evaluate_javascript_semantics,
+    invalidate_incomplete_javascript_verification,
     is_risky_remote_target,
     is_suspicious_uri,
     is_untrusted_http_uri,
@@ -246,15 +247,23 @@ def _stream_filters(value: Any) -> list[str]:
     return [str(value)] if value is not None else []
 
 
-def _pypdf_script_text(value: Any) -> str:
-    if not isinstance(value, StreamObject):
+def _decode_script_bytes(data: bytes) -> str:
+    return data.decode("utf-16" if data.startswith((b"\xff\xfe", b"\xfe\xff")) else "utf-8-sig")
+
+
+def _pypdf_script_text(value: Any) -> str | None:
+    if isinstance(value, TextStringObject):
         return str(value)
-    if _JBIG2_FILTERS.intersection(_stream_filters(value.get("/Filter"))):
-        return ""
+    if not isinstance(value, (StreamObject, bytes)):
+        return None
     try:
-        return value.get_data().decode("utf-8", errors="replace")
+        if isinstance(value, bytes):
+            return _decode_script_bytes(value)
+        if not _JBIG2_FILTERS.intersection(_stream_filters(value.get("/Filter"))):
+            return _decode_script_bytes(value.get_data())
     except (pypdf.errors.PyPdfError, ValueError, TypeError):
-        return ""
+        pass
+    return None
 
 
 def _bounded_stream_bytes(
@@ -1156,12 +1165,14 @@ def _inspect_additional_evidence(
     xfa_analysis: dict[str, Any],
     recovered: list[str],
     register: Any,
-) -> tuple[set[str], dict[str, Any], dict[str, Any]]:
+) -> tuple[set[str], dict[str, Any], dict[str, Any], int]:
     non_js: set[str] = set()
     differential = _differential_summary()
     qr_analysis = empty_qr_analysis()
     script_codes = {item["code"] for item in scripts}
+    script_ids = {item["script_id"] for item in scripts}
     seen_uris = {item["uri"] for item in uris}
+    inspected_uri_tokens = 0
     budget = DecodeBudget(_STATIC_BYTE_LIMIT)
     xfa_budget = DecodeBudget(_STATIC_BYTE_LIMIT)
     seen_xfa = set()
@@ -1213,9 +1224,10 @@ def _inspect_additional_evidence(
                     non_js.add("action_inspection_limit")
                     break
                 fallback = _CATALOG_EVIDENCE.get(path)
-                if fallback and fallback[0] in recovered and not isinstance(value, pikepdf.Array):
+                if fallback and not isinstance(value, pikepdf.Array):
                     _, parent_id, kind = fallback
-                    register(parent_id, kind, value, path)
+                    if fallback[0] in recovered:
+                        register(parent_id, kind, value, path)
                 if value.is_indirect:
                     if value.objgen in seen_objects:
                         continue
@@ -1276,6 +1288,7 @@ def _inspect_additional_evidence(
                                 script_codes.add(code)
                                 script_id = f"script:xfa_{xfa_script_index}"
                                 xfa_script_index += 1
+                                script_ids.add(script_id)
                                 scripts.append({"script_id": script_id, "parent_id": xfa_id, "code": code})
                 if action in _NON_JS_ACTIONS:
                     non_js.add(action)
@@ -1320,6 +1333,8 @@ def _inspect_additional_evidence(
                             uris.append(evidence)
                             if suspicious:
                                 register(evidence_id, "action", value, path, action_role="suspicious_uri")
+                    if target in seen_uris:
+                        inspected_uri_tokens += 1 + int(action == "/URI")
                 if "/JS" in value or action == "/JavaScript":
                     code_value = value.get("/JS")
                     code = None
@@ -1329,16 +1344,23 @@ def _inspect_additional_evidence(
                         filters = _stream_filters(code_value.get("/Filter"))
                         decoded, _ = _bounded_stream_bytes(code_value, filters, budget)
                         if decoded is not None:
-                            code = decoded.decode("utf-8", errors="replace")
-                    if not code:
+                            try:
+                                code = _decode_script_bytes(decoded)
+                            except UnicodeDecodeError:
+                                pass
+                    if code is None:
                         non_js.add("javascript_body_unavailable")
                     elif code not in script_codes:
-                        script_codes.add(code)
                         script_parent = parent_id or f"action:script_{len(scripts)}"
                         if not parent_id:
                             register(script_parent, "action", value, path)
-                        script_id = parent_id if parent_id.startswith("script:") else f"script:{script_parent}"
-                        register(script_id, "script", code_value, f"{path}/JS", parent_id=script_parent)
+                        script_id = script_parent if script_parent.startswith("script:") else f"script:{script_parent}"
+                        if script_id in script_ids:
+                            script_id = f"{script_id}_{len(scripts)}"
+                        if not script_parent.startswith("script:"):
+                            register(script_id, "script", code_value, f"{path}/JS", parent_id=script_parent)
+                        script_codes.add(code)
+                        script_ids.add(script_id)
                         scripts.append({"script_id": script_id, "parent_id": script_parent, "code": code})
                 pending.extend(
                     (child, f"{path}{key}", parent_id)
@@ -1375,7 +1397,7 @@ def _inspect_additional_evidence(
                 qr_analysis = scan_pdf_qr_codes(data, pdf, pages_count=len(pdf.pages), codec_anomalies=codec_anomalies)
     except (pikepdf.PdfError, pypdf.errors.PyPdfError, ValueError, TypeError):
         non_js.add("supplemental_inspection_incomplete")
-    return non_js, qr_analysis, differential
+    return non_js, qr_analysis, differential, inspected_uri_tokens
 
 
 def _build_xref_offset_map(reader: PdfReader, raw_pdf_bytes: bytes) -> dict[tuple[int, int], int]:
@@ -1864,6 +1886,7 @@ class InstantPDFIngestion:
         non_js_triggers = set()
         qr_analysis = empty_qr_analysis()
         differential_analysis = _differential_summary()
+        inspected_uri_tokens = 0
         polyglot_analysis = inspect_polyglot_and_revisions(data, header_pos, last_eof)
         recovered = evasion_unpack_audit["recovered_hidden_triggers"]
         try:
@@ -1879,7 +1902,7 @@ class InstantPDFIngestion:
         except Exception as exc:
             raise ValueError("pdf_parse_failed") from exc
         if reader is not None:
-            non_js_triggers, qr_analysis, differential_analysis = self._extract_graph_and_scripts(
+            non_js_triggers, qr_analysis, differential_analysis, inspected_uri_tokens = self._extract_graph_and_scripts(
                 reader,
                 graph_bytes,
                 records,
@@ -1973,6 +1996,7 @@ class InstantPDFIngestion:
             "extracted_scripts": extracted_scripts,
             "js_semantics": js_semantics,
             "extracted_uris": extracted_uris,
+            "inspected_uri_tokens": inspected_uri_tokens,
             "phishing_analysis": phishing_analysis,
             "qr_analysis": qr_analysis,
             "differential_analysis": differential_analysis,
@@ -1983,6 +2007,7 @@ class InstantPDFIngestion:
             "non_js_triggers": sorted(non_js_triggers),
             "raw_tokens": raw_tokens,
         }
+        invalidate_incomplete_javascript_verification(ingest_data)
         ingest_data["signature_matches"] = match_pdf_signatures(data, ingest_data)
         return ingest_data
 
@@ -2000,7 +2025,7 @@ class InstantPDFIngestion:
         recovered: list[str],
         original_data: bytes,
         incremental_eof_count: int,
-    ) -> tuple[set[str], dict[str, Any], dict[str, Any]]:
+    ) -> tuple[set[str], dict[str, Any], dict[str, Any], int]:
         visited_ids: set[str] = set()
         node_limit = 200
         offset_map = _build_xref_offset_map(reader, raw_pdf_bytes)
@@ -2190,7 +2215,7 @@ class InstantPDFIngestion:
                                 act_id = f"action:annot_{p_idx}_{a_idx}"
                                 act_type = ""
                                 if isinstance(a_act, DictionaryObject):
-                                    act_type = str(a_act.get("/S", ""))
+                                    act_type = str(a_act.get("/S") or ("/JavaScript" if "/JS" in a_act else ""))
                                 is_threat_act = act_type in (
                                     "/JavaScript",
                                     "/Launch",
@@ -2212,6 +2237,7 @@ class InstantPDFIngestion:
                                     is_threat_trigger=is_threat_act,
                                     invoker=f"/Annot[{p_idx},{a_idx}]/A",
                                     indirect_id=act_idnum,
+                                    action_type=act_type,
                                     page_index=p_idx,
                                     rect_area=annotation_rect_area(rect)
                                     if str(annot_resolved.get("/Subtype")) in VISUAL_LURE_SUBTYPES
@@ -2237,8 +2263,9 @@ class InstantPDFIngestion:
                 oa_resolved = open_action.get_object() if isinstance(open_action, IndirectObject) else open_action
                 oa_id = "action:open_action"
                 is_threat_oa = False
+                s_type = ""
                 if isinstance(oa_resolved, DictionaryObject):
-                    s_type = str(oa_resolved.get("/S", ""))
+                    s_type = str(oa_resolved.get("/S") or ("/JavaScript" if "/JS" in oa_resolved else ""))
                     if (
                         s_type in ("/JavaScript", "/Launch", "/ImportData", "/GoToE", "/SubmitForm")
                         or "/JS" in oa_resolved
@@ -2252,6 +2279,7 @@ class InstantPDFIngestion:
                     is_threat_trigger=is_threat_oa,
                     invoker="/Catalog/OpenAction",
                     indirect_id=oa_idnum,
+                    action_type=s_type,
                 )
                 raw_edges.append({"source": root_id, "target": oa_id, "relation": ("catalog", "action")})
                 self._check_action_for_script(oa_resolved, oa_id, records, raw_edges, extracted_scripts, register_node)
@@ -2266,17 +2294,19 @@ class InstantPDFIngestion:
                     else additional_actions
                 )
                 aa_id = "action:aa"
-                is_threat_aa = False
+                aa_action_types: set[str] = set()
+                has_js_aa = False
                 if isinstance(aa_resolved, DictionaryObject):
                     for k in aa_resolved:
                         sub = aa_resolved[k]
                         if isinstance(sub, IndirectObject):
                             sub = sub.get_object()
-                        if isinstance(sub, DictionaryObject) and (
-                            str(sub.get("/S", "")) in ("/JavaScript", "/Launch", "/ImportData", "/GoToE", "/SubmitForm")
-                            or "/JS" in sub
-                        ):
-                            is_threat_aa = True
+                        if isinstance(sub, DictionaryObject):
+                            has_js_aa |= "/JS" in sub
+                            aa_action_types.add(str(sub.get("/S") or ("/JavaScript" if "/JS" in sub else "")))
+                is_threat_aa = has_js_aa or bool(
+                    aa_action_types & {"/JavaScript", "/Launch", "/ImportData", "/GoToE", "/SubmitForm"}
+                )
                 register_node(
                     aa_id,
                     "action",
@@ -2285,6 +2315,7 @@ class InstantPDFIngestion:
                     is_threat_trigger=is_threat_aa,
                     invoker="/Catalog/AA",
                     indirect_id=aa_idnum,
+                    action_type=next(iter(aa_action_types)) if len(aa_action_types) == 1 else None,
                 )
                 raw_edges.append({"source": root_id, "target": aa_id, "relation": ("catalog", "action")})
                 self._check_action_for_script(aa_resolved, aa_id, records, raw_edges, extracted_scripts, register_node)
@@ -2405,7 +2436,7 @@ class InstantPDFIngestion:
             and not extracted_scripts
             and not _PDF_NAME.search(raw_pdf_bytes)
         ):
-            return set(), empty_qr_analysis(), _differential_summary()
+            return set(), empty_qr_analysis(), _differential_summary(), 0
 
         def register_supplemental(
             evidence_id: str,
@@ -2433,7 +2464,7 @@ class InstantPDFIngestion:
                 invoker=path,
                 indirect_id=object_id or None,
                 has_stream=isinstance(obj, pikepdf.Stream),
-                action_type=str(obj.get("/S") or "") if kind == "action" else None,
+                action_type=str(obj.get("/S") or ("/JavaScript" if "/JS" in obj else "")) if kind == "action" else None,
                 action_role=action_role,
             )
             if evidence_id in visited_ids:
@@ -2473,12 +2504,12 @@ class InstantPDFIngestion:
         raw_js = _safe_raw_get(action_obj, "/JS")
         js_idnum = raw_js.idnum if isinstance(raw_js, IndirectObject) else None
         js_entry = action_obj.get("/JS")
-        if js_entry is not None:
-            if isinstance(js_entry, IndirectObject):
-                js_idnum = js_entry.idnum
-                js_entry = js_entry.get_object()
+        if isinstance(js_entry, IndirectObject):
+            js_idnum = js_entry.idnum
+            js_entry = js_entry.get_object()
+        script_text = _pypdf_script_text(js_entry)
+        if script_text is not None:
             script_id = f"script:{action_id}"
-            script_text = _pypdf_script_text(js_entry)
             register_node(
                 script_id,
                 "script",
@@ -2580,6 +2611,8 @@ class InstantPDFIngestion:
                     if isinstance(js_obj, IndirectObject):
                         js_obj = js_obj.get_object()
                     code = _pypdf_script_text(js_obj)
+                    if code is None:
+                        continue
                     extracted_scripts.append(
                         {
                             "script_id": f"{script_id}_{i}",
@@ -2754,8 +2787,11 @@ class InstantPDFIngestion:
                         elif hasattr(v, "type"):
                             walk(v, depth + 1)
 
-                if other_sources:
-                    walk(esprima.parseScript("\n".join(other_sources), tolerant=True), 1)
+                for code in other_sources:
+                    try:
+                        walk(esprima.parseScript(code, tolerant=True), 1)
+                    except Exception:
+                        continue
                 for code in xfa_sources:
                     try:
                         tree = esprima.parseScript(code, tolerant=True)

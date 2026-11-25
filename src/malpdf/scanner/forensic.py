@@ -18,6 +18,7 @@ from urllib.parse import unquote, urlsplit
 import esprima
 import numpy as np
 
+from malpdf.scanner.js_intent import analyze_pdf_javascript_intent, classify_obfuscation_techniques
 from malpdf.static.js_semantics import SemanticBudget, SemanticLimits, analyze_js_tree
 from malpdf.static.js_semantics import children as js_children
 
@@ -69,6 +70,8 @@ DANGEROUS_PATTERNS: list[tuple[str, str, str]] = [
 
 
 def _describe_trigger_cascade(inv: str, knd: str, action_role: str | None, is_crit: bool) -> str:
+    if action_role == "verified_benign_js":
+        return "Hành động JavaScript đã được kiểm chứng theo mục đích sử dụng trong tài liệu."
     if action_role == "destination":
         return "Khóa /OpenAction thiết lập trang đích điều hướng khi mở tài liệu."
     if action_role == "benign_navigation":
@@ -109,131 +112,14 @@ _EXPLOIT_APIS = re.compile(
     r"|spell\s*\.\s*customDictionaryOpen|exportDataObject|importDataObject|ActiveXObject|WScript|Shell)\s*\(",
     re.IGNORECASE,
 )
-_SAFE_JS_CALLS = frozenset(
-    """
-    AFNumber_Format AFNumber_Keystroke AFDate_FormatEx AFDate_KeystrokeEx AFTime_FormatEx AFTime_KeystrokeEx
-    AFPercent_Format AFPercent_Keystroke AFSpecial_Format AFSpecial_Keystroke AFSimple_Calculate AFSimple
-    AFRange_Validate AFMergeChange parseInt parseFloat isNaN isFinite Number String Boolean Array
-""".split()
+_UNSAFE_JS_SYNTAX = re.compile(
+    r"\\x[0-9a-fA-F]{2}|\\u00[0-7][0-9a-fA-F]|\b(?:with|setTimeout|setInterval)\s*\("
+    r"|\b(?:eval|Function|__proto__|constructor)\b|\barguments\s*\["
 )
-_SAFE_JS_MEMBER_CALLS = frozenset(
-    """
-    app.alert app.beep this.print this.getField this.resetForm Math.round Math.floor Math.ceil Math.min Math.max Math.abs
-""".split()
-)
-_SAFE_JS_SCALAR_METHODS = {"toFixed", "toString", "trim", "toLowerCase", "toUpperCase"}
-_SAFE_JS_EVENT_PROPERTIES = {"value", "rc", "change", "willCommit", "selStart", "selEnd"}
-_JS_CHILDREN = {
-    "Program": ("body",),
-    "BlockStatement": ("body",),
-    "ExpressionStatement": ("expression",),
-    "VariableDeclaration": ("declarations",),
-    "IfStatement": ("test", "consequent", "alternate"),
-    "ConditionalExpression": ("test", "consequent", "alternate"),
-    "ArrayExpression": ("elements",),
-}
-_JS_OPERATORS = {
-    "BinaryExpression": {"+", "-", "*", "/", "%", "<", "<=", ">", ">=", "==", "!=", "===", "!=="},
-    "LogicalExpression": {"&&", "||"},
-    "UnaryExpression": {"+", "-", "!", "typeof"},
-}
-_UNSAFE_JS_SYNTAX = re.compile(r"\\[xu][0-9a-fA-F]|\b(?:Function|setTimeout|setInterval)\s*\(")
 _MAX_JS_BYTES = 256 * 1024
 _MAX_FLOW_STRING = 2048
 _FLOW_LIMITS = SemanticLimits(max_nodes=4000, max_steps=8000)
 _JS_CALL_NAME = re.compile(r"[a-zA-Z_$][\w$]*(?:\.[a-zA-Z_$][\w$]*)*")
-
-
-def _js_member_name(node: dict) -> str:
-    if node["type"] != "MemberExpression" or node["computed"]:
-        return ""
-    receiver = node["object"]
-    owner = "this" if receiver["type"] == "ThisExpression" else receiver.get("name", "")
-    return f"{owner}.{node['property'].get('name', '')}"
-
-
-def _verified_js_calls(code: str) -> set[str] | None:
-    try:
-        ast = esprima.parseScript(code, tolerant=False).toDict()
-    except esprima.Error:
-        return None
-    locals_: set[str] = set()
-    calls: set[str] = set()
-
-    def check(node: dict) -> bool:
-        kind = node["type"]
-        if kind in _JS_CHILDREN:
-            for key in _JS_CHILDREN[kind]:
-                child = node.get(key)
-                if isinstance(child, list):
-                    if not all(item is not None and check(item) for item in child):
-                        return False
-                elif child is not None and not check(child):
-                    return False
-            return True
-        if kind in _JS_OPERATORS:
-            children = ("argument",) if kind == "UnaryExpression" else ("left", "right")
-            return node["operator"] in _JS_OPERATORS[kind] and all(check(node[key]) for key in children)
-        if kind == "VariableDeclarator":
-            binding = node["id"]
-            name = binding.get("name", "")
-            if binding["type"] != "Identifier" or name in _SAFE_JS_CALLS | {
-                "app",
-                "event",
-                "Math",
-                "eval",
-                "arguments",
-            }:
-                return False
-            if node.get("init") is not None and not check(node["init"]):
-                return False
-            locals_.add(name)
-            return True
-        if kind == "AssignmentExpression":
-            left = node["left"]
-            return (
-                node["operator"] == "="
-                and (
-                    left["type"] == "Identifier"
-                    and left["name"] in locals_
-                    or _js_member_name(left) in {"event.value", "event.rc"}
-                )
-                and check(node["right"])
-            )
-        if kind == "Identifier":
-            return node["name"] in locals_ | {"undefined", "NaN", "Infinity"}
-        if kind == "Literal":
-            val = node.get("value")
-            return "regex" not in node and (
-                not isinstance(val, str) or len(val) <= 160 and _shannon_entropy_str(val) <= 4.8
-            )
-        if kind == "MemberExpression" and not node["computed"]:
-            member = _js_member_name(node)
-            obj = node["object"]
-            return member in {f"event.{name}" for name in _SAFE_JS_EVENT_PROPERTIES} or (
-                node["property"].get("name") in {"value", "valueAsString"}
-                and obj["type"] == "CallExpression"
-                and _js_member_name(obj["callee"]) == "this.getField"
-                and check(obj)
-            )
-        if kind not in {"CallExpression", "NewExpression"}:
-            return False
-        callee = node["callee"]
-        name = callee.get("name", "") if callee["type"] == "Identifier" else _js_member_name(callee)
-        if kind == "NewExpression":
-            allowed = callee["type"] == "Identifier" and name == "Array"
-        else:
-            allowed = name in _SAFE_JS_CALLS or name in _SAFE_JS_MEMBER_CALLS
-            if not allowed and callee["type"] == "MemberExpression" and not callee["computed"]:
-                prop = callee["property"].get("name")
-                if prop in _SAFE_JS_SCALAR_METHODS and check(callee["object"]):
-                    name, allowed = f".{prop}", True
-        if not allowed or not all(check(arg) for arg in node["arguments"]):
-            return False
-        calls.add(name)
-        return True
-
-    return calls if ast["body"] and check(ast) else None
 
 
 @dataclass(frozen=True)
@@ -382,17 +268,17 @@ def _resolve_js_ast_flow(tree: dict) -> tuple[set[str], set[str]]:
     return strings, calls
 
 
-def _inspect_js_flow(code: str, budget: SemanticBudget | None = None) -> tuple[set[str], set[str]]:
+def _inspect_js_flow(code: str, budget: SemanticBudget | None = None) -> tuple[set[str], set[str], bool]:
     try:
         tree = esprima.parseScript(code, {"tolerant": True}).toDict()
     except (esprima.Error, RecursionError, ValueError):
-        return set(), set()
+        return set(), set(), True
     strings, calls = _resolve_js_ast_flow(tree)
     if budget is not None:
         digest = hashlib.sha256(code.encode("utf-8", errors="surrogatepass")).hexdigest()
         analysis = analyze_js_tree(tree, digest, budget=budget)
         calls.update(name for call in analysis["calls"] for name in call["known_api_candidates"])
-    return strings, calls
+    return strings, calls, False
 
 
 def evaluate_javascript_semantics(
@@ -400,63 +286,113 @@ def evaluate_javascript_semantics(
     ast_stats: dict[str, float] | None = None,
     ast_node_counts: dict[str, int] | None = None,
 ) -> dict[str, Any]:
-    stats = ast_stats or {}
-    codes = [str(script.get("code") or "") for script in extracted_scripts]
-    verified = bool(codes) and (
-        0 < float(stats.get("total_nodes") or 0) <= 120
-        and float(stats.get("max_depth") or 0) <= 12
-        and float(stats.get("loops") or 0) == float(stats.get("computed_members") or 0) == 0
-        and not any((ast_node_counts or {}).get(kind) for kind in ("FunctionDeclaration", "FunctionExpression"))
-        and sum(map(len, codes)) <= 512
-    )
+    codes = [script.get("code") for script in extracted_scripts]
+    intent = analyze_pdf_javascript_intent([code if isinstance(code, str) else "" for code in codes])
     indicators: set[str] = set()
     techniques: set[str] = set()
-    calls: set[str] = set()
+    evasive_techniques: set[str] = set()
     resolved_calls: set[str] = set()
     resolved_urls: set[str] = set()
     budget = SemanticBudget(_FLOW_LIMITS)
-    for code in dict.fromkeys(codes):
-        if (
-            not code.strip()
-            or len(code) > _MAX_JS_BYTES
-            or len(code.encode("utf-8", errors="surrogatepass")) > _MAX_JS_BYTES
-        ):
-            verified = False
+    inspected = {}
+    for code, report in zip(codes, intent["per_script_intents"], strict=True):
+        if not isinstance(code, str):
+            report.update(
+                is_verified_benign=False, intent_label_vi="", unverified_reasons=["javascript_body_unavailable"]
+            )
             continue
-        deobfuscated = deobfuscate_javascript_static(code)
-        techniques.update(deobfuscated["deobfuscation_techniques"])
-        strings, flow_calls = _inspect_js_flow(code, budget)
-        normalized = deobfuscated["deobfuscated_code"]
-        if normalized != code:
-            folded_strings, folded_calls = _inspect_js_flow(normalized)
-            strings.update(folded_strings)
-            flow_calls.update(folded_calls)
-        resolved_calls.update(flow_calls)
-        resolved_urls.update(match.group() for value in strings for match in EMBEDDED_URI_PATTERN.finditer(value))
-        text = "\n".join((code, normalized, "\n".join(sorted(strings)), *(f"{name}(" for name in sorted(flow_calls))))
-        indicators.update(tag for tag, pattern, _ in DANGEROUS_PATTERNS if re.search(pattern, text, re.IGNORECASE))
-        indicators.update(re.sub(r"\s", "", match.group()[:-1]) for match in _EXPLOIT_APIS.finditer(text))
-        if not verified or _UNSAFE_JS_SYNTAX.search(code) or _shannon_entropy_str(code) > 5.2:
-            verified = False
+        if not code.strip() or report["intent_codes"] == ["empty_noop"] or len(code) > _MAX_JS_BYTES:
             continue
-        script_calls = _verified_js_calls(code)
-        verified = script_calls is not None
-        if script_calls is not None:
-            calls.update(script_calls)
-    suspicious_urls = [uri for uri in sorted(resolved_urls) if is_suspicious_uri(uri)[0]]
-    if suspicious_urls:
-        indicators.add("js_flow_suspicious_uri")
+        if len(code.encode("utf-8", errors="surrogatepass")) > _MAX_JS_BYTES:
+            continue
+        if code not in inspected:
+            deobfuscated = deobfuscate_javascript_static(code)
+            folded = deobfuscated["deobfuscation_techniques"]
+            techniques.update(folded)
+            evasive, _ = classify_obfuscation_techniques(code, folded)
+            strings, flow_calls, syntax_error = _inspect_js_flow(code, budget)
+            normalized = deobfuscated["deobfuscated_code"]
+            if normalized != code:
+                folded_strings, folded_calls, _ = _inspect_js_flow(normalized)
+                strings.update(folded_strings)
+                flow_calls.update(folded_calls)
+            resolved_calls.update(flow_calls)
+            urls = {match.group() for value in strings for match in EMBEDDED_URI_PATTERN.finditer(value)}
+            resolved_urls.update(urls)
+            text = "\n".join(
+                (code, normalized, "\n".join(sorted(strings)), *(f"{name}(" for name in sorted(flow_calls)))
+            )
+            found = {tag for tag, pattern, _ in DANGEROUS_PATTERNS if re.search(pattern, text, re.IGNORECASE)}
+            found.update(re.sub(r"\s", "", match.group()[:-1]) for match in _EXPLOIT_APIS.finditer(text))
+            if syntax_error:
+                found.add("javascript_syntax_error")
+            if any(is_suspicious_uri(uri)[0] for uri in urls):
+                found.add("js_flow_suspicious_uri")
+            reasons = set()
+            if _UNSAFE_JS_SYNTAX.search(code):
+                reasons.add("unsafe_javascript_syntax")
+            if found:
+                reasons.add("dangerous_javascript_indicator")
+            if evasive:
+                reasons.add("evasive_obfuscation")
+            inspected[code] = found, evasive, reasons
+            indicators.update(found)
+            evasive_techniques.update(evasive)
+        found, evasive, reasons = inspected[code]
+        if reasons:
+            report.update(
+                is_verified_benign=False,
+                intent_label_vi="",
+                unverified_reasons=sorted(set(report["unverified_reasons"]) | reasons),
+                dangerous_indicators=sorted(set(report["dangerous_indicators"]) | found),
+                evasive_obfuscation_techniques=sorted(set(report["evasive_obfuscation_techniques"]) | set(evasive)),
+            )
+    indicators.update(intent["dangerous_indicators"])
+    evasive_techniques.update(intent["evasive_obfuscation_techniques"])
+    reports = intent["per_script_intents"]
+    verified = bool(reports) and all(report["is_verified_benign"] for report in reports)
     return {
+        **intent,
         "has_scripts": bool(codes),
-        "is_verified_benign_js": verified and not indicators and not techniques,
+        "is_verified_benign_js": verified,
+        "intent_summary_vi": intent["intent_summary_vi"] if verified else "",
+        "script_intents": sorted(
+            {code for report in reports if report["is_verified_benign"] for code in report["intent_codes"]}
+        ),
+        "unverified_reasons": sorted({reason for report in reports for reason in report["unverified_reasons"]}),
         "malicious_indicator_count": len(indicators),
         "dangerous_indicators": sorted(indicators),
         "deobfuscation_techniques": sorted(techniques),
-        "benign_api_calls": sorted(calls),
+        "evasive_obfuscation_techniques": sorted(evasive_techniques),
+        "benign_api_calls": sorted(
+            {call for report in reports if report["is_verified_benign"] for call in report["benign_api_calls"]}
+        ),
         "resolved_calls": sorted(resolved_calls),
         "resolved_urls": sorted(resolved_urls),
-        "flow_suspicious_urls": suspicious_urls,
+        "flow_suspicious_urls": [uri for uri in sorted(resolved_urls) if is_suspicious_uri(uri)[0]],
     }
+
+
+def invalidate_incomplete_javascript_verification(ingest_data: dict[str, Any]) -> None:
+    js = ingest_data["js_semantics"]
+    non_js = set(ingest_data.get("non_js_triggers", ()))
+    raw_tokens = ingest_data.get("raw_tokens", {})
+    xfa = ingest_data.get("xfa_analysis", {})
+    gaps = non_js.intersection(
+        {"javascript_body_unavailable", "action_inspection_limit", "supplemental_inspection_incomplete"}
+    )
+    if ingest_data.get("evasion_unpack_audit", {}).get("hex_escaped_names_decoded", 0) > 0:
+        gaps.add("hex_escaped_pdf_names")
+    if xfa.get("present") or xfa.get("anomalies"):
+        gaps.add("xfa_javascript_unverified")
+    if raw_tokens.get("JS", 0) + raw_tokens.get("JavaScript", 0) > 0 and not ingest_data.get("extracted_scripts"):
+        gaps.add("javascript_body_unavailable")
+    if gaps:
+        js.update(
+            is_verified_benign_js=False,
+            intent_summary_vi="",
+            unverified_reasons=sorted(set(js.get("unverified_reasons", ())) | gaps),
+        )
 
 
 _DANGEROUS_URI_SCHEMES = {"javascript", "vbscript", "data", "file", "smb", "mhtml", "jar"}
@@ -664,6 +600,7 @@ def _reconcile_semantic_verdict(
     records = ingest_data["raw_records"]
     js = ingest_data["js_semantics"]
     raw_tokens = ingest_data["raw_tokens"]
+    invalidate_incomplete_javascript_verification(ingest_data)
     has_non_js_threat = bool(
         threat_non_js
         or any(raw_tokens.get(key) for key in ("Launch", "EmbeddedFile", "XFA", "RichMedia"))
@@ -720,7 +657,7 @@ def _reconcile_semantic_verdict(
         return math.log(
             uninspected_probability / (1.0 - uninspected_probability)
         ) * temperature, uninspected_probability
-    if probability < threshold or has_non_js_threat:
+    if has_non_js_threat or (probability < threshold and not js["is_verified_benign_js"]):
         return logit, probability
 
     catalog_action_records = [
@@ -729,14 +666,19 @@ def _reconcile_semantic_verdict(
     benign_nav_indices = [index for index, record in catalog_action_records if _is_benign_catalog_action(record)]
     reconciled_ids = {records[index]["evidence_id"] for index in benign_nav_indices}
     if js["is_verified_benign_js"]:
-        script_parents = {script["parent_id"] for script in ingest_data["extracted_scripts"]}
+        script_parents = {script["parent_id"] for script in ingest_data.get("extracted_scripts", ())}
         node_indices = [
             index
             for index, record in enumerate(records)
             if record["kind"] == "script"
             or record["action_type"] == "/JavaScript"
-            or record["evidence_id"] in script_parents
+            or (record["evidence_id"] in script_parents and not _is_benign_catalog_action(record))
         ]
+        if probability < threshold:
+            for index in node_indices:
+                records[index].update(is_threat_trigger=False, action_role="verified_benign_js")
+            if probability <= 0.15:
+                return logit, probability
         drop_indices = sorted(set(node_indices) | set(benign_nav_indices))
         if len(drop_indices) >= len(records):
             drop_indices = node_indices
@@ -758,6 +700,8 @@ def _reconcile_semantic_verdict(
         drop_indices = benign_nav_indices
         prefix = "lexical_" if is_v3 else ""
         trigger_columns = {prefix + _CATALOG_ACTION_TOKENS[evidence_id] for evidence_id in reconciled_ids}
+    if len(drop_indices) >= len(records):
+        return logit, probability
     if is_v3:
         names = ingest_data["v3_feature_names"]
         center, scale = ingest_data["v3_scaler_center"], ingest_data["v3_scaler_scale"]
@@ -768,7 +712,7 @@ def _reconcile_semantic_verdict(
     baselines = [-center[index] / scale[index] for index in column_indices]
     cf_logit = counterfactual(drop_indices, column_indices, baselines)
     cf_prob = _calibrated_probability(cf_logit, temperature)
-    if cf_prob >= threshold:
+    if cf_prob >= min(threshold, probability):
         return logit, probability
     calibration = {
         "applied": True,
@@ -826,10 +770,15 @@ def reconcile_taxonomy_observations(
 ) -> set[str]:
     suppressed = set()
     triggers = set(ingest_data.get("non_js_triggers", ()))
+    threat_triggers_set = triggers - _NON_THREAT_AUDIT_MARKERS
     password_locked = ingest_data.get("encryption_analysis", {}).get("password_locked")
     js_semantics = ingest_data.get("js_semantics", {})
-    if verdict == "BENIGN" and not triggers and not password_locked and js_semantics.get("is_verified_benign_js"):
-        suppressed = {"js_script_exec", "auto_open_trigger"}
+    evasion_audit = ingest_data.get("evasion_unpack_audit", {})
+    verified_benign_js = bool(js_semantics.get("is_verified_benign_js")) and not evasion_audit.get(
+        "hex_escaped_names_decoded"
+    )
+    if verdict == "BENIGN" and not threat_triggers_set and not password_locked and verified_benign_js:
+        suppressed = {"js_script_exec", "auto_open_trigger", "obfuscated_payload", "buffer_loop_staging"}
         for label in suppressed:
             observations[label] = None
     phishing = ingest_data.get("phishing_analysis", {})
@@ -850,7 +799,6 @@ def reconcile_taxonomy_observations(
     codec_reasons = sorted(
         {f"{item['codec']}: {', '.join(item['reason_codes'])}" for item in ingest_data.get("codec_anomalies", [])}
     )
-    evasion_audit = ingest_data.get("evasion_unpack_audit", {})
     effective_recovered = list(evasion_audit.get("recovered_hidden_triggers", []))
     records = ingest_data.get("raw_records") or []
     raw_tokens = ingest_data.get("raw_tokens") or {}
@@ -864,6 +812,10 @@ def reconcile_taxonomy_observations(
         and "action:open_action" in benign_catalog_ids
     ):
         effective_recovered.remove("OpenAction")
+    if verdict == "BENIGN" and verified_benign_js and not threat_triggers_set:
+        effective_recovered = [
+            token for token in effective_recovered if token not in {"JS", "JavaScript", "AA", "OpenAction", "AcroForm"}
+        ]
     structural = observations.get("structural_parser_evasion")
     details = [structural] if structural else []
     differential = ingest_data.get("differential_analysis", {})
@@ -891,7 +843,8 @@ def reconcile_taxonomy_observations(
         or not raw_tokens
         or not ingest_data.get("graph_present", True)
         or password_locked
-        or triggers
+        or threat_triggers_set
+        or (triggers and not verified_benign_js)
         or ingest_data.get("codec_anomalies")
         or phishing.get("has_phishing_threat")
         or qr.get("has_qr_threat")
@@ -911,27 +864,29 @@ def reconcile_taxonomy_observations(
         and raw_tokens.get("JS", 0) == raw_tokens.get("JavaScript", 0) == 0
         and not any(record.get("kind") == "script" for record in records)
     )
-    verified_navigation_js = (
-        bool(benign_catalog_ids)
-        and js_semantics.get("is_verified_benign_js")
-        and ingest_data.get("ast_semantic_calibration", {}).get("applied")
+    no_xfa = (
+        not ingest_data.get("xfa_analysis", {}).get("present")
+        and not raw_tokens.get("XFA", 0)
+        and not any(record.get("evidence_id") == "script:acroform_xfa" for record in records)
     )
+    no_dropper = raw_tokens.get("Launch", 0) == raw_tokens.get("EmbeddedFile", 0) == 0 and not any(
+        record.get("kind") == "filespec" or record.get("action_type") == "/Launch" for record in records
+    )
+    verified_form_only = verified_benign_js and no_xfa and no_dropper and not effective_recovered
     disproven = {
         "js_script_exec": no_js,
-        "obfuscated_payload": no_js or verified_navigation_js,
+        "obfuscated_payload": no_js,
         "buffer_loop_staging": no_js,
         "auto_open_trigger": not scripts
         and all(_is_benign_catalog_action(record) for record in catalog_actions)
         and _catalog_action_tokens_accounted_for(raw_tokens, benign_catalog_ids),
-        "active_form_or_exploit": not scripts
-        and not ingest_data.get("xfa_analysis", {}).get("present")
-        and all(raw_tokens.get(token, 0) == 0 for token in ("XFA", "AcroForm", "Acroform")),
-        "embedded_dropper_or_launch": not scripts
-        and raw_tokens.get("Launch", 0) == raw_tokens.get("EmbeddedFile", 0) == 0
-        and not any(record.get("kind") == "filespec" or record.get("action_type") == "/Launch" for record in records),
+        "active_form_or_exploit": verified_form_only
+        or (not scripts and no_xfa and not (raw_tokens.get("AcroForm", 0) or raw_tokens.get("Acroform", 0))),
+        "embedded_dropper_or_launch": verified_form_only or (not scripts and no_dropper),
         "suspicious_uri_redirect": not phishing.get("suspicious_uris")
         and not any(record.get("action_type") in {"/SubmitForm", "/GoToR"} for record in records)
-        and len(ingest_data.get("extracted_uris", [])) >= raw_tokens.get("URI", 0),
+        and max(len(ingest_data.get("extracted_uris", ())), int(ingest_data.get("inspected_uri_tokens", 0)))
+        >= raw_tokens.get("URI", 0),
         "structural_parser_evasion": not evasion_audit.get("hex_escaped_names_decoded")
         and not effective_recovered
         and not any(
@@ -1131,6 +1086,8 @@ class ForensicAttributionEngine:
         records = ingest_data.get("raw_records", [])
         v3_evidence = cross_weights is not None and "tabular_weight" in cross_weights
         scripts = ingest_data.get("extracted_scripts", [])
+        js_semantics = ingest_data.get("js_semantics", {})
+        script_intents = js_semantics.get("per_script_intents", [])
         stats = ingest_data.get("ast_stats") or {}
         counts = ingest_data.get("ast_node_counts") or {}
         triggers = []
@@ -1160,21 +1117,26 @@ class ForensicAttributionEngine:
         )
 
         threat_scripts = []
-        for script in scripts:
+        for index, script in enumerate(scripts):
             code = script.get("code", "")
+            intent = script_intents[index] if index < len(script_intents) else {}
+            verified = bool(intent.get("is_verified_benign"))
             deobf = deobfuscate_javascript_static(code)
             deobf_code = deobf["deobfuscated_code"]
             combined_scan_text = code + ("\n" + deobf_code if deobf["deobfuscation_applied"] else "")
             matches = [
                 (tag, label)
                 for tag, pattern, label in DANGEROUS_PATTERNS
-                if re.search(pattern, combined_scan_text, re.IGNORECASE)
+                if not verified and re.search(pattern, combined_scan_text, re.IGNORECASE)
             ]
+            descriptions = dict(matches)
+            indicators = list(dict.fromkeys([*descriptions, *intent.get("dangerous_indicators", ())]))
             raw_snippet = re.sub(r"\s+", " ", code).strip()[:180]
             deobf_snippet = re.sub(r"\s+", " ", deobf_code).strip()[:180]
+            show_deobfuscated = deobf["deobfuscation_applied"] and not verified
             display_snippet = (
                 f"[DEOBFUSCATED ({', '.join(deobf['deobfuscation_techniques'])})]: {deobf_snippet}\n[RAW]: {raw_snippet}"
-                if deobf["deobfuscation_applied"]
+                if show_deobfuscated
                 else raw_snippet
             )
             threat_scripts.append(
@@ -1183,16 +1145,19 @@ class ForensicAttributionEngine:
                     "parent_id": script.get("parent_id"),
                     "entropy": round(_shannon_entropy_str(code), 4),
                     "length_chars": len(code),
-                    "dangerous_indicators": [tag for tag, _ in matches],
-                    "indicator_descriptions": [label for _, label in matches],
+                    "is_verified_benign": verified,
+                    "intent_codes": intent.get("intent_codes", []),
+                    "intent_label_vi": intent.get("intent_label_vi", ""),
+                    "dangerous_indicators": indicators,
+                    "indicator_descriptions": [descriptions.get(tag, tag) for tag in indicators],
                     "snippet": raw_snippet,
                     "code_snippet": display_snippet,
                     "raw_code_snippet": raw_snippet,
                     "deobfuscated_code": deobf_code,
-                    "deobfuscation_applied": deobf["deobfuscation_applied"],
+                    "deobfuscation_applied": show_deobfuscated,
                     "deobfuscation_techniques": deobf["deobfuscation_techniques"],
                     "full_code": code,
-                    "annotated_lines": _annotate_code_lines(deobf_code if deobf["deobfuscation_applied"] else code),
+                    "annotated_lines": _annotate_code_lines(deobf_code if show_deobfuscated else code),
                 }
             )
 
@@ -1205,9 +1170,12 @@ class ForensicAttributionEngine:
         threat_triggers = [
             t
             for t in triggers
-            if t.get("is_threat_trigger")
-            or t.get("kind") in ("script", "filespec")
-            or t.get("object_id") in script_parents
+            if t.get("action_role") != "verified_benign_js"
+            and (
+                t.get("is_threat_trigger")
+                or t.get("kind") in ("script", "filespec")
+                or t.get("object_id") in script_parents
+            )
         ]
         default_stream_goal = next(
             (record["evidence_id"] for record in records if record.get("kind") == "stream"),
@@ -1375,7 +1343,9 @@ class ForensicAttributionEngine:
                 inv = str(trigger.get("invoker") or "/Root")
                 knd = str(trigger.get("kind") or "action")
                 action_role = trigger.get("action_role")
-                is_crit = bool(trigger.get("is_threat_trigger")) or knd in ("script", "filespec")
+                is_crit = action_role != "verified_benign_js" and (
+                    bool(trigger.get("is_threat_trigger")) or knd in ("script", "filespec")
+                )
                 observations.append(
                     {
                         "stage_num": index + 1,
@@ -1460,7 +1430,7 @@ class ForensicAttributionEngine:
             else "document_structure",
             "attack_path_string": " -> ".join(attack_path),
             "attack_path_status": "observed" if path_ids and path_ids[-1] == goal else "unreachable_in_observed_graph",
-            "suspicious_object_count": len(triggers),
+            "suspicious_object_count": len(threat_triggers),
             "script_count": len(threat_scripts),
         }
 

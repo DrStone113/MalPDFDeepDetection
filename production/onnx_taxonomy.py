@@ -320,7 +320,13 @@ class ONNXThreatTaxonomyClassifier:
 
         all_indicators: set[str] = set()
         deobf_techniques: list[str] = []
+        js_semantics = ingest_data.get("js_semantics", {})
         if script_findings:
+            script_findings = [
+                finding
+                for finding in script_findings
+                if not (finding.get("is_verified_benign") and finding.get("intent_codes") == ["empty_noop"])
+            ]
             combined_js = "\n".join(
                 (str(sf.get("full_code", "")) + "\n" + str(sf.get("deobfuscated_code", ""))) for sf in script_findings
             )
@@ -332,7 +338,14 @@ class ONNXThreatTaxonomyClassifier:
                         deobf_techniques.append(str(tech))
         else:
             js_parts: list[str] = []
-            for s in scripts:
+            intents = js_semantics.get("per_script_intents", [])
+            for index, s in enumerate(scripts):
+                if (
+                    index < len(intents)
+                    and intents[index].get("is_verified_benign")
+                    and intents[index].get("intent_codes") == ["empty_noop"]
+                ):
+                    continue
                 raw_code = str(s.get("code", ""))
                 deobf_res = deobfuscate_javascript_static(raw_code)
                 scan_txt = raw_code + (
@@ -347,7 +360,15 @@ class ONNXThreatTaxonomyClassifier:
                         all_indicators.add(tag)
             combined_js = "\n".join(js_parts)
 
-        all_indicators.update(ingest_data.get("js_semantics", {}).get("dangerous_indicators", ()))
+        all_indicators.update(js_semantics.get("dangerous_indicators", ()))
+        if "evasive_obfuscation_techniques" in js_semantics:
+            deobf_techniques = list(js_semantics["evasive_obfuscation_techniques"])
+        elif js_semantics.get("is_verified_benign_js"):
+            deobf_techniques = [
+                technique
+                for technique in deobf_techniques
+                if technique not in {"string_concat_fold", "unicode_escape_decode"}
+            ]
         has_obfuscated_js = bool(deobf_techniques) or bool(
             all_indicators.intersection({"unescape_decode", "from_char_code", "eval_exec"})
         )

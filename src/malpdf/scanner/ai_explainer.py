@@ -95,6 +95,13 @@ def _inspection_findings(dossier: dict[str, Any], taxonomy: dict[str, Any]) -> l
     return details
 
 
+def _verified_js_summary(dossier: dict[str, Any], verdict: str) -> str:
+    semantics = dossier.get("js_semantics") or {}
+    if verdict == "BENIGN" and semantics.get("is_verified_benign_js"):
+        return semantics.get("intent_summary_vi") or ""
+    return ""
+
+
 class AIThreatExplainer:
     def __init__(self) -> None:
         pass
@@ -128,7 +135,12 @@ class AIThreatExplainer:
             else ("Điểm mô hình dưới ngưỡng cảnh báo" if verdict == "BENIGN" else "Chưa có điểm đánh giá tệp")
         )
         all_triggers = dossier.get("trigger_objects", []) or dossier.get("suspicious_triggers", []) or []
-        triggers = [t for t in all_triggers if t.get("is_threat_trigger") or t.get("kind") in ("script", "filespec")]
+        triggers = [
+            t
+            for t in all_triggers
+            if t.get("action_role") != "verified_benign_js"
+            and (t.get("is_threat_trigger") or t.get("kind") in ("script", "filespec"))
+        ]
         scripts = dossier.get("threat_scripts", []) or dossier.get("script_findings", []) or []
         attack_path_str = dossier.get("attack_path_string") or " -> ".join(dossier.get("attack_path") or [])
 
@@ -137,9 +149,16 @@ class AIThreatExplainer:
         ]
         script_summaries: list[dict[str, Any]] = []
         detail_parts = _inspection_findings(dossier, taxonomy)
+        intent_summary = _verified_js_summary(dossier, verdict)
+        if intent_summary:
+            detail_parts.insert(0, intent_summary)
         for s in scripts[:3]:
             inds = (s.get("dangerous_indicators") or [])[:5]
-            raw_snippet = str(s.get("deobfuscated_code") or s.get("raw_code_snippet") or s.get("snippet") or "")
+            raw_snippet = str(
+                (s.get("deobfuscated_code") if s.get("deobfuscation_applied") else s.get("raw_code_snippet"))
+                or s.get("snippet")
+                or ""
+            )
             clean_snippet = re.sub(r"\s+", " ", raw_snippet).strip()[:120]
             sid = str(s.get("script_id") or "script")
             script_summaries.append(
@@ -147,6 +166,8 @@ class AIThreatExplainer:
                     "script_id": sid,
                     "indicators": [_INDICATOR_LABELS_VI.get(str(i), str(i)) for i in inds],
                     "deobfuscated": bool(s.get("deobfuscation_applied", False)),
+                    "is_verified_benign": bool(s.get("is_verified_benign")),
+                    "intent_label_vi": s.get("intent_label_vi", ""),
                     "snippet_preview": clean_snippet,
                 }
             )
@@ -160,7 +181,13 @@ class AIThreatExplainer:
 
         status_str = "Malicious" if verdict == "MALICIOUS" else ("Benign" if verdict == "BENIGN" else "Unavailable")
         threat_type_str = (
-            "Embedded JavaScript observed" if scripts else (threat_label if verdict == "MALICIOUS" else "None")
+            "Verified benign JavaScript"
+            if intent_summary
+            else "Embedded JavaScript observed"
+            if scripts
+            else threat_label
+            if verdict == "MALICIOUS"
+            else "None"
         )
 
         cdr_summary: dict[str, Any] | None = None
@@ -182,7 +209,8 @@ class AIThreatExplainer:
             "threat_type": threat_type_str,
             "threat_label": threat_label,
             "threat_title_vi": threat_title_vi,
-            "details": "; ".join(detail_parts)[:360],
+            "intent_summary_vi": intent_summary,
+            "details": " ".join(detail_parts)[:360],
             "file_name": file_name,
             "pages_count": pages,
             "file_size_kb": size_kb,
@@ -225,8 +253,14 @@ class AIThreatExplainer:
         detected_cnt = int(taxonomy.get("detected_count") or 0)
         total_analyzers = int(taxonomy.get("total_analyzers") or 0)
         all_triggers = dossier.get("trigger_objects", []) or dossier.get("suspicious_triggers", []) or []
-        triggers = [t for t in all_triggers if t.get("is_threat_trigger") or t.get("kind") in ("script", "filespec")]
+        triggers = [
+            t
+            for t in all_triggers
+            if t.get("action_role") != "verified_benign_js"
+            and (t.get("is_threat_trigger") or t.get("kind") in ("script", "filespec"))
+        ]
         scripts = dossier.get("threat_scripts", []) or dossier.get("script_findings", []) or []
+        intent_summary = _verified_js_summary(dossier, verdict)
         attack_path_str = dossier.get("attack_path_string") or " -> ".join(dossier.get("attack_path") or [])
 
         trigger_names = [
@@ -306,6 +340,8 @@ class AIThreatExplainer:
             exec_sum = (
                 f"Tệp '{file_name}' ({pages} trang, {size_kb} KB) có điểm mô hình {prob_pct:.2f}%, vượt {thr_text}."
             )
+        elif intent_summary and not triggers:
+            exec_sum = f"Tệp '{file_name}' có điểm mô hình {prob_pct:.2f}%, dưới {thr_text}. {intent_summary}"
         elif triggers or scripts:
             exec_sum = (
                 f"Tệp '{file_name}' ({pages} trang, {size_kb} KB) có điểm mô hình {prob_pct:.2f}% "
@@ -321,7 +357,9 @@ class AIThreatExplainer:
         if inspection_findings:
             exec_sum += " " + " ".join(inspection_findings)
 
-        if triggers or scripts:
+        if intent_summary and not triggers:
+            static_detail = intent_summary
+        elif triggers or scripts:
             found_bits = []
             if triggers:
                 found_bits.append(f"{len(triggers)} khóa kích hoạt ({trigger_summary})")
@@ -370,7 +408,7 @@ class AIThreatExplainer:
                 "Không nên mở trực tiếp tệp gốc. Chuyển sang mục Làm sạch tệp để gỡ bỏ khóa kích hoạt "
                 "rồi tải bản đã xử lý."
             )
-        elif triggers or scripts:
+        elif triggers or (scripts and not intent_summary):
             cdr_card_detail = "Chưa làm sạch. Có thể chạy Làm sạch tệp nếu muốn loại bỏ các thành phần tự động."
             remediation_text = (
                 "Điểm mô hình dưới ngưỡng cảnh báo, nhưng cấu trúc vẫn có thành phần thực thi hoặc tự chạy. "
@@ -394,7 +432,7 @@ class AIThreatExplainer:
 
         return {
             "explanation_method": "deterministic_evidence_summary",
-            "danger_level": "HIGH" if above_threshold or triggers or scripts else "SAFE",
+            "danger_level": "HIGH" if above_threshold or triggers or (scripts and not intent_summary) else "SAFE",
             "danger_score": prob_pct,
             "headline": threat_title_vi,
             "executive_summary": exec_sum,
@@ -406,7 +444,7 @@ class AIThreatExplainer:
                 },
                 {
                     "title": "Dấu hiệu cấu trúc",
-                    "severity": "warning" if triggers or scripts else "info",
+                    "severity": "warning" if triggers or (scripts and not intent_summary) else "info",
                     "detail": static_detail,
                 },
                 {

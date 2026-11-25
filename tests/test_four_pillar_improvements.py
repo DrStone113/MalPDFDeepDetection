@@ -214,11 +214,14 @@ def test_onnx_and_pytorch_pillar_probability_parity(pytorch_engine, onnx_engine)
         "AFSimple_Calculate('SUM', new Array('Quantity', 'Price'));",
         "var qty = this.getField('Quantity').value; var price = 2; event.value = Math.round(qty * price);",
         "if (event.value < 0) { app.alert('Invalid'); event.rc = false; }",
+        "var values = [1, 2]; event.value = values[0];",
+        "function diagnostic() { return 1; } diagnostic();",
     ],
 )
 def test_diverse_enterprise_acroform_js_matrix(scanner, code):
     result = scanner.scan_bytes(_with_scripts("form", code), explain=True)
-    assert result.forensic_dossier["js_semantics"]["is_verified_benign_js"]
+    semantics = result.forensic_dossier["js_semantics"]
+    assert semantics["is_verified_benign_js"] is True, semantics["unverified_reasons"]
     assert result.verdict == "BENIGN"
     assert result.threat_taxonomy["detected_count"] == 0
 
@@ -226,9 +229,10 @@ def test_diverse_enterprise_acroform_js_matrix(scanner, code):
 @pytest.mark.parametrize(
     "code",
     [
-        "var values = [1, 2]; event.value = values[0];",
-        "function diagnostic() { return 1; }",
-        "var unused = new Function('return 1');",
+        pytest.param("var unused = new Function('return 1');", id="function-constructor"),
+        pytest.param("var name = 'eval'; this[name]('1 + 1');", id="computed-global-call"),
+        pytest.param("var text = 'A'; for (var i = 0; i < 5; i++) { text += text; }", id="string-doubling"),
+        pytest.param("function diagnostic() { Collab.getIcon('diagnostic'); }", id="collab-icon"),
     ],
 )
 def test_non_allowlisted_javascript_is_not_rescued(scanner, code):
