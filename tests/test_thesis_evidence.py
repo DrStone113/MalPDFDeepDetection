@@ -7,7 +7,6 @@ import pytest
 
 from malpdf.thesis.evidence import EvidenceError, build_thesis_evidence
 
-
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -16,11 +15,11 @@ def _rows(path: Path) -> list[dict[str, str]]:
         return list(csv.DictReader(handle))
 
 
-def test_thesis_evidence_builder_is_deterministic_and_uses_explicit_metric_names(tmp_path: Path) -> None:
+def test_thesis_evidence_builder_is_deterministic_and_preserves_phase2_evidence(tmp_path: Path) -> None:
     first = build_thesis_evidence(REPOSITORY_ROOT, tmp_path / "first")
     second = build_thesis_evidence(REPOSITORY_ROOT, tmp_path / "second")
 
-    assert len(first.table_paths) == 10
+    assert len(first.table_paths) >= 10
     assert [path.name for path in first.table_paths] == [path.name for path in second.table_paths]
     for first_path, second_path in zip(first.table_paths, second.table_paths, strict=True):
         assert first_path.read_bytes() == second_path.read_bytes()
@@ -39,7 +38,16 @@ def test_thesis_evidence_builder_is_deterministic_and_uses_explicit_metric_names
     assert dataset["rows"] == "24337"
     assert dataset["predictive_features"] == "41"
     assert dataset["feature_equivalent_groups"] == "15371"
-    assert "identical 41-dimensional feature vectors" in first.results_summary_path.read_text(encoding="utf-8")
+
+    summary_text = first.results_summary_path.read_text(encoding="utf-8")
+    assert "identical 41-dimensional feature vectors" in summary_text
+    if (REPOSITORY_ROOT / "reports/experiments/transgraph_v4").is_dir():
+        assert "PDF-TransGraph v4" in summary_text
+        assert (first.output_directory / "tables" / "sota_v4_and_conformal_summary.csv").is_file()
+        checksum_sources = {
+            row["source"] for row in _rows(first.output_directory / "tables" / "evidence_source_checksums.csv")
+        }
+        assert any("transgraph_v4" in src for src in checksum_sources)
 
 
 def test_thesis_evidence_builder_requires_committed_sources(tmp_path: Path) -> None:

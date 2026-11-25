@@ -12,6 +12,7 @@ from pathlib import Path
 import platform
 import sys
 import tempfile
+import threading
 import time
 from typing import Annotated, Any
 
@@ -71,6 +72,8 @@ session_registry = BrowserSessionRegistry(QUARANTINE_DIR)
 
 SERVICE_STARTED_AT = time.time()
 _RENDER_CACHE: dict[tuple[str, int], tuple[str, int]] = {}
+_RENDER_CACHE_LOCK = threading.Lock()
+_VERDICT_PRIORITY = {"MALICIOUS": 3, "UNAVAILABLE": 2, "BENIGN": 1}
 _TEMPLATE_CACHE: str | None = None
 
 production_router = APIRouter(route_class=session_route_class(session_registry))
@@ -122,7 +125,8 @@ def _render_page_png_base64(pdf_bytes: bytes, page_idx: int = 0, cache_key: str 
     if not pdf_bytes:
         return "", 0
     key = cache_key or hashlib.sha256(pdf_bytes).hexdigest()
-    cached = _RENDER_CACHE.get((key, page_idx))
+    with _RENDER_CACHE_LOCK:
+        cached = _RENDER_CACHE.get((key, page_idx))
     if cached is not None:
         return cached
     try:
@@ -136,17 +140,41 @@ def _render_page_png_base64(pdf_bytes: bytes, page_idx: int = 0, cache_key: str 
             png_bytes = pix.tobytes("png")
             b64_str = base64.b64encode(png_bytes).decode("ascii")
             result = (f"data:image/png;base64,{b64_str}", total_pages)
-            if len(_RENDER_CACHE) >= 128:
-                _RENDER_CACHE.pop(next(iter(_RENDER_CACHE)), None)
-            _RENDER_CACHE[(key, page_idx)] = result
+            with _RENDER_CACHE_LOCK:
+                if len(_RENDER_CACHE) >= 128:
+                    _RENDER_CACHE.pop(next(iter(_RENDER_CACHE)), None)
+                _RENDER_CACHE[(key, page_idx)] = result
             return result
     except Exception:
         return "", 0
 
 
 def _gateway_record(rep: EmailInspectionReport, msg_id: str, subject: str, fallback_size: int) -> dict[str, Any]:
-    att = rep.attachments[0] if rep.attachments else None
-    cdr_audit = att.cdr_audit if att and att.cdr_audit else {}
+    attachments = rep.attachments
+    primary = (
+        max(
+            attachments,
+            key=lambda item: (_VERDICT_PRIORITY.get(item.verdict, 0), float(item.malware_probability or -1.0)),
+        )
+        if attachments
+        else None
+    )
+    cdr_audit = primary.cdr_audit if primary and primary.cdr_audit else {}
+    probs = [float(item.malware_probability) for item in attachments if item.malware_probability is not None]
+    ood_flags = [item.is_ood for item in attachments if item.is_ood is not None]
+    agg_is_ood = True if any(ood_flags) else (False if ood_flags else None)
+    all_malicious_disarmed = (
+        bool(attachments)
+        and any(item.disarmed for item in attachments)
+        and not any(item.verdict == "MALICIOUS" and not item.disarmed for item in attachments)
+        and rep.unavailable_attachments == 0
+    )
+    att_label = (
+        "Không có"
+        if primary is None
+        else (primary.filename if len(attachments) == 1 else f"{primary.filename} (+{len(attachments) - 1} tệp)")
+    )
+    removed_triggers = [trig for item in attachments for trig in (item.cdr_audit or {}).get("removed_triggers", [])]
     return {
         "msg_id": msg_id,
         "eml_job_id": msg_id,
@@ -155,17 +183,17 @@ def _gateway_record(rep: EmailInspectionReport, msg_id: str, subject: str, fallb
         "sender": rep.sender.split("@")[0],
         "sender_full": rep.sender,
         "recipient": rep.recipient,
-        "attachment": att.filename if att else "Không có",
-        "sha256": att.sha256 if att else "",
-        "size_bytes": att.size_bytes if att else fallback_size,
-        "verdict": att.verdict if att else "NOT_SCANNED",
-        "malware_probability": att.malware_probability if att else None,
-        "is_ood": att.is_ood if att else None,
-        "disarmed": att.disarmed if att else False,
+        "attachment": att_label,
+        "sha256": primary.sha256 if primary else "",
+        "size_bytes": sum(item.size_bytes for item in attachments) if attachments else fallback_size,
+        "verdict": primary.verdict if primary else "NOT_SCANNED",
+        "malware_probability": max(probs) if probs else None,
+        "is_ood": agg_is_ood,
+        "disarmed": all_malicious_disarmed,
         "action": rep.action_taken,
         "latency_ms": rep.processing_latency_ms,
-        "removed_triggers": cdr_audit.get("removed_triggers", []),
-        "sha256_after": cdr_audit.get("sha256_after", att.sha256 if att else ""),
+        "removed_triggers": removed_triggers,
+        "sha256_after": cdr_audit.get("sha256_after", primary.sha256 if primary else ""),
         "size_retention_pct": cdr_audit.get("size_retention_pct"),
         "preserved_pages": cdr_audit.get("sanitized_pages", 0),
     }
@@ -476,6 +504,7 @@ def _execute_disarm_for_job(
     raw_bytes = job.raw_bytes
     filename = job.file_name
     scan_res = job.scan_result
+    attempt_id: int | None = None
     try:
         if scan_res is None or (
             password is not None and scan_res.forensic_dossier.get("encryption_analysis", {}).get("password_locked")
@@ -483,7 +512,7 @@ def _execute_disarm_for_job(
             scan_res = scanner.scan_bytes(raw_bytes, file_name=filename, explain=True, password=password)
             current_session().store.attach_scan_result(job.scan_id, scan_res)
         pre_scan = scan_res.to_dict()
-        current_session().store.set_status(job.scan_id, "DISARMING")
+        attempt_id = current_session().store.begin_disarm(job.scan_id)
         sanitized_bytes, audit = disarmer.sanitize_bytes(
             raw_bytes,
             file_name=filename,
@@ -500,7 +529,7 @@ def _execute_disarm_for_job(
         post_scan = scanner.scan_bytes(sanitized_bytes, file_name=f"sanitized_{filename}", explain=True)
     except Exception as exc:
         detail = str(exc).replace(password, "[redacted]") if password else str(exc)
-        current_session().store.set_status(job.scan_id, "FAILED", error=detail)
+        current_session().store.set_status(job.scan_id, "FAILED", error=detail, attempt_id=attempt_id)
         raise HTTPException(status_code=422, detail=detail) from None
     pre_dossier = pre_scan.get("forensic_dossier", {}) or {}
     audit_dict = audit.to_dict()
@@ -508,6 +537,7 @@ def _execute_disarm_for_job(
     audit_dict["post_scan_verification"] = {
         "verdict_before": pre_scan.get("verdict", "UNKNOWN"),
         "verdict_after": post_scan.verdict,
+        "prediction_available": bool(post_scan.prediction_available),
         "prob_before": pre_scan.get("malware_probability"),
         "prob_after": post_scan.malware_probability,
         "scripts_before": len(pre_dossier.get("threat_scripts", [])),
@@ -527,7 +557,16 @@ def _execute_disarm_for_job(
             "resources_preserved": audit.resources_preserved,
         },
     }
-    current_session().store.attach_sanitized(job.scan_id, sanitized_bytes, audit, audit_dict["post_scan_verification"])
+    approved = current_session().store.attach_sanitized(
+        job.scan_id, sanitized_bytes, audit, audit_dict["post_scan_verification"], attempt_id=attempt_id
+    )
+    if not approved:
+        audit.is_sanitized = False
+        audit.quarantine_recommended = True
+        audit_dict["is_sanitized"] = False
+        audit_dict["quarantine_recommended"] = True
+    audit_dict["status"] = "DISARMED" if approved else "FAILED"
+    audit_dict["download_ready"] = approved
     audit_dict["ai_threat_explanation"] = ai_explainer.explain_threat(pre_scan, cdr_audit=audit_dict)
     if not include_preview_images:
         omit_preview_images(audit_dict)

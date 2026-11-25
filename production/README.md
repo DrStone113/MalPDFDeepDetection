@@ -1,26 +1,26 @@
 # MalPDF DeepDetection — Thư mục Triển khai Production (ONNX Runtime)
 
-Thư mục `production/` đóng gói dịch vụ kiểm tra PDF (**PDF-TransGraph v3.2b** + **PDFMultiLabelThreatNet v2** 8 nhãn), giải thích XAI, làm sạch tệp tại chỗ với `pikepdf` (CDR) và cổng kiểm tra Email (`.eml`) chạy trên ONNX Runtime.
+Thư mục `production/` đóng gói dịch vụ kiểm tra PDF (**PDF-TransGraph v4** + **PDFMultiLabelThreatNet v2** 8 nhãn + **Mondrian Conformal v4**), giải thích XAI, làm sạch tệp tại chỗ với `pikepdf` (CDR) và cổng kiểm tra Email (`.eml`) chạy hoàn toàn trên ONNX Runtime (không phụ thuộc `torch`).
 
 > Tài liệu hướng dẫn triển khai và xử lý sự cố: [`docs/deployment_huggingface_and_onnx.md`](../docs/deployment_huggingface_and_onnx.md).
 
 ## 1. Cấu trúc thư mục
 
-- `models/pdf_transgraph_v3.onnx`: Mô hình nhị phân chính **PDF-TransGraph v3.2b** (`Opset 17`, 23 chiều đặc trưng nút HGT và 29 đặc trưng cấu trúc/tệp).
+- `models/pdf_transgraph_v4.onnx`: Mô hình nhị phân chính **PDF-TransGraph v4** (`Opset 17`, đồ thị DAG Shortest-Path Graphormer 23 chiều, biểu diễn chuỗi kích hoạt `ActionSubgraphIR` 24 chiều và 29 đặc trưng cấu trúc/tệp).
 - `models/multilabel_threat_net_v2.onnx`: Mô hình phân loại đa nhãn 8 nhóm hành vi (`Opset 17`, 52 đặc trưng bảng/từ khóa và đồ thị 23 chiều).
-- `configs/transgraph_v3_contract.json`: Khóa toàn vẹn mô hình v3.2b (SHA-256 chuẩn hóa `LF`, `temperature = 0.8884`, `decision_threshold = 0.0573`, danh sách 29 đặc trưng).
-- `configs/onnx_manifest.json`: Bảng đối chiếu SHA-256 mô hình/hợp đồng, sai số logit so với PyTorch và số liệu suy luận thực tế.
+- `configs/transgraph_v4_contract.json` & `configs/conformal_calibration_v4.json`: Khóa toàn vẹn mô hình v4 và hiệu chuẩn Mondrian Conformal v4 (SHA-256 chuẩn hóa `LF`, nhiệt độ hiệu chuẩn `Val_Calib`, ngưỡng quyết định và phân vị không tương thích theo lớp).
+- `configs/onnx_manifest.json`: Bảng đối chiếu SHA-256 mô hình/hợp đồng, sai số logit so với PyTorch (`< 1e-5`) và số liệu suy luận thực tế.
 - `configs/tabular_scaler.json` & `configs/multilabel_threat_contract.json`: Bộ chuẩn hóa Z-score và ngưỡng của 8 đầu dự đoán.
-- `onnx_engine.py`: Bộ máy suy luận `ONNXMalPDFScannerEngine` (tính XAI occlusion trên ONNX Runtime và cắt bỏ khóa kích hoạt đối chứng bằng `pikepdf`).
+- `onnx_engine.py`: Bộ máy suy luận `ONNXMalPDFScannerEngine` (trích xuất DAG/Action-IR thuần NumPy không cần PyTorch, tính XAI occlusion trên ONNX Runtime và cắt bỏ khóa kích hoạt đối chứng bằng `pikepdf`).
 - `onnx_taxonomy.py`: Bộ phân loại hành vi 8 nhãn `ONNXThreatTaxonomyClassifier`.
 - `web_service.py`: Dịch vụ FastAPI (`production_router` và `app`) phục vụ giao diện web và API `/api/scan`, `/api/disarm`, `/api/xai/ablate`, `/api/gateway/inspect-eml`, `/favicon.ico`, `/env-config.js`.
 - `app.py`: Điểm khởi chạy tương thích với **Hugging Face Spaces (ZeroGPU & CPU)** và Uvicorn độc lập.
 - `Dockerfile` & `requirements.txt`: Cấu hình đóng gói container chỉ dùng `onnxruntime`.
 
-## 2. Hiệu năng & Độ khớp ONNX Runtime (`v3.2b`)
+## 2. Độ khớp ONNX Runtime (`PDF-TransGraph v4`)
 
-- **So với PyTorch CPU:** thời gian suy luận trung vị giảm từ `4.455 ms` xuống `1.452 ms` (nhanh hơn `3.07x`).
-- **Độ khớp số học (27 mẫu Phase 2 & fixture thật):** sai lệch logit tối đa `1.43e-6`, trùng khớp phán quyết trên toàn bộ mẫu kiểm tra.
+- **Kiến trúc nhánh phẳng (`0` nút điều khiển rẽ nhánh `If`/`Loop`/`Scan`):** toàn bộ luồng đồ thị DAG, ma trận đường đi ngắn nhất và `ActionSubgraphIR` chạy thuần trên toán tử ma trận Opset 17.
+- **Độ khớp số học (27 mẫu Phase 2, fixture thật & đồ thị rỗng):** sai lệch logit tối đa `< 1e-5`, trùng khớp phán quyết và trạng thái Mondrian Conformal với PyTorch.
 
 ## 3. Chạy thử trực tiếp tại máy (Local)
 

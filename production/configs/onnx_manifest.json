@@ -1,32 +1,35 @@
 {
   "onnx_opset": 17,
   "binary_model": {
-    "filename": "pdf_transgraph_v3.onnx",
-    "model_version": "PDF-TransGraph v3.2b",
+    "filename": "pdf_transgraph_v4.onnx",
+    "model_version": "PDF-TransGraph v4",
     "regime": "regime_b",
-    "source_run": "run_20261122T123421Z_16abd6134688",
-    "temperature": 0.8884006303686849,
-    "decision_threshold": 0.057277346240410046,
+    "source_run": "run_20261125T205245987520Z_ff03f69b39e7",
+    "conformal_run": "run_20261125T231916758600Z_ff03f69b39e7",
+    "temperature": 1.0072500233222652,
+    "decision_threshold": 0.2691295079513685,
     "tabular_in_features": 29,
+    "action_ir_in_features": 24,
     "node_in_dim": 23,
-    "sha256": "3c5c4465473085567fff75065457d5e408ccf9a185ac7fb3f82d13912ada7c96",
-    "contract_sha256": "5dfe6895c2c9287c699bcc3adc24dfb002cd6beda91eafac917c4c57b50b2757",
-    "size_bytes": 2157427,
-    "parameter_count": 672885,
-    "max_logit_abs_diff_vs_pytorch": 1.430511474609375e-06,
+    "sha256": "940df1ebccc81d528413420ee97c8c7a3e1a20f4a7e9ca7b9844afcd33d13785",
+    "contract_sha256": "94d3c6962d3fb985b093bd59785e955b246fd96f829e9833c5a6c466dbeb8320",
+    "conformal_sha256": "977ed62d0238d99a89f6aa7279058362a460adc4d3ee6d26c248d002725de184",
+    "size_bytes": 3033436,
+    "parameter_count": 783990,
+    "max_logit_abs_diff_vs_pytorch": 1.9073486328125e-06,
     "reviewed_controls_max_logit_abs_diff": 9.5367431640625e-07,
-    "phase_2_max_logit_abs_diff": 1.430511474609375e-06
+    "phase_2_max_logit_abs_diff": 1.9073486328125e-06
   },
   "multilabel_model": {
     "filename": "multilabel_threat_net_v2.onnx",
     "sha256": "3361be682ceff8278b25eef1a0d8ad4ecb3c3f79081e1434fc15798691af5900",
     "size_bytes": 4006327,
     "parameter_count": 971034,
-    "max_logit_abs_diff_vs_pytorch": 5.72e-06
+    "max_logit_abs_diff_vs_pytorch": 7.63e-06
   },
   "neural_forward_benchmark_cpu": {
-    "pytorch_median_ms": 4.455,
-    "onnxruntime_median_ms": 1.452,
-    "speedup_factor": 3.07
+    "pytorch_median_ms": 4.642,
+    "onnxruntime_median_ms": 1.73,
+    "speedup_factor": 2.68
   }
 }

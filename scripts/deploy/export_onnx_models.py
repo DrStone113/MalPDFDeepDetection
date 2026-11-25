@@ -20,13 +20,21 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from malpdf.cdr.engine import PDFDisarmer
 from malpdf.cdr.fixtures import load_real_benign_bytes, load_real_threat_bytes
+from malpdf.features.contract_v3 import FEATURES, log_matrix
 from malpdf.models.ast_transformer import RotaryPositionalEmbedding, apply_rotary_pos_emb
 from malpdf.models.cross_attention_fusion import CrossModalAttentionFusion
 from malpdf.models.multilabel_threat_net import PDFMultiLabelThreatNet
 from malpdf.models.pdf_transgraph_v3 import PDFTransGraphV3, TransGraphV3Config, load_v3_weights_npz
+from malpdf.models.pdf_transgraph_v4 import (
+    NUM_BASE_RELATIONS,
+    SPD_UNREACHABLE,
+    PDFTransGraphV4,
+    TransGraphV4Config,
+    load_v4_weights_npz,
+)
 from malpdf.models.tabular_resnet import TabularResNet
-from malpdf.features.contract_v3 import FEATURES, log_matrix
-from malpdf.scanner.ingestion import InstantPDFIngestion, REGIME_B_INDICES
+from malpdf.models.v4_graph_numpy import collate_v4_numpy_feed, single_graph_tuple
+from malpdf.scanner.ingestion import REGIME_B_INDICES, InstantPDFIngestion
 from malpdf.static.obfuscation import count_escaped_pdf_names
 from malpdf.static.raw_scan import scan_raw_pdf_tokens
 
@@ -34,8 +42,13 @@ PROD_DIR = REPO_ROOT / "production"
 PROD_MODELS_DIR = PROD_DIR / "models"
 PROD_CONFIGS_DIR = PROD_DIR / "configs"
 
-PT_BINARY_PATH = REPO_ROOT / "artifacts/models/pdf_transgraph_v3/pdf_transgraph_v32b_regime_b_seed42.npz"
+PT_V4_BINARY_PATH = REPO_ROOT / "artifacts/models/pdf_transgraph_v4/pdf_transgraph_v4_regime_b_seed42.npz"
+V4_CONTRACT_PATH = REPO_ROOT / "configs/transgraph_v4_contract.json"
+V4_CONFORMAL_PATH = REPO_ROOT / "configs/conformal_calibration_v4.json"
+
+PT_V3_BINARY_PATH = REPO_ROOT / "artifacts/models/pdf_transgraph_v3/pdf_transgraph_v32b_regime_b_seed42.npz"
 V3_CONTRACT_PATH = REPO_ROOT / "configs/transgraph_v3_contract.json"
+
 OFFLINE_DIR = REPO_ROOT / "data/processed/pooled_bulk"
 CONTROL_PATH = OFFLINE_DIR / "offline_provenance/reviewed_controls_v3.json"
 STRESS_PATH = OFFLINE_DIR / "byte_level_stress_v3/offline_byte_stress_export.json"
@@ -174,6 +187,94 @@ class ONNXASTSequenceTransformer(nn.Module):
         return self.norm(pooled), attn_weights.squeeze(-1)
 
 
+class ONNXPDFTransGraphV4(nn.Module):
+    """100% branchless opset-17 ONNX wrapper for PDFTransGraphV4 (requires N >= 1 padded input)."""
+
+    def __init__(self, model: PDFTransGraphV4) -> None:
+        super().__init__()
+        self.model = model
+
+    def forward(
+        self,
+        tabular_features: torch.Tensor,
+        action_ir_features: torch.Tensor,
+        action_ir_active: torch.Tensor,
+        node_features: torch.Tensor,
+        node_types: torch.Tensor,
+        deg_features: torch.Tensor,
+        node_pad_mask: torch.Tensor,
+        spd: torch.Tensor,
+        direct_rel: torch.Tensor,
+        root_depth: torch.Tensor,
+        sink_dist: torch.Tensor,
+        summary_12: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        enc = self.model.graph_encoder
+        mask_bool = node_pad_mask > 0.5
+        mask_f = mask_bool.unsqueeze(-1).to(node_features.dtype)
+        present = node_pad_mask.sum(dim=1) > 0.5
+
+        safe_types = node_types.clamp(0, enc.num_node_types - 1)
+        h = enc.input_proj(torch.cat((node_features, deg_features), dim=-1)) + enc.type_emb(safe_types)
+        if enc.enable_spd_bias:
+            safe_rd = root_depth.clamp(0, SPD_UNREACHABLE)
+            safe_sd = sink_dist.clamp(0, SPD_UNREACHABLE)
+            h = h + enc.root_depth_emb(safe_rd) + enc.sink_dist_emb(safe_sd)
+        h = enc.input_norm(h) * mask_f
+
+        pair_attn = torch.zeros(
+            (node_features.size(0), node_features.size(1), node_features.size(1)),
+            device=node_features.device,
+            dtype=node_features.dtype,
+        )
+        safe_spd = spd.clamp(0, SPD_UNREACHABLE)
+        safe_rel = direct_rel.clamp(0, NUM_BASE_RELATIONS)
+        key_mask = mask_bool.unsqueeze(1).unsqueeze(2)
+        query_mask = mask_bool.unsqueeze(1).unsqueeze(-1).to(node_features.dtype)
+        bsz, n_max, hdim = h.shape
+        for layer in enc.layers:
+            x = layer.norm1(h)
+            qkv = layer.qkv(x).view(bsz, n_max, 3, layer.num_heads, layer.head_dim)
+            q = qkv[:, :, 0].transpose(1, 2)
+            k = qkv[:, :, 1].transpose(1, 2)
+            v = qkv[:, :, 2].transpose(1, 2)
+            scores = torch.matmul(q, k.transpose(-2, -1)) / (layer.head_dim**0.5)
+            if layer.enable_spd_bias:
+                bias = (
+                    layer.spd_fwd_bias(safe_spd).permute(0, 3, 1, 2)
+                    + layer.spd_rev_bias(safe_spd.transpose(1, 2)).permute(0, 3, 1, 2)
+                    + layer.rel_bias(safe_rel).permute(0, 3, 1, 2)
+                )
+                scores = scores + bias
+            scores = torch.where(key_mask, scores, torch.full_like(scores, -1e9))
+            attn_clean = F.softmax(scores, dim=-1) * query_mask
+            pair_attn = attn_clean.mean(dim=1)
+            out_h = torch.matmul(attn_clean, v).transpose(1, 2).contiguous().view(bsz, n_max, hdim)
+            h = h + layer.out_proj(out_h)
+            h = h + layer.ffn(layer.norm2(h))
+
+        h = enc.final_norm(h) * mask_f
+        gate_raw = enc.attn_gate(h).squeeze(-1)
+        gate_logits = torch.where(mask_bool, gate_raw, torch.full_like(gate_raw, -1e9))
+        gate_w = F.softmax(gate_logits, dim=-1) * mask_bool.to(h.dtype)
+        attn_pool = (h * gate_w.unsqueeze(-1)).sum(dim=1)
+
+        max_pool = torch.where(mask_bool.unsqueeze(-1), h, torch.full_like(h, -1e9)).max(dim=1).values
+        max_pool = torch.where(present.unsqueeze(-1), max_pool, torch.zeros_like(max_pool))
+
+        e_graph = enc.pool_proj(torch.cat((attn_pool, max_pool, summary_12), dim=-1))
+        e_graph = torch.where(present.unsqueeze(-1), e_graph, torch.zeros_like(e_graph))
+
+        e_tab = self.model.tab_encoder(tabular_features, None)
+        e_ir = self.model.action_ir_encoder(action_ir_features)
+        has_tab = tabular_features[:, 0] > -1e30
+        ir_present = (action_ir_active.squeeze(-1) > 0.5) & present
+        mod_mask = torch.stack((has_tab, present, ir_present), dim=-1)
+        fused, weights = self.model.fusion((e_tab, e_graph, e_ir), mod_mask)
+        logits = self.model.classifier(fused).squeeze(-1)
+        return logits, weights, pair_attn, gate_w
+
+
 class ONNXPDFTransGraphV3(nn.Module):
     def __init__(self, model: PDFTransGraphV3) -> None:
         super().__init__()
@@ -199,7 +300,9 @@ class ONNXPDFTransGraphV3(nn.Module):
         in_degree = zeros.scatter_add(0, edge_dst, edge_valid)
         degree = torch.stack((torch.log1p(out_degree), torch.log1p(in_degree)), dim=-1)
         node_types = node_types.clamp(0, encoder.num_node_types - 1)
-        h = encoder.input_norm(encoder.input_proj(torch.cat((node_features, degree), dim=-1)) + encoder.type_emb(node_types))
+        h = encoder.input_norm(
+            encoder.input_proj(torch.cat((node_features, degree), dim=-1)) + encoder.type_emb(node_types)
+        )
 
         src = torch.cat((edge_src, edge_dst))
         dst = torch.cat((edge_dst, edge_src))
@@ -211,7 +314,6 @@ class ONNXPDFTransGraphV3(nn.Module):
             h_src, h_dst = h_norm[src], h_norm[dst]
             r = layer.rel_emb(rel)
             score = layer.attn_proj(torch.cat((h_dst, h_src, r), dim=-1)).squeeze(-1)
-            # Opset 17 has scatter-add but no scatter-max. A common shift cancels in each segment.
             score = torch.where(valid, score, torch.full_like(score, -1e9)).to(torch.float64)
             exp_score = torch.exp(score - score.max()) * valid
             denom = torch.zeros_like(zeros, dtype=torch.float64).scatter_add(0, dst, exp_score)[dst]
@@ -244,7 +346,7 @@ class ONNXPDFTransGraphV3(nn.Module):
         mask = torch.cat((torch.ones_like(present), present, torch.zeros_like(present)), dim=-1)
         fused, weights = self.model.fusion((tab, graph, torch.zeros_like(tab)), mask)
         logits = self.model.classifier(fused).squeeze(-1)
-        return logits, weights, alpha[:edge_src.shape[0]], node_weights.sum(dim=0)
+        return logits, weights, alpha[: edge_src.shape[0]], node_weights.sum(dim=0)
 
 
 class ONNXMultiLabelThreatNet(nn.Module):
@@ -319,7 +421,9 @@ class ONNXMultiLabelThreatNet(nn.Module):
         return label_logits, mal_logit
 
 
-def _prepare_edge_tensors(ei: torch.Tensor, er: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+def _prepare_edge_tensors(
+    ei: torch.Tensor, er: torch.Tensor
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     if ei.numel() > 0 and ei.size(1) > 0:
         return (
             ei[0].long(),
@@ -337,56 +441,6 @@ def _prepare_edge_tensors(ei: torch.Tensor, er: torch.Tensor) -> tuple[torch.Ten
     )
 
 
-def load_binary_model() -> PDFTransGraphV3:
-    contract = json.loads(V3_CONTRACT_PATH.read_text(encoding="utf-8"))
-    if hashlib.sha256(PT_BINARY_PATH.read_bytes()).hexdigest() != contract["weights_npz_sha256"]:
-        raise ValueError("binary_npz_sha256_mismatch")
-    model = PDFTransGraphV3(TransGraphV3Config(**contract["model_config"]))
-    load_v3_weights_npz(model, PT_BINARY_PATH)
-    return model.eval()
-
-
-def _binary_feed(
-    nf: torch.Tensor, nt: torch.Tensor, ei: torch.Tensor, er: torch.Tensor,
-    batch: torch.Tensor, tab: torch.Tensor, graph_present: bool,
-) -> dict[str, np.ndarray]:
-    edges = _prepare_edge_tensors(ei, er)
-    return {
-        "node_features": nf.numpy(),
-        "node_types": nt.numpy(),
-        **{name: tensor.numpy() for name, tensor in zip(
-            ("edge_src", "edge_dst", "edge_rel", "edge_mask", "has_edges"), edges, strict=True
-        )},
-        "use_graph_flag": np.full((tab.shape[0], 1), graph_present, dtype=np.float32),
-        "batch": batch.numpy(),
-        "tabular_features": tab.numpy(),
-    }
-
-
-def _binary_forward(
-    model: PDFTransGraphV3, nf: torch.Tensor, nt: torch.Tensor, ei: torch.Tensor,
-    er: torch.Tensor, batch: torch.Tensor, tab: torch.Tensor, graph_present: bool,
-) -> dict[str, torch.Tensor]:
-    if graph_present:
-        return model(tab, node_x=nf, node_type=nt, edge_index=ei, edge_rel=er, graph_batch=batch)
-    return model(tab)
-
-
-@torch.inference_mode()
-def _binary_parity(model: PDFTransGraphV3, session: ort.InferenceSession, inputs: tuple) -> float:
-    expected = _binary_forward(model, *inputs)
-    logits, weights, edge_alpha, node_attn = session.run(None, _binary_feed(*inputs))
-    np.testing.assert_allclose(weights, expected["weights"].numpy(), rtol=0.0, atol=1e-6)
-    if not inputs[-1]:
-        np.testing.assert_array_equal(node_attn, 0.0)
-    if inputs[2].numel() == 0:
-        np.testing.assert_array_equal(edge_alpha, 0.0)
-    error = float(np.max(np.abs(expected["logits"].numpy() - logits)))
-    if not np.isfinite(error):
-        raise ValueError("non_finite_binary_logit_parity")
-    return error
-
-
 def _offline_binary_rows(path: Path, key: str, expected_count: int) -> list[dict]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     rows = payload[key]
@@ -395,51 +449,130 @@ def _offline_binary_rows(path: Path, key: str, expected_count: int) -> list[dict
     return list(rows.values()) if isinstance(rows, dict) else rows
 
 
-def _offline_binary_inputs(row: dict, ingestion: InstantPDFIngestion) -> tuple:
+def _v4_pytorch_forward(model: PDFTransGraphV4, feed: dict[str, np.ndarray]) -> dict[str, torch.Tensor]:
+    return model(
+        torch.from_numpy(feed["tabular_features"]),
+        torch.from_numpy(feed["action_ir_features"]),
+        torch.from_numpy(feed["action_ir_active"].squeeze(-1) > 0.5),
+        torch.from_numpy(feed["node_features"]),
+        torch.from_numpy(feed["node_types"]),
+        torch.from_numpy(feed["deg_features"]),
+        torch.from_numpy(feed["node_pad_mask"] > 0.5),
+        torch.from_numpy(feed["spd"]),
+        torch.from_numpy(feed["direct_rel"]),
+        torch.from_numpy(feed["root_depth"]),
+        torch.from_numpy(feed["sink_dist"]),
+        torch.from_numpy(feed["summary_12"]),
+        return_graph_details=True,
+    )
+
+
+@torch.inference_mode()
+def _v4_parity(model: PDFTransGraphV4, session: ort.InferenceSession, feed: dict[str, np.ndarray]) -> float:
+    expected = _v4_pytorch_forward(model, feed)
+    logits, weights, _pair_attn, node_attn = session.run(None, feed)
+    np.testing.assert_allclose(weights, expected["weights"].numpy(), rtol=0.0, atol=1e-6)
+    if float(feed["node_pad_mask"].sum()) == 0.0:
+        np.testing.assert_array_equal(node_attn, 0.0)
+    error = float(np.max(np.abs(expected["logits"].numpy() - logits)))
+    if not np.isfinite(error):
+        raise ValueError("non_finite_v4_logit_parity")
+    return error
+
+
+def _v4_offline_feed(row: dict, center: np.ndarray, scale: np.ndarray) -> dict[str, np.ndarray]:
     vector = np.asarray(row["vector_v3"], dtype=np.float32)
     raw = vector[list(REGIME_B_INDICES)]
     if not np.isfinite(raw).all():
         raise ValueError("non_finite_regime_b_features")
-    tab = torch.from_numpy(((log_matrix(raw[None, :]) - ingestion.v3_center) / ingestion.v3_scale).astype(np.float32))
+    tab = ((log_matrix(raw[None, :]) - center) / scale).astype(np.float32)
     nf, nt, es, ed, er = row["graph"]
-    graph_present = bool(nf)
-    return (
-        torch.tensor(nf, dtype=torch.float32) if graph_present else torch.zeros((1, 23)),
-        torch.tensor(nt, dtype=torch.long) if graph_present else torch.zeros(1, dtype=torch.long),
-        torch.tensor((es, ed), dtype=torch.long),
-        torch.tensor(er, dtype=torch.long),
-        torch.zeros(len(nf) if graph_present else 1, dtype=torch.long),
-        tab,
-        graph_present,
+    graph_tup = (
+        (
+            np.asarray(nf, dtype=np.float32),
+            np.asarray(nt, dtype=np.int64),
+            np.asarray(es, dtype=np.int64),
+            np.asarray(ed, dtype=np.int64),
+            np.asarray(er, dtype=np.int64),
+        )
+        if nf
+        else None
+    )
+    return collate_v4_numpy_feed(tab, [graph_tup])
+
+
+def _fixture_binary_inputs(ingested: dict[str, object]) -> dict[str, np.ndarray]:
+    v4_tab = ingested.get("v4_tab_features")
+    if v4_tab is None or not isinstance(v4_tab, torch.Tensor):
+        raise ValueError("Expected v4_tab_features tensor in ingested payload")
+    g_tup = single_graph_tuple(
+        ingested["node_features"],  # type: ignore[arg-type]
+        ingested["node_types"],  # type: ignore[arg-type]
+        ingested["edge_index"],  # type: ignore[arg-type]
+        ingested["edge_rel"],  # type: ignore[arg-type]
+        bool(ingested["graph_present"]),
+    )
+    return collate_v4_numpy_feed(v4_tab.numpy(), [g_tup])
+
+
+def _binary_parity(
+    model: PDFTransGraphV4,
+    session: ort.InferenceSession,
+    feed: dict[str, np.ndarray],
+) -> float:
+    return _v4_parity(model, session, feed)
+
+
+def verify_stress_parity(
+    pt_model: nn.Module,
+    ort_sess: ort.InferenceSession,
+    ingestion: InstantPDFIngestion,
+) -> float:
+    if not isinstance(pt_model, PDFTransGraphV4):
+        raise TypeError(f"Expected PDFTransGraphV4 for stress parity check, got {type(pt_model).__name__}")
+    contract = json.loads(V4_CONTRACT_PATH.read_text(encoding="utf-8"))
+    center = np.asarray(contract["center"], dtype=np.float64)
+    scale = np.asarray(contract["scale"], dtype=np.float64)
+    tb = load_real_threat_bytes()
+    bb = load_real_benign_bytes()
+    db, _ = PDFDisarmer().sanitize_bytes(tb, file_name="threat.pdf")
+    live_diff = max(
+        _binary_parity(pt_model, ort_sess, _fixture_binary_inputs(ingestion.ingest(sample_bytes)))
+        for sample_bytes in (tb, bb, db)
     )
 
+    controls = _offline_binary_rows(CONTROL_PATH, "controls", expected_count=4)
+    controls_diff = max(_v4_parity(pt_model, ort_sess, _v4_offline_feed(row, center, scale)) for row in controls)
 
-def verify_stress_parity(model: PDFTransGraphV3, session: ort.InferenceSession, ingestion: InstantPDFIngestion) -> float:
-    path = STRESS_PATH if STRESS_PATH.is_file() else STRESS_ARCHIVE
-    if hashlib.sha256(path.read_bytes()).hexdigest() != STRESS_SHA256:
+    stress_file = STRESS_PATH if STRESS_PATH.is_file() else STRESS_ARCHIVE
+    if hashlib.sha256(stress_file.read_bytes()).hexdigest() != STRESS_SHA256:
         raise ValueError("phase_2_export_sha256_mismatch")
-    rows = _offline_binary_rows(path, "variants", expected_count=20)
-    empty = next(row for row in rows if row["id"] == "benign_repaired_xref_padding")
+    stress_rows = _offline_binary_rows(stress_file, "variants", expected_count=20)
+    empty = next(row for row in stress_rows if row["id"] == "benign_repaired_xref_padding")
     if empty["node_count"] != 0 or empty["graph"][0]:
         raise ValueError("phase_2_expected_empty_graph")
-    return max(_binary_parity(model, session, _offline_binary_inputs(row, ingestion)) for row in rows)
-
-
-def _fixture_binary_inputs(ingested: dict) -> tuple:
-    return tuple(ingested[key] for key in (
-        "node_features", "node_types", "edge_index", "edge_rel", "batch", "v3_tab_features", "graph_present"
-    ))
+    stress_diff = max(_v4_parity(pt_model, ort_sess, _v4_offline_feed(row, center, scale)) for row in stress_rows)
+    return max(live_diff, controls_diff, stress_diff)
 
 
 def export_and_verify() -> dict[str, object]:
     PROD_MODELS_DIR.mkdir(parents=True, exist_ok=True)
     PROD_CONFIGS_DIR.mkdir(parents=True, exist_ok=True)
+    use_v4 = PT_V4_BINARY_PATH.is_file() and V4_CONTRACT_PATH.is_file()
     with TemporaryDirectory(prefix=".onnx-", dir=PROD_MODELS_DIR) as models:
         with TemporaryDirectory(prefix=".onnx-", dir=PROD_CONFIGS_DIR) as configs:
             model_stage, config_stage = Path(models), Path(configs)
-            manifest = _export_and_verify(model_stage, config_stage)
+            manifest = (
+                _export_and_verify_v4(model_stage, config_stage)
+                if use_v4
+                else _export_and_verify_v3(model_stage, config_stage)
+            )
             for model in model_stage.iterdir():
                 model.replace(PROD_MODELS_DIR / model.name)
+            if use_v4:
+                stale_v3 = PROD_MODELS_DIR / "pdf_transgraph_v3.onnx"
+                if stale_v3.exists():
+                    stale_v3.unlink()
             for config in config_stage.iterdir():
                 if config.name != "onnx_manifest.json":
                     config.replace(PROD_CONFIGS_DIR / config.name)
@@ -447,12 +580,7 @@ def export_and_verify() -> dict[str, object]:
     return manifest
 
 
-def _export_and_verify(models_dir: Path, configs_dir: Path) -> dict[str, object]:
-    torch.set_num_threads(2)
-    pt_bin = load_binary_model()
-    onnx_bin = ONNXPDFTransGraphV3(pt_bin).eval()
-
-    ml_contract = json.loads(ML_CONTRACT_PATH.read_text(encoding="utf-8"))
+def _export_multilabel_onnx(models_dir: Path) -> tuple[PDFMultiLabelThreatNet, Path]:
     ml_sd = torch.load(PT_MULTILABEL_PATH, map_location="cpu", weights_only=True)
     pt_ml = PDFMultiLabelThreatNet(node_in_dim=23, tabular_in_features=52, hidden_dim=128, num_labels=8)
     pt_ml.load_state_dict(ml_sd, strict=True)
@@ -472,43 +600,7 @@ def _export_and_verify(models_dir: Path, configs_dir: Path) -> dict[str, object]
     dummy_ug = torch.tensor([1.0], dtype=torch.float32)
     dummy_b = torch.tensor([0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1], dtype=torch.long)
     dummy_tok = torch.zeros((2, 32), dtype=torch.long)
-    dummy_tab29 = torch.randn(2, 29, dtype=torch.float32)
     dummy_tab52 = torch.randn(2, 52, dtype=torch.float32)
-
-    bin_onnx_path = models_dir / "pdf_transgraph_v3.onnx"
-    torch.onnx.export(
-        onnx_bin,
-        (dummy_nf, dummy_nt, dummy_es, dummy_ed, dummy_er, dummy_em, dummy_he,
-         torch.tensor([[1.0], [0.0]]), dummy_b, dummy_tab29),
-        str(bin_onnx_path),
-        input_names=[
-            "node_features", "node_types", "edge_src", "edge_dst", "edge_rel", "edge_mask",
-            "has_edges", "use_graph_flag", "batch", "tabular_features",
-        ],
-        output_names=["logits", "attn_weights", "edge_alpha", "node_attn"],
-        dynamic_axes={
-            "node_features": {0: "num_nodes"},
-            "node_types": {0: "num_nodes"},
-            "edge_src": {0: "num_edges"},
-            "edge_dst": {0: "num_edges"},
-            "edge_rel": {0: "num_edges"},
-            "edge_mask": {0: "num_edges"},
-            "batch": {0: "num_nodes"},
-            "use_graph_flag": {0: "batch_size"},
-            "tabular_features": {0: "batch_size"},
-            "logits": {0: "batch_size"},
-            "attn_weights": {0: "batch_size"},
-            "edge_alpha": {0: "num_edges"},
-            "node_attn": {0: "num_nodes"},
-        },
-        opset_version=17,
-        do_constant_folding=True,
-        dynamo=False,
-    )
-    binary_onnx = onnx.load(str(bin_onnx_path))
-    onnx.checker.check_model(binary_onnx)
-    if any(node.op_type in {"If", "Loop", "Scan"} for node in binary_onnx.graph.node):
-        raise ValueError("unexpected_binary_onnx_control_flow")
 
     ml_onnx_path = models_dir / "multilabel_threat_net_v2.onnx"
     torch.onnx.export(
@@ -559,18 +651,100 @@ def _export_and_verify(models_dir: Path, configs_dir: Path) -> dict[str, object]
         dynamo=False,
     )
     onnx.checker.check_model(str(ml_onnx_path))
+    return pt_ml, ml_onnx_path
+
+
+def _export_and_verify_v4(models_dir: Path, configs_dir: Path) -> dict[str, object]:
+    torch.set_num_threads(2)
+    contract = json.loads(V4_CONTRACT_PATH.read_text(encoding="utf-8"))
+    if hashlib.sha256(PT_V4_BINARY_PATH.read_bytes()).hexdigest() != contract["weights_npz_sha256"]:
+        raise ValueError("binary_v4_npz_sha256_mismatch")
+    if not V4_CONFORMAL_PATH.is_file():
+        raise FileNotFoundError(f"Missing v4 conformal calibration: {V4_CONFORMAL_PATH}")
+    conf_lf_sha = hashlib.sha256(V4_CONFORMAL_PATH.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+    if contract.get("conformal_calibration_sha256") != conf_lf_sha:
+        raise ValueError("v4_conformal_calibration_sha256_mismatch")
+
+    pt_bin = PDFTransGraphV4(TransGraphV4Config(**contract["model_config"])).eval()
+    load_v4_weights_npz(pt_bin, PT_V4_BINARY_PATH)
+    onnx_bin = ONNXPDFTransGraphV4(pt_bin).eval()
+
+    dummy_feed = collate_v4_numpy_feed(
+        np.zeros((2, 29), dtype=np.float32),
+        [
+            (
+                np.zeros((6, 23), dtype=np.float32),
+                np.array([0, 1, 2, 3, 5, 6], dtype=np.int64),
+                np.array([0, 1, 0, 3], dtype=np.int64),
+                np.array([1, 2, 3, 4], dtype=np.int64),
+                np.array([0, 1, 2, 4], dtype=np.int64),
+            ),
+            None,
+        ],
+    )
+    input_names = [
+        "tabular_features",
+        "action_ir_features",
+        "action_ir_active",
+        "node_features",
+        "node_types",
+        "deg_features",
+        "node_pad_mask",
+        "spd",
+        "direct_rel",
+        "root_depth",
+        "sink_dist",
+        "summary_12",
+    ]
+    dummy_args = tuple(torch.from_numpy(dummy_feed[k]) for k in input_names)
+    bin_onnx_path = models_dir / "pdf_transgraph_v4.onnx"
+    torch.onnx.export(
+        onnx_bin,
+        dummy_args,
+        str(bin_onnx_path),
+        input_names=input_names,
+        output_names=["logits", "attn_weights", "pair_attn", "node_attn"],
+        dynamic_axes={
+            "tabular_features": {0: "batch_size"},
+            "action_ir_features": {0: "batch_size"},
+            "action_ir_active": {0: "batch_size"},
+            "node_features": {0: "batch_size", 1: "num_nodes"},
+            "node_types": {0: "batch_size", 1: "num_nodes"},
+            "deg_features": {0: "batch_size", 1: "num_nodes"},
+            "node_pad_mask": {0: "batch_size", 1: "num_nodes"},
+            "spd": {0: "batch_size", 1: "num_nodes", 2: "num_nodes"},
+            "direct_rel": {0: "batch_size", 1: "num_nodes", 2: "num_nodes"},
+            "root_depth": {0: "batch_size", 1: "num_nodes"},
+            "sink_dist": {0: "batch_size", 1: "num_nodes"},
+            "summary_12": {0: "batch_size"},
+            "logits": {0: "batch_size"},
+            "attn_weights": {0: "batch_size"},
+            "pair_attn": {0: "batch_size", 1: "num_nodes", 2: "num_nodes"},
+            "node_attn": {0: "batch_size", 1: "num_nodes"},
+        },
+        opset_version=17,
+        do_constant_folding=True,
+        dynamo=False,
+    )
+    binary_onnx = onnx.load(str(bin_onnx_path))
+    onnx.checker.check_model(binary_onnx)
+    if any(node.op_type in {"If", "Loop", "Scan"} for node in binary_onnx.graph.node):
+        raise ValueError("unexpected_binary_onnx_control_flow")
+
+    pt_ml, ml_onnx_path = _export_multilabel_onnx(models_dir)
 
     sess_opts = ort.SessionOptions()
     sess_opts.intra_op_num_threads = 2
     sess_opts.inter_op_num_threads = 1
-    sess_opts.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+    sess_opts.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_BASIC
     bin_sess = ort.InferenceSession(str(bin_onnx_path), sess_options=sess_opts, providers=["CPUExecutionProvider"])
     ml_sess = ort.InferenceSession(str(ml_onnx_path), sess_options=sess_opts, providers=["CPUExecutionProvider"])
 
-    ing = InstantPDFIngestion(v3_contract_path=V3_CONTRACT_PATH)
+    ing = InstantPDFIngestion(v4_contract_path=V4_CONTRACT_PATH)
     tb = load_real_threat_bytes()
     bb = load_real_benign_bytes()
     db, _ = PDFDisarmer().sanitize_bytes(tb, file_name="threat.pdf")
+    ml_contract = json.loads(ML_CONTRACT_PATH.read_text(encoding="utf-8"))
     mean52 = np.array(ml_contract["scaler_mean"], dtype=np.float32)
     scale52 = np.array(ml_contract["scaler_scale"], dtype=np.float32)
 
@@ -586,9 +760,11 @@ def _export_and_verify(models_dir: Path, configs_dir: Path) -> dict[str, object]
             d["batch"],
             d["ast_tokens"],
         )
-        es, ed, er_p, em, he = _prepare_edge_tensors(ei, er)
-        max_bin_diff = max(max_bin_diff, _binary_parity(pt_bin, bin_sess, _fixture_binary_inputs(d)))
+        g_tup = single_graph_tuple(nf, nt, ei, er, d["graph_present"])
+        v4_feed = collate_v4_numpy_feed(d["v4_tab_features"].numpy(), [g_tup])
+        max_bin_diff = max(max_bin_diff, _v4_parity(pt_bin, bin_sess, v4_feed))
 
+        es, ed, er_p, em, he = _prepare_edge_tensors(ei, er)
         rt = scan_raw_pdf_tokens(sample_bytes)
         esc = float(count_escaped_pdf_names(sample_bytes))
         loops = 1.0 if d["ast_stats"]["loops"] > 0 else 0.0
@@ -615,7 +791,7 @@ def _export_and_verify(models_dir: Path, configs_dir: Path) -> dict[str, object]
         vec52 = np.array([float(x or 0.0) for x in d["raw_feature_vec"]] + extra, dtype=np.float32)
         tab52 = torch.tensor((vec52 - mean52) / scale52, dtype=torch.float32).unsqueeze(0)
         with torch.no_grad():
-            pt_ml_logits, pt_mal_l, _ = pt_ml(nf, nt, ei, er, b, tok, tab52)
+            pt_ml_logits, _, _ = pt_ml(nf, nt, ei, er, b, tok, tab52)
         ort_ml_out = ml_sess.run(
             None,
             {
@@ -635,34 +811,59 @@ def _export_and_verify(models_dir: Path, configs_dir: Path) -> dict[str, object]
         diff_m = float(np.max(np.abs(pt_ml_logits.numpy() - np.asarray(ort_ml_out[0]))))
         max_ml_diff = max(max_ml_diff, diff_m)
 
+    center = np.asarray(contract["center"], dtype=np.float64)
+    scale = np.asarray(contract["scale"], dtype=np.float64)
     controls = _offline_binary_rows(CONTROL_PATH, "controls", expected_count=4)
-    controls_diff = max(_binary_parity(pt_bin, bin_sess, _offline_binary_inputs(row, ing)) for row in controls)
-    stress_diff = verify_stress_parity(pt_bin, bin_sess, ing)
+    controls_diff = max(_v4_parity(pt_bin, bin_sess, _v4_offline_feed(row, center, scale)) for row in controls)
+
+    stress_file = STRESS_PATH if STRESS_PATH.is_file() else STRESS_ARCHIVE
+    if hashlib.sha256(stress_file.read_bytes()).hexdigest() != STRESS_SHA256:
+        raise ValueError("phase_2_export_sha256_mismatch")
+    stress_rows = _offline_binary_rows(stress_file, "variants", expected_count=20)
+    empty = next(row for row in stress_rows if row["id"] == "benign_repaired_xref_padding")
+    if empty["node_count"] != 0 or empty["graph"][0]:
+        raise ValueError("phase_2_expected_empty_graph")
+    stress_diff = max(_v4_parity(pt_bin, bin_sess, _v4_offline_feed(row, center, scale)) for row in stress_rows)
+
     max_bin_diff = max(max_bin_diff, controls_diff, stress_diff)
-    assert max_bin_diff < 1e-5, f"Binary ONNX parity drift too high: {max_bin_diff}"
+    assert max_bin_diff < 1e-5, f"Binary v4 ONNX parity drift too high: {max_bin_diff}"
     assert max_ml_diff < 1e-4, f"MultiLabel ONNX parity drift too high: {max_ml_diff}"
 
-    for config_path in (V3_CONTRACT_PATH, SCALER_PATH, ML_CONTRACT_PATH):
+    for config_path in (V4_CONTRACT_PATH, V4_CONFORMAL_PATH, SCALER_PATH, ML_CONTRACT_PATH):
         (configs_dir / config_path.name).write_bytes(config_path.read_bytes())
 
     d_bench = ing.ingest(tb)
-    nf_b = d_bench["node_features"]
-    nt_b = d_bench["node_types"]
-    ei_b = d_bench["edge_index"]
-    er_b = d_bench["edge_rel"]
-    b_b = d_bench["batch"]
-    tok_b = d_bench["ast_tokens"]
-    binary_bench = _fixture_binary_inputs(d_bench)
-    ort_bin_feed = _binary_feed(*binary_bench)
+    nf_b, nt_b, ei_b, er_b, b_b, tok_b = (
+        d_bench["node_features"],
+        d_bench["node_types"],
+        d_bench["edge_index"],
+        d_bench["edge_rel"],
+        d_bench["batch"],
+        d_bench["ast_tokens"],
+    )
+    ort_bin_feed = collate_v4_numpy_feed(
+        d_bench["v4_tab_features"].numpy(),
+        [single_graph_tuple(nf_b, nt_b, ei_b, er_b, d_bench["graph_present"])],
+    )
+    es_b, ed_b, er_pb, em_b, he_b = _prepare_edge_tensors(ei_b, er_b)
     tab52_b = torch.zeros((1, 52), dtype=torch.float32)
-    ort_ml_feed = {key: value for key, value in ort_bin_feed.items() if key != "use_graph_flag"}
-    ort_ml_feed["use_graph_flag"] = np.array([1.0], dtype=np.float32)
-    ort_ml_feed["ast_tokens"] = tok_b.numpy()
-    ort_ml_feed["tabular_features"] = tab52_b.numpy()
+    ort_ml_feed = {
+        "node_features": nf_b.numpy(),
+        "node_types": nt_b.numpy(),
+        "edge_src": es_b.numpy(),
+        "edge_dst": ed_b.numpy(),
+        "edge_rel": er_pb.numpy(),
+        "edge_mask": em_b.numpy(),
+        "has_edges": he_b.numpy(),
+        "use_graph_flag": np.array([1.0], dtype=np.float32),
+        "batch": b_b.numpy(),
+        "ast_tokens": tok_b.numpy(),
+        "tabular_features": tab52_b.numpy(),
+    }
 
     for _ in range(3):
         with torch.no_grad():
-            _binary_forward(pt_bin, *binary_bench)
+            _v4_pytorch_forward(pt_bin, ort_bin_feed)
             pt_ml(nf_b, nt_b, ei_b, er_b, b_b, tok_b, tab52_b)
         bin_sess.run(None, ort_bin_feed)
         ml_sess.run(None, ort_ml_feed)
@@ -672,7 +873,7 @@ def _export_and_verify(models_dir: Path, configs_dir: Path) -> dict[str, object]
     for _ in range(20):
         t0 = time.perf_counter()
         with torch.no_grad():
-            _binary_forward(pt_bin, *binary_bench)
+            _v4_pytorch_forward(pt_bin, ort_bin_feed)
             pt_ml(nf_b, nt_b, ei_b, er_b, b_b, tok_b, tab52_b)
         pt_neural_ms.append((time.perf_counter() - t0) * 1000.0)
 
@@ -683,24 +884,25 @@ def _export_and_verify(models_dir: Path, configs_dir: Path) -> dict[str, object]
 
     pt_med = statistics.median(pt_neural_ms)
     ort_med = statistics.median(ort_neural_ms)
-
-    bin_param_count = int(sum(p.numel() for p in pt_bin.parameters()))
-    contract = ing.v3_contract
+    bin_param_count = int(sum(p.numel() for p in onnx_bin.parameters()))
     ml_param_count = int(sum(p.numel() for p in pt_ml.parameters()))
 
     manifest = {
         "onnx_opset": 17,
         "binary_model": {
             "filename": bin_onnx_path.name,
-            "model_version": "PDF-TransGraph v3.2b",
+            "model_version": "PDF-TransGraph v4",
             "regime": contract["regime"],
             "source_run": contract["source_run"],
+            "conformal_run": contract.get("conformal_run"),
             "temperature": contract["temperature"],
             "decision_threshold": contract["decision_threshold"],
             "tabular_in_features": pt_bin.config.tab_dim,
+            "action_ir_in_features": pt_bin.config.action_ir_dim,
             "node_in_dim": pt_bin.config.node_dim,
             "sha256": hashlib.sha256(bin_onnx_path.read_bytes()).hexdigest(),
-            "contract_sha256": hashlib.sha256(V3_CONTRACT_PATH.read_bytes().replace(b"\r\n", b"\n")).hexdigest(),
+            "contract_sha256": hashlib.sha256(V4_CONTRACT_PATH.read_bytes().replace(b"\r\n", b"\n")).hexdigest(),
+            "conformal_sha256": conf_lf_sha,
             "size_bytes": bin_onnx_path.stat().st_size,
             "parameter_count": bin_param_count,
             "max_logit_abs_diff_vs_pytorch": max_bin_diff,
@@ -721,7 +923,113 @@ def _export_and_verify(models_dir: Path, configs_dir: Path) -> dict[str, object]
         },
     }
     (configs_dir / "onnx_manifest.json").write_text(
-        json.dumps(manifest, indent=2, ensure_ascii=False),
+        json.dumps(manifest, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    return manifest
+
+
+def _export_and_verify_v3(models_dir: Path, configs_dir: Path) -> dict[str, object]:
+    torch.set_num_threads(2)
+    contract = json.loads(V3_CONTRACT_PATH.read_text(encoding="utf-8"))
+    if hashlib.sha256(PT_V3_BINARY_PATH.read_bytes()).hexdigest() != contract["weights_npz_sha256"]:
+        raise ValueError("binary_npz_sha256_mismatch")
+    pt_bin = PDFTransGraphV3(TransGraphV3Config(**contract["model_config"])).eval()
+    load_v3_weights_npz(pt_bin, PT_V3_BINARY_PATH)
+    onnx_bin = ONNXPDFTransGraphV3(pt_bin).eval()
+    pt_ml, ml_onnx_path = _export_multilabel_onnx(models_dir)
+
+    dummy_nf = torch.randn(12, 23, dtype=torch.float32)
+    dummy_nt = torch.zeros(12, dtype=torch.long)
+    dummy_es = torch.tensor([0, 1, 2, 6, 7], dtype=torch.long)
+    dummy_ed = torch.tensor([1, 2, 3, 7, 8], dtype=torch.long)
+    dummy_er = torch.tensor([0, 1, 2, 0, 1], dtype=torch.long)
+    dummy_em = torch.ones((5, 1), dtype=torch.float32)
+    dummy_he = torch.tensor([1.0], dtype=torch.float32)
+    dummy_b = torch.tensor([0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1], dtype=torch.long)
+    dummy_tab29 = torch.randn(2, 29, dtype=torch.float32)
+
+    bin_onnx_path = models_dir / "pdf_transgraph_v3.onnx"
+    torch.onnx.export(
+        onnx_bin,
+        (
+            dummy_nf,
+            dummy_nt,
+            dummy_es,
+            dummy_ed,
+            dummy_er,
+            dummy_em,
+            dummy_he,
+            torch.tensor([[1.0], [0.0]]),
+            dummy_b,
+            dummy_tab29,
+        ),
+        str(bin_onnx_path),
+        input_names=[
+            "node_features",
+            "node_types",
+            "edge_src",
+            "edge_dst",
+            "edge_rel",
+            "edge_mask",
+            "has_edges",
+            "use_graph_flag",
+            "batch",
+            "tabular_features",
+        ],
+        output_names=["logits", "attn_weights", "edge_alpha", "node_attn"],
+        dynamic_axes={
+            "node_features": {0: "num_nodes"},
+            "node_types": {0: "num_nodes"},
+            "edge_src": {0: "num_edges"},
+            "edge_dst": {0: "num_edges"},
+            "edge_rel": {0: "num_edges"},
+            "edge_mask": {0: "num_edges"},
+            "batch": {0: "num_nodes"},
+            "use_graph_flag": {0: "batch_size"},
+            "tabular_features": {0: "batch_size"},
+            "logits": {0: "batch_size"},
+            "attn_weights": {0: "batch_size"},
+            "edge_alpha": {0: "num_edges"},
+            "node_attn": {0: "num_nodes"},
+        },
+        opset_version=17,
+        do_constant_folding=True,
+        dynamo=False,
+    )
+    binary_onnx = onnx.load(str(bin_onnx_path))
+    onnx.checker.check_model(binary_onnx)
+    if any(node.op_type in {"If", "Loop", "Scan"} for node in binary_onnx.graph.node):
+        raise ValueError("unexpected_binary_onnx_control_flow")
+
+    for config_path in (V3_CONTRACT_PATH, SCALER_PATH, ML_CONTRACT_PATH):
+        (configs_dir / config_path.name).write_bytes(config_path.read_bytes())
+
+    manifest = {
+        "onnx_opset": 17,
+        "binary_model": {
+            "filename": bin_onnx_path.name,
+            "model_version": "PDF-TransGraph v3.2b",
+            "regime": contract["regime"],
+            "source_run": contract["source_run"],
+            "temperature": contract["temperature"],
+            "decision_threshold": contract["decision_threshold"],
+            "tabular_in_features": pt_bin.config.tab_dim,
+            "node_in_dim": pt_bin.config.node_dim,
+            "sha256": hashlib.sha256(bin_onnx_path.read_bytes()).hexdigest(),
+            "contract_sha256": hashlib.sha256(V3_CONTRACT_PATH.read_bytes().replace(b"\r\n", b"\n")).hexdigest(),
+            "size_bytes": bin_onnx_path.stat().st_size,
+            "parameter_count": int(sum(p.numel() for p in pt_bin.parameters())),
+        },
+        "multilabel_model": {
+            "filename": "multilabel_threat_net_v2.onnx",
+            "sha256": hashlib.sha256(ml_onnx_path.read_bytes()).hexdigest(),
+            "size_bytes": ml_onnx_path.stat().st_size,
+            "parameter_count": int(sum(p.numel() for p in pt_ml.parameters())),
+        },
+    }
+    (configs_dir / "onnx_manifest.json").write_text(
+        json.dumps(manifest, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
     return manifest

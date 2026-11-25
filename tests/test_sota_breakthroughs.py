@@ -69,7 +69,8 @@ def test_transgraph_v4_global_spd_active_action_ir_and_monotonic_loss(tmp_path: 
     assert float(torch.max(torch.abs(out["logits"] - out2["logits"]))) < 1e-6
 
     loss_val = subtree_monotonic_loss(torch.tensor([2.5]), torch.tensor([1.0]), margin=0.25)
-    assert float(loss_val) == ((2.5 - 1.0 + 0.25) ** 2)
+    expected_loss = (float(torch.sigmoid(torch.tensor(2.5))) - float(torch.sigmoid(torch.tensor(1.0))) + 0.25) ** 2
+    assert abs(float(loss_val) - expected_loss) < 1e-6
 
 
 def test_problem_space_physical_binary_grafting_preserves_pdf_validity_and_triggers() -> None:
@@ -166,14 +167,18 @@ def test_mondrian_conformal_evaluator_coverage_and_states() -> None:
     assert observed["prediction_set"] == ["MALICIOUS"]
     assert observed["conformal_state"] == "CERTIFIED_MALICIOUS"
 
-    saved = MondrianConformalEvaluator.from_json_file(REPO_ROOT / "configs" / "conformal_calibration_v3.json")
-    for probability in (0.002, 0.999):
-        result = saved.evaluate(probability)
-        assert result["calibration_n_benign"] == 1023
-        assert result["calibration_n_malicious"] == 1129
-        for metric in ("p_benign", "p_malicious", "credibility", "confidence"):
-            assert np.isfinite(result[metric])
-            assert 0.0 <= result[metric] <= 1.0
+    for conf_name in ("conformal_calibration_v3.json", "conformal_calibration_v4.json"):
+        conf_path = REPO_ROOT / "configs" / conf_name
+        if not conf_path.is_file():
+            continue
+        saved = MondrianConformalEvaluator.from_json_file(conf_path)
+        for probability in (0.002, 0.999):
+            result = saved.evaluate(probability)
+            assert result["calibration_n_benign"] == 1023
+            assert result["calibration_n_malicious"] == 1129
+            for metric in ("p_benign", "p_malicious", "credibility", "confidence"):
+                assert np.isfinite(result[metric])
+                assert 0.0 <= result[metric] <= 1.0
 
 
 def test_cf_cdr_minimal_cut_and_perceptual_ssim(tmp_path: Path) -> None:

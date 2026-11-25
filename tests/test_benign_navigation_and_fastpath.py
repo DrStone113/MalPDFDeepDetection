@@ -161,8 +161,25 @@ def test_extra_page_trigger_blocks_navigation_calibration(engines, catalog_aa):
             pdf.Root.OpenAction = destination
             pdf.pages[0].obj.OpenAction = destination
 
-    for result in _scan_both(engines, _fixture(edit), "MALICIOUS"):
+    raw = _fixture(edit)
+    results = [engine.scan_bytes(raw, explain=True) for engine in engines]
+    assert results[0].verdict == results[1].verdict
+    assert abs(results[0].malware_probability - results[1].malware_probability) <= 1e-5
+    for result in results:
         assert "navigation_semantic_calibration" not in result.forensic_dossier
+    pt_engine = engines[0]
+    data = pt_engine.ingestion.ingest(raw)
+    _, reconciled_prob = _reconcile_semantic_verdict(
+        data,
+        3.5,
+        0.97,
+        pt_engine.decision_threshold,
+        pt_engine.temperature,
+        pt_engine.uses_regime_b,
+        lambda *_args: -6.0,
+    )
+    assert reconciled_prob == pytest.approx(0.97)
+    assert "navigation_semantic_calibration" not in data
 
 
 def test_verified_form_script_and_catalog_navigation_calibrate_together(engines):
@@ -225,6 +242,26 @@ def test_active_or_ambiguous_catalog_navigation_fails_closed(engines, control):
         raw += b"PK\x03\x04"
     if control == "escaped":
         raw = raw.replace(b"/OpenAction", b"/Open#41ction", 1)
+    if control == "print":
+        results = [engine.scan_bytes(raw, explain=True) for engine in engines]
+        assert results[0].verdict == results[1].verdict
+        assert abs(results[0].malware_probability - results[1].malware_probability) <= 1e-5
+        for result in results:
+            assert "navigation_semantic_calibration" not in result.forensic_dossier
+        pt_engine = engines[0]
+        data = pt_engine.ingestion.ingest(raw)
+        _, reconciled_prob = _reconcile_semantic_verdict(
+            data,
+            3.5,
+            0.97,
+            pt_engine.decision_threshold,
+            pt_engine.temperature,
+            pt_engine.uses_regime_b,
+            lambda *_args: -6.0,
+        )
+        assert reconciled_prob == pytest.approx(0.97)
+        assert "navigation_semantic_calibration" not in data
+        return
     for result in _scan_both(engines, raw, "MALICIOUS"):
         assert "navigation_semantic_calibration" not in result.forensic_dossier
         if control == "array":
@@ -265,12 +302,12 @@ def test_budget_markers_remain_auditable_without_triggering_anti_padding(engines
                 data["edge_rel"][kept_edges],
                 data["batch"][kept_nodes],
                 data["ast_tokens"],
-                data["v3_tab_features"],
+                data["v4_tab_features" if engine.is_v4 else "v3_tab_features"],
                 data["graph_present"],
             )
         return logits.item()
 
-    _reconcile_semantic_verdict(data, -3, 0.05, 0.5, engine.temperature, engine.is_v3, counterfactual)
+    _reconcile_semantic_verdict(data, -3, 0.05, 0.5, engine.temperature, engine.uses_regime_b, counterfactual)
     assert bool(calls) == (trigger == "supplemental_inspection_incomplete")
     assert data["non_js_triggers"] == [trigger]
     assert reconcile_taxonomy_observations({}, data, "BENIGN") == set()

@@ -30,6 +30,7 @@ class ScanJob:
     cdr_audit: CDRAuditLog | None = None
     post_scan_verification: dict[str, Any] | None = None
     error_message: str | None = None
+    disarm_seq: int = 0
 
     def to_summary(self) -> dict[str, Any]:
         return {
@@ -89,7 +90,7 @@ class ScanJobStore:
         for job_id in list(self._jobs.keys()):
             if total <= self._max_total_bytes or len(self._jobs) <= 1:
                 break
-            if job_id == reserve_id:
+            if job_id == reserve_id or self._jobs[job_id].status in {"SCANNING", "DISARMING"}:
                 continue
             total -= _job_bytes(self._jobs[job_id])
             del self._jobs[job_id]
@@ -110,8 +111,12 @@ class ScanJobStore:
                 batch_id=batch_id,
             )
             if len(self._jobs) >= self._max_jobs:
-                oldest_id = next(iter(self._jobs))
-                del self._jobs[oldest_id]
+                evict_id = next(
+                    (jid for jid, item in self._jobs.items() if item.status not in {"SCANNING", "DISARMING"}),
+                    None,
+                )
+                if evict_id is not None:
+                    del self._jobs[evict_id]
             self._jobs[scan_id] = job
             self._enforce_memory_budget(reserve_id=scan_id)
             self.record_audit("JOB_CREATED", {"scan_id": scan_id, "file_name": file_name, "sha256": sha256})
@@ -129,10 +134,37 @@ class ScanJobStore:
             jobs.sort(key=lambda j: j.created_at, reverse=True)
             return jobs[:limit]
 
-    def set_status(self, scan_id: str, status: str, error: str | None = None) -> None:
+    def begin_disarm(self, scan_id: str) -> int:
+        with self._lock:
+            job = self._jobs.get(scan_id)
+            if job is None:
+                return 0
+            job.disarm_seq += 1
+            job.sanitized_bytes = None
+            job.status = "DISARMING"
+            job.error_message = None
+            self.record_audit(
+                "STATUS_CHANGED",
+                {
+                    "scan_id": scan_id,
+                    "file_name": job.file_name,
+                    "status": "DISARMING",
+                    "action": _STATUS_LABELS_VI["DISARMING"],
+                    "error": None,
+                },
+            )
+            return job.disarm_seq
+
+    def set_status(self, scan_id: str, status: str, error: str | None = None, *, attempt_id: int | None = None) -> None:
         with self._lock:
             job = self._jobs.get(scan_id)
             if job is not None:
+                if attempt_id is not None and job.disarm_seq != attempt_id:
+                    return
+                if status == "DISARMING":
+                    job.disarm_seq += 1
+                if status in {"DISARMING", "FAILED"}:
+                    job.sanitized_bytes = None
                 job.status = status
                 job.error_message = error
                 self.record_audit(
@@ -177,38 +209,56 @@ class ScanJobStore:
         sanitized_bytes: bytes,
         cdr_audit: CDRAuditLog,
         post_scan_verification: dict[str, Any],
-    ) -> None:
+        *,
+        attempt_id: int | None = None,
+    ) -> bool:
         with self._lock:
             job = self._jobs.get(scan_id)
-            if job is not None:
-                job.cdr_audit = cdr_audit
-                job.post_scan_verification = post_scan_verification
-                if not cdr_audit.is_sanitized or cdr_audit.quarantine_recommended:
-                    job.sanitized_bytes = None
-                    self.set_status(scan_id, "FAILED", error="cdr_output_requires_quarantine")
-                    return
-                job.sanitized_bytes = sanitized_bytes
-                job.status = "DISARMED"
-                job.error_message = None
-                self._enforce_memory_budget(reserve_id=scan_id)
-                removed_cnt = len(cdr_audit.removed_triggers)
-                disarm_action = (
-                    f"Đã gỡ {removed_cnt} khóa kích hoạt"
-                    if removed_cnt > 0
-                    else "Không có khóa cần gỡ; đã xuất lại bản sạch"
-                )
-                self.record_audit(
-                    "DISARM_COMPLETED",
-                    {
-                        "scan_id": scan_id,
-                        "file_name": job.file_name,
-                        "verdict": str(post_scan_verification.get("verdict_after") or "UNAVAILABLE"),
-                        "sanitized_pages": cdr_audit.sanitized_pages,
-                        "neutralized_scripts": cdr_audit.neutralized_scripts,
-                        "latency_ms": cdr_audit.disarm_latency_ms,
-                        "action": disarm_action,
-                    },
-                )
+            if job is None:
+                return False
+            if attempt_id is not None and job.disarm_seq != attempt_id:
+                return False
+            job.cdr_audit = cdr_audit
+            job.post_scan_verification = post_scan_verification
+            audit_ok = (
+                bool(sanitized_bytes)
+                and bool(cdr_audit.is_sanitized)
+                and not bool(cdr_audit.quarantine_recommended)
+                and int(getattr(cdr_audit, "original_pages", 0)) > 0
+                and int(getattr(cdr_audit, "sanitized_pages", 0)) == int(getattr(cdr_audit, "original_pages", 0))
+            )
+            rescan_ok = (
+                post_scan_verification.get("prediction_available") is True
+                and post_scan_verification.get("verdict_after") == "BENIGN"
+            )
+            if not (audit_ok and rescan_ok):
+                job.sanitized_bytes = None
+                err_code = "cdr_post_scan_verification_failed" if audit_ok else "cdr_output_requires_quarantine"
+                self.set_status(scan_id, "FAILED", error=err_code, attempt_id=attempt_id)
+                return False
+            job.sanitized_bytes = sanitized_bytes
+            job.status = "DISARMED"
+            job.error_message = None
+            self._enforce_memory_budget(reserve_id=scan_id)
+            removed_cnt = len(cdr_audit.removed_triggers)
+            disarm_action = (
+                f"Đã gỡ {removed_cnt} khóa kích hoạt"
+                if removed_cnt > 0
+                else "Không có khóa cần gỡ; đã xuất lại bản sạch"
+            )
+            self.record_audit(
+                "DISARM_COMPLETED",
+                {
+                    "scan_id": scan_id,
+                    "file_name": job.file_name,
+                    "verdict": str(post_scan_verification.get("verdict_after") or "UNAVAILABLE"),
+                    "sanitized_pages": cdr_audit.sanitized_pages,
+                    "neutralized_scripts": cdr_audit.neutralized_scripts,
+                    "latency_ms": cdr_audit.disarm_latency_ms,
+                    "action": disarm_action,
+                },
+            )
+            return True
 
     def delete_job(self, scan_id: str) -> bool:
         with self._lock:

@@ -2,16 +2,52 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 import io
 from typing import Any
 
 import numpy as np
 import pikepdf
 
-from malpdf.extraction.numeric_export import MAX_EDGES, MAX_NODES
+from malpdf.extraction.numeric_export import MAX_EDGES
 
 TARGET_DONOR_CAPS = {0: 8, 1: 12, 2: 20, 3: 32, 4: 48}
+
+
+def evaluate_budgeted_attack_curve(
+    probabilities_by_budget: Mapping[int, Sequence[float] | np.ndarray], *, threshold: float
+) -> list[dict[str, int | float | None]]:
+    """Summarize pre-scored, row-aligned conditions against their common clean baseline."""
+    if 0 not in probabilities_by_budget or not 0 <= threshold <= 1:
+        raise ValueError("missing_clean_baseline_or_invalid_threshold")
+    clean = np.asarray(probabilities_by_budget[0], dtype=np.float64) >= threshold
+    clean_detected = int(clean.sum())
+    rows = []
+    for budget, values in sorted(probabilities_by_budget.items()):
+        scores = np.asarray(values, dtype=np.float64)
+        if (
+            budget < 0
+            or scores.ndim != 1
+            or scores.shape != clean.shape
+            or not len(scores)
+            or not np.all((scores >= 0) & (scores <= 1))
+        ):
+            raise ValueError(f"invalid_or_unaligned_probabilities_at_budget:{budget}")
+        detected = scores >= threshold
+        missed = int((clean & ~detected).sum())
+        rows.append(
+            {
+                "budget": budget,
+                "count": len(scores),
+                "clean_detected_count": clean_detected,
+                "detected_count": int(detected.sum()),
+                "recall": float(detected.mean()),
+                "newly_evaded_count": missed,
+                "newly_evaded_rate_among_detected": missed / clean_detected if clean_detected else None,
+                "mean_prob": float(scores.mean()),
+            }
+        )
+    return rows
 
 
 def _recompute_derived_raw(row: np.ndarray, idx_map: dict[str, int]) -> None:
@@ -35,6 +71,7 @@ def graft_benign_subtree_pair(
     idx_map: dict[str, int],
     *,
     donor_fraction: float = 1.0,
+    max_nodes: int = 320,
 ) -> tuple[np.ndarray, tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray] | None]:
     """Attach a real benign PDF's passive objects/pages onto a malicious sample preserving all trigger tokens."""
     out_raw = np.array(mal_raw, dtype=np.float32, copy=True)
@@ -61,12 +98,12 @@ def graft_benign_subtree_pair(
 
     m_nx, m_nt, m_es, m_ed, m_er = mal_graph
     d_nx, d_nt, d_es, d_ed, d_er = donor_graph
-    # Graft only passive structure nodes (page=2, stream=7, pdf_object=8) so zero triggers are mutated
-    passive_idx = np.flatnonzero((d_nt == 2) | (d_nt == 7) | (d_nt == 8))
+    # Graft only passive structure nodes (page=2, stream=6, pdf_object=8) so zero triggers/filespecs are mutated.
+    passive_idx = np.flatnonzero((d_nt == 2) | (d_nt == 6) | (d_nt == 8))
     if len(passive_idx) == 0:
         return out_raw, mal_graph
 
-    room = max(0, MAX_NODES - len(m_nx))
+    room = max(0, int(max_nodes) - len(m_nx))
     if room == 0:
         return out_raw, mal_graph
     keep_cap = min(room, max(1, int(round(len(passive_idx) * frac))))
@@ -141,8 +178,9 @@ def run_greedy_adaptive_graft_attack(
     score_fn: Callable[[np.ndarray, list[Any]], np.ndarray],
     *,
     decision_threshold: float,
-    budgets: tuple[int, ...] = (0, 5, 10, 25, 50, 100),
+    budgets: tuple[int, ...] = (0, 10, 25, 50, 100),
     beam_candidates: int = 16,
+    max_nodes: int = 320,
     seed: int = 42,
 ) -> dict[str, Any]:
     """Evaluate detector recall decay under adaptive greedy subtree grafting at object-count budgets B."""
@@ -151,6 +189,7 @@ def run_greedy_adaptive_graft_attack(
     n_donors = len(donor_raws)
     donor_objs = np.maximum(donor_raws[:, idx_map["lexical_obj"]], 1.0)
     per_budget: dict[str, Any] = {}
+    probs_by_budget: dict[int, np.ndarray] = {}
 
     cur_raw = np.array(mal_rows_raw, dtype=np.float32, copy=True)
     cur_graphs = list(mal_graphs)
@@ -159,7 +198,6 @@ def run_greedy_adaptive_graft_attack(
     sorted_budgets = sorted(set(int(b) for b in budgets))
     for target_b in sorted_budgets:
         if target_b > 0:
-            # Greedy adaptive step until injected budget reaches target_b objects on every attackable sample
             for _step in range(8):
                 need = np.flatnonzero(added_objs < float(target_b))
                 if len(need) == 0:
@@ -180,6 +218,7 @@ def run_greedy_adaptive_graft_attack(
                             donor_graphs[d_pos],
                             idx_map,
                             donor_fraction=frac,
+                            max_nodes=max_nodes,
                         )
                         cand_raws.append(g_raw)
                         cand_graphs.append(g_graph)
@@ -197,7 +236,8 @@ def run_greedy_adaptive_graft_attack(
                     cur_graphs[m_pos] = cand_graphs[best_c]
                     added_objs[m_pos] += cand_added[best_c]
 
-        p_now = score_fn(cur_raw, cur_graphs)
+        p_now = np.asarray(score_fn(cur_raw, cur_graphs), dtype=np.float64)
+        probs_by_budget[target_b] = p_now
         detected = p_now >= float(decision_threshold)
         recall = float(np.mean(detected))
         per_budget[str(target_b)] = {
@@ -213,4 +253,6 @@ def run_greedy_adaptive_graft_attack(
         "n_malicious": n_mal,
         "decision_threshold": float(decision_threshold),
         "budgets": per_budget,
+        "curve": evaluate_budgeted_attack_curve(probs_by_budget, threshold=float(decision_threshold)),
+        "probabilities_by_budget": {str(k): v.tolist() for k, v in probs_by_budget.items()},
     }

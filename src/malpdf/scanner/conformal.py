@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import hashlib
 import json
 import logging
 from pathlib import Path
@@ -120,20 +121,35 @@ class MondrianConformalEvaluator:
 
 
 def load_conformal_calibration(
-    *config_dirs: Path, weights_sha256: str | None, temperature: float
+    *config_dirs: Path,
+    weights_sha256: str | None,
+    temperature: float,
+    expected_sha256: str | None = None,
+    filenames: tuple[str, ...] = ("conformal_calibration_v4.json", "conformal_calibration_v3.json"),
 ) -> MondrianConformalEvaluator | None:
     if not weights_sha256:
         return None
+    saw_sha_mismatch = False
     for directory in config_dirs:
-        path = directory / "conformal_calibration_v3.json"
-        try:
-            if not path.is_file():
-                continue
-            evaluator = MondrianConformalEvaluator.from_json_file(path)
-            if evaluator.metadata.get("weights_npz_sha256") == weights_sha256 and np.isclose(
-                float(evaluator.metadata["temperature"]), temperature, rtol=0, atol=1e-9
-            ):
-                return evaluator
-        except (AttributeError, KeyError, OSError, TypeError, ValueError) as exc:
-            logging.getLogger(__name__).warning("Ignoring invalid conformal calibration %s: %s", path, exc)
+        for filename in filenames:
+            path = directory / filename
+            try:
+                if not path.is_file():
+                    continue
+                raw_bytes = path.read_bytes()
+                if expected_sha256 is not None:
+                    digest = hashlib.sha256(raw_bytes).hexdigest()
+                    lf_digest = hashlib.sha256(raw_bytes.replace(b"\r\n", b"\n")).hexdigest()
+                    if digest != expected_sha256 and lf_digest != expected_sha256:
+                        saw_sha_mismatch = True
+                        continue
+                evaluator = MondrianConformalEvaluator.from_json_file(path)
+                if evaluator.metadata.get("weights_npz_sha256") == weights_sha256 and np.isclose(
+                    float(evaluator.metadata["temperature"]), temperature, rtol=0, atol=1e-9
+                ):
+                    return evaluator
+            except (AttributeError, KeyError, OSError, TypeError, ValueError) as exc:
+                logging.getLogger(__name__).warning("Ignoring invalid conformal calibration %s: %s", path, exc)
+    if expected_sha256 is not None and saw_sha_mismatch:
+        raise ValueError("conformal_calibration_sha256_mismatch")
     return None

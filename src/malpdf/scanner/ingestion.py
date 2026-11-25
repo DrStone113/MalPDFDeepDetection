@@ -119,6 +119,7 @@ AST_NODE_TYPES: list[str] = [
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_SCALER_PATH = REPO_ROOT / "configs" / "tabular_scaler.json"
 DEFAULT_V3_CONTRACT_PATH = REPO_ROOT / "configs" / "transgraph_v3_contract.json"
+DEFAULT_V4_CONTRACT_PATH = REPO_ROOT / "configs" / "transgraph_v4_contract.json"
 REGIME_B_NAMES = tuple(name for name in LEXICAL if name != "lexical_AcroForm") + RAW[:3] + DERIVED[:4]
 REGIME_B_INDICES = tuple(FEATURES.index(name) for name in REGIME_B_NAMES)
 VERIFIED_CONTRACT_VERSION = "pdf-graph-projection-v2"
@@ -1870,6 +1871,7 @@ class InstantPDFIngestion:
         node_in_dim: int = 23,
         as_numpy: bool = False,
         v3_contract_path: Path | str | None = None,
+        v4_contract_path: Path | str | None = None,
     ) -> None:
         if node_in_dim not in (19, 23):
             raise ValueError("unsupported_node_in_dim")
@@ -1921,14 +1923,41 @@ class InstantPDFIngestion:
             ):
                 raise ValueError("invalid_transgraph_v3_contract")
 
-    def _build_v3_tabular_features(
+        self.v4_contract: dict[str, Any] = {}
+        self.v4_feature_names: list[str] = []
+        self.v4_center = np.empty(0, dtype=np.float64)
+        self.v4_scale = np.empty(0, dtype=np.float64)
+        v4_path = DEFAULT_V4_CONTRACT_PATH
+        if not v4_path.is_file():
+            v4_path = REPO_ROOT / "production" / "configs" / v4_path.name
+        if v4_contract_path is not None or v4_path.is_file():
+            if v4_contract_path is not None:
+                v4_path = Path(v4_contract_path)
+            self.v4_contract = json.loads(v4_path.read_text(encoding="utf-8"))
+            self.v4_feature_names = self.v4_contract["feature_names"]
+            self.v4_center = np.asarray(self.v4_contract["center"], dtype=np.float64)
+            self.v4_scale = np.asarray(self.v4_contract["scale"], dtype=np.float64)
+            if (
+                tuple(self.v4_feature_names) != REGIME_B_NAMES
+                or tuple(self.v4_contract["feature_indices_73"]) != REGIME_B_INDICES
+                or self.v4_center.shape != (29,)
+                or self.v4_scale.shape != (29,)
+                or not np.isfinite(self.v4_center).all()
+                or not np.isfinite(self.v4_scale).all()
+                or np.any(self.v4_scale == 0)
+            ):
+                raise ValueError("invalid_transgraph_v4_contract")
+
+    def _build_regime_b_tabular_features(
         self,
         data: bytes,
         raw_entropy: float,
         header_pos: int,
+        center: np.ndarray,
+        scale: np.ndarray,
         recovered_tokens: dict[str, int] | None = None,
     ) -> tuple[list[float], Any]:
-        if not self.v3_contract:
+        if center.size == 0:
             return [], None
         tok = scan_raw_pdf_tokens(data)
         for key, count in (recovered_tokens or {}).items():
@@ -1949,8 +1978,34 @@ class InstantPDFIngestion:
         )
         if not self.contract_verified:
             return raw, None
-        scaled = ((log_matrix([raw]) - self.v3_center) / self.v3_scale).astype(np.float32)
+        scaled = ((log_matrix([raw]) - center) / scale).astype(np.float32)
         return raw, scaled if self.as_numpy else torch.from_numpy(scaled)
+
+    def _build_v3_tabular_features(
+        self,
+        data: bytes,
+        raw_entropy: float,
+        header_pos: int,
+        recovered_tokens: dict[str, int] | None = None,
+    ) -> tuple[list[float], Any]:
+        if not self.v3_contract:
+            return [], None
+        return self._build_regime_b_tabular_features(
+            data, raw_entropy, header_pos, self.v3_center, self.v3_scale, recovered_tokens
+        )
+
+    def _build_v4_tabular_features(
+        self,
+        data: bytes,
+        raw_entropy: float,
+        header_pos: int,
+        recovered_tokens: dict[str, int] | None = None,
+    ) -> tuple[list[float], Any]:
+        if not self.v4_contract:
+            return [], None
+        return self._build_regime_b_tabular_features(
+            data, raw_entropy, header_pos, self.v4_center, self.v4_scale, recovered_tokens
+        )
 
     def read_bytes(self, source: str | Path | bytes, max_bytes: int = DEFAULT_MAX_PDF_BYTES) -> tuple[bytes, str]:
         if isinstance(source, bytes):
@@ -2105,12 +2160,14 @@ class InstantPDFIngestion:
             extracted_scripts=extracted_scripts,
             stream_interior_tokens=structural_audit["stream_interior_tokens"],
         )
-        v3_raw, v3_tab = self._build_v3_tabular_features(
-            data,
-            raw_entropy,
-            header_pos,
-            {key: raw_tokens[key] for key in recovered},
-        )
+        recovered_map = {key: raw_tokens[key] for key in recovered}
+        v3_raw, v3_tab = self._build_v3_tabular_features(data, raw_entropy, header_pos, recovered_map)
+        v4_raw, v4_tab = self._build_v4_tabular_features(data, raw_entropy, header_pos, recovered_map)
+        eff_v3_names = self.v3_feature_names or self.v4_feature_names
+        eff_v3_raw = v3_raw if v3_raw else v4_raw
+        eff_v3_tab = v3_tab if v3_tab is not None else v4_tab
+        eff_v3_center = self.v3_center.tolist() if self.v3_center.size else self.v4_center.tolist()
+        eff_v3_scale = self.v3_scale.tolist() if self.v3_scale.size else self.v4_scale.tolist()
 
         ingest_data = {
             **graph_data,
@@ -2135,11 +2192,16 @@ class InstantPDFIngestion:
             "ast_node_counts": ast_node_counts,
             "tab_features": tab_features,
             "raw_feature_vec": raw_feature_vec,
-            "v3_feature_names": self.v3_feature_names,
-            "v3_raw_feature_vec": v3_raw,
-            "v3_tab_features": v3_tab,
-            "v3_scaler_center": self.v3_center.tolist(),
-            "v3_scaler_scale": self.v3_scale.tolist(),
+            "v3_feature_names": eff_v3_names,
+            "v3_raw_feature_vec": eff_v3_raw,
+            "v3_tab_features": eff_v3_tab,
+            "v3_scaler_center": eff_v3_center,
+            "v3_scaler_scale": eff_v3_scale,
+            "v4_feature_names": self.v4_feature_names,
+            "v4_raw_feature_vec": v4_raw,
+            "v4_tab_features": v4_tab,
+            "v4_scaler_center": self.v4_center.tolist(),
+            "v4_scaler_scale": self.v4_scale.tolist(),
             "prediction_blockers": [
                 f"feature_not_observed:{name}"
                 for name, value in zip(self.feature_names, raw_feature_vec)

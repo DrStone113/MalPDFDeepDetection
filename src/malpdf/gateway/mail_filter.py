@@ -159,6 +159,38 @@ class MailGatewayFilter:
         visited_parts = 0
         password_candidates: list[str] | None = None
 
+        def _quarantine_and_replace(
+            part: Message,
+            pdf_bytes: bytes,
+            filename: str,
+            sha256: str,
+            reason: str,
+            *,
+            include_reason_header: bool = True,
+        ) -> tuple[Message, Path]:
+            q_file = self.quarantine_dir / f"{sha256}.pdf"
+            q_file.write_bytes(pdf_bytes)
+            replacement = MIMEText(f"The original PDF (SHA-256 {sha256}) was quarantined. {reason}", "plain")
+            replacement_name = f"quarantined_{filename or 'attachment.pdf'}.txt"
+            for key, value in part.items():
+                if key.lower() not in {
+                    "content-type",
+                    "content-transfer-encoding",
+                    "content-disposition",
+                    "mime-version",
+                    "x-malpdf-sanitized",
+                    "x-malpdf-quarantined",
+                    "x-malpdf-reason",
+                    "x-malpdf-original-sha256",
+                }:
+                    replacement[key] = value
+            replacement.add_header("Content-Disposition", "attachment", filename=replacement_name)
+            replacement.add_header("X-MalPDF-Quarantined", "TRUE")
+            replacement.add_header("X-MalPDF-Original-SHA256", sha256)
+            if include_reason_header:
+                replacement.add_header("X-MalPDF-Reason", reason)
+            return replacement, q_file
+
         def inspect_part(part: Message, depth: int = 0) -> Message:
             nonlocal malicious_count, quarantined_only_count, password_locked_count, unavailable_count, visited_parts
             nonlocal password_candidates
@@ -180,6 +212,14 @@ class MailGatewayFilter:
                 scan_res = self.scanner.scan_bytes(pdf_bytes, file_name=filename, explain=True)
             except (ValueError, RuntimeError):
                 unavailable_count += 1
+                blocker = "pdf_attachment_unreadable" if pdf_bytes else "pdf_attachment_payload_missing"
+                replacement, q_err = _quarantine_and_replace(
+                    part,
+                    pdf_bytes,
+                    filename,
+                    sha256,
+                    blocker.upper(),
+                )
                 inspections.append(
                     AttachmentInspection(
                         filename=filename,
@@ -189,13 +229,12 @@ class MailGatewayFilter:
                         malware_probability=None,
                         is_ood=None,
                         disarmed=False,
+                        quarantine_path=str(q_err.resolve()),
                         prediction_available=False,
-                        prediction_blockers=[
-                            "pdf_attachment_unreadable" if pdf_bytes else "pdf_attachment_payload_missing"
-                        ],
+                        prediction_blockers=[blocker],
                     )
                 )
-                return part
+                return replacement
             locked = scan_res.forensic_dossier.get("encryption_analysis", {}).get("password_locked", False)
             password = None
             if locked:
@@ -215,6 +254,13 @@ class MailGatewayFilter:
             quarantine_locked = locked and (self.quarantine_password_locked or malicious)
             if not scan_res.prediction_available and not quarantine_locked:
                 unavailable_count += 1
+                replacement, q_unavail = _quarantine_and_replace(
+                    part,
+                    pdf_bytes,
+                    filename,
+                    sha256,
+                    "PDF_PREDICTION_UNAVAILABLE",
+                )
                 inspections.append(
                     AttachmentInspection(
                         filename=filename,
@@ -224,14 +270,16 @@ class MailGatewayFilter:
                         malware_probability=None,
                         is_ood=None,
                         disarmed=False,
+                        quarantine_path=str(q_unavail.resolve()),
                         prediction_available=False,
                         prediction_blockers=scan_res.prediction_blockers,
                     )
                 )
-                return part
+                return replacement
             audit = None
             q_path = None
             disarmed = False
+            post_scan_failed = False
             if malicious or quarantine_locked:
                 malicious_count += int(malicious)
                 q_path = self.quarantine_dir / f"{sha256}.pdf"
@@ -243,13 +291,46 @@ class MailGatewayFilter:
                         sanitized_bytes, audit = self.disarmer.sanitize_bytes(
                             pdf_bytes, file_name=filename, password=password
                         )
-                        disarmed = audit.is_sanitized and not audit.quarantine_recommended
+                        orig_pages = int(getattr(audit, "original_pages", 0))
+                        san_pages = int(getattr(audit, "sanitized_pages", 0))
+                        valid_cdr_output = (
+                            bool(sanitized_bytes) and orig_pages > 0 and san_pages > 0 and san_pages == orig_pages
+                        )
+                        if valid_cdr_output and audit.is_sanitized and not audit.quarantine_recommended:
+                            post_scan = self.scanner.scan_bytes(
+                                sanitized_bytes,
+                                file_name=f"sanitized_{filename or 'attachment.pdf'}",
+                                explain=False,
+                            )
+                            disarmed = bool(post_scan.prediction_available and post_scan.verdict == "BENIGN")
+                            if not disarmed:
+                                post_scan_failed = True
+                                audit.is_sanitized = False
+                                audit.quarantine_recommended = True
+                        elif not valid_cdr_output and audit is not None:
+                            post_scan_failed = True
+                            audit.is_sanitized = False
+                            audit.quarantine_recommended = True
                     except (ValueError, RuntimeError):
-                        pass
+                        disarmed = False
                 if disarmed:
                     replacement = MIMEApplication(sanitized_bytes, _subtype="pdf")
                     replacement_name = f"sanitized_{filename or 'attachment.pdf'}"
-                    status_header = "X-MalPDF-Sanitized"
+                    for key, value in part.items():
+                        if key.lower() not in {
+                            "content-type",
+                            "content-transfer-encoding",
+                            "content-disposition",
+                            "mime-version",
+                            "x-malpdf-sanitized",
+                            "x-malpdf-quarantined",
+                            "x-malpdf-reason",
+                            "x-malpdf-original-sha256",
+                        }:
+                            replacement[key] = value
+                    replacement.add_header("Content-Disposition", "attachment", filename=replacement_name)
+                    replacement.add_header("X-MalPDF-Sanitized", "TRUE")
+                    replacement.add_header("X-MalPDF-Original-SHA256", sha256)
                 else:
                     quarantined_only_count += int(malicious)
                     if quarantine_locked:
@@ -258,28 +339,18 @@ class MailGatewayFilter:
                         reason = "A suspicious QR code requires quarantine."
                     elif audit and audit.residual_codec_anomalies:
                         reason = "Residual resource or codec anomalies require quarantine."
+                    elif post_scan_failed:
+                        reason = "Post-disarm scanner verification detected residual risk."
                     else:
                         reason = "Content disarm could not verify a clean PDF."
-                    replacement = MIMEText(f"The original PDF (SHA-256 {sha256}) was quarantined. {reason}", "plain")
-                    replacement_name = f"quarantined_{filename or 'attachment.pdf'}.txt"
-                    status_header = "X-MalPDF-Quarantined"
-                for key, value in part.items():
-                    if key.lower() not in {
-                        "content-type",
-                        "content-transfer-encoding",
-                        "content-disposition",
-                        "mime-version",
-                        "x-malpdf-sanitized",
-                        "x-malpdf-quarantined",
-                        "x-malpdf-reason",
-                        "x-malpdf-original-sha256",
-                    }:
-                        replacement[key] = value
-                replacement.add_header("Content-Disposition", "attachment", filename=replacement_name)
-                replacement.add_header(status_header, "TRUE")
-                replacement.add_header("X-MalPDF-Original-SHA256", sha256)
-                if quarantine_locked:
-                    replacement.add_header("X-MalPDF-Reason", reason)
+                    replacement, q_path = _quarantine_and_replace(
+                        part,
+                        pdf_bytes,
+                        filename,
+                        sha256,
+                        reason,
+                        include_reason_header=quarantine_locked,
+                    )
                 part = replacement
             if password is not None:
                 part["X-MalPDF-Unlocked-From-Email"] = "TRUE"

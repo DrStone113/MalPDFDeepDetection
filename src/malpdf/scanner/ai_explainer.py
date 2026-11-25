@@ -539,7 +539,7 @@ class AIThreatExplainer:
             matched_specific_section = True
             sections.append(
                 "Xin chào, đây là trợ lý giải thích kết quả kiểm tra của **MalPDF DeepDetection**:\n"
-                "- **Mô hình phân loại tệp PDF:** **PDF-TransGraph v3.2b** (đồ thị cấu trúc HGT 23 chiều và 29 đặc trưng tệp) kết hợp **PDFMultiLabelThreatNet v2** (8 nhóm kiểm tra hành vi).\n"
+                "- **Mô hình phân loại tệp PDF:** **PDF-TransGraph v4** (đồ thị cấu trúc DAG Transformer 23 chiều, biểu diễn chuỗi kích hoạt `ActionSubgraphIR` 24 chiều và 29 đặc trưng tệp) kết hợp **PDFMultiLabelThreatNet v2** (8 nhóm kiểm tra hành vi).\n"
                 "- **Trợ lý hỏi đáp:** Hỗ trợ Cloud AI, mô hình chạy trên trình duyệt qua WebLLM (**`Qwen2.5-1.5B-Instruct`** hoặc **`Llama-3.2-1B-Instruct`**) và bộ giải thích từ kết quả quét của **MalPDF DeepDetection**.\n"
                 f"- **Tệp đang xem (`{file_name}`):** {explanation['executive_summary']}"
             )

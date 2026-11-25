@@ -591,7 +591,16 @@ def _reconcile_semantic_verdict(
     non_js = set(ingest_data["non_js_triggers"])
     threat_non_js = non_js - _NON_THREAT_AUDIT_MARKERS
     hardening_reasons = non_js.intersection(
-        {"/GoToR", "/FileAttachment", "/3D", "/U3D", "/PRC", "gotor_unc_ntlm_risk", "xfa_formcalc_network_call"}
+        {
+            "/Launch",
+            "/GoToR",
+            "/FileAttachment",
+            "/3D",
+            "/U3D",
+            "/PRC",
+            "gotor_unc_ntlm_risk",
+            "xfa_formcalc_network_call",
+        }
     )
     if ingest_data.get("polyglot_analysis", {}).get("has_polyglot_payload"):
         hardening_reasons.add("polyglot_payload")
@@ -602,6 +611,11 @@ def _reconcile_semantic_verdict(
     if codec:
         hardening_reasons.add("codec_anomaly")
     records = ingest_data["raw_records"]
+    if any(record.get("action_type") == "/Launch" for record in records):
+        hardening_reasons.add("/Launch")
+    evasion_audit = ingest_data.get("evasion_unpack_audit") or {}
+    if evasion_audit.get("hex_escaped_names_decoded") and evasion_audit.get("recovered_hidden_triggers"):
+        hardening_reasons.add("hex_escaped_trigger_evasion")
     js = ingest_data["js_semantics"]
     raw_tokens = ingest_data["raw_tokens"]
     invalidate_incomplete_javascript_verification(ingest_data)
@@ -661,7 +675,7 @@ def _reconcile_semantic_verdict(
         return math.log(
             uninspected_probability / (1.0 - uninspected_probability)
         ) * temperature, uninspected_probability
-    if has_non_js_threat or (probability <= _CLEAN_CALIBRATION_FLOOR and not js["is_verified_benign_js"]):
+    if has_non_js_threat:
         return logit, probability
 
     catalog_action_records = [
@@ -700,6 +714,15 @@ def _reconcile_semantic_verdict(
             or not 0 < len(benign_nav_indices) < len(records)
             or not _catalog_action_tokens_accounted_for(raw_tokens, reconciled_ids)
         ):
+            return logit, probability
+        if probability <= _CLEAN_CALIBRATION_FLOOR:
+            ingest_data["navigation_semantic_calibration"] = {
+                "applied": True,
+                "raw_prob": round(probability, 4),
+                "calibrated_prob": round(probability, 4),
+                "reconciled_nodes": sorted(reconciled_ids),
+                "reason": "benign_catalog_navigation_verified",
+            }
             return logit, probability
         drop_indices = benign_nav_indices
         prefix = "lexical_" if is_v3 else ""

@@ -35,7 +35,8 @@ def test_onnx_engine_matches_pytorch_on_real_fixtures() -> None:
     onnx_engine = ONNXMalPDFScannerEngine()
     for scanner in (pt_engine, onnx_engine):
         assert scanner.tabular_in_features == 29
-        assert scanner.decision_threshold == pytest.approx(0.057277346, abs=1e-6)
+    assert onnx_engine.decision_threshold == pytest.approx(pt_engine.decision_threshold, abs=1e-6)
+    assert onnx_engine.temperature == pytest.approx(pt_engine.temperature, abs=1e-6)
 
     pt_threat = pt_engine.scan_bytes(threat_bytes, file_name="real_threat_document.pdf", explain=True)
     ox_threat = onnx_engine.scan_bytes(threat_bytes, file_name="real_threat_document.pdf", explain=True)
@@ -139,10 +140,13 @@ def test_production_web_service_endpoints_and_cdr_integrity() -> None:
     r_health = client.get("/api/health")
     assert r_health.status_code == 200
     health_json = r_health.json()
+    expected_scanner = ONNXMalPDFScannerEngine()
     assert health_json["runtime"] == "onnxruntime"
-    assert health_json["model"] == "PDF-TransGraph v3.2b (23D ONNX)"
-    assert health_json["temperature"] == pytest.approx(0.888401)
-    assert health_json["decision_threshold"] == pytest.approx(0.057277)
+    assert health_json["model"] == (
+        "PDF-TransGraph v4 (23D ONNX)" if expected_scanner.is_v4 else "PDF-TransGraph v3.2b (23D ONNX)"
+    )
+    assert health_json["temperature"] == pytest.approx(expected_scanner.temperature, abs=1e-5)
+    assert health_json["decision_threshold"] == pytest.approx(expected_scanner.decision_threshold, abs=1e-5)
     assert health_json["prediction_available"] is True
     assert health_json["multilabel_weights_loaded"] is True
     assert health_json["cdr_engine"] == "pikepdf-inplace"
@@ -254,26 +258,33 @@ def test_onnx_engine_scans_pdf_above_legacy_10mib_cap() -> None:
     assert result.file_size_bytes == len(large_pdf)
 
 
-def test_onnx_engine_accepts_crlf_and_lf_v3_contract_digest(tmp_path: Path, monkeypatch) -> None:
+def test_onnx_engine_accepts_crlf_and_lf_contract_digest(tmp_path: Path, monkeypatch) -> None:
     import pytest
 
     import onnx_engine as oe
 
-    contract_path = PROD_DIR / "configs" / "transgraph_v3_contract.json"
+    is_v4_default = (PROD_DIR / "models" / "pdf_transgraph_v4.onnx").is_file() and (
+        PROD_DIR / "configs" / "transgraph_v4_contract.json"
+    ).is_file()
+    contract_name = "transgraph_v4_contract.json" if is_v4_default else "transgraph_v3_contract.json"
+    attr_name = "DEFAULT_V4_CONTRACT_PATH" if is_v4_default else "DEFAULT_V3_CONTRACT_PATH"
+    err_match = "transgraph_v4_contract_sha256_mismatch" if is_v4_default else "transgraph_v3_contract_sha256_mismatch"
+
+    contract_path = PROD_DIR / "configs" / contract_name
     lf_bytes = contract_path.read_bytes().replace(b"\r\n", b"\n")
     crlf_bytes = lf_bytes.replace(b"\n", b"\r\n")
 
-    tmp_contract = tmp_path / "transgraph_v3_contract.json"
-    monkeypatch.setattr(oe, "DEFAULT_V3_CONTRACT_PATH", tmp_contract)
+    tmp_contract = tmp_path / contract_name
+    monkeypatch.setattr(oe, attr_name, tmp_contract)
 
     for raw_variant in (lf_bytes, crlf_bytes):
         tmp_contract.write_bytes(raw_variant)
         scanner = ONNXMalPDFScannerEngine()
-        assert scanner.is_v3 is True
+        assert (scanner.is_v4 if is_v4_default else scanner.is_v3) is True
         assert scanner.tabular_in_features == 29
 
     tmp_contract.write_bytes(lf_bytes + b"\n ")
-    with pytest.raises(ValueError, match="transgraph_v3_contract_sha256_mismatch"):
+    with pytest.raises(ValueError, match=err_match):
         ONNXMalPDFScannerEngine()
 
 

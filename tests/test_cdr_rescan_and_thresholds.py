@@ -574,3 +574,87 @@ def test_web_cdr_rescan_stateless_and_scan_assessment_contract(
         {"text": "Vùng lưỡng lự · Đẩy CDR", "state": "AMBIGUOUS_BOTH", "hidden": False},
         {"text": "--", "state": "", "hidden": True},
     ]
+
+
+@pytest.mark.parametrize("app_module", ["malpdf.web.app", "production.web_service"])
+def test_disarm_route_and_store_fail_closed_on_residual_threat_and_stale_redisarm(
+    monkeypatch: pytest.MonkeyPatch, app_module: str
+) -> None:
+    mod = importlib.import_module(app_module)
+    raw_threat = load_real_threat_bytes()
+    client = TestClient(mod.app)
+
+    health_resp = client.get("/api/health")
+    assert health_resp.status_code == 200
+    assert health_resp.json()["status"] == "healthy"
+
+    disarm_ok = client.post(
+        "/api/disarm?include_preview_images=false",
+        files={"file": ("threat.pdf", raw_threat, "application/pdf")},
+    )
+    assert disarm_ok.status_code == 200
+    ok_body = disarm_ok.json()
+    scan_id = ok_body["scan_id"]
+    assert ok_body["is_sanitized"] is True
+    assert ok_body["download_ready"] is True
+    assert ok_body["status"] == "DISARMED"
+    dl_ok = client.get(f"/api/download/sanitized/{scan_id}")
+    assert dl_ok.status_code == 200
+    _assert_cdr_integrity(raw_threat, dl_ok.content, ok_body)
+
+    orig_scan = mod.scanner.scan_bytes
+
+    def forced_residual_malicious(data: bytes, file_name: str = "sample.pdf", explain: bool = True, **kw):
+        res = orig_scan(data, file_name=file_name, explain=explain, **kw)
+        if str(file_name).startswith("sanitized_"):
+            res.verdict = "MALICIOUS"
+            res.malware_probability = 0.91
+        return res
+
+    monkeypatch.setattr(mod.scanner, "scan_bytes", forced_residual_malicious)
+    disarm_bad = client.post(f"/api/disarm/{scan_id}?include_preview_images=false")
+    assert disarm_bad.status_code == 200
+    bad_body = disarm_bad.json()
+    assert bad_body["is_sanitized"] is False
+    assert bad_body["quarantine_recommended"] is True
+    assert bad_body["download_ready"] is False
+    assert bad_body["status"] == "FAILED"
+    assert client.get(f"/api/download/sanitized/{scan_id}").status_code == 409
+
+    monkeypatch.setattr(mod.scanner, "scan_bytes", orig_scan)
+    re_ok = client.post(f"/api/disarm/{scan_id}?include_preview_images=false")
+    assert re_ok.status_code == 200
+    assert re_ok.json()["download_ready"] is True
+    assert client.get(f"/api/download/sanitized/{scan_id}").status_code == 200
+
+    def exploding_rescan(data: bytes, file_name: str = "sample.pdf", explain: bool = True, **kw):
+        if str(file_name).startswith("sanitized_"):
+            raise RuntimeError("rescan_engine_fault")
+        return orig_scan(data, file_name=file_name, explain=explain, **kw)
+
+    monkeypatch.setattr(mod.scanner, "scan_bytes", exploding_rescan)
+    err_resp = client.post(f"/api/disarm/{scan_id}?include_preview_images=false")
+    assert err_resp.status_code == 422
+    assert client.get(f"/api/download/sanitized/{scan_id}").status_code == 409
+
+
+def test_store_protects_inflight_jobs_and_rejects_deleted_or_unverified_disarm(tmp_path: Path) -> None:
+    raw = load_real_benign_bytes()
+    cleaned, audit = PDFDisarmer().sanitize_bytes(load_real_threat_bytes())
+    store = ScanJobStore(max_jobs=2, quarantine_dir=tmp_path / "q", max_total_bytes=len(raw) * 2)
+
+    active = store.create_job(raw, "inflight.pdf")
+    store.set_status(active.scan_id, "DISARMING")
+    idle = store.create_job(raw, "idle.pdf")
+    newest = store.create_job(raw, "newest.pdf")
+    assert store.get_job(active.scan_id) is not None
+    assert store.get_job(idle.scan_id) is None
+    assert store.get_job(newest.scan_id) is not None
+
+    assert (
+        store.attach_sanitized("job-deleted", cleaned, audit, {"verdict_after": "BENIGN", "prediction_available": True})
+        is False
+    )
+    assert store.attach_sanitized(newest.scan_id, cleaned, audit, {"verdict_after": "BENIGN"}) is False
+    assert store.get_job(newest.scan_id).sanitized_bytes is None
+    assert store.get_job(newest.scan_id).status == "FAILED"
