@@ -16,7 +16,6 @@ from typing import Annotated, Any
 from fastapi import FastAPI, File, Form, Header, HTTPException, Query, Response, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import HTMLResponse
-from fastapi.routing import APIRoute
 import pymupdf as fitz
 import torch
 
@@ -31,11 +30,10 @@ from malpdf.scanner.ai_explainer import (
 from malpdf.scanner.engine import MalPDFScannerEngine
 from malpdf.web.cloud_chat import CLOUD_MODEL, cloud_answer, cloud_stream_response
 from malpdf.web.http import (
-    GRAPH_ASSET_PATH,
-    dashboard_graph,
-    dashboard_styles,
     omit_preview_images,
     read_scan_upload,
+    register_dashboard_assets,
+    render_dashboard_html_response,
     sanitized_pdf_response,
 )
 from malpdf.web.sessions import BrowserSessionRegistry, current_session, optional_session, session_route_class
@@ -46,18 +44,7 @@ PDF_MAGIC = b"%PDF-"
 PDF_MAGIC_SEARCH_WINDOW = 1024
 
 app = FastAPI(title="MalPDF DeepDetection Web Service")
-app.router.add_api_route(
-    "/assets/dashboard.css",
-    dashboard_styles,
-    include_in_schema=False,
-    route_class_override=APIRoute,
-)
-app.router.add_api_route(
-    GRAPH_ASSET_PATH,
-    dashboard_graph,
-    include_in_schema=False,
-    route_class_override=APIRoute,
-)
+register_dashboard_assets(app.router)
 
 scanner = MalPDFScannerEngine(device="cpu")
 disarmer = PDFDisarmer()
@@ -149,9 +136,10 @@ def _gateway_record(rep: EmailInspectionReport, msg_id: str, subject: str, fallb
 
 
 @app.get("/", response_class=HTMLResponse)
-def index() -> str:
+@app.get("/ui", response_class=HTMLResponse)
+def index() -> HTMLResponse:
     template_path = Path(os.environ.get("MALPDF_TEMPLATE_PATH", Path(__file__).parent / "templates" / "index.html"))
-    return template_path.read_text(encoding="utf-8")
+    return render_dashboard_html_response(template_path.read_text(encoding="utf-8"))
 
 
 @app.get("/api/health")

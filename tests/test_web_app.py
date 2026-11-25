@@ -13,6 +13,7 @@ import pytest
 
 from malpdf.cdr.fixtures import load_real_benign_bytes, load_real_threat_bytes
 from malpdf.web.app import app
+from malpdf.web.http import STATIC_ASSETS, compute_asset_version
 
 client = TestClient(app)
 
@@ -35,11 +36,45 @@ def _extract_pdf_text(data: bytes) -> tuple[int, str]:
         return len(doc), text
 
 
+def _combined_frontend_text() -> str:
+    parts = [client.get("/").text]
+    for asset_path in (
+        "/assets/dashboard-theme.css",
+        "/assets/dashboard-core.js",
+        "/assets/dashboard-ai.js",
+        "/assets/dashboard-graph.js",
+        "/assets/dashboard-app.js",
+    ):
+        asset_res = client.get(asset_path)
+        assert asset_res.status_code == 200
+        parts.append(asset_res.text)
+    return "\n".join(parts)
+
+
 def test_index_page_returns_html() -> None:
     response = client.get("/")
+    second = client.get("/")
+    ui_response = client.get("/ui")
     assert response.status_code == 200
+    assert ui_response.status_code == 200
     assert "MalPDF DeepDetection" in response.text
-    assert "vis-network" in response.text
+    assert '<meta name="color-scheme" content="light dark"' in response.text
+    assert '<meta name="text-scale" content="scale"' in response.text
+    assert "onclick=" not in response.text
+    assert "fonts.googleapis.com" not in response.text
+
+    csp_one = response.headers.get("content-security-policy", "")
+    csp_two = second.headers.get("content-security-policy", "")
+    assert csp_one != csp_two
+    assert "require-trusted-types-for 'script'" in csp_one
+    assert "frame-ancestors 'self' https://huggingface.co https://*.hf.space" in csp_one
+    assert "x-frame-options" not in {k.lower() for k in response.headers.keys()}
+
+    for route in STATIC_ASSETS:
+        assert client.get(route).status_code == 200
+    version = compute_asset_version()
+    assert "immutable" in client.get(f"/assets/dashboard-app.js?v={version}").headers.get("cache-control", "")
+    assert client.get("/assets/dashboard-app.js").headers.get("cache-control") == "no-cache"
 
 
 def test_health_endpoint() -> None:
@@ -302,27 +337,23 @@ def test_ai_threat_explainer_and_chat_endpoint() -> None:
 
 
 def test_webllm_client_ai_and_hardware_fallback_markup_present() -> None:
-    response = client.get("/")
-    assert response.status_code == 200
-    html = response.text
-    assert "checkSystemRequirements" in html
-    assert "navigator.gpu" in html
-    assert "navigator.deviceMemory" in html
-    assert "Qwen2.5-1.5B-Instruct-q4f16_1-MLC" in html
-    assert "Llama-3.2-1B-Instruct-q4f16_1-MLC" in html
-    assert "ai-hardware-fallback-banner" in html
-    assert "buildCompactScanContextJSON" in html
-    assert "initWebLLMEngine" in html
-    assert "_isRefusalOrBrokenLLMReply" in html
-    assert "_describeGraphNodeVi" in html
-    assert "setGraphLayoutMode" in html
-    assert "toggleThreatOnlyFilter" in html
+    bundle = _combined_frontend_text()
+    assert "checkSystemRequirements" in bundle
+    assert "navigator.gpu" in bundle
+    assert "navigator.deviceMemory" in bundle
+    assert "Qwen2.5-1.5B-Instruct-q4f16_1-MLC" in bundle
+    assert "Llama-3.2-1B-Instruct-q4f16_1-MLC" in bundle
+    assert "ai-hardware-fallback-banner" in bundle
+    assert "buildCompactScanContextJSON" in bundle
+    assert "initWebLLMEngine" in bundle
+    assert "_isRefusalOrBrokenLLMReply" in bundle
+    assert "_describeGraphNodeVi" in bundle
+    assert "setGraphLayoutMode" in bundle
+    assert "toggleThreatOnlyFilter" in bundle
 
 
 def test_web_ui_scanning_effect_and_decluttered_markup() -> None:
-    response = client.get("/")
-    assert response.status_code == 200
-    html = response.text
+    bundle = _combined_frontend_text()
 
     for expected in (
         "doc-scan-stage",
@@ -348,7 +379,7 @@ def test_web_ui_scanning_effect_and_decluttered_markup() -> None:
         "formatBytesVi",
         "xhr.upload",
     ):
-        assert expected in html
+        assert expected in bundle
 
     for removed in (
         "_createCartoonNodeSvgUri",
@@ -359,7 +390,7 @@ def test_web_ui_scanning_effect_and_decluttered_markup() -> None:
         "ai-danger-banner",
         "xai-entropy",
     ):
-        assert removed not in html
+        assert removed not in bundle
 
 
 def test_demo_routes_are_absent() -> None:

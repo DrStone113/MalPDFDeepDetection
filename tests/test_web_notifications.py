@@ -8,6 +8,10 @@ import re
 import shutil
 import subprocess
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+TEMPLATE_PATH = REPO_ROOT / "src/malpdf/web/templates/index.html"
+STATIC_DIR = REPO_ROOT / "src/malpdf/web/static"
+
 
 class DocumentAttributes(HTMLParser):
     def __init__(self) -> None:
@@ -19,12 +23,22 @@ class DocumentAttributes(HTMLParser):
             self.html_attributes = dict(attrs)
 
 
+def _inline_core_module() -> str:
+    source = (STATIC_DIR / "dashboard-core.js").read_text(encoding="utf-8")
+    return re.sub(r"^export\s+", "", source, flags=re.MULTILINE)
+
+
 def test_browser_template_contains_no_provider_credentials() -> None:
-    template = Path(__file__).resolve().parents[1] / "src/malpdf/web/templates/index.html"
-    source = template.read_text(encoding="utf-8")
-    contains_key_literal = re.search(r"\b(?:sk-(?:proj-)?|hf_)[A-Za-z0-9_-]{20,}", source) is not None
-    assert contains_key_literal is False, "Provider credential literals must never be served to browsers"
-    assert "VILAO_API_CONFIG.apiKey" not in source
+    template_source = TEMPLATE_PATH.read_text(encoding="utf-8")
+    assert re.search(r"\bon(?:click|change|keydown|keyup|input|submit|focus|blur)\s*=", template_source) is None
+    for path in [TEMPLATE_PATH, *sorted(STATIC_DIR.glob("dashboard*"))]:
+        source = path.read_text(encoding="utf-8")
+        contains_key_literal = re.search(r"\b(?:sk-(?:proj-)?|hf_)[A-Za-z0-9_-]{20,}", source) is not None
+        assert contains_key_literal is False, f"Credential literal found in {path.name}"
+        assert "VILAO_API_CONFIG.apiKey" not in source
+        assert "fonts.googleapis.com" not in source
+        assert "fonts.gstatic.com" not in source
+        assert "cdn.jsdelivr.net/npm/marked" not in source
 
 
 def _browser_attributes(tmp_path: Path, page: str) -> dict[str, str | None]:
@@ -63,18 +77,10 @@ def _browser_attributes(tmp_path: Path, page: str) -> dict[str, str | None]:
 
 
 def test_notification_displays_untrusted_subject_as_text_in_real_browser(tmp_path: Path) -> None:
-    template = Path(__file__).resolve().parents[1] / "src/malpdf/web/templates/index.html"
-    source = template.read_text(encoding="utf-8")
-    start = source.index("    function showToast(")
-    end = source.index("\n    }", start) + len("\n    }")
-    escape_start = source.index("    function _escTax(")
-    escape_end = source.index("\n    }", escape_start) + len("\n    }")
     payload = "<svg onload=\"document.documentElement.setAttribute('data-review-xss','executed')\"></svg>"
     page = (
         '<!doctype html><html><head><meta charset="utf-8"></head><body><div id="toast-container"></div><script>\n'
-        + source[escape_start:escape_end]
-        + "\n"
-        + source[start:end]
+        + _inline_core_module()
         + "\nconst subject = "
         + json.dumps(payload)
         + ";\nshowToast(subject, 'success', 300000);"
@@ -88,10 +94,6 @@ def test_notification_displays_untrusted_subject_as_text_in_real_browser(tmp_pat
 
 
 def test_held_email_is_not_labeled_safe_or_offered_as_clean_download(tmp_path: Path) -> None:
-    template = Path(__file__).resolve().parents[1] / "src/malpdf/web/templates/index.html"
-    source = template.read_text(encoding="utf-8")
-    start = source.index("    function renderEMLInspectionResult(")
-    end = source.index("\n    }", start) + len("\n    }")
     ids = [
         "mail-tab-result-card",
         "mail-tab-res-subject",
@@ -99,9 +101,8 @@ def test_held_email_is_not_labeled_safe_or_offered_as_clean_download(tmp_path: P
         "mail-tab-res-attachments",
         "mail-tab-res-threats",
         "mail-tab-action-badge",
-        "btn-mail-tab-download-eml",
     ]
-    markup = "".join(f'<div id="{name}"></div>' for name in ids)
+    markup = "".join(f'<div id="{name}"></div>' for name in ids) + '<a id="btn-mail-tab-download-eml"></a>'
     data = {
         "subject": "Needs review",
         "total_attachments": 1,
@@ -113,8 +114,8 @@ def test_held_email_is_not_labeled_safe_or_offered_as_clean_download(tmp_path: P
     page = (
         '<!doctype html><html><head><meta charset="utf-8"></head><body>'
         + markup
-        + "<script>"
-        + source[start:end]
+        + "<script>\n"
+        + _inline_core_module()
         + "\nrenderEMLInspectionResult("
         + json.dumps(data)
         + ");"
@@ -128,10 +129,6 @@ def test_held_email_is_not_labeled_safe_or_offered_as_clean_download(tmp_path: P
 
 
 def test_scan_guidance_distinguishes_warnings_and_unresolved_results(tmp_path: Path) -> None:
-    template = Path(__file__).resolve().parents[1] / "src/malpdf/web/templates/index.html"
-    source = template.read_text(encoding="utf-8")
-    start = source.index("    function scanAssessment(")
-    end = source.index("\n    }", start) + len("\n    }")
     benign = {
         "verdict": "BENIGN",
         "prediction_available": True,
@@ -160,7 +157,7 @@ def test_scan_guidance_distinguishes_warnings_and_unresolved_results(tmp_path: P
     ]
     page = (
         '<!doctype html><html><head><meta charset="utf-8"></head><body><script>\n'
-        + source[start:end]
+        + _inline_core_module()
         + "\nconst cases = "
         + json.dumps([data for data, _, _ in cases])
         + ";\n"
@@ -172,3 +169,63 @@ def test_scan_guidance_distinguishes_warnings_and_unresolved_results(tmp_path: P
     for result, (_, title, guidance) in zip(results, cases, strict=True):
         assert result["title"] == title
         assert result["guidance"].startswith(guidance)
+
+
+def test_trusted_types_csp_blocks_raw_innerhtml_and_allows_dom_toast(tmp_path: Path) -> None:
+    payload = "<img src=x onerror=1>"
+    page = (
+        '<!doctype html><html><head><meta charset="utf-8">'
+        '<meta http-equiv="Content-Security-Policy" '
+        "content=\"require-trusted-types-for 'script'; trusted-types malpdf-html malpdf-script-url dompurify;\">"
+        '</head><body><div id="toast-container"></div><div id="sr-announcer"></div><script>\n'
+        + _inline_core_module()
+        + "\nlet rawBlocked = false;\n"
+        + "try { document.body.innerHTML = "
+        + json.dumps(payload)
+        + "; } catch (err) { rawBlocked = err instanceof TypeError; }\n"
+        + "initTrustedTypes();\n"
+        + "showToast("
+        + json.dumps(payload)
+        + ", 'warning', 300000);\n"
+        + "document.documentElement.setAttribute('data-raw-blocked', String(rawBlocked));\n"
+        + "document.documentElement.setAttribute('data-toast-literal', "
+        + "String(document.getElementById('toast-container').textContent.includes("
+        + json.dumps(payload)
+        + ")));\n"
+        + "</script></body></html>"
+    )
+    attributes = _browser_attributes(tmp_path, page)
+    assert attributes.get("data-raw-blocked") == "true"
+    assert attributes.get("data-toast-literal") == "true"
+
+
+def test_vietnamese_ime_composition_enter_does_not_submit_chat_form(tmp_path: Path) -> None:
+    ai_source = (STATIC_DIR / "dashboard-ai.js").read_text(encoding="utf-8")
+    assert "event.isComposing || event.keyCode === 229" in ai_source
+    page = """<!doctype html><html><head><meta charset="utf-8"></head><body>
+<form id="ai-chat-form"><textarea id="ai-chat-input">Xin chào</textarea><button id="ai-chat-send-btn" type="submit">Gửi</button></form>
+<script>
+const form = document.getElementById("ai-chat-form");
+const input = document.getElementById("ai-chat-input");
+let submits = 0;
+form.addEventListener("submit", (event) => { event.preventDefault(); submits += 1; });
+input.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    if (event.isComposing || event.keyCode === 229) return;
+    form.requestSubmit();
+  }
+});
+input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true, isComposing: true }));
+const afterComposing = submits;
+const safariKeyCode = new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true });
+Object.defineProperty(safariKeyCode, "keyCode", { get: () => 229 });
+input.dispatchEvent(safariKeyCode);
+const after229 = submits;
+input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", shiftKey: true, bubbles: true, cancelable: true }));
+const afterShift = submits;
+input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
+document.documentElement.setAttribute("data-ime-counts", JSON.stringify([afterComposing, after229, afterShift, submits]));
+</script></body></html>"""
+    attributes = _browser_attributes(tmp_path, page)
+    assert json.loads(attributes["data-ime-counts"]) == [0, 0, 0, 1]

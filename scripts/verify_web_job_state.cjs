@@ -21,6 +21,12 @@ async function scan(page, name) {
     page.setDefaultTimeout(10000);
     const errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
+    await page.addInitScript(() => {
+      window.__cspViolations = [];
+      window.addEventListener("securitypolicyviolation", (e) => {
+        window.__cspViolations.push(`${e.violatedDirective}:${e.blockedURI}`);
+      });
+    });
     await page.goto(origin);
     const styles = await page.request.get(origin + "/assets/dashboard.css");
     assert.equal(styles.status(), 200);
@@ -106,9 +112,9 @@ async function scan(page, name) {
       },
       { times: 1 },
     );
-    await page.locator('button[onclick="changeDiffPage(1)"]').click();
+    await page.locator("#btn-diff-next").click();
     await sawPageRequest;
-    await page.locator('button[onclick="changeDiffPage(-1)"]').click();
+    await page.locator("#btn-diff-prev").click();
     releasePreview();
     await page
       .locator("#diff-page-indicator")
@@ -116,7 +122,7 @@ async function scan(page, name) {
       .waitFor();
 
     await page.route(previewUrl, (route) => route.abort("failed"), { times: 1 });
-    await page.locator('button[onclick="changeDiffPage(1)"]').click();
+    await page.locator("#btn-diff-next").click();
     await page.locator("#diff-retry").waitFor();
     assert.equal(await page.locator("#btn-download-sanitized").isEnabled(), true);
     await page.locator("#diff-retry").click();
@@ -150,7 +156,14 @@ async function scan(page, name) {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.locator("#tab-cdr").focus();
     await page.keyboard.press("Enter");
-    assert.equal(await page.locator("#tab-cdr").getAttribute("aria-current"), "true");
+    assert.equal(await page.locator("#tab-cdr").getAttribute("aria-selected"), "true");
+    assert.equal(new URL(page.url()).searchParams.get("tab"), "cdr");
+    assert.equal(await page.locator("#tab-cdr").evaluate((el) => el === document.activeElement), true);
+    await page.keyboard.press("ArrowRight");
+    assert.equal(await page.locator("#tab-mail").evaluate((el) => el === document.activeElement), true);
+    assert.equal(await page.locator("#tab-mail").getAttribute("tabindex"), "0");
+    assert.equal(await page.locator("#tab-cdr").getAttribute("aria-selected"), "true");
+    await page.keyboard.press("ArrowLeft");
     assert.equal(await page.locator("#tab-cdr").evaluate((el) => el === document.activeElement), true);
     assert.equal(await page.locator("#diff-mode-slider").getAttribute("aria-pressed"), "true");
     const slider = page.locator("#diff-split-handle");
@@ -184,6 +197,7 @@ async function scan(page, name) {
     assert.equal(await page.locator("#diff-mode-side").getAttribute("aria-pressed"), "true");
     await page.locator("#diff-mode-slider").click();
     assert.equal(await page.locator("#diff-mode-slider").getAttribute("aria-pressed"), "true");
+    assert.deepEqual(await page.evaluate(() => window.__cspViolations || []), []);
     assert.deepEqual(errors, []);
     console.log(
       "PASS: scoped CDR, lost acknowledgement, preview retry, expired scan, Unicode download, local settings, keyboard and pointer",

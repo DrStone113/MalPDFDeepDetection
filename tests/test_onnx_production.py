@@ -12,10 +12,10 @@ PROD_DIR = REPO_ROOT / "production"
 if str(PROD_DIR) not in sys.path:
     sys.path.insert(0, str(PROD_DIR))
 
-from malpdf.cdr.fixtures import load_real_benign_bytes, load_real_threat_bytes
-from malpdf.cdr.engine import PDFDisarmer
-from malpdf.scanner.engine import MalPDFScannerEngine
 import app as prod_entrypoint
+from malpdf.cdr.engine import PDFDisarmer
+from malpdf.cdr.fixtures import load_real_benign_bytes, load_real_threat_bytes
+from malpdf.scanner.engine import MalPDFScannerEngine
 from onnx_engine import ONNXMalPDFScannerEngine
 from web_service import app as prod_web_app
 
@@ -59,8 +59,12 @@ def test_onnx_engine_matches_pytorch_on_real_fixtures() -> None:
     assert ox_benign.threat_taxonomy["detected_count"] == 0
     assert ox_benign.threat_taxonomy["severity"] == "SAFE"
     assert ox_benign.threat_taxonomy["threat_label"] == "Clean.PDF.Verified"
-    assert all(not h["detected"] and h["probability_pct"] < 25.0 for h in ox_benign.threat_taxonomy["ml_label_predictions"])
-    assert all(not h["detected"] and h["probability_pct"] < 25.0 for h in pt_benign.threat_taxonomy["ml_label_predictions"])
+    assert all(
+        not h["detected"] and h["probability_pct"] < 25.0 for h in ox_benign.threat_taxonomy["ml_label_predictions"]
+    )
+    assert all(
+        not h["detected"] and h["probability_pct"] < 25.0 for h in pt_benign.threat_taxonomy["ml_label_predictions"]
+    )
 
     cleaned, audit = PDFDisarmer().sanitize_bytes(threat_bytes)
     assert audit.is_sanitized
@@ -110,12 +114,21 @@ def test_production_web_service_endpoints_and_cdr_integrity() -> None:
     r_root = client.get("/")
     assert r_root.status_code == 200
     assert "MalPDF" in r_root.text
+    assert "require-trusted-types-for 'script'" in r_root.headers.get("content-security-policy", "")
+    assert r_root.headers.get("x-content-type-options") == "nosniff"
+    assert "x-frame-options" not in {k.lower() for k in r_root.headers.keys()}
 
     r_head = client.head("/")
     assert r_head.status_code == 200
 
     r_ui = client.get("/ui")
     assert r_ui.status_code == 200
+    assert "require-trusted-types-for 'script'" in r_ui.headers.get("content-security-policy", "")
+
+    from malpdf.web.http import STATIC_ASSETS
+
+    for route in STATIC_ASSETS:
+        assert client.get(route).status_code == 200
 
     r_fav = client.get("/favicon.ico")
     assert r_fav.status_code == 200
@@ -223,6 +236,7 @@ def test_zerogpu_entrypoint_decorator_registered() -> None:
 def test_onnx_engine_scans_pdf_above_legacy_10mib_cap() -> None:
     import io
     import os
+
     import pikepdf
 
     with pikepdf.open(io.BytesIO(load_real_benign_bytes())) as pdf:
@@ -241,8 +255,9 @@ def test_onnx_engine_scans_pdf_above_legacy_10mib_cap() -> None:
 
 
 def test_onnx_engine_accepts_crlf_and_lf_v3_contract_digest(tmp_path: Path, monkeypatch) -> None:
-    import onnx_engine as oe
     import pytest
+
+    import onnx_engine as oe
 
     contract_path = PROD_DIR / "configs" / "transgraph_v3_contract.json"
     lf_bytes = contract_path.read_bytes().replace(b"\r\n", b"\n")
@@ -260,5 +275,3 @@ def test_onnx_engine_accepts_crlf_and_lf_v3_contract_digest(tmp_path: Path, monk
     tmp_contract.write_bytes(lf_bytes + b"\n ")
     with pytest.raises(ValueError, match="transgraph_v3_contract_sha256_mismatch"):
         ONNXMalPDFScannerEngine()
-
-

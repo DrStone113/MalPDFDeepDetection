@@ -18,7 +18,6 @@ from typing import Annotated, Any
 from fastapi import APIRouter, FastAPI, File, Form, Header, HTTPException, Query, Response, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import HTMLResponse
-from fastapi.routing import APIRoute
 import onnxruntime as ort
 import pymupdf as fitz
 
@@ -40,11 +39,10 @@ from malpdf.scanner.ai_explainer import (
 )
 from malpdf.web.cloud_chat import CLOUD_MODEL, cloud_answer, cloud_stream_response
 from malpdf.web.http import (
-    GRAPH_ASSET_PATH,
-    dashboard_graph,
-    dashboard_styles,
     omit_preview_images,
     read_scan_upload,
+    register_dashboard_assets,
+    render_dashboard_html_response,
     sanitized_pdf_response,
 )
 from malpdf.web.sessions import BrowserSessionRegistry, current_session, optional_session, session_route_class
@@ -76,18 +74,7 @@ _RENDER_CACHE: dict[tuple[str, int], tuple[str, int]] = {}
 _TEMPLATE_CACHE: str | None = None
 
 production_router = APIRouter(route_class=session_route_class(session_registry))
-production_router.add_api_route(
-    "/assets/dashboard.css",
-    dashboard_styles,
-    include_in_schema=False,
-    route_class_override=APIRoute,
-)
-production_router.add_api_route(
-    GRAPH_ASSET_PATH,
-    dashboard_graph,
-    include_in_schema=False,
-    route_class_override=APIRoute,
-)
+register_dashboard_assets(production_router)
 
 
 def _resolve_template_path() -> Path:
@@ -186,8 +173,8 @@ def _gateway_record(rep: EmailInspectionReport, msg_id: str, subject: str, fallb
 
 @production_router.get("/", response_class=HTMLResponse)
 @production_router.get("/ui", response_class=HTMLResponse)
-def index() -> str:
-    return _load_index_html()
+def index() -> HTMLResponse:
+    return render_dashboard_html_response(_load_index_html())
 
 
 @production_router.head("/")
