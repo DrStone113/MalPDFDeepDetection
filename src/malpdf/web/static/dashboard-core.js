@@ -520,13 +520,6 @@ export function scanAssessment(data) {
       guidance: "Tạm thời đừng mở bản gốc. Hãy kiểm tra lại hoặc xin một bản khác từ người gửi.",
     };
   }
-  if (data.cdr_provenance?.verified_sanitized === true) {
-    return {
-      tone: "clear",
-      title: "Bản PDF đã làm sạch — Chưa thấy dấu hiệu nguy hiểm",
-      guidance: "Tệp khớp mã băm SHA-256 của bản đã làm sạch trong phiên này; không ghi nhận khóa kích hoạt thực thi.",
-    };
-  }
   return {
     tone: "clear",
     title: "Chưa thấy dấu hiệu nguy hiểm",

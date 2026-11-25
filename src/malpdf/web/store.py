@@ -121,29 +121,6 @@ class ScanJobStore:
         with self._lock:
             return self._jobs.get(scan_id)
 
-    def find_sanitized_provenance(self, sha256: str) -> dict[str, Any] | None:
-        if not sha256:
-            return None
-        with self._lock:
-            for job in reversed(list(self._jobs.values())):
-                audit = job.cdr_audit
-                if (
-                    job.status == "DISARMED"
-                    and job.sanitized_bytes is not None
-                    and audit is not None
-                    and audit.is_sanitized
-                    and not audit.quarantine_recommended
-                    and audit.sha256_after == sha256
-                ):
-                    return {
-                        "verified_sanitized": True,
-                        "source_scan_id": job.scan_id,
-                        "source_file_name": job.file_name,
-                        "sanitization_mode": audit.sanitization_mode,
-                        "removed_triggers_count": len(audit.removed_triggers),
-                    }
-        return None
-
     def list_jobs(self, batch_id: str | None = None, limit: int = 50) -> list[ScanJob]:
         with self._lock:
             jobs = list(self._jobs.values())

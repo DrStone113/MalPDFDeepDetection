@@ -17,7 +17,7 @@ import pymupdf as fitz
 import pytest
 import torch
 
-from malpdf.cdr.engine import CDRAuditLog, PDFDisarmer
+from malpdf.cdr.engine import PDFDisarmer
 from malpdf.cdr.fixtures import load_real_benign_bytes, load_real_threat_bytes
 from malpdf.scanner.engine import MalPDFScannerEngine
 from malpdf.scanner.forensic import classify_prediction_confidence, is_suspicious_uri
@@ -429,9 +429,10 @@ def test_confidence_conformal_threat_and_official_domains(
 
 
 @pytest.mark.parametrize("app_module", ["malpdf.web.app", "production.web_service"])
-def test_web_cdr_provenance_and_scan_assessment_contract(
+def test_web_cdr_rescan_stateless_and_scan_assessment_contract(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, app_module: str
 ) -> None:
+    assert not hasattr(ScanJobStore, "find_sanitized_provenance")
     module = importlib.import_module(app_module)
     monkeypatch.setattr(module.session_registry, "quarantine_root", tmp_path / "quarantine")
     app = module.app if app_module == "malpdf.web.app" else module.production_router
@@ -456,30 +457,19 @@ def test_web_cdr_provenance_and_scan_assessment_contract(
     cleaned_bytes = dl_r.content
     _assert_cdr_integrity(threat, cleaned_bytes, disarm_r.json())
 
-    explain_provenance_calls: list[dict | None] = []
-    orig_explain = module.ai_explainer.explain_threat
-
-    def _spy_explain(scan_result: dict, cdr_audit: dict | None = None) -> dict:
-        prov = scan_result.get("cdr_provenance")
-        explain_provenance_calls.append(dict(prov) if isinstance(prov, dict) else None)
-        return orig_explain(scan_result, cdr_audit=cdr_audit)
-
-    monkeypatch.setattr(module.ai_explainer, "explain_threat", _spy_explain)
-
     rescan_r = client.post("/api/scan", files={"file": ("sanitized_real_threat.pdf", cleaned_bytes, "application/pdf")})
     assert rescan_r.status_code == 200
     rescan = rescan_r.json()
+    assert "cdr_provenance" not in rescan
     assert rescan["verdict"] == "BENIGN"
     assert rescan["is_ood"] is False
-    assert rescan["cdr_provenance"]["verified_sanitized"] is True
-    assert rescan["cdr_provenance"]["source_scan_id"] == scan_id
-    assert explain_provenance_calls == [rescan["cdr_provenance"]]
+    assert rescan["threat_taxonomy"]["detected_count"] == 0
+    assert all(h["evidence_status"] == "not_observed" for h in rescan["threat_taxonomy"]["ml_label_predictions"])
+    assert rescan["forensic_dossier"]["conformal_analysis"]["conformal_state"] == "CERTIFIED_BENIGN"
 
-    explain_provenance_calls.clear()
     detail_r = client.get(f"/api/scans/{rescan['scan_id']}")
     assert detail_r.status_code == 200
-    assert detail_r.json()["scan_result"]["cdr_provenance"]["source_scan_id"] == scan_id
-    assert explain_provenance_calls == [rescan["cdr_provenance"]]
+    assert "cdr_provenance" not in detail_r.json()["scan_result"]
 
     with pikepdf.open(io.BytesIO(cleaned_bytes)) as pdf:
         pdf.Root.InfoMarker = pikepdf.String("modified-bytes")
@@ -495,56 +485,11 @@ def test_web_cdr_provenance_and_scan_assessment_contract(
     )
     assert batch_r.status_code == 200
     batch_items = batch_r.json()
-    assert batch_items[0]["cdr_provenance"]["source_scan_id"] == scan_id
-    assert "cdr_provenance" not in batch_items[1]
-
-    other_session_client = TestClient(host_app)
-    other_r = other_session_client.post(
-        "/api/scan", files={"file": ("sanitized_real_threat.pdf", cleaned_bytes, "application/pdf")}
-    )
-    assert other_r.status_code == 200
-    assert "cdr_provenance" not in other_r.json()
-
-    store = ScanJobStore()
-    q_job = store.create_job(threat, "q.pdf")
-    q_audit = CDRAuditLog(
-        sha256_before="a" * 64,
-        sha256_after="b" * 64,
-        size_before=len(threat),
-        size_after=len(cleaned_bytes),
-        removed_triggers=[],
-        neutralized_scripts=0,
-        preserved_pages=1,
-        is_sanitized=True,
-        file_name="q.pdf",
-        sanitization_mode="full",
-        quarantine_recommended=True,
-    )
-    store.attach_sanitized(q_job.scan_id, cleaned_bytes, q_audit, {})
-    assert store.find_sanitized_provenance("b" * 64) is None
-    u_job = store.create_job(threat, "u.pdf")
-    store.attach_sanitized(
-        u_job.scan_id,
-        cleaned_bytes,
-        CDRAuditLog(
-            sha256_before="a" * 64,
-            sha256_after="c" * 64,
-            size_before=len(threat),
-            size_after=len(cleaned_bytes),
-            removed_triggers=[],
-            neutralized_scripts=0,
-            preserved_pages=1,
-            is_sanitized=False,
-            file_name="u.pdf",
-            sanitization_mode="full",
-            quarantine_recommended=False,
-        ),
-        {},
-    )
-    assert store.find_sanitized_provenance("c" * 64) is None
+    assert all("cdr_provenance" not in item and item["verdict"] == "BENIGN" for item in batch_items)
 
     core_js = client.get("/assets/dashboard-core.js").text
     app_js = client.get("/assets/dashboard-app.js").text
+    assert "cdr_provenance" not in core_js
     inline_core = re.sub(r"^export\s+", "", core_js, flags=re.MULTILINE)
     start_marker = "function formatRatioPercent(value)"
     end_marker = "function applyJsThreatHighlights("
@@ -606,10 +551,13 @@ def test_web_cdr_provenance_and_scan_assessment_contract(
         + "document.documentElement.setAttribute('data-conformal', JSON.stringify(cOut));\n"
         + "</script></body></html>"
     )
-    attrs = _dump_dom_attrs(tmp_path, f"provenance_{app_module.replace('.', '_')}.html", page)
+    attrs = _dump_dom_attrs(tmp_path, f"stateless_{app_module.replace('.', '_')}.html", page)
     a_out = json.loads(attrs["data-assess"])
-    assert a_out[0]["tone"] == "clear"
-    assert a_out[0]["title"] == "Bản PDF đã làm sạch — Chưa thấy dấu hiệu nguy hiểm"
+    assert a_out[0] == {
+        "tone": "clear",
+        "title": "Chưa thấy dấu hiệu nguy hiểm",
+        "guidance": "Chỉ mở nếu bạn tin nguồn gửi.",
+    }
     assert a_out[1]["tone"] == "caution"
     assert a_out[1]["title"] == "Chưa đủ căn cứ để kết luận"
     assert a_out[2]["tone"] == "caution"

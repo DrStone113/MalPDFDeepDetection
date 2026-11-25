@@ -284,8 +284,6 @@ def get_scan_detail(scan_id: str, include_preview_images: bool = True) -> dict[s
     scan_res = detail.get("scan_result")
     cdr_dict = detail.get("cdr_audit") if isinstance(detail.get("cdr_audit"), dict) else None
     if scan_res and isinstance(scan_res, dict):
-        if (provenance := current_session().store.find_sanitized_provenance(job.sha256)) is not None:
-            scan_res["cdr_provenance"] = provenance
         scan_res["ai_threat_explanation"] = ai_explainer.explain_threat(scan_res, cdr_audit=cdr_dict)
     if cdr_dict is not None and not include_preview_images:
         omit_preview_images(cdr_dict)
@@ -321,8 +319,6 @@ async def scan_uploaded_file(
     current_session().store.attach_scan_result(job.scan_id, scan_res)
     res_dict = scan_res.to_dict()
     res_dict["scan_id"] = job.scan_id
-    if (provenance := current_session().store.find_sanitized_provenance(job.sha256)) is not None:
-        res_dict["cdr_provenance"] = provenance
     res_dict["ai_threat_explanation"] = ai_explainer.explain_threat(res_dict)
     return res_dict
 
@@ -344,8 +340,6 @@ async def scan_batch_files(files: list[UploadFile] = File(...)) -> list[dict[str
             current_session().store.attach_scan_result(job.scan_id, scan_res)
             res_dict = scan_res.to_dict()
             res_dict["scan_id"] = job.scan_id
-            if (provenance := current_session().store.find_sanitized_provenance(job.sha256)) is not None:
-                res_dict["cdr_provenance"] = provenance
             res_dict["ai_threat_explanation"] = ai_explainer.explain_threat(res_dict)
             results.append(res_dict)
         except Exception as exc:
