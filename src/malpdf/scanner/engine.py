@@ -21,7 +21,9 @@ from malpdf.scanner.conformal import load_conformal_calibration
 from malpdf.scanner.forensic import (
     TRIGGER_FEATURES_V3,
     ForensicAttributionEngine,
+    _calibrated_probability,
     _reconcile_semantic_verdict,
+    classify_prediction_confidence,
     observed_ast_distribution,
     semantic_graph_selection,
 )
@@ -526,10 +528,11 @@ class MalPDFScannerEngine:
 
         with self._model_lock, torch.no_grad():
             logits, attn_weights = self._forward(nf, nt, ei, er, b, tok, tab, graph_present)
-            raw_prob = torch.sigmoid(logits / self.temperature).item()
+            raw_logit = float(logits.item())
+            raw_prob = _calibrated_probability(raw_logit, self.temperature)
             logit_val, prob = _reconcile_semantic_verdict(
                 ingest_data,
-                logits.item(),
+                raw_logit,
                 raw_prob,
                 self.decision_threshold,
                 self.temperature,
@@ -541,16 +544,8 @@ class MalPDFScannerEngine:
         verdict = "MALICIOUS" if prob >= self.decision_threshold else "BENIGN"
         energy_score, is_ood = self.calculate_energy_ood(logit_val)
 
-        ood_warning = None
-        if is_ood:
-            ood_warning = "OOD_ANOMALY_DETECTED"
-            confidence = "LOW"
-        elif prob >= 0.85 or prob <= 0.15:
-            confidence = "HIGH"
-        elif prob >= 0.70 or prob <= 0.30:
-            confidence = "MEDIUM"
-        else:
-            confidence = "LOW"
+        ood_warning = "OOD_ANOMALY_DETECTED" if is_ood else None
+        confidence = classify_prediction_confidence(prob, self.decision_threshold, is_ood)
 
         node_saliency: list[float] = []
         edge_attention: list[float] = []
@@ -673,7 +668,7 @@ class MalPDFScannerEngine:
             malware_prob=prob,
         )
         if self.conformal is not None and math.isfinite(prob):
-            observed_threat = taxonomy_info.get("detected_count", 0) > 0 and prob < self.decision_threshold
+            observed_threat = taxonomy_info.get("detected_count", 0) > 0
             static_override = (
                 verdict == "MALICIOUS"
                 and raw_prob < self.decision_threshold

@@ -272,8 +272,10 @@ def test_mail_gateway_auto_unlocks_from_email_and_web_password_api(engines, code
     assert locked["forensic_dossier"]["encryption_analysis"]["password_locked"]
     assert "mật khẩu" in locked["ai_threat_explanation"]["executive_summary"]
     assert "mật khẩu" in AIThreatExplainer().answer_question(locked, "Tệp bị khóa vì sao?")
-    page = codec_client.get("/").text
-    assessment = page.split("function scanAssessment(data) {", 1)[1].split("function renderScanResult", 1)[0]
+    core_js = codec_client.get("/assets/dashboard-core.js").text
+    assessment = core_js.split("export function scanAssessment(data) {", 1)[1].split(
+        "export async function consumeCloudStream", 1
+    )[0]
     assert "encryption_analysis?.password_locked" in assessment
     assert assessment.index("Tệp bị khóa mật khẩu") < assessment.index("Chưa thấy dấu hiệu nguy hiểm")
     unlocked = codec_client.post("/api/scan", files=files, data={"password": password}).json()

@@ -505,12 +505,26 @@ export function scanAssessment(data) {
       guidance: "Tránh mở bản gốc. Nếu cần đọc tài liệu, hãy tạo bản đã làm sạch.",
     };
   }
-  const staticCheckClear = heads?.length && heads.every((head) => head.evidence_status === "not_observed");
+  const detectedCount =
+    data.threat_taxonomy?.detected_count ?? data.forensic_dossier?.threat_taxonomy?.detected_count ?? 0;
+  const hasThreatScripts = Boolean(data.forensic_dossier?.threat_scripts?.length);
+  const staticCheckClear =
+    heads?.length &&
+    detectedCount === 0 &&
+    !hasThreatScripts &&
+    heads.every((head) => head.evidence_status === "not_observed");
   if (!data.prediction_available || data.verdict !== "BENIGN" || data.is_ood !== false || !staticCheckClear) {
     return {
       tone: "caution",
       title: "Chưa đủ căn cứ để kết luận",
       guidance: "Tạm thời đừng mở bản gốc. Hãy kiểm tra lại hoặc xin một bản khác từ người gửi.",
+    };
+  }
+  if (data.cdr_provenance?.verified_sanitized === true) {
+    return {
+      tone: "clear",
+      title: "Bản PDF đã làm sạch — Chưa thấy dấu hiệu nguy hiểm",
+      guidance: "Tệp khớp mã băm SHA-256 của bản đã làm sạch trong phiên này; không ghi nhận khóa kích hoạt thực thi.",
     };
   }
   return {

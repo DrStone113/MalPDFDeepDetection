@@ -36,8 +36,8 @@ from malpdf.scanner.qr_scan import scan_pdf_qr_codes, zxingcpp
 _JBIG2_MAGIC = b"\x97JB2\r\n\x1a\n"
 _MEDIA_TRIGGER_KEYS = {"/3D", "/U3D", "/PRC"}
 _REMOVED_ANNOT_SUBTYPES = {"/FileAttachment", *_MEDIA_TRIGGER_KEYS}
-_REMOVED_ANNOT_LABELS = {name[1:] for name in _REMOVED_ANNOT_SUBTYPES}
 _MINIMAL_MEDIA_SUBTYPES = {"/Movie", "/Sound", "/Screen", "/RichMedia", *_REMOVED_ANNOT_SUBTYPES}
+_REMOVED_ANNOT_LABELS = {name[1:] for name in _MINIMAL_MEDIA_SUBTYPES}
 _MINIMAL_ATTACHMENT_KEYS = {"/AF", "/EF", "/EmbeddedFiles", "/Collection"}
 _AA_EVENTS = {
     "/WC",
@@ -365,6 +365,10 @@ def _active_keys(
         "/JavaScript",
         "/Launch",
         "/XFA",
+        *_MINIMAL_ATTACHMENT_KEYS,
+    }
+    media_keys = {
+        *_MEDIA_TRIGGER_KEYS,
         "/RichMedia",
         "/RichMediaContent",
         "/RichMediaSettings",
@@ -384,9 +388,6 @@ def _active_keys(
         "/Sound",
         "/Rendition",
     }
-    if strict:
-        forbidden.update(_MINIMAL_ATTACHMENT_KEYS)
-    removed_subtypes = _MINIMAL_MEDIA_SUBTYPES if strict else _REMOVED_ANNOT_SUBTYPES
     resource_ids = _page_resource_ids(pdf)
     while pending:
         value, location, depth, in_resources = pending.pop()
@@ -426,7 +427,7 @@ def _active_keys(
             active = (
                 key in forbidden
                 or not in_resources
-                and (key in _MEDIA_TRIGGER_KEYS or key == "/Subtype" and str(child) in removed_subtypes)
+                and (key in media_keys or key == "/Subtype" and str(child) in _MINIMAL_MEDIA_SUBTYPES)
                 or key in {"/F", "/UF"}
                 and action in {"/Launch", "/GoToR"}
                 or key == "/URI"
@@ -564,8 +565,8 @@ class PDFDisarmer:
             objects_before = len(pdf.objects)
             pdf_version = str(pdf.pdf_version)
             root = pdf.Root
-            annotation_subtypes = _MINIMAL_MEDIA_SUBTYPES if minimal else _REMOVED_ANNOT_SUBTYPES
             navigation_groups = list(_detach_navigation_groups(pdf)) if minimal else []
+            annotation_actions = []
 
             if "/OpenAction" in root and not is_navigation_destination(root["/OpenAction"]):
                 del root["/OpenAction"]
@@ -674,7 +675,7 @@ class PDFDisarmer:
                             removed_indices.append(a_idx)
                             removed_triggers.append(f"page_{page_idx}_annot_{a_idx}_qr_phishing")
                             continue
-                        if subtype in annotation_subtypes:
+                        if subtype in _MINIMAL_MEDIA_SUBTYPES:
                             removed_indices.append(a_idx)
                             path = f"page_{page_idx}_annot_{a_idx}_{subtype[1:]}"
                             removed_triggers.append(path)
@@ -682,7 +683,7 @@ class PDFDisarmer:
                                 {
                                     "object_id": path,
                                     "object_type": f"Chú thích ({subtype})",
-                                    "diagnosis": "Chú thích chứa tệp đính kèm hoặc nội dung 3D",
+                                    "diagnosis": "Chú thích chứa tệp đính kèm hoặc nội dung đa phương tiện",
                                     "cdr_action": "Gỡ bỏ chú thích khỏi trang",
                                     "status": "Đã gỡ bỏ",
                                 }
@@ -728,6 +729,8 @@ class PDFDisarmer:
                                         "visual_impact": None,
                                     }
                                 )
+                            else:
+                                annotation_actions.append((page_idx, a_idx, annot))
                     for a_idx in reversed(removed_indices):
                         del annots[a_idx]
 
@@ -781,6 +784,13 @@ class PDFDisarmer:
                     removed_triggers.append(f"obj_{obj_idx}_action_{s_val}_removed")
 
             nested_removed = _active_keys(pdf, remove=True, strict=minimal, lure_phrases=lure_phrases)
+            for page_idx, a_idx, annot in annotation_actions:
+                action = annot.get("/A")
+                if isinstance(action, pikepdf.Dictionary) and not {"/S", "/D", "/URI", "/Next"}.intersection(
+                    action.keys()
+                ):
+                    del annot["/A"]
+                    removed_triggers.append(f"page_{page_idx}_annot_{a_idx}_empty_A")
             removed_triggers.extend(nested_removed)
             neutralized_scripts += sum(path.endswith(("/JS", "/JavaScript")) for path in nested_removed)
             object_diff_matrix.extend(
@@ -879,7 +889,7 @@ class PDFDisarmer:
                 for annot in annotations:
                     if not isinstance(annot, pikepdf.Dictionary):
                         continue
-                    if str(annot.get("/Subtype")) in annotation_subtypes or _visual_lure_action(
+                    if str(annot.get("/Subtype")) in _MINIMAL_MEDIA_SUBTYPES or _visual_lure_action(
                         annot, page.obj, lure_texts.get(index), preserved_pages
                     ):
                         raise ValueError("cdr_active_key_verification_failed")
@@ -1045,7 +1055,7 @@ class PDFDisarmer:
             if any(key in t.lower() for key in ("names", "xfa", "embeddedfiles"))
             or t == "polyglot_payload_stripped"
             or t.rsplit("_", 1)[-1] in _REMOVED_ANNOT_LABELS
-            or t.endswith(tuple(_MEDIA_TRIGGER_KEYS))
+            or t.endswith(tuple(_MEDIA_TRIGGER_KEYS | _MINIMAL_ATTACHMENT_KEYS))
         ]
 
         trailer_state = {
@@ -1134,10 +1144,15 @@ class PDFDisarmer:
         if not isinstance(result, dict):
             return False
         dossier = result.get("forensic_dossier") or {}
+        heads = (result.get("threat_taxonomy") or dossier.get("threat_taxonomy") or {}).get(
+            "ml_label_predictions"
+        ) or ()
         return (
             result.get("verdict") == "BENIGN"
             and result.get("prediction_available", True)
+            and ("is_ood" not in result or result.get("is_ood") is False)
             and not dossier.get("threat_scripts")
+            and all(head.get("evidence_status") == "not_observed" for head in heads)
         )
 
     def sanitize_file(

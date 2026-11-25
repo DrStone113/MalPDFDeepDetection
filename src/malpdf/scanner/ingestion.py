@@ -214,6 +214,23 @@ _CRITICAL_FONT_REASONS = frozenset(
     {"font_directory_truncated", "font_table_bounds_invalid", "font_table_overlap", "font_duplicate_table"}
 )
 _CODEC_OBJECT_LIMIT = 10_000
+_ACTION_CONTAINER_LIMIT = 50_000
+_PDF_CONTAINERS = (pikepdf.Dictionary, pikepdf.Stream, pikepdf.Array)
+_NON_ACTION_RESOURCE_KEYS = {"/Font", "/ColorSpace", "/ExtGState", "/Pattern", "/Shading", "/ProcSet", "/Properties"}
+_AUDITED_STREAM_TOKENS = (
+    "obj",
+    "stream",
+    "JS",
+    "JavaScript",
+    "AA",
+    "OpenAction",
+    "AcroForm",
+    "Acroform",
+    "URI",
+    "XFA",
+    "Launch",
+    "EmbeddedFile",
+)
 _inspect_font_directory = partial(inspect_font, inspect_table_data=False)
 _TYPE1_REASONS = {"type1_segment_header_invalid", "type1_segment_truncated", "type1_end_marker_missing"}
 _WOFF_REASONS = {"woff_header_invalid", "woff_directory_truncated", "woff_table_bounds_invalid", "woff_table_overlap"}
@@ -1153,6 +1170,97 @@ def _inspect_xfa_payload(xfa_obj: Any, budget: DecodeBudget) -> dict[str, Any]:
     }
 
 
+def _container_size(value: Any) -> int:
+    return len(value) if isinstance(value, pikepdf.Array) else len(value.keys())
+
+
+def _stream_interior_tokens(pdf: pikepdf.Pdf, raw_tokens: dict[str, int], byte_limit: int) -> dict[str, int]:
+    objects = pdf.objects
+    if pdf.is_encrypted or len(objects) > _CODEC_OBJECT_LIMIT:
+        return {}
+    streams = []
+    excluded = set()
+    pending = [obj for obj in objects if isinstance(obj, _PDF_CONTAINERS)]
+    for _ in range(_ACTION_CONTAINER_LIMIT):
+        if not pending:
+            break
+        value = pending.pop()
+        if len(pending) > _ACTION_CONTAINER_LIMIT or _container_size(value) > _ACTION_CONTAINER_LIMIT:
+            return {}
+        if isinstance(value, pikepdf.Stream):
+            streams.append(value)
+            if value.get("/Type") == pikepdf.Name.ObjStm:
+                excluded.add(value.objgen)
+        if isinstance(value, pikepdf.Array):
+            children = value
+        else:
+            for key in ("/JS", "/XFA"):
+                body = value.get(key)
+                if isinstance(body, pikepdf.Stream):
+                    excluded.add(body.objgen)
+                elif key == "/XFA" and isinstance(body, pikepdf.Array):
+                    if len(body) > _ACTION_CONTAINER_LIMIT:
+                        return {}
+                    excluded.update(item.objgen for item in body if isinstance(item, pikepdf.Stream))
+            children = value.values()
+        pending.extend(child for child in children if isinstance(child, _PDF_CONTAINERS) and not child.is_indirect)
+    if pending:
+        return {}
+
+    counts: dict[str, int] = {}
+    for stream in streams:
+        if not 0 <= int(stream.get("/Length") or 0) <= _STATIC_BYTE_LIMIT:
+            return {}
+        raw = stream.read_raw_bytes()
+        byte_limit -= len(raw)
+        if byte_limit < 0 or len(raw) > _STATIC_BYTE_LIMIT or b"endstream" in raw or b"endobj" in raw:
+            return {}
+        if stream.objgen in excluded:
+            continue
+        interior = _scan_scanner_raw_tokens(raw)
+        for token in _AUDITED_STREAM_TOKENS:
+            if interior[token] and raw_tokens.get(token, 0):
+                counts[token] = min(raw_tokens[token], counts.get(token, 0) + interior[token])
+    return counts
+
+
+def _is_inactive_acroform(acroform: Any) -> bool:
+    if not isinstance(acroform, pikepdf.Dictionary):
+        return False
+    pending = [acroform]
+    seen = set()
+    for _ in range(_ACTION_CONTAINER_LIMIT):
+        if not pending:
+            return True
+        value = pending.pop()
+        if value.is_indirect:
+            if value.objgen in seen:
+                continue
+            seen.add(value.objgen)
+        if len(pending) > _ACTION_CONTAINER_LIMIT or _container_size(value) > _ACTION_CONTAINER_LIMIT:
+            return False
+        if isinstance(value, pikepdf.Array):
+            children = value
+        else:
+            keys = value.keys()
+            action = str(value.get("/S") or "")
+            uri = value.get("/URI")
+            if (
+                (_NON_JS_KEYS | {"/JS", "/JavaScript", "/OpenAction"}).intersection(keys)
+                or action == "/JavaScript"
+                or action in _NON_JS_ACTIONS
+                or str(value.get("/Subtype") or "") in _EXTERNAL_ANNOTATIONS
+                or "/AA" in keys
+                and not is_benign_catalog_aa(value["/AA"])
+                or isinstance(uri, pikepdf.String)
+                and is_suspicious_uri(str(uri))[0]
+            ):
+                return False
+            children = (child for key, child in value.items() if key not in {"/Parent", "/P"})
+        pending.extend(child for child in children if isinstance(child, _PDF_CONTAINERS))
+    return not pending
+
+
 def _inspect_additional_evidence(
     data: bytes,
     reader: PdfReader,
@@ -1165,6 +1273,8 @@ def _inspect_additional_evidence(
     xfa_analysis: dict[str, Any],
     recovered: list[str],
     register: Any,
+    raw_tokens: dict[str, int],
+    structural_audit: dict[str, Any],
 ) -> tuple[set[str], dict[str, Any], dict[str, Any], int]:
     non_js: set[str] = set()
     differential = _differential_summary()
@@ -1180,11 +1290,28 @@ def _inspect_additional_evidence(
     attachment_index = 0
     gotor_index = 0
     has_jbig2_magic = _JBIG2_MAGIC in data
+
+    def inspect_uri(value: Any, path: str, action: str) -> int:
+        uri = value.get("/URI")
+        if not isinstance(uri, pikepdf.String):
+            return 0
+        target = str(uri)
+        if target not in seen_uris:
+            evidence_id = f"action:uri_{len(uris)}"
+            evidence = _uri_evidence(target, evidence_id, path)
+            if not evidence:
+                return 0
+            seen_uris.add(target)
+            uris.append(evidence)
+            if evidence["is_suspicious"]:
+                register(evidence_id, "action", value, path, action_role="suspicious_uri")
+        return 1 + int(action == "/URI")
+
     try:
         with pikepdf.open(io.BytesIO(data)) as pdf:
             known_uri_ids = {item["evidence_id"] for item in uris}
-            annotations_left = 1024
-            for page_index, page in enumerate(islice(pdf.pages, 64)):
+            annotations_left = 4096
+            for page_index, page in enumerate(islice(pdf.pages, 2048)):
                 annotations = page.obj.get("/Annots")
                 if not isinstance(annotations, pikepdf.Array):
                     continue
@@ -1212,17 +1339,19 @@ def _inspect_additional_evidence(
                 annotations_left -= min(annotations_left, len(annotations))
                 if not annotations_left:
                     break
-            pending = [(pdf.Root, "/Root", ""), (pdf.Root.get("/AcroForm"), "/Root/AcroForm", "")]
+            root = pdf.Root
+            acroform = root.get("/AcroForm")
+            pending = [(root, "/Root", "", 0, False)]
+            if isinstance(acroform, _PDF_CONTAINERS):
+                pending.append((acroform, "/Root/AcroForm", "", 0, False))
             seen_objects = set()
-            for _ in range(10000):
+            for _ in range(_ACTION_CONTAINER_LIMIT):
                 if not pending:
                     break
-                value, path, parent_id = pending.pop()
-                if not isinstance(value, (pikepdf.Dictionary, pikepdf.Stream, pikepdf.Array)):
-                    continue
-                if len(path) > 1024 or len(pending) > 10000:
+                if len(pending) > _ACTION_CONTAINER_LIMIT:
                     non_js.add("action_inspection_limit")
                     break
+                value, path, parent_id, depth, in_resources = pending.pop()
                 fallback = _CATALOG_EVIDENCE.get(path)
                 if fallback and not isinstance(value, pikepdf.Array):
                     _, parent_id, kind = fallback
@@ -1232,11 +1361,15 @@ def _inspect_additional_evidence(
                     if value.objgen in seen_objects:
                         continue
                     seen_objects.add(value.objgen)
+                if depth > 128 or _container_size(value) > _ACTION_CONTAINER_LIMIT:
+                    non_js.add("action_inspection_limit")
+                    continue
                 if isinstance(value, pikepdf.Array):
-                    if len(value) > 10000:
-                        non_js.add("action_inspection_limit")
-                        continue
-                    pending.extend((item, f"{path}[{idx}]", parent_id) for idx, item in enumerate(value))
+                    pending.extend(
+                        (item, f"{path}[{idx}]"[:256], parent_id, 0 if item.is_indirect else depth + 1, in_resources)
+                        for idx, item in enumerate(value)
+                        if isinstance(item, _PDF_CONTAINERS)
+                    )
                     continue
                 action = str(value.get("/S") or "")
                 subtype = str(value.get("/Subtype") or "")
@@ -1321,20 +1454,7 @@ def _inspect_additional_evidence(
                         else:
                             continue
                         break
-                uri_value = value.get("/URI")
-                if isinstance(uri_value, pikepdf.String):
-                    target = str(uri_value)
-                    if target not in seen_uris:
-                        evidence_id = f"action:uri_{len(uris)}"
-                        evidence = _uri_evidence(target, evidence_id, path)
-                        if evidence:
-                            seen_uris.add(target)
-                            suspicious = evidence["is_suspicious"]
-                            uris.append(evidence)
-                            if suspicious:
-                                register(evidence_id, "action", value, path, action_role="suspicious_uri")
-                    if target in seen_uris:
-                        inspected_uri_tokens += 1 + int(action == "/URI")
+                inspected_uri_tokens += inspect_uri(value, path, action)
                 if "/JS" in value or action == "/JavaScript":
                     code_value = value.get("/JS")
                     code = None
@@ -1362,14 +1482,28 @@ def _inspect_additional_evidence(
                         script_codes.add(code)
                         script_ids.add(script_id)
                         scripts.append({"script_id": script_id, "parent_id": script_parent, "code": code})
+                resource_owner = str(value.get("/Type") or "") in {"/Page", "/Pages", "/XObject"}
                 pending.extend(
-                    (child, f"{path}{key}", parent_id)
+                    (
+                        child,
+                        f"{path}{key[:256]}"[:256],
+                        parent_id,
+                        0 if child.is_indirect else depth + 1,
+                        in_resources or (resource_owner and key == "/Resources"),
+                    )
                     for key, child in value.items()
-                    if key != "/Parent" and (path != "/Root" or key != "/AcroForm")
+                    if isinstance(child, _PDF_CONTAINERS)
+                    and key != "/Parent"
+                    and (path != "/Root" or key not in {"/AcroForm", "/StructTreeRoot"})
+                    and (not in_resources or key not in _NON_ACTION_RESOURCE_KEYS)
                 )
-            else:
+            if pending:
                 non_js.add("action_inspection_limit")
 
+            if "action_inspection_limit" not in non_js:
+                for obj in islice(pdf.objects, _CODEC_OBJECT_LIMIT):
+                    if isinstance(obj, (pikepdf.Dictionary, pikepdf.Stream)) and obj.objgen not in seen_objects:
+                        inspected_uri_tokens += inspect_uri(obj, f"/Object[{obj.objgen[0]}]", str(obj.get("/S") or ""))
             if len(pdf.objects) > _CODEC_OBJECT_LIMIT:
                 non_js.add("codec_inspection_limit")
             stream_records = {(r["obj_num"], r["generation"]): r for r in reversed(records) if r["has_stream"]}
@@ -1395,6 +1529,21 @@ def _inspect_additional_evidence(
                 )
             ):
                 qr_analysis = scan_pdf_qr_codes(data, pdf, pages_count=len(pdf.pages), codec_anomalies=codec_anomalies)
+            audit: dict[str, Any] = {}
+            if data is original_data:
+                audit["stream_interior_tokens"] = _stream_interior_tokens(pdf, raw_tokens, len(data))
+            if "action_inspection_limit" not in non_js:
+                audit["inspected_benign_openaction_tokens"] = int(is_benign_catalog_navigation(root.get("/OpenAction")))
+                audit["inspected_benign_aa_tokens"] = (
+                    int(is_benign_catalog_aa(root.get("/AA")))
+                    + int(isinstance(acroform, pikepdf.Dictionary) and is_benign_catalog_aa(acroform.get("/AA")))
+                    + sum(is_benign_catalog_aa(page.obj.get("/AA")) for page in pdf.pages)
+                )
+                if not scripts and not xfa_analysis["present"] and "javascript_body_unavailable" not in non_js:
+                    audit["inspected_acroform_tokens"] = sum(
+                        _is_inactive_acroform(root.get(key)) for key in ("/AcroForm", "/Acroform")
+                    )
+            structural_audit.update(audit)
     except (pikepdf.PdfError, pypdf.errors.PyPdfError, ValueError, TypeError):
         non_js.add("supplemental_inspection_incomplete")
     return non_js, qr_analysis, differential, inspected_uri_tokens
@@ -1887,6 +2036,12 @@ class InstantPDFIngestion:
         qr_analysis = empty_qr_analysis()
         differential_analysis = _differential_summary()
         inspected_uri_tokens = 0
+        structural_audit = {
+            "stream_interior_tokens": {},
+            "inspected_acroform_tokens": 0,
+            "inspected_benign_openaction_tokens": 0,
+            "inspected_benign_aa_tokens": 0,
+        }
         polyglot_analysis = inspect_polyglot_and_revisions(data, header_pos, last_eof)
         recovered = evasion_unpack_audit["recovered_hidden_triggers"]
         try:
@@ -1901,7 +2056,7 @@ class InstantPDFIngestion:
                     metadata_size = max(float(len(meta_stream.get_data())), metadata_size)
         except Exception as exc:
             raise ValueError("pdf_parse_failed") from exc
-        if reader is not None:
+        if reader is not None and not password_locked:
             non_js_triggers, qr_analysis, differential_analysis, inspected_uri_tokens = self._extract_graph_and_scripts(
                 reader,
                 graph_bytes,
@@ -1915,6 +2070,7 @@ class InstantPDFIngestion:
                 recovered,
                 data,
                 polyglot_analysis["incremental_eof_count"],
+                structural_audit,
             )
 
         codec_records = {anomaly["evidence_id"] for anomaly in codec_anomalies}
@@ -1947,6 +2103,7 @@ class InstantPDFIngestion:
             ast_stats=ast_stats,
             records=records,
             extracted_scripts=extracted_scripts,
+            stream_interior_tokens=structural_audit["stream_interior_tokens"],
         )
         v3_raw, v3_tab = self._build_v3_tabular_features(
             data,
@@ -1997,6 +2154,7 @@ class InstantPDFIngestion:
             "js_semantics": js_semantics,
             "extracted_uris": extracted_uris,
             "inspected_uri_tokens": inspected_uri_tokens,
+            "structural_audit": structural_audit,
             "phishing_analysis": phishing_analysis,
             "qr_analysis": qr_analysis,
             "differential_analysis": differential_analysis,
@@ -2025,6 +2183,7 @@ class InstantPDFIngestion:
         recovered: list[str],
         original_data: bytes,
         incremental_eof_count: int,
+        structural_audit: dict[str, Any],
     ) -> tuple[set[str], dict[str, Any], dict[str, Any], int]:
         visited_ids: set[str] = set()
         node_limit = 200
@@ -2395,6 +2554,7 @@ class InstantPDFIngestion:
                     "JS",
                     "AA",
                     "AcroForm",
+                    "Acroform",
                     "URI",
                     "JBIG2Decode",
                     "ObjStm",
@@ -2436,6 +2596,14 @@ class InstantPDFIngestion:
             and not extracted_scripts
             and not _PDF_NAME.search(raw_pdf_bytes)
         ):
+            if raw_pdf_bytes is original_data:
+                try:
+                    with pikepdf.open(io.BytesIO(raw_pdf_bytes)) as pdf:
+                        structural_audit["stream_interior_tokens"] = _stream_interior_tokens(
+                            pdf, raw_tokens, len(raw_pdf_bytes)
+                        )
+                except (pikepdf.PdfError, ValueError, TypeError, OverflowError):
+                    return {"supplemental_inspection_incomplete"}, empty_qr_analysis(), _differential_summary(), 0
             return set(), empty_qr_analysis(), _differential_summary(), 0
 
         def register_supplemental(
@@ -2483,6 +2651,8 @@ class InstantPDFIngestion:
             xfa_analysis,
             recovered,
             register_supplemental,
+            raw_tokens,
+            structural_audit,
         )
 
     def _check_action_for_script(
@@ -2836,6 +3006,7 @@ class InstantPDFIngestion:
         ast_stats: dict[str, float],
         records: list[dict[str, Any]] | None = None,
         extracted_scripts: list[dict[str, Any]] | None = None,
+        stream_interior_tokens: dict[str, int] | None = None,
     ) -> tuple[torch.Tensor | None, list[float | None]]:
         size_kb = len(data) / 1024.0
         ast_total = max(ast_stats["total_nodes"], 1.0)
@@ -2892,7 +3063,13 @@ class InstantPDFIngestion:
             discovered_streams = len(stream_records)
             decode_failures = sum(1 for r in stream_records if r.get("stream_decode_failed"))
             decomp_exceeded = any(bool(r.get("decompression_ratio_exceeded")) for r in stream_records)
-            lexical_stream_mismatch = abs(stream_count - endstream_count) > 0.0
+            interior_stream_count = (stream_interior_tokens or {}).get("stream", 0)
+            effective_stream_count = (
+                max(endstream_count, stream_count - interior_stream_count)
+                if interior_stream_count and stream_count >= endstream_count
+                else stream_count
+            )
+            lexical_stream_mismatch = effective_stream_count != endstream_count
             is_truncated_stream = decomp_exceeded or decode_failures > 0 or lexical_stream_mismatch
             truncated_streams = decode_failures + (1 if decomp_exceeded and decode_failures == 0 else 0)
             if discovered_streams > 0:

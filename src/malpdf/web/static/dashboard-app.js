@@ -786,7 +786,7 @@ function formatRatioPercent(value) {
   return Number.isFinite(value) ? (value * 100).toFixed(2) + "%" : "--";
 }
 
-function renderConformalAnalysis(analysis) {
+function renderConformalAnalysis(analysis, data = null) {
   const states = {
     CERTIFIED_BENIGN: "Chứng nhận an toàn (Conformal)",
     CERTIFIED_MALICIOUS: "Chứng nhận nguy hiểm (Conformal)",
@@ -798,7 +798,11 @@ function renderConformalAnalysis(analysis) {
   const badge = document.getElementById("conformal-state-badge");
   document.getElementById("conformal-status").hidden = !hasState;
   badge.dataset.state = hasState ? state : "";
-  badge.textContent = hasState ? states[state] : "--";
+  badge.textContent = !hasState
+    ? "--"
+    : state === "DRIFT_OOD_EMPTY" && data?.verdict === "BENIGN" && data?.is_ood === false
+      ? "Dưới ngưỡng cảnh báo · Ngoài dải chuẩn 99%"
+      : states[state];
   document.getElementById("conformal-credibility").textContent = hasState
     ? "Độ khả tín " +
       formatRatioPercent(analysis.credibility) +
@@ -957,7 +961,7 @@ function renderScanResult(data, cdrAudit = null) {
   headline.className = `font-bold text-lg sm:text-xl ${textClass} leading-snug break-words`;
   subtext.textContent = data.file_name;
   document.getElementById("status-action").textContent = assessment.guidance;
-  renderConformalAnalysis(data.forensic_dossier?.conformal_analysis);
+  renderConformalAnalysis(data.forensic_dossier?.conformal_analysis, data);
 
   renderThreatTaxonomy(data);
 

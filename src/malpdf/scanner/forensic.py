@@ -35,6 +35,7 @@ TRIGGER_FEATURES_V3 = {
 _NON_THREAT_AUDIT_MARKERS = frozenset({"action_inspection_limit", "codec_inspection_limit"})
 _BENIGN_CATALOG_ACTION_ROLES = frozenset({"destination", "benign_navigation", "empty_aa"})
 _CATALOG_ACTION_TOKENS = {"action:open_action": "OpenAction", "action:aa": "AA"}
+_CLEAN_CALIBRATION_FLOOR = 0.004
 
 
 def observed_ast_distribution(ingest_data: dict[str, Any]) -> list[float]:
@@ -377,6 +378,7 @@ def invalidate_incomplete_javascript_verification(ingest_data: dict[str, Any]) -
     js = ingest_data["js_semantics"]
     non_js = set(ingest_data.get("non_js_triggers", ()))
     raw_tokens = ingest_data.get("raw_tokens", {})
+    stream_interior = (ingest_data.get("structural_audit") or {}).get("stream_interior_tokens") or {}
     xfa = ingest_data.get("xfa_analysis", {})
     gaps = non_js.intersection(
         {"javascript_body_unavailable", "action_inspection_limit", "supplemental_inspection_incomplete"}
@@ -385,7 +387,9 @@ def invalidate_incomplete_javascript_verification(ingest_data: dict[str, Any]) -
         gaps.add("hex_escaped_pdf_names")
     if xfa.get("present") or xfa.get("anomalies"):
         gaps.add("xfa_javascript_unverified")
-    if raw_tokens.get("JS", 0) + raw_tokens.get("JavaScript", 0) > 0 and not ingest_data.get("extracted_scripts"):
+    if not ingest_data.get("extracted_scripts") and any(
+        raw_tokens.get(token, 0) > stream_interior.get(token, 0) for token in ("JS", "JavaScript")
+    ):
         gaps.add("javascript_body_unavailable")
     if gaps:
         js.update(
@@ -417,13 +421,13 @@ _KNOWN_AUTH_HOSTS = {
     "doi.org",
     "arxiv.org",
     "example.org",
-    "example.invalid",
 }
 _OFFICIAL_URI_DOMAINS = frozenset(
     """
-    microsoft.com live.com microsoftonline.com office.com sharepoint.com onedrive.com docusign.com docusign.net
+    microsoft.com live.com microsoftonline.com office.com sharepoint.com onedrive.com docusign.com
     google.com adobe.com paypal.com apple.com dropbox.com github.com arxiv.org doi.org nist.gov nasa.gov irs.gov
-    example.org example.com example.invalid
+    example.org example.com edu gov mil edu.vn gov.vn chinhphu.vn orcid.org ieee.org acm.org springer.com
+    sciencedirect.com nature.com iso.org w3.org ietf.org python.org wikipedia.org wikimedia.org linkedin.com
 """.split()
 )
 _PHISHING_SHORTENERS = frozenset(
@@ -657,7 +661,7 @@ def _reconcile_semantic_verdict(
         return math.log(
             uninspected_probability / (1.0 - uninspected_probability)
         ) * temperature, uninspected_probability
-    if has_non_js_threat or (probability < threshold and not js["is_verified_benign_js"]):
+    if has_non_js_threat or (probability <= _CLEAN_CALIBRATION_FLOOR and not js["is_verified_benign_js"]):
         return logit, probability
 
     catalog_action_records = [
@@ -677,7 +681,7 @@ def _reconcile_semantic_verdict(
         if probability < threshold:
             for index in node_indices:
                 records[index].update(is_threat_trigger=False, action_role="verified_benign_js")
-            if probability <= 0.15:
+            if probability <= _CLEAN_CALIBRATION_FLOOR:
                 return logit, probability
         drop_indices = sorted(set(node_indices) | set(benign_nav_indices))
         if len(drop_indices) >= len(records):
@@ -751,6 +755,18 @@ def _calibrated_probability(logit: float, temperature: float) -> float:
     return math.exp(-float(np.logaddexp(0.0, -logit / temperature)))
 
 
+def classify_prediction_confidence(prob: float, threshold: float, is_ood: bool) -> str:
+    if is_ood or not math.isfinite(prob):
+        return "LOW"
+    if prob >= threshold:
+        if prob >= max(0.85, threshold + 0.35):
+            return "HIGH"
+        return "MEDIUM" if prob >= max(0.50, threshold + 0.15) else "LOW"
+    if prob <= min(0.15, threshold * 0.35):
+        return "HIGH"
+    return "MEDIUM" if prob <= min(0.30, threshold * 0.70) else "LOW"
+
+
 def semantic_graph_selection(
     node_count: int,
     edge_index: np.ndarray,
@@ -802,6 +818,12 @@ def reconcile_taxonomy_observations(
     effective_recovered = list(evasion_audit.get("recovered_hidden_triggers", []))
     records = ingest_data.get("raw_records") or []
     raw_tokens = ingest_data.get("raw_tokens") or {}
+    audit = ingest_data.get("structural_audit") or {}
+    stream_interior = audit.get("stream_interior_tokens") or {}
+
+    def effective_tok(name: str) -> int:
+        return max(0, int(raw_tokens.get(name, 0)) - int(stream_interior.get(name, 0)))
+
     scripts = ingest_data.get("extracted_scripts") or []
     catalog_actions = [record for record in records if record.get("evidence_id") in _CATALOG_ACTION_TOKENS]
     benign_catalog_ids = {record["evidence_id"] for record in catalog_actions if _is_benign_catalog_action(record)}
@@ -861,15 +883,15 @@ def reconcile_taxonomy_observations(
 
     no_js = (
         not scripts
-        and raw_tokens.get("JS", 0) == raw_tokens.get("JavaScript", 0) == 0
+        and effective_tok("JS") == effective_tok("JavaScript") == 0
         and not any(record.get("kind") == "script" for record in records)
     )
     no_xfa = (
         not ingest_data.get("xfa_analysis", {}).get("present")
-        and not raw_tokens.get("XFA", 0)
+        and not effective_tok("XFA")
         and not any(record.get("evidence_id") == "script:acroform_xfa" for record in records)
     )
-    no_dropper = raw_tokens.get("Launch", 0) == raw_tokens.get("EmbeddedFile", 0) == 0 and not any(
+    no_dropper = effective_tok("Launch") == effective_tok("EmbeddedFile") == 0 and not any(
         record.get("kind") == "filespec" or record.get("action_type") == "/Launch" for record in records
     )
     verified_form_only = verified_benign_js and no_xfa and no_dropper and not effective_recovered
@@ -879,21 +901,28 @@ def reconcile_taxonomy_observations(
         "buffer_loop_staging": no_js,
         "auto_open_trigger": not scripts
         and all(_is_benign_catalog_action(record) for record in catalog_actions)
-        and _catalog_action_tokens_accounted_for(raw_tokens, benign_catalog_ids),
+        and effective_tok("OpenAction")
+        <= max(int("action:open_action" in benign_catalog_ids), int(audit.get("inspected_benign_openaction_tokens", 0)))
+        and effective_tok("AA")
+        <= max(int("action:aa" in benign_catalog_ids), int(audit.get("inspected_benign_aa_tokens", 0))),
         "active_form_or_exploit": verified_form_only
-        or (not scripts and no_xfa and not (raw_tokens.get("AcroForm", 0) or raw_tokens.get("Acroform", 0))),
+        or (
+            not scripts
+            and no_xfa
+            and effective_tok("AcroForm") + effective_tok("Acroform") <= int(audit.get("inspected_acroform_tokens", 0))
+        ),
         "embedded_dropper_or_launch": verified_form_only or (not scripts and no_dropper),
         "suspicious_uri_redirect": not phishing.get("suspicious_uris")
         and not any(record.get("action_type") in {"/SubmitForm", "/GoToR"} for record in records)
         and max(len(ingest_data.get("extracted_uris", ())), int(ingest_data.get("inspected_uri_tokens", 0)))
-        >= raw_tokens.get("URI", 0),
+        >= effective_tok("URI"),
         "structural_parser_evasion": not evasion_audit.get("hex_escaped_names_decoded")
         and not effective_recovered
         and not any(
             record.get("stream_decode_failed") or record.get("decompression_ratio_exceeded") for record in records
         )
-        and raw_tokens.get("obj", 0) == raw_tokens.get("endobj", 0)
-        and raw_tokens.get("stream", 0) == raw_tokens.get("endstream", 0),
+        and effective_tok("obj") == raw_tokens.get("endobj", 0)
+        and effective_tok("stream") == raw_tokens.get("endstream", 0),
     }
     suppressed.update(head for head, disproved in disproven.items() if disproved and observations.get(head) is None)
     return suppressed
