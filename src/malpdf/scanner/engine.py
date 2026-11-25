@@ -17,6 +17,7 @@ import torch
 from malpdf.cdr.engine import is_navigation_destination
 from malpdf.models.pdf_transgraph import PDFTransGraph
 from malpdf.models.pdf_transgraph_v3 import PDFTransGraphV3, TransGraphV3Config, _segment_softmax, load_v3_weights_npz
+from malpdf.scanner.conformal import load_conformal_calibration
 from malpdf.scanner.forensic import (
     TRIGGER_FEATURES_V3,
     ForensicAttributionEngine,
@@ -149,6 +150,12 @@ class MalPDFScannerEngine:
             raise ValueError("temperature_must_be_positive_and_finite")
         if not 0.0 < self.decision_threshold < 1.0:
             raise ValueError("decision_threshold_must_be_between_zero_and_one")
+        self.conformal = load_conformal_calibration(
+            REPO_ROOT / "production" / "configs",
+            REPO_ROOT / "configs",
+            weights_sha256=contract.get("weights_npz_sha256"),
+            temperature=self.temperature,
+        )
         self.model.eval()
         self.model_path: Path | None = resolved_path
         self.weights_loaded = True
@@ -661,6 +668,16 @@ class MalPDFScannerEngine:
             verdict=verdict,
             malware_prob=prob,
         )
+        if self.conformal is not None and math.isfinite(prob):
+            observed_threat = taxonomy_info.get("detected_count", 0) > 0 and prob < self.decision_threshold
+            static_override = (
+                verdict == "MALICIOUS"
+                and raw_prob < self.decision_threshold
+                and bool(ingest_data.get("semantic_verdict_enforcement"))
+            )
+            forensic_dossier["conformal_analysis"] = self.conformal.evaluate(
+                prob, has_observed_threat=observed_threat or static_override
+            )
         if explain:
             forensic_dossier["threat_taxonomy"] = taxonomy_info
 

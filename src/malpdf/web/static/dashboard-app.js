@@ -23,11 +23,56 @@ import {
   updateTabs,
 } from "./dashboard-core.js";
 
+const colorSchemeMeta = document.querySelector('meta[name="color-scheme"]');
+const systemDarkScheme = window.matchMedia("(prefers-color-scheme: dark)");
+
+function isDarkScheme() {
+  return colorSchemeMeta.content === "dark" || (colorSchemeMeta.content !== "light" && systemDarkScheme.matches);
+}
+
+function updateThemeToggle() {
+  document.documentElement.toggleAttribute("data-system-dark", systemDarkScheme.matches);
+  const isDark = isDarkScheme();
+  const label = isDark ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối";
+  const button = document.getElementById("btn-theme-toggle");
+  setIcon(document.getElementById("theme-toggle-icon"), isDark ? "light_mode" : "dark_mode");
+  document.getElementById("theme-toggle-text").textContent = isDark ? "Sáng" : "Tối";
+  button.setAttribute("aria-label", label);
+  button.title = label;
+}
+
+function syncThemeMetaFromStorage() {
+  let scheme = "light dark";
+  try {
+    const saved = localStorage.getItem("color-scheme");
+    if (saved === "light" || saved === "dark") scheme = saved;
+  } catch {
+    // Storage can be unavailable in embedded or restricted browser sessions.
+  }
+  colorSchemeMeta.content = scheme;
+  updateThemeToggle();
+}
+
+function toggleColorScheme() {
+  const next = isDarkScheme() ? "light" : "dark";
+  const matchesSystem = window.matchMedia(`(prefers-color-scheme: ${next})`).matches;
+  colorSchemeMeta.content = matchesSystem ? "light dark" : next;
+  updateThemeToggle();
+  try {
+    if (matchesSystem) localStorage.removeItem("color-scheme");
+    else localStorage.setItem("color-scheme", next);
+  } catch {
+    // The theme still applies for the current page if storage is blocked.
+  }
+}
+
 function initAmbientCyberCanvas() {
   const canvas = document.getElementById("ambient-cyber-canvas");
   if (!canvas) return;
-  if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
   const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  let rafId = 0;
   let w = window.innerWidth;
   let h = window.innerHeight;
   canvas.width = w;
@@ -113,13 +158,32 @@ function initAmbientCyberCanvas() {
       resizeTimer = setTimeout(() => {
         w = canvas.width = window.innerWidth;
         h = canvas.height = window.innerHeight;
-        renderCyberNetwork(0);
+        if (!document.hidden && reducedMotion.matches) renderCyberNetwork(0);
       }, 120);
     },
     { passive: true },
   );
 
-  window.requestAnimationFrame(renderCyberNetwork);
+  function renderFrame(ts) {
+    rafId = 0;
+    if (document.hidden || reducedMotion.matches) return;
+    renderCyberNetwork(ts);
+    rafId = requestAnimationFrame(renderFrame);
+  }
+
+  function syncAnimation() {
+    if (document.hidden || reducedMotion.matches) {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = 0;
+      if (!document.hidden) renderCyberNetwork(0);
+    } else if (!rafId) {
+      rafId = requestAnimationFrame(renderFrame);
+    }
+  }
+
+  document.addEventListener("visibilitychange", syncAnimation);
+  reducedMotion.addEventListener("change", syncAnimation);
+  syncAnimation();
 }
 
 function setDiffViewMode(mode, persist = true) {
@@ -235,13 +299,7 @@ async function quickSwitchAndDisarm(event) {
   event?.currentTarget.focus({ preventScroll: true });
   await switchTab("cdr");
   if (appState.currentScanResult?.scan_id !== scanId) return;
-  const alreadyDisarmed =
-    appState.currentCDRAudit &&
-    appState.currentCDRAudit.scan_id === appState.currentScanResult.scan_id &&
-    appState.currentCDRAudit.is_sanitized;
-  if (!alreadyDisarmed) {
-    await executeLiveCDR();
-  }
+  await executeLiveCDR();
 }
 
 async function handleFileList(fileList) {
@@ -723,6 +781,108 @@ function renderThreatTaxonomy(data) {
     );
   }
 }
+
+function formatRatioPercent(value) {
+  return Number.isFinite(value) ? (value * 100).toFixed(2) + "%" : "--";
+}
+
+function renderConformalAnalysis(analysis) {
+  const states = {
+    CERTIFIED_BENIGN: "Chứng nhận an toàn (Conformal)",
+    CERTIFIED_MALICIOUS: "Chứng nhận nguy hiểm (Conformal)",
+    AMBIGUOUS_BOTH: "Vùng lưỡng lự · Đẩy CDR",
+    DRIFT_OOD_EMPTY: "Lệch phân phối (Drift) · Đẩy CDR",
+  };
+  const state = analysis?.conformal_state;
+  const hasState = Object.hasOwn(states, state);
+  const badge = document.getElementById("conformal-state-badge");
+  document.getElementById("conformal-status").hidden = !hasState;
+  badge.dataset.state = hasState ? state : "";
+  badge.textContent = hasState ? states[state] : "--";
+  document.getElementById("conformal-credibility").textContent = hasState
+    ? "Độ khả tín " +
+      formatRatioPercent(analysis.credibility) +
+      " · Độ tin cậy " +
+      formatRatioPercent(analysis.confidence)
+    : "--";
+}
+
+function applyJsThreatHighlights(container, extraIndicators = []) {
+  CSS.highlights?.clear();
+  const tokens = [
+    "this.exportDataObject",
+    "app.alert",
+    "eval",
+    "unescape",
+    "launchURL",
+    "exportDataObject",
+    "submitForm",
+    "getAnnots",
+    "fromCharCode",
+    "ActiveXObject",
+    "WScript",
+    "Collab",
+    "printf",
+    ...extraIndicators
+      .filter((value) => typeof value === "string")
+      .map((value) => value.trim())
+      .filter((value) => /^[a-z0-9]{3,}$/i.test(value)),
+  ];
+  const pattern = tokens.map((token) => token.replaceAll(".", "\\.")).join("|");
+  const identifier = "\\p{ID_Continue}$\\u200c\\u200d";
+  const tokenPattern = new RegExp("(?<![" + identifier + "])(?:" + pattern + ")(?![" + identifier + "])", "giu");
+  const useHighlight = CSS.highlights && typeof globalThis.Highlight === "function";
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+  const textNodes = [];
+  const ranges = [];
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) textNodes.push(node);
+  for (const node of textNodes) {
+    const matches = Array.from(node.data.matchAll(tokenPattern));
+    if (!matches.length) continue;
+    if (useHighlight) {
+      for (const match of matches) {
+        const range = new Range();
+        range.setStart(node, match.index);
+        range.setEnd(node, match.index + match[0].length);
+        ranges.push(range);
+      }
+    } else {
+      const fragment = document.createDocumentFragment();
+      let offset = 0;
+      for (const match of matches) {
+        fragment.append(document.createTextNode(node.data.slice(offset, match.index)));
+        fragment.append(dom("mark", { class: "js-threat-mark" }, match[0]));
+        offset = match.index + match[0].length;
+      }
+      fragment.append(document.createTextNode(node.data.slice(offset)));
+      node.replaceWith(fragment);
+    }
+  }
+  if (useHighlight && ranges.length > 0) CSS.highlights.set("malpdf-js-threat", new Highlight(...ranges));
+}
+
+function renderThreatSnippet(threats) {
+  const threat = threats[0];
+  const snippetEl = document.getElementById("threat-code-snippet");
+  document.getElementById("js-threat-count").textContent = threats.length + " đoạn mã";
+  document.getElementById("threat-code-empty").classList.toggle("hidden", Boolean(threat));
+  document.getElementById("threat-code-box").classList.toggle("hidden", !threat);
+  if (threat) {
+    const indicators = threat.dangerous_indicators || [];
+    snippetEl.textContent = _formatReadableCodeSnippet(threat.code_snippet || threat.snippet);
+    applyJsThreatHighlights(snippetEl, indicators);
+    document.getElementById("threat-entropy").textContent = (threat.entropy || 0).toFixed(2);
+    document.getElementById("threat-indicators").textContent = indicators.length
+      ? indicators.map((ind) => _INDICATOR_VI[ind] || ind).join(", ")
+      : "Không có dấu hiệu rủi ro cụ thể";
+  } else {
+    CSS.highlights?.clear();
+    snippetEl.textContent = "";
+    document.getElementById("threat-entropy").textContent = "--";
+    document.getElementById("threat-indicators").textContent = "Không có";
+  }
+}
+
 function renderScanResult(data, cdrAudit = null) {
   if (data.scan_id !== appState.currentScanResult?.scan_id) {
     cancelActiveChat();
@@ -771,6 +931,7 @@ function renderScanResult(data, cdrAudit = null) {
   headline.className = `font-bold text-lg sm:text-xl ${textClass} leading-snug break-words`;
   subtext.textContent = data.file_name;
   document.getElementById("status-action").textContent = assessment.guidance;
+  renderConformalAnalysis(data.forensic_dossier?.conformal_analysis);
 
   renderThreatTaxonomy(data);
 
@@ -898,33 +1059,10 @@ function renderScanResult(data, cdrAudit = null) {
         pathFlowEl.appendChild(badge);
       });
     }
-
-    const threats = data.forensic_dossier?.threat_scripts ? data.forensic_dossier.threat_scripts : [];
-    document.getElementById("js-threat-count").textContent = `${threats.length} đoạn mã`;
-    const codeEmpty = document.getElementById("threat-code-empty");
-    const codeBox = document.getElementById("threat-code-box");
-    const snippetEl = document.getElementById("threat-code-snippet");
-    if (threats.length > 0) {
-      const rawSnippet = threats[0].code_snippet || threats[0].snippet || "Chưa trích xuất được nội dung đoạn mã.";
-      if (snippetEl) snippetEl.textContent = _formatReadableCodeSnippet(rawSnippet);
-      if (codeEmpty) codeEmpty.classList.add("hidden");
-      if (codeBox) codeBox.classList.remove("hidden");
-      document.getElementById("threat-entropy").textContent = (threats[0].entropy || 0).toFixed(2);
-      const inds = (threats[0].dangerous_indicators || []).map((ind) => _INDICATOR_VI[ind] || ind);
-      document.getElementById("threat-indicators").textContent = inds.length
-        ? inds.join(", ")
-        : "Không có dấu hiệu rủi ro cụ thể";
-    } else {
-      if (snippetEl) snippetEl.textContent = "";
-      if (codeBox) codeBox.classList.add("hidden");
-      if (codeEmpty) codeEmpty.classList.remove("hidden");
-      document.getElementById("threat-entropy").textContent = "--";
-      document.getElementById("threat-indicators").textContent = "Không có";
-    }
-
-    renderMitreCascade(data.forensic_dossier.mitre_cascade || [], isMal);
-    renderCrossAttentionTable(data.forensic_dossier.cross_attention_matrix || []);
   }
+  renderThreatSnippet(data.forensic_dossier?.threat_scripts || []);
+  renderMitreCascade(data.forensic_dossier?.mitre_cascade || [], isMal);
+  renderCrossAttentionTable(data.forensic_dossier?.cross_attention_matrix || []);
 
   updateCDRBeforeCard(data, assessment);
 
@@ -1371,6 +1509,7 @@ function renderCrossAttentionTable(matrix) {
         "td",
         {
           class: `p-3 align-middle text-right font-bold font-mono num ${isCrit ? "text-error" : "text-on-surface-variant"}`,
+          dataset: { sortValue: r.attention_score || 0 },
         },
         scorePct,
       ),
@@ -1397,6 +1536,7 @@ function renderCrossAttentionTable(matrix) {
     labelTableCells(tbody, tr);
     tbody.appendChild(tr);
   });
+  resortActiveTable(tbody);
 }
 
 function updateCDRBeforeCard(data, assessment) {
@@ -1458,17 +1598,6 @@ async function handleCDRFileUpload(file) {
 
 function resetCDRAfterCard(fileName = "document.pdf") {
   setCDRPending(false);
-  const btn = document.getElementById("btn-execute-disarm");
-  const text = document.getElementById("btn-disarm-text");
-  const icon = document.getElementById("cdr-disarm-icon");
-  if (btn)
-    btn.className =
-      "px-4 py-2 rounded-lg text-xs font-bold bg-primary-container hover:bg-primary text-white shadow-sm transition flex items-center gap-2 active:scale-95";
-  if (text) text.textContent = "Làm sạch tệp PDF ngay";
-  if (icon) {
-    setIcon(icon, "healing");
-    icon.classList.remove("animate-spin");
-  }
   const cardAfter = document.getElementById("card-cdr-after");
   if (cardAfter)
     cardAfter.className = "glass-card rounded-xl p-4 sm:p-5 border-l-4 border-slate-300 flex flex-col justify-between";
@@ -1491,18 +1620,18 @@ function resetCDRAfterCard(fileName = "document.pdf") {
   if (pagesEl) pagesEl.textContent = "--";
   const textIntEl = document.getElementById("cdr-text-integrity");
   if (textIntEl) textIntEl.textContent = "--";
+  document.getElementById("cdr-ssim-metric").textContent = "--";
   const hashSanEl = document.getElementById("hash-sanitized");
   if (hashSanEl) hashSanEl.textContent = "--";
   const footerBox = document.getElementById("cdr-integrity-footer");
   const footerIcon = document.getElementById("cdr-integrity-footer-icon");
   const footerText = document.getElementById("cdr-integrity-footer-text");
-  if (footerBox)
-    footerBox.className =
-      "mt-4 pt-3 border-t border-slate-200 flex items-center gap-2 text-xs text-on-surface-variant bg-slate-50/70 -mx-5 -mb-5 p-4 rounded-b-xl";
+  if (footerBox) footerBox.className = "flex items-center gap-1 text-[11px] text-outline font-semibold";
   if (footerIcon) setIcon(footerIcon, "schedule");
-  if (footerText) footerText.textContent = "Chờ thực hiện làm sạch để đối chiếu nội dung và cấu trúc.";
-  const dlBtn = document.getElementById("btn-download-sanitized");
-  if (dlBtn) dlBtn.disabled = true;
+  if (footerText) {
+    footerText.textContent = "Chờ thực hiện làm sạch để đối chiếu nội dung và cấu trúc.";
+    footerText.removeAttribute("title");
+  }
   const body = document.getElementById("cdr-diff-table-body");
   if (body) {
     body.replaceChildren(
@@ -1522,24 +1651,13 @@ function resetCDRAfterCard(fileName = "document.pdf") {
 }
 
 function applyCDRAuditToUI(audit) {
-  if (!audit?.is_sanitized || audit.scan_id !== appState.currentScanResult?.scan_id) return;
+  if (!audit?.is_sanitized || audit.quarantine_recommended || audit.scan_id !== appState.currentScanResult?.scan_id)
+    return;
   appState.currentCDRAudit = audit;
   const psv = audit.post_scan_verification || {};
   const vAfter = psv.verdict_after;
   const postMal = vAfter === "MALICIOUS";
   const postBenign = vAfter === "BENIGN";
-
-  const btn = document.getElementById("btn-execute-disarm");
-  const text = document.getElementById("btn-disarm-text");
-  const icon = document.getElementById("cdr-disarm-icon");
-  if (btn)
-    btn.className =
-      "px-4 py-2 rounded-lg text-xs font-bold bg-tertiary text-white shadow-sm transition flex items-center gap-2 active:scale-95";
-  if (text) text.textContent = "Đã làm sạch tệp";
-  if (icon) {
-    setIcon(icon, "verified");
-    icon.classList.remove("animate-spin");
-  }
 
   const ratioPct = audit.size_before > 0 ? ((audit.size_after / audit.size_before) * 100).toFixed(1) : "--";
   const cardAfter = document.getElementById("card-cdr-after");
@@ -1586,6 +1704,7 @@ function applyCDRAuditToUI(audit) {
   const suffix = audit.text_integrity_verified === true ? " ký tự (khớp văn bản gốc)" : " ký tự";
   const textIntEl = document.getElementById("cdr-text-integrity");
   if (textIntEl) textIntEl.textContent = Number(audit.extracted_text_chars || 0).toLocaleString("vi-VN") + suffix;
+  document.getElementById("cdr-ssim-metric").textContent = formatRatioPercent(audit.visual_similarity?.mean_ssim);
   const hashSanEl = document.getElementById("hash-sanitized");
   if (hashSanEl) hashSanEl.textContent = audit.sha256_after || "--";
 
@@ -1593,34 +1712,63 @@ function applyCDRAuditToUI(audit) {
   const footerIcon = document.getElementById("cdr-integrity-footer-icon");
   const footerText = document.getElementById("cdr-integrity-footer-text");
   const intact = Boolean(audit.content_streams_preserved && audit.resources_preserved && !postMal);
-  if (footerBox) {
-    footerBox.className = intact
-      ? "mt-4 pt-3 border-t border-slate-200 flex items-center gap-2 text-xs text-tertiary bg-emerald-50/50 -mx-5 -mb-5 p-4 rounded-b-xl"
-      : "mt-4 pt-3 border-t border-slate-200 flex items-center gap-2 text-xs text-amber-800 bg-amber-50/60 -mx-5 -mb-5 p-4 rounded-b-xl";
-  }
+  if (footerBox)
+    footerBox.className = `flex items-center gap-1 text-[11px] font-semibold ${intact ? "text-tertiary" : "text-amber-800"}`;
   if (footerIcon) setIcon(footerIcon, intact ? "verified_user" : "info");
   if (footerText) {
     footerText.textContent = audit.text_integrity_verified
       ? "Đã giữ nguyên luồng nội dung trang và đối chiếu văn bản trích xuất."
       : "Đã lưu bản sao loại bỏ khóa hành động; chưa đối chiếu hết văn bản trích xuất.";
+    const modes = {
+      full: "Full CDR",
+      minimal_cut: "CF-CDR",
+      full_fallback: "Đã chuyển từ CF-CDR sang Full CDR",
+    };
+    const preserved = audit.preserved_interactive_elements;
+    if (Object.hasOwn(modes, audit.sanitization_mode))
+      footerText.textContent += " " + modes[audit.sanitization_mode] + ".";
+    if (Array.isArray(preserved)) {
+      footerText.textContent += ` Giữ lại ${preserved.length} thành phần tương tác.`;
+      footerText.title = preserved.join(", ");
+    } else {
+      footerText.removeAttribute("title");
+    }
   }
-  const dlBtn = document.getElementById("btn-download-sanitized");
-  if (dlBtn) dlBtn.disabled = false;
 
   renderCDRDiffMatrix(audit);
+  setCDRPending(appState.disarmingScans.has(audit.scan_id));
+}
+
+function selectedCDRMode() {
+  return document.getElementById("cdr-mode-select")?.value === "minimal_cut" ? "minimal_cut" : "full";
+}
+
+function hasCompletedCDRMode(scanId, mode) {
+  const audit = appState.currentCDRAudit;
+  return Boolean(scanId && audit?.scan_id === scanId && (audit.sanitization_mode ?? "full") === mode);
 }
 
 function setCDRPending(pending) {
-  document.getElementById("btn-execute-disarm").disabled = pending;
-  document.getElementById("btn-execute-disarm").setAttribute("aria-busy", String(pending));
+  const scanId = appState.currentScanResult?.scan_id;
+  const completed = !pending && !appState.unconfirmedCDR.has(scanId) && hasCompletedCDRMode(scanId, selectedCDRMode());
+  const button = document.getElementById("btn-execute-disarm");
+  button.disabled = pending;
+  button.setAttribute("aria-busy", String(pending));
+  button.classList.toggle("bg-tertiary", completed);
+  button.classList.toggle("bg-primary-container", !completed);
+  document.getElementById("cdr-mode-select").disabled = pending;
   document.getElementById("btn-quick-disarm").disabled = pending;
+  document.getElementById("btn-download-sanitized").disabled =
+    pending || !appState.currentCDRAudit || appState.unconfirmedCDR.has(scanId);
   document.getElementById("cdr-disarm-scan-overlay").classList.toggle("hidden", !pending);
-  if (pending) {
-    const icon = document.getElementById("cdr-disarm-icon");
-    setIcon(icon, "progress_activity");
-    icon.classList.add("animate-spin");
-    document.getElementById("btn-disarm-text").textContent = "Đang kiểm tra và làm sạch cấu trúc PDF...";
-  }
+  const icon = document.getElementById("cdr-disarm-icon");
+  setIcon(icon, pending ? "progress_activity" : completed ? "verified" : "healing");
+  icon.classList.toggle("animate-spin", pending);
+  document.getElementById("btn-disarm-text").textContent = pending
+    ? "Đang kiểm tra và làm sạch cấu trúc PDF..."
+    : completed
+      ? "Đã làm sạch tệp"
+      : "Làm sạch tệp PDF ngay";
 }
 
 async function readCDRStatus(scanId) {
@@ -1628,9 +1776,24 @@ async function readCDRStatus(scanId) {
   if (res.status === 404) throw new Error("Lượt quét đã hết hạn. Hãy chọn lại tệp PDF.");
   if (!res.ok) throw new Error("Chưa xác nhận được trạng thái lượt quét.");
   const job = await res.json();
-  if (job.has_sanitized && job.cdr_audit) return { ...job.cdr_audit, scan_id: job.scan_id };
   if (job.status === "DISARMING") throw new Error("Máy chủ vẫn đang làm sạch. Hãy kiểm tra lại sau.");
+  if (job.has_sanitized && job.cdr_audit?.is_sanitized && !job.cdr_audit.quarantine_recommended) {
+    return { ...job.cdr_audit, scan_id: job.scan_id };
+  }
   return null;
+}
+
+function confirmsCDRAttempt(audit, attempt) {
+  if (!audit) return false;
+  const mode = audit.sanitization_mode ?? "full";
+  if (mode !== attempt.mode && !(attempt.mode === "minimal_cut" && mode === "full_fallback")) return false;
+  const previous = attempt.previousAudit;
+  return (
+    !previous ||
+    mode !== (previous.sanitization_mode ?? "full") ||
+    audit.sha256_after !== previous.sha256_after ||
+    audit.disarm_latency_ms !== previous.disarm_latency_ms
+  );
 }
 
 async function executeLiveCDR() {
@@ -1639,15 +1802,39 @@ async function executeLiveCDR() {
     showToast("Hãy tải tệp PDF lên trước khi làm sạch tệp.", "warning");
     return;
   }
-  if (appState.disarmingScans.has(scanId) || appState.currentCDRAudit?.scan_id === scanId) return;
+  const cdrMode = selectedCDRMode();
+  if (appState.disarmingScans.has(scanId)) return;
+  if (!appState.unconfirmedCDR.has(scanId) && hasCompletedCDRMode(scanId, cdrMode)) return;
+  const previousAudit = appState.currentCDRAudit;
   appState.disarmingScans.add(scanId);
   setCDRPending(true);
   try {
-    let audit = appState.unconfirmedCDR.has(scanId) ? await readCDRStatus(scanId) : null;
-    if (appState.currentScanResult?.scan_id !== scanId) return;
+    let audit;
+    const unconfirmed = appState.unconfirmedCDR.get(scanId);
+    if (unconfirmed) {
+      const savedAudit = await readCDRStatus(scanId);
+      appState.unconfirmedCDR.delete(scanId);
+      if (appState.currentScanResult?.scan_id !== scanId) return;
+      if (savedAudit) {
+        applyCDRAuditToUI(savedAudit);
+        if (
+          hasCompletedCDRMode(scanId, cdrMode) ||
+          (unconfirmed.mode === cdrMode && confirmsCDRAttempt(savedAudit, unconfirmed))
+        ) {
+          audit = savedAudit;
+        }
+      } else if (appState.currentCDRAudit) {
+        appState.currentCDRAudit = null;
+        resetCDRAfterCard(appState.currentScanResult.file_name);
+        setCDRPending(true);
+        clearVisualDiff();
+      }
+    }
     if (!audit) {
+      const attempt = { mode: cdrMode, previousAudit: appState.currentCDRAudit };
+      const modeQuery = cdrMode === "full" && !attempt.previousAudit ? "" : `mode=${encodeURIComponent(cdrMode)}&`;
       try {
-        const res = await fetch(`/api/disarm/${scanId}?include_preview_images=false`, { method: "POST" });
+        const res = await fetch(`/api/disarm/${scanId}?${modeQuery}include_preview_images=false`, { method: "POST" });
         if (res.status === 404) throw new Error("Lượt quét đã hết hạn. Hãy chọn lại tệp PDF.");
         if (!res.ok && res.status < 500) {
           const err = await res.json().catch(() => ({}));
@@ -1657,13 +1844,24 @@ async function executeLiveCDR() {
         audit = await res.json();
       } catch (err) {
         if (!(err instanceof TypeError || err instanceof SyntaxError)) throw err;
-        appState.unconfirmedCDR.add(scanId);
+        appState.unconfirmedCDR.set(scanId, attempt);
         if (appState.currentScanResult?.scan_id !== scanId) return;
-        audit = await readCDRStatus(scanId);
+        const savedAudit = await readCDRStatus(scanId);
+        if (confirmsCDRAttempt(savedAudit, attempt)) audit = savedAudit;
       }
     }
     if (appState.currentScanResult?.scan_id !== scanId) return;
-    if (!audit?.is_sanitized || audit.scan_id !== scanId) throw new Error("Chưa xác nhận được bản PDF đã làm sạch.");
+    if (
+      appState.currentCDRAudit &&
+      audit?.scan_id === scanId &&
+      (!audit.is_sanitized || audit.quarantine_recommended)
+    ) {
+      appState.currentCDRAudit = null;
+      clearVisualDiff();
+    }
+    if (!audit?.is_sanitized || audit.quarantine_recommended || audit.scan_id !== scanId) {
+      throw new Error("Chưa xác nhận được bản PDF đã làm sạch.");
+    }
     appState.unconfirmedCDR.delete(scanId);
     applyCDRAuditToUI(audit);
     const remCount = Array.isArray(audit.removed_triggers) ? audit.removed_triggers.length : 0;
@@ -1673,16 +1871,20 @@ async function executeLiveCDR() {
         : `Đã làm sạch tệp: không ghi nhận khóa kích hoạt cần gỡ, giữ nguyên ${audit.sanitized_pages} trang.`;
     showToast(cdrDoneMsg, "success");
     if (audit.ai_threat_explanation) renderAIExplainer(audit.ai_threat_explanation, false, appState.currentScanResult);
-    appState.visualDiffCache.clear();
-    if (appState.activeTab === "cdr") loadVisualDiff(appState.currentDiffPage);
   } catch (err) {
-    if (appState.currentScanResult?.scan_id === scanId && !appState.currentCDRAudit) {
-      resetCDRAfterCard(appState.currentScanResult.file_name);
+    if (appState.currentScanResult?.scan_id === scanId) {
+      if (!appState.currentCDRAudit) resetCDRAfterCard(appState.currentScanResult.file_name);
       showToast("Không thể làm sạch tệp: " + err.message, "error");
     }
   } finally {
     appState.disarmingScans.delete(scanId);
-    if (appState.currentScanResult?.scan_id === scanId) setCDRPending(false);
+    if (appState.currentScanResult?.scan_id === scanId) {
+      setCDRPending(false);
+      if (previousAudit !== appState.currentCDRAudit) {
+        appState.visualDiffCache.clear();
+        if (appState.activeTab === "cdr") loadVisualDiff(appState.currentDiffPage);
+      }
+    }
     fetchScanHistory();
   }
 }
@@ -1737,7 +1939,7 @@ function downloadSanitizedPDF() {
 
 async function loadMailGatewayHistory() {
   const spinner = document.getElementById("mail-spinner");
-  if (spinner) spinner.style.display = "inline-block";
+  if (spinner) spinner.hidden = false;
   try {
     const response = await fetch("/api/gateway/history");
     if (!response.ok) throw new Error(`Mã lỗi ${response.status}`);
@@ -1807,7 +2009,7 @@ async function loadMailGatewayHistory() {
   } catch (error) {
     showToast("Không đọc được lịch sử kiểm tra email: " + error.message, "error");
   } finally {
-    if (spinner) spinner.style.display = "none";
+    if (spinner) spinner.hidden = true;
   }
 }
 
@@ -1895,12 +2097,14 @@ async function fetchSiemLogs() {
       cols.forEach((value, idx) => {
         const cell = document.createElement("td");
         cell.className = idx === 6 ? "p-3 text-xs text-right font-mono num" : "p-3 text-xs";
+        if (idx === 6 && Number.isFinite(detail.latency_ms)) cell.dataset.sortValue = detail.latency_ms;
         cell.textContent = value;
         row.appendChild(cell);
       });
       labelTableCells(tbody, row);
       tbody.appendChild(row);
     });
+    resortActiveTable(tbody);
   } catch (err) {
     console.error("Lỗi tải nhật ký hoạt động:", err);
   }
@@ -2218,7 +2422,11 @@ async function fetchQuarantineVault() {
       tr.replaceChildren(
         dom("td", { class: "p-3 font-semibold text-on-surface" }, q.file_name),
         dom("td", { class: "p-3 text-error font-mono font-bold" }, `${q.sha256_prefix ?? ""}…`),
-        dom("td", { class: "p-3 text-right text-on-surface-variant font-mono num" }, formatBytesVi(q.size_bytes || 0)),
+        dom(
+          "td",
+          { class: "p-3 text-right text-on-surface-variant font-mono num", dataset: { sortValue: q.size_bytes || 0 } },
+          formatBytesVi(q.size_bytes || 0),
+        ),
         dom("td", { class: "p-3 text-outline text-xs num" }, (q.quarantined_at || "").replace("T", " ").slice(0, 19)),
         dom(
           "td",
@@ -2238,6 +2446,7 @@ async function fetchQuarantineVault() {
       labelTableCells(tbody, tr);
       tbody.appendChild(tr);
     });
+    resortActiveTable(tbody);
   } catch (err) {
     console.warn("Failed to fetch quarantine vault:", err);
   }
@@ -2374,7 +2583,91 @@ function labelTableCells(tbody, row) {
   row.setAttribute("role", "row");
   for (const cell of row.cells) {
     cell.setAttribute("role", "cell");
-    cell.dataset.label = headers[cell.cellIndex].textContent.trim();
+    const header = headers[cell.cellIndex];
+    cell.dataset.label = header.dataset.colLabel || header.textContent.trim();
+  }
+}
+
+const tableCollator = new Intl.Collator("vi", { numeric: true, sensitivity: "base" });
+
+function numericSortValue(cell) {
+  if (cell.dataset.sortValue !== undefined) return Number(cell.dataset.sortValue);
+  const text = cell.textContent.trim();
+  const value = Number.parseFloat(text.replace(/[^\d.-]/g, ""));
+  const unit = text.slice(-2).toUpperCase();
+  return value * (unit === "MB" ? 1024 ** 2 : unit === "KB" ? 1024 : 1);
+}
+
+function sortTableRows(tbody, th, direction) {
+  const rows = Array.from(tbody.rows).filter((row) => row.cells.length > 1);
+  if (rows.length <= 1) return;
+  const columnIndex = th.cellIndex;
+  const numeric = th.dataset.type === "number";
+  const order = direction === "ascending" ? 1 : -1;
+  const entries = rows.map((row) => {
+    const cell = row.cells[columnIndex];
+    return { row, value: numeric ? numericSortValue(cell) : cell.textContent.trim() };
+  });
+  entries.sort((a, b) => {
+    if (!numeric) return order * tableCollator.compare(a.value, b.value);
+    if (!Number.isFinite(a.value)) return Number.isFinite(b.value) ? 1 : 0;
+    if (!Number.isFinite(b.value)) return -1;
+    return order * (a.value - b.value);
+  });
+  const insertRow =
+    typeof tbody.moveBefore === "function" ? (row) => tbody.moveBefore(row, null) : (row) => tbody.appendChild(row);
+  for (const { row } of entries) insertRow(row);
+}
+
+function sortTableByHeader(table, th) {
+  const nextDir = th.getAttribute("aria-sort") === "ascending" ? "descending" : "ascending";
+  for (const header of table.tHead.querySelectorAll("th[aria-sort]")) header.removeAttribute("aria-sort");
+  th.setAttribute("aria-sort", nextDir);
+  sortTableRows(table.tBodies[0], th, nextDir);
+  const direction = nextDir === "ascending" ? "tăng dần" : "giảm dần";
+  document.getElementById("table-sort-status").textContent =
+    `Đã sắp xếp bảng theo ${th.dataset.colLabel} (${direction})`;
+}
+
+function resortActiveTable(tbody) {
+  const header = tbody.closest("table").tHead.querySelector("th[aria-sort]");
+  if (header) sortTableRows(tbody, header, header.getAttribute("aria-sort"));
+}
+
+function wireSortableTables() {
+  const hasInvokerCommands = "commandForElement" in HTMLButtonElement.prototype;
+  for (const table of document.querySelectorAll("table[id]")) {
+    const buttons = table.tHead?.querySelectorAll('button[command="--sort"]');
+    if (!buttons?.length) continue;
+    table.addEventListener("command", (event) => {
+      if (event.command !== "--sort") return;
+      const header = event.source?.closest("th");
+      if (header?.closest("thead") === table.tHead) sortTableByHeader(table, header);
+    });
+    if (!hasInvokerCommands) {
+      for (const button of buttons)
+        button.addEventListener("click", () => sortTableByHeader(table, button.closest("th")));
+    }
+  }
+}
+
+function wireDeferredVisibilityObservers() {
+  const sections = document.querySelectorAll(".deferred-below-fold");
+  if (!sections.length) return;
+  const supportsNativeVisibility =
+    "contentVisibility" in document.documentElement.style &&
+    ("oncontentvisibilityautostatechange" in sections[0] || "ContentVisibilityAutoStateChangeEvent" in window);
+  if (supportsNativeVisibility) {
+    for (const section of sections) {
+      section.addEventListener("contentvisibilityautostatechange", (event) => {
+        section.dataset.cvSkipped = String(Boolean(event.skipped));
+      });
+    }
+  } else if ("IntersectionObserver" in window) {
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) entry.target.dataset.cvSkipped = String(!entry.isIntersecting);
+    });
+    for (const section of sections) observer.observe(section);
   }
 }
 
@@ -2409,6 +2702,9 @@ function wireDashboardEvents() {
   }
   wireAIChatEvents();
   wireScrollFades();
+  wireSortableTables();
+  wireDeferredVisibilityObservers();
+  systemDarkScheme.addEventListener("change", updateThemeToggle);
 
   const dropzone = byId("dropzone");
   const input = byId("file-input");
@@ -2421,6 +2717,7 @@ function wireDashboardEvents() {
   });
   input.addEventListener("change", () => handleFileList(input.files));
   byId("cdr-file-input").addEventListener("change", (event) => handleCDRFileUpload(event.target.files[0]));
+  byId("cdr-mode-select").addEventListener("change", () => setCDRPending(false));
   byId("mail-tab-file-input").addEventListener("change", (event) => handleEMLUpload(event.target.files[0]));
   for (const name of ["dragenter", "dragover", "dragleave", "drop"]) {
     dropzone.addEventListener(name, (event) => {
@@ -2433,6 +2730,7 @@ function wireDashboardEvents() {
   }
 
   const actions = {
+    "btn-theme-toggle": toggleColorScheme,
     "btn-cancel-scan": cancelActiveScan,
     "btn-quick-disarm": quickSwitchAndDisarm,
     "btn-export-forensics": exportForensicJSON,
@@ -2484,6 +2782,7 @@ function wireDashboardEvents() {
 
 function initDashboard() {
   initTrustedTypes();
+  syncThemeMetaFromStorage();
   wireDashboardEvents();
   initSplitSliderEvents();
   const params = new URL(location.href).searchParams;

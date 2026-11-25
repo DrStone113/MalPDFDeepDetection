@@ -440,7 +440,10 @@ async def disarm_pdf(
     file: UploadFile | None = File(default=None),
     include_preview_images: bool = True,
     password: Annotated[str | None, Form()] = None,
+    mode: str = "full",
 ) -> dict[str, Any]:
+    if mode not in {"full", "minimal_cut"}:
+        raise HTTPException(status_code=400, detail="invalid_disarm_mode")
     if file is not None:
         content = await file.read()
         _validate_pdf_bytes(content)
@@ -449,21 +452,26 @@ async def disarm_pdf(
         current_session().active_job_id = job.scan_id
     else:
         job = _get_active_or_latest_job()
-    return await run_in_threadpool(_execute_disarm_for_job, job, include_preview_images, password=password)
+    return await run_in_threadpool(_execute_disarm_for_job, job, include_preview_images, password=password, mode=mode)
 
 
 @production_router.post("/api/disarm/{scan_id}")
 def disarm_specific_job(
-    scan_id: str, include_preview_images: bool = True, password: Annotated[str | None, Form()] = None
+    scan_id: str,
+    include_preview_images: bool = True,
+    password: Annotated[str | None, Form()] = None,
+    mode: str = "full",
 ) -> dict[str, Any]:
+    if mode not in {"full", "minimal_cut"}:
+        raise HTTPException(status_code=400, detail="invalid_disarm_mode")
     job = current_session().store.get_job(scan_id)
     if not job:
         raise HTTPException(status_code=404, detail="scan_job_not_found")
-    return _execute_disarm_for_job(job, include_preview_images, password=password)
+    return _execute_disarm_for_job(job, include_preview_images, password=password, mode=mode)
 
 
 def _execute_disarm_for_job(
-    job: ScanJob, include_preview_images: bool = True, *, password: str | None = None
+    job: ScanJob, include_preview_images: bool = True, *, password: str | None = None, mode: str = "full"
 ) -> dict[str, Any]:
     raw_bytes = job.raw_bytes
     filename = job.file_name
@@ -476,7 +484,19 @@ def _execute_disarm_for_job(
             current_session().store.attach_scan_result(job.scan_id, scan_res)
         pre_scan = scan_res.to_dict()
         current_session().store.set_status(job.scan_id, "DISARMING")
-        sanitized_bytes, audit = disarmer.sanitize_bytes(raw_bytes, file_name=filename, password=password)
+        sanitized_bytes, audit = disarmer.sanitize_bytes(
+            raw_bytes,
+            file_name=filename,
+            password=password,
+            mode=mode,
+            rescore_fn=(
+                lambda candidate: scanner.scan_bytes(
+                    candidate, file_name=f"cf_{filename}", explain=False, password=password
+                ).to_dict()
+            )
+            if mode == "minimal_cut"
+            else None,
+        )
         post_scan = scanner.scan_bytes(sanitized_bytes, file_name=f"sanitized_{filename}", explain=True)
     except Exception as exc:
         detail = str(exc).replace(password, "[redacted]") if password else str(exc)

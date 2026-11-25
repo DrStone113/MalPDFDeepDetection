@@ -17,7 +17,7 @@ export const appState = {
   previewRequest: null,
   historyRequest: 0,
   disarmingScans: new Set(),
-  unconfirmedCDR: new Set(),
+  unconfirmedCDR: new Map(),
   visualDiffCache: new Map(),
 };
 

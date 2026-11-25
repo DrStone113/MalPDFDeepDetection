@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import base64
+from collections.abc import Callable, Iterator
 from dataclasses import asdict, dataclass, field
 import hashlib
 import io
+from itertools import islice
 from pathlib import Path
 import time
 from typing import Any
@@ -12,13 +14,14 @@ import numpy as np
 import pikepdf
 import pymupdf as fitz
 
-from malpdf.scanner.forensic import is_suspicious_uri
+from malpdf.scanner.forensic import EMBEDDED_URI_PATTERN, is_suspicious_uri
 from malpdf.scanner.ingestion import (
     IMAGE_LURE_MIN_AREA,
     VISUAL_LURE_SUBTYPES,
     annotation_rect_area,
     inspect_pdf_codec_anomalies,
     inspect_polyglot_and_revisions,
+    is_benign_catalog_navigation,
     lure_phrases_for_pages,
     page_box_area,
     qr_phishing_reasons,
@@ -28,12 +31,139 @@ from malpdf.scanner.ingestion import (
 from malpdf.scanner.ingestion import (
     is_navigation_destination as is_navigation_destination,
 )
-from malpdf.scanner.qr_scan import scan_pdf_qr_codes
+from malpdf.scanner.qr_scan import scan_pdf_qr_codes, zxingcpp
 
 _JBIG2_MAGIC = b"\x97JB2\r\n\x1a\n"
 _MEDIA_TRIGGER_KEYS = {"/3D", "/U3D", "/PRC"}
 _REMOVED_ANNOT_SUBTYPES = {"/FileAttachment", *_MEDIA_TRIGGER_KEYS}
 _REMOVED_ANNOT_LABELS = {name[1:] for name in _REMOVED_ANNOT_SUBTYPES}
+_MINIMAL_MEDIA_SUBTYPES = {"/Movie", "/Sound", "/Screen", "/RichMedia", *_REMOVED_ANNOT_SUBTYPES}
+_MINIMAL_ATTACHMENT_KEYS = {"/AF", "/EF", "/EmbeddedFiles", "/Collection"}
+_AA_EVENTS = {
+    "/WC",
+    "/WS",
+    "/DS",
+    "/WP",
+    "/DP",
+    "/O",
+    "/C",
+    "/E",
+    "/X",
+    "/D",
+    "/U",
+    "/Fo",
+    "/Bl",
+    "/PO",
+    "/PC",
+    "/PV",
+    "/PI",
+    "/K",
+    "/F",
+    "/V",
+}
+_MINIMUM_SSIM = 0.95
+
+
+def _pixmap_pixels(pixmap: fitz.Pixmap) -> np.ndarray:
+    return np.frombuffer(pixmap.samples, dtype=np.uint8).reshape(pixmap.height, pixmap.width, pixmap.n)
+
+
+def _compute_ssim_uint8(img_a: np.ndarray, img_b: np.ndarray) -> float:
+    if img_a.shape != img_b.shape or not img_a.size:
+        raise ValueError("ssim_requires_matching_nonempty_images")
+    if np.array_equal(img_a, img_b):
+        return 1.0
+
+    pixel_count = img_a.shape[0] * img_a.shape[1] if img_a.ndim >= 2 else img_a.size
+    stride = 4 if pixel_count >= 512 * 512 else 2 if pixel_count >= 256 * 256 else 1
+    block = 8 // stride
+
+    def luminance_blocks(image: np.ndarray) -> np.ndarray:
+        image = np.atleast_2d(image)[::stride, ::stride]
+        if image.ndim == 3 and image.shape[-1] >= 3:
+            luminance = image[..., 0] * np.float32(0.299)
+            luminance += image[..., 1] * np.float32(0.587)
+            luminance += image[..., 2] * np.float32(0.114)
+        else:
+            luminance = image.reshape(image.shape[:2]).astype(np.float32)
+        height, width = luminance.shape
+        luminance = np.pad(luminance, ((0, -height % block), (0, -width % block)), mode="edge")
+        return luminance.reshape((height + block - 1) // block, block, (width + block - 1) // block, block)
+
+    a, b = luminance_blocks(img_a), luminance_blocks(img_b)
+    scale = 1.0 / (block * block)
+    mean_a = np.einsum("ijkl->ik", a) * scale
+    mean_b = np.einsum("ijkl->ik", b) * scale
+    mean_sq_a, mean_sq_b = mean_a**2, mean_b**2
+    mean_product = mean_a * mean_b
+    var_sum = (np.einsum("ijkl,ijkl->ik", a, a) + np.einsum("ijkl,ijkl->ik", b, b)) * scale
+    var_sum -= mean_sq_a + mean_sq_b
+    covariance = np.einsum("ijkl,ijkl->ik", a, b) * scale - mean_product
+    c1, c2 = (0.01 * 255) ** 2, (0.03 * 255) ** 2
+    luminance = (2 * mean_product + c1) / (mean_sq_a + mean_sq_b + c1)
+    structure = (2 * covariance + c2) / (np.maximum(var_sum, 0) + c2)
+    return float(np.clip(np.mean(luminance * structure), -1.0, 1.0))
+
+
+def _safe_navigation_action(action: Any) -> bool:
+    if not is_benign_catalog_navigation(action):
+        return False
+    destination = action
+    if isinstance(action, pikepdf.Dictionary):
+        argument = "/D" if str(action["/S"]) == "/GoTo" else "/N"
+        if not set(action.keys()) <= {"/Type", "/S", argument}:
+            return False
+        if "/Type" in action and action["/Type"] != pikepdf.Name("/Action"):
+            return False
+        destination = action[argument]
+    return not isinstance(destination, pikepdf.Array) or destination[0].is_indirect
+
+
+def _detach_navigation_groups(
+    pdf: pikepdf.Pdf, allowed: set[str] | None = None
+) -> Iterator[tuple[str, pikepdf.Dictionary, str, Any]]:
+    root = pdf.Root
+    acroform = root.get("/AcroForm")
+    slots = [
+        ("catalog_OpenAction", root, "/OpenAction"),
+        ("catalog_AdditionalActions", root, "/AA"),
+        ("acroform_AA", acroform, "/AA"),
+        *((f"page_{index}_AA", page.obj, "/AA") for index, page in enumerate(pdf.pages)),
+    ]
+    for label, owner, key in slots:
+        if (
+            (allowed is not None and label not in allowed)
+            or not isinstance(owner, pikepdf.Dictionary)
+            or key not in owner
+        ):
+            continue
+        value = owner[key]
+        safe = (
+            _safe_navigation_action(value)
+            if key == "/OpenAction"
+            else isinstance(value, pikepdf.Dictionary)
+            and bool(value.keys())
+            and set(value.keys()) <= _AA_EVENTS
+            and all(
+                isinstance(action, pikepdf.Dictionary) and _safe_navigation_action(action) for action in value.values()
+            )
+        )
+        if safe:
+            del owner[key]
+            yield label, owner, key, value
+
+
+def _active_keys_with_verified_navigation(
+    pdf: pikepdf.Pdf, preserved: list[str], *, strict: bool, lure_phrases: set[str]
+) -> list[str]:
+    groups = list(_detach_navigation_groups(pdf, set(preserved))) if preserved else []
+    try:
+        if {group[0] for group in groups} != set(preserved):
+            raise ValueError("cdr_preserved_navigation_verification_failed")
+        return _active_keys(pdf, remove=False, strict=strict, lure_phrases=lure_phrases)
+    finally:
+        for _, owner, key, value in groups:
+            owner[key] = value
 
 
 def _visual_lure_action(
@@ -53,6 +183,56 @@ def _visual_lure_action(
         rect_area=annotation_rect_area(annot.get("/Rect")),
         uri=str(uri),
     )
+
+
+def _qr_lure_annotations(
+    data: bytes,
+    page_texts: dict[int, str],
+    pages_count: int,
+    all_phrases: set[str],
+    lure_phrases: set[str],
+) -> set[tuple[int, int]]:
+    if zxingcpp is None or pages_count > 3:
+        return set()
+    matches = set()
+    formats = zxingcpp.BarcodeFormat.QRCode | zxingcpp.BarcodeFormat.MicroQRCode
+    remaining_previews = 16
+    with fitz.open(stream=data, filetype="pdf") as rendered, pikepdf.open(io.BytesIO(data)) as structure:
+        for page_index, page in enumerate(structure.pages):
+            annotations = page.obj.get("/Annots")
+            if not isinstance(annotations, pikepdf.Array):
+                continue
+            render_page = rendered[page_index]
+            for annot_index, annot in enumerate(islice(annotations, 64)):
+                if remaining_previews == 0:
+                    return matches
+                if (
+                    not isinstance(annot, pikepdf.Dictionary)
+                    or not annot.is_indirect
+                    or "/AP" not in annot
+                    or str(annot.get("/Subtype")) in _MINIMAL_MEDIA_SUBTYPES
+                ):
+                    continue
+                try:
+                    preview = render_page.load_annot(annot.objgen[0])
+                    bounds = (preview.rect * (110 / 72)).irect
+                    if min(bounds.width, bounds.height) < 21 or bounds.width * bounds.height > 1_000_000:
+                        continue
+                    remaining_previews -= 1
+                    pixmap = preview.get_pixmap(dpi=110, colorspace=fitz.csRGB, alpha=False)
+                    if pixmap.alpha:
+                        pixmap = fitz.Pixmap(pixmap, 0)
+                    pixels = _pixmap_pixels(pixmap)
+                    codes = zxingcpp.read_barcodes(pixels, formats=formats)
+                except Exception:
+                    continue
+                if any(
+                    qr_phishing_reasons(match.group(), page_texts, pages_count, all_phrases, lure_phrases)
+                    for code in codes
+                    for match in EMBEDDED_URI_PATTERN.finditer(code.text)
+                ):
+                    matches.add((page_index, annot_index))
+    return matches
 
 
 def _overlay_pages(pdf: pikepdf.Pdf) -> set[int]:
@@ -90,7 +270,7 @@ def _sample_original_pages(data: bytes) -> tuple[list[str] | None, dict[int, np.
                 if index < preview_limit:
                     try:
                         pixmap = page.get_pixmap(dpi=84)
-                        samples[index] = np.frombuffer(pixmap.samples, dtype=np.uint8).copy()
+                        samples[index] = _pixmap_pixels(pixmap)
                     except (RuntimeError, ValueError):
                         continue
     except Exception:
@@ -167,6 +347,7 @@ def _active_keys(
     pdf: pikepdf.Pdf,
     *,
     remove: bool,
+    strict: bool = False,
     lure_phrases: set[str] | frozenset[str] = frozenset(),
 ) -> list[str]:
     pending = [(pdf.Root, "/Root", 0, False)] + [
@@ -203,6 +384,9 @@ def _active_keys(
         "/Sound",
         "/Rendition",
     }
+    if strict:
+        forbidden.update(_MINIMAL_ATTACHMENT_KEYS)
+    removed_subtypes = _MINIMAL_MEDIA_SUBTYPES if strict else _REMOVED_ANNOT_SUBTYPES
     resource_ids = _page_resource_ids(pdf)
     while pending:
         value, location, depth, in_resources = pending.pop()
@@ -242,7 +426,7 @@ def _active_keys(
             active = (
                 key in forbidden
                 or not in_resources
-                and (key in _MEDIA_TRIGGER_KEYS or key == "/Subtype" and str(child) in _REMOVED_ANNOT_SUBTYPES)
+                and (key in _MEDIA_TRIGGER_KEYS or key == "/Subtype" and str(child) in removed_subtypes)
                 or key in {"/F", "/UF"}
                 and action in {"/Launch", "/GoToR"}
                 or key == "/URI"
@@ -250,7 +434,11 @@ def _active_keys(
                 or key == "/S"
                 and (str(child) in forbidden_actions or str(child) == "/URI" and suspicious_uri)
             )
-            navigation = str(key) == "/OpenAction" and is_navigation_destination(child)
+            navigation = (
+                str(key) == "/OpenAction"
+                and is_navigation_destination(child)
+                and (not strict or _safe_navigation_action(child))
+            )
             if active and not navigation:
                 paths.append(f"{location}{key}")
                 if remove:
@@ -292,6 +480,10 @@ class CDRAuditLog:
     residual_codec_anomalies: list[dict[str, Any]] = field(default_factory=list)
     quarantine_recommended: bool = False
     residual_qr_anomalies: list[str] = field(default_factory=list)
+    sanitization_mode: str = "full"
+    visual_similarity: dict[str, Any] = field(default_factory=dict)
+    preserved_interactive_elements: list[str] = field(default_factory=list)
+    cdr_evaluation_pillars: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -308,7 +500,16 @@ class PDFDisarmer:
         file_name: str = "",
         *,
         password: str | None = None,
+        mode: str = "full",
+        rescore_fn: Callable[[bytes], dict[str, Any]] | None = None,
     ) -> tuple[bytes, CDRAuditLog]:
+        if mode not in {"full", "minimal_cut"}:
+            raise ValueError("invalid_disarm_mode")
+        minimal = mode == "minimal_cut"
+        sanitization_mode = "full_fallback" if minimal else "full"
+        preserved_interactive: list[str] = []
+        visual_lure_pages: set[int] = set()
+        rescore_verified = not minimal or rescore_fn is None
         start_time = time.perf_counter()
         sha_before = hashlib.sha256(data).hexdigest()
         size_before = len(data)
@@ -355,9 +556,16 @@ class PDFDisarmer:
                 qr_phishing_reasons(uri, lure_texts, preserved_pages, all_phrases, lure_phrases)
                 for uri in qr_analysis["decoded_uris"]
             )
+            qr_lures = (
+                _qr_lure_annotations(inspection_bytes, lure_texts, preserved_pages, all_phrases, lure_phrases)
+                if minimal and not original_codec_anomalies
+                else set()
+            )
             objects_before = len(pdf.objects)
             pdf_version = str(pdf.pdf_version)
             root = pdf.Root
+            annotation_subtypes = _MINIMAL_MEDIA_SUBTYPES if minimal else _REMOVED_ANNOT_SUBTYPES
+            navigation_groups = list(_detach_navigation_groups(pdf)) if minimal else []
 
             if "/OpenAction" in root and not is_navigation_destination(root["/OpenAction"]):
                 del root["/OpenAction"]
@@ -461,7 +669,12 @@ class PDFDisarmer:
                         if not isinstance(annot, pikepdf.Dictionary):
                             continue
                         subtype = str(annot.get("/Subtype", ""))
-                        if subtype in _REMOVED_ANNOT_SUBTYPES:
+                        if (page_idx, a_idx) in qr_lures:
+                            visual_lure_pages.add(page_idx)
+                            removed_indices.append(a_idx)
+                            removed_triggers.append(f"page_{page_idx}_annot_{a_idx}_qr_phishing")
+                            continue
+                        if subtype in annotation_subtypes:
                             removed_indices.append(a_idx)
                             path = f"page_{page_idx}_annot_{a_idx}_{subtype[1:]}"
                             removed_triggers.append(path)
@@ -480,6 +693,7 @@ class PDFDisarmer:
                             removed_triggers.append(f"page_{page_idx}_annot_{a_idx}_AA")
                         visual_lure = _visual_lure_action(annot, page_obj, lure_texts.get(page_idx), preserved_pages)
                         if visual_lure:
+                            visual_lure_pages.add(page_idx)
                             del annot["/A"]
                             path = f"page_{page_idx}_annot_{a_idx}_{visual_lure}_lure_URI"
                             removed_triggers.append(path)
@@ -566,7 +780,7 @@ class PDFDisarmer:
                     del obj["/S"]
                     removed_triggers.append(f"obj_{obj_idx}_action_{s_val}_removed")
 
-            nested_removed = _active_keys(pdf, remove=True, lure_phrases=lure_phrases)
+            nested_removed = _active_keys(pdf, remove=True, strict=minimal, lure_phrases=lure_phrases)
             removed_triggers.extend(nested_removed)
             neutralized_scripts += sum(path.endswith(("/JS", "/JavaScript")) for path in nested_removed)
             object_diff_matrix.extend(
@@ -580,13 +794,65 @@ class PDFDisarmer:
                 }
                 for path in nested_removed
             )
-            out_buf = io.BytesIO()
-            pdf.save(
-                out_buf,
-                encryption=False if pdf.is_encrypted else None,
-                compress_streams=not any(item["filter"] == "Uncompressed" for item in original_codec_anomalies),
-            )
-            sanitized_bytes = out_buf.getvalue()
+
+            def serialize() -> bytes:
+                out_buf = io.BytesIO()
+                pdf.save(
+                    out_buf,
+                    encryption=False if pdf.is_encrypted else None,
+                    compress_streams=not any(item["filter"] == "Uncompressed" for item in original_codec_anomalies),
+                )
+                return out_buf.getvalue()
+
+            sanitized_bytes = None
+            last_candidate = None
+            if minimal and rescore_fn is not None and not has_qr_phishing and not original_codec_anomalies:
+                targets = targeted_objects or []
+                priorities = {name: index for index, name in reversed(list(enumerate(targets)))}
+                evidence_aliases = {
+                    "catalog_OpenAction": "action:open_action",
+                    "catalog_AdditionalActions": "action:aa",
+                }
+
+                def priority(group: tuple[str, pikepdf.Dictionary, str, Any]) -> int:
+                    label, owner, _, _ = group
+                    object_id = f"{owner.objgen[0]} {owner.objgen[1]} R"
+                    return min(
+                        priorities.get(alias, len(targets)) for alias in (label, evidence_aliases.get(label), object_id)
+                    )
+
+                navigation_groups.sort(key=priority)
+                for _, owner, key, value in navigation_groups:
+                    owner[key] = value
+                for prefix in range(min(len(navigation_groups) + 1, 7)):
+                    remaining = [label for label, *_ in navigation_groups[prefix:]]
+                    last_candidate = serialize()
+                    if self._candidate_is_benign(last_candidate, remaining, lure_phrases, rescore_fn):
+                        sanitized_bytes = last_candidate
+                        sanitization_mode = "minimal_cut"
+                        preserved_interactive = remaining
+                        rescore_verified = True
+                        break
+                    if prefix < len(navigation_groups):
+                        _, owner, key, _ = navigation_groups[prefix]
+                        del owner[key]
+
+            if sanitized_bytes is None:
+                for label, owner, key, value in navigation_groups:
+                    if label == "catalog_OpenAction" and is_navigation_destination(value):
+                        owner[key] = value
+                    elif key in owner:
+                        del owner[key]
+                sanitized_bytes = serialize()
+                if (
+                    minimal
+                    and rescore_fn is not None
+                    and not has_qr_phishing
+                    and not original_codec_anomalies
+                    and sanitized_bytes != last_candidate
+                ):
+                    rescore_verified = self._candidate_is_benign(sanitized_bytes, [], lure_phrases, rescore_fn)
+            removed_triggers.extend(label for label, owner, key, _ in navigation_groups if key not in owner)
 
         polyglot_after = inspect_polyglot_and_revisions(sanitized_bytes)
         if polyglot_before["has_polyglot_payload"] and not polyglot_after["has_polyglot_payload"]:
@@ -602,7 +868,9 @@ class PDFDisarmer:
             )
         residual_qr_anomalies = []
         with pikepdf.open(io.BytesIO(sanitized_bytes)) as verify_pdf:
-            if _active_keys(verify_pdf, remove=False, lure_phrases=lure_phrases):
+            if _active_keys_with_verified_navigation(
+                verify_pdf, preserved_interactive, strict=minimal, lure_phrases=lure_phrases
+            ):
                 raise ValueError("cdr_active_key_verification_failed")
             for index, page in enumerate(verify_pdf.pages):
                 annotations = page.obj.get("/Annots")
@@ -611,7 +879,7 @@ class PDFDisarmer:
                 for annot in annotations:
                     if not isinstance(annot, pikepdf.Dictionary):
                         continue
-                    if str(annot.get("/Subtype")) in _REMOVED_ANNOT_SUBTYPES or _visual_lure_action(
+                    if str(annot.get("/Subtype")) in annotation_subtypes or _visual_lure_action(
                         annot, page.obj, lure_texts.get(index), preserved_pages
                     ):
                         raise ValueError("cdr_active_key_verification_failed")
@@ -640,6 +908,13 @@ class PDFDisarmer:
             has_names_js_after = "/Names" in verify_pdf.Root and "/JavaScript" in verify_pdf.Root["/Names"]
             root_reference = f"{verify_pdf.Root.objgen[0]} {verify_pdf.Root.objgen[1]} R"
 
+        if minimal and not residual_codec_anomalies:
+            residual_qr_anomalies.extend(
+                f"qr_annotation_phishing_remaining:page_{page}_annot_{annot}"
+                for page, annot in sorted(
+                    _qr_lure_annotations(sanitized_bytes, lure_texts, sanitized_pages, all_phrases, lure_phrases)
+                )
+            )
         quarantine_recommended = (
             bool(residual_codec_anomalies or residual_qr_anomalies) or polyglot_after["has_polyglot_payload"]
         )
@@ -655,6 +930,7 @@ class PDFDisarmer:
         extracted_chars = 0
         sanitized_text: list[str] | None = None
         page_previews: list[dict[str, Any]] = []
+        pixel_exact_pages = 0
         doc_metadata: dict[str, str] = {
             "title": "",
             "author": "",
@@ -690,18 +966,23 @@ class PDFDisarmer:
                             img_uri = ""
                             pixel_mae = None
                             pixel_id_pct = None
+                            page_ssim = None
                             try:
                                 clean_pix = p.get_pixmap(dpi=84)
                                 png_bytes = clean_pix.tobytes("png")
                                 img_uri = "data:image/png;base64," + base64.b64encode(png_bytes).decode("ascii")
-                                clean_arr = np.frombuffer(clean_pix.samples, dtype=np.uint8)
+                                clean_arr = _pixmap_pixels(clean_pix)
                                 orig_arr = orig_pix_samples.get(p_idx)
                                 if orig_arr is not None and orig_arr.shape == clean_arr.shape and orig_arr.size > 0:
                                     diff_mean = float(
                                         np.mean(np.abs(orig_arr.astype(np.float32) - clean_arr.astype(np.float32)))
                                     )
                                     pixel_mae = round(diff_mean, 6)
-                                    pixel_id_pct = round(float(np.mean(orig_arr == clean_arr)) * 100.0, 4)
+                                    matching_pixels = int(np.count_nonzero(orig_arr == clean_arr))
+                                    pixel_id_pct = round(matching_pixels * 100.0 / orig_arr.size, 4)
+                                    pixel_exact = matching_pixels == orig_arr.size
+                                    page_ssim = 1.0 if pixel_exact else _compute_ssim_uint8(orig_arr, clean_arr)
+                                    pixel_exact_pages += pixel_exact
                             except Exception:
                                 img_uri = ""
                             if img_uri:
@@ -713,6 +994,7 @@ class PDFDisarmer:
                                         "height_pt": round(float(rect.height), 1),
                                         "pixel_mean_absolute_error": pixel_mae,
                                         "pixel_identity_pct": pixel_id_pct,
+                                        "ssim": round(page_ssim, 6) if page_ssim is not None else None,
                                         "image_data_uri": img_uri,
                                         "text_excerpt": clean_txt[:1200],
                                     }
@@ -726,6 +1008,19 @@ class PDFDisarmer:
             if original_text is not None and sanitized_text is not None and original_chars > 0
             else None
         )
+        compared = [preview for preview in page_previews if preview["ssim"] is not None]
+        scores = [preview["ssim"] for preview in compared]
+        visual_similarity = {
+            "evaluated_pages": len(scores),
+            "mean_ssim": round(float(np.mean(scores)), 6) if scores else None,
+            "min_page_ssim": min(scores) if scores else None,
+            "pixel_exact_pages": pixel_exact_pages,
+        }
+        if original_chars == 0 and any(
+            preview["ssim"] < _MINIMUM_SSIM and preview["page_number"] - 1 not in visual_lure_pages
+            for preview in compared
+        ):
+            raise ValueError("cdr_visual_similarity_degraded")
         if text_integrity is False:
             raise ValueError("cdr_extracted_text_changed")
         for item in object_diff_matrix:
@@ -767,6 +1062,12 @@ class PDFDisarmer:
             else "changed",
         }
 
+        neutralization_verified = rescore_verified and not (
+            (has_oa_after and not navigation_preserved and "catalog_OpenAction" not in preserved_interactive)
+            or (has_aa_after and "catalog_AdditionalActions" not in preserved_interactive)
+            or has_names_js_after
+            or quarantine_recommended
+        )
         audit_log = CDRAuditLog(
             sha256_before=sha_before,
             sha256_after=sha_after,
@@ -775,12 +1076,7 @@ class PDFDisarmer:
             removed_triggers=removed_triggers,
             neutralized_scripts=neutralized_scripts,
             preserved_pages=preserved_pages,
-            is_sanitized=not (
-                (has_oa_after and not navigation_preserved)
-                or has_aa_after
-                or has_names_js_after
-                or quarantine_recommended
-            ),
+            is_sanitized=neutralization_verified,
             file_name=file_name,
             original_pages=preserved_pages,
             sanitized_pages=sanitized_pages,
@@ -801,9 +1097,48 @@ class PDFDisarmer:
             residual_codec_anomalies=residual_codec_anomalies,
             quarantine_recommended=quarantine_recommended,
             residual_qr_anomalies=residual_qr_anomalies,
+            sanitization_mode=sanitization_mode,
+            visual_similarity=visual_similarity,
+            preserved_interactive_elements=preserved_interactive,
+            cdr_evaluation_pillars={
+                "neutralization_verified": neutralization_verified,
+                "functional_usability": {
+                    "pages_preserved": sanitized_pages == preserved_pages,
+                    "text_preserved": original_text is not None and original_text == sanitized_text,
+                    "preserved_interactive_elements": preserved_interactive,
+                },
+                "visual_similarity_verified": (
+                    bool(scores) and len(scores) == len(orig_pix_samples) and min(scores) >= _MINIMUM_SSIM
+                ),
+            },
         )
 
         return sanitized_bytes, audit_log
+
+    @staticmethod
+    def _candidate_is_benign(
+        candidate: bytes,
+        preserved: list[str],
+        lure_phrases: set[str],
+        rescore_fn: Callable[[bytes], dict[str, Any]],
+    ) -> bool:
+        if inspect_polyglot_and_revisions(candidate)["has_polyglot_payload"]:
+            return False
+        with pikepdf.open(io.BytesIO(candidate)) as pdf:
+            if _active_keys_with_verified_navigation(pdf, preserved, strict=True, lure_phrases=lure_phrases):
+                return False
+        try:
+            result = rescore_fn(candidate)
+        except Exception:
+            return False
+        if not isinstance(result, dict):
+            return False
+        dossier = result.get("forensic_dossier") or {}
+        return (
+            result.get("verdict") == "BENIGN"
+            and result.get("prediction_available", True)
+            and not dossier.get("threat_scripts")
+        )
 
     def sanitize_file(
         self,

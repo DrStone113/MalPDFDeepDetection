@@ -439,3 +439,40 @@ def test_surgical_cumulative_ablation_and_mail_gateway_inspect_job() -> None:
     dl_eml = client.get(f"/api/gateway/download/eml/{gw_json['eml_job_id']}")
     assert dl_eml.status_code == 200
     assert len(dl_eml.content) > 500
+
+
+def test_scan_conformal_analysis_and_disarm_modes() -> None:
+    threat = load_real_threat_bytes()
+    scan = client.post("/api/scan", files={"file": ("real_threat_document.pdf", threat, "application/pdf")})
+    assert scan.status_code == 200, scan.text
+    result = scan.json()
+    conformal = result["forensic_dossier"]["conformal_analysis"]
+    assert conformal["conformal_state"] in {
+        "CERTIFIED_BENIGN",
+        "CERTIFIED_MALICIOUS",
+        "AMBIGUOUS_BOTH",
+        "DRIFT_OOD_EMPTY",
+    }
+    assert 0.0 <= conformal["credibility"] <= 1.0
+    assert 0.0 <= conformal["confidence"] <= 1.0
+    assert isinstance(conformal["reject_for_cdr"], bool)
+
+    scan_id = result["scan_id"]
+    invalid = client.post(f"/api/disarm/{scan_id}?mode=invalid")
+    assert invalid.status_code == 400, invalid.text
+    assert invalid.json()["detail"] == "invalid_disarm_mode"
+
+    disarm = client.post(f"/api/disarm/{scan_id}?mode=minimal_cut&include_preview_images=false")
+    assert disarm.status_code == 200, disarm.text
+    audit = disarm.json()
+    assert audit["is_sanitized"] is True
+    assert audit["sanitization_mode"] in {"minimal_cut", "full_fallback"}
+    assert audit["visual_similarity"]["mean_ssim"] >= 0.95
+    assert audit["cdr_evaluation_pillars"]["visual_similarity_verified"] is True
+    assert audit["page_previews"] and all("image_data_uri" not in page for page in audit["page_previews"])
+
+    download = client.get(f"/api/download/sanitized/{scan_id}")
+    assert download.status_code == 200
+    assert len(download.content) > 0.8 * len(threat)
+    pages, content = _extract_pdf_text(download.content)
+    assert content and (pages, content) == _extract_pdf_text(threat)

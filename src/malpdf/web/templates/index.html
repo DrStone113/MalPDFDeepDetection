@@ -10,16 +10,6 @@
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <link rel="stylesheet" href="/assets/dashboard.css?v=__MALPDF_ASSET_VERSION__" />
   <link rel="stylesheet" href="/assets/dashboard-theme.css?v=__MALPDF_ASSET_VERSION__" />
-  <script type="importmap" nonce="__MALPDF_CSP_NONCE__">
-  {
-    "imports": {
-      "/assets/dashboard-core.js": "/assets/dashboard-core.js?v=__MALPDF_ASSET_VERSION__",
-      "/assets/dashboard-ai.js": "/assets/dashboard-ai.js?v=__MALPDF_ASSET_VERSION__",
-      "/assets/dashboard-graph.js": "/assets/dashboard-graph.js?v=__MALPDF_ASSET_VERSION__",
-      "/assets/dashboard-app.js": "/assets/dashboard-app.js?v=__MALPDF_ASSET_VERSION__"
-    }
-  }
-  </script>
   <script type="module" nonce="__MALPDF_CSP_NONCE__" src="/assets/dashboard-app.js?v=__MALPDF_ASSET_VERSION__"></script>
 </head>
 <body class="min-h-screen p-1.5 sm:p-2.5 lg:p-3.5 flex flex-col justify-between selection:bg-primary-fixed selection:text-primary">
@@ -70,15 +60,22 @@
         </button>
       </nav>
 
-      <div class="hidden lg:flex items-center gap-2 text-xs text-on-surface-variant bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 order-2 xl:order-3 shrink-0">
-        <span id="telemetry-dot" class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
-        <span id="telemetry-model-info"><span id="telemetry-status-label">Sẵn sàng</span> • <span id="telemetry-latency" class="num text-tertiary font-bold">Chưa quét tệp</span></span>
+      <div class="flex items-center gap-2 order-2 xl:order-3 shrink-0">
+        <div class="hidden lg:flex items-center gap-2 text-xs text-on-surface-variant bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+          <span id="telemetry-dot" class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
+          <span id="telemetry-model-info"><span id="telemetry-status-label">Sẵn sàng</span> • <span id="telemetry-latency" class="num text-tertiary font-bold">Chưa quét tệp</span></span>
+        </div>
+        <button type="button" id="btn-theme-toggle" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-on-surface border border-slate-200 transition flex items-center gap-1.5 shrink-0" aria-label="Chuyển giao diện sáng / tối" title="Chuyển giao diện sáng / tối">
+          <span id="theme-toggle-icon" class="material-symbols-outlined text-[16px]" data-icon="dark_mode" aria-hidden="true"></span>
+          <span id="theme-toggle-text" class="hidden sm:inline">Giao diện</span>
+        </button>
       </div>
     </div>
   </header>
 
   <!-- MAIN CONTAINER -->
   <main id="main-content" tabindex="-1" class="w-full max-w-[2560px] mx-auto px-1.5 sm:px-3 lg:px-5 flex-1">
+    <p id="table-sort-status" role="status" class="visually-hidden"></p>
 
     <!-- ========================================== -->
     <!-- TAB 1: SCANNER & FORENSIC XAI DOSSIER      -->
@@ -150,7 +147,7 @@ class="lg:col-span-8 xl:col-span-9 min-h-[164px] border-2 border-dashed border-s
                   <p id="scan-spinner-subtext" class="text-[11px] text-on-surface-variant truncate">Đang gửi tệp lên máy chủ phân tích...</p>
                   <div class="flex items-center gap-2.5">
                     <div class="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
-                      <div id="scan-progress-bar" class="h-2 bg-sky-500 rounded-full transition-all duration-150" style="width: 0%;"></div>
+                      <div id="scan-progress-bar" class="h-2 bg-sky-500 rounded-full transition-all duration-150"></div>
                     </div>
                     <span id="scan-progress-pct" class="text-xs font-mono font-bold text-sky-700 num w-12 text-right shrink-0">0%</span>
                   </div>
@@ -203,6 +200,10 @@ class="lg:col-span-8 xl:col-span-9 min-h-[164px] border-2 border-dashed border-s
               <h2 id="status-headline" class="font-bold text-lg sm:text-xl leading-snug break-words"></h2>
               <p id="status-subtext" class="text-xs text-on-surface-variant break-words mt-0.5"></p>
               <p id="status-action" class="text-sm text-on-surface leading-relaxed mt-1.5"></p>
+              <div id="conformal-status" class="conformal-status mt-1.5" hidden>
+                <span id="conformal-state-badge" class="conformal-badge font-bold">--</span>
+                <span id="conformal-credibility" class="text-on-surface-variant num">--</span>
+              </div>
             </div>
           </div>
           <div class="flex items-center flex-wrap gap-2 w-full lg:w-auto">
@@ -243,7 +244,7 @@ class="lg:col-span-8 xl:col-span-9 min-h-[164px] border-2 border-dashed border-s
               <span id="card-threshold-label" class="text-xs text-on-surface-variant">Ngưỡng nguy hiểm --%</span>
             </div>
             <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-              <div id="bar-prob" class="h-2 rounded-full shimmer-bar transition-all duration-700" style="width: 0%;"></div>
+              <div id="bar-prob" class="h-2 rounded-full shimmer-bar transition-all duration-700"></div>
             </div>
           </div>
 
@@ -346,7 +347,7 @@ class="lg:col-span-8 xl:col-span-9 min-h-[164px] border-2 border-dashed border-s
                       <span id="xai-graph-weight" class="font-mono font-bold text-primary-container num">--</span>
                     </div>
                     <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
-                      <div id="xai-graph-bar" class="bg-primary-container shimmer-bar h-2.5 rounded-full transition-all duration-500" style="width: 0%;"></div>
+                      <div id="xai-graph-bar" class="bg-primary-container shimmer-bar h-2.5 rounded-full transition-all duration-500"></div>
                     </div>
                   </div>
                   <div>
@@ -358,7 +359,7 @@ class="lg:col-span-8 xl:col-span-9 min-h-[164px] border-2 border-dashed border-s
                       <span id="xai-ast-weight" class="font-mono font-bold text-slate-700 num">--</span>
                     </div>
                     <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
-                      <div id="xai-ast-bar" class="bg-slate-600 shimmer-bar h-2.5 rounded-full transition-all duration-500" style="width: 0%;"></div>
+                      <div id="xai-ast-bar" class="bg-slate-600 shimmer-bar h-2.5 rounded-full transition-all duration-500"></div>
                     </div>
                   </div>
                 </div>
@@ -416,14 +417,22 @@ class="lg:col-span-8 xl:col-span-9 min-h-[164px] border-2 border-dashed border-s
               <!-- Subview 1: Notable Components Table -->
               <div id="ev-view-components" role="tabpanel" aria-labelledby="ev-tab-components" tabindex="0" class="rounded-lg border border-slate-200 bg-white">
                 <div tabindex="0" role="region" aria-label="Thành phần đáng chú ý trong tệp PDF" class="table-scroll-region">
-                  <table role="table" class="w-full text-left text-xs">
+                  <table id="forensic-components-table" role="table" class="w-full text-left text-xs">
                     <caption class="visually-hidden">Thành phần đáng chú ý trong tệp PDF</caption>
                     <thead role="rowgroup" class="bg-slate-50 text-on-surface-variant text-[11px] border-b border-slate-200">
                       <tr role="row">
-                        <th scope="col" role="columnheader" class="p-3">Vị trí trong tệp</th>
-                        <th scope="col" role="columnheader" class="p-3">Đặc trưng liên quan</th>
-                        <th scope="col" role="columnheader" class="p-3 text-right">Mức ảnh hưởng</th>
-                        <th scope="col" role="columnheader" class="p-3">Mức độ</th>
+                        <th scope="col" role="columnheader" class="p-3" data-col-label="Vị trí trong tệp" data-type="text">
+                          <button type="button" commandfor="forensic-components-table" command="--sort" class="sort-header-btn"><span>Vị trí trong tệp</span><span class="sort-indicator" aria-hidden="true"></span></button>
+                        </th>
+                        <th scope="col" role="columnheader" class="p-3" data-col-label="Đặc trưng liên quan" data-type="text">
+                          <button type="button" commandfor="forensic-components-table" command="--sort" class="sort-header-btn"><span>Đặc trưng liên quan</span><span class="sort-indicator" aria-hidden="true"></span></button>
+                        </th>
+                        <th scope="col" role="columnheader" class="p-3 text-right" data-col-label="Mức ảnh hưởng" data-type="number">
+                          <button type="button" commandfor="forensic-components-table" command="--sort" class="sort-header-btn"><span>Mức ảnh hưởng</span><span class="sort-indicator" aria-hidden="true"></span></button>
+                        </th>
+                        <th scope="col" role="columnheader" class="p-3" data-col-label="Mức độ" data-type="text">
+                          <button type="button" commandfor="forensic-components-table" command="--sort" class="sort-header-btn"><span>Mức độ</span><span class="sort-indicator" aria-hidden="true"></span></button>
+                        </th>
                         <th scope="col" role="columnheader" class="p-3 text-right">Thao tác</th>
                       </tr>
                     </thead>
@@ -557,7 +566,7 @@ class="lg:col-span-8 xl:col-span-9 min-h-[164px] border-2 border-dashed border-s
                     <span id="webllm-progress-pct" class="font-mono font-bold text-primary-container num shrink-0">0%</span>
                   </div>
                   <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                    <div id="webllm-progress-bar" class="bg-primary-container shimmer-bar h-1.5 rounded-full transition-all duration-300" style="width: 0%;"></div>
+                    <div id="webllm-progress-bar" class="bg-primary-container shimmer-bar h-1.5 rounded-full transition-all duration-300"></div>
                   </div>
                 </div>
 
@@ -943,6 +952,11 @@ class="lg:col-span-8 xl:col-span-9 min-h-[164px] border-2 border-dashed border-s
             <span class="material-symbols-outlined text-[17px]" data-icon="upload_file" aria-hidden="true"></span>
             <span>Chọn tệp PDF khác</span>
           </button>
+          <label for="cdr-mode-select" class="visually-hidden">Chế độ làm sạch</label>
+          <select id="cdr-mode-select" class="px-3 py-2 rounded-lg text-xs font-semibold bg-white text-on-surface border border-slate-200">
+            <option value="full" selected>Làm sạch chuẩn (Full CDR)</option>
+            <option value="minimal_cut">Cắt tối thiểu đối chứng (CF-CDR)</option>
+          </select>
           <button type="button" id="btn-execute-disarm" class="px-4 py-2 rounded-lg text-xs font-bold bg-primary-container hover:bg-primary text-white shadow-sm transition flex items-center gap-2 active:scale-95">
             <span class="material-symbols-outlined text-[17px]" id="cdr-disarm-icon" data-icon="healing" aria-hidden="true"></span>
             <span id="btn-disarm-text">Làm sạch tệp PDF ngay</span>
@@ -1015,9 +1029,13 @@ class="lg:col-span-8 xl:col-span-9 min-h-[164px] border-2 border-dashed border-s
                     <span class="text-on-surface-variant shrink-0">Nội dung chữ:</span>
                     <span id="cdr-text-integrity" class="font-bold text-on-surface text-right truncate num">--</span>
                   </div>
+                  <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200/70 flex justify-between items-center gap-2">
+                    <span class="text-on-surface-variant">Tương đồng thị giác (SSIM):</span>
+                    <span id="cdr-ssim-metric" class="font-bold text-on-surface text-right num">--</span>
+                  </div>
                 </div>
               </div>
-              <div class="mt-3 pt-2.5 border-t border-slate-200 flex items-center justify-between gap-2">
+              <div class="mt-3 pt-2.5 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
                 <span id="cdr-integrity-footer" class="text-[11px] text-outline font-semibold flex items-center gap-1">
                   <span id="cdr-integrity-footer-icon" class="material-symbols-outlined text-[15px]" data-icon="schedule" aria-hidden="true"></span>
                   <span id="cdr-integrity-footer-text">Chờ làm sạch</span>
@@ -1161,13 +1179,13 @@ class="lg:col-span-8 xl:col-span-9 min-h-[164px] border-2 border-dashed border-s
           <!-- 2. Interactive Split-Screen Slider View -->
           <div id="diff-split-slider-view" class="hidden pt-1">
             <div id="diff-split-box" class="diff-split-container rounded-xl aspect-[3/4] max-h-[680px] xl:max-h-[740px] w-full max-w-2xl bg-white mx-auto shadow-md border border-slate-200 flex items-center justify-center relative overflow-hidden cursor-ew-resize select-none">
-              <img id="diff-split-orig-img" src="" alt="Tệp gốc" class="absolute inset-0 w-full h-full object-contain select-none pointer-events-none p-2" style="clip-path: inset(0 50% 0 0);" />
+              <img id="diff-split-orig-img" src="" alt="Tệp gốc" class="absolute inset-0 w-full h-full object-contain select-none pointer-events-none p-2" />
 
-              <div id="diff-split-clean-wrap" class="absolute inset-0 w-full h-full overflow-hidden pointer-events-none" style="clip-path: inset(0 0 0 50%);">
+              <div id="diff-split-clean-wrap" class="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
                 <img id="diff-split-clean-img" src="" alt="Tệp đã làm sạch" class="absolute inset-0 w-full h-full object-contain select-none pointer-events-none p-2" />
               </div>
 
-              <div id="diff-split-handle" class="diff-split-handle" style="left: 50%;" tabindex="0" role="slider" aria-label="Vị trí so sánh ảnh trước và sau" aria-valuemin="2" aria-valuemax="98" aria-valuenow="50">
+              <div id="diff-split-handle" class="diff-split-handle" tabindex="0" role="slider" aria-label="Vị trí so sánh ảnh trước và sau" aria-valuemin="2" aria-valuemax="98" aria-valuenow="50">
                 <div class="diff-split-pill">◀▶</div>
               </div>
 
@@ -1222,7 +1240,7 @@ class="lg:col-span-8 xl:col-span-9 min-h-[164px] border-2 border-dashed border-s
               <span id="mail-active-job-text">Kiểm tra qua Email với PDF đang mở</span>
             </button>
             <button type="button" id="btn-refresh-mail" class="px-3.5 py-2 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-on-surface border border-slate-200 transition flex items-center gap-1.5 active:scale-95">
-              <div class="w-4 h-4 border-2 border-primary-container border-t-transparent rounded-full animate-spin" id="mail-spinner" style="display:none;"></div>
+              <div class="w-4 h-4 border-2 border-primary-container border-t-transparent rounded-full animate-spin" id="mail-spinner" hidden></div>
               <span class="material-symbols-outlined text-[16px]" data-icon="refresh" aria-hidden="true"></span>
               <span>Làm mới</span>
             </button>
@@ -1354,17 +1372,31 @@ class="lg:col-span-8 xl:col-span-9 min-h-[164px] border-2 border-dashed border-s
 
         <div id="container-siem-table" role="tabpanel" aria-labelledby="subtab-siem-feed" tabindex="0" class="rounded-lg border border-slate-200 bg-white">
           <div tabindex="0" role="region" aria-label="Nhật ký hoạt động" class="table-scroll-region">
-            <table role="table" class="w-full text-left text-xs">
+            <table id="siem-logs-table" role="table" class="w-full text-left text-xs">
               <caption class="visually-hidden">Nhật ký hoạt động</caption>
               <thead role="rowgroup" class="bg-slate-50 text-on-surface-variant text-[11px] border-b border-slate-200">
                 <tr role="row">
-                  <th scope="col" role="columnheader" class="p-3">Mã ghi nhận</th>
-                  <th scope="col" role="columnheader" class="p-3">Thời điểm</th>
-                  <th scope="col" role="columnheader" class="p-3">Hoạt động</th>
-                  <th scope="col" role="columnheader" class="p-3">Tên tệp</th>
-                  <th scope="col" role="columnheader" class="p-3">Kết luận</th>
-                  <th scope="col" role="columnheader" class="p-3">Chi tiết</th>
-                  <th scope="col" role="columnheader" class="p-3 text-right">Thời gian xử lý</th>
+                  <th scope="col" role="columnheader" class="p-3" data-col-label="Mã ghi nhận" data-type="text">
+                    <button type="button" commandfor="siem-logs-table" command="--sort" class="sort-header-btn"><span>Mã ghi nhận</span><span class="sort-indicator" aria-hidden="true"></span></button>
+                  </th>
+                  <th scope="col" role="columnheader" class="p-3" data-col-label="Thời điểm" data-type="text">
+                    <button type="button" commandfor="siem-logs-table" command="--sort" class="sort-header-btn"><span>Thời điểm</span><span class="sort-indicator" aria-hidden="true"></span></button>
+                  </th>
+                  <th scope="col" role="columnheader" class="p-3" data-col-label="Hoạt động" data-type="text">
+                    <button type="button" commandfor="siem-logs-table" command="--sort" class="sort-header-btn"><span>Hoạt động</span><span class="sort-indicator" aria-hidden="true"></span></button>
+                  </th>
+                  <th scope="col" role="columnheader" class="p-3" data-col-label="Tên tệp" data-type="text">
+                    <button type="button" commandfor="siem-logs-table" command="--sort" class="sort-header-btn"><span>Tên tệp</span><span class="sort-indicator" aria-hidden="true"></span></button>
+                  </th>
+                  <th scope="col" role="columnheader" class="p-3" data-col-label="Kết luận" data-type="text">
+                    <button type="button" commandfor="siem-logs-table" command="--sort" class="sort-header-btn"><span>Kết luận</span><span class="sort-indicator" aria-hidden="true"></span></button>
+                  </th>
+                  <th scope="col" role="columnheader" class="p-3" data-col-label="Chi tiết" data-type="text">
+                    <button type="button" commandfor="siem-logs-table" command="--sort" class="sort-header-btn"><span>Chi tiết</span><span class="sort-indicator" aria-hidden="true"></span></button>
+                  </th>
+                  <th scope="col" role="columnheader" class="p-3 text-right" data-col-label="Thời gian xử lý" data-type="number">
+                    <button type="button" commandfor="siem-logs-table" command="--sort" class="sort-header-btn"><span>Thời gian xử lý</span><span class="sort-indicator" aria-hidden="true"></span></button>
+                  </th>
                 </tr>
               </thead>
               <tbody role="rowgroup" id="siem-stream-body" class="divide-y divide-slate-200"></tbody>
@@ -1374,14 +1406,22 @@ class="lg:col-span-8 xl:col-span-9 min-h-[164px] border-2 border-dashed border-s
 
         <div id="container-quarantine-table" role="tabpanel" aria-labelledby="subtab-siem-vault" tabindex="0" hidden class="hidden rounded-lg border border-red-200 bg-red-50/40">
           <div tabindex="0" role="region" aria-label="Tệp đang cách ly" class="table-scroll-region">
-            <table role="table" class="w-full text-left text-xs">
+            <table id="quarantine-vault-table" role="table" class="w-full text-left text-xs">
               <caption class="visually-hidden">Tệp đang cách ly</caption>
               <thead role="rowgroup" class="bg-red-50 text-error text-[11px] border-b border-red-200">
                 <tr role="row">
-                  <th scope="col" role="columnheader" class="p-3">Tên tệp bị cách ly</th>
-                  <th scope="col" role="columnheader" class="p-3">Mã SHA-256</th>
-                  <th scope="col" role="columnheader" class="p-3 text-right">Dung lượng</th>
-                  <th scope="col" role="columnheader" class="p-3">Thời điểm cách ly</th>
+                  <th scope="col" role="columnheader" class="p-3" data-col-label="Tên tệp bị cách ly" data-type="text">
+                    <button type="button" commandfor="quarantine-vault-table" command="--sort" class="sort-header-btn"><span>Tên tệp bị cách ly</span><span class="sort-indicator" aria-hidden="true"></span></button>
+                  </th>
+                  <th scope="col" role="columnheader" class="p-3" data-col-label="Mã SHA-256" data-type="text">
+                    <button type="button" commandfor="quarantine-vault-table" command="--sort" class="sort-header-btn"><span>Mã SHA-256</span><span class="sort-indicator" aria-hidden="true"></span></button>
+                  </th>
+                  <th scope="col" role="columnheader" class="p-3 text-right" data-col-label="Dung lượng" data-type="number">
+                    <button type="button" commandfor="quarantine-vault-table" command="--sort" class="sort-header-btn"><span>Dung lượng</span><span class="sort-indicator" aria-hidden="true"></span></button>
+                  </th>
+                  <th scope="col" role="columnheader" class="p-3" data-col-label="Thời điểm cách ly" data-type="text">
+                    <button type="button" commandfor="quarantine-vault-table" command="--sort" class="sort-header-btn"><span>Thời điểm cách ly</span><span class="sort-indicator" aria-hidden="true"></span></button>
+                  </th>
                   <th scope="col" role="columnheader" class="p-3 text-right">Thao tác</th>
                 </tr>
               </thead>

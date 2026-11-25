@@ -24,6 +24,7 @@ if str(PROD_ROOT) not in sys.path:
     sys.path.insert(0, str(PROD_ROOT))
 
 from malpdf.cdr.engine import is_navigation_destination
+from malpdf.scanner.conformal import load_conformal_calibration
 from malpdf.scanner.forensic import (
     TRIGGER_FEATURES_V3,
     ForensicAttributionEngine,
@@ -170,6 +171,14 @@ class ONNXMalPDFScannerEngine:
             raise ValueError("temperature_must_be_positive_and_finite")
         if not 0.0 < self.decision_threshold < 1.0:
             raise ValueError("decision_threshold_must_be_between_zero_and_one")
+        self.conformal = load_conformal_calibration(
+            PROD_ROOT / "configs",
+            REPO_ROOT / "configs",
+            weights_sha256=contract.get("weights_npz_sha256")
+            if use_manifest and expected_sha and contract_sha
+            else None,
+            temperature=self.temperature,
+        )
         self.forensic = ForensicAttributionEngine()
         self.taxonomy = ONNXThreatTaxonomyClassifier(manifest_path=resolved_manifest)
 
@@ -747,6 +756,16 @@ class ONNXMalPDFScannerEngine:
             verdict=verdict,
             malware_prob=prob,
         )
+        if self.conformal is not None and math.isfinite(prob):
+            observed_threat = taxonomy_info.get("detected_count", 0) > 0 and prob < self.decision_threshold
+            static_override = (
+                verdict == "MALICIOUS"
+                and raw_prob < self.decision_threshold
+                and bool(ingest_data.get("semantic_verdict_enforcement"))
+            )
+            forensic_dossier["conformal_analysis"] = self.conformal.evaluate(
+                prob, has_observed_threat=observed_threat or static_override
+            )
         if explain:
             forensic_dossier["threat_taxonomy"] = taxonomy_info
 

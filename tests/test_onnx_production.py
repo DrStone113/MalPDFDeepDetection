@@ -275,3 +275,47 @@ def test_onnx_engine_accepts_crlf_and_lf_v3_contract_digest(tmp_path: Path, monk
     tmp_contract.write_bytes(lf_bytes + b"\n ")
     with pytest.raises(ValueError, match="transgraph_v3_contract_sha256_mismatch"):
         ONNXMalPDFScannerEngine()
+
+
+def test_pytorch_and_onnx_conformal_analysis_and_prod_disarm_mode_parity() -> None:
+    pytorch = MalPDFScannerEngine(device="cpu")
+    onnx = ONNXMalPDFScannerEngine()
+    threat = load_real_threat_bytes()
+    for name, data in (
+        ("real_threat_document.pdf", threat),
+        ("real_benign_document.pdf", load_real_benign_bytes()),
+    ):
+        for explain in (False, True):
+            pt_result = pytorch.scan_bytes(data, file_name=name, explain=explain)
+            onnx_result = onnx.scan_bytes(data, file_name=name, explain=explain)
+            pt_conformal = pt_result.forensic_dossier["conformal_analysis"]
+            onnx_conformal = onnx_result.forensic_dossier["conformal_analysis"]
+            case = f"{name}, explain={explain}"
+            assert onnx_conformal["conformal_state"] == pt_conformal["conformal_state"], case
+            assert isinstance(pt_conformal["reject_for_cdr"], bool), case
+            assert onnx_conformal["reject_for_cdr"] is pt_conformal["reject_for_cdr"], case
+            for metric in ("p_benign", "p_malicious"):
+                assert 0.0 <= pt_conformal[metric] <= 1.0, case
+                assert 0.0 <= onnx_conformal[metric] <= 1.0, case
+                assert onnx_conformal[metric] == pytest.approx(pt_conformal[metric], abs=1e-3), (case, metric)
+
+    client = TestClient(prod_web_app)
+    scan = client.post("/api/scan", files={"file": ("real_threat_document.pdf", threat, "application/pdf")})
+    assert scan.status_code == 200, scan.text
+    scan_id = scan.json()["scan_id"]
+
+    invalid = client.post(f"/api/disarm/{scan_id}?mode=invalid")
+    assert invalid.status_code == 400, invalid.text
+    assert invalid.json()["detail"] == "invalid_disarm_mode"
+
+    disarm = client.post(f"/api/disarm/{scan_id}?mode=minimal_cut&include_preview_images=false")
+    assert disarm.status_code == 200, disarm.text
+    audit = disarm.json()
+    assert audit["is_sanitized"] is True
+    assert audit["visual_similarity"]["mean_ssim"] >= 0.95
+
+    download = client.get(f"/api/download/sanitized/{scan_id}")
+    assert download.status_code == 200
+    assert len(download.content) > 0.8 * len(threat)
+    pages, content = _extract_pdf_text_and_pages(download.content)
+    assert content and (pages, content) == _extract_pdf_text_and_pages(threat)

@@ -229,3 +229,69 @@ document.documentElement.setAttribute("data-ime-counts", JSON.stringify([afterCo
 </script></body></html>"""
     attributes = _browser_attributes(tmp_path, page)
     assert json.loads(attributes["data-ime-counts"]) == [0, 0, 0, 1]
+
+
+def test_modern_web_workbench_contract_and_highlight_api(tmp_path: Path) -> None:
+    template = TEMPLATE_PATH.read_text(encoding="utf-8")
+    theme = (STATIC_DIR / "dashboard-theme.css").read_text(encoding="utf-8")
+    script = (STATIC_DIR / "dashboard-app.js").read_text(encoding="utf-8")
+    for element_id in ("btn-theme-toggle", "cdr-mode-select", "conformal-state-badge", "cdr-ssim-metric"):
+        assert f'id="{element_id}"' in template
+    assert 'command="--sort"' in template
+    assert "/assets/dashboard-theme.css" in template
+    assert "/assets/dashboard-app.js" in template
+    for feature in (
+        "aria-sort",
+        "moveBefore",
+        "Intl.Collator",
+        "CSS.highlights",
+        "TreeWalker",
+        "contentvisibilityautostatechange",
+    ):
+        assert feature in script
+    assert "::highlight(malpdf-js-threat)" in theme
+    assert ':root:has(> head > meta[name="color-scheme"][content="dark"])' in theme
+
+    page = (
+        '<!doctype html><html><head><meta charset="utf-8"><meta name="color-scheme" content="light dark"><style>'
+        + theme
+        + """</style></head><body>
+<section id="deferred" class="deferred-below-fold"><code id="snippet">Observed marker: alert.</code></section>
+<script>
+const root = document.documentElement;
+window.addEventListener("error", () => { root.dataset.runtimeError = "true"; });
+const meta = document.querySelector('meta[name="color-scheme"]');
+root.dataset.initialScheme = getComputedStyle(root).colorScheme;
+meta.content = "dark";
+root.dataset.explicitScheme = getComputedStyle(root).colorScheme;
+
+const snippet = document.getElementById("snippet");
+const walker = document.createTreeWalker(snippet, NodeFilter.SHOW_TEXT);
+const node = walker.nextNode();
+const marker = "alert";
+const offset = node.data.indexOf(marker);
+const range = new Range();
+range.setStart(node, offset);
+range.setEnd(node, offset + marker.length);
+CSS.highlights.set("malpdf-js-threat", new Highlight(range));
+root.dataset.highlightRegistered = String(CSS.highlights.has("malpdf-js-threat"));
+const [registered] = CSS.highlights.get("malpdf-js-threat");
+root.dataset.highlightNodes = JSON.stringify([registered.startContainer.nodeType, registered.endContainer.nodeType]);
+root.dataset.highlightText = registered.toString();
+
+const section = document.getElementById("deferred");
+const eventName = "contentvisibilityautostatechange";
+section.addEventListener(eventName, (event) => {
+  root.dataset.visibilitySkipped = String(event.skipped);
+}, { once: true });
+section.dispatchEvent(new ContentVisibilityAutoStateChangeEvent(eventName, { skipped: true }));
+</script></body></html>"""
+    )
+    attributes = _browser_attributes(tmp_path, page)
+    assert "data-runtime-error" not in attributes
+    assert attributes["data-initial-scheme"] == "light dark"
+    assert attributes["data-explicit-scheme"] == "dark"
+    assert attributes["data-highlight-registered"] == "true"
+    assert json.loads(attributes["data-highlight-nodes"]) == [3, 3]
+    assert attributes["data-highlight-text"] == "alert"
+    assert attributes["data-visibility-skipped"] == "true"
