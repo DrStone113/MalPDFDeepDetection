@@ -666,7 +666,12 @@ class MalPDFScannerEngine:
 
         raw_recs = ingest_data.get("raw_records", [])
         verdict = "MALICIOUS" if prob >= self.decision_threshold else "BENIGN"
-        energy_score, is_ood = self.calculate_energy_ood(logit_val)
+        enforcement = ingest_data.get("semantic_verdict_enforcement")
+        has_policy_enforcement = bool(enforcement)
+        policy_override = (
+            verdict == "MALICIOUS" and raw_prob < self.decision_threshold and has_policy_enforcement
+        ) or (verdict == "BENIGN" and raw_prob >= self.decision_threshold and has_policy_enforcement)
+        energy_score, is_ood = self.calculate_energy_ood(raw_logit if has_policy_enforcement else logit_val)
 
         ood_warning = "OOD_ANOMALY_DETECTED" if is_ood else None
         confidence = classify_prediction_confidence(prob, self.decision_threshold, is_ood)
@@ -791,16 +796,18 @@ class MalPDFScannerEngine:
             verdict=verdict,
             malware_prob=prob,
         )
-        if self.conformal is not None and math.isfinite(prob):
-            observed_threat = taxonomy_info.get("detected_count", 0) > 0
-            static_override = (
-                verdict == "MALICIOUS"
-                and raw_prob < self.decision_threshold
-                and bool(ingest_data.get("semantic_verdict_enforcement"))
+        neural_eval_prob = raw_prob if has_policy_enforcement else prob
+        if self.conformal is not None and math.isfinite(neural_eval_prob):
+            conformal_res = self.conformal.evaluate(neural_eval_prob, has_observed_threat=False)
+            conformal_res["score_source"] = (
+                (enforcement.get("score_source") or "policy_override")
+                if has_policy_enforcement
+                else "neural_calibrated"
             )
-            forensic_dossier["conformal_analysis"] = self.conformal.evaluate(
-                prob, has_observed_threat=observed_threat or static_override
-            )
+            conformal_res["neural_malware_probability"] = round(float(neural_eval_prob), 6)
+            conformal_res["policy_override"] = policy_override
+            conformal_res["policy_reject_for_cdr"] = bool(conformal_res["reject_for_cdr"] or policy_override)
+            forensic_dossier["conformal_analysis"] = conformal_res
         if explain:
             forensic_dossier["threat_taxonomy"] = taxonomy_info
 

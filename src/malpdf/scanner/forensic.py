@@ -19,6 +19,10 @@ import esprima
 import numpy as np
 
 from malpdf.scanner.js_intent import analyze_pdf_javascript_intent, classify_obfuscation_techniques
+from malpdf.scanner.static_evidence import (
+    compute_benign_structural_consistency,
+    fuse_neural_and_static_evidence,
+)
 from malpdf.static.js_semantics import SemanticBudget, SemanticLimits, analyze_js_tree
 from malpdf.static.js_semantics import children as js_children
 
@@ -425,10 +429,19 @@ _KNOWN_AUTH_HOSTS = {
 _OFFICIAL_URI_DOMAINS = frozenset(
     """
     microsoft.com live.com microsoftonline.com office.com sharepoint.com onedrive.com docusign.com
-    google.com adobe.com paypal.com apple.com dropbox.com github.com arxiv.org doi.org nist.gov nasa.gov irs.gov
+    google.com adobe.com paypal.com apple.com dropbox.com github.com gitlab.com bitbucket.org
+    arxiv.org doi.org nist.gov nasa.gov irs.gov huggingface.co kaggle.com pytorch.org tensorflow.org
     example.org example.com edu gov mil edu.vn gov.vn chinhphu.vn orcid.org ieee.org acm.org springer.com
-    sciencedirect.com nature.com iso.org w3.org ietf.org python.org wikipedia.org wikimedia.org linkedin.com
+    sciencedirect.com nature.com mdpi.com wiley.com tandfonline.com oup.com cambridge.org elsevier.com
+    researchgate.net semanticscholar.org overleaf.com latex-project.org ctan.org coursera.org edx.org udemy.com
+    stackoverflow.com medium.com mozilla.org apache.org gnu.org creativecommons.org
+    iso.org w3.org ietf.org python.org wikipedia.org wikimedia.org linkedin.com viblo.asia
 """.split()
+)
+_HIGH_RISK_URI_TLDS = frozenset("zip mov top xyz click tk ml gq cf".split())
+_LEXICAL_LURE_PATH = re.compile(
+    r"(?<![a-z0-9])(?:portal|secure|auth|verify|confirm|recover|unlock|session|token|wallet|invoice-view)(?![a-z0-9])",
+    re.IGNORECASE,
 )
 _PHISHING_SHORTENERS = frozenset(
     "bit.ly tinyurl.com t.co cutt.ly is.gd rebrand.ly ngrok-free.app trycloudflare.com".split()
@@ -557,6 +570,16 @@ def is_suspicious_uri(uri: str, *, lure_phrases: set[str] | frozenset[str] = fro
     brand_host = host.removesuffix(shared_host).rstrip(".") if shared_host else "" if content_path else host
     if untrusted and any(brand in brand_host for brand in _PHISHING_BRANDS):
         reasons.append("brand_impersonation_host")
+    tld = host.rsplit(".", 1)[-1] if "." in host else ""
+    if (
+        untrusted
+        and parts.scheme in {"http", "https"}
+        and (
+            (tld in _HIGH_RISK_URI_TLDS and _LEXICAL_LURE_PATH.search(host + "/" + unquote(parts.path).lower()))
+            or host.count("-") >= 4
+        )
+    ):
+        reasons.append("lexical_phishing_host")
     if (
         len(lure_phrases) >= 2
         and parts.scheme in {"http", "https"}
@@ -655,21 +678,30 @@ def _reconcile_semantic_verdict(
                     }
                     return core_logit, core_prob
     hardening_reasons.update(_static_verdict_reasons(ingest_data))
+    ingest_data["benign_structural_consistency"] = compute_benign_structural_consistency(ingest_data)
     if hardening_reasons:
-        if probability >= threshold:
+        fusion = fuse_neural_and_static_evidence(
+            raw_logit=logit,
+            raw_prob=probability,
+            threshold=threshold,
+            temperature=temperature,
+            hard_reasons=hardening_reasons,
+        )
+        if not fusion["applied"]:
             return logit, probability
-        enforced = max(threshold, 0.885)
         ingest_data["semantic_verdict_enforcement"] = {
             "raw_prob": round(probability, 4),
-            "enforced_prob": round(enforced, 4),
-            "reasons": sorted(hardening_reasons),
+            "enforced_prob": round(fusion["fused_prob"], 4),
+            "score_source": fusion["score_source"],
+            "reasons": fusion["reasons"],
         }
-        return math.log(enforced / (1.0 - enforced)) * temperature, enforced
+        return fusion["fused_logit"], fusion["fused_prob"]
     if ingest_data.get("encryption_analysis", {}).get("password_locked") and probability >= threshold:
         uninspected_probability = threshold / 2
         ingest_data["semantic_verdict_enforcement"] = {
             "raw_prob": round(probability, 4),
             "enforced_prob": round(uninspected_probability, 4),
+            "score_source": "password_locked_policy",
             "reasons": ["password_locked_structure_uninspected"],
         }
         return math.log(
@@ -1425,6 +1457,8 @@ class ForensicAttributionEngine:
                     "qr_analysis",
                     "differential_analysis",
                     "codec_anomalies",
+                    "codec_inspection_limits",
+                    "benign_structural_consistency",
                     "xfa_analysis",
                     "polyglot_analysis",
                     "non_js_triggers",

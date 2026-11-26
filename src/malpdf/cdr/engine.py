@@ -9,6 +9,7 @@ from itertools import islice
 from pathlib import Path
 import time
 from typing import Any
+import zlib
 
 import numpy as np
 import pikepdf
@@ -278,7 +279,58 @@ def _sample_original_pages(data: bytes) -> tuple[list[str] | None, dict[int, np.
     return texts, samples
 
 
-def _preserved_document_state(pdf: pikepdf.Pdf) -> list[dict[str, Any]]:
+def _bounded_stream_digest(stream: pikepdf.Stream, *, max_decoded_bytes: int = 32 * 1024**2) -> str:
+    try:
+        raw = stream.read_raw_bytes()
+    except Exception:
+        return hashlib.sha256(b"").hexdigest()
+    filters = stream.get("/Filter")
+    if isinstance(filters, pikepdf.Array):
+        filter_names = [str(item) for item in filters]
+    else:
+        filter_names = [str(filters)] if filters is not None else []
+    parms = stream.get("/DecodeParms")
+    has_predictor = False
+    if isinstance(parms, pikepdf.Dictionary) and "/Predictor" in parms:
+        try:
+            has_predictor = int(parms.get("/Predictor", 1) or 1) != 1
+        except (TypeError, ValueError, OverflowError):
+            return hashlib.sha256(raw).hexdigest()
+    if not filter_names:
+        return hashlib.sha256(raw).hexdigest()
+    if filter_names in (["/FlateDecode"], ["/Fl"]) and not has_predictor and len(raw) <= 16 * 1024**2:
+        try:
+            decoder = zlib.decompressobj()
+            hasher = hashlib.sha256()
+            total = 0
+            for start in range(0, len(raw), 16 * 1024):
+                chunk = decoder.decompress(raw[start : start + 16 * 1024], max(1, max_decoded_bytes - total + 1))
+                total += len(chunk)
+                if total > max_decoded_bytes or decoder.unconsumed_tail:
+                    return hashlib.sha256(raw).hexdigest()
+                hasher.update(chunk)
+            tail = decoder.flush()
+            total += len(tail)
+            if total <= max_decoded_bytes and decoder.eof:
+                hasher.update(tail)
+                return hasher.hexdigest()
+        except Exception:
+            return hashlib.sha256(raw).hexdigest()
+    if len(raw) <= 4 * 1024**2:
+        try:
+            decoded = stream.read_bytes()
+            if len(decoded) <= max_decoded_bytes:
+                return hashlib.sha256(decoded).hexdigest()
+        except Exception:
+            pass
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _preserved_document_state(
+    pdf: pikepdf.Pdf,
+    *,
+    uninspected_objgens: set[tuple[int, int]] | frozenset[tuple[int, int]] = frozenset(),
+) -> list[dict[str, Any]]:
     active: set[tuple[int, int]] = set()
     memo: dict[tuple[int, int], Any] = {}
     skip_keys = {"/Length", "/Filter", "/DecodeParms", "/Parent", "/P"}
@@ -300,14 +352,14 @@ def _preserved_document_state(pdf: pikepdf.Pdf) -> list[dict[str, Any]]:
                         str(key): snapshot(value[key]) for key in sorted(value.keys()) if str(key) not in skip_keys
                     }
                     if isinstance(value, pikepdf.Stream):
-                        try:
-                            stream_bytes = value.read_bytes()
-                        except Exception:
+                        if identity in uninspected_objgens:
                             try:
-                                stream_bytes = value.read_raw_bytes()
+                                raw_fallback = value.read_raw_bytes()
                             except Exception:
-                                stream_bytes = b""
-                        items["decoded_sha256"] = hashlib.sha256(stream_bytes).hexdigest()
+                                raw_fallback = b""
+                            items["decoded_sha256"] = hashlib.sha256(raw_fallback).hexdigest()
+                        else:
+                            items["decoded_sha256"] = _bounded_stream_digest(value)
                     res = items
                 if identity != (0, 0):
                     memo[identity] = res
@@ -323,9 +375,9 @@ def _preserved_document_state(pdf: pikepdf.Pdf) -> list[dict[str, Any]]:
     return states
 
 
-def _page_resource_ids(pdf: pikepdf.Pdf) -> set[tuple[int, int]]:
-    pending = [page.obj.get("/Resources") for page in pdf.pages]
-    seen = set()
+def _walk_indirect_ids(roots: list[Any]) -> set[tuple[int, int]]:
+    pending = list(roots)
+    seen: set[tuple[int, int]] = set()
     for _ in range(100000):
         if not pending:
             return seen
@@ -341,6 +393,14 @@ def _page_resource_ids(pdf: pikepdf.Pdf) -> set[tuple[int, int]]:
         else:
             pending.extend(child for key, child in value.items() if key not in {"/Parent", "/P"})
     raise ValueError("cdr_resource_traversal_limit")
+
+
+def _page_resource_ids(pdf: pikepdf.Pdf) -> set[tuple[int, int]]:
+    return _walk_indirect_ids([page.obj.get("/Resources") for page in pdf.pages])
+
+
+def _retained_document_ids(pdf: pikepdf.Pdf) -> set[tuple[int, int]]:
+    return _walk_indirect_ids([pdf.Root, *(page.obj for page in pdf.pages)])
 
 
 def _active_keys(
@@ -479,6 +539,7 @@ class CDRAuditLog:
     content_streams_preserved: bool = False
     resources_preserved: bool = False
     residual_codec_anomalies: list[dict[str, Any]] = field(default_factory=list)
+    residual_codec_inspection_limits: list[dict[str, Any]] = field(default_factory=list)
     quarantine_recommended: bool = False
     residual_qr_anomalies: list[str] = field(default_factory=list)
     sanitization_mode: str = "full"
@@ -529,37 +590,68 @@ class PDFDisarmer:
                 unlocked = io.BytesIO()
                 pdf.save(unlocked, encryption=False)
                 inspection_bytes = unlocked.getvalue()
-            original_codec_anomalies = inspect_pdf_codec_anomalies(pdf, has_jbig2_magic=_JBIG2_MAGIC in data)
+            original_uninspected: list[dict[str, Any]] = []
+            original_codec_anomalies = inspect_pdf_codec_anomalies(
+                pdf,
+                has_jbig2_magic=_JBIG2_MAGIC in data,
+                uninspected_out=original_uninspected,
+            )
+            orig_uninspected_objgens = {
+                (int(item["object_number"]), int(item.get("generation", 0)))
+                for item in original_uninspected
+                if item.get("object_number") is not None
+            }
+            orig_uninspected_xrefs = {obj_num for obj_num, _ in orig_uninspected_objgens}
+            native_render_safe = not original_codec_anomalies and not original_uninspected
             original_text, orig_pix_samples = (
-                _sample_original_pages(inspection_bytes) if not original_codec_anomalies else (None, {})
+                _sample_original_pages(inspection_bytes) if native_render_safe else (None, {})
             )
             original_chars = sum(map(len, original_text or []))
-            original_state = _preserved_document_state(pdf)
+            original_state = _preserved_document_state(pdf, uninspected_objgens=orig_uninspected_objgens)
             preserved_pages = len(pdf.pages)
             overlay_pages = _overlay_pages(pdf)
-            lure_texts = (
-                read_lure_page_text(inspection_bytes, overlay_pages) if preserved_pages <= 3 or overlay_pages else {}
-            )
-            all_phrases, lure_phrases = lure_phrases_for_pages(lure_texts)
-            if pdf.is_encrypted and preserved_pages <= 3 and not original_codec_anomalies:
+            if pdf.is_encrypted and not original_codec_anomalies:
                 with pikepdf.open(io.BytesIO(inspection_bytes)) as inspection_pdf:
                     qr_analysis = scan_pdf_qr_codes(
                         inspection_bytes,
                         inspection_pdf,
                         pages_count=preserved_pages,
                         codec_anomalies=original_codec_anomalies,
+                        uninspected_xrefs=orig_uninspected_xrefs,
                     )
             else:
                 qr_analysis = scan_pdf_qr_codes(
-                    inspection_bytes, pdf, pages_count=preserved_pages, codec_anomalies=original_codec_anomalies
+                    inspection_bytes,
+                    pdf,
+                    pages_count=preserved_pages,
+                    codec_anomalies=original_codec_anomalies,
+                    uninspected_xrefs=orig_uninspected_xrefs,
                 )
-            has_qr_phishing = any(
-                qr_phishing_reasons(uri, lure_texts, preserved_pages, all_phrases, lure_phrases)
-                for uri in qr_analysis["decoded_uris"]
+            qr_pages = set(qr_analysis.get("qr_pages") or ())
+            lure_texts = (
+                read_lure_page_text(inspection_bytes, overlay_pages, priority_pages=qr_pages)
+                if preserved_pages <= 3 or overlay_pages or qr_pages
+                else {}
             )
+            all_phrases, lure_phrases = lure_phrases_for_pages(lure_texts)
+            qr_uri_pages = qr_analysis.get("uri_pages") or {}
+
+            def _uri_qr_reasons(uri: str, texts_map: dict[int, str]) -> list[str]:
+                u_pages = qr_uri_pages.get(uri) or []
+                scoped = (
+                    {p: texts_map[p] for p in u_pages if p in texts_map}
+                    if preserved_pages > 3 and u_pages
+                    else texts_map
+                )
+                u_all, u_corr = (
+                    lure_phrases_for_pages(scoped) if scoped is not texts_map else (all_phrases, lure_phrases)
+                )
+                return qr_phishing_reasons(uri, scoped, preserved_pages, u_all, u_corr)
+
+            has_qr_phishing = any(_uri_qr_reasons(uri, lure_texts) for uri in qr_analysis["decoded_uris"])
             qr_lures = (
                 _qr_lure_annotations(inspection_bytes, lure_texts, preserved_pages, all_phrases, lure_phrases)
-                if minimal and not original_codec_anomalies
+                if minimal and native_render_safe
                 else set()
             )
             objects_before = len(pdf.objects)
@@ -893,23 +985,63 @@ class PDFDisarmer:
                         annot, page.obj, lure_texts.get(index), preserved_pages
                     ):
                         raise ValueError("cdr_active_key_verification_failed")
+            residual_uninspected: list[dict[str, Any]] = []
             residual_codec_anomalies = inspect_pdf_codec_anomalies(
-                verify_pdf, has_jbig2_magic=_JBIG2_MAGIC in sanitized_bytes
+                verify_pdf,
+                has_jbig2_magic=_JBIG2_MAGIC in sanitized_bytes,
+                uninspected_out=residual_uninspected,
             )
             for anomaly in residual_codec_anomalies:
                 del anomaly["stream"]
+            retained_ids = _retained_document_ids(verify_pdf)
+            residual_retained_limits: list[dict[str, Any]] = []
+            for uninspected in residual_uninspected:
+                ident = (int(uninspected.get("object_number") or 0), int(uninspected.get("generation") or 0))
+                if ident in retained_ids or ident == (0, 0):
+                    residual_retained_limits.append(
+                        {
+                            "object_number": uninspected.get("object_number"),
+                            "generation": uninspected.get("generation", 0),
+                            "codec": uninspected.get("codec", "STREAM"),
+                            "filter": uninspected.get("filter", ""),
+                            "stream_size": uninspected.get("stream_size"),
+                            "reason_codes": [*uninspected.get("reason_codes", ()), "unverified_retained_resource"],
+                        }
+                    )
+            res_uninspected_objgens = {
+                (int(item["object_number"]), int(item.get("generation", 0)))
+                for item in residual_uninspected
+                if item.get("object_number") is not None
+            }
+            res_uninspected_xrefs = {obj_num for obj_num, _ in res_uninspected_objgens}
             if has_qr_phishing:
                 verified_qr = scan_pdf_qr_codes(
-                    sanitized_bytes, verify_pdf, pages_count=preserved_pages, codec_anomalies=residual_codec_anomalies
+                    sanitized_bytes,
+                    verify_pdf,
+                    pages_count=preserved_pages,
+                    codec_anomalies=residual_codec_anomalies,
+                    uninspected_xrefs=res_uninspected_xrefs,
                 )
+                verified_uri_pages = verified_qr.get("uri_pages") or {}
+
+                def _verified_uri_reasons(uri: str) -> list[str]:
+                    u_pages = verified_uri_pages.get(uri) or qr_uri_pages.get(uri) or []
+                    scoped = (
+                        {p: lure_texts[p] for p in u_pages if p in lure_texts}
+                        if preserved_pages > 3 and u_pages
+                        else lure_texts
+                    )
+                    u_all, u_corr = (
+                        lure_phrases_for_pages(scoped) if scoped is not lure_texts else (all_phrases, lure_phrases)
+                    )
+                    return qr_phishing_reasons(uri, scoped, preserved_pages, u_all, u_corr)
+
                 residual_qr_anomalies = [
-                    f"qr_code_phishing_uri: {uri}"
-                    for uri in verified_qr["decoded_uris"]
-                    if qr_phishing_reasons(uri, lure_texts, preserved_pages, all_phrases, lure_phrases)
+                    f"qr_code_phishing_uri: {uri}" for uri in verified_qr["decoded_uris"] if _verified_uri_reasons(uri)
                 ]
                 if not residual_qr_anomalies:
                     residual_qr_anomalies.append("qr_phishing_removal_unverified")
-            sanitized_state = _preserved_document_state(verify_pdf)
+            sanitized_state = _preserved_document_state(verify_pdf, uninspected_objgens=res_uninspected_objgens)
             sanitized_pages = len(verify_pdf.pages)
             objects_after = len(verify_pdf.objects)
             has_oa_after = "/OpenAction" in verify_pdf.Root
@@ -918,7 +1050,7 @@ class PDFDisarmer:
             has_names_js_after = "/Names" in verify_pdf.Root and "/JavaScript" in verify_pdf.Root["/Names"]
             root_reference = f"{verify_pdf.Root.objgen[0]} {verify_pdf.Root.objgen[1]} R"
 
-        if minimal and not residual_codec_anomalies:
+        if minimal and not residual_codec_anomalies and not residual_uninspected:
             residual_qr_anomalies.extend(
                 f"qr_annotation_phishing_remaining:page_{page}_annot_{annot}"
                 for page, annot in sorted(
@@ -926,7 +1058,8 @@ class PDFDisarmer:
                 )
             )
         quarantine_recommended = (
-            bool(residual_codec_anomalies or residual_qr_anomalies) or polyglot_after["has_polyglot_payload"]
+            bool(residual_codec_anomalies or residual_retained_limits or residual_qr_anomalies)
+            or polyglot_after["has_polyglot_payload"]
         )
         content_preserved = [state["/Contents"] for state in original_state] == [
             state["/Contents"] for state in sanitized_state
@@ -947,7 +1080,7 @@ class PDFDisarmer:
             "subject": "",
             "version": f"PDF-{pdf_version}",
         }
-        if not quarantine_recommended:
+        if not quarantine_recommended and not residual_uninspected:
             try:
                 with fitz.open(stream=sanitized_bytes, filetype="pdf") as doc:
                     sanitized_text = []
@@ -1067,6 +1200,7 @@ class PDFDisarmer:
             "additional_actions_status": "NULL (Scrubbed)" if not has_aa_after else "Present",
             "names_js_status": "Present" if has_names_js_after else "Absent after reparse",
             "residual_codec_anomalies_count": len(residual_codec_anomalies),
+            "residual_codec_inspection_limits_count": len(residual_retained_limits),
             "content_streams_status": "decoded_content_and_resources_equal"
             if content_preserved and resources_preserved
             else "changed",
@@ -1105,6 +1239,7 @@ class PDFDisarmer:
             content_streams_preserved=content_preserved,
             resources_preserved=resources_preserved,
             residual_codec_anomalies=residual_codec_anomalies,
+            residual_codec_inspection_limits=residual_retained_limits,
             quarantine_recommended=quarantine_recommended,
             residual_qr_anomalies=residual_qr_anomalies,
             sanitization_mode=sanitization_mode,

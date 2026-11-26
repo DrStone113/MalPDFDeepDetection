@@ -419,7 +419,11 @@ def table_checksum(data: bytes | memoryview, *, head: bool = False) -> int:
     return total & 0xFFFFFFFF
 
 
-def inspect_font(data: bytes, *, inspect_table_data: bool = True) -> dict:
+def inspect_font(data: bytes, *, inspect_table_data: bool = True, measured_length: int | None = None) -> dict:
+    total_len = len(data) if measured_length is None else measured_length
+    if total_len < len(data):
+        raise ValueError("measured_length_smaller_than_prefix")
+    prefix_only = total_len > len(data)
     result = {
         "format": "sfnt",
         "complete": False,
@@ -429,6 +433,8 @@ def inspect_font(data: bytes, *, inspect_table_data: bool = True) -> dict:
         "font_execution_performed": False,
         "font_validity_verified": False,
     }
+    if measured_length is not None:
+        result["prefix_only"] = prefix_only
     if data[:4] not in {b"\x00\x01\x00\x00", b"OTTO", b"true", b"typ1"}:
         raise MediaIssue("font_container_unsupported", "unsupported", result)
     if len(data) < 12:
@@ -452,7 +458,7 @@ def inspect_font(data: bytes, *, inspect_table_data: bool = True) -> dict:
             "offset": offset,
             "size_bytes": length,
             "checksum_declared": checksum,
-            "bounds_verified": offset >= 12 + count * 16 and offset + length <= len(data),
+            "bounds_verified": offset >= 12 + count * 16 and offset + length <= total_len,
             "checksum_verified": False,
         }
         result["tables"].append(item)
@@ -461,13 +467,16 @@ def inspect_font(data: bytes, *, inspect_table_data: bool = True) -> dict:
             continue
         if offset % 4:
             reasons.add("font_table_alignment_invalid")
+        if length:
+            ranges.append((offset, offset + length))
+        in_prefix = offset + length <= len(data)
+        if not in_prefix:
+            continue
         body = memoryview(data)[offset : offset + length]
         if inspect_table_data:
             item.update(sha256=digest(body), checksum_verified=table_checksum(body, head=tag == b"head") == checksum)
             if not item["checksum_verified"]:
                 reasons.add("font_table_checksum_mismatch")
-        if length:
-            ranges.append((offset, offset + length))
         if tag == b"head" and length >= 54:
             result["units_per_em"] = int.from_bytes(body[18:20], "big")
             result["bounding_box"] = list(struct.unpack_from(">hhhh", body, 36))
@@ -480,7 +489,7 @@ def inspect_font(data: bytes, *, inspect_table_data: bool = True) -> dict:
         reasons.add("font_table_overlap")
     result.update(
         table_count=count,
-        complete=not reasons,
+        complete=not reasons and not (prefix_only and inspect_table_data),
         reason_codes=sorted(reasons),
         instruction_tables_present=bool(seen & {b"fpgm", b"prep", b"cvt "}),
         svg_table_present=b"SVG " in seen,

@@ -798,11 +798,22 @@ function renderConformalAnalysis(analysis, data = null) {
   const badge = document.getElementById("conformal-state-badge");
   document.getElementById("conformal-status").hidden = !hasState;
   badge.dataset.state = hasState ? state : "";
+  const policyDisagreement = analysis?.policy_override === true;
+  const thresholdDisagreement =
+    !policyDisagreement &&
+    ((state === "CERTIFIED_BENIGN" && data?.verdict === "MALICIOUS") ||
+      (state === "CERTIFIED_MALICIOUS" && data?.verdict === "BENIGN"));
   badge.textContent = !hasState
     ? "--"
-    : state === "DRIFT_OOD_EMPTY" && data?.verdict === "BENIGN" && data?.is_ood === false
-      ? "Dưới ngưỡng cảnh báo · Ngoài dải chuẩn 99%"
-      : states[state];
+    : policyDisagreement
+      ? analysis?.policy_reject_for_cdr
+        ? "Bất đồng Mô hình–Luật tĩnh · Đẩy CDR"
+        : "Bất đồng Mô hình–Luật tĩnh"
+      : thresholdDisagreement
+        ? "Vùng biên ngưỡng quyết định"
+        : state === "DRIFT_OOD_EMPTY" && data?.verdict === "BENIGN" && data?.is_ood === false
+          ? "Dưới ngưỡng cảnh báo · Ngoài dải chuẩn 99%"
+          : states[state];
   document.getElementById("conformal-credibility").textContent = hasState
     ? "Độ khả tín " +
       formatRatioPercent(analysis.credibility) +

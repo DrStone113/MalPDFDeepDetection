@@ -24,15 +24,11 @@ from pypdf.generic import (
     IndirectObject,
     NameObject,
     NullObject,
+    NumberObject,
     StreamObject,
     TextStringObject,
     read_object,
 )
-
-try:
-    import torch
-except ImportError:
-    torch = None
 
 from malpdf.extraction.byte_images import ByteImageLimits, _tile_order
 from malpdf.extraction.filters import DecodeBudget, FilterLimits, _parameters, _predict, _Stopped, decode_filters
@@ -57,6 +53,7 @@ from malpdf.scanner.forensic import (
 )
 from malpdf.scanner.qr_scan import empty_qr_analysis, page_has_image_xobject, scan_pdf_qr_codes
 from malpdf.scanner.signatures import match_pdf_signatures
+from malpdf.scanner.static_evidence import CODEC_QUOTA_REASON_CODES, is_quota_only_codec_reasons
 from malpdf.static.js_ast import CodeInspectionError
 from malpdf.static.raw_scan import count_acroform_names, scan_raw_pdf_tokens
 from malpdf.static.xfa_xml import inspect_xfa_xml
@@ -179,6 +176,21 @@ _RECOVERABLE_TOKENS = {
 }
 _STATIC_BYTE_LIMIT = 4 * 1024**2
 _STATIC_FILTER_LIMITS = FilterLimits(max_input_bytes=_STATIC_BYTE_LIMIT, max_stage_bytes=_STATIC_BYTE_LIMIT)
+_CODEC_DOC_BUDGET_BYTES = 96 * 1024**2
+_CODEC_FILTER_LIMITS = FilterLimits(
+    max_input_bytes=16 * 1024**2,
+    max_stage_bytes=8 * 1024**2,
+    max_total_bytes=8 * 1024**2,
+    max_filters=8,
+    max_expansion_ratio=500,
+)
+_STREAM_PREVIEW_LIMIT = 64 * 1024
+_STREAM_PREVIEW_LIMITS = FilterLimits(
+    max_input_bytes=_STREAM_PREVIEW_LIMIT,
+    max_stage_bytes=_STREAM_PREVIEW_LIMIT,
+    max_total_bytes=_STREAM_PREVIEW_LIMIT,
+    max_expansion_ratio=1000,
+)
 _NON_JS_ACTIONS = {
     "/Launch",
     "/ImportData",
@@ -232,7 +244,6 @@ _AUDITED_STREAM_TOKENS = (
     "Launch",
     "EmbeddedFile",
 )
-_inspect_font_directory = partial(inspect_font, inspect_table_data=False)
 _TYPE1_REASONS = {"type1_segment_header_invalid", "type1_segment_truncated", "type1_end_marker_missing"}
 _WOFF_REASONS = {"woff_header_invalid", "woff_directory_truncated", "woff_table_bounds_invalid", "woff_table_overlap"}
 
@@ -291,23 +302,19 @@ def _bounded_stream_bytes(
     *,
     allow_flate_padding: bool = False,
     raw: bytes | None = None,
+    limits: FilterLimits = _STATIC_FILTER_LIMITS,
 ) -> tuple[bytes | None, list[str]]:
-    if int(stream.get("/Length") or 0) > _STATIC_BYTE_LIMIT or not budget.remaining:
+    if int(stream.get("/Length") or 0) > limits.max_input_bytes or not budget.remaining:
         return None, ["decoded_byte_or_expansion_limit"]
     if raw is None:
         raw = stream.read_raw_bytes()
-    parms = stream.get("/DecodeParms")
-    if isinstance(parms, pikepdf.Array):
-        parms = list(parms)[: len(filters)]
-    if isinstance(parms, list):
-        parms = [dict(item) if isinstance(item, pikepdf.Dictionary) else None for item in parms]
-    elif isinstance(parms, pikepdf.Dictionary):
-        parms = dict(parms)
+    if len(raw) > limits.max_input_bytes:
+        return None, ["decoded_byte_or_expansion_limit"]
     result = decode_filters(
         raw,
         filters,
-        decode_parms=parms if filters else None,
-        limits=_STATIC_FILTER_LIMITS,
+        decode_parms=_stream_decode_parms(stream, filters),
+        limits=limits,
         budget=budget,
         recover_trailing=allow_flate_padding,
     )
@@ -319,6 +326,72 @@ def _bounded_stream_bytes(
     return result.data, reasons
 
 
+def _stream_decode_parms(stream: Any, filters: list[str]) -> Any:
+    if not filters:
+        return None
+
+    def as_dict(item: Any) -> dict | None:
+        if isinstance(item, DictionaryObject):
+            return {key: int(value) if isinstance(value, NumberObject) else value for key, value in item.items()}
+        return dict(item) if isinstance(item, pikepdf.Dictionary) else None
+
+    parms = _resolve_pdf_object(stream.get("/DecodeParms"))
+    if isinstance(parms, (pikepdf.Array, ArrayObject)):
+        return [as_dict(_resolve_pdf_object(item)) for item in islice(parms, len(filters))]
+    if isinstance(parms, (pikepdf.Dictionary, DictionaryObject)):
+        return as_dict(parms)
+    return None if isinstance(parms, NullObject) else parms
+
+
+def _flate_prefix_and_length(
+    raw: bytes, budget: DecodeBudget, *, prefix_cap: int, cap: int
+) -> tuple[bytes | None, int | None, list[str]]:
+    decoder = zlib.decompressobj()
+    prefix = bytearray()
+    total = 0
+    try:
+        for start in range(0, len(raw), 16 * 1024):
+            chunk = raw[start : start + 16 * 1024]
+            decoded = decoder.decompress(chunk, cap - total + 1)
+            total += len(decoded)
+            budget.remaining = max(0, budget.remaining - len(decoded))
+            if decoder.unconsumed_tail or total > cap:
+                return None, None, ["decoded_byte_or_expansion_limit"]
+            if len(prefix) < prefix_cap:
+                prefix.extend(decoded[: prefix_cap - len(prefix)])
+            if decoder.eof:
+                whitespace = b" \t\r\n\v\f"
+                if decoder.unused_data.strip(whitespace) or raw[start + len(chunk) :].strip(whitespace):
+                    return None, None, ["trailing_flate_data"]
+                return bytes(prefix), total, []
+    except zlib.error:
+        return None, None, ["invalid_flate_stream"]
+    return None, None, ["truncated_flate_stream"]
+
+
+def _decode_sfnt_prefix_and_length(
+    raw: bytes,
+    wrappers: list[str],
+    budget: DecodeBudget,
+    *,
+    prefix_cap: int = 65536,
+    stream_cap: int = 32 * 1024**2,
+    max_ratio: int = 500,
+) -> tuple[bytes | None, int | None, list[str]]:
+    cap = min(budget.remaining, stream_cap, max(len(raw), 1) * max_ratio)
+    if not wrappers:
+        if len(raw) > cap:
+            return None, None, ["decoded_byte_or_expansion_limit"]
+        budget.remaining -= len(raw)
+        return raw[:prefix_cap], len(raw), []
+    if wrappers in (["/FlateDecode"], ["/Fl"]):
+        return _flate_prefix_and_length(raw, budget, prefix_cap=prefix_cap, cap=cap)
+    decoded = decode_filters(raw, wrappers, limits=_CODEC_FILTER_LIMITS, budget=budget)
+    if decoded.data is None:
+        return None, None, decoded.metadata["reason_codes"]
+    return decoded.data[:prefix_cap], len(decoded.data), decoded.metadata["reason_codes"]
+
+
 def _codec_reasons(inspect, body: bytes, *, include_unsupported: bool = False) -> list[str]:
     try:
         return inspect(body)["reason_codes"]
@@ -328,7 +401,7 @@ def _codec_reasons(inspect, body: bytes, *, include_unsupported: bool = False) -
         return exc.details.get("reason_codes") or [exc.code]
 
 
-def _font_anomaly_reasons(body: bytes, key: str, subtype: str) -> list[str]:
+def _font_anomaly_reasons(body: bytes, key: str, subtype: str, *, measured_length: int | None = None) -> list[str]:
     signature = body[:4]
     if key == "/FontFile":
         return sorted(_TYPE1_REASONS.intersection(_codec_reasons(inspect_type1, body)))
@@ -336,7 +409,8 @@ def _font_anomaly_reasons(body: bytes, key: str, subtype: str) -> list[str]:
         inspect = partial(inspect_woff, budget=DecodeBudget(_STATIC_BYTE_LIMIT), max_expansion_ratio=20)
         return sorted(_WOFF_REASONS.intersection(_codec_reasons(inspect, body)))
     if signature in _SFNT_SIGNATURES:
-        return sorted(_CRITICAL_FONT_REASONS.intersection(_codec_reasons(_inspect_font_directory, body)))
+        inspect = partial(inspect_font, inspect_table_data=False, measured_length=measured_length)
+        return sorted(_CRITICAL_FONT_REASONS.intersection(_codec_reasons(inspect, body)))
     if key == "/FontFile2":
         if signature == b"ttcf":
             return ["font_directory_truncated"] if len(body) < 12 else []
@@ -414,12 +488,30 @@ def _might_decode_to_swf(stream: pikepdf.Stream, raw: bytes, filters: list[str])
         return False
 
 
-def inspect_pdf_codec_anomalies(pdf: pikepdf.Pdf, *, has_jbig2_magic: bool = False) -> list[dict[str, Any]]:
-    budget = DecodeBudget(_STATIC_BYTE_LIMIT)
+def inspect_pdf_codec_anomalies(
+    pdf: pikepdf.Pdf,
+    *,
+    has_jbig2_magic: bool = False,
+    uninspected_out: list[dict[str, Any]] | None = None,
+    doc_budget: DecodeBudget | None = None,
+) -> list[dict[str, Any]]:
+    anomalies, _ = _inspect_pdf_codecs(pdf, has_jbig2_magic, uninspected_out, doc_budget)
+    return anomalies
+
+
+def _inspect_pdf_codecs(
+    pdf: pikepdf.Pdf,
+    has_jbig2_magic: bool,
+    uninspected_out: list[dict[str, Any]] | None,
+    doc_budget: DecodeBudget | None,
+) -> tuple[list[dict[str, Any]], set[tuple[int, int]]]:
+    budget = doc_budget if doc_budget is not None else DecodeBudget(_CODEC_DOC_BUDGET_BYTES)
     anomalies = []
     font_streams: dict[tuple[int, int], tuple[str, pikepdf.Stream]] = {}
     icc_streams: dict[tuple[int, int], pikepdf.Stream] = {}
-    inspected_bodies: dict[tuple, list[str]] = {}
+    seen_streams: set[tuple[tuple[int, int], str, str, tuple[str, ...]]] = set()
+    clean_streams: set[tuple[int, int]] = set()
+    failed_streams: set[tuple[int, int]] = set()
     flash_candidates = []
     direct_objects = []
 
@@ -427,48 +519,60 @@ def inspect_pdf_codec_anomalies(pdf: pikepdf.Pdf, *, has_jbig2_magic: bool = Fal
         if not reasons:
             return
         object_number, generation = stream.objgen
-        anomalies.append(
-            {
-                "object_number": object_number,
-                "generation": generation,
-                "codec": codec,
-                "filter": filter_name,
-                "stream_size": stream_size,
-                "reason_codes": reasons,
-                "stream": stream,
-            }
-        )
+        failed_streams.add((object_number, generation))
+        finding = {
+            "object_number": object_number,
+            "generation": generation,
+            "codec": codec,
+            "filter": filter_name,
+            "stream_size": stream_size,
+            "reason_codes": reasons,
+        }
+        if is_quota_only_codec_reasons(reasons):
+            if uninspected_out is not None:
+                uninspected_out.append(finding)
+        else:
+            anomalies.append({**finding, "stream": stream})
 
     def inspect_stream(stream: pikepdf.Stream, codec: str, codec_filter: str, wrappers: list[str]) -> None:
+        identity = (stream.objgen, codec, codec_filter, tuple(wrappers))
+        if identity in seen_streams:
+            return
+        seen_streams.add(identity)
         stream_size = None
-        identity = None
+        measured_len = None
         try:
             stream_size = int(stream.get("/Length") or 0)
-            if codec_filter == "Uncompressed" and stream_size > budget.remaining:
+            if stream_size > _CODEC_FILTER_LIMITS.max_input_bytes or not budget.remaining:
+                record_anomaly(stream, codec, codec_filter, stream_size, ["decoded_byte_or_expansion_limit"])
                 return
-            subtype = str(stream.get("/Subtype") or "") if codec == "FONT" else ""
-            raw = None
-            if stream_size <= _STATIC_BYTE_LIMIT:
-                raw = stream.read_raw_bytes()
-                if codec_filter == "Uncompressed" and not raw.startswith(_JBIG2_MAGIC):
-                    return
-                identity = (
-                    codec,
-                    codec_filter,
-                    subtype,
-                    tuple(wrappers),
-                    str(stream.get("/DecodeParms")) if wrappers else "",
-                    hashlib.sha256(raw).digest(),
+            raw = stream.read_raw_bytes()
+            if codec_filter == "Uncompressed" and not raw.startswith(_JBIG2_MAGIC):
+                return
+            if len(raw) > _CODEC_FILTER_LIMITS.max_input_bytes:
+                record_anomaly(stream, codec, codec_filter, stream_size, ["decoded_byte_or_expansion_limit"])
+                return
+            use_sfnt_prefix = False
+            if codec_filter == "/FontFile2" and wrappers in ([], ["/FlateDecode"], ["/Fl"]):
+                parms = _stream_decode_parms(stream, wrappers)
+                if isinstance(parms, list) and len(parms) == 1:
+                    parms = parms[0]
+                use_sfnt_prefix = parms is None or isinstance(parms, dict) and "/Predictor" not in parms
+                if use_sfnt_prefix and wrappers:
+                    _parameters("/FlateDecode", parms)
+            if use_sfnt_prefix:
+                body, measured_len, reasons = _decode_sfnt_prefix_and_length(raw, wrappers, budget)
+            else:
+                body, reasons = _bounded_stream_bytes(
+                    stream, wrappers, budget, allow_flate_padding=codec == "ICC", raw=raw, limits=_CODEC_FILTER_LIMITS
                 )
-                if identity in inspected_bodies:
-                    record_anomaly(stream, codec, codec_filter, stream_size, inspected_bodies[identity])
-                    return
-            body, reasons = _bounded_stream_bytes(stream, wrappers, budget, allow_flate_padding=codec == "ICC", raw=raw)
+        except _Stopped as exc:
+            body, reasons = None, [exc.code]
         except (pikepdf.PdfError, ValueError, TypeError, OverflowError):
+            if codec_filter == "Uncompressed":
+                return
             body, reasons = None, ["stream_decode_failed"]
-        if codec_filter == "Uncompressed" and (body is None or not body.startswith(_JBIG2_MAGIC)):
-            return
-        if body is not None:
+        if body is not None and not reasons:
             if codec == "JBIG2":
                 reasons = _codec_reasons(jbig2_structure, body, include_unsupported=True)
             elif codec == "JPX":
@@ -478,9 +582,10 @@ def inspect_pdf_codec_anomalies(pdf: pikepdf.Pdf, *, has_jbig2_magic: bool = Fal
             elif codec == "ICC":
                 reasons = _inspect_icc_profile(body)
             else:
-                reasons = _font_anomaly_reasons(body, codec_filter, subtype)
-        if identity is not None:
-            inspected_bodies[identity] = reasons
+                subtype = str(stream.get("/Subtype") or "")
+                reasons = _font_anomaly_reasons(body, codec_filter, subtype, measured_length=measured_len)
+            if not reasons:
+                clean_streams.add(stream.objgen)
         record_anomaly(stream, codec, codec_filter, stream_size, reasons)
 
     for obj in islice(pdf.objects, _CODEC_OBJECT_LIMIT):
@@ -538,7 +643,8 @@ def inspect_pdf_codec_anomalies(pdf: pikepdf.Pdf, *, has_jbig2_magic: bool = Fal
     for stream in icc_streams.values():
         inspect_stream(stream, "ICC", "/ICCBased", _stream_filters(stream.get("/Filter")))
 
-    flash_budget = DecodeBudget(_STATIC_BYTE_LIMIT)
+    flash_allowance = min(budget.remaining, _STATIC_BYTE_LIMIT)
+    flash_budget = DecodeBudget(flash_allowance)
     flash_candidates.sort(key=lambda candidate: candidate[0].get("/Type") != pikepdf.Name.EmbeddedFile)
     for stream, filters in flash_candidates:
         if not flash_budget.remaining:
@@ -564,7 +670,8 @@ def inspect_pdf_codec_anomalies(pdf: pikepdf.Pdf, *, has_jbig2_magic: bool = Fal
             continue
         if body and body.startswith(_SWF_SIGNATURES):
             record_anomaly(stream, "SWF", "/SWF", size, _inspect_swf(body))
-    return anomalies
+    budget.remaining -= flash_allowance - flash_budget.remaining
+    return anomalies, clean_streams - failed_streams
 
 
 def _recover_hidden_evasion_tokens(data: bytes, base_tokens: dict[str, int]) -> tuple[dict[str, int], dict[str, Any]]:
@@ -767,6 +874,7 @@ _REVISION_TRIGGER = re.compile(
 _REVISION_OBJECT_END = re.compile(rb"(?m)^[ \t]*stream\b|(?<![^\s>])endobj\b")
 _REVISION_LITERAL = re.compile(rb"\((?:\\[\s\S]|[^\\()])*\)|(?<!<)<[0-9a-fA-F\s]*>|%[^\r\n]*")
 _REVISION_LIMIT = 512 * 1024
+_BENIGN_SHADOWABLE = {b"/OpenAction", b"/AA"}
 
 
 def _revision_trigger_updates(data: bytes, mismatch: bool) -> tuple[list[str], list[str]]:
@@ -782,7 +890,7 @@ def _revision_trigger_updates(data: bytes, mismatch: bool) -> tuple[list[str], l
             break
         chunk = data[start : min(end, start + _REVISION_LIMIT)]
         added_tokens: set[bytes] = set()
-        shadowed_here = False
+        removed_tokens: set[bytes] = set()
         objects = list(_REVISION_OBJECT.finditer(chunk))
         for index, match in enumerate(objects):
             next_offset = objects[index + 1].start() if index + 1 < len(objects) else len(chunk)
@@ -800,11 +908,14 @@ def _revision_trigger_updates(data: bytes, mismatch: bool) -> tuple[list[str], l
                 continue
             removed = previous - current
             if removed:
-                shadowed_here = True
+                removed_tokens.update(removed)
                 if len(shadowed) < 32:
                     label = b" ".join(identity).decode("ascii")
                     shadowed.append(f"{label} R: " + ", ".join(token.decode("ascii") for token in sorted(removed)))
             added_tokens.update(current - base_tokens)
+        shadowed_here = bool(removed_tokens - _BENIGN_SHADOWABLE) or (
+            bool(removed_tokens) and (bool(added_tokens) or mismatch)
+        )
         if shadowed_here and "incremental_shadow_trigger_update" not in anomalies:
             anomalies.append("incremental_shadow_trigger_update")
         if added_tokens and (mismatch or shadowed_here) and "incremental_hidden_trigger_revision" not in anomalies:
@@ -987,9 +1098,11 @@ def _analyze_phishing(
 ) -> dict[str, Any]:
     qr_uris = qr_analysis["decoded_uris"]
     overlay_pages = {item["page_index"] for item in uris if item["rect_area"] >= IMAGE_LURE_MIN_AREA}
-    texts = (
-        bounded_lure_page_text(reader, pages_count, overlay_pages) if reader is not None and (uris or qr_uris) else {}
-    )
+    texts = {}
+    if reader is not None and (uris or qr_uris):
+        texts = bounded_lure_page_text(
+            reader, pages_count, overlay_pages, priority_pages=set(qr_analysis.get("qr_pages") or ())
+        )
     phrases, corroborated = lure_phrases_for_pages(texts)
     image_only_lure = False
     if corroborated or overlay_pages and texts:
@@ -1020,7 +1133,10 @@ def _analyze_phishing(
                     record.update(is_threat_trigger=True, action_role="suspicious_uri")
     suspicious = [item for item in uris if item["is_suspicious"]]
     for index, uri in enumerate(qr_uris):
-        reasons = qr_phishing_reasons(uri, texts, pages_count, phrases, corroborated)
+        uri_pages = (qr_analysis.get("uri_pages") or {}).get(uri) or []
+        local_texts = texts if pages_count <= 3 else {p: texts[p] for p in uri_pages if p in texts}
+        local_phrases, local_corroborated = lure_phrases_for_pages(local_texts)
+        reasons = qr_phishing_reasons(uri, local_texts, pages_count, local_phrases, local_corroborated)
         if reasons:
             suspicious.append(
                 {
@@ -1050,15 +1166,22 @@ def _open_scanner_reader(data: bytes) -> tuple[PdfReader, int]:
     return reader, pages
 
 
-def bounded_lure_page_text(reader: PdfReader, pages_count: int, overlay_pages: set[int]) -> dict[int, str]:
-    if pages_count > 10 or pages_count > 3 and not overlay_pages:
+def bounded_lure_page_text(
+    reader: PdfReader,
+    pages_count: int,
+    overlay_pages: set[int],
+    *,
+    priority_pages: set[int] | frozenset[int] = frozenset(),
+) -> dict[int, str]:
+    if pages_count > 10 and not overlay_pages and not priority_pages:
         return {}
-    first_pages = set(range(min(pages_count, 3)))
-    indices = sorted(overlay_pages) + sorted(first_pages - overlay_pages)
+    first_pages = set(range(pages_count)) if pages_count <= 3 else set()
+    indices = sorted(priority_pages) + sorted(overlay_pages - priority_pages)
+    indices += sorted(first_pages - priority_pages - overlay_pages)
     budget = DecodeBudget(_LURE_TEXT_LIMIT)
     texts = {}
-    for index in indices:
-        if index >= pages_count:
+    for index in indices[:8]:
+        if not 0 <= index < pages_count:
             continue
         try:
             text = _page_lure_text(reader.pages[index], budget)
@@ -1069,12 +1192,14 @@ def bounded_lure_page_text(reader: PdfReader, pages_count: int, overlay_pages: s
     return texts
 
 
-def read_lure_page_text(data: bytes, overlay_pages: set[int]) -> dict[int, str]:
+def read_lure_page_text(
+    data: bytes, overlay_pages: set[int], *, priority_pages: set[int] | frozenset[int] = frozenset()
+) -> dict[int, str]:
     try:
         reader, pages_count = _open_scanner_reader(data)
     except (pypdf.errors.PyPdfError, ValueError, TypeError):
         return {}
-    return bounded_lure_page_text(reader, pages_count, overlay_pages)
+    return bounded_lure_page_text(reader, pages_count, overlay_pages, priority_pages=priority_pages)
 
 
 _CATALOG_EVIDENCE = {
@@ -1276,6 +1401,9 @@ def _inspect_additional_evidence(
     register: Any,
     raw_tokens: dict[str, int],
     structural_audit: dict[str, Any],
+    *,
+    codec_inspection_limits: list[dict[str, Any]],
+    doc_budget: DecodeBudget,
 ) -> tuple[set[str], dict[str, Any], dict[str, Any], int]:
     non_js: set[str] = set()
     differential = _differential_summary()
@@ -1505,10 +1633,17 @@ def _inspect_additional_evidence(
                 for obj in islice(pdf.objects, _CODEC_OBJECT_LIMIT):
                     if isinstance(obj, (pikepdf.Dictionary, pikepdf.Stream)) and obj.objgen not in seen_objects:
                         inspected_uri_tokens += inspect_uri(obj, f"/Object[{obj.objgen[0]}]", str(obj.get("/S") or ""))
-            if len(pdf.objects) > _CODEC_OBJECT_LIMIT:
+            object_limit_reached = len(pdf.objects) > _CODEC_OBJECT_LIMIT
+            if object_limit_reached:
                 non_js.add("codec_inspection_limit")
             stream_records = {(r["obj_num"], r["generation"]): r for r in reversed(records) if r["has_stream"]}
-            for anomaly in inspect_pdf_codec_anomalies(pdf, has_jbig2_magic=has_jbig2_magic):
+            findings, clean_streams = _inspect_pdf_codecs(pdf, has_jbig2_magic, codec_inspection_limits, doc_budget)
+            for record in records:
+                if (record["obj_num"], record["generation"]) in clean_streams:
+                    record["stream_decode_failed"] = False
+            if codec_inspection_limits:
+                non_js.add("codec_inspection_limit")
+            for anomaly in findings:
                 stream = anomaly.pop("stream")
                 object_number, generation = anomaly["object_number"], anomaly["generation"]
                 evidence_id = f"stream:{anomaly['codec'].lower()}_{object_number}_{generation}"
@@ -1524,12 +1659,22 @@ def _inspect_additional_evidence(
             differential = inspect_parser_differential(original_data, reader, pdf, incremental_eof_count)
             if (
                 not codec_anomalies
-                and "codec_inspection_limit" not in non_js
+                and not object_limit_reached
                 and not any(
                     record["stream_decode_failed"] or record["decompression_ratio_exceeded"] for record in records
                 )
             ):
-                qr_analysis = scan_pdf_qr_codes(data, pdf, pages_count=len(pdf.pages), codec_anomalies=codec_anomalies)
+                qr_analysis = scan_pdf_qr_codes(
+                    data,
+                    pdf,
+                    pages_count=len(pdf.pages),
+                    codec_anomalies=codec_anomalies,
+                    uninspected_xrefs={
+                        item["object_number"] for item in codec_inspection_limits if item.get("object_number")
+                    },
+                )
+            else:
+                qr_analysis["coverage_complete"] = False
             audit: dict[str, Any] = {}
             if data is original_data:
                 audit["stream_interior_tokens"] = _stream_interior_tokens(pdf, raw_tokens, len(data))
@@ -1635,6 +1780,8 @@ def _extract_object_metadata(
     indirect_id: int | None = None,
     offset_map: dict[tuple[int, int], int] | None = None,
     span_map: dict[tuple[int, int], tuple[int, int]] | None = None,
+    *,
+    doc_budget: DecodeBudget | None = None,
 ) -> dict[str, Any]:
     resolved = obj
     obj_num = indirect_id
@@ -1665,27 +1812,45 @@ def _extract_object_metadata(
         else:
             filter_name = "Uncompressed"
         raw_stream_buf = getattr(resolved, "_data", None)
+        filters = _stream_filters(resolved.get("/Filter")) if isinstance(resolved, DictionaryObject) else []
         if isinstance(raw_stream_buf, (bytes, bytearray)):
             raw_stream_bytes = len(raw_stream_buf)
-        is_jbig2 = isinstance(resolved, DictionaryObject) and _JBIG2_FILTERS.intersection(
-            _stream_filters(resolved.get("/Filter"))
-        )
-        if isinstance(raw_stream_buf, (bytes, bytearray)) and (is_jbig2 or len(raw_stream_buf) > 65536):
-            raw_obj_bytes = bytes(raw_stream_buf[:65536])
-        else:
-            try:
-                decoded_buf = resolved.get_data()
-                raw_obj_bytes = decoded_buf if isinstance(decoded_buf, bytes) else bytes(decoded_buf)
-                decoded_stream_bytes = len(raw_obj_bytes)
-                if raw_stream_bytes is None:
-                    raw_stream_bytes = decoded_stream_bytes
-                elif raw_stream_bytes > 0 and (decoded_stream_bytes / float(raw_stream_bytes)) > 100.0:
-                    decompression_ratio_exceeded = True
-                if decoded_stream_bytes > 4 * 1024 * 1024:
-                    decompression_ratio_exceeded = True
-            except Exception:
-                stream_decode_failed = True
-                raw_obj_bytes = bytes(raw_stream_buf) if isinstance(raw_stream_buf, (bytes, bytearray)) else b""
+            raw_obj_bytes = bytes(raw_stream_buf[:_STREAM_PREVIEW_LIMIT])
+            if not filters:
+                decoded_stream_bytes = raw_stream_bytes
+        if filters and raw_stream_bytes is not None and raw_stream_bytes <= _STREAM_PREVIEW_LIMIT:
+            budget = doc_budget if doc_budget is not None else DecodeBudget(_CODEC_DOC_BUDGET_BYTES)
+            if budget.remaining and not _JBIG2_FILTERS.intersection(filters):
+                try:
+                    preview = decode_filters(
+                        raw_obj_bytes,
+                        filters,
+                        decode_parms=_stream_decode_parms(resolved, filters),
+                        limits=_STREAM_PREVIEW_LIMITS,
+                        budget=budget,
+                    )
+                except (pypdf.errors.PyPdfError, ValueError, TypeError, OverflowError):
+                    stream_decode_failed = True
+                else:
+                    if preview.data is not None:
+                        raw_obj_bytes = preview.data
+                        decoded_stream_bytes = len(preview.data)
+                    elif preview.partial_data is not None and len(filters) == 1:
+                        raw_obj_bytes = preview.partial_data[:_STREAM_PREVIEW_LIMIT]
+                    status = preview.metadata["status"]
+                    stream_decode_failed = status == "decode_error"
+                    if (
+                        status == "resource_limit"
+                        and filters in (["/FlateDecode"], ["/Fl"])
+                        and raw_stream_bytes <= 32768
+                        and budget.remaining
+                    ):
+                        threshold = max(32 * 1024**2, 1000 * max(raw_stream_bytes, 1))
+                        cap = min(threshold, budget.remaining)
+                        _, _, reasons = _flate_prefix_and_length(bytes(raw_stream_buf), budget, prefix_cap=0, cap=cap)
+                        quota_stop = bool(CODEC_QUOTA_REASON_CODES.intersection(reasons))
+                        decompression_ratio_exceeded = quota_stop and cap == threshold
+                        stream_decode_failed = bool(reasons) and not quota_stop
         decoded_text = raw_obj_bytes[:1200].decode("utf-8", errors="replace").strip()
         printable_ratio = sum(1 for c in decoded_text[:200] if c.isprintable() or c in "\r\n\t") / max(
             len(decoded_text[:200]), 1
@@ -1876,7 +2041,15 @@ class InstantPDFIngestion:
         if node_in_dim not in (19, 23):
             raise ValueError("unsupported_node_in_dim")
         self.node_in_dim: int = int(node_in_dim)
-        self.as_numpy: bool = bool(as_numpy or torch is None)
+        self._torch = None
+        if not as_numpy:
+            try:
+                import torch
+            except ImportError:
+                pass
+            else:
+                self._torch = torch
+        self.as_numpy: bool = self._torch is None
         path = Path(scaler_path) if scaler_path is not None else DEFAULT_SCALER_PATH
         with path.open("r", encoding="utf-8") as stream:
             scaler_data = json.load(stream)
@@ -1979,7 +2152,7 @@ class InstantPDFIngestion:
         if not self.contract_verified:
             return raw, None
         scaled = ((log_matrix([raw]) - center) / scale).astype(np.float32)
-        return raw, scaled if self.as_numpy else torch.from_numpy(scaled)
+        return raw, scaled if self.as_numpy else self._torch.from_numpy(scaled)
 
     def _build_v3_tabular_features(
         self,
@@ -2054,6 +2227,8 @@ class InstantPDFIngestion:
         extracted_scripts: list[dict[str, Any]] = []
         extracted_uris: list[dict[str, Any]] = []
         codec_anomalies: list[dict[str, Any]] = []
+        codec_inspection_limits: list[dict[str, Any]] = []
+        doc_budget = DecodeBudget(_CODEC_DOC_BUDGET_BYTES)
         xfa_analysis = {"present": False, "javascript_count": 0, "formcalc_count": 0, "xml_nodes": 0, "anomalies": []}
         graph_bytes = data
         metadata_size = 0.0
@@ -2126,6 +2301,8 @@ class InstantPDFIngestion:
                 data,
                 polyglot_analysis["incremental_eof_count"],
                 structural_audit,
+                codec_inspection_limits=codec_inspection_limits,
+                doc_budget=doc_budget,
             )
 
         codec_records = {anomaly["evidence_id"] for anomaly in codec_anomalies}
@@ -2222,6 +2399,7 @@ class InstantPDFIngestion:
             "differential_analysis": differential_analysis,
             "polyglot_analysis": polyglot_analysis,
             "codec_anomalies": codec_anomalies,
+            "codec_inspection_limits": codec_inspection_limits,
             "xfa_analysis": xfa_analysis,
             "evasion_unpack_audit": evasion_unpack_audit,
             "non_js_triggers": sorted(non_js_triggers),
@@ -2246,6 +2424,9 @@ class InstantPDFIngestion:
         original_data: bytes,
         incremental_eof_count: int,
         structural_audit: dict[str, Any],
+        *,
+        codec_inspection_limits: list[dict[str, Any]],
+        doc_budget: DecodeBudget,
     ) -> tuple[set[str], dict[str, Any], dict[str, Any], int]:
         visited_ids: set[str] = set()
         node_limit = 200
@@ -2280,6 +2461,7 @@ class InstantPDFIngestion:
                 indirect_id=indirect_id,
                 offset_map=offset_map,
                 span_map=span_map,
+                doc_budget=doc_budget,
             )
             final_size = size if size is not None and meta["phys_span_bytes"] is None else meta["size_bytes"]
             if kind == "action" and isinstance(obj_ref, DictionaryObject):
@@ -2715,6 +2897,8 @@ class InstantPDFIngestion:
             register_supplemental,
             raw_tokens,
             structural_audit,
+            codec_inspection_limits=codec_inspection_limits,
+            doc_budget=doc_budget,
         )
 
     def _check_action_for_script(
@@ -2884,6 +3068,7 @@ class InstantPDFIngestion:
                     node_raw_features.append([log_size, has_stream_val])
                 incoming_counts[idx] = 0
 
+        torch = self._torch
         num_nodes = len(node_types)
         if num_nodes == 0:
             if self.as_numpy or torch is None:
@@ -2983,7 +3168,7 @@ class InstantPDFIngestion:
 
     def _extract_ast_stream(
         self, extracted_scripts: list[dict[str, Any]], xfa_anomalies: list[str]
-    ) -> tuple[torch.Tensor, dict[str, float], dict[str, int]]:
+    ) -> tuple[Any, dict[str, float], dict[str, int]]:
         counts: dict[str, int] = {k: 0 for k in AST_NODE_TYPES}
         total_nodes = 0
         max_depth = 0
@@ -3039,6 +3224,7 @@ class InstantPDFIngestion:
         ast_values = [counts[k] for k in AST_NODE_TYPES]
         while len(ast_values) < 32:
             ast_values.append(0)
+        torch = self._torch
         if self.as_numpy or torch is None:
             tokens: Any = np.asarray([[int(v) % 64 for v in ast_values[:32]]], dtype=np.int64)
         else:
@@ -3069,7 +3255,7 @@ class InstantPDFIngestion:
         records: list[dict[str, Any]] | None = None,
         extracted_scripts: list[dict[str, Any]] | None = None,
         stream_interior_tokens: dict[str, int] | None = None,
-    ) -> tuple[torch.Tensor | None, list[float | None]]:
+    ) -> tuple[Any, list[float | None]]:
         size_kb = len(data) / 1024.0
         ast_total = max(ast_stats["total_nodes"], 1.0)
         stream_count = float(raw_tokens.get("stream", raw_tokens.get("Stream", 0)))
@@ -3177,6 +3363,7 @@ class InstantPDFIngestion:
             return None, raw_vec
         arr = np.array([float(v) for v in raw_vec if v is not None], dtype=np.float32)
         scaled = (arr - self.scaler_mean) / self.scaler_scale
+        torch = self._torch
         if self.as_numpy or torch is None:
             return scaled.astype(np.float32, copy=False)[None, :], raw_vec
         tab_tensor = torch.tensor(scaled, dtype=torch.float32).unsqueeze(0)
