@@ -36,7 +36,7 @@ async function scan(page, name) {
     const first = await scan(page, "A.pdf");
     assert.match(
       await page.locator("#status-headline").innerText(),
-      /^(Chưa thấy dấu hiệu nguy hiểm|Chưa đủ căn cứ để kết luận|Có dấu hiệu đáng ngờ|Có cảnh báo mã độc)$/,
+      /^(Không tìm thấy dấu hiệu nguy hiểm|Cần lưu ý trước khi mở tệp|Có dấu hiệu đáng ngờ|Có cảnh báo mã độc)$/,
     );
     assert.ok(await page.locator("#status-action").innerText());
     assert.equal(await page.locator("#scan-details").count(), 0);

@@ -977,17 +977,17 @@ function renderScanResult(data, cdrAudit = null) {
   renderThreatTaxonomy(data);
 
   const verdictEl = document.getElementById("card-verdict");
-  if (!data.prediction_available) {
-    verdictEl.textContent = "Chưa xác định";
-    verdictEl.className = "text-2xl font-bold tracking-tight text-amber-700";
-  } else if (isMal) {
+  if (isMal) {
     verdictEl.textContent = "Nguy hiểm";
     verdictEl.className = "text-2xl font-bold tracking-tight text-error";
   } else if (assessment.tone === "clear") {
     verdictEl.textContent = "An toàn";
     verdictEl.className = "text-2xl font-bold tracking-tight text-tertiary";
+  } else if (!data.prediction_available && assessment.title === "Cần lưu ý trước khi mở tệp") {
+    verdictEl.textContent = "Chưa xác định";
+    verdictEl.className = "text-2xl font-bold tracking-tight text-amber-700";
   } else {
-    verdictEl.textContent = "Cần kiểm tra";
+    verdictEl.textContent = "Cần lưu ý";
     verdictEl.className = "text-2xl font-bold tracking-tight text-amber-700";
   }
 
@@ -1167,30 +1167,72 @@ function renderVerticalQueue(jobs) {
   vContainer.replaceChildren();
 
   jobs.slice(0, 20).forEach((j) => {
-    const isMal = j.verdict === "MALICIOUS";
-    const isPending = j.verdict === "PENDING" || j.status === "SCANNING";
-    const isUnavail = !isMal && !isPending && j.verdict !== "BENIGN";
+    const hasResult =
+      j.has_scan_result === true ||
+      ((j.verdict === "BENIGN" || j.verdict === "MALICIOUS" || j.verdict === "UNAVAILABLE") &&
+        ("threat_taxonomy" in j || "forensic_dossier" in j));
+    const isFailedNoResult = !hasResult && j.status === "FAILED";
+    const isPending =
+      !hasResult &&
+      !isFailedNoResult &&
+      (j.status === "PENDING" || j.status === "QUEUED" || j.status === "SCANNING" || j.verdict === "PENDING");
+    const qAssess = hasResult ? scanAssessment(j) : null;
+    const isUnavail =
+      isFailedNoResult ||
+      (!hasResult && !isPending && j.verdict !== "BENIGN" && j.verdict !== "MALICIOUS") ||
+      (hasResult && j.prediction_available === false && qAssess?.title === "Cần lưu ý trước khi mở tệp");
+    const qTone = isPending
+      ? "pending"
+      : isUnavail
+        ? "unavail"
+        : qAssess
+          ? qAssess.tone
+          : j.verdict === "MALICIOUS"
+            ? "danger"
+            : "clear";
     const isDisarmed = j.status === "DISARMED" || j.has_sanitized_pdf;
     const isActive = appState.currentScanResult?.scan_id === j.scan_id;
     const sizeLabel = j.file_size_bytes
       ? `${Math.round(j.file_size_bytes / 1024).toLocaleString("vi-VN")} KB`
       : "-- KB";
-    const pillText = isMal ? "Nguy hiểm" : isPending ? "Đang quét" : isUnavail ? "Chưa xác định" : "An toàn";
-    const iconWrapClass = isMal
-      ? "bg-red-50 text-error"
-      : isUnavail
-        ? "bg-amber-50 text-amber-800"
-        : isPending
-          ? "bg-slate-100 text-outline"
-          : "bg-emerald-50 text-tertiary";
-    const iconName = isMal ? "gpp_maybe" : isPending ? "pending" : isUnavail ? "help" : "check_circle";
-    const pillClass = isMal
-      ? "bg-red-50 text-error border border-red-200"
-      : isUnavail
-        ? "bg-amber-50 text-amber-800 border border-amber-200"
-        : isPending
-          ? "bg-slate-100 text-outline"
-          : "bg-emerald-50 text-tertiary border border-emerald-200";
+    const pillText =
+      qTone === "danger"
+        ? "Nguy hiểm"
+        : qTone === "pending"
+          ? "Đang quét"
+          : isFailedNoResult
+            ? "Lỗi xử lý"
+            : qTone === "unavail"
+              ? "Chưa xác định"
+              : qTone === "caution"
+                ? "Cần lưu ý"
+                : "An toàn";
+    const iconWrapClass =
+      qTone === "danger"
+        ? "bg-red-50 text-error"
+        : qTone === "unavail" || qTone === "caution"
+          ? "bg-amber-50 text-amber-800"
+          : qTone === "pending"
+            ? "bg-slate-100 text-outline"
+            : "bg-emerald-50 text-tertiary";
+    const iconName =
+      qTone === "danger"
+        ? "gpp_maybe"
+        : qTone === "pending"
+          ? "pending"
+          : qTone === "unavail"
+            ? "help"
+            : qTone === "caution"
+              ? "info"
+              : "check_circle";
+    const pillClass =
+      qTone === "danger"
+        ? "bg-red-50 text-error border border-red-200"
+        : qTone === "unavail" || qTone === "caution"
+          ? "bg-amber-50 text-amber-800 border border-amber-200"
+          : qTone === "pending"
+            ? "bg-slate-100 text-outline"
+            : "bg-emerald-50 text-tertiary border border-emerald-200";
 
     const item = document.createElement("div");
     item.className = `p-2.5 rounded-lg border transition cursor-pointer flex items-center justify-between gap-2 active:scale-98 group ${

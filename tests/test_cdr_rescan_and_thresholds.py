@@ -555,13 +555,13 @@ def test_web_cdr_rescan_stateless_and_scan_assessment_contract(
     a_out = json.loads(attrs["data-assess"])
     assert a_out[0] == {
         "tone": "clear",
-        "title": "Chưa thấy dấu hiệu nguy hiểm",
-        "guidance": "Chỉ mở nếu bạn tin nguồn gửi.",
+        "title": "Không tìm thấy dấu hiệu nguy hiểm",
+        "guidance": "Đã kiểm tra cấu trúc PDF, luồng dữ liệu và 8 nhóm dấu hiệu tĩnh. Bạn có thể mở đọc tài liệu bình thường.",
     }
     assert a_out[1]["tone"] == "caution"
-    assert a_out[1]["title"] == "Chưa đủ căn cứ để kết luận"
+    assert a_out[1]["title"] == "Cần lưu ý trước khi mở tệp"
     assert a_out[2]["tone"] == "caution"
-    assert a_out[2]["title"] == "Chưa đủ căn cứ để kết luận"
+    assert a_out[2]["title"] == "Cần lưu ý trước khi mở tệp"
 
     c_out = json.loads(attrs["data-conformal"])
     assert c_out == [

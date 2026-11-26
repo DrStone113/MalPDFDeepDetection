@@ -679,6 +679,7 @@ def _recover_hidden_evasion_tokens(data: bytes, base_tokens: dict[str, int]) -> 
         "hex_escaped_names_decoded": 0,
         "objstm_streams_unpacked": 0,
         "objstm_decoded_bytes": 0,
+        "objstm_unpack_complete": True,
         "recovered_hidden_triggers": [],
     }
     has_objstm = b"/ObjStm" in data
@@ -696,22 +697,29 @@ def _recover_hidden_evasion_tokens(data: bytes, base_tokens: dict[str, int]) -> 
                         continue
                     attempted += 1
                     if attempted > 64 or not budget.remaining:
+                        audit["objstm_unpack_complete"] = False
                         break
+                    filters = _stream_filters(obj.get("/Filter"))
                     try:
-                        body, _ = _bounded_stream_bytes(obj, _stream_filters(obj.get("/Filter")), budget)
+                        raw_obj = obj.read_raw_bytes()
+                        body, _ = _bounded_stream_bytes(obj, filters, budget, raw=raw_obj)
                     except (pikepdf.PdfError, ValueError, TypeError):
+                        audit["objstm_unpack_complete"] = False
                         continue
                     if body is None:
+                        audit["objstm_unpack_complete"] = False
                         continue
                     audit["objstm_streams_unpacked"] += 1
                     audit["objstm_decoded_bytes"] += len(body)
+                    norm_raw, _ = normalize_pdf_hex_names(raw_obj)
+                    already = _scan_scanner_raw_tokens(norm_raw)
                     body, decoded = normalize_pdf_hex_names(body)
                     audit["hex_escaped_names_decoded"] += decoded
                     unpacked = _scan_scanner_raw_tokens(body)
                     for key in _RECOVERABLE_TOKENS:
-                        counts[key] += unpacked[key]
+                        counts[key] = max(0, counts[key] + unpacked[key] - already[key])
         except pikepdf.PdfError:
-            pass
+            audit["objstm_unpack_complete"] = False
     merged = base_tokens.copy()
     for key in sorted(_RECOVERABLE_TOKENS):
         if counts[key] > base_tokens.get(key, 0):
@@ -1300,7 +1308,80 @@ def _container_size(value: Any) -> int:
     return len(value) if isinstance(value, pikepdf.Array) else len(value.keys())
 
 
-def _stream_interior_tokens(pdf: pikepdf.Pdf, raw_tokens: dict[str, int], byte_limit: int) -> dict[str, int]:
+_PDF_DELIM_BYTES = frozenset(b" \t\r\n\x00\x0c()<>[]{}/%")
+
+
+def _non_stream_literal_delimiters(raw_pdf_bytes: bytes, expected_streams: int) -> dict[str, int] | None:
+    n = len(raw_pdf_bytes)
+    i = 0
+    obj_hits = 0
+    stream_hits = 0
+    skipped_streams = 0
+    while i < n:
+        ch = raw_pdf_bytes[i]
+        if ch == 0x25:  # '%' comment — single forward scan to CR or LF
+            j = i + 1
+            while j < n and raw_pdf_bytes[j] not in (0x0A, 0x0D):
+                j += 1
+            seg = raw_pdf_bytes[i:j]
+            if b"endobj" in seg or b"endstream" in seg:
+                return None
+            obj_hits += seg.count(b"obj")
+            stream_hits += seg.count(b"stream")
+            i = j + 1
+        elif ch == 0x28:  # '(' balanced PDF literal string
+            start = i + 1
+            depth = 1
+            i += 1
+            while i < n and depth > 0:
+                b = raw_pdf_bytes[i]
+                if b == 0x5C:
+                    i += 2
+                    continue
+                if b == 0x28:
+                    depth += 1
+                elif b == 0x29:
+                    depth -= 1
+                i += 1
+            if depth != 0:
+                return None
+            seg = raw_pdf_bytes[start : i - 1]
+            if b"endobj" in seg or b"endstream" in seg:
+                return None
+            obj_hits += seg.count(b"obj")
+            stream_hits += seg.count(b"stream")
+        elif (
+            ch == 0x73
+            and raw_pdf_bytes[i : i + 6] == b"stream"
+            and (i == 0 or raw_pdf_bytes[i - 1] in _PDF_DELIM_BYTES)
+            and i + 6 < n
+            and raw_pdf_bytes[i + 6] in (0x0A, 0x0D, 0x20, 0x09)
+        ):
+            k = i + 6
+            while k < n and raw_pdf_bytes[k] in (0x20, 0x09):
+                k += 1
+            if k >= n or raw_pdf_bytes[k] not in (0x0A, 0x0D):
+                i += 6
+                continue
+            if raw_pdf_bytes[k : k + 2] == b"\r\n":
+                k += 2
+            else:
+                k += 1
+            end_s = raw_pdf_bytes.find(b"endstream", k)
+            if end_s == -1:
+                return None
+            skipped_streams += 1
+            i = end_s + 9
+        else:
+            i += 1
+    if skipped_streams != expected_streams:
+        return None
+    return {"obj": obj_hits, "stream": stream_hits}
+
+
+def _stream_interior_tokens(
+    pdf: pikepdf.Pdf, raw_tokens: dict[str, int], byte_limit: int, raw_pdf_bytes: bytes | None = None
+) -> dict[str, int]:
     objects = pdf.objects
     if pdf.is_encrypted or len(objects) > _CODEC_OBJECT_LIMIT:
         return {}
@@ -1334,12 +1415,13 @@ def _stream_interior_tokens(pdf: pikepdf.Pdf, raw_tokens: dict[str, int], byte_l
         return {}
 
     counts: dict[str, int] = {}
+    max_stream = _CODEC_FILTER_LIMITS.max_input_bytes
     for stream in streams:
-        if not 0 <= int(stream.get("/Length") or 0) <= _STATIC_BYTE_LIMIT:
+        if not 0 <= int(stream.get("/Length") or 0) <= max_stream:
             return {}
         raw = stream.read_raw_bytes()
         byte_limit -= len(raw)
-        if byte_limit < 0 or len(raw) > _STATIC_BYTE_LIMIT or b"endstream" in raw or b"endobj" in raw:
+        if byte_limit < 0 or len(raw) > max_stream or b"endstream" in raw or b"endobj" in raw:
             return {}
         if stream.objgen in excluded:
             continue
@@ -1347,6 +1429,13 @@ def _stream_interior_tokens(pdf: pikepdf.Pdf, raw_tokens: dict[str, int], byte_l
         for token in _AUDITED_STREAM_TOKENS:
             if interior[token] and raw_tokens.get(token, 0):
                 counts[token] = min(raw_tokens[token], counts.get(token, 0) + interior[token])
+    if raw_pdf_bytes is not None:
+        lit_counts = _non_stream_literal_delimiters(raw_pdf_bytes, len(streams))
+        if lit_counts is None:
+            return {}
+        for token, extra in lit_counts.items():
+            if extra and raw_tokens.get(token, 0):
+                counts[token] = min(raw_tokens[token], counts.get(token, 0) + extra)
     return counts
 
 
@@ -1677,7 +1766,9 @@ def _inspect_additional_evidence(
                 qr_analysis["coverage_complete"] = False
             audit: dict[str, Any] = {}
             if data is original_data:
-                audit["stream_interior_tokens"] = _stream_interior_tokens(pdf, raw_tokens, len(data))
+                audit["stream_interior_tokens"] = _stream_interior_tokens(
+                    pdf, raw_tokens, len(data), raw_pdf_bytes=data
+                )
             if "action_inspection_limit" not in non_js:
                 audit["inspected_benign_openaction_tokens"] = int(is_benign_catalog_navigation(root.get("/OpenAction")))
                 audit["inspected_benign_aa_tokens"] = (
@@ -2844,7 +2935,7 @@ class InstantPDFIngestion:
                 try:
                     with pikepdf.open(io.BytesIO(raw_pdf_bytes)) as pdf:
                         structural_audit["stream_interior_tokens"] = _stream_interior_tokens(
-                            pdf, raw_tokens, len(raw_pdf_bytes)
+                            pdf, raw_tokens, len(raw_pdf_bytes), raw_pdf_bytes=raw_pdf_bytes
                         )
                 except (pikepdf.PdfError, ValueError, TypeError, OverflowError):
                     return {"supplemental_inspection_incomplete"}, empty_qr_analysis(), _differential_summary(), 0

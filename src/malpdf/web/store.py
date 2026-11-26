@@ -33,7 +33,8 @@ class ScanJob:
     disarm_seq: int = 0
 
     def to_summary(self) -> dict[str, Any]:
-        return {
+        sr = self.scan_result
+        summary: dict[str, Any] = {
             "scan_id": self.scan_id,
             "file_name": self.file_name,
             "file_size_bytes": self.file_size_bytes,
@@ -41,11 +42,39 @@ class ScanJob:
             "created_at": self.created_at,
             "status": self.status,
             "batch_id": self.batch_id,
-            "verdict": self.scan_result.verdict if self.scan_result else "PENDING",
-            "malware_probability": self.scan_result.malware_probability if self.scan_result else None,
+            "verdict": sr.verdict if sr else "PENDING",
+            "malware_probability": sr.malware_probability if sr else None,
+            "has_scan_result": sr is not None,
             "has_sanitized": self.sanitized_bytes is not None,
             "error_message": self.error_message,
         }
+        if sr is not None:
+            top_tax = sr.threat_taxonomy if isinstance(sr.threat_taxonomy, dict) else {}
+            dos = sr.forensic_dossier if isinstance(sr.forensic_dossier, dict) else {}
+            dos_tax = dos.get("threat_taxonomy") if isinstance(dos.get("threat_taxonomy"), dict) else {}
+            raw_heads = top_tax.get("ml_label_predictions")
+            if raw_heads is None:
+                raw_heads = dos_tax.get("ml_label_predictions")
+            raw_detected = top_tax.get("detected_count")
+            if raw_detected is None:
+                raw_detected = dos_tax.get("detected_count")
+            proj_tax: dict[str, Any] = {}
+            if raw_heads is not None:
+                proj_tax["ml_label_predictions"] = [
+                    {"evidence_status": h.get("evidence_status")} if isinstance(h, dict) else h for h in raw_heads
+                ]
+            if raw_detected is not None:
+                proj_tax["detected_count"] = raw_detected
+            summary["prediction_available"] = sr.prediction_available
+            summary["is_ood"] = sr.is_ood
+            summary["threat_taxonomy"] = proj_tax
+            summary["forensic_dossier"] = {
+                "encryption_analysis": {
+                    "password_locked": bool((dos.get("encryption_analysis") or {}).get("password_locked"))
+                },
+                "threat_scripts": [{}] if dos.get("threat_scripts") else [],
+            }
+        return summary
 
     def to_detail(self) -> dict[str, Any]:
         data = self.to_summary()

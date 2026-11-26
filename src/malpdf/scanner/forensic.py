@@ -848,7 +848,13 @@ def reconcile_taxonomy_observations(
     verified_benign_js = bool(js_semantics.get("is_verified_benign_js")) and not evasion_audit.get(
         "hex_escaped_names_decoded"
     )
-    if verdict == "BENIGN" and not threat_triggers_set and not password_locked and verified_benign_js:
+    if (
+        verdict == "BENIGN"
+        and not triggers
+        and evasion_audit.get("objstm_unpack_complete", True)
+        and not password_locked
+        and verified_benign_js
+    ):
         suppressed = {"js_script_exec", "auto_open_trigger", "obfuscated_payload", "buffer_loop_staging"}
         for label in suppressed:
             observations[label] = None
@@ -882,13 +888,29 @@ def reconcile_taxonomy_observations(
     scripts = ingest_data.get("extracted_scripts") or []
     catalog_actions = [record for record in records if record.get("evidence_id") in _CATALOG_ACTION_TOKENS]
     benign_catalog_ids = {record["evidence_id"] for record in catalog_actions if _is_benign_catalog_action(record)}
-    if (
-        "OpenAction" in effective_recovered
-        and not evasion_audit.get("hex_escaped_names_decoded")
-        and raw_tokens.get("OpenAction", 0) <= 1
-        and "action:open_action" in benign_catalog_ids
-    ):
-        effective_recovered.remove("OpenAction")
+    no_xfa_present = (
+        not ingest_data.get("xfa_analysis", {}).get("present")
+        and not effective_tok("XFA")
+        and not any(record.get("evidence_id") == "script:acroform_xfa" for record in records)
+    )
+    if not evasion_audit.get("hex_escaped_names_decoded") and evasion_audit.get("objstm_unpack_complete", True):
+        benign_actions_only = not scripts and all(_is_benign_catalog_action(record) for record in catalog_actions)
+        inspected_oa = max(
+            int("action:open_action" in benign_catalog_ids), int(audit.get("inspected_benign_openaction_tokens", 0))
+        )
+        if (
+            "OpenAction" in effective_recovered
+            and benign_actions_only
+            and 0 < effective_tok("OpenAction") <= inspected_oa
+        ):
+            effective_recovered.remove("OpenAction")
+        inspected_aa = max(int("action:aa" in benign_catalog_ids), int(audit.get("inspected_benign_aa_tokens", 0)))
+        if "AA" in effective_recovered and benign_actions_only and 0 < effective_tok("AA") <= inspected_aa:
+            effective_recovered.remove("AA")
+        inspected_acro = int(audit.get("inspected_acroform_tokens", 0))
+        acro_total = effective_tok("AcroForm") + effective_tok("Acroform")
+        if not scripts and no_xfa_present and 0 < acro_total <= inspected_acro:
+            effective_recovered = [t for t in effective_recovered if t not in {"AcroForm", "Acroform"}]
     if verdict == "BENIGN" and verified_benign_js and not threat_triggers_set:
         effective_recovered = [
             token for token in effective_recovered if token not in {"JS", "JavaScript", "AA", "OpenAction", "AcroForm"}
@@ -920,8 +942,8 @@ def reconcile_taxonomy_observations(
         or not raw_tokens
         or not ingest_data.get("graph_present", True)
         or password_locked
-        or threat_triggers_set
-        or (triggers and not verified_benign_js)
+        or triggers
+        or not evasion_audit.get("objstm_unpack_complete", True)
         or ingest_data.get("codec_anomalies")
         or phishing.get("has_phishing_threat")
         or qr.get("has_qr_threat")

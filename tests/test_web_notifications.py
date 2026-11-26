@@ -137,14 +137,14 @@ def test_scan_guidance_distinguishes_warnings_and_unresolved_results(tmp_path: P
     }
     observed = {"ml_label_predictions": [{"evidence_status": "observed"}]}
     cases = [
-        (benign, "Chưa thấy dấu hiệu nguy hiểm", "Chỉ mở nếu bạn tin nguồn gửi."),
-        ({**benign, "is_ood": True}, "Chưa đủ căn cứ để kết luận", "Tạm thời đừng mở bản gốc"),
-        ({**benign, "is_ood": None}, "Chưa đủ căn cứ để kết luận", "Tạm thời đừng mở bản gốc"),
-        ({**benign, "prediction_available": False}, "Chưa đủ căn cứ để kết luận", "Tạm thời đừng mở bản gốc"),
-        ({**benign, "threat_taxonomy": {}}, "Chưa đủ căn cứ để kết luận", "Tạm thời đừng mở bản gốc"),
+        (benign, "Không tìm thấy dấu hiệu nguy hiểm", "Đã kiểm tra cấu trúc PDF"),
+        ({**benign, "is_ood": True}, "Cần lưu ý trước khi mở tệp", "Tạm thời đừng mở bản gốc"),
+        ({**benign, "is_ood": None}, "Cần lưu ý trước khi mở tệp", "Tạm thời đừng mở bản gốc"),
+        ({**benign, "prediction_available": False}, "Cần lưu ý trước khi mở tệp", "Tạm thời đừng mở bản gốc"),
+        ({**benign, "threat_taxonomy": {}}, "Cần lưu ý trước khi mở tệp", "Tạm thời đừng mở bản gốc"),
         (
             {**benign, "threat_taxonomy": {"ml_label_predictions": [{"evidence_status": "model_signal"}]}},
-            "Chưa đủ căn cứ để kết luận",
+            "Cần lưu ý trước khi mở tệp",
             "Tạm thời đừng mở bản gốc",
         ),
         ({**benign, "threat_taxonomy": observed}, "Có dấu hiệu đáng ngờ", "Tránh mở bản gốc"),

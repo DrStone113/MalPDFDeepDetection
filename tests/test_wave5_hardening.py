@@ -277,7 +277,7 @@ def test_mail_gateway_auto_unlocks_from_email_and_web_password_api(engines, code
         "export async function consumeCloudStream", 1
     )[0]
     assert "encryption_analysis?.password_locked" in assessment
-    assert assessment.index("Tệp bị khóa mật khẩu") < assessment.index("Chưa thấy dấu hiệu nguy hiểm")
+    assert assessment.index("Tệp bị khóa mật khẩu") < assessment.index("Không tìm thấy dấu hiệu nguy hiểm")
     unlocked = codec_client.post("/api/scan", files=files, data={"password": password}).json()
     assert unlocked["verdict"] == "MALICIOUS"
     assert not unlocked["forensic_dossier"]["encryption_analysis"]["password_locked"]

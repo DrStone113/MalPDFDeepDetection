@@ -516,14 +516,16 @@ export function scanAssessment(data) {
   if (!data.prediction_available || data.verdict !== "BENIGN" || data.is_ood !== false || !staticCheckClear) {
     return {
       tone: "caution",
-      title: "Chưa đủ căn cứ để kết luận",
-      guidance: "Tạm thời đừng mở bản gốc. Hãy kiểm tra lại hoặc xin một bản khác từ người gửi.",
+      title: "Cần lưu ý trước khi mở tệp",
+      guidance:
+        "Tạm thời đừng mở bản gốc. Hệ thống ghi nhận cấu trúc ít gặp hoặc tín hiệu phụ chưa xác minh tĩnh; hãy bấm Làm sạch tệp để đọc an toàn.",
     };
   }
   return {
     tone: "clear",
-    title: "Chưa thấy dấu hiệu nguy hiểm",
-    guidance: "Chỉ mở nếu bạn tin nguồn gửi.",
+    title: "Không tìm thấy dấu hiệu nguy hiểm",
+    guidance:
+      "Đã kiểm tra cấu trúc PDF, luồng dữ liệu và 8 nhóm dấu hiệu tĩnh. Bạn có thể mở đọc tài liệu bình thường.",
   };
 }
 export async function consumeCloudStream(response, onDelta, onReady) {

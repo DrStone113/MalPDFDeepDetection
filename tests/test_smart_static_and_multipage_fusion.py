@@ -345,6 +345,151 @@ def test_policy_fusion_graded_probabilities_extreme_thresholds_and_conformal_pur
     assert pred_audit.sanitized_pages == pred_audit.original_pages
     assert len(clean_pred) > int(0.8 * len(bad_pred_buf.getvalue()))
 
+
+def test_bug037_merged_textbook_objstm_and_project_titles_have_zero_model_signal_and_fail_closed_guards(
+    engines,
+) -> None:
+    from malpdf.scanner.forensic import reconcile_taxonomy_observations
+    from malpdf.web.store import ScanJob
+
+    base = load_real_benign_bytes()
+    font_a = _build_valid_large_sfnt_bytes(1_500_000, place_head_at_tail=False)
+    with pikepdf.open(io.BytesIO(base)) as pdf, pikepdf.open(io.BytesIO(base)) as donor:
+        while len(pdf.pages) < 67:
+            pdf.pages.append(donor.pages[0])
+        del pdf.pages[67:]
+        ff2 = pdf.make_stream(zlib.compress(font_a, level=6), Filter=pikepdf.Name.FlateDecode, Length1=len(font_a))
+        desc = pdf.make_indirect(
+            pikepdf.Dictionary(
+                Type=pikepdf.Name.FontDescriptor,
+                FontName=pikepdf.Name("/ABCDEF+WinFormsMain"),
+                Flags=32,
+                FontBBox=pikepdf.Array([-200, -300, 1800, 1900]),
+                FontFile2=ff2,
+            )
+        )
+        fdict = pdf.make_indirect(
+            pikepdf.Dictionary(
+                Type=pikepdf.Name.Font,
+                Subtype=pikepdf.Name.TrueType,
+                BaseFont=pikepdf.Name("/ABCDEF+WinFormsMain"),
+                FontDescriptor=desc,
+            )
+        )
+        pdf.pages[0].obj.Resources = pikepdf.Dictionary(Font=pikepdf.Dictionary(WF0=fdict))
+        with pdf.open_outline() as outline:
+            outline.root.append(pikepdf.OutlineItem("Chapter 1: WinForms project and object stream guide", 0))
+        pdf.Root.AcroForm = pikepdf.Dictionary(Fields=pikepdf.Array())
+        pdf.Root.OpenAction = pikepdf.Array([pdf.pages[0].obj, pikepdf.Name.FitH, None])
+        for i in range(6):
+            annot = pdf.make_indirect(
+                pikepdf.Dictionary(
+                    Type=pikepdf.Name.Annot,
+                    Subtype=pikepdf.Name.Link,
+                    Rect=pikepdf.Array([40, 40, 220, 62]),
+                    A=pikepdf.Dictionary(
+                        S=pikepdf.Name.URI,
+                        URI="https://learn.microsoft.com/dotnet/desktop/winforms/",
+                    ),
+                )
+            )
+            pdf.pages[i].obj.Annots = pikepdf.Array([annot])
+        buf_objstm = io.BytesIO()
+        pdf.save(buf_objstm, object_stream_mode=pikepdf.ObjectStreamMode.generate)
+        buf_plain = io.BytesIO()
+        pdf.save(buf_plain, object_stream_mode=pikepdf.ObjectStreamMode.disable)
+
+    for raw in (buf_objstm.getvalue(), buf_plain.getvalue()):
+        for eng in engines:
+            res = eng.scan_bytes(raw, file_name="Winforms_merged.pdf", explain=True)
+            assert res.verdict == "BENIGN"
+            assert res.is_ood is False
+            heads = res.forensic_dossier["threat_taxonomy"]["ml_label_predictions"]
+            assert [h["id"] for h in heads if h["evidence_status"] != "not_observed"] == []
+
+            # Verify ScanJob.to_summary() projects identical scanAssessment inputs (including dossier fallback)
+            job = ScanJob(
+                scan_id="job-test037",
+                file_name="Winforms_merged.pdf",
+                raw_bytes=raw,
+                file_size_bytes=len(raw),
+                sha256=res.sha256,
+                created_at="2026-11-26T00:00:00Z",
+                status="SCANNED",
+                scan_result=res,
+            )
+            summary = job.to_summary()
+            assert summary["prediction_available"] is True
+            assert summary["is_ood"] is False
+            assert summary["threat_taxonomy"]["detected_count"] == 0
+            assert all(
+                h["evidence_status"] == "not_observed" for h in summary["threat_taxonomy"]["ml_label_predictions"]
+            )
+
+    # Fail-closed guard 1: incomplete /ObjStm unpack must NOT clear recovered AcroForm
+    packed_ing = engines[0].ingestion.ingest(buf_objstm.getvalue())
+    incomplete_ing = {
+        **packed_ing,
+        "evasion_unpack_audit": {**packed_ing["evasion_unpack_audit"], "objstm_unpack_complete": False},
+    }
+    assert "structural_parser_evasion" not in reconcile_taxonomy_observations({}, incomplete_ing, "BENIGN")
+
+    # Fail-closed guard 2: all 3 inspection limit markers & delimiter mismatch block suppression
+    for marker in ("action_inspection_limit", "codec_inspection_limit", "supplemental_inspection_incomplete"):
+        marked = {**packed_ing, "non_js_triggers": [marker]}
+        assert reconcile_taxonomy_observations({}, marked, "BENIGN") == set()
+    bad_delim = {
+        **packed_ing,
+        "raw_tokens": {**packed_ing["raw_tokens"], "obj": packed_ing["raw_tokens"]["endobj"] + 5},
+    }
+    assert "structural_parser_evasion" not in reconcile_taxonomy_observations({}, bad_delim, "BENIGN")
+
+    # Fast-path 1-page clean PDF with literal newline after 'object stream\n' + uncompressed ObjStm no double-count
+    with pikepdf.open(io.BytesIO(base)) as pdf1:
+        del pdf1.pages[1:]
+        pdf1.docinfo["/Title"] = "WinForms object stream\nguide for project"
+        fp_buf = io.BytesIO()
+        pdf1.save(fp_buf, object_stream_mode=pikepdf.ObjectStreamMode.disable)
+    for eng in engines:
+        fp_res = eng.scan_bytes(fp_buf.getvalue(), explain=True)
+        assert fp_res.verdict == "BENIGN"
+        assert [
+            h["id"]
+            for h in fp_res.forensic_dossier["threat_taxonomy"]["ml_label_predictions"]
+            if h["evidence_status"] != "not_observed"
+        ] == []
+
+    with pikepdf.open(io.BytesIO(base)) as pdf_unc:
+        del pdf_unc.pages[1:]
+        pdf_unc.Root.AcroForm = pikepdf.Dictionary(Fields=pikepdf.Array())
+        pdf_unc.Root.OpenAction = pikepdf.Array([pdf_unc.pages[0].obj, pikepdf.Name.FitH, None])
+        unc_buf = io.BytesIO()
+        pdf_unc.save(unc_buf, object_stream_mode=pikepdf.ObjectStreamMode.generate, compress_streams=False)
+    for eng in engines:
+        unc_res = eng.scan_bytes(unc_buf.getvalue(), explain=True)
+        assert unc_res.verdict == "BENIGN"
+        assert [
+            h["id"]
+            for h in unc_res.forensic_dossier["threat_taxonomy"]["ml_label_predictions"]
+            if h["evidence_status"] != "not_observed"
+        ] == []
+
+    empty_rec_incomplete = {
+        **packed_ing,
+        "evasion_unpack_audit": {
+            "hex_escaped_names_decoded": 0,
+            "objstm_unpack_complete": False,
+            "recovered_hidden_triggers": [],
+        },
+    }
+    assert reconcile_taxonomy_observations({}, empty_rec_incomplete, "BENIGN") == set()
+    js_with_limit = {
+        **packed_ing,
+        "non_js_triggers": ["codec_inspection_limit"],
+        "js_semantics": {**packed_ing["js_semantics"], "is_verified_benign_js": True},
+    }
+    assert reconcile_taxonomy_observations({}, js_with_limit, "BENIGN") == set()
+
     # Conformal purity on policy override (ZIP suffix appended to benign PDF):
     poly_pdf = load_real_benign_bytes() + b"PK\x03\x04" + b"\x00" * 26
     for eng in engines:
