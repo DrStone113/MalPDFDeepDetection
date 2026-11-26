@@ -16,7 +16,21 @@ for candidate_src in (PROD_ROOT / "src", REPO_ROOT / "src"):
     if candidate_src.is_dir() and str(candidate_src) not in sys.path:
         sys.path.insert(0, str(candidate_src))
 
-from malpdf.scanner.forensic import DANGEROUS_PATTERNS, deobfuscate_javascript_static, reconcile_taxonomy_observations
+from malpdf.models.v4_graph_numpy import (
+    ACTION_IR_DIM,
+    AUX_TELEMETRY_V4_DIM,
+    EXPECTED_MULTILABEL_V4_ONNX_INPUTS,
+    EXPECTED_MULTILABEL_V4_ONNX_OUTPUTS,
+    MULTILABEL_V4_CONTRACT_VERSION,
+    build_runtime_multilabel_v4_feed_np,
+    validate_multilabel_v4_contract_np,
+)
+from malpdf.scanner.forensic import (
+    DANGEROUS_PATTERNS,
+    deobfuscate_javascript_static,
+    reconcile_taxonomy_observations,
+    verified_zero_js_disproven_heads,
+)
 from malpdf.static.obfuscation import MAX_PDF_BYTES, count_escaped_pdf_names
 from malpdf.static.raw_scan import scan_raw_pdf_tokens
 
@@ -83,9 +97,13 @@ CODE_PRIORITY_ORDER: list[str] = [
     "structural_parser_evasion",
 ]
 
-DEFAULT_ML_CONTRACT_PATH = PROD_ROOT / "configs" / "multilabel_threat_contract.json"
+DEFAULT_ML_V4_CONTRACT_PATH = PROD_ROOT / "configs" / "multilabel_threat_v4_contract.json"
+DEFAULT_ML_V4_ONNX_PATH = PROD_ROOT / "models" / "multilabel_threat_net_v4.onnx"
+LEGACY_ML_V2_CONTRACT_PATH = PROD_ROOT / "configs" / "multilabel_threat_contract.json"
+LEGACY_ML_V2_ONNX_PATH = PROD_ROOT / "models" / "multilabel_threat_net_v2.onnx"
+DEFAULT_ML_CONTRACT_PATH = DEFAULT_ML_V4_CONTRACT_PATH
 DEFAULT_ONNX_MANIFEST_PATH = PROD_ROOT / "configs" / "onnx_manifest.json"
-DEFAULT_ML_ONNX_PATH = PROD_ROOT / "models" / "multilabel_threat_net_v2.onnx"
+DEFAULT_ML_ONNX_PATH = DEFAULT_ML_V4_ONNX_PATH
 
 
 def _sigmoid_np(x: np.ndarray | float) -> np.ndarray | float:
@@ -106,39 +124,206 @@ class ONNXThreatTaxonomyClassifier:
         onnx_path: Path | str | None = None,
         manifest_path: Path | str | None = None,
     ) -> None:
-        c_path = Path(contract_path) if contract_path is not None else DEFAULT_ML_CONTRACT_PATH
-        m_path = Path(onnx_path) if onnx_path is not None else DEFAULT_ML_ONNX_PATH
         man_path = Path(manifest_path) if manifest_path is not None else DEFAULT_ONNX_MANIFEST_PATH
+        manifest = json.loads(man_path.read_text(encoding="utf-8")) if man_path.is_file() else {}
+        ml_meta = manifest.get("multilabel_model") or {}
+
+        use_manifest = contract_path is None and onnx_path is None
+        if use_manifest:
+            if ml_meta.get("filename"):
+                m_path = PROD_ROOT / "models" / str(ml_meta["filename"])
+                c_name = str(
+                    ml_meta.get("contract_filename")
+                    or (
+                        "multilabel_threat_v4_contract.json"
+                        if "v4" in str(ml_meta["filename"]).lower()
+                        else "multilabel_threat_contract.json"
+                    )
+                )
+                c_path = PROD_ROOT / "configs" / c_name
+                if not c_path.is_file() and (REPO_ROOT / "configs" / c_name).is_file():
+                    c_path = REPO_ROOT / "configs" / c_name
+            elif DEFAULT_ML_V4_ONNX_PATH.is_file():
+                m_path = DEFAULT_ML_V4_ONNX_PATH
+                c_path = (
+                    DEFAULT_ML_V4_CONTRACT_PATH
+                    if DEFAULT_ML_V4_CONTRACT_PATH.is_file()
+                    else (REPO_ROOT / "configs" / DEFAULT_ML_V4_CONTRACT_PATH.name)
+                )
+            else:
+                m_path = LEGACY_ML_V2_ONNX_PATH
+                c_path = (
+                    LEGACY_ML_V2_CONTRACT_PATH
+                    if LEGACY_ML_V2_CONTRACT_PATH.is_file()
+                    else (REPO_ROOT / "configs" / LEGACY_ML_V2_CONTRACT_PATH.name)
+                )
+        elif contract_path is not None and onnx_path is None:
+            c_path = Path(contract_path)
+            is_v4_c = False
+            if c_path.is_file():
+                try:
+                    is_v4_c = (
+                        json.loads(c_path.read_text(encoding="utf-8")).get("contract_version")
+                        == MULTILABEL_V4_CONTRACT_VERSION
+                    )
+                except Exception:
+                    is_v4_c = False
+            else:
+                is_v4_c = c_path.name == DEFAULT_ML_V4_CONTRACT_PATH.name
+            m_path = DEFAULT_ML_V4_ONNX_PATH if is_v4_c else LEGACY_ML_V2_ONNX_PATH
+        elif contract_path is None and onnx_path is not None:
+            m_path = Path(onnx_path)
+            is_v4_onnx = False
+            if m_path.is_file():
+                probe_opts = ort.SessionOptions()
+                probe_opts.graph_optimization_level = ort.GraphOptimizationLevel.ORT_DISABLE_ALL
+                probe_sess = ort.InferenceSession(
+                    str(m_path), sess_options=probe_opts, providers=["CPUExecutionProvider"]
+                )
+                probe_inputs = {inp.name for inp in probe_sess.get_inputs()}
+                is_v4_onnx = {"action_ir_features", "aux_telemetry_features"}.issubset(probe_inputs)
+            else:
+                is_v4_onnx = m_path.name == DEFAULT_ML_V4_ONNX_PATH.name
+            c_name = "multilabel_threat_v4_contract.json" if is_v4_onnx else "multilabel_threat_contract.json"
+            c_path = PROD_ROOT / "configs" / c_name
+            if not c_path.is_file() and (REPO_ROOT / "configs" / c_name).is_file():
+                c_path = REPO_ROOT / "configs" / c_name
+        else:
+            c_path = Path(contract_path)  # type: ignore[arg-type]
+            m_path = Path(onnx_path)  # type: ignore[arg-type]
 
         self.ml_weights_loaded = False
+        self.is_v4 = False
+        self.model_version = "StructuralFallback"
+        self.classification_source_name = "structural_fallback"
         self.ml_session: ort.InferenceSession | None = None
         self.label_defs: list[dict[str, Any]] = []
         self.scaler_mean: np.ndarray | None = None
         self.scaler_scale: np.ndarray | None = None
+        self.tab29_center: np.ndarray | None = None
+        self.tab29_scale: np.ndarray | None = None
+        self.label_temperatures: np.ndarray | None = None
+        self.mal_temperature: float = 1.0
 
         if c_path.is_file() and m_path.is_file():
-            if onnx_path is None and man_path.is_file():
-                manifest = json.loads(man_path.read_text(encoding="utf-8"))
-                expected_sha = (manifest.get("multilabel_model") or {}).get("sha256")
-                if expected_sha:
-                    actual_sha = hashlib.sha256(m_path.read_bytes()).hexdigest()
-                    if actual_sha != expected_sha:
-                        raise ValueError("multilabel_onnx_sha256_mismatch")
+            if use_manifest and ml_meta:
+                expected_sha = ml_meta.get("sha256")
+                if expected_sha and hashlib.sha256(m_path.read_bytes()).hexdigest() != expected_sha:
+                    raise ValueError("multilabel_onnx_sha256_mismatch")
+                expected_c_sha = ml_meta.get("contract_sha256")
+                if expected_c_sha:
+                    raw_c = c_path.read_bytes()
+                    if (
+                        hashlib.sha256(raw_c).hexdigest() != expected_c_sha
+                        and hashlib.sha256(raw_c.replace(b"\r\n", b"\n")).hexdigest() != expected_c_sha
+                    ):
+                        raise ValueError("multilabel_contract_sha256_mismatch")
 
             contract_data = json.loads(c_path.read_text(encoding="utf-8"))
+            is_v4 = contract_data.get("contract_version") == MULTILABEL_V4_CONTRACT_VERSION
+            if is_v4:
+                validate_multilabel_v4_contract_np(contract_data)
+
             opts = ort.SessionOptions()
-            opts.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+            opts.graph_optimization_level = (
+                ort.GraphOptimizationLevel.ORT_ENABLE_BASIC if is_v4 else ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+            )
             opts.intra_op_num_threads = 2
-            self.ml_session = ort.InferenceSession(
+            opts.inter_op_num_threads = 1
+            opts.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
+            sess = ort.InferenceSession(
                 str(m_path),
                 sess_options=opts,
                 providers=["CPUExecutionProvider"],
             )
-            self.label_defs = contract_data.get("labels") or self.label_defs
-            self.scaler_mean = np.array(contract_data["scaler_mean"], dtype=np.float32)
-            raw_scale = np.array(contract_data["scaler_scale"], dtype=np.float32)
-            self.scaler_scale = np.where(np.abs(raw_scale) < 1e-6, 1.0, raw_scale)
-            self.ml_weights_loaded = True
+            if is_v4:
+                in_list = sess.get_inputs()
+                out_list = sess.get_outputs()
+                if tuple(i.name for i in in_list) != EXPECTED_MULTILABEL_V4_ONNX_INPUTS:
+                    raise ValueError("invalid_multilabel_v4_onnx_inputs")
+                if tuple(o.name for o in out_list) != EXPECTED_MULTILABEL_V4_ONNX_OUTPUTS:
+                    raise ValueError("invalid_multilabel_v4_onnx_outputs")
+                in_shapes = {i.name: i.shape for i in in_list}
+                out_shapes = {o.name: o.shape for o in out_list}
+                if (
+                    int(in_shapes["tabular_features"][-1]) != 29
+                    or int(in_shapes["action_ir_features"][-1]) != ACTION_IR_DIM
+                    or int(in_shapes["node_features"][-1]) != 23
+                    or int(in_shapes["aux_telemetry_features"][-1]) != AUX_TELEMETRY_V4_DIM
+                    or int(out_shapes["label_logits"][-1]) != 8
+                ):
+                    raise ValueError("invalid_multilabel_v4_onnx_shapes")
+                self.ml_session = sess
+                self.is_v4 = True
+                self.model_version = str(contract_data.get("model_version") or "PDFMultiLabelThreatNet v4")
+                self.classification_source_name = "multilabel_neural_model_v4"
+                self.label_defs = contract_data["labels"]
+                self.tab29_center = np.asarray(contract_data["tab29_center"], dtype=np.float64)
+                self.tab29_scale = np.asarray(contract_data["tab29_scale"], dtype=np.float64)
+                self.label_temperatures = np.asarray(contract_data["label_temperatures"], dtype=np.float64)
+                self.mal_temperature = float(contract_data["mal_temperature"])
+                self.ml_weights_loaded = True
+            else:
+                self.ml_session = sess
+                self.is_v4 = False
+                self.model_version = "PDFMultiLabelThreatNet v2"
+                self.classification_source_name = "multilabel_neural_model_v2"
+                self.label_defs = contract_data.get("labels") or self.label_defs
+                self.scaler_mean = np.array(contract_data["scaler_mean"], dtype=np.float32)
+                raw_scale = np.array(contract_data["scaler_scale"], dtype=np.float32)
+                self.scaler_scale = np.where(np.abs(raw_scale) < 1e-6, 1.0, raw_scale)
+                self.ml_weights_loaded = True
+
+    def _predict_multilabel_v4_onnx(
+        self,
+        raw_pdf_bytes: bytes,
+        raw_tokens: dict[str, int],
+        ingest_data: dict[str, Any],
+        escaped_names: float,
+        has_obfuscated_js: bool,
+        all_indicators: set[str],
+        matched_cves: list[tuple[str, str]],
+        has_export_dropper: bool,
+        has_launch: bool,
+        has_submit_form: bool,
+        has_embedded_file: bool,
+        has_stream_anomaly: bool,
+        v4_graph_feed: dict[str, np.ndarray] | None,
+    ) -> tuple[list[float], float] | None:
+        if (
+            not self.ml_weights_loaded
+            or not self.is_v4
+            or self.ml_session is None
+            or self.tab29_center is None
+            or self.tab29_scale is None
+            or self.label_temperatures is None
+        ):
+            return None
+        feed = build_runtime_multilabel_v4_feed_np(
+            raw_pdf_bytes=raw_pdf_bytes,
+            raw_tokens=raw_tokens,
+            ingest_data=ingest_data,
+            tab29_center=self.tab29_center,
+            tab29_scale=self.tab29_scale,
+            escaped_names=escaped_names,
+            has_obfuscated_js=has_obfuscated_js,
+            all_indicators=all_indicators,
+            matched_cves=matched_cves,
+            has_export_dropper=has_export_dropper,
+            has_launch=has_launch,
+            has_submit_form=has_submit_form,
+            has_embedded_file=has_embedded_file,
+            has_stream_anomaly=has_stream_anomaly,
+            v4_graph_feed=v4_graph_feed,
+        )
+        if feed is None:
+            return None
+        label_logits, mal_logit = self.ml_session.run(None, feed)
+        lbl_z = np.asarray(label_logits, dtype=np.float64)[0]
+        mal_z = float(np.asarray(mal_logit, dtype=np.float64).reshape(-1)[0])
+        probs = [float(p) for p in _sigmoid_np(lbl_z / self.label_temperatures).tolist()]  # type: ignore[union-attr]
+        aux_mal_prob = float(_sigmoid_np(mal_z / self.mal_temperature))
+        return probs, aux_mal_prob
 
     def _predict_multilabel_onnx(
         self,
@@ -278,6 +463,7 @@ class ONNXThreatTaxonomyClassifier:
         forensic_dossier: dict[str, Any],
         verdict: str | None,
         malware_prob: float | None,
+        v4_graph_feed: dict[str, np.ndarray] | None = None,
     ) -> dict[str, Any]:
         raw_tokens = ingest_data.get("raw_tokens") or (scan_raw_pdf_tokens(raw_pdf_bytes) if raw_pdf_bytes else {})
         records = ingest_data.get("raw_records") or []
@@ -396,12 +582,17 @@ class ONNXThreatTaxonomyClassifier:
         if decomp_exceeded:
             anomaly_parts.append("vượt ngưỡng tỷ lệ giải nén")
 
+        has_unextracted_js = (not password_locked) and (
+            "javascript_body_unavailable" in (js_semantics.get("unverified_reasons") or ())
+        )
         observations = {
             "js_script_exec": (
                 f"Trích xuất được {len(scripts)} đoạn JavaScript"
                 if scripts
                 else "Ghi nhận khóa JavaScript trong cấu trúc tệp"
                 if has_js
+                else "Ghi nhận khóa JavaScript chưa trích xuất được thân mã trong cấu trúc tệp"
+                if has_unextracted_js
                 else None
             ),
             "auto_open_trigger": (
@@ -429,19 +620,47 @@ class ONNXThreatTaxonomyClassifier:
             "structural_parser_evasion": (", ".join(anomaly_parts).capitalize() + "." if has_stream_anomaly else None),
         }
 
-        suppressed_heads = reconcile_taxonomy_observations(observations, ingest_data, verdict)
-        ml_out = self._predict_multilabel_onnx(
-            raw_pdf_bytes=raw_pdf_bytes,
-            raw_tokens=raw_tokens,
-            ingest_data=ingest_data,
-            has_obfuscated_js=has_obfuscated_js,
-            has_embedded_file=has_embedded_file or has_export_dropper,
-            has_launch=has_launch or raw_tokens.get("Launch", 0) > 0,
-            structural_uri_count=structural_uri_count,
+        escaped_names = (
+            float(count_escaped_pdf_names(raw_pdf_bytes, max_bytes=max(MAX_PDF_BYTES, len(raw_pdf_bytes))))
+            if raw_pdf_bytes
+            else 0.0
         )
+        suppressed_heads = reconcile_taxonomy_observations(
+            observations, ingest_data, verdict
+        ) | verified_zero_js_disproven_heads(observations, ingest_data, escaped_names)
+
+        blocked_scan = verdict == "UNAVAILABLE" or bool(ingest_data.get("prediction_blockers"))
+        if blocked_scan:
+            ml_out = None
+        elif self.is_v4:
+            ml_out = self._predict_multilabel_v4_onnx(
+                raw_pdf_bytes=raw_pdf_bytes,
+                raw_tokens=raw_tokens,
+                ingest_data=ingest_data,
+                escaped_names=escaped_names,
+                has_obfuscated_js=has_obfuscated_js,
+                all_indicators=all_indicators,
+                matched_cves=matched_cves,
+                has_export_dropper=has_export_dropper,
+                has_launch=has_launch or raw_tokens.get("Launch", 0) > 0,
+                has_submit_form=has_submit_form,
+                has_embedded_file=has_embedded_file or has_export_dropper,
+                has_stream_anomaly=has_stream_anomaly,
+                v4_graph_feed=v4_graph_feed,
+            )
+        else:
+            ml_out = self._predict_multilabel_onnx(
+                raw_pdf_bytes=raw_pdf_bytes,
+                raw_tokens=raw_tokens,
+                ingest_data=ingest_data,
+                has_obfuscated_js=has_obfuscated_js,
+                has_embedded_file=has_embedded_file or has_export_dropper,
+                has_launch=has_launch or raw_tokens.get("Launch", 0) > 0,
+                structural_uri_count=structural_uri_count,
+            )
 
         raw_probs, aux_mal_prob = ml_out if ml_out is not None else (None, None)
-        classification_source = "multilabel_neural_model_v2" if raw_probs is not None else "structural_fallback"
+        classification_source = self.classification_source_name if raw_probs is not None else "structural_fallback"
         ml_label_predictions: list[dict[str, Any]] = []
         analyzer_detections: list[dict[str, Any]] = []
 
@@ -459,9 +678,14 @@ class ONNXThreatTaxonomyClassifier:
             lid = str(definition["id"])
             score = float(raw_probs[idx]) if raw_probs is not None else None
             threshold = float(definition.get("threshold", 0.50)) if score is not None else None
+            flag_enabled = bool(definition.get("model_flag_enabled", True))
             evidence = observations.get(lid)
             model_flagged = (
-                lid not in suppressed_heads and score is not None and threshold is not None and score >= threshold
+                flag_enabled
+                and lid not in suppressed_heads
+                and score is not None
+                and threshold is not None
+                and score >= threshold
             )
             observed = evidence is not None
             status = "observed" if observed else "model_signal" if model_flagged else "not_observed"
@@ -687,6 +911,7 @@ class ONNXThreatTaxonomyClassifier:
         return {
             "classification_source": classification_source,
             "model_name": "PDFMultiLabelThreatNet-ONNX" if self.ml_weights_loaded else "StructuralFallback",
+            "model_version": self.model_version if self.ml_weights_loaded else "StructuralFallback",
             "ml_weights_loaded": self.ml_weights_loaded,
             "aux_malware_probability": round(float(aux_mal_prob), 4) if aux_mal_prob is not None else None,
             "threat_label": threat_label,

@@ -21,15 +21,19 @@
     "phase_2_max_logit_abs_diff": 1.9073486328125e-06
   },
   "multilabel_model": {
-    "filename": "multilabel_threat_net_v2.onnx",
-    "sha256": "3361be682ceff8278b25eef1a0d8ad4ecb3c3f79081e1434fc15798691af5900",
-    "size_bytes": 4006327,
-    "parameter_count": 971034,
-    "max_logit_abs_diff_vs_pytorch": 7.63e-06
+    "filename": "multilabel_threat_net_v4.onnx",
+    "model_version": "PDFMultiLabelThreatNet v4",
+    "source_run": "run_20261126T042911584695Z_87fc6ce2630e",
+    "contract_filename": "multilabel_threat_v4_contract.json",
+    "contract_sha256": "6e7df8d3081f108d8c2b080888a8c10104dfa3fba4c29417996ba0c0afbb9c11",
+    "sha256": "e4b66c30c7b29c5309189f2cab313c25c7eeb6bf22efa5684b231a84e41e8003",
+    "size_bytes": 4022990,
+    "parameter_count": 988721,
+    "max_logit_abs_diff_vs_pytorch": 3.81e-06
   },
   "neural_forward_benchmark_cpu": {
-    "pytorch_median_ms": 4.642,
-    "onnxruntime_median_ms": 1.73,
-    "speedup_factor": 2.68
+    "pytorch_median_ms": 7.107,
+    "onnxruntime_median_ms": 2.08,
+    "speedup_factor": 3.42
   }
 }

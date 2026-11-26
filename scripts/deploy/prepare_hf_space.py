@@ -37,14 +37,27 @@ def copy_clean_tree(src: Path, dst: Path) -> None:
 
 def ensure_onnx_models_exported() -> None:
     want_v4 = (REPO_ROOT / "configs" / "transgraph_v4_contract.json").is_file()
+    want_ml_v4 = (REPO_ROOT / "configs" / "multilabel_threat_v4_contract.json").is_file()
     bin_onnx = PROD_DIR / "models" / ("pdf_transgraph_v4.onnx" if want_v4 else "pdf_transgraph_v3.onnx")
-    ml_onnx = PROD_DIR / "models" / "multilabel_threat_net_v2.onnx"
+    ml_onnx = PROD_DIR / "models" / ("multilabel_threat_net_v4.onnx" if want_ml_v4 else "multilabel_threat_net_v2.onnx")
     manifest = PROD_DIR / "configs" / "onnx_manifest.json"
     contract = PROD_DIR / "configs" / ("transgraph_v4_contract.json" if want_v4 else "transgraph_v3_contract.json")
-    need_export = not all(path.is_file() for path in (bin_onnx, ml_onnx, manifest, contract))
+    ml_contract = (
+        PROD_DIR
+        / "configs"
+        / ("multilabel_threat_v4_contract.json" if want_ml_v4 else "multilabel_threat_contract.json")
+    )
+    need_export = not all(path.is_file() for path in (bin_onnx, ml_onnx, manifest, contract, ml_contract))
     if not need_export:
-        meta = json.loads(manifest.read_text(encoding="utf-8")).get("binary_model") or {}
-        if meta.get("filename") != bin_onnx.name or meta.get("sha256") != _sha256(bin_onnx):
+        manifest_doc = json.loads(manifest.read_text(encoding="utf-8"))
+        meta = manifest_doc.get("binary_model") or {}
+        ml_meta = manifest_doc.get("multilabel_model") or {}
+        if (
+            meta.get("filename") != bin_onnx.name
+            or meta.get("sha256") != _sha256(bin_onnx)
+            or ml_meta.get("filename") != ml_onnx.name
+            or ml_meta.get("sha256") != _sha256(ml_onnx)
+        ):
             need_export = True
     if not need_export:
         return
@@ -79,6 +92,54 @@ def verify_bundle_manifest_integrity(target_dir: Path) -> None:
         expected_conf = binary_meta.get("conformal_sha256")
         if not conf_file.is_file() or (expected_conf and _sha256_lf(conf_file) != expected_conf):
             raise ValueError("hf_bundle_conformal_v4_sha256_mismatch")
+
+    ml_meta = manifest.get("multilabel_model") or {}
+    ml_filename = str(ml_meta.get("filename") or "")
+    ml_file = target_dir / "models" / ml_filename
+    if not ml_filename or not ml_file.is_file() or _sha256(ml_file) != ml_meta.get("sha256"):
+        raise ValueError("hf_bundle_multilabel_onnx_sha256_mismatch")
+    if ml_filename == "multilabel_threat_net_v4.onnx":
+        ml_c_name = str(ml_meta.get("contract_filename") or "multilabel_threat_v4_contract.json")
+        ml_c_file = target_dir / "configs" / ml_c_name
+        if not ml_c_file.is_file() or _sha256_lf(ml_c_file) != ml_meta.get("contract_sha256"):
+            raise ValueError("hf_bundle_multilabel_v4_contract_sha256_mismatch")
+        for stale_ml_rel in (
+            Path("models/multilabel_threat_net_v2.onnx"),
+            Path("configs/multilabel_threat_contract.json"),
+        ):
+            stale_ml_path = target_dir / stale_ml_rel
+            if stale_ml_path.exists():
+                stale_ml_path.unlink()
+        bundle_src = str(target_dir / "src")
+        if bundle_src not in sys.path:
+            sys.path.insert(0, bundle_src)
+        from malpdf.models.v4_graph_numpy import EXPECTED_MULTILABEL_HEAD_IDS_V4, validate_multilabel_v4_contract_np
+
+        validate_multilabel_v4_contract_np(json.loads(ml_c_file.read_text(encoding="utf-8")))
+        import os
+        import subprocess
+
+        smoke_env = {**os.environ, "MALPDF_REVIEWED_FIXTURES": str(REPO_ROOT / "tests" / "fixtures")}
+        smoke_code = (
+            "import json, sys; from pathlib import Path; "
+            f"b = Path({str(target_dir)!r}); sys.path[:0] = [str(b), str(b / 'src')]; "
+            "from onnx_engine import ONNXMalPDFScannerEngine; "
+            "from onnx_taxonomy import ONNXThreatTaxonomyClassifier; "
+            "from malpdf.cdr.fixtures import load_real_benign_bytes, load_real_threat_bytes; "
+            "sc = ONNXMalPDFScannerEngine(model_path=b/'models'/'pdf_transgraph_v4.onnx', "
+            "scaler_path=b/'configs'/'tabular_scaler.json', manifest_path=b/'configs'/'onnx_manifest.json'); "
+            "sc.taxonomy = ONNXThreatTaxonomyClassifier(contract_path=b/'configs'/'multilabel_threat_v4_contract.json', "
+            "onnx_path=b/'models'/'multilabel_threat_net_v4.onnx', manifest_path=b/'configs'/'onnx_manifest.json'); "
+            "assert sc.weights_loaded and sc.taxonomy.ml_weights_loaded and sc.taxonomy.is_v4; "
+            "rb = sc.scan_bytes(load_real_benign_bytes(), explain=True); "
+            "rt = sc.scan_bytes(load_real_threat_bytes(), explain=True); "
+            "assert rb.verdict == 'BENIGN' and rt.verdict == 'MALICIOUS'; "
+            "assert rb.threat_taxonomy['classification_source'] == 'multilabel_neural_model_v4'; "
+            "assert rt.threat_taxonomy['classification_source'] == 'multilabel_neural_model_v4'; "
+            f"assert tuple(h['id'] for h in rb.threat_taxonomy['ml_label_predictions']) == {EXPECTED_MULTILABEL_HEAD_IDS_V4!r}; "
+            "assert rt.threat_taxonomy['detected_count'] >= 4"
+        )
+        subprocess.run([sys.executable, "-c", smoke_code], check=True, env=smoke_env)
 
 
 def prepare_bundle(target_dir: Path) -> None:

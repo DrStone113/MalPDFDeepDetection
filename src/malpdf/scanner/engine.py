@@ -58,6 +58,7 @@ def _select_default_model_path() -> Path:
 
 
 DEFAULT_MODEL_PATH = _select_default_model_path()
+_INITIAL_DEFAULT_MODEL_PATH = DEFAULT_MODEL_PATH
 FALLBACK_MODEL_PATH = FALLBACK_V3_MODEL_PATH
 
 
@@ -110,7 +111,11 @@ class MalPDFScannerEngine:
             self.device = torch.device(device)
 
         resolved_path = None
-        dynamic_default = _select_default_model_path()
+        dynamic_default = (
+            DEFAULT_MODEL_PATH
+            if ("MALPDF_MODEL_PATH" not in os.environ and DEFAULT_MODEL_PATH != _INITIAL_DEFAULT_MODEL_PATH)
+            else _select_default_model_path()
+        )
         if model_path is not None:
             resolved_path = Path(model_path)
         elif (
@@ -523,6 +528,8 @@ class MalPDFScannerEngine:
             "ast_branch_pct": ast_branch_pct,
             "tabular_branch_pct": tabular_branch_pct,
         }
+        if self.is_v4:
+            proof_metrics["action_ir_branch_pct"] = ast_branch_pct
         return node_saliency, edge_attention, ast_token_attention, tabular_grad_importance, proof_metrics
 
     def scan_bytes(
@@ -552,8 +559,20 @@ class MalPDFScannerEngine:
         pages_count = int(ingest_data.get("pages_count", 1))
         raw_entropy = float(ingest_data.get("raw_entropy", 0.0))
 
+        model_gen = "v4" if self.is_v4 else ("v3" if self.is_v3 else "v2")
+        mod_schema = (
+            "v4_dag_action_ir_tabular"
+            if model_gen == "v4"
+            else ("v3_tabular_graph" if model_gen == "v3" else "v2_graph_ast")
+        )
+        static_dossier["model_generation"] = model_gen
+        static_dossier["modality_schema"] = mod_schema
         if ingest_data.get("prediction_blockers"):
-            dossier = self.forensic.explain(ingest_data, malware_prob=None) if explain else static_dossier
+            dossier = (
+                self.forensic.explain(ingest_data, malware_prob=None, model_generation=model_gen)
+                if explain
+                else static_dossier
+            )
             taxonomy_info = self.taxonomy.classify(
                 raw_pdf_bytes=data,
                 ingest_data=ingest_data,
@@ -650,6 +669,11 @@ class MalPDFScannerEngine:
                 graph_present,
             )[0].item()
 
+        request_v4_feed = (
+            collate_v4_numpy_feed(tab.detach().cpu().numpy(), [single_graph_tuple(nf, nt, ei, er, graph_present)])
+            if self.is_v4
+            else None
+        )
         with self._model_lock, torch.no_grad():
             logits, attn_weights = self._forward(nf, nt, ei, er, b, tok, tab, graph_present)
             raw_logit = float(logits.item())
@@ -710,6 +734,7 @@ class MalPDFScannerEngine:
                 ast_token_attention=ast_token_attention,
                 tabular_grad_importance=tabular_grad_importance,
                 xai_proof_metrics=proof_metrics,
+                model_generation=model_gen,
             )
 
         graph_nodes: list[dict[str, Any]] = []
@@ -795,6 +820,7 @@ class MalPDFScannerEngine:
             forensic_dossier=forensic_dossier,
             verdict=verdict,
             malware_prob=prob,
+            v4_graph_feed=request_v4_feed,
         )
         neural_eval_prob = raw_prob if has_policy_enforcement else prob
         if self.conformal is not None and math.isfinite(neural_eval_prob):

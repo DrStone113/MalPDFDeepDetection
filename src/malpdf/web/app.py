@@ -181,21 +181,21 @@ def health() -> dict[str, Any]:
     )
     ast_enc = getattr(model, "ast_encoder", None)
     ir_enc = getattr(model, "action_ir_encoder", None)
-    ast_layers = (
-        len(getattr(getattr(ast_enc, "encoder", None), "layers", []) or [])
-        if ast_enc is not None
-        else (2 if ir_enc is not None else 0)
-    )
+    ast_layers = len(getattr(getattr(ast_enc, "encoder", None), "layers", []) or []) if ast_enc is not None else 0
+    ml_loaded = bool(scanner.taxonomy.ml_weights_loaded)
+    ml_ver = getattr(scanner.taxonomy, "model_version", "PDFMultiLabelThreatNet v4")
     session = optional_session()
     recent_jobs = session.store.list_jobs(limit=10) if session is not None else []
     node_dim = getattr(scanner, "node_in_dim", 19)
     return {
-        "status": "healthy" if scanner.weights_loaded else "unavailable",
+        "status": "healthy" if (scanner.weights_loaded and ml_loaded) else "unavailable",
         "prediction_available": bool(scanner.weights_loaded),
         "prediction_blockers": [],
         "model": f"{scanner.model_version} ({node_dim}D)",
         "temperature": round(scanner.temperature, 6),
         "decision_threshold": round(scanner.decision_threshold, 6),
+        "multilabel_model": ml_ver if ml_loaded else "StructuralFallback",
+        "multilabel_weights_loaded": ml_loaded,
         "node_in_dim": node_dim,
         "ood_threshold": scanner.ood_threshold,
         "cdr_engine": "pikepdf-inplace",
@@ -205,6 +205,8 @@ def health() -> dict[str, Any]:
         "checkpoint": scanner.model_path.name if scanner.model_path else None,
         "parameter_count": scanner.parameter_count,
         "hgt_layers": hgt_layers,
+        "graph_encoder_layers": hgt_layers,
+        "action_ir_features": 24 if ir_enc is not None else 0,
         "ast_encoder_layers": ast_layers,
         "tabular_features": scanner.tabular_in_features,
         "torch_version": torch.__version__,

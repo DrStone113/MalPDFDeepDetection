@@ -233,8 +233,10 @@ def env_config_js() -> Response:
 def health() -> dict[str, Any]:
     session = optional_session()
     recent_jobs = session.store.list_jobs(limit=10) if session is not None else []
+    ml_loaded = bool(scanner.taxonomy.ml_weights_loaded)
+    ml_ver = getattr(scanner.taxonomy, "model_version", "PDFMultiLabelThreatNet v4")
     return {
-        "status": "healthy" if scanner.weights_loaded else "unavailable",
+        "status": "healthy" if (scanner.weights_loaded and ml_loaded) else "unavailable",
         "runtime": "onnxruntime",
         "onnxruntime_version": ort.__version__,
         "prediction_available": bool(scanner.weights_loaded),
@@ -242,8 +244,8 @@ def health() -> dict[str, Any]:
         "model": f"{scanner.model_version} ({scanner.node_in_dim}D ONNX)",
         "temperature": round(scanner.temperature, 6),
         "decision_threshold": round(scanner.decision_threshold, 6),
-        "multilabel_model": "PDFMultiLabelThreatNet v2 (ONNX)",
-        "multilabel_weights_loaded": bool(scanner.taxonomy.ml_weights_loaded),
+        "multilabel_model": f"{ml_ver} (ONNX)" if ml_loaded else "StructuralFallback",
+        "multilabel_weights_loaded": ml_loaded,
         "node_in_dim": scanner.node_in_dim,
         "ood_threshold": scanner.ood_threshold,
         "cdr_engine": "pikepdf-inplace",
@@ -252,8 +254,10 @@ def health() -> dict[str, Any]:
         "weights_loaded": scanner.weights_loaded,
         "checkpoint": scanner.model_path.name if scanner.model_path else None,
         "parameter_count": scanner.parameter_count,
-        "hgt_layers": 2,
-        "ast_encoder_layers": 0 if scanner.is_v3 else 2,
+        "hgt_layers": 3 if scanner.is_v4 else 2,
+        "graph_encoder_layers": 3 if scanner.is_v4 else 2,
+        "action_ir_features": 24 if scanner.is_v4 else 0,
+        "ast_encoder_layers": 0 if scanner.uses_regime_b else 2,
         "tabular_features": scanner.tabular_in_features,
         "python_version": platform.python_version(),
         "uptime_s": round(time.time() - SERVICE_STARTED_AT, 1),

@@ -1,16 +1,16 @@
 # MalPDF DeepDetection — Thư mục Triển khai Production (ONNX Runtime)
 
-Thư mục `production/` đóng gói dịch vụ kiểm tra PDF (**PDF-TransGraph v4** + **PDFMultiLabelThreatNet v2** 8 nhãn + **Mondrian Conformal v4**), giải thích XAI, làm sạch tệp tại chỗ với `pikepdf` (CDR) và cổng kiểm tra Email (`.eml`) chạy hoàn toàn trên ONNX Runtime (không phụ thuộc `torch`).
+Thư mục `production/` đóng gói dịch vụ kiểm tra PDF (**PDF-TransGraph v4** + **PDFMultiLabelThreatNet v4** 8 nhãn + **Mondrian Conformal v4**), giải thích XAI 3 nhánh, làm sạch tệp tại chỗ với `pikepdf` (CDR) và cổng kiểm tra Email (`.eml`) chạy hoàn toàn trên ONNX Runtime (không phụ thuộc `torch`).
 
 > Tài liệu hướng dẫn triển khai và xử lý sự cố: [`docs/deployment_huggingface_and_onnx.md`](../docs/deployment_huggingface_and_onnx.md).
 
 ## 1. Cấu trúc thư mục
 
 - `models/pdf_transgraph_v4.onnx`: Mô hình nhị phân chính **PDF-TransGraph v4** (`Opset 17`, đồ thị DAG Shortest-Path Graphormer 23 chiều, biểu diễn chuỗi kích hoạt `ActionSubgraphIR` 24 chiều và 29 đặc trưng cấu trúc/tệp).
-- `models/multilabel_threat_net_v2.onnx`: Mô hình phân loại đa nhãn 8 nhóm hành vi (`Opset 17`, 52 đặc trưng bảng/từ khóa và đồ thị 23 chiều).
+- `models/multilabel_threat_net_v4.onnx`: Mô hình phân loại đa nhãn **PDFMultiLabelThreatNet v4** (`Opset 17`, đồng bộ thế hệ với `v4` qua đồ thị DAG 23 chiều, `ActionSubgraphIR` 24 chiều, 29 đặc trưng Regime-B `log1p`-RobustScaled và 16 chỉ báo phụ bị chặn log).
 - `configs/transgraph_v4_contract.json` & `configs/conformal_calibration_v4.json`: Khóa toàn vẹn mô hình v4 và hiệu chuẩn Mondrian Conformal v4 (SHA-256 chuẩn hóa `LF`, nhiệt độ hiệu chuẩn `Val_Calib`, ngưỡng quyết định và phân vị không tương thích theo lớp).
 - `configs/onnx_manifest.json`: Bảng đối chiếu SHA-256 mô hình/hợp đồng, sai số logit so với PyTorch (`< 1e-5`) và số liệu suy luận thực tế.
-- `configs/tabular_scaler.json` & `configs/multilabel_threat_contract.json`: Bộ chuẩn hóa Z-score và ngưỡng của 8 đầu dự đoán.
+- `configs/multilabel_threat_v4_contract.json` & `configs/tabular_scaler.json`: Hợp đồng chuẩn hóa log-Robust, nhiệt độ hiệu chuẩn từng đầu và ngưỡng kiểm soát FPR của 8 đầu dự đoán `v4`.
 - `onnx_engine.py`: Bộ máy suy luận `ONNXMalPDFScannerEngine` (trích xuất DAG/Action-IR thuần NumPy không cần PyTorch, tính XAI occlusion trên ONNX Runtime và cắt bỏ khóa kích hoạt đối chứng bằng `pikepdf`).
 - `onnx_taxonomy.py`: Bộ phân loại hành vi 8 nhãn `ONNXThreatTaxonomyClassifier`.
 - `web_service.py`: Dịch vụ FastAPI (`production_router` và `app`) phục vụ giao diện web và API `/api/scan`, `/api/disarm`, `/api/xai/ablate`, `/api/gateway/inspect-eml`, `/favicon.ico`, `/env-config.js`.

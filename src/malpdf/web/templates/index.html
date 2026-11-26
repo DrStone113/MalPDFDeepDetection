@@ -337,12 +337,12 @@ class="lg:col-span-8 xl:col-span-9 min-h-[164px] border-2 border-dashed border-s
                   <span class="material-symbols-outlined text-primary-container text-[20px]" data-icon="analytics" aria-hidden="true"></span>
                   <h2 class="font-bold text-base text-on-surface">Mức đóng góp của các nguồn đặc trưng</h2>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div id="xai-modality-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <div class="flex justify-between text-xs font-medium mb-1">
                       <span class="text-on-surface flex items-center gap-1.5">
                         <span class="w-2.5 h-2.5 rounded-full bg-primary-container"></span>
-                        <span>Đồ thị cấu trúc PDF</span>
+                        <span id="xai-graph-branch-label">Đồ thị cấu trúc PDF</span>
                       </span>
                       <span id="xai-graph-weight" class="font-mono font-bold text-primary-container num">--</span>
                     </div>
@@ -350,11 +350,23 @@ class="lg:col-span-8 xl:col-span-9 min-h-[164px] border-2 border-dashed border-s
                       <div id="xai-graph-bar" class="bg-primary-container shimmer-bar h-2.5 rounded-full transition-all duration-500"></div>
                     </div>
                   </div>
-                  <div>
+                  <div id="xai-tabular-wrap">
+                    <div class="flex justify-between text-xs font-medium mb-1">
+                      <span class="text-on-surface flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+                        <span id="xai-tabular-branch-label">Chỉ số cấu trúc &amp; thống kê tệp</span>
+                      </span>
+                      <span id="xai-tabular-weight" class="font-mono font-bold text-emerald-700 num">--</span>
+                    </div>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                      <div id="xai-tabular-bar" class="bg-emerald-600 shimmer-bar h-2.5 rounded-full transition-all duration-500"></div>
+                    </div>
+                  </div>
+                  <div id="xai-action-ir-wrap">
                     <div class="flex justify-between text-xs font-medium mb-1">
                       <span class="text-on-surface flex items-center gap-1.5">
                         <span class="w-2.5 h-2.5 rounded-full bg-slate-600"></span>
-                        <span id="xai-secondary-branch-label">Chỉ số cấu trúc &amp; thống kê tệp</span>
+                        <span id="xai-secondary-branch-label">Chuỗi hành động &amp; đích thực thi</span>
                       </span>
                       <span id="xai-ast-weight" class="font-mono font-bold text-slate-700 num">--</span>
                     </div>

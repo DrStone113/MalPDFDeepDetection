@@ -29,7 +29,9 @@ def test_explicit_missing_checkpoint_is_not_replaced_by_another_model(tmp_path: 
         engine.MalPDFScannerEngine(model_path=tmp_path / "not_trained.pt", device="cpu")
 
 
-def test_missing_default_checkpoints_never_produce_random_inference(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_missing_default_checkpoints_never_produce_random_inference(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.setattr(engine, "DEFAULT_MODEL_PATH", tmp_path / "primary.pt")
     monkeypatch.setattr(engine, "FALLBACK_MODEL_PATH", tmp_path / "fallback.pt")
     try:
@@ -64,7 +66,9 @@ def test_invalid_scaler_is_rejected_before_inference(tmp_path: Path, payload: di
         InstantPDFIngestion(scaler_path=scaler_path)
 
 
-def test_missing_fixture_is_reported_without_generating_a_document(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_missing_fixture_is_reported_without_generating_a_document(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     fixture_dir = tmp_path / "fixtures"
     monkeypatch.setattr(fixtures, "FIXTURES_DIR", fixture_dir)
     monkeypatch.setattr(fixtures, "BENIGN_FIXTURE_PATH", fixture_dir / "real_benign_document.pdf")
@@ -141,7 +145,9 @@ def test_health_does_not_claim_readiness_without_loaded_weights(monkeypatch: pyt
     assert response.json()["status"] == "unavailable"
 
 
-@pytest.mark.parametrize("data", [b"", b"not a PDF", b"%PDF-1.7\n%%EOF\n"], ids=["empty", "missing_header", "missing_catalog"])
+@pytest.mark.parametrize(
+    "data", [b"", b"not a PDF", b"%PDF-1.7\n%%EOF\n"], ids=["empty", "missing_header", "missing_catalog"]
+)
 def test_invalid_document_never_becomes_a_fabricated_graph(data: bytes) -> None:
     ingestion = InstantPDFIngestion()
     with pytest.raises(ValueError):
@@ -356,7 +362,9 @@ def test_ai_explainer_multi_intent_qa_and_cdr_context() -> None:
             "verdict_after": "BENIGN",
         },
     }
-    ans_cdr = explainer.answer_question(scan_dict, "Kết quả tẩy độc CDR và mã JavaScript của tệp này?", cdr_audit=cdr_audit)
+    ans_cdr = explainer.answer_question(
+        scan_dict, "Kết quả tẩy độc CDR và mã JavaScript của tệp này?", cdr_audit=cdr_audit
+    )
     assert "6.02%" not in ans_cdr
     assert "3.12%" in ans_cdr
     assert "JavaScript" in ans_cdr or "Script" in ans_cdr
@@ -432,8 +440,9 @@ def test_threat_taxonomy_and_virustotal_hash_endpoint(monkeypatch: pytest.Monkey
 
     threat_res = scanner.scan_bytes(threat_bytes, file_name="real_threat_document.pdf", explain=True)
     tax = threat_res.threat_taxonomy
-    assert tax["classification_source"] == "multilabel_neural_model_v2"
+    assert tax["classification_source"] == "multilabel_neural_model_v4"
     assert tax["model_name"] == "PDFMultiLabelThreatNet"
+    assert tax["model_version"] == "PDFMultiLabelThreatNet v4"
     assert tax["ml_weights_loaded"] is True
     assert len(tax["ml_label_predictions"]) == 8
     pred_map = {p["id"]: p for p in tax["ml_label_predictions"]}
@@ -452,24 +461,31 @@ def test_threat_taxonomy_and_virustotal_hash_endpoint(monkeypatch: pytest.Monkey
     assert "Action (/OpenAction)" in threat_res.forensic_dossier["attack_path"]
 
     benign_res = scanner.scan_bytes(benign_bytes, file_name="real_benign_document.pdf", explain=True)
-    assert benign_res.threat_taxonomy["classification_source"] == "multilabel_neural_model_v2"
+    assert benign_res.threat_taxonomy["classification_source"] == "multilabel_neural_model_v4"
     assert benign_res.threat_taxonomy["threat_label"] == "Clean.PDF.Verified"
     assert benign_res.threat_taxonomy["detected_count"] == 0
     assert benign_res.threat_taxonomy["mitre_attack"] == []
-    assert all(p["detected"] is False and p["probability"] < 0.15 for p in benign_res.threat_taxonomy["ml_label_predictions"])
+    assert all(
+        p["detected"] is False and p["probability"] < 0.15 for p in benign_res.threat_taxonomy["ml_label_predictions"]
+    )
 
-    disarmed_bytes, cdr_log = cdr_engine.PDFDisarmer().sanitize_bytes(threat_bytes, file_name="real_threat_document.pdf")
+    disarmed_bytes, cdr_log = cdr_engine.PDFDisarmer().sanitize_bytes(
+        threat_bytes, file_name="real_threat_document.pdf"
+    )
     assert len(disarmed_bytes) > 0.8 * len(threat_bytes)
     assert cdr_log.sanitized_pages == cdr_log.original_pages
     import pymupdf as fitz
+
     with fitz.open(stream=disarmed_bytes, filetype="pdf") as doc:
         extracted_text = "".join(page.get_text("text") for page in doc)
     assert len(extracted_text.strip()) > 0
     disarmed_res = scanner.scan_bytes(disarmed_bytes, file_name="disarmed.pdf", explain=True)
-    assert disarmed_res.threat_taxonomy["classification_source"] == "multilabel_neural_model_v2"
+    assert disarmed_res.threat_taxonomy["classification_source"] == "multilabel_neural_model_v4"
     assert disarmed_res.threat_taxonomy["threat_label"] == "Clean.PDF.Verified"
     assert disarmed_res.threat_taxonomy["detected_count"] == 0
-    assert all(p["detected"] is False and p["probability"] < 0.15 for p in disarmed_res.threat_taxonomy["ml_label_predictions"])
+    assert all(
+        p["detected"] is False and p["probability"] < 0.15 for p in disarmed_res.threat_taxonomy["ml_label_predictions"]
+    )
 
     explainer = AIThreatExplainer()
     qa_tax = explainer.answer_question(threat_res.to_dict(), "Nó là loại mã độc gì như VirusTotal?")

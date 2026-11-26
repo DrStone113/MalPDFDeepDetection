@@ -1053,19 +1053,93 @@ function renderScanResult(data, cdrAudit = null) {
 
   if (data.forensic_dossier) {
     const weights = data.forensic_dossier.cross_modal_weights || {};
-    const gw = Number.isFinite(weights.graph_weight) ? (weights.graph_weight * 100).toFixed(1) : null;
+    const modGridEl = document.getElementById("xai-modality-grid");
+    const graphLabelEl = document.getElementById("xai-graph-branch-label");
+    const tabWrapEl = document.getElementById("xai-tabular-wrap");
+    const tabWeightEl = document.getElementById("xai-tabular-weight");
+    const tabBarEl = document.getElementById("xai-tabular-bar");
+    const irWrapEl = document.getElementById("xai-action-ir-wrap");
     const secLabelEl = document.getElementById("xai-secondary-branch-label");
-    const useTabularAsSecondary =
-      Number.isFinite(weights.tabular_weight) && (!Number.isFinite(weights.ast_weight) || weights.ast_weight === 0);
-    const secWeight = useTabularAsSecondary ? weights.tabular_weight : weights.ast_weight;
-    if (secLabelEl) {
-      secLabelEl.textContent = useTabularAsSecondary ? "Chỉ số cấu trúc & thống kê tệp" : "Mã JavaScript (AST)";
+
+    const modalitySchema =
+      data.forensic_dossier.modality_schema ||
+      weights.modality_schema ||
+      (data.forensic_dossier.model_generation === "v4" || Number.isFinite(weights.action_ir_weight)
+        ? "v4_dag_action_ir_tabular"
+        : data.forensic_dossier.model_generation === "v3" || Number.isFinite(weights.tabular_weight)
+          ? "v3_tabular_graph"
+          : "v2_graph_ast");
+    const isV4Schema = modalitySchema === "v4_dag_action_ir_tabular";
+    const isV3Schema = modalitySchema === "v3_tabular_graph";
+    const hasTabular = Number.isFinite(weights.tabular_weight);
+
+    const roundTenthsSum100 = (vals) => {
+      const sum = vals.reduce((a, b) => a + b, 0);
+      if (!(sum > 0)) return vals.map(() => 0);
+      const scaled = vals.map((v) => (Math.max(0, v) / sum) * 1000);
+      const floors = scaled.map((x) => Math.floor(x));
+      let rem = 1000 - floors.reduce((a, b) => a + b, 0);
+      const order = scaled.map((x, i) => ({ i, frac: x - floors[i] })).sort((a, b) => b.frac - a.frac);
+      for (let k = 0; k < order.length && rem > 0; k += 1, rem -= 1) {
+        floors[order[k].i] += 1;
+      }
+      return floors.map((f) => (f / 10).toFixed(1));
+    };
+
+    if (isV4Schema) {
+      if (modGridEl) modGridEl.className = "grid grid-cols-1 sm:grid-cols-3 gap-4";
+      if (graphLabelEl) graphLabelEl.textContent = "Đồ thị cấu trúc PDF (DAG)";
+      if (tabWrapEl) tabWrapEl.classList.remove("hidden");
+      if (irWrapEl) irWrapEl.classList.remove("hidden");
+      if (secLabelEl) secLabelEl.textContent = "Chuỗi hành động & đích thực thi";
+      if (Number.isFinite(weights.graph_weight) && hasTabular) {
+        const irRaw = Number.isFinite(weights.action_ir_weight) ? weights.action_ir_weight : 0;
+        const [gw, tw, irw] = roundTenthsSum100([weights.graph_weight, weights.tabular_weight, irRaw]);
+        document.getElementById("xai-graph-weight").textContent = `${gw}%`;
+        document.getElementById("xai-graph-bar").style.width = `${gw}%`;
+        if (tabWeightEl) tabWeightEl.textContent = `${tw}%`;
+        if (tabBarEl) tabBarEl.style.width = `${tw}%`;
+        document.getElementById("xai-ast-weight").textContent = `${irw}%`;
+        document.getElementById("xai-ast-bar").style.width = `${irw}%`;
+      } else {
+        document.getElementById("xai-graph-weight").textContent = "--";
+        document.getElementById("xai-graph-bar").style.width = "0%";
+        if (tabWeightEl) tabWeightEl.textContent = "--";
+        if (tabBarEl) tabBarEl.style.width = "0%";
+        document.getElementById("xai-ast-weight").textContent = "--";
+        document.getElementById("xai-ast-bar").style.width = "0%";
+      }
+    } else if (isV3Schema) {
+      if (modGridEl) modGridEl.className = "grid grid-cols-1 sm:grid-cols-2 gap-4";
+      if (graphLabelEl) graphLabelEl.textContent = "Đồ thị cấu trúc PDF";
+      if (tabWrapEl) tabWrapEl.classList.add("hidden");
+      if (irWrapEl) irWrapEl.classList.remove("hidden");
+      if (secLabelEl) secLabelEl.textContent = "Chỉ số cấu trúc & thống kê tệp";
+      if (hasTabular && Number.isFinite(weights.graph_weight)) {
+        const [gw, tw] = roundTenthsSum100([weights.graph_weight, weights.tabular_weight]);
+        document.getElementById("xai-graph-weight").textContent = `${gw}%`;
+        document.getElementById("xai-graph-bar").style.width = `${gw}%`;
+        document.getElementById("xai-ast-weight").textContent = `${tw}%`;
+        document.getElementById("xai-ast-bar").style.width = `${tw}%`;
+      } else {
+        document.getElementById("xai-graph-weight").textContent = "--";
+        document.getElementById("xai-graph-bar").style.width = "0%";
+        document.getElementById("xai-ast-weight").textContent = "--";
+        document.getElementById("xai-ast-bar").style.width = "0%";
+      }
+    } else {
+      const gw = Number.isFinite(weights.graph_weight) ? (weights.graph_weight * 100).toFixed(1) : null;
+      const aw = Number.isFinite(weights.ast_weight) ? (weights.ast_weight * 100).toFixed(1) : null;
+      if (modGridEl) modGridEl.className = "grid grid-cols-1 sm:grid-cols-2 gap-4";
+      if (graphLabelEl) graphLabelEl.textContent = "Đồ thị cấu trúc PDF";
+      if (tabWrapEl) tabWrapEl.classList.add("hidden");
+      if (irWrapEl) irWrapEl.classList.remove("hidden");
+      if (secLabelEl) secLabelEl.textContent = "Mã JavaScript (AST)";
+      document.getElementById("xai-graph-weight").textContent = gw === null ? "--" : `${gw}%`;
+      document.getElementById("xai-graph-bar").style.width = `${gw ?? 0}%`;
+      document.getElementById("xai-ast-weight").textContent = aw === null ? "--" : `${aw}%`;
+      document.getElementById("xai-ast-bar").style.width = `${aw ?? 0}%`;
     }
-    const aw = Number.isFinite(secWeight) ? (secWeight * 100).toFixed(1) : null;
-    document.getElementById("xai-graph-weight").textContent = gw === null ? "--" : gw + "%";
-    document.getElementById("xai-graph-bar").style.width = (gw ?? 0) + "%";
-    document.getElementById("xai-ast-weight").textContent = aw === null ? "--" : aw + "%";
-    document.getElementById("xai-ast-bar").style.width = (aw ?? 0) + "%";
 
     const pathLabelEl = document.getElementById("attack-path-label");
     const activePath = data.forensic_dossier.attack_path_kind === "observed_active_object";

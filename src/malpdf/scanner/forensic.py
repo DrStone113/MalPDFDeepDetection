@@ -958,13 +958,10 @@ def reconcile_taxonomy_observations(
     ):
         return suppressed
 
-    no_js = (
-        not scripts
-        and effective_tok("JS") == effective_tok("JavaScript") == 0
-        and not any(record.get("kind") == "script" for record in records)
-    )
+    zero_js_covered = _has_complete_zero_js_coverage(ingest_data)
     no_xfa = (
         not ingest_data.get("xfa_analysis", {}).get("present")
+        and not ingest_data.get("xfa_analysis", {}).get("anomalies")
         and not effective_tok("XFA")
         and not any(record.get("evidence_id") == "script:acroform_xfa" for record in records)
     )
@@ -973,10 +970,11 @@ def reconcile_taxonomy_observations(
     )
     verified_form_only = verified_benign_js and no_xfa and no_dropper and not effective_recovered
     disproven = {
-        "js_script_exec": no_js,
-        "obfuscated_payload": no_js,
-        "buffer_loop_staging": no_js,
+        "js_script_exec": zero_js_covered,
+        "obfuscated_payload": zero_js_covered,
+        "buffer_loop_staging": zero_js_covered,
         "auto_open_trigger": not scripts
+        and not evasion_audit.get("hex_escaped_names_decoded")
         and all(_is_benign_catalog_action(record) for record in catalog_actions)
         and effective_tok("OpenAction")
         <= max(int("action:open_action" in benign_catalog_ids), int(audit.get("inspected_benign_openaction_tokens", 0)))
@@ -985,11 +983,14 @@ def reconcile_taxonomy_observations(
         "active_form_or_exploit": verified_form_only
         or (
             not scripts
+            and not evasion_audit.get("hex_escaped_names_decoded")
             and no_xfa
             and effective_tok("AcroForm") + effective_tok("Acroform") <= int(audit.get("inspected_acroform_tokens", 0))
         ),
-        "embedded_dropper_or_launch": verified_form_only or (not scripts and no_dropper),
+        "embedded_dropper_or_launch": verified_form_only
+        or (not scripts and not evasion_audit.get("hex_escaped_names_decoded") and no_dropper),
         "suspicious_uri_redirect": not phishing.get("suspicious_uris")
+        and not evasion_audit.get("hex_escaped_names_decoded")
         and not any(record.get("action_type") in {"/SubmitForm", "/GoToR"} for record in records)
         and max(len(ingest_data.get("extracted_uris", ())), int(ingest_data.get("inspected_uri_tokens", 0)))
         >= effective_tok("URI"),
@@ -1003,6 +1004,75 @@ def reconcile_taxonomy_observations(
     }
     suppressed.update(head for head, disproved in disproven.items() if disproved and observations.get(head) is None)
     return suppressed
+
+
+def _has_complete_zero_js_coverage(ingest_data: dict[str, Any]) -> bool:
+    records = ingest_data.get("raw_records") or []
+    raw_tokens = ingest_data.get("raw_tokens") or {}
+    encryption = ingest_data.get("encryption_analysis") or {}
+    evasion_audit = ingest_data.get("evasion_unpack_audit") or {}
+    xfa_analysis = ingest_data.get("xfa_analysis") or {}
+    differential = ingest_data.get("differential_analysis") or {}
+    js_semantics = ingest_data.get("js_semantics") or {}
+    triggers = set(ingest_data.get("non_js_triggers") or ())
+    audit = ingest_data.get("structural_audit") or {}
+    stream_interior = audit.get("stream_interior_tokens") or {}
+
+    if (
+        not records
+        or not raw_tokens
+        or ingest_data.get("graph_present") is not True
+        or encryption.get("password_locked", False)
+        or (bool(encryption) and encryption.get("graph_inspected") is not True)
+        or evasion_audit.get("objstm_unpack_complete", True) is not True
+        or bool(evasion_audit.get("hex_escaped_names_decoded"))
+        or bool(differential.get("has_differential_evasion"))
+        or bool(differential.get("anomalies"))
+        or bool(ingest_data.get("codec_anomalies"))
+        or bool(js_semantics.get("unverified_reasons"))
+        or bool(
+            triggers.intersection(
+                {
+                    "codec_inspection_limit",
+                    "javascript_body_unavailable",
+                    "action_inspection_limit",
+                    "supplemental_inspection_incomplete",
+                    "parser_trigger_visibility_mismatch",
+                }
+            )
+        )
+    ):
+        return False
+
+    def effective_tok(name: str) -> int:
+        return max(0, int(raw_tokens.get(name, 0)) - int(stream_interior.get(name, 0)))
+
+    no_js = (
+        not (ingest_data.get("extracted_scripts") or [])
+        and effective_tok("JS") == 0
+        and effective_tok("JavaScript") == 0
+        and not any(record.get("kind") == "script" for record in records)
+    )
+    no_xfa = (
+        not xfa_analysis.get("present")
+        and not xfa_analysis.get("anomalies")
+        and effective_tok("XFA") == 0
+        and not any(record.get("evidence_id") == "script:acroform_xfa" for record in records)
+    )
+    return bool(no_js and no_xfa)
+
+
+def verified_zero_js_disproven_heads(
+    observations: dict[str, Any],
+    ingest_data: dict[str, Any],
+    escaped_names_count: float = 0.0,
+) -> set[str]:
+    if not _has_complete_zero_js_coverage(ingest_data):
+        return set()
+    out = {head for head in ("js_script_exec", "buffer_loop_staging") if observations.get(head) is None}
+    if escaped_names_count <= 0.0 and observations.get("obfuscated_payload") is None:
+        out.add("obfuscated_payload")
+    return out
 
 
 _JS_QUOTED = r"""(?:"(?:[^"\\\r\n]|\\[^\r\n])*"|'(?:[^'\\\r\n]|\\[^\r\n])*')"""
@@ -1169,7 +1239,13 @@ class ForensicAttributionEngine:
         tabular_grad_importance: list[float | None] | None = None,
         xai_proof_metrics: dict[str, float] | None = None,
         saliency_method: str = "gradient_input",
+        model_generation: str = "v2",
     ) -> dict[str, Any]:
+        modality_schema = (
+            "v4_dag_action_ir_tabular"
+            if model_generation == "v4"
+            else ("v3_tabular_graph" if model_generation == "v3" else "v2_graph_ast")
+        )
         cross_weights = None
         if cross_modal_attn is not None:
             weights = (
@@ -1181,11 +1257,21 @@ class ForensicAttributionEngine:
             if weights.ndim == 1 and len(weights) == 2:
                 cross_weights = {"graph_weight": round(float(weights[0]), 4), "ast_weight": round(float(weights[1]), 4)}
             elif weights.ndim == 1 and len(weights) == 3:
-                cross_weights = {
-                    "tabular_weight": round(float(weights[0]), 4),
-                    "graph_weight": round(float(weights[1]), 4),
-                    "ast_weight": round(float(weights[2]), 4),
-                }
+                if model_generation == "v4":
+                    cross_weights = {
+                        "modality_schema": "v4_dag_action_ir_tabular",
+                        "tabular_weight": round(float(weights[0]), 4),
+                        "graph_weight": round(float(weights[1]), 4),
+                        "action_ir_weight": round(float(weights[2]), 4),
+                        "ast_weight": 0.0,
+                    }
+                else:
+                    cross_weights = {
+                        "modality_schema": "v3_tabular_graph",
+                        "tabular_weight": round(float(weights[0]), 4),
+                        "graph_weight": round(float(weights[1]), 4),
+                        "ast_weight": round(float(weights[2]), 4),
+                    }
 
         from malpdf.scanner.ingestion import AST_NODE_TYPES
 
@@ -1493,12 +1579,23 @@ class ForensicAttributionEngine:
                 )
                 if name in ingest_data
             },
+            "model_generation": model_generation,
+            "modality_schema": modality_schema,
             "cross_modal_weights": cross_weights,
-            "modality_breakdown": {
-                "graph_pct": proof.get("graph_branch_pct"),
-                "ast_pct": proof.get("ast_branch_pct"),
-                "tabular_pct": proof.get("tabular_branch_pct"),
-            },
+            "modality_breakdown": (
+                {
+                    "graph_pct": proof.get("graph_branch_pct"),
+                    "action_ir_pct": proof.get("action_ir_branch_pct", proof.get("ast_branch_pct")),
+                    "ast_pct": proof.get("ast_branch_pct"),
+                    "tabular_pct": proof.get("tabular_branch_pct"),
+                }
+                if model_generation == "v4"
+                else {
+                    "graph_pct": proof.get("graph_branch_pct"),
+                    "ast_pct": proof.get("ast_branch_pct"),
+                    "tabular_pct": proof.get("tabular_branch_pct"),
+                }
+            ),
             "trigger_objects": triggers,
             "threat_scripts": threat_scripts,
             "ast_token_attributions": ast_attributions[:10],
@@ -1591,7 +1688,6 @@ class ForensicAttributionEngine:
         ax_graph.axis("off")
         ax_graph.set_title(f"Attack Flow Subgraph (SHA: {sha256[:8]}...)", fontsize=11, fontweight="bold")
 
-        labels = ["Hetero-Graph", "AST Tokens"]
         if cross_modal_weights is None:
             ax_attn.text(0.5, 0.5, "Attention unavailable", ha="center", va="center")
             ax_attn.axis("off")
@@ -1599,12 +1695,23 @@ class ForensicAttributionEngine:
             fig.savefig(out, bbox_inches="tight")
             plt.close(fig)
             return out
-        weights = [cross_modal_weights["graph_weight"], cross_modal_weights["ast_weight"]]
-        bar_colors = ["#1f77b4", "#ff7f0e"]
-        if "tabular_weight" in cross_modal_weights:
-            labels.insert(0, "Tabular")
-            weights.insert(0, cross_modal_weights["tabular_weight"])
-            bar_colors.insert(0, "#2ca02c")
+        schema = cross_modal_weights.get("modality_schema")
+        if schema == "v4_dag_action_ir_tabular" or "action_ir_weight" in cross_modal_weights:
+            labels = ["Tabular", "DAG Graph", "Action IR"]
+            weights = [
+                cross_modal_weights["tabular_weight"],
+                cross_modal_weights["graph_weight"],
+                cross_modal_weights["action_ir_weight"],
+            ]
+            bar_colors = ["#2ca02c", "#1f77b4", "#ff7f0e"]
+        elif schema == "v3_tabular_graph" or "tabular_weight" in cross_modal_weights:
+            labels = ["Tabular", "Graph"]
+            weights = [cross_modal_weights["tabular_weight"], cross_modal_weights["graph_weight"]]
+            bar_colors = ["#2ca02c", "#1f77b4"]
+        else:
+            labels = ["Hetero-Graph", "AST Tokens"]
+            weights = [cross_modal_weights["graph_weight"], cross_modal_weights["ast_weight"]]
+            bar_colors = ["#1f77b4", "#ff7f0e"]
         bars = ax_attn.bar(labels, weights, color=bar_colors, width=0.45, edgecolor="#222222")
         ax_attn.set_ylim(0, 1.05)
         ax_attn.set_ylabel("Attention Weight", fontsize=9, fontweight="bold")

@@ -537,9 +537,29 @@ class AIThreatExplainer:
         )
         if is_greeting_or_identity:
             matched_specific_section = True
+            ml_ver_label = str(taxonomy.get("model_version") or "PDFMultiLabelThreatNet v4")
+            mod_schema_val = dossier.get("modality_schema") or (dossier.get("cross_modal_weights") or {}).get(
+                "modality_schema"
+            )
+            bin_gen = str(
+                dossier.get("model_generation")
+                or (
+                    "v4"
+                    if mod_schema_val == "v4_dag_action_ir_tabular" or "action_ir_pct" in modality
+                    else ("v3" if mod_schema_val == "v3_tabular_graph" else ("v2" if mod_schema_val else "v4"))
+                )
+            )
+            if bin_gen == "v4":
+                bin_desc = "**PDF-TransGraph v4** (đồ thị cấu trúc DAG Transformer 23 chiều, biểu diễn chuỗi kích hoạt `ActionSubgraphIR` 24 chiều và 29 đặc trưng tệp)"
+            elif bin_gen == "v3":
+                bin_desc = "**PDF-TransGraph v3** (đồ thị cấu trúc 23 chiều và 29 đặc trưng thống kê tệp)"
+            else:
+                bin_desc = (
+                    "**PDF-TransGraph v2** (đồ thị không đồng nhất HGT, bộ mã hóa JavaScript AST và đặc trưng bảng)"
+                )
             sections.append(
                 "Xin chào, đây là trợ lý giải thích kết quả kiểm tra của **MalPDF DeepDetection**:\n"
-                "- **Mô hình phân loại tệp PDF:** **PDF-TransGraph v4** (đồ thị cấu trúc DAG Transformer 23 chiều, biểu diễn chuỗi kích hoạt `ActionSubgraphIR` 24 chiều và 29 đặc trưng tệp) kết hợp **PDFMultiLabelThreatNet v2** (8 nhóm kiểm tra hành vi).\n"
+                f"- **Mô hình phân loại tệp PDF:** {bin_desc} kết hợp **{ml_ver_label}** (8 nhóm kiểm tra hành vi).\n"
                 "- **Trợ lý hỏi đáp:** Hỗ trợ Cloud AI, mô hình chạy trên trình duyệt qua WebLLM (**`Qwen2.5-1.5B-Instruct`** hoặc **`Llama-3.2-1B-Instruct`**) và bộ giải thích từ kết quả quét của **MalPDF DeepDetection**.\n"
                 f"- **Tệp đang xem (`{file_name}`):** {explanation['executive_summary']}"
             )
@@ -691,9 +711,17 @@ class AIThreatExplainer:
             matched_specific_section = True
             g_pct = modality.get("graph_pct")
             a_pct = modality.get("ast_pct")
+            ir_pct = modality.get("action_ir_pct")
             t_pct = modality.get("tabular_pct")
+            mod_schema = (dossier.get("cross_modal_weights") or {}).get("modality_schema")
+            is_v4_mod = mod_schema == "v4_dag_action_ir_tabular" or "action_ir_pct" in modality
             if isinstance(g_pct, (int, float)) and isinstance(t_pct, (int, float)):
-                if isinstance(a_pct, (int, float)) and a_pct > 0.0:
+                if is_v4_mod and isinstance(ir_pct, (int, float)) and ir_pct > 0.0:
+                    mod_line = (
+                        f"- **Đóng góp nguồn đặc trưng:** đồ thị cấu trúc DAG {g_pct:.1f}%, "
+                        f"chuỗi hành động & đích thực thi (Action IR) {ir_pct:.1f}% và thông số cấu trúc tệp {t_pct:.1f}%.\n"
+                    )
+                elif not is_v4_mod and isinstance(a_pct, (int, float)) and a_pct > 0.0:
                     mod_line = f"- **Đóng góp nguồn đặc trưng:** đồ thị PDF {g_pct:.1f}%, mã JavaScript {a_pct:.1f}% và thông số tệp {t_pct:.1f}%.\n"
                 else:
                     mod_line = f"- **Đóng góp nguồn đặc trưng:** đồ thị cấu trúc PDF {g_pct:.1f}% và thông số thống kê tệp {t_pct:.1f}%.\n"

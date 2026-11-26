@@ -7,6 +7,7 @@ import statistics
 import sys
 from tempfile import TemporaryDirectory
 import time
+from typing import Any
 
 import numpy as np
 import onnx
@@ -24,6 +25,11 @@ from malpdf.features.contract_v3 import FEATURES, log_matrix
 from malpdf.models.ast_transformer import RotaryPositionalEmbedding, apply_rotary_pos_emb
 from malpdf.models.cross_attention_fusion import CrossModalAttentionFusion
 from malpdf.models.multilabel_threat_net import PDFMultiLabelThreatNet
+from malpdf.models.multilabel_threat_net_v4 import (
+    MultiLabelV4Config,
+    PDFMultiLabelThreatNetV4,
+    load_multilabel_v4_npz,
+)
 from malpdf.models.pdf_transgraph_v3 import PDFTransGraphV3, TransGraphV3Config, load_v3_weights_npz
 from malpdf.models.pdf_transgraph_v4 import (
     NUM_BASE_RELATIONS,
@@ -33,7 +39,14 @@ from malpdf.models.pdf_transgraph_v4 import (
     load_v4_weights_npz,
 )
 from malpdf.models.tabular_resnet import TabularResNet
-from malpdf.models.v4_graph_numpy import collate_v4_numpy_feed, single_graph_tuple
+from malpdf.models.v4_graph_numpy import (
+    EXPECTED_MULTILABEL_V4_ONNX_INPUTS,
+    EXPECTED_MULTILABEL_V4_ONNX_OUTPUTS,
+    build_runtime_multilabel_v4_feed_np,
+    collate_v4_numpy_feed,
+    single_graph_tuple,
+    validate_multilabel_v4_contract_np,
+)
 from malpdf.scanner.ingestion import REGIME_B_INDICES, InstantPDFIngestion
 from malpdf.static.obfuscation import count_escaped_pdf_names
 from malpdf.static.raw_scan import scan_raw_pdf_tokens
@@ -54,6 +67,10 @@ CONTROL_PATH = OFFLINE_DIR / "offline_provenance/reviewed_controls_v3.json"
 STRESS_PATH = OFFLINE_DIR / "byte_level_stress_v3/offline_byte_stress_export.json"
 STRESS_ARCHIVE = OFFLINE_DIR / "offline_provenance/byte_level_stress_v3.json"
 STRESS_SHA256 = "1e13f4f5cff5c9eeeefc884e80a6ee28df83a9fb7c693208f347c9a4a48fd90f"
+PT_MULTILABEL_V4_PATH = (
+    REPO_ROOT / "artifacts" / "models" / "multilabel_threat_v4" / "multilabel_threat_net_v4_seed42.npz"
+)
+ML_V4_CONTRACT_PATH = REPO_ROOT / "configs" / "multilabel_threat_v4_contract.json"
 PT_MULTILABEL_PATH = REPO_ROOT / "artifacts" / "models" / "multilabel_threat_v2" / "multilabel_threat_net_v2_best.pt"
 SCALER_PATH = REPO_ROOT / "configs" / "tabular_scaler.json"
 ML_CONTRACT_PATH = REPO_ROOT / "configs" / "multilabel_threat_contract.json"
@@ -187,6 +204,87 @@ class ONNXASTSequenceTransformer(nn.Module):
         return self.norm(pooled), attn_weights.squeeze(-1)
 
 
+def _onnx_v4_encode_multimodal(
+    model: PDFTransGraphV4 | PDFMultiLabelThreatNetV4,
+    tabular_features: torch.Tensor,
+    action_ir_features: torch.Tensor,
+    action_ir_active: torch.Tensor,
+    node_features: torch.Tensor,
+    node_types: torch.Tensor,
+    deg_features: torch.Tensor,
+    node_pad_mask: torch.Tensor,
+    spd: torch.Tensor,
+    direct_rel: torch.Tensor,
+    root_depth: torch.Tensor,
+    sink_dist: torch.Tensor,
+    summary_12: torch.Tensor,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    enc = model.graph_encoder
+    mask_bool = node_pad_mask > 0.5
+    mask_f = mask_bool.unsqueeze(-1).to(node_features.dtype)
+    present = node_pad_mask.sum(dim=1) > 0.5
+
+    safe_types = node_types.clamp(0, enc.num_node_types - 1)
+    h = enc.input_proj(torch.cat((node_features, deg_features), dim=-1)) + enc.type_emb(safe_types)
+    if enc.enable_spd_bias:
+        safe_rd = root_depth.clamp(0, SPD_UNREACHABLE)
+        safe_sd = sink_dist.clamp(0, SPD_UNREACHABLE)
+        h = h + enc.root_depth_emb(safe_rd) + enc.sink_dist_emb(safe_sd)
+    h = enc.input_norm(h) * mask_f
+
+    pair_attn = torch.zeros(
+        (node_features.size(0), node_features.size(1), node_features.size(1)),
+        device=node_features.device,
+        dtype=node_features.dtype,
+    )
+    safe_spd = spd.clamp(0, SPD_UNREACHABLE)
+    safe_rel = direct_rel.clamp(0, NUM_BASE_RELATIONS)
+    key_mask = mask_bool.unsqueeze(1).unsqueeze(2)
+    query_mask = mask_bool.unsqueeze(1).unsqueeze(-1).to(node_features.dtype)
+    bsz, n_max, hdim = h.shape
+    for layer in enc.layers:
+        x = layer.norm1(h)
+        qkv = layer.qkv(x).view(bsz, n_max, 3, layer.num_heads, layer.head_dim)
+        q = qkv[:, :, 0].transpose(1, 2)
+        k = qkv[:, :, 1].transpose(1, 2)
+        v = qkv[:, :, 2].transpose(1, 2)
+        scores = torch.matmul(q, k.transpose(-2, -1)) / (layer.head_dim**0.5)
+        if layer.enable_spd_bias:
+            bias = (
+                layer.spd_fwd_bias(safe_spd).permute(0, 3, 1, 2)
+                + layer.spd_rev_bias(safe_spd.transpose(1, 2)).permute(0, 3, 1, 2)
+                + layer.rel_bias(safe_rel).permute(0, 3, 1, 2)
+            )
+            scores = scores + bias
+        scores = torch.where(key_mask, scores, torch.full_like(scores, -1e9))
+        attn_clean = F.softmax(scores, dim=-1) * query_mask
+        pair_attn = attn_clean.mean(dim=1)
+        out_h = torch.matmul(attn_clean, v).transpose(1, 2).contiguous().view(bsz, n_max, hdim)
+        h = h + layer.out_proj(out_h)
+        h = h + layer.ffn(layer.norm2(h))
+
+    h = enc.final_norm(h) * mask_f
+    gate_raw = enc.attn_gate(h).squeeze(-1)
+    gate_logits = torch.where(mask_bool, gate_raw, torch.full_like(gate_raw, -1e9))
+    gate_w = F.softmax(gate_logits, dim=-1) * mask_bool.to(h.dtype)
+    attn_pool = (h * gate_w.unsqueeze(-1)).sum(dim=1)
+
+    max_pool = torch.where(mask_bool.unsqueeze(-1), h, torch.full_like(h, -1e9)).max(dim=1).values
+    max_pool = torch.where(present.unsqueeze(-1), max_pool, torch.zeros_like(max_pool))
+
+    e_graph = enc.pool_proj(torch.cat((attn_pool, max_pool, summary_12), dim=-1))
+    e_graph = torch.where(present.unsqueeze(-1), e_graph, torch.zeros_like(e_graph))
+
+    e_tab = model.tab_encoder(tabular_features, None)
+    e_ir = model.action_ir_encoder(action_ir_features)
+    has_tab = tabular_features[:, 0] > -1e30
+    ir_present = (action_ir_active.squeeze(-1) > 0.5) & present
+    mod_mask = torch.stack((has_tab, present, ir_present), dim=-1)
+    fused, weights = model.fusion((e_tab, e_graph, e_ir), mod_mask)
+    ir_masked = torch.where(ir_present.unsqueeze(-1), e_ir, torch.zeros_like(e_ir))
+    return fused, weights, pair_attn, gate_w, e_tab, e_graph, ir_masked
+
+
 class ONNXPDFTransGraphV4(nn.Module):
     """100% branchless opset-17 ONNX wrapper for PDFTransGraphV4 (requires N >= 1 padded input)."""
 
@@ -209,70 +307,70 @@ class ONNXPDFTransGraphV4(nn.Module):
         sink_dist: torch.Tensor,
         summary_12: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-        enc = self.model.graph_encoder
-        mask_bool = node_pad_mask > 0.5
-        mask_f = mask_bool.unsqueeze(-1).to(node_features.dtype)
-        present = node_pad_mask.sum(dim=1) > 0.5
-
-        safe_types = node_types.clamp(0, enc.num_node_types - 1)
-        h = enc.input_proj(torch.cat((node_features, deg_features), dim=-1)) + enc.type_emb(safe_types)
-        if enc.enable_spd_bias:
-            safe_rd = root_depth.clamp(0, SPD_UNREACHABLE)
-            safe_sd = sink_dist.clamp(0, SPD_UNREACHABLE)
-            h = h + enc.root_depth_emb(safe_rd) + enc.sink_dist_emb(safe_sd)
-        h = enc.input_norm(h) * mask_f
-
-        pair_attn = torch.zeros(
-            (node_features.size(0), node_features.size(1), node_features.size(1)),
-            device=node_features.device,
-            dtype=node_features.dtype,
+        fused, weights, pair_attn, gate_w, _, _, _ = _onnx_v4_encode_multimodal(
+            self.model,
+            tabular_features,
+            action_ir_features,
+            action_ir_active,
+            node_features,
+            node_types,
+            deg_features,
+            node_pad_mask,
+            spd,
+            direct_rel,
+            root_depth,
+            sink_dist,
+            summary_12,
         )
-        safe_spd = spd.clamp(0, SPD_UNREACHABLE)
-        safe_rel = direct_rel.clamp(0, NUM_BASE_RELATIONS)
-        key_mask = mask_bool.unsqueeze(1).unsqueeze(2)
-        query_mask = mask_bool.unsqueeze(1).unsqueeze(-1).to(node_features.dtype)
-        bsz, n_max, hdim = h.shape
-        for layer in enc.layers:
-            x = layer.norm1(h)
-            qkv = layer.qkv(x).view(bsz, n_max, 3, layer.num_heads, layer.head_dim)
-            q = qkv[:, :, 0].transpose(1, 2)
-            k = qkv[:, :, 1].transpose(1, 2)
-            v = qkv[:, :, 2].transpose(1, 2)
-            scores = torch.matmul(q, k.transpose(-2, -1)) / (layer.head_dim**0.5)
-            if layer.enable_spd_bias:
-                bias = (
-                    layer.spd_fwd_bias(safe_spd).permute(0, 3, 1, 2)
-                    + layer.spd_rev_bias(safe_spd.transpose(1, 2)).permute(0, 3, 1, 2)
-                    + layer.rel_bias(safe_rel).permute(0, 3, 1, 2)
-                )
-                scores = scores + bias
-            scores = torch.where(key_mask, scores, torch.full_like(scores, -1e9))
-            attn_clean = F.softmax(scores, dim=-1) * query_mask
-            pair_attn = attn_clean.mean(dim=1)
-            out_h = torch.matmul(attn_clean, v).transpose(1, 2).contiguous().view(bsz, n_max, hdim)
-            h = h + layer.out_proj(out_h)
-            h = h + layer.ffn(layer.norm2(h))
-
-        h = enc.final_norm(h) * mask_f
-        gate_raw = enc.attn_gate(h).squeeze(-1)
-        gate_logits = torch.where(mask_bool, gate_raw, torch.full_like(gate_raw, -1e9))
-        gate_w = F.softmax(gate_logits, dim=-1) * mask_bool.to(h.dtype)
-        attn_pool = (h * gate_w.unsqueeze(-1)).sum(dim=1)
-
-        max_pool = torch.where(mask_bool.unsqueeze(-1), h, torch.full_like(h, -1e9)).max(dim=1).values
-        max_pool = torch.where(present.unsqueeze(-1), max_pool, torch.zeros_like(max_pool))
-
-        e_graph = enc.pool_proj(torch.cat((attn_pool, max_pool, summary_12), dim=-1))
-        e_graph = torch.where(present.unsqueeze(-1), e_graph, torch.zeros_like(e_graph))
-
-        e_tab = self.model.tab_encoder(tabular_features, None)
-        e_ir = self.model.action_ir_encoder(action_ir_features)
-        has_tab = tabular_features[:, 0] > -1e30
-        ir_present = (action_ir_active.squeeze(-1) > 0.5) & present
-        mod_mask = torch.stack((has_tab, present, ir_present), dim=-1)
-        fused, weights = self.model.fusion((e_tab, e_graph, e_ir), mod_mask)
         logits = self.model.classifier(fused).squeeze(-1)
         return logits, weights, pair_attn, gate_w
+
+
+class ONNXMultiLabelThreatNetV4(nn.Module):
+    """100% branchless opset-17 ONNX wrapper for PDFMultiLabelThreatNetV4."""
+
+    def __init__(self, model: PDFMultiLabelThreatNetV4) -> None:
+        super().__init__()
+        self.model = model
+
+    def forward(
+        self,
+        tabular_features: torch.Tensor,
+        action_ir_features: torch.Tensor,
+        action_ir_active: torch.Tensor,
+        node_features: torch.Tensor,
+        node_types: torch.Tensor,
+        deg_features: torch.Tensor,
+        node_pad_mask: torch.Tensor,
+        spd: torch.Tensor,
+        direct_rel: torch.Tensor,
+        root_depth: torch.Tensor,
+        sink_dist: torch.Tensor,
+        summary_12: torch.Tensor,
+        aux_telemetry_features: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        fused, _, _, _, e_tab, e_graph, ir_masked = _onnx_v4_encode_multimodal(
+            self.model,
+            tabular_features,
+            action_ir_features,
+            action_ir_active,
+            node_features,
+            node_types,
+            deg_features,
+            node_pad_mask,
+            spd,
+            direct_rel,
+            root_depth,
+            sink_dist,
+            summary_12,
+        )
+        e_aux = self.model.aux_encoder(aux_telemetry_features)
+        h = self.model.trunk_proj(torch.cat((fused, e_tab, e_graph, ir_masked, e_aux), dim=-1))
+        h = h + self.model.trunk_res(h)
+        query_scores = torch.matmul(h, self.model.label_queries.t()) * self.model.label_scale + self.model.label_bias
+        label_logits = self.model.label_linear(h) + query_scores
+        mal_logit = self.model.aux_mal_head(h).squeeze(-1)
+        return label_logits, mal_logit
 
 
 class ONNXPDFTransGraphV3(nn.Module):
@@ -654,6 +752,89 @@ def _export_multilabel_onnx(models_dir: Path) -> tuple[PDFMultiLabelThreatNet, P
     return pt_ml, ml_onnx_path
 
 
+def _export_multilabel_v4_onnx(models_dir: Path) -> tuple[PDFMultiLabelThreatNetV4, dict[str, Any], Path]:
+    ml_contract = json.loads(ML_V4_CONTRACT_PATH.read_text(encoding="utf-8"))
+    validate_multilabel_v4_contract_np(ml_contract)
+    if hashlib.sha256(PT_MULTILABEL_V4_PATH.read_bytes()).hexdigest() != ml_contract["weights_npz_sha256"]:
+        raise ValueError("multilabel_v4_npz_sha256_mismatch")
+    pt_ml = PDFMultiLabelThreatNetV4(MultiLabelV4Config(**ml_contract["model_config"])).eval()
+    load_multilabel_v4_npz(pt_ml, PT_MULTILABEL_V4_PATH)
+    onnx_ml = ONNXMultiLabelThreatNetV4(pt_ml).eval()
+
+    dummy_base = collate_v4_numpy_feed(
+        np.zeros((2, 29), dtype=np.float32),
+        [
+            (
+                np.zeros((6, 23), dtype=np.float32),
+                np.array([0, 1, 2, 3, 5, 6], dtype=np.int64),
+                np.array([0, 1, 0, 3], dtype=np.int64),
+                np.array([1, 2, 3, 4], dtype=np.int64),
+                np.array([0, 1, 2, 4], dtype=np.int64),
+            ),
+            None,
+        ],
+    )
+    dummy_feed = {**dummy_base, "aux_telemetry_features": np.zeros((2, 16), dtype=np.float32)}
+    input_names = list(EXPECTED_MULTILABEL_V4_ONNX_INPUTS)
+    output_names = list(EXPECTED_MULTILABEL_V4_ONNX_OUTPUTS)
+    dummy_args = tuple(torch.from_numpy(dummy_feed[k]) for k in input_names)
+    ml_onnx_path = models_dir / "multilabel_threat_net_v4.onnx"
+    torch.onnx.export(
+        onnx_ml,
+        dummy_args,
+        str(ml_onnx_path),
+        input_names=input_names,
+        output_names=output_names,
+        dynamic_axes={
+            "tabular_features": {0: "batch_size"},
+            "action_ir_features": {0: "batch_size"},
+            "action_ir_active": {0: "batch_size"},
+            "node_features": {0: "batch_size", 1: "num_nodes"},
+            "node_types": {0: "batch_size", 1: "num_nodes"},
+            "deg_features": {0: "batch_size", 1: "num_nodes"},
+            "node_pad_mask": {0: "batch_size", 1: "num_nodes"},
+            "spd": {0: "batch_size", 1: "num_nodes", 2: "num_nodes"},
+            "direct_rel": {0: "batch_size", 1: "num_nodes", 2: "num_nodes"},
+            "root_depth": {0: "batch_size", 1: "num_nodes"},
+            "sink_dist": {0: "batch_size", 1: "num_nodes"},
+            "summary_12": {0: "batch_size"},
+            "aux_telemetry_features": {0: "batch_size"},
+            "label_logits": {0: "batch_size"},
+            "mal_logit": {0: "batch_size"},
+        },
+        opset_version=17,
+        do_constant_folding=True,
+        dynamo=False,
+    )
+    ml_onnx_doc = onnx.load(str(ml_onnx_path))
+    onnx.checker.check_model(ml_onnx_doc)
+    if any(node.op_type in {"If", "Loop", "Scan"} for node in ml_onnx_doc.graph.node):
+        raise ValueError("unexpected_multilabel_v4_onnx_control_flow")
+    return pt_ml, ml_contract, ml_onnx_path
+
+
+def _v4_ml_pytorch_forward(
+    pt_ml: PDFMultiLabelThreatNetV4, feed: dict[str, np.ndarray]
+) -> tuple[np.ndarray, np.ndarray]:
+    with torch.no_grad():
+        out = pt_ml(
+            torch.from_numpy(feed["tabular_features"]),
+            torch.from_numpy(feed["action_ir_features"]),
+            torch.from_numpy(feed["action_ir_active"].squeeze(-1) > 0.5),
+            torch.from_numpy(feed["node_features"]),
+            torch.from_numpy(feed["node_types"]),
+            torch.from_numpy(feed["deg_features"]),
+            torch.from_numpy(feed["node_pad_mask"] > 0.5),
+            torch.from_numpy(feed["spd"]),
+            torch.from_numpy(feed["direct_rel"]),
+            torch.from_numpy(feed["root_depth"]),
+            torch.from_numpy(feed["sink_dist"]),
+            torch.from_numpy(feed["summary_12"]),
+            torch.from_numpy(feed["aux_telemetry_features"]),
+        )
+    return out["label_logits"].numpy(), out["mal_logit"].numpy()
+
+
 def _export_and_verify_v4(models_dir: Path, configs_dir: Path) -> dict[str, object]:
     torch.set_num_threads(2)
     contract = json.loads(V4_CONTRACT_PATH.read_text(encoding="utf-8"))
@@ -731,7 +912,9 @@ def _export_and_verify_v4(models_dir: Path, configs_dir: Path) -> dict[str, obje
     if any(node.op_type in {"If", "Loop", "Scan"} for node in binary_onnx.graph.node):
         raise ValueError("unexpected_binary_onnx_control_flow")
 
-    pt_ml, ml_onnx_path = _export_multilabel_onnx(models_dir)
+    if not (PROD_MODELS_DIR / "multilabel_threat_net_v2.onnx").is_file() and PT_MULTILABEL_PATH.is_file():
+        _export_multilabel_onnx(models_dir)
+    pt_ml, ml_v4_contract, ml_onnx_path = _export_multilabel_v4_onnx(models_dir)
 
     sess_opts = ort.SessionOptions()
     sess_opts.intra_op_num_threads = 2
@@ -744,72 +927,95 @@ def _export_and_verify_v4(models_dir: Path, configs_dir: Path) -> dict[str, obje
     tb = load_real_threat_bytes()
     bb = load_real_benign_bytes()
     db, _ = PDFDisarmer().sanitize_bytes(tb, file_name="threat.pdf")
-    ml_contract = json.loads(ML_CONTRACT_PATH.read_text(encoding="utf-8"))
-    mean52 = np.array(ml_contract["scaler_mean"], dtype=np.float32)
-    scale52 = np.array(ml_contract["scaler_scale"], dtype=np.float32)
+    ml_center = np.asarray(ml_v4_contract["tab29_center"], dtype=np.float64)
+    ml_scale = np.asarray(ml_v4_contract["tab29_scale"], dtype=np.float64)
+    ml_temps = np.asarray(ml_v4_contract["label_temperatures"], dtype=np.float64)
+    ml_thrs = np.asarray([float(item["threshold"]) for item in ml_v4_contract["labels"]], dtype=np.float64)
+    ml_enabled = np.asarray(
+        [bool(item.get("model_flag_enabled", True)) for item in ml_v4_contract["labels"]], dtype=bool
+    )
 
     max_bin_diff = 0.0
     max_ml_diff = 0.0
+    sample_ml_feeds: list[dict[str, np.ndarray]] = []
     for sample_bytes in (tb, bb, db):
         d = ing.ingest(sample_bytes)
-        nf, nt, ei, er, b, tok = (
-            d["node_features"],
-            d["node_types"],
-            d["edge_index"],
-            d["edge_rel"],
-            d["batch"],
-            d["ast_tokens"],
-        )
+        nf, nt, ei, er = d["node_features"], d["node_types"], d["edge_index"], d["edge_rel"]
         g_tup = single_graph_tuple(nf, nt, ei, er, d["graph_present"])
         v4_feed = collate_v4_numpy_feed(d["v4_tab_features"].numpy(), [g_tup])
         max_bin_diff = max(max_bin_diff, _v4_parity(pt_bin, bin_sess, v4_feed))
 
-        es, ed, er_p, em, he = _prepare_edge_tensors(ei, er)
-        rt = scan_raw_pdf_tokens(sample_bytes)
+        rt = d.get("raw_tokens") or scan_raw_pdf_tokens(sample_bytes)
         esc = float(count_escaped_pdf_names(sample_bytes))
-        loops = 1.0 if d["ast_stats"]["loops"] > 0 else 0.0
         js_txt = "\n".join(s["code"] for s in d["extracted_scripts"])
-        deobf = 1.0 if any(k in js_txt for k in ("unescape", "fromCharCode", "eval")) else 0.0
-        uri_eff = float(rt.get("URI", 0))
-        emb_eff = float(rt.get("EmbeddedFile", 0) + rt.get("Launch", 0))
-        extra = [
-            float(rt.get("AA", 0)),
-            float(rt.get("Acroform", 0)),
-            float(rt.get("Launch", 0)),
-            float(rt.get("EmbeddedFile", 0)),
-            float(rt.get("URI", 0)),
-            float(rt.get("ObjStm", 0)),
-            float(rt.get("Encrypt", 0)),
-            float(rt.get("JBIG2Decode", 0)),
-            float(rt.get("RichMedia", 0)),
-            esc,
-            loops,
-            deobf,
-            uri_eff,
-            emb_eff,
-        ]
-        vec52 = np.array([float(x or 0.0) for x in d["raw_feature_vec"]] + extra, dtype=np.float32)
-        tab52 = torch.tensor((vec52 - mean52) / scale52, dtype=torch.float32).unsqueeze(0)
-        with torch.no_grad():
-            pt_ml_logits, _, _ = pt_ml(nf, nt, ei, er, b, tok, tab52)
-        ort_ml_out = ml_sess.run(
-            None,
-            {
-                "node_features": nf.numpy(),
-                "node_types": nt.numpy(),
-                "edge_src": es.numpy(),
-                "edge_dst": ed.numpy(),
-                "edge_rel": er_p.numpy(),
-                "edge_mask": em.numpy(),
-                "has_edges": he.numpy(),
-                "use_graph_flag": np.array([1.0], dtype=np.float32),
-                "batch": b.numpy(),
-                "ast_tokens": tok.numpy(),
-                "tabular_features": tab52.numpy(),
-            },
+        deobf = any(k in js_txt for k in ("unescape", "fromCharCode", "eval"))
+        records = d.get("raw_records") or []
+        has_launch = any(r.get("action_type") == "/Launch" for r in records) or rt.get("Launch", 0) > 0
+        has_submit = any(r.get("action_type") == "/SubmitForm" for r in records)
+        has_emb = any(r.get("kind") == "filespec" for r in records) or rt.get("EmbeddedFile", 0) > 0
+        has_stream_err = any(
+            bool(r.get("stream_decode_failed") or r.get("decompression_ratio_exceeded")) for r in records
         )
-        diff_m = float(np.max(np.abs(pt_ml_logits.numpy() - np.asarray(ort_ml_out[0]))))
+        ml_feed = build_runtime_multilabel_v4_feed_np(
+            raw_pdf_bytes=sample_bytes,
+            raw_tokens=rt,
+            ingest_data=d,
+            tab29_center=ml_center,
+            tab29_scale=ml_scale,
+            escaped_names=esc,
+            has_obfuscated_js=deobf,
+            all_indicators=set((d.get("js_semantics") or {}).get("dangerous_indicators") or ()),
+            matched_cves=[],
+            has_export_dropper=("exportDataObject" in js_txt or "importDataObject" in js_txt),
+            has_launch=has_launch,
+            has_submit_form=has_submit,
+            has_embedded_file=has_emb,
+            has_stream_anomaly=has_stream_err,
+            v4_graph_feed=v4_feed,
+        )
+        assert ml_feed is not None
+        sample_ml_feeds.append(ml_feed)
+        pt_lbl, pt_mal = _v4_ml_pytorch_forward(pt_ml, ml_feed)
+        ort_lbl, ort_mal = ml_sess.run(None, ml_feed)
+        diff_m = max(
+            float(np.max(np.abs(pt_lbl - np.asarray(ort_lbl)))),
+            float(np.max(np.abs(pt_mal - np.asarray(ort_mal)))),
+        )
         max_ml_diff = max(max_ml_diff, diff_m)
+
+        pt_probs = 1.0 / (1.0 + np.exp(-np.clip(pt_lbl[0].astype(np.float64) / ml_temps, -40.0, 40.0)))
+        ort_probs = 1.0 / (1.0 + np.exp(-np.clip(np.asarray(ort_lbl)[0].astype(np.float64) / ml_temps, -40.0, 40.0)))
+        pt_flags = ml_enabled & (pt_probs >= ml_thrs)
+        ort_flags = ml_enabled & (ort_probs >= ml_thrs)
+        if not np.array_equal(pt_flags, ort_flags):
+            raise ValueError("multilabel_v4_calibrated_flag_parity_mismatch")
+
+    batch2_base = collate_v4_numpy_feed(
+        np.concatenate([sample_ml_feeds[0]["tabular_features"], sample_ml_feeds[1]["tabular_features"]], axis=0),
+        [
+            single_graph_tuple(
+                ing.ingest(tb)["node_features"],
+                ing.ingest(tb)["node_types"],
+                ing.ingest(tb)["edge_index"],
+                ing.ingest(tb)["edge_rel"],
+                True,
+            ),
+            None,
+        ],
+    )
+    batch2_ml = {
+        **batch2_base,
+        "aux_telemetry_features": np.concatenate(
+            [sample_ml_feeds[0]["aux_telemetry_features"], np.zeros((1, 16), dtype=np.float32)], axis=0
+        ),
+    }
+    pt_b2_lbl, pt_b2_mal = _v4_ml_pytorch_forward(pt_ml, batch2_ml)
+    ort_b2_lbl, ort_b2_mal = ml_sess.run(None, batch2_ml)
+    max_ml_diff = max(
+        max_ml_diff,
+        float(np.max(np.abs(pt_b2_lbl - np.asarray(ort_b2_lbl)))),
+        float(np.max(np.abs(pt_b2_mal - np.asarray(ort_b2_mal)))),
+    )
 
     center = np.asarray(contract["center"], dtype=np.float64)
     scale = np.asarray(contract["scale"], dtype=np.float64)
@@ -827,44 +1033,29 @@ def _export_and_verify_v4(models_dir: Path, configs_dir: Path) -> dict[str, obje
 
     max_bin_diff = max(max_bin_diff, controls_diff, stress_diff)
     assert max_bin_diff < 1e-5, f"Binary v4 ONNX parity drift too high: {max_bin_diff}"
-    assert max_ml_diff < 1e-4, f"MultiLabel ONNX parity drift too high: {max_ml_diff}"
+    assert max_ml_diff < 1e-5, f"MultiLabel v4 ONNX parity drift too high: {max_ml_diff}"
 
-    for config_path in (V4_CONTRACT_PATH, V4_CONFORMAL_PATH, SCALER_PATH, ML_CONTRACT_PATH):
-        (configs_dir / config_path.name).write_bytes(config_path.read_bytes())
+    for config_path in (V4_CONTRACT_PATH, V4_CONFORMAL_PATH, SCALER_PATH, ML_CONTRACT_PATH, ML_V4_CONTRACT_PATH):
+        if config_path.is_file():
+            (configs_dir / config_path.name).write_bytes(config_path.read_bytes())
 
     d_bench = ing.ingest(tb)
-    nf_b, nt_b, ei_b, er_b, b_b, tok_b = (
+    nf_b, nt_b, ei_b, er_b = (
         d_bench["node_features"],
         d_bench["node_types"],
         d_bench["edge_index"],
         d_bench["edge_rel"],
-        d_bench["batch"],
-        d_bench["ast_tokens"],
     )
     ort_bin_feed = collate_v4_numpy_feed(
         d_bench["v4_tab_features"].numpy(),
         [single_graph_tuple(nf_b, nt_b, ei_b, er_b, d_bench["graph_present"])],
     )
-    es_b, ed_b, er_pb, em_b, he_b = _prepare_edge_tensors(ei_b, er_b)
-    tab52_b = torch.zeros((1, 52), dtype=torch.float32)
-    ort_ml_feed = {
-        "node_features": nf_b.numpy(),
-        "node_types": nt_b.numpy(),
-        "edge_src": es_b.numpy(),
-        "edge_dst": ed_b.numpy(),
-        "edge_rel": er_pb.numpy(),
-        "edge_mask": em_b.numpy(),
-        "has_edges": he_b.numpy(),
-        "use_graph_flag": np.array([1.0], dtype=np.float32),
-        "batch": b_b.numpy(),
-        "ast_tokens": tok_b.numpy(),
-        "tabular_features": tab52_b.numpy(),
-    }
+    ort_ml_feed = sample_ml_feeds[0]
 
     for _ in range(3):
         with torch.no_grad():
             _v4_pytorch_forward(pt_bin, ort_bin_feed)
-            pt_ml(nf_b, nt_b, ei_b, er_b, b_b, tok_b, tab52_b)
+            _v4_ml_pytorch_forward(pt_ml, ort_ml_feed)
         bin_sess.run(None, ort_bin_feed)
         ml_sess.run(None, ort_ml_feed)
 
@@ -874,7 +1065,7 @@ def _export_and_verify_v4(models_dir: Path, configs_dir: Path) -> dict[str, obje
         t0 = time.perf_counter()
         with torch.no_grad():
             _v4_pytorch_forward(pt_bin, ort_bin_feed)
-            pt_ml(nf_b, nt_b, ei_b, er_b, b_b, tok_b, tab52_b)
+            _v4_ml_pytorch_forward(pt_ml, ort_ml_feed)
         pt_neural_ms.append((time.perf_counter() - t0) * 1000.0)
 
         t1 = time.perf_counter()
@@ -910,7 +1101,11 @@ def _export_and_verify_v4(models_dir: Path, configs_dir: Path) -> dict[str, obje
             "phase_2_max_logit_abs_diff": stress_diff,
         },
         "multilabel_model": {
-            "filename": "multilabel_threat_net_v2.onnx",
+            "filename": ml_onnx_path.name,
+            "model_version": "PDFMultiLabelThreatNet v4",
+            "source_run": ml_v4_contract["source_run"],
+            "contract_filename": ML_V4_CONTRACT_PATH.name,
+            "contract_sha256": hashlib.sha256(ML_V4_CONTRACT_PATH.read_bytes().replace(b"\r\n", b"\n")).hexdigest(),
             "sha256": hashlib.sha256(ml_onnx_path.read_bytes()).hexdigest(),
             "size_bytes": ml_onnx_path.stat().st_size,
             "parameter_count": ml_param_count,

@@ -2,9 +2,69 @@
 
 from __future__ import annotations
 
+import math
 from typing import Any
 
 import numpy as np
+
+MULTILABEL_V4_CONTRACT_VERSION = "pdf-multilabel-v4-regime-b"
+EXPECTED_MULTILABEL_HEAD_IDS_V4: tuple[str, ...] = (
+    "js_script_exec",
+    "auto_open_trigger",
+    "obfuscated_payload",
+    "buffer_loop_staging",
+    "active_form_or_exploit",
+    "embedded_dropper_or_launch",
+    "suspicious_uri_redirect",
+    "structural_parser_evasion",
+)
+EXPECTED_REGIME_B_NAMES_V4: tuple[str, ...] = (
+    "lexical_AA",
+    "lexical_EmbeddedFile",
+    "lexical_Encrypt",
+    "lexical_JBIG2Decode",
+    "lexical_JS",
+    "lexical_JavaScript",
+    "lexical_Launch",
+    "lexical_ObjStm",
+    "lexical_OpenAction",
+    "lexical_Resources",
+    "lexical_RichMedia",
+    "lexical_Root",
+    "lexical_URI",
+    "lexical_XFA",
+    "lexical_endobj",
+    "lexical_endstream",
+    "lexical_obj",
+    "lexical_page_command",
+    "lexical_stream",
+    "lexical_trailer",
+    "lexical_xref",
+    "lexical_startxref",
+    "raw_size_bytes",
+    "raw_entropy",
+    "raw_header_offset",
+    "js_per_obj",
+    "stream_per_obj",
+    "obj_endobj_diff",
+    "stream_endstream_diff",
+)
+EXPECTED_MULTILABEL_V4_ONNX_INPUTS: tuple[str, ...] = (
+    "tabular_features",
+    "action_ir_features",
+    "action_ir_active",
+    "node_features",
+    "node_types",
+    "deg_features",
+    "node_pad_mask",
+    "spd",
+    "direct_rel",
+    "root_depth",
+    "sink_dist",
+    "summary_12",
+    "aux_telemetry_features",
+)
+EXPECTED_MULTILABEL_V4_ONNX_OUTPUTS: tuple[str, ...] = ("label_logits", "mal_logit")
 
 NUM_NODE_TYPES = 9
 NUM_BASE_RELATIONS = 8
@@ -12,6 +72,26 @@ GRAPH_SUMMARY_DIM = 12
 MAX_SPD_HOPS = 8
 SPD_UNREACHABLE = MAX_SPD_HOPS + 1
 ACTION_IR_DIM = 24
+AUX_TELEMETRY_V4_DIM = 16
+
+AUX_TELEMETRY_V4_NAMES: tuple[str, ...] = (
+    "log1p_lexical_acroform",
+    "log1p_escaped_name_candidates",
+    "ast_observed",
+    "log1p_ast_node_count",
+    "log1p_ast_max_depth",
+    "log1p_ast_loops",
+    "log1p_ast_computed_members",
+    "ast_call_ratio",
+    "ast_has_loop",
+    "js_has_deobf_call",
+    "js_has_exploit_api",
+    "js_has_launch_or_export",
+    "has_action_launch_or_gotor",
+    "has_action_submit_or_uri",
+    "has_embedded_payload",
+    "has_parser_or_stream_anomaly",
+)
 
 CANONICAL_NODE_TYPES: dict[str, int] = {
     "catalog": 0,
@@ -285,3 +365,305 @@ def single_graph_tuple(
         np.asarray(ed_np, dtype=np.int64),
         np.asarray(er_np, dtype=np.int64),
     )
+
+
+def extract_runtime_aux_v4_np(
+    *,
+    lexical_acroform: float,
+    escaped_name_candidates: float,
+    ast_observed: bool,
+    ast_node_count: float,
+    ast_max_depth: float,
+    ast_loops: float,
+    ast_computed_members: float,
+    ast_call_expressions: float,
+    ast_has_loop: bool,
+    js_has_deobf_call: bool,
+    js_has_exploit_api: bool,
+    js_has_launch_or_export: bool,
+    has_action_launch_or_gotor: bool,
+    has_action_submit_or_uri: bool,
+    has_embedded_payload: bool,
+    has_parser_or_stream_anomaly: bool,
+) -> np.ndarray:
+    """Build bounded 16D auxiliary telemetry vector [1, 16] with zero linear page/size dependence."""
+    out = np.zeros((1, AUX_TELEMETRY_V4_DIM), dtype=np.float32)
+    out[0, 0] = float(np.log1p(max(0.0, float(lexical_acroform))))
+    out[0, 1] = float(np.log1p(max(0.0, float(escaped_name_candidates))))
+    if ast_observed:
+        nc = max(0.0, float(ast_node_count))
+        out[0, 2] = 1.0
+        out[0, 3] = float(np.log1p(nc))
+        out[0, 4] = float(np.log1p(max(0.0, float(ast_max_depth))))
+        out[0, 5] = float(np.log1p(max(0.0, float(ast_loops))))
+        out[0, 6] = float(np.log1p(max(0.0, float(ast_computed_members))))
+        out[0, 7] = float(np.clip(max(0.0, float(ast_call_expressions)) / max(nc, 1.0), 0.0, 1.0)) if nc > 0.0 else 0.0
+        out[0, 8] = 1.0 if ast_has_loop else 0.0
+    out[0, 9] = 1.0 if js_has_deobf_call else 0.0
+    out[0, 10] = 1.0 if js_has_exploit_api else 0.0
+    out[0, 11] = 1.0 if js_has_launch_or_export else 0.0
+    out[0, 12] = 1.0 if has_action_launch_or_gotor else 0.0
+    out[0, 13] = 1.0 if has_action_submit_or_uri else 0.0
+    out[0, 14] = 1.0 if has_embedded_payload else 0.0
+    out[0, 15] = 1.0 if has_parser_or_stream_anomaly else 0.0
+    return np.ascontiguousarray(out, dtype=np.float32)
+
+
+_V4_NODE_KIND_SET: frozenset[str] = frozenset(
+    {"catalog", "pages", "page", "action", "script", "stream", "acroform", "filespec", "pdf_object"}
+)
+
+
+def _canonical_23d_node_features_np(ingest_data: dict[str, Any]) -> np.ndarray | None:
+    nf = ingest_data.get("node_features")
+    if nf is None:
+        return None
+    nx_np = nf.detach().cpu().numpy() if hasattr(nf, "detach") else np.asarray(nf, dtype=np.float32)
+    if nx_np.ndim != 2:
+        return None
+    if nx_np.shape[1] == 23:
+        return np.asarray(nx_np, dtype=np.float32)
+    if nx_np.shape[1] != 19:
+        return None
+    out = np.zeros((nx_np.shape[0], 23), dtype=np.float32)
+    if not bool(ingest_data.get("graph_present", True)):
+        return out
+    recs = [r for r in (ingest_data.get("raw_records") or [])[:200] if r.get("kind") in _V4_NODE_KIND_SET]
+    for i in range(nx_np.shape[0]):
+        if i < len(recs):
+            r = recs[i]
+            size_val = float(r.get("phys_span_bytes") or r.get("size_bytes") or 0.0)
+            has_s = 1.0 if r.get("has_stream") else 0.0
+            log_size = float(np.log1p(max(0.0, size_val)))
+            phys_mask = 1.0 if size_val > 0.0 else 0.0
+            raw_stream = r.get("raw_stream_bytes")
+            stream_val = float(raw_stream) if isinstance(raw_stream, int) and raw_stream >= 0 else size_val
+            stream_log = float(np.log1p(max(0.0, stream_val))) if has_s > 0.0 else 0.0
+            rep_flag = 1.0 if r.get("is_repaired") else 0.0
+            out[i, :6] = (log_size, phys_mask, stream_log, has_s, 1.0, rep_flag)
+        else:
+            log_size = float(nx_np[i, 0])
+            has_s = 1.0 if float(nx_np[i, 1]) > 0.5 else 0.0
+            out[i, :6] = (
+                log_size,
+                1.0 if log_size > 0.0 else 0.0,
+                log_size if has_s > 0.0 else 0.0,
+                has_s,
+                1.0,
+                0.0,
+            )
+        out[i, 6] = nx_np[i, 2]
+        out[i, 7:23] = nx_np[i, 3:19]
+    return out
+
+
+def validate_multilabel_v4_contract_np(contract: dict[str, Any]) -> None:
+    if contract.get("contract_version") != MULTILABEL_V4_CONTRACT_VERSION:
+        raise ValueError("invalid_multilabel_v4_contract_version")
+    mcfg = contract.get("model_config")
+    if not isinstance(mcfg, dict):
+        raise ValueError("invalid_multilabel_v4_model_config")
+    hidden_dim = mcfg.get("hidden_dim")
+    num_heads = mcfg.get("num_heads")
+    num_layers = mcfg.get("num_graph_layers")
+    if (
+        mcfg.get("tab_dim") != len(EXPECTED_REGIME_B_NAMES_V4)
+        or mcfg.get("action_ir_dim") != ACTION_IR_DIM
+        or mcfg.get("node_dim") != 23
+        or mcfg.get("aux_dim") != AUX_TELEMETRY_V4_DIM
+        or mcfg.get("num_labels") != len(EXPECTED_MULTILABEL_HEAD_IDS_V4)
+        or mcfg.get("num_node_types") != NUM_NODE_TYPES
+        or mcfg.get("num_base_relations") != NUM_BASE_RELATIONS
+        or not isinstance(hidden_dim, int)
+        or not isinstance(num_heads, int)
+        or not isinstance(num_layers, int)
+        or hidden_dim <= 0
+        or num_heads <= 0
+        or num_layers <= 0
+        or hidden_dim % num_heads != 0
+    ):
+        raise ValueError("invalid_multilabel_v4_model_config")
+    if tuple(contract.get("tab_feature_names") or ()) != EXPECTED_REGIME_B_NAMES_V4:
+        raise ValueError("invalid_multilabel_v4_tab_feature_names")
+    if tuple(contract.get("aux_feature_names") or ()) != AUX_TELEMETRY_V4_NAMES:
+        raise ValueError("invalid_multilabel_v4_aux_feature_names")
+    labels = contract.get("labels") or []
+    if tuple(str(item.get("id", "")) for item in labels) != EXPECTED_MULTILABEL_HEAD_IDS_V4:
+        raise ValueError("invalid_multilabel_v4_head_order")
+    temps = contract.get("label_temperatures") or []
+    if len(temps) != len(EXPECTED_MULTILABEL_HEAD_IDS_V4) or not all(
+        isinstance(t, (int, float)) and math.isfinite(float(t)) and float(t) > 0.0 for t in temps
+    ):
+        raise ValueError("invalid_multilabel_v4_label_temperatures")
+    mal_t = contract.get("mal_temperature")
+    if not isinstance(mal_t, (int, float)) or not math.isfinite(float(mal_t)) or float(mal_t) <= 0.0:
+        raise ValueError("invalid_multilabel_v4_mal_temperature")
+    center = np.asarray(contract.get("tab29_center") or (), dtype=np.float64)
+    scale = np.asarray(contract.get("tab29_scale") or (), dtype=np.float64)
+    if (
+        center.shape != (len(EXPECTED_REGIME_B_NAMES_V4),)
+        or scale.shape != (len(EXPECTED_REGIME_B_NAMES_V4),)
+        or not np.isfinite(center).all()
+        or not np.isfinite(scale).all()
+        or np.any(scale == 0.0)
+    ):
+        raise ValueError("invalid_multilabel_v4_scaler")
+    for item in labels:
+        thr = item.get("threshold")
+        enabled = item.get("model_flag_enabled", True)
+        if not isinstance(enabled, bool):
+            raise ValueError("invalid_multilabel_v4_model_flag_enabled")
+        if not isinstance(thr, (int, float)) or not math.isfinite(float(thr)) or float(thr) <= 0.0:
+            raise ValueError("invalid_multilabel_v4_head_threshold")
+        if enabled and float(thr) > 1.0:
+            raise ValueError("invalid_multilabel_v4_enabled_threshold_range")
+
+
+def build_runtime_multilabel_v4_feed_np(
+    *,
+    raw_pdf_bytes: bytes,
+    raw_tokens: dict[str, int],
+    ingest_data: dict[str, Any],
+    tab29_center: np.ndarray,
+    tab29_scale: np.ndarray,
+    escaped_names: float,
+    has_obfuscated_js: bool,
+    all_indicators: set[str],
+    matched_cves: list[tuple[str, str]],
+    has_export_dropper: bool,
+    has_launch: bool,
+    has_submit_form: bool,
+    has_embedded_file: bool,
+    has_stream_anomaly: bool,
+    v4_graph_feed: dict[str, np.ndarray] | None = None,
+) -> dict[str, np.ndarray] | None:
+    raw_29 = ingest_data.get("v4_raw_feature_vec")
+    if not isinstance(raw_29, list) or len(raw_29) != len(EXPECTED_REGIME_B_NAMES_V4):
+        if not raw_pdf_bytes:
+            return None
+        header_pos = max(raw_pdf_bytes.find(b"%PDF-"), 0)
+        denom = max(float(raw_tokens.get("obj", 0)), 1.0)
+        raw_29 = [
+            float(raw_tokens.get(name.removeprefix("lexical_"), 0))
+            for name in EXPECTED_REGIME_B_NAMES_V4
+            if name.startswith("lexical_")
+        ]
+        raw_29.extend(
+            (
+                float(len(raw_pdf_bytes)),
+                float(ingest_data.get("raw_entropy") or 0.0),
+                float(header_pos),
+                float(raw_tokens.get("JS", 0) + raw_tokens.get("JavaScript", 0)) / denom,
+                float(raw_tokens.get("stream", 0)) / denom,
+                float(raw_tokens.get("obj", 0) - raw_tokens.get("endobj", 0)),
+                float(raw_tokens.get("stream", 0) - raw_tokens.get("endstream", 0)),
+            )
+        )
+    arr_29 = np.asarray(raw_29, dtype=np.float64).reshape(1, -1)
+    if not np.isfinite(arr_29).all():
+        return None
+    log_29 = np.sign(arr_29) * np.log1p(np.abs(arr_29))
+    tab_29 = np.ascontiguousarray(((log_29 - tab29_center) / tab29_scale).astype(np.float32), dtype=np.float32)
+
+    if (
+        isinstance(v4_graph_feed, dict)
+        and all(k in v4_graph_feed for k in EXPECTED_MULTILABEL_V4_ONNX_INPUTS[:-1])
+        and np.asarray(v4_graph_feed["action_ir_features"]).shape == (1, ACTION_IR_DIM)
+    ):
+        base_feed = {
+            k: np.ascontiguousarray(v4_graph_feed[k])
+            for k in EXPECTED_MULTILABEL_V4_ONNX_INPUTS[:-1]
+            if k != "tabular_features"
+        }
+        base_feed["tabular_features"] = tab_29
+    else:
+        nf_23 = _canonical_23d_node_features_np(ingest_data)
+        g_tup = (
+            single_graph_tuple(
+                nf_23,
+                ingest_data.get("node_types"),
+                ingest_data.get("edge_index"),
+                ingest_data.get("edge_rel"),
+                bool(ingest_data.get("graph_present", True)),
+            )
+            if nf_23 is not None
+            else None
+        )
+        base_feed = collate_v4_numpy_feed(tab_29, [g_tup])
+
+    records = ingest_data.get("raw_records") or []
+    encryption = ingest_data.get("encryption_analysis") or {}
+    triggers = set(ingest_data.get("non_js_triggers") or ())
+    ast_stats = ingest_data.get("ast_stats") or {}
+    ast_counts = ingest_data.get("ast_node_counts") or {}
+
+    ast_obs = (not encryption.get("password_locked", False)) and (
+        not triggers.intersection(
+            {"javascript_body_unavailable", "action_inspection_limit", "supplemental_inspection_incomplete"}
+        )
+    )
+    loops_val = float(ast_stats.get("loops") or 0.0)
+    has_loop = (
+        loops_val > 0.0
+        or int(ast_counts.get("ForStatement") or 0) > 0
+        or int(ast_counts.get("WhileStatement") or 0) > 0
+    )
+    has_exploit_api = bool(matched_cves) or bool(
+        all_indicators.intersection(
+            {"util_printf_overflow", "collab_overflow", "get_icon_overflow", "media_newplayer_uaf"}
+        )
+    )
+    has_launch_or_export = bool(has_export_dropper) or ("launch_url" in all_indicators)
+    has_act_launch = bool(has_launch) or any(
+        r.get("action_type") in {"/Launch", "/GoToR", "/GoToE", "/ImportData"} for r in records
+    )
+    phishing = ingest_data.get("phishing_analysis") or {}
+    qr = ingest_data.get("qr_analysis") or {}
+    has_act_uri = (
+        bool(has_submit_form)
+        or bool(phishing.get("suspicious_uris"))
+        or bool(qr.get("suspicious_uris"))
+        or any(
+            r.get("action_type") == "/SubmitForm"
+            or (r.get("action_type") == "/URI" and bool(r.get("is_threat_trigger")))
+            for r in records
+        )
+    )
+    diff = ingest_data.get("differential_analysis") or {}
+    header_offset_pos = (raw_pdf_bytes[:1024].find(b"%PDF-") > 0) if raw_pdf_bytes else False
+    has_struct_anom = (
+        bool(has_stream_anomaly)
+        or bool(diff.get("has_differential_evasion"))
+        or abs(float(raw_tokens.get("obj", 0) - raw_tokens.get("endobj", 0))) > 0.0
+        or abs(float(raw_tokens.get("stream", 0) - raw_tokens.get("endstream", 0))) > 0.0
+        or header_offset_pos
+    )
+    ast_total_nodes = float(
+        ast_stats.get("total_nodes")
+        if ast_stats.get("total_nodes") is not None
+        else (ast_stats.get("node_count") or 0.0)
+    )
+    ast_calls = float(
+        ast_counts.get("CallExpression")
+        if ast_counts.get("CallExpression") is not None
+        else (ast_stats.get("call_count") or 0.0)
+    )
+    aux_16 = extract_runtime_aux_v4_np(
+        lexical_acroform=float(raw_tokens.get("AcroForm", 0) + raw_tokens.get("Acroform", 0)),
+        escaped_name_candidates=float(escaped_names),
+        ast_observed=ast_obs,
+        ast_node_count=ast_total_nodes,
+        ast_max_depth=float(ast_stats.get("max_depth") or 0.0),
+        ast_loops=loops_val,
+        ast_computed_members=float(ast_stats.get("computed_members") or 0.0),
+        ast_call_expressions=ast_calls,
+        ast_has_loop=has_loop,
+        js_has_deobf_call=bool(has_obfuscated_js),
+        js_has_exploit_api=has_exploit_api,
+        js_has_launch_or_export=has_launch_or_export,
+        has_action_launch_or_gotor=has_act_launch,
+        has_action_submit_or_uri=has_act_uri,
+        has_embedded_payload=bool(has_embedded_file),
+        has_parser_or_stream_anomaly=has_struct_anom,
+    )
+    return {**base_feed, "aux_telemetry_features": aux_16}

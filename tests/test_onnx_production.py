@@ -101,6 +101,8 @@ def test_explicit_legacy_checkpoints_keep_their_feature_contract() -> None:
     ort_result = onnx.scan_bytes(benign, explain=False)
     assert pt_result.verdict == ort_result.verdict == "BENIGN"
     assert ort_result.malware_probability == pytest.approx(pt_result.malware_probability, abs=1e-4)
+    assert pt_result.threat_taxonomy["classification_source"] == "multilabel_neural_model_v4"
+    assert ort_result.threat_taxonomy["classification_source"] == "multilabel_neural_model_v4"
 
 
 def test_production_web_service_endpoints_and_cdr_integrity() -> None:
@@ -149,6 +151,9 @@ def test_production_web_service_endpoints_and_cdr_integrity() -> None:
     assert health_json["decision_threshold"] == pytest.approx(expected_scanner.decision_threshold, abs=1e-5)
     assert health_json["prediction_available"] is True
     assert health_json["multilabel_weights_loaded"] is True
+    assert health_json["multilabel_model"] == "PDFMultiLabelThreatNet v4 (ONNX)"
+    assert health_json["ast_encoder_layers"] == 0
+    assert health_json["action_ir_features"] == 24
     assert health_json["cdr_engine"] == "pikepdf-inplace"
 
     r_scan = client.post(

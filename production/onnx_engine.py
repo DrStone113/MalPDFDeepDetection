@@ -150,7 +150,7 @@ class ONNXMalPDFScannerEngine:
         )
         self.model_path: Path | None = resolved_model
         self.weights_loaded: bool = True
-        self.parameter_count = 760000 if self.is_v4 else (672885 if self.is_v3 else 808323)
+        self.parameter_count = 783990 if self.is_v4 else (672885 if self.is_v3 else 808323)
         if binary_meta.get("filename") == resolved_model.name:
             self.parameter_count = int(binary_meta.get("parameter_count", self.parameter_count))
 
@@ -525,6 +525,8 @@ class ONNXMalPDFScannerEngine:
             "ast_branch_pct": ast_branch_pct,
             "tabular_branch_pct": tabular_branch_pct,
         }
+        if self.is_v4:
+            proof_metrics["action_ir_branch_pct"] = ast_branch_pct
         measured_nodes = set(cand_nodes)
         measured_tabs = set(active_tab_indices)
         reported_nodes = [value if index in measured_nodes else None for index, value in enumerate(node_saliency)]
@@ -560,8 +562,20 @@ class ONNXMalPDFScannerEngine:
         pages_count = int(ingest_data.get("pages_count", 1))
         raw_entropy = float(ingest_data.get("raw_entropy", 0.0))
 
+        model_gen = "v4" if self.is_v4 else ("v3" if self.is_v3 else "v2")
+        mod_schema = (
+            "v4_dag_action_ir_tabular"
+            if model_gen == "v4"
+            else ("v3_tabular_graph" if model_gen == "v3" else "v2_graph_ast")
+        )
+        static_dossier["model_generation"] = model_gen
+        static_dossier["modality_schema"] = mod_schema
         if ingest_data.get("prediction_blockers"):
-            dossier = self.forensic.explain(ingest_data, malware_prob=None) if explain else static_dossier
+            dossier = (
+                self.forensic.explain(ingest_data, malware_prob=None, model_generation=model_gen)
+                if explain
+                else static_dossier
+            )
             taxonomy_info = self.taxonomy.classify(
                 raw_pdf_bytes=data,
                 ingest_data=ingest_data,
@@ -679,6 +693,11 @@ class ONNXMalPDFScannerEngine:
             )[0]
             return float(logits.reshape(-1)[0])
 
+        request_v4_feed = (
+            collate_v4_numpy_feed(tab_np, [single_graph_tuple(nf_np, nt_np, ei_np, er_np, graph_present)])
+            if self.is_v4
+            else None
+        )
         logits_arr, attn_weights_arr, edge_alpha_arr, ast_token_attn_arr = self._run_binary(
             None,
             model_inputs,
@@ -746,6 +765,7 @@ class ONNXMalPDFScannerEngine:
                 tabular_grad_importance=tabular_grad_importance,
                 xai_proof_metrics=proof_metrics,
                 saliency_method="occlusion",
+                model_generation=model_gen,
             )
 
         graph_nodes: list[dict[str, Any]] = []
@@ -831,6 +851,7 @@ class ONNXMalPDFScannerEngine:
             forensic_dossier=forensic_dossier,
             verdict=verdict,
             malware_prob=prob,
+            v4_graph_feed=request_v4_feed,
         )
         neural_eval_prob = raw_prob if has_policy_enforcement else prob
         if self.conformal is not None and math.isfinite(neural_eval_prob):

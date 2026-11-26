@@ -13,15 +13,36 @@ from malpdf.models.multilabel_threat_net import (
     MULTILABEL_THREAT_DEFINITIONS,
     PDFMultiLabelThreatNet,
 )
-from malpdf.scanner.forensic import DANGEROUS_PATTERNS, deobfuscate_javascript_static, reconcile_taxonomy_observations
+from malpdf.models.multilabel_threat_net_v4 import (
+    MULTILABEL_V4_CONTRACT_VERSION,
+    MultiLabelV4Config,
+    PDFMultiLabelThreatNetV4,
+    load_multilabel_v4_npz,
+)
+from malpdf.models.v4_graph_numpy import (
+    build_runtime_multilabel_v4_feed_np,
+    validate_multilabel_v4_contract_np,
+)
+from malpdf.scanner.forensic import (
+    DANGEROUS_PATTERNS,
+    deobfuscate_javascript_static,
+    reconcile_taxonomy_observations,
+    verified_zero_js_disproven_heads,
+)
 from malpdf.static.obfuscation import MAX_PDF_BYTES, count_escaped_pdf_names
 from malpdf.static.raw_scan import scan_raw_pdf_tokens
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_MULTILABEL_CONTRACT_PATH = REPO_ROOT / "configs" / "multilabel_threat_contract.json"
-DEFAULT_MULTILABEL_CHECKPOINT_PATH = (
+DEFAULT_MULTILABEL_V4_CONTRACT_PATH = REPO_ROOT / "configs" / "multilabel_threat_v4_contract.json"
+DEFAULT_MULTILABEL_V4_CHECKPOINT_PATH = (
+    REPO_ROOT / "artifacts" / "models" / "multilabel_threat_v4" / "multilabel_threat_net_v4_seed42.npz"
+)
+LEGACY_MULTILABEL_V2_CONTRACT_PATH = REPO_ROOT / "configs" / "multilabel_threat_contract.json"
+LEGACY_MULTILABEL_V2_CHECKPOINT_PATH = (
     REPO_ROOT / "artifacts" / "models" / "multilabel_threat_v2" / "multilabel_threat_net_v2_best.pt"
 )
+DEFAULT_MULTILABEL_CONTRACT_PATH = DEFAULT_MULTILABEL_V4_CONTRACT_PATH
+DEFAULT_MULTILABEL_CHECKPOINT_PATH = DEFAULT_MULTILABEL_V4_CHECKPOINT_PATH
 
 CVE_EXPLOIT_SIGNATURES: list[tuple[str, str, str]] = [
     ("CVE-2008-2992", r"\butil\.printf\s*\(", "Adobe Reader util.printf Stack Buffer Overflow"),
@@ -87,6 +108,31 @@ CODE_PRIORITY_ORDER: list[str] = [
 ]
 
 
+def _is_v4_npz_checkpoint(path: Path) -> bool:
+    if path.suffix.lower() == ".npz":
+        return True
+    if not path.is_file():
+        return False
+    import zipfile
+
+    if not zipfile.is_zipfile(path):
+        return False
+    try:
+        with zipfile.ZipFile(path, "r") as zf:
+            return any(name.endswith(".npy") for name in zf.namelist())
+    except Exception:
+        return False
+
+
+def _is_v4_contract_file(path: Path) -> bool:
+    if not path.is_file():
+        return path.name == DEFAULT_MULTILABEL_V4_CONTRACT_PATH.name
+    try:
+        return json.loads(path.read_text(encoding="utf-8")).get("contract_version") == MULTILABEL_V4_CONTRACT_VERSION
+    except Exception:
+        return False
+
+
 class ThreatTaxonomyClassifier:
     def __init__(
         self,
@@ -95,50 +141,168 @@ class ThreatTaxonomyClassifier:
         checkpoint_path: Path | str | None = None,
     ) -> None:
         self.device = torch.device(device)
-        c_path = Path(contract_path) if contract_path is not None else DEFAULT_MULTILABEL_CONTRACT_PATH
-        ckpt_path = Path(checkpoint_path) if checkpoint_path is not None else DEFAULT_MULTILABEL_CHECKPOINT_PATH
+        if contract_path is None and checkpoint_path is None:
+            if DEFAULT_MULTILABEL_V4_CONTRACT_PATH.is_file() and DEFAULT_MULTILABEL_V4_CHECKPOINT_PATH.is_file():
+                c_path = DEFAULT_MULTILABEL_V4_CONTRACT_PATH
+                ckpt_path = DEFAULT_MULTILABEL_V4_CHECKPOINT_PATH
+            else:
+                c_path = LEGACY_MULTILABEL_V2_CONTRACT_PATH
+                ckpt_path = LEGACY_MULTILABEL_V2_CHECKPOINT_PATH
+        elif contract_path is not None and checkpoint_path is None:
+            c_path = Path(contract_path)
+            is_v4_c = _is_v4_contract_file(c_path)
+            ckpt_path = DEFAULT_MULTILABEL_V4_CHECKPOINT_PATH if is_v4_c else LEGACY_MULTILABEL_V2_CHECKPOINT_PATH
+        elif contract_path is None and checkpoint_path is not None:
+            ckpt_path = Path(checkpoint_path)
+            is_v4_ckpt = _is_v4_npz_checkpoint(ckpt_path)
+            c_path = DEFAULT_MULTILABEL_V4_CONTRACT_PATH if is_v4_ckpt else LEGACY_MULTILABEL_V2_CONTRACT_PATH
+        else:
+            c_path = Path(contract_path)  # type: ignore[arg-type]
+            ckpt_path = Path(checkpoint_path)  # type: ignore[arg-type]
 
         self.ml_weights_loaded = False
+        self.is_v4 = False
+        self.model_version = "StructuralFallback"
+        self.classification_source_name = "structural_fallback"
         self.ml_checkpoint_path: Path | None = None
-        self.ml_model: PDFMultiLabelThreatNet | None = None
+        self.ml_model: PDFMultiLabelThreatNet | PDFMultiLabelThreatNetV4 | None = None
         self.contract: dict[str, Any] = {}
         self.label_defs: list[dict[str, Any]] = [{**d, "threshold": 0.50} for d in MULTILABEL_THREAT_DEFINITIONS]
         self.scaler_mean: np.ndarray | None = None
         self.scaler_scale: np.ndarray | None = None
+        self.tab29_center: np.ndarray | None = None
+        self.tab29_scale: np.ndarray | None = None
+        self.label_temperatures: np.ndarray | None = None
+        self.mal_temperature: float = 1.0
 
         if c_path.is_file() and ckpt_path.is_file():
             contract_data = json.loads(c_path.read_text(encoding="utf-8"))
-            expected_sha = contract_data.get("checkpoint_sha256")
-            if checkpoint_path is None and expected_sha:
-                actual_sha = hashlib.sha256(ckpt_path.read_bytes()).hexdigest()
-                if actual_sha != expected_sha:
-                    raise ValueError("multilabel_checkpoint_sha256_mismatch")
+            if contract_data.get("contract_version") == MULTILABEL_V4_CONTRACT_VERSION:
+                validate_multilabel_v4_contract_np(contract_data)
+                expected_sha = contract_data.get("weights_npz_sha256")
+                if checkpoint_path is None and expected_sha:
+                    actual_sha = hashlib.sha256(ckpt_path.read_bytes()).hexdigest()
+                    if actual_sha != expected_sha:
+                        raise ValueError("multilabel_v4_npz_sha256_mismatch")
+                cfg = MultiLabelV4Config(**contract_data["model_config"])
+                model_v4 = PDFMultiLabelThreatNetV4(cfg).to(self.device)
+                load_multilabel_v4_npz(model_v4, ckpt_path, map_location=self.device)
+                model_v4.eval()
+                self.ml_model = model_v4
+                self.ml_weights_loaded = True
+                self.is_v4 = True
+                self.model_version = str(contract_data.get("model_version") or "PDFMultiLabelThreatNet v4")
+                self.classification_source_name = "multilabel_neural_model_v4"
+                self.ml_checkpoint_path = ckpt_path
+                self.contract = contract_data
+                self.label_defs = contract_data["labels"]
+                self.tab29_center = np.asarray(contract_data["tab29_center"], dtype=np.float64)
+                self.tab29_scale = np.asarray(contract_data["tab29_scale"], dtype=np.float64)
+                self.label_temperatures = np.asarray(contract_data["label_temperatures"], dtype=np.float64)
+                self.mal_temperature = float(contract_data["mal_temperature"])
+            else:
+                expected_sha = contract_data.get("checkpoint_sha256")
+                if checkpoint_path is None and expected_sha:
+                    actual_sha = hashlib.sha256(ckpt_path.read_bytes()).hexdigest()
+                    if actual_sha != expected_sha:
+                        raise ValueError("multilabel_checkpoint_sha256_mismatch")
 
-            state_dict = torch.load(ckpt_path, map_location=self.device, weights_only=True)
-            tab_dim = int(contract_data.get("tabular_in_features", 52))
-            node_dim = int(contract_data.get("node_in_dim", 23))
-            hidden_dim = int(contract_data.get("hidden_dim", 128))
-            labels_cfg = contract_data.get("labels") or self.label_defs
+                state_dict = torch.load(ckpt_path, map_location=self.device, weights_only=True)
+                tab_dim = int(contract_data.get("tabular_in_features", 52))
+                node_dim = int(contract_data.get("node_in_dim", 23))
+                hidden_dim = int(contract_data.get("hidden_dim", 128))
+                labels_cfg = contract_data.get("labels") or self.label_defs
 
-            model = PDFMultiLabelThreatNet(
-                node_in_dim=node_dim,
-                num_node_types=9,
-                num_relations=8,
-                ast_vocab_size=int(contract_data.get("ast_vocab_size", 64)),
-                tabular_in_features=tab_dim,
-                hidden_dim=hidden_dim,
-                num_labels=len(labels_cfg),
-            ).to(self.device)
-            model.load_state_dict(state_dict)
-            model.eval()
+                model = PDFMultiLabelThreatNet(
+                    node_in_dim=node_dim,
+                    num_node_types=9,
+                    num_relations=8,
+                    ast_vocab_size=int(contract_data.get("ast_vocab_size", 64)),
+                    tabular_in_features=tab_dim,
+                    hidden_dim=hidden_dim,
+                    num_labels=len(labels_cfg),
+                ).to(self.device)
+                model.load_state_dict(state_dict)
+                model.eval()
 
-            self.ml_model = model
-            self.ml_weights_loaded = True
-            self.ml_checkpoint_path = ckpt_path
-            self.contract = contract_data
-            self.label_defs = labels_cfg
-            self.scaler_mean = np.array(contract_data["scaler_mean"], dtype=np.float32)
-            self.scaler_scale = np.array(contract_data["scaler_scale"], dtype=np.float32)
+                self.ml_model = model
+                self.ml_weights_loaded = True
+                self.is_v4 = False
+                self.model_version = "PDFMultiLabelThreatNet v2"
+                self.classification_source_name = "multilabel_neural_model_v2"
+                self.ml_checkpoint_path = ckpt_path
+                self.contract = contract_data
+                self.label_defs = labels_cfg
+                self.scaler_mean = np.array(contract_data["scaler_mean"], dtype=np.float32)
+                self.scaler_scale = np.array(contract_data["scaler_scale"], dtype=np.float32)
+
+    def _predict_multilabel_v4(
+        self,
+        raw_pdf_bytes: bytes,
+        raw_tokens: dict[str, int],
+        ingest_data: dict[str, Any],
+        escaped_names: float,
+        has_obfuscated_js: bool,
+        all_indicators: set[str],
+        matched_cves: list[tuple[str, str]],
+        has_export_dropper: bool,
+        has_launch: bool,
+        has_submit_form: bool,
+        has_embedded_file: bool,
+        has_stream_anomaly: bool,
+        v4_graph_feed: dict[str, np.ndarray] | None,
+    ) -> tuple[list[float], float] | None:
+        if (
+            not self.ml_weights_loaded
+            or not isinstance(self.ml_model, PDFMultiLabelThreatNetV4)
+            or self.tab29_center is None
+            or self.tab29_scale is None
+            or self.label_temperatures is None
+        ):
+            return None
+        feed = build_runtime_multilabel_v4_feed_np(
+            raw_pdf_bytes=raw_pdf_bytes,
+            raw_tokens=raw_tokens,
+            ingest_data=ingest_data,
+            tab29_center=self.tab29_center,
+            tab29_scale=self.tab29_scale,
+            escaped_names=escaped_names,
+            has_obfuscated_js=has_obfuscated_js,
+            all_indicators=all_indicators,
+            matched_cves=matched_cves,
+            has_export_dropper=has_export_dropper,
+            has_launch=has_launch,
+            has_submit_form=has_submit_form,
+            has_embedded_file=has_embedded_file,
+            has_stream_anomaly=has_stream_anomaly,
+            v4_graph_feed=v4_graph_feed,
+        )
+        if feed is None:
+            return None
+        dev = self.device
+        with torch.no_grad():
+            out = self.ml_model(
+                torch.from_numpy(feed["tabular_features"]).to(dev),
+                torch.from_numpy(feed["action_ir_features"]).to(dev),
+                torch.from_numpy(feed["action_ir_active"].squeeze(-1) > 0.5).to(dev),
+                torch.from_numpy(feed["node_features"]).to(dev),
+                torch.from_numpy(feed["node_types"]).to(dev),
+                torch.from_numpy(feed["deg_features"]).to(dev),
+                torch.from_numpy(feed["node_pad_mask"] > 0.5).to(dev),
+                torch.from_numpy(feed["spd"]).to(dev),
+                torch.from_numpy(feed["direct_rel"]).to(dev),
+                torch.from_numpy(feed["root_depth"]).to(dev),
+                torch.from_numpy(feed["sink_dist"]).to(dev),
+                torch.from_numpy(feed["summary_12"]).to(dev),
+                torch.from_numpy(feed["aux_telemetry_features"]).to(dev),
+            )
+            lbl_z = out["label_logits"][0].detach().cpu().numpy().astype(np.float64)
+            mal_z = float(out["mal_logit"].reshape(-1)[0].item())
+        scaled_lbl = np.clip(lbl_z / self.label_temperatures, -40.0, 40.0)
+        probs = [float(p) for p in (1.0 / (1.0 + np.exp(-scaled_lbl))).tolist()]
+        scaled_mal = max(-40.0, min(40.0, mal_z / self.mal_temperature))
+        aux_mal_prob = float(1.0 / (1.0 + np.exp(-scaled_mal)))
+        return probs, aux_mal_prob
 
     def _predict_multilabel_neural(
         self,
@@ -253,6 +417,7 @@ class ThreatTaxonomyClassifier:
         forensic_dossier: dict[str, Any],
         verdict: str | None,
         malware_prob: float | None,
+        v4_graph_feed: dict[str, np.ndarray] | None = None,
     ) -> dict[str, Any]:
         raw_tokens = ingest_data.get("raw_tokens") or (scan_raw_pdf_tokens(raw_pdf_bytes) if raw_pdf_bytes else {})
         records = ingest_data.get("raw_records") or []
@@ -371,12 +536,17 @@ class ThreatTaxonomyClassifier:
         if decomp_exceeded:
             anomaly_parts.append("vượt ngưỡng tỷ lệ giải nén")
 
+        has_unextracted_js = (not password_locked) and (
+            "javascript_body_unavailable" in (js_semantics.get("unverified_reasons") or ())
+        )
         observations = {
             "js_script_exec": (
                 f"Trích xuất được {len(scripts)} đoạn JavaScript"
                 if scripts
                 else "Ghi nhận khóa JavaScript trong cấu trúc tệp"
                 if has_js
+                else "Ghi nhận khóa JavaScript chưa trích xuất được thân mã trong cấu trúc tệp"
+                if has_unextracted_js
                 else None
             ),
             "auto_open_trigger": (
@@ -404,19 +574,47 @@ class ThreatTaxonomyClassifier:
             "structural_parser_evasion": (", ".join(anomaly_parts).capitalize() + "." if has_stream_anomaly else None),
         }
 
-        suppressed_heads = reconcile_taxonomy_observations(observations, ingest_data, verdict)
-        ml_out = self._predict_multilabel_neural(
-            raw_pdf_bytes=raw_pdf_bytes,
-            raw_tokens=raw_tokens,
-            ingest_data=ingest_data,
-            has_obfuscated_js=has_obfuscated_js,
-            has_embedded_file=has_embedded_file or has_export_dropper,
-            has_launch=has_launch or raw_tokens.get("Launch", 0) > 0,
-            structural_uri_count=structural_uri_count,
+        escaped_names = (
+            float(count_escaped_pdf_names(raw_pdf_bytes, max_bytes=max(MAX_PDF_BYTES, len(raw_pdf_bytes))))
+            if raw_pdf_bytes
+            else 0.0
         )
+        suppressed_heads = reconcile_taxonomy_observations(
+            observations, ingest_data, verdict
+        ) | verified_zero_js_disproven_heads(observations, ingest_data, escaped_names)
+
+        blocked_scan = verdict == "UNAVAILABLE" or bool(ingest_data.get("prediction_blockers"))
+        if blocked_scan:
+            ml_out = None
+        elif self.is_v4:
+            ml_out = self._predict_multilabel_v4(
+                raw_pdf_bytes=raw_pdf_bytes,
+                raw_tokens=raw_tokens,
+                ingest_data=ingest_data,
+                escaped_names=escaped_names,
+                has_obfuscated_js=has_obfuscated_js,
+                all_indicators=all_indicators,
+                matched_cves=matched_cves,
+                has_export_dropper=has_export_dropper,
+                has_launch=has_launch or raw_tokens.get("Launch", 0) > 0,
+                has_submit_form=has_submit_form,
+                has_embedded_file=has_embedded_file or has_export_dropper,
+                has_stream_anomaly=has_stream_anomaly,
+                v4_graph_feed=v4_graph_feed,
+            )
+        else:
+            ml_out = self._predict_multilabel_neural(
+                raw_pdf_bytes=raw_pdf_bytes,
+                raw_tokens=raw_tokens,
+                ingest_data=ingest_data,
+                has_obfuscated_js=has_obfuscated_js,
+                has_embedded_file=has_embedded_file or has_export_dropper,
+                has_launch=has_launch or raw_tokens.get("Launch", 0) > 0,
+                structural_uri_count=structural_uri_count,
+            )
 
         raw_probs, aux_mal_prob = ml_out if ml_out is not None else (None, None)
-        classification_source = "multilabel_neural_model_v2" if raw_probs is not None else "structural_fallback"
+        classification_source = self.classification_source_name if raw_probs is not None else "structural_fallback"
         ml_label_predictions: list[dict[str, Any]] = []
         analyzer_detections: list[dict[str, Any]] = []
 
@@ -434,9 +632,14 @@ class ThreatTaxonomyClassifier:
             lid = str(definition["id"])
             score = float(raw_probs[idx]) if raw_probs is not None else None
             threshold = float(definition.get("threshold", 0.50)) if score is not None else None
+            flag_enabled = bool(definition.get("model_flag_enabled", True))
             evidence = observations.get(lid)
             model_flagged = (
-                lid not in suppressed_heads and score is not None and threshold is not None and score >= threshold
+                flag_enabled
+                and lid not in suppressed_heads
+                and score is not None
+                and threshold is not None
+                and score >= threshold
             )
             observed = evidence is not None
             status = "observed" if observed else "model_signal" if model_flagged else "not_observed"
@@ -670,6 +873,7 @@ class ThreatTaxonomyClassifier:
         return {
             "classification_source": classification_source,
             "model_name": "PDFMultiLabelThreatNet" if self.ml_weights_loaded else "StructuralFallback",
+            "model_version": self.model_version if self.ml_weights_loaded else "StructuralFallback",
             "ml_weights_loaded": self.ml_weights_loaded,
             "aux_malware_probability": round(float(aux_mal_prob), 4) if aux_mal_prob is not None else None,
             "threat_label": threat_label,

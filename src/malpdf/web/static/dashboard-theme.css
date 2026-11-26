@@ -117,6 +117,7 @@ body {
 #scan-progress-bar,
 #bar-prob,
 #xai-graph-bar,
+#xai-tabular-bar,
 #xai-ast-bar,
 #webllm-progress-bar {
   width: 0%;
