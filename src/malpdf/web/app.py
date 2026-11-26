@@ -29,7 +29,7 @@ from malpdf.scanner.ai_explainer import (
     AIThreatExplainer,
 )
 from malpdf.scanner.engine import MalPDFScannerEngine
-from malpdf.web.cloud_chat import CLOUD_MODEL, cloud_answer, cloud_stream_response
+from malpdf.web.cloud_chat import cloud_answer_with_model, cloud_stream_response
 from malpdf.web.http import (
     omit_preview_images,
     read_scan_upload,
@@ -352,22 +352,24 @@ def ai_chat_about_scan(payload: dict[str, Any]) -> dict[str, Any] | Response:
     )
     answer = ai_explainer.answer_question(scan_dict, question, cdr_audit=cdr_dict)
     compact_ctx = ai_explainer.build_compact_llm_context(scan_dict, cdr_audit=cdr_dict)
+    resolved_model: str | None = None
     if cloud_requested:
         if payload.get("stream") is True:
             stream = cloud_stream_response(question, compact_ctx, CLIENT_LLM_SYSTEM_PROMPT)
             if stream is None:
                 raise HTTPException(status_code=503, detail="cloud_ai_unavailable")
             return stream
-        answer = cloud_answer(question, compact_ctx, CLIENT_LLM_SYSTEM_PROMPT)
-        if answer is None:
+        cloud_result = cloud_answer_with_model(question, compact_ctx, CLIENT_LLM_SYSTEM_PROMPT)
+        if cloud_result is None:
             raise HTTPException(status_code=503, detail="cloud_ai_unavailable")
+        answer, resolved_model = cloud_result
     return {
         "scan_id": job.scan_id,
         "file_name": job.file_name,
         "question": question,
         "answer": answer,
         "mode": "cloud" if cloud_requested else "deterministic_fallback",
-        "model": CLOUD_MODEL if cloud_requested else None,
+        "model": resolved_model if cloud_requested else None,
         "llm_compact_context": compact_ctx,
         "llm_system_prompt": CLIENT_LLM_SYSTEM_PROMPT,
         "preferred_webllm_model": DEFAULT_WEBLLM_MODEL,

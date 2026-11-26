@@ -56,7 +56,7 @@ if gr is not None:
     with gr.Blocks(title="MalPDF DeepDetection") as demo:
         gr.HTML(
             '<div style="padding:16px;font-family:system-ui,sans-serif;">'
-            '<h3>MalPDF DeepDetection (ONNX Runtime Production)</h3>'
+            "<h3>MalPDF DeepDetection (ONNX Runtime Production)</h3>"
             '<p>Mở giao diện kiểm tra PDF đầy đủ tại <a href="/ui">/ui</a>.</p>'
             "</div>"
         )
@@ -67,6 +67,9 @@ if gr is not None:
 
 
 def run_production_server() -> None:
+    from sidecar_9router import start_9router_sidecar_if_enabled
+
+    start_9router_sidecar_if_enabled()
     port = int(os.environ.get("GRADIO_SERVER_PORT", os.environ.get("PORT", "7860")))
     if gr is not None and demo is not None:
         from web_service import production_router
@@ -93,6 +96,7 @@ def run_production_server() -> None:
         demo.block_thread()
     else:
         import uvicorn
+
         from web_service import app as standalone_app
 
         uvicorn.run(standalone_app, host="0.0.0.0", port=port)
@@ -100,4 +104,3 @@ def run_production_server() -> None:
 
 if __name__ == "__main__":
     run_production_server()
-

@@ -13,13 +13,17 @@ export const CLIENT_LLM_SYSTEM_PROMPT =
   "Trả lời trực tiếp, ngắn gọn bằng tiếng Việt, chỉ dựa trên dữ liệu phân tích đã cung cấp; " +
   "không suy đoán vượt quá bằng chứng và không tự ý kết luận tệp hoàn toàn an toàn.";
 
+export function isCloudModel(modelId) {
+  return modelId === "cloud-ai" || modelId === "cnb/minimax-m3.1-flash";
+}
+
 export const clientAIState = {
   checked: false,
   hardwareSupported: false,
   hardwareReason: "",
   detectedRamGb: null,
   adapterInfo: null,
-  selectedModel: "cnb/minimax-m3.1-flash",
+  selectedModel: "cloud-ai",
   loadedModel: null,
   engine: null,
   engineReady: false,
@@ -76,7 +80,7 @@ export async function evaluateClientAIHardware() {
 
   if (selectEl) selectEl.disabled = false;
 
-  if (clientAIState.selectedModel === "cnb/minimax-m3.1-flash") {
+  if (isCloudModel(clientAIState.selectedModel)) {
     if (badge) {
       badge.textContent = "Cloud AI";
       badge.className =
@@ -814,7 +818,7 @@ export async function sendAIChatMessage() {
     }
 
     let fallbackReason = "Hệ thống dùng câu trả lời từ kết quả quét.";
-    if (model === "cnb/minimax-m3.1-flash") {
+    if (isCloudModel(model)) {
       stage("cloud", "Đang gửi yêu cầu đến Cloud AI", "Gửi câu hỏi và dữ liệu quét tóm tắt qua máy chủ.");
       try {
         const cloud = await postChat({ mode: "cloud", stream: true });

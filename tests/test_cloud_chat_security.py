@@ -4,15 +4,24 @@ import importlib
 import re
 from typing import Any
 
-import pytest
 from fastapi.testclient import TestClient
+import pytest
 
 from malpdf.cdr.fixtures import load_real_benign_bytes
+
+CLOUD_ENV_VARS = (
+    "CLOUD_AI_API_KEY",
+    "CLOUD_AI_URL",
+    "CLOUD_AI_MODEL",
+    "CLOUD_AI_ALLOW_LOOPBACK",
+    "VILAO_API_KEY",
+)
 
 
 @pytest.fixture(params=["malpdf.web.app", "production.web_service"], ids=["pytorch", "onnx"])
 def service(request: pytest.FixtureRequest, monkeypatch):
-    monkeypatch.delenv("VILAO_API_KEY", raising=False)
+    for name in CLOUD_ENV_VARS:
+        monkeypatch.delenv(name, raising=False)
     return importlib.import_module(request.param)
 
 
@@ -88,12 +97,19 @@ def test_served_html_contains_no_browser_provider_credentials(service) -> None:
     response = _client(service).get("/")
     assert response.status_code == 200
     html = response.text
-    contains_provider_token_literal = bool(re.search(r"\bsk-[A-Za-z0-9_-]{12,}", html))
+    contains_provider_token_literal = bool(re.search(r"\b(?:sk|9r_[A-Za-z0-9_-]{16,})-[A-Za-z0-9_-]{12,}", html))
     assert contains_provider_token_literal is False, "embedded_provider_token_literal"
 
     inline_scripts = "\n".join(re.findall(r"<script\b[^>]*>(.*?)</script\s*>", html, flags=re.DOTALL | re.IGNORECASE))
-    contains_browser_secret_config = bool(re.search(r"\bVILAO_(?:API_KEY|API_TOKEN|TOKEN)\b", inline_scripts))
-    contains_browser_authorization_header = bool(re.search(r"\bAuthorization\s*[\"']?\s*:", inline_scripts, flags=re.IGNORECASE))
+    contains_browser_secret_config = bool(
+        re.search(
+            r"\b(?:VILAO_(?:API_KEY|API_TOKEN|TOKEN)|CLOUD_AI_API_KEY|BOOTSTRAP_API_KEY|HF_SYNC_TOKEN|STATE_ENCRYPTION_KEY)\b",
+            inline_scripts,
+        )
+    )
+    contains_browser_authorization_header = bool(
+        re.search(r"\bAuthorization\s*[\"']?\s*:", inline_scripts, flags=re.IGNORECASE)
+    )
     contains_browser_bearer_config = bool(re.search(r"\bBearer\s+", inline_scripts, flags=re.IGNORECASE))
     assert contains_browser_secret_config is False, "browser_provider_secret_configuration"
     assert contains_browser_authorization_header is False, "browser_provider_authorization_header"

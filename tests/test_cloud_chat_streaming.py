@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-import importlib
 import asyncio
+import importlib
 import io
 import json
 from typing import Any
 from urllib.error import HTTPError
 
-import pytest
 from fastapi.testclient import TestClient
+import pytest
 from starlette.requests import ClientDisconnect
 
 from malpdf.cdr.fixtures import load_real_benign_bytes
@@ -16,11 +16,21 @@ from malpdf.web import cloud_chat
 
 PRIVATE_REASONING = "PRIVATE_REASONING_MUST_NEVER_BE_DISPLAYED"
 TEST_CREDENTIAL = "test-only-credential-not-valid-for-any-provider"
+PRIMARY_CREDENTIAL = "primary-9router-stream-test-credential"
+CLOUD_ENV_VARS = (
+    "CLOUD_AI_API_KEY",
+    "CLOUD_AI_URL",
+    "CLOUD_AI_MODEL",
+    "CLOUD_AI_ALLOW_LOOPBACK",
+    "VILAO_API_KEY",
+)
 
 
 def provider_event(text: str | None = None, *, reasoning: str | None = None, finish: str | None = None) -> bytes:
     delta = {"content": text, "reasoning_content": reasoning}
-    return ("data: " + json.dumps({"choices": [{"delta": delta, "finish_reason": finish}]}, ensure_ascii=False) + "\r\n\r\n").encode()
+    return (
+        "data: " + json.dumps({"choices": [{"delta": delta, "finish_reason": finish}]}, ensure_ascii=False) + "\r\n\r\n"
+    ).encode()
 
 
 class StreamTransport:
@@ -28,20 +38,30 @@ class StreamTransport:
         self.raw = raw
         self.response = io.BytesIO(raw)
         self.calls: list[dict[str, Any]] = []
+        self.urls: list[str] = []
 
     def open(self, request, timeout):
+        self.urls.append(request.full_url)
         self.calls.append(json.loads(request.data))
         self.response = io.BytesIO(self.raw)
         return self.response
 
 
+def _clear_cloud_env(monkeypatch) -> None:
+    for name in CLOUD_ENV_VARS:
+        monkeypatch.delenv(name, raising=False)
+
+
 @pytest.fixture(params=["malpdf.web.app", "production.web_service"], ids=["pytorch", "onnx"])
 def scanned_client(request, monkeypatch):
     monkeypatch.delenv("MALPDF_PUBLIC_ORIGIN", raising=False)
+    _clear_cloud_env(monkeypatch)
     monkeypatch.setenv("VILAO_API_KEY", TEST_CREDENTIAL)
     service = importlib.import_module(request.param)
     client = TestClient(service.app, base_url="https://testserver")
-    result = client.post("/api/scan", files={"file": ("reviewed-stream.pdf", load_real_benign_bytes(), "application/pdf")})
+    result = client.post(
+        "/api/scan", files={"file": ("reviewed-stream.pdf", load_real_benign_bytes(), "application/pdf")}
+    )
     assert result.status_code == 200
     return client, result.json()["scan_id"], service
 
@@ -58,24 +78,51 @@ def read_events(response):
 def test_cloud_stream_emits_final_deltas_and_explicit_completion(scanned_client, monkeypatch, caplog):
     client, scan_id, _ = scanned_client
     transport = StreamTransport(
-        provider_event(reasoning=PRIVATE_REASONING) + provider_event("Xin chào ")
-        + provider_event("bạn!", finish="stop") + b"data: [DONE]\r\n\r\n"
+        provider_event(reasoning=PRIVATE_REASONING)
+        + provider_event("Xin chào ")
+        + provider_event("bạn!", finish="stop")
+        + b"data: [DONE]\r\n\r\n"
     )
     monkeypatch.setattr(cloud_chat, "build_opener", lambda *_: transport)
 
-    response = client.post("/api/ai/chat", json={"scan_id": scan_id, "question": "hello", "mode": "cloud", "stream": True})
+    response = client.post(
+        "/api/ai/chat", json={"scan_id": scan_id, "question": "hello", "mode": "cloud", "stream": True}
+    )
 
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/event-stream")
     assert response.headers["x-accel-buffering"] == "no"
     events = read_events(response)
     assert "".join(data["text"] for event, data in events if event == "delta") == "Xin chào bạn!"
+    assert events[0] == ("ready", {"mode": "cloud", "model": cloud_chat.CLOUD_MODEL})
     assert events[-1] == ("done", {"mode": "cloud", "model": cloud_chat.CLOUD_MODEL})
     assert all(event != "error" for event, _ in events)
     assert PRIVATE_REASONING not in response.text + caplog.text
     assert TEST_CREDENTIAL not in response.text + caplog.text
     assert transport.calls[0]["stream"] is True
     assert transport.response.closed
+
+
+def test_primary_9router_stream_reports_dynamic_combo_model_and_accepts_null_stop_delta(scanned_client, monkeypatch):
+    client, scan_id, _ = scanned_client
+    monkeypatch.setenv("CLOUD_AI_API_KEY", PRIMARY_CREDENTIAL)
+    monkeypatch.setenv("CLOUD_AI_URL", "https://drstone113-malpdf-9router.hf.space/v1")
+    monkeypatch.setenv("CLOUD_AI_MODEL", "malpdf-default")
+    stop_without_delta = b'data: {"choices":[{"delta":null,"finish_reason":"stop"}]}\r\n\r\n'
+    transport = StreamTransport(provider_event("Phân tích ổn định.") + stop_without_delta + b"data: [DONE]\r\n\r\n")
+    monkeypatch.setattr(cloud_chat, "build_opener", lambda *_: transport)
+
+    response = client.post(
+        "/api/ai/chat", json={"scan_id": scan_id, "question": "hello", "mode": "cloud", "stream": True}
+    )
+
+    assert response.status_code == 200
+    events = read_events(response)
+    assert events[0] == ("ready", {"mode": "cloud", "model": "malpdf-default"})
+    assert events[-1] == ("done", {"mode": "cloud", "model": "malpdf-default"})
+    assert "".join(data["text"] for event, data in events if event == "delta") == "Phân tích ổn định."
+    assert transport.calls[0]["model"] == "malpdf-default"
+    assert transport.urls[0] == "https://drstone113-malpdf-9router.hf.space/v1/chat/completions"
 
 
 def test_stream_emits_delta_before_reading_completion_and_closes_on_cancel():
@@ -118,7 +165,7 @@ def test_stream_validates_owner_input_and_missing_key_before_provider(scanned_cl
 
     assert other.post("/api/ai/chat", json=payload).status_code == 404
     assert client.post("/api/ai/chat", json={**payload, "question": "x" * 2001}).status_code == 400
-    monkeypatch.delenv("VILAO_API_KEY", raising=False)
+    _clear_cloud_env(monkeypatch)
     response = client.post("/api/ai/chat", json=payload)
 
     assert response.status_code == 503
@@ -147,7 +194,9 @@ def test_stream_initial_provider_failure_remains_an_http_error(scanned_client, m
             raise HTTPError("https://provider.invalid", 429, PRIVATE_REASONING, {}, io.BytesIO())
 
     monkeypatch.setattr(cloud_chat, "build_opener", lambda *_: BusyTransport())
-    response = client.post("/api/ai/chat", json={"scan_id": scan_id, "question": "hello", "mode": "cloud", "stream": True})
+    response = client.post(
+        "/api/ai/chat", json={"scan_id": scan_id, "question": "hello", "mode": "cloud", "stream": True}
+    )
     assert response.status_code == 503
     assert response.json()["detail"] == "cloud_ai_busy"
     assert PRIVATE_REASONING not in response.text
@@ -168,7 +217,9 @@ def test_stream_mid_answer_timeout_is_a_safe_terminal_event(scanned_client, monk
             return TimeoutResponse(provider_event("Partial answer"))
 
     monkeypatch.setattr(cloud_chat, "build_opener", lambda *_: TimeoutTransport())
-    response = client.post("/api/ai/chat", json={"scan_id": scan_id, "question": "hello", "mode": "cloud", "stream": True})
+    response = client.post(
+        "/api/ai/chat", json={"scan_id": scan_id, "question": "hello", "mode": "cloud", "stream": True}
+    )
     events = read_events(response)
     assert events[-1] == ("error", {"detail": "cloud_ai_timeout"})
     assert all(event != "done" for event, _ in events)
@@ -176,21 +227,37 @@ def test_stream_mid_answer_timeout_is_a_safe_terminal_event(scanned_client, monk
     assert TEST_CREDENTIAL not in response.text
 
 
-@pytest.mark.parametrize("raw,expected", [
-    (provider_event("Incomplete", finish="length"), "cloud_ai_output_limit"),
-    (provider_event("Interrupted"), "cloud_ai_stream_interrupted"),
-    (provider_event(reasoning=PRIVATE_REASONING, finish="stop"), "cloud_ai_invalid_response"),
-    (b"data: invalid-json\n\n", "cloud_ai_invalid_response"),
-    (b"data: " + b"x" * 65536 + b"\n\n", "cloud_ai_invalid_response"),
-    (provider_event("x" * 16001, finish="stop"), "cloud_ai_output_limit"),
-    (b"data: \xff\n\n", "cloud_ai_invalid_response"),
-], ids=["length", "interrupted", "reasoning-only", "malformed-json", "oversized-frame", "oversized-answer", "invalid-utf8"])
+@pytest.mark.parametrize(
+    "raw,expected",
+    [
+        (provider_event("Incomplete", finish="length"), "cloud_ai_output_limit"),
+        (provider_event("Interrupted"), "cloud_ai_stream_interrupted"),
+        (provider_event(reasoning=PRIVATE_REASONING, finish="stop"), "cloud_ai_invalid_response"),
+        (b'data: {"choices":[{"delta":"bad-delta","finish_reason":null}]}\n\n', "cloud_ai_invalid_response"),
+        (b"data: invalid-json\n\n", "cloud_ai_invalid_response"),
+        (b"data: " + b"x" * 65536 + b"\n\n", "cloud_ai_invalid_response"),
+        (provider_event("x" * 16001, finish="stop"), "cloud_ai_output_limit"),
+        (b"data: \xff\n\n", "cloud_ai_invalid_response"),
+    ],
+    ids=[
+        "length",
+        "interrupted",
+        "reasoning-only",
+        "non-dict-delta",
+        "malformed-json",
+        "oversized-frame",
+        "oversized-answer",
+        "invalid-utf8",
+    ],
+)
 def test_cloud_stream_failure_is_explicit_and_never_completes(scanned_client, monkeypatch, raw, expected):
     client, scan_id, _ = scanned_client
     transport = StreamTransport(raw)
     monkeypatch.setattr(cloud_chat, "build_opener", lambda *_: transport)
 
-    response = client.post("/api/ai/chat", json={"scan_id": scan_id, "question": "hello", "mode": "cloud", "stream": True})
+    response = client.post(
+        "/api/ai/chat", json={"scan_id": scan_id, "question": "hello", "mode": "cloud", "stream": True}
+    )
 
     assert response.status_code == 200
     events = read_events(response)

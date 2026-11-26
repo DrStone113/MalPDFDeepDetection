@@ -140,6 +140,10 @@ def verify_bundle_manifest_integrity(target_dir: Path) -> None:
             "assert rt.threat_taxonomy['detected_count'] >= 4"
         )
         subprocess.run([sys.executable, "-c", smoke_code], check=True, env=smoke_env)
+    if not (target_dir / "sidecar_9router.py").is_file():
+        raise ValueError("hf_bundle_missing_sidecar_9router")
+    if not (target_dir / "9router_space" / "hf_supervisor.mjs").is_file():
+        raise ValueError("hf_bundle_missing_hf_supervisor_mjs")
 
 
 def prepare_bundle(target_dir: Path) -> None:
@@ -154,6 +158,7 @@ def prepare_bundle(target_dir: Path) -> None:
     prod_root_files = [
         "app.py",
         "web_service.py",
+        "sidecar_9router.py",
         "onnx_engine.py",
         "onnx_taxonomy.py",
         "requirements.txt",
@@ -163,6 +168,12 @@ def prepare_bundle(target_dir: Path) -> None:
         if not src_file.is_file():
             raise FileNotFoundError(f"Missing production file: {src_file}")
         shutil.copy2(src_file, target_dir / fname)
+
+    sup_dst_dir = target_dir / "9router_space"
+    if sup_dst_dir.exists():
+        shutil.rmtree(sup_dst_dir)
+    sup_dst_dir.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(PROD_DIR / "9router_space" / "hf_supervisor.mjs", sup_dst_dir / "hf_supervisor.mjs")
 
     copy_clean_tree(PROD_DIR / "configs", target_dir / "configs")
     shutil.copy2(
