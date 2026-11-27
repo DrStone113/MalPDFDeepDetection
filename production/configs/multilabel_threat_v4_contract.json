@@ -1,11 +1,11 @@
 {
   "contract_version": "pdf-multilabel-v4-regime-b",
   "model_version": "PDFMultiLabelThreatNet v4",
-  "source_run": "run_20261126T042911584695Z_87fc6ce2630e",
-  "fitted_on": "verified_clean_split_20261122T064432Z+v32_benign_supplement_bug020_cic_null_preserved",
+  "source_run": "run_20261127T062457360374Z_c0ea9f5223d4",
+  "fitted_on": "verified_clean_split_20261122T064432Z+v32_benign_supplement_bug020_cic_null_preserved with frozen features and logistic refit of loop/XFA on Train",
   "seed": 42,
   "checkpoint_relpath": "artifacts/models/multilabel_threat_v4/multilabel_threat_net_v4_seed42.npz",
-  "weights_npz_sha256": "22fff588f1ede8fb0db0f66d65a659e07d023a6b625073603f4f1581e6c608ef",
+  "weights_npz_sha256": "1909c3b52770e151e8622d11f31da5a0b563b9e718b04c03e9c8fefdcc286697",
   "v4_binary_contract_sha256": "94d3c6962d3fb985b093bd59785e955b246fd96f829e9833c5a6c466dbeb8320",
   "model_config": {
     "tab_dim": 29,
@@ -138,8 +138,8 @@
     1.49999,
     1.49999,
     1.49999,
-    1.0,
-    1.49999,
+    1.3660155038172193,
+    1.460394016325631,
     1.49999,
     1.0,
     1.49999
@@ -210,8 +210,8 @@
       "mitre_name_vi": "Khai thác ứng dụng trình đọc",
       "mitre_tactic_vi": "Khai thác ứng dụng",
       "desc_vi": "Chứa vòng lặp lặp lại thao tác với chuỗi hoặc bộ đệm trong JavaScript",
-      "threshold": 0.8731,
-      "temperature": 1.0,
+      "threshold": 0.9466,
+      "temperature": 1.3660155038172193,
       "model_flag_enabled": true
     },
     {
@@ -227,9 +227,9 @@
       "mitre_name_vi": "Khai thác thành phần trình đọc PDF",
       "mitre_tactic_vi": "Khai thác ứng dụng",
       "desc_vi": "Sử dụng biểu mẫu XFA hoặc lời gọi API từng gắn với lỗ hổng trình đọc PDF",
-      "threshold": 1.01,
-      "temperature": 1.49999,
-      "model_flag_enabled": false
+      "threshold": 0.9961,
+      "temperature": 1.460394016325631,
+      "model_flag_enabled": true
     },
     {
       "id": "embedded_dropper_or_launch",
@@ -282,5 +282,6 @@
       "temperature": 1.49999,
       "model_flag_enabled": true
     }
-  ]
+  ],
+  "shares_weights_with": "run_20261126T042911584695Z_87fc6ce2630e"
 }

@@ -72,6 +72,42 @@ DEFAULT_OUT_MODEL = REPO / "artifacts/models/multilabel_threat_v4/multilabel_thr
 DEFAULT_OUT_CONTRACT = REPO / "configs/multilabel_threat_v4_contract.json"
 DEFAULT_REPORT_ROOT = REPO / "reports/experiments/multilabel_threat_v4"
 V4_BINARY_CONTRACT_PATH = REPO / "configs/transgraph_v4_contract.json"
+REVIEWED_HEAD_COLUMNS = {
+    head: EXPECTED_HEAD_IDS_V4.index(head)
+    for head in ("buffer_loop_staging", "active_form_or_exploit", "suspicious_uri_redirect")
+}
+
+
+def _apply_reviewed_behavior_labels(
+    path: Path, corpus: CSRGraphCorpus, targets: np.ndarray, masks: np.ndarray
+) -> np.ndarray:
+    row_by_sha = {sha: i for i, sha in enumerate(corpus.shas)}
+    reviewed_rows = np.zeros(len(corpus.shas), dtype=bool)
+    with path.open(encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, start=1):
+            record = json.loads(line)
+            if not isinstance(record, dict) or set(record) != {"sha256", "labels"}:
+                raise ValueError(f"{path}:{line_number}: expected sha256 and labels")
+            sha, labels = record["sha256"], record["labels"]
+            if not isinstance(sha, str) or sha not in row_by_sha:
+                raise ValueError(f"{path}:{line_number}: SHA-256 is outside the frozen corpus")
+            row = row_by_sha[sha]
+            if reviewed_rows[row]:
+                raise ValueError(f"{path}:{line_number}: duplicate SHA-256")
+            if corpus.labels[row] < 0:
+                raise ValueError(f"{path}:{line_number}: unlabeled PDF in the frozen corpus")
+            if not isinstance(labels, dict) or not labels or labels.keys() - REVIEWED_HEAD_COLUMNS.keys():
+                raise ValueError(f"{path}:{line_number}: expected reviewed labels for the rare behavior heads")
+            for head, value in labels.items():
+                if value is not None and not isinstance(value, bool):
+                    raise ValueError(f"{path}:{line_number}: behavior label must be true, false or null")
+                if value is True and corpus.labels[row] == 0:
+                    raise ValueError(f"{path}:{line_number}: positive threat behavior on a benign PDF")
+                col = REVIEWED_HEAD_COLUMNS[head]
+                targets[row, col] = value is True
+                masks[row, col] = value is not None
+            reviewed_rows[row] = True
+    return reviewed_rows
 
 
 def _build_aux_and_targets(
@@ -209,6 +245,7 @@ def _augment_live_runtime_telemetry_batch(
     y_bin_b: np.ndarray,
     raw_b: np.ndarray,
     rng: np.random.Generator,
+    reviewed_rows: np.ndarray | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Teach live scanner AST/phishing telemetry channels on verified train batches without unverified external labels."""
     aux_out = aux_b.copy()
@@ -217,6 +254,8 @@ def _augment_live_runtime_telemetry_batch(
     n = len(y_bin_b)
 
     for idx in range(n):
+        if reviewed_rows is not None and reviewed_rows[idx]:
+            continue
         yb = int(y_bin_b[idx])
         u = float(rng.random())
         if yb == 0:
@@ -426,76 +465,49 @@ def _calibrate_head_threshold(
     ben_mask = y_bin == 0
     eval_mask = mask_head > 0.5
     pos_mask = eval_mask & (y_head > 0.5)
+    positive_count = int(pos_mask.sum())
     ben_probs = np.asarray(probs[ben_mask], dtype=np.float64)
-    all_p = np.asarray(probs[eval_mask], dtype=np.float64)
-    all_y = np.asarray(y_head[eval_mask] > 0.5, dtype=np.int64)
 
-    def ben_fpr(thr: float) -> float:
-        return 0.0 if len(ben_probs) == 0 else float(np.mean(ben_probs >= thr))
-
-    cand_grid = np.unique(
-        np.concatenate(
-            (
-                np.linspace(0.20, 0.99, 159),
-                np.quantile(all_p, np.linspace(0.05, 0.999, 120)) if len(all_p) else np.array([0.5]),
-                (np.sort(ben_probs)[-min(len(ben_probs), 24) :] + 1e-4) if len(ben_probs) else np.array([0.5]),
-            )
-        )
-    )
-    cand_grid = cand_grid[(cand_grid >= 0.20) & (cand_grid <= 0.9999)]
-    legal = [float(t) for t in cand_grid if ben_fpr(round(float(t), 4)) <= max_benign_fpr]
-
-    if int(pos_mask.sum()) == 0:
-        for fallback_t in [0.50, *sorted(legal)]:
-            r_t = round(float(fallback_t), 4)
-            if 0.20 <= r_t <= 0.9999 and ben_fpr(r_t) <= max_benign_fpr:
-                return {
-                    "threshold": r_t,
-                    "model_flag_enabled": True,
-                    "val_calib_pos": 0,
-                    "val_calib_benign": int(ben_mask.sum()),
-                    "val_calib_benign_fpr": round(ben_fpr(r_t), 6),
-                    "val_calib_f1": None,
-                }
+    def disabled(reason: str) -> dict[str, Any]:
         return {
             "threshold": 1.01,
             "model_flag_enabled": False,
-            "val_calib_pos": 0,
+            "val_calib_pos": positive_count,
             "val_calib_benign": int(ben_mask.sum()),
             "val_calib_benign_fpr": 0.0,
-            "val_calib_f1": None,
+            "val_calib_f1": 0.0 if positive_count else None,
+            "disable_reason": reason,
         }
 
-    best_thr = None
-    best_f1 = -1.0
-    for t in legal:
-        r_t = round(float(t), 4)
-        if ben_fpr(r_t) > max_benign_fpr:
-            continue
-        pred = (all_p >= r_t).astype(np.int64)
-        f1 = float(f1_score(all_y, pred, zero_division=0))
-        if f1 > best_f1 or (
-            abs(f1 - best_f1) <= 1e-6 and best_thr is not None and abs(r_t - 0.5) < abs(best_thr - 0.5)
-        ):
-            best_f1 = f1
-            best_thr = r_t
+    if positive_count == 0:
+        return disabled("no_calibration_positives")
+    if len(ben_probs) == 0:
+        return disabled("no_calibration_benign")
 
-    if best_thr is None:
-        return {
-            "threshold": 1.01,
-            "model_flag_enabled": False,
-            "val_calib_pos": int(pos_mask.sum()),
-            "val_calib_benign": int(ben_mask.sum()),
-            "val_calib_benign_fpr": 0.0,
-            "val_calib_f1": 0.0,
-        }
+    thresholds = np.arange(2_000, 10_000) / 10_000
+    benign_fp = len(ben_probs) - np.searchsorted(np.sort(ben_probs), thresholds)
+    benign_fpr = benign_fp / len(ben_probs)
+    legal = benign_fpr <= max_benign_fpr
+    if not legal.any():
+        return disabled("no_threshold_within_fpr_budget")
+
+    evaluated_probs = np.sort(probs[eval_mask])
+    predicted = len(evaluated_probs) - np.searchsorted(evaluated_probs, thresholds)
+    true_positives = positive_count - np.searchsorted(np.sort(probs[pos_mask]), thresholds)
+    eligible = legal & (true_positives > 0)
+    if not eligible.any():
+        return disabled("no_positives_detected_within_fpr_budget")
+
+    f1 = 2 * true_positives / (positive_count + predicted)
+    best = np.flatnonzero(eligible & (f1 >= np.max(f1[eligible]) - 1e-6))
+    selected = best[np.argmin(np.abs(thresholds[best] - 0.5))]
     return {
-        "threshold": float(best_thr),
+        "threshold": float(thresholds[selected]),
         "model_flag_enabled": True,
-        "val_calib_pos": int(pos_mask.sum()),
+        "val_calib_pos": positive_count,
         "val_calib_benign": int(ben_mask.sum()),
-        "val_calib_benign_fpr": round(ben_fpr(best_thr), 6),
-        "val_calib_f1": round(best_f1, 4),
+        "val_calib_benign_fpr": round(float(benign_fpr[selected]), 6),
+        "val_calib_f1": round(float(f1[selected]), 4),
     }
 
 
@@ -561,6 +573,9 @@ def main() -> None:
     parser.add_argument("--epochs", type=int, default=20)
     parser.add_argument("--batch-size", type=int, default=128)
     parser.add_argument("--lr", type=float, default=1.2e-3)
+    parser.add_argument(
+        "--reviewed-behavior-labels", type=Path, help="Reviewed rare behavior labels by corpus SHA-256 (JSONL)"
+    )
     args = parser.parse_args()
 
     t_start = time.perf_counter()
@@ -579,6 +594,8 @@ def main() -> None:
         "split_view": DEFAULT_SPLIT_VIEW,
         "benign_supplement": DEFAULT_SUPP,
     }
+    if args.reviewed_behavior_labels is not None:
+        input_paths["reviewed_behavior_labels"] = args.reviewed_behavior_labels
     input_hashes = {k: digest(p) for k, p in input_paths.items()}
 
     print(f"[BUG-038] Loading verified v4 corpus (BUG-020 CIC null preserved) on {device}...", flush=True)
@@ -592,12 +609,18 @@ def main() -> None:
     graphs, ir, active = precompute_corpus(corpus)
     scoreable = np.isfinite(corpus.raw_73[:, REGIME_B_INDICES]).all(axis=1)
     aux_all, y_mat, m_mat = _build_aux_and_targets(corpus, graphs)
+    reviewed_rows = None
+    if args.reviewed_behavior_labels is not None:
+        reviewed_rows = _apply_reviewed_behavior_labels(args.reviewed_behavior_labels, corpus, y_mat, m_mat)
     parts, split_audit = _build_leak_free_partitions(corpus, scoreable)
 
     train_rows = parts["train"]
     select_rows = parts["val_select"]
     calib_rows = parts["val_calib"]
     test_int_rows = parts["test_internal"]
+    reviewed_train = reviewed_rows[train_rows] if reviewed_rows is not None else None
+    if reviewed_rows is not None:
+        split_audit["reviewed_behavior_rows"] = {name: int(reviewed_rows[rows].sum()) for name, rows in parts.items()}
     print(f"[BUG-038] Leak-free split audit: {json.dumps(split_audit)}", flush=True)
 
     transform = RobustTransform.fit(corpus.raw_73[train_rows], roles=["train"] * len(train_rows))
@@ -639,7 +662,13 @@ def main() -> None:
         y_ep = y_mat.copy()
         m_ep = m_mat.copy()
         aux_tr, y_tr, m_tr = _augment_live_runtime_telemetry_batch(
-            aux_all[train_rows], y_mat[train_rows], m_mat[train_rows], corpus.labels[train_rows], raw_aug_tr, rng
+            aux_all[train_rows],
+            y_mat[train_rows],
+            m_mat[train_rows],
+            corpus.labels[train_rows],
+            raw_aug_tr,
+            rng,
+            reviewed_train,
         )
         _recompute_derived(raw_aug_tr)
         tab_aug_tr, _, _, _ = slice_regime_inputs(*transform.transform(raw_aug_tr), "regime_b")
@@ -785,11 +814,13 @@ def main() -> None:
         worst_k = int(np.argmax(flags_mat.sum(axis=0)))
         offending = cal_probs[cal_ben, worst_k][flags_mat[:, worst_k]]
         next_thr = round(float(np.min(offending)) + 2e-4, 4)
-        if next_thr <= 0.9999:
+        positives = (m_mat[calib_rows, worst_k] > 0.5) & (y_mat[calib_rows, worst_k] > 0.5)
+        if next_thr <= 0.9999 and (cal_probs[positives, worst_k] >= next_thr).any():
             thresholds[worst_k] = next_thr
         else:
             thresholds[worst_k] = 1.01
             enabled_flags[worst_k] = False
+            head_cal_records[worst_k]["disable_reason"] = "combined_fpr_budget"
 
     def eval_indices(idx_arr: np.ndarray) -> dict[str, Any]:
         z_lbl, z_mal = _predict_multilabel_v4(model, graphs, ir, active, tab_all, aux_all, idx_arr, device)
@@ -803,9 +834,17 @@ def main() -> None:
         return res
 
     val_calib_metrics = eval_indices(calib_rows)
+    for head, record in zip(EXPECTED_HEAD_IDS_V4, head_cal_records, strict=True):
+        final = val_calib_metrics["per_head"][head]
+        record.update(
+            threshold=final["threshold"],
+            model_flag_enabled=final["model_flag_enabled"],
+            val_calib_benign_fpr=final["benign_fpr"],
+            val_calib_f1=final["f1"],
+        )
     assert val_calib_metrics["any_head_benign_fpr"] <= 0.005
     for hid_m in val_calib_metrics["per_head"].values():
-        assert hid_m["benign_fpr"] <= 0.005
+        assert hid_m["benign_fpr"] <= 0.001
     test_internal_metrics = eval_indices(test_int_rows)
 
     ben_test_rows = test_int_rows[corpus.labels[test_int_rows] == 0]
@@ -894,7 +933,7 @@ def main() -> None:
         "best_epoch": best_epoch,
         "inputs_sha256": input_hashes,
         "split_audit": split_audit,
-        "calibration_rule": "Per-head masked NLL temperature in [0.50, 1.50] + F1-optimal threshold subject to benign Val_Calib FPR <= 0.5% under runtime >=",
+        "calibration_rule": "Per-head masked NLL temperature in [0.50, 1.50]; maximize positive F1 over four-decimal thresholds in [0.20, 0.9999]; benign Val_Calib FPR <= 0.1% per head and <= 0.5% combined under runtime >=",
     }
     meth_path = exp_dir / "locked_methodology.json"
     meth_path.write_text(json.dumps(methodology, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")

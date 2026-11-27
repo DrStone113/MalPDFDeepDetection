@@ -23,17 +23,17 @@
   "multilabel_model": {
     "filename": "multilabel_threat_net_v4.onnx",
     "model_version": "PDFMultiLabelThreatNet v4",
-    "source_run": "run_20261126T042911584695Z_87fc6ce2630e",
+    "source_run": "run_20261127T062457360374Z_c0ea9f5223d4",
     "contract_filename": "multilabel_threat_v4_contract.json",
-    "contract_sha256": "6e7df8d3081f108d8c2b080888a8c10104dfa3fba4c29417996ba0c0afbb9c11",
-    "sha256": "e4b66c30c7b29c5309189f2cab313c25c7eeb6bf22efa5684b231a84e41e8003",
+    "contract_sha256": "6a7a7ab6980eb0c8f4596eb0cbfaead8ac5c00bd71d44de694772a88d96ab560",
+    "sha256": "04be861ee0dfd58e17b2c7a56fb999a399d16d221e70fd8055551a165c4697c4",
     "size_bytes": 4022990,
     "parameter_count": 988721,
-    "max_logit_abs_diff_vs_pytorch": 3.81e-06
+    "max_logit_abs_diff_vs_pytorch": 7.63e-06
   },
   "neural_forward_benchmark_cpu": {
-    "pytorch_median_ms": 7.107,
-    "onnxruntime_median_ms": 2.08,
-    "speedup_factor": 3.42
+    "pytorch_median_ms": 4.998,
+    "onnxruntime_median_ms": 1.548,
+    "speedup_factor": 3.23
   }
 }
