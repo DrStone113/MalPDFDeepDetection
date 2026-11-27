@@ -1,17 +1,16 @@
 """Prepare reviewed offline source and operator setup without reading PDFs."""
 
 from datetime import datetime, timezone
-import json
 from pathlib import Path
 import re
 
 import gateway_contract as contract
 import gateway_snapshot as snapshot
+from lab_contract import parse_json, text_failure, validate_public_key
 import lab_jobs as jobs
 import lab_vmware as vmware
 import labctl as ctl
 import setup_runner as installer
-from lab_contract import parse_json, text_failure, validate_public_key
 
 
 def bootstrap():
@@ -69,6 +68,10 @@ def make_job(commit, manifest, metadata, kind):
 
 
 def cohort_contract(kind='pdf-static'):
+    if kind == jobs.URI_REVIEW_KIND:
+        from malpdf.extraction import uri_review_job
+        uri_review_job.metadata_rows(ctl.REPO)
+        return uri_review_job.contract()
     if kind in jobs.BENIGN_OOD_KINDS:
         from lab_runner import publisher_module
         return publisher_module(kind).contract()

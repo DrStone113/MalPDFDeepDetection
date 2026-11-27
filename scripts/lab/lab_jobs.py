@@ -7,19 +7,19 @@ import importlib.util
 import io
 import ipaddress
 import json
+import math
 import os
 from pathlib import Path
 import re
 import shutil
 import subprocess
 import sys
-import uuid
-import math
-import time
 import tempfile
+import time
+import uuid
 
-import lab_side as side
 from lab_contract import MAX_REPORT, REV_RE, parse_json, validate_report
+import lab_side as side
 
 API = 1
 JOBS = Path('/var/lib/malpdf/jobs')
@@ -31,9 +31,10 @@ BENIGN_OOD_KIND = 'pdf-benign-ood'
 BENIGN_OOD_EXPANDED_KIND = 'pdf-benign-ood-expanded'
 BENIGN_OOD_DIVERSE_KIND = 'pdf-benign-ood-diverse'
 BENIGN_V32_COHORT_KIND = 'pdf-benign-v32-cohort'
+URI_REVIEW_KIND = 'pdf-uri-review'
 BENIGN_OOD_KINDS = {BENIGN_OOD_KIND, BENIGN_OOD_EXPANDED_KIND, BENIGN_OOD_DIVERSE_KIND, BENIGN_V32_COHORT_KIND}
 FINGERPRINT_KINDS = {HOLDOUT_TLSH_KIND, POOLED_TLSH_KIND}
-PDF_KINDS = {'pdf-static', 'pdf-static-cve', 'pdf-static-cic-full', 'pdf-diagnostic-replay',
+PDF_KINDS = {'pdf-static', 'pdf-static-cve', 'pdf-static-cic-full', 'pdf-diagnostic-replay', URI_REVIEW_KIND,
              'pdf-static-bulk', *BENIGN_OOD_KINDS, *FINGERPRINT_KINDS}
 KINDS = {'syntax', 'synthetic', *PDF_KINDS}
 LIMITS = {'wall_seconds': 1800, 'file_wall_seconds': 60, 'file_cpu_seconds': 45,
@@ -89,6 +90,8 @@ def summary_valid(summary):
 
 
 def policy(kind):
+    if kind == URI_REVIEW_KIND:
+        return {**LIMITS, 'samples': 151, 'workers': 3, 'wall_seconds': 7200}
     if kind == BENIGN_V32_COHORT_KIND:
         return {**policy(BENIGN_OOD_KIND), 'samples': 974, 'workers': 5, 'wall_seconds': 21600, 'output_bytes': 1024**3}
     if kind == BENIGN_OOD_DIVERSE_KIND:

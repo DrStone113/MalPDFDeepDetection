@@ -7,7 +7,6 @@ Latest catalog reachability does not establish historical revision completeness.
 """
 
 from collections import defaultdict
-from dataclasses import replace
 import hashlib
 import io
 import json
@@ -16,15 +15,22 @@ from xml.parsers import expat
 import zlib
 
 from pypdf import PdfReader
-from pypdf.generic import (ArrayObject, ByteStringObject, DictionaryObject,
-                          IndirectObject, NameObject, StreamObject, TextStringObject)
+from pypdf.generic import (
+    ArrayObject,
+    ByteStringObject,
+    DictionaryObject,
+    IndirectObject,
+    NameObject,
+    StreamObject,
+    TextStringObject,
+)
 
 from malpdf.static.code_inspector import _decode_script_bytes, _stream_bytes
+from malpdf.static.execution import capacity
 from malpdf.static.js_ast import CodeInspectionError, inspect_js_syntax
 from malpdf.static.parser_diagnostics import ParserDiagnostics
 from malpdf.static.profiling import stage
 from malpdf.static.recovery import MuPDFObjectReader, projected_object
-from malpdf.static.execution import capacity
 
 EVIDENCE_SCHEMA = "pdf-evidence-v9"
 MAX_METADATA_BYTES = 2 * 1024**2
@@ -395,6 +401,18 @@ class _Graph:
                 self.flag_excessive_object_graph = True
                 raise CodeInspectionError("graph_object_limit")
         kind, fields = self.kind(value)
+        action = fields.get("action_kind")
+        if self.backend == "pypdf" and action in {"/URI", "/SubmitForm"}:
+            destination = value.get("/URI" if action == "/URI" else "/F")
+            if isinstance(destination, (ByteStringObject, TextStringObject)) and 0 < len(destination) <= 4096:
+                if isinstance(destination, ByteStringObject):
+                    target_bytes = bytes(destination)
+                elif destination.autodetect_utf16 or destination.autodetect_pdfdocencoding:
+                    target_bytes = destination.original_bytes
+                else:
+                    target_bytes = b""
+                if 0 < len(target_bytes) <= 4096:
+                    fields["uri_target_sha256"] = _digest(target_bytes)
         projection = projected_object(value)
         fields["projection"] = projection
         if isinstance(value, StreamObject):
@@ -839,7 +857,7 @@ def inspect_evidence_v9(data, static, code, limits, *, timings=None, primary_com
                                   size_bytes=len(data), immutable=True)
     input_digest = (static.get("input") or {}).get("sha256")
     input_verified = input_digest == store.digest
-    measurements = store.observation("legacy", "primary_model_inputs", "primary_model_inputs",
+    store.observation("legacy", "primary_model_inputs", "primary_model_inputs",
         status="verified" if input_verified else "unavailable",
         reason_codes=[] if input_verified else ["primary_input_identity_unverified"],
         source_object_id=document, primary_complete=bool(primary_complete),

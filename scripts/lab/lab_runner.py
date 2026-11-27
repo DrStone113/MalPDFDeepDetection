@@ -10,12 +10,12 @@ from pathlib import Path
 import signal
 import stat
 import sys
-import time
 import tempfile
+import time
 
+from lab_contract import MAX_REPORT, parse_json
 import lab_jobs as jobs
 import lab_side as side
-from lab_contract import MAX_REPORT, parse_json
 
 CVE_NAMES = ('bank_statment.pdf', 'link_URI.pdf', 'rce_foxit.pdf', 'url2_invoice_template.pdf', 'xss_popup.pdf')
 CVE_MANIFEST = {'path': 'data/processed/source_preparation/run_20261001T133833267219Z_3efd81e782c1/cve_t4pdf/source_pdf_manifest.csv',
@@ -218,8 +218,9 @@ def publisher_module(kind):
 def pdf_metadata(job):
     source = source_imports(job)
     cfg = jobs.config()
-    import tomllib
     import importlib.metadata
+    import tomllib
+
     from check_local import dependency_versions
     try:
         dependency_versions(tomllib.loads((source / 'pyproject.toml').read_text(encoding='utf-8')))
@@ -227,6 +228,9 @@ def pdf_metadata(job):
         raise ValueError('dependency_mismatch') from None
     import yaml
     data_root = Path(cfg['data_root'])
+    if job['kind'] == jobs.URI_REVIEW_KIND:
+        from malpdf.extraction.uri_review_job import load_rows
+        return source, data_root, load_rows(data_root)
     if job['kind'] in jobs.BENIGN_OOD_KINDS:
         return source, data_root, publisher_module(job['kind']).load_rows(data_root)
     if job['kind'] == 'pdf-diagnostic-replay':
@@ -450,7 +454,7 @@ def _pdf_worker(job_id, *, prepare=False, shard=0, count=1):
         claim = parse_json(side.bounded_read(jobs.job_directory(job_id) / 'claim.json', 4096))
         if claim.get('job_id') != job_id or claim.get('hypervisor_controls_attested') is not True or claim.get('parent_pid') != os.getppid():
             raise ValueError('approval_required')
-        if job['kind'] in jobs.FINGERPRINT_KINDS | jobs.BENIGN_OOD_KINDS and (
+        if job['kind'] in jobs.FINGERPRINT_KINDS | jobs.BENIGN_OOD_KINDS | {jobs.URI_REVIEW_KIND} and (
                 claim.get('start_ticks') is None or jobs.process_identity(os.getppid()) != claim['start_ticks']):
             raise ValueError('approval_required')
     worker_limits(prepare=prepare, wall_seconds=job['limits']['wall_seconds'], fsize_bytes=jobs.pdf_worker_fsize_limit(job['kind']))
@@ -517,9 +521,9 @@ def _pdf_worker(job_id, *, prepare=False, shard=0, count=1):
     if not 0 <= shard < count <= job['limits']['workers']:
         raise ValueError('job_mismatch')
     rows = [(index, row) for index, row in enumerate(rows) if index % count == shard]
-    from malpdf.extraction.orchestrator import extract_pdf
     from malpdf.extraction.arlington_model import load_model
     from malpdf.extraction.jobs import require_extraction_lab
+    from malpdf.extraction.orchestrator import extract_pdf
     from malpdf.static.code_inspector import _worker_count
     require_extraction_lab(True, repository_root=data_root)
     limits = pdf_inspection_limits(job)
@@ -543,6 +547,10 @@ def _pdf_worker(job_id, *, prepare=False, shard=0, count=1):
     cohort_args = {}
     boundary = 'data/raw/cve_t4pdf' if job['kind'] == 'pdf-static-cve' else 'data/raw/cic_pdf'
     publisher = None
+    if job['kind'] == jobs.URI_REVIEW_KIND:
+        from malpdf.extraction.uri_review_job import RAW_ROOT
+        boundary = RAW_ROOT
+        cohort_args = {'include_byte_images': False, 'coalesce_checkpoints': True}
     if job['kind'] in jobs.BENIGN_OOD_KINDS:
         publisher = publisher_module(job['kind'])
         boundary = publisher.RAW_ROOT
@@ -596,7 +604,7 @@ def _pdf_worker(job_id, *, prepare=False, shard=0, count=1):
                 expected_sha256=row['pdf_sha256'], limits=limits, arlington_catalog=catalog,
                 run_id=job['job_id'], entry_point='lab_runner.pdf_static_worker', **cohort_args)
         payload = jobs.encoded(bundle)
-        if publisher is not None:
+        if publisher is not None or job['kind'] == jobs.URI_REVIEW_KIND:
             bundle, payload = publisher_bundle_budget(bundle, payload, row['pdf_sha256'], bundle_limit)
         if len(payload) > bundle_limit:
             jobs.write_pdf_halt(job, directory, shard=shard, index=index, reason='bundle_size_limit')
@@ -655,7 +663,11 @@ def pdf_bulk_worker(job_id):
         raise ValueError('manifest_unavailable')
     from malpdf.extraction.arlington_model import load_model, write_catalog_snapshot
     from malpdf.extraction.batch import extract_pdfs
-    from malpdf.extraction.bulk_pipeline import build_clean_corpus_manifest, default_bulk_limits, run_hybrid_bulk_extraction
+    from malpdf.extraction.bulk_pipeline import (
+        build_clean_corpus_manifest,
+        default_bulk_limits,
+        run_hybrid_bulk_extraction,
+    )
     from malpdf.extraction.bulk_recovery import checkpoint_partition, run_pilot
     from malpdf.extraction.jobs import require_extraction_lab
     require_extraction_lab(True, repository_root=data_root)
@@ -732,6 +744,7 @@ def pdf_bulk_worker(job_id):
 
     def run(selection, output, chunk_size):
         import threading
+
         from malpdf.static.profile_worker import resident_bytes
 
         corpus = output == output_dir
@@ -918,6 +931,10 @@ def console_run():
     if job['kind'] in jobs.FINGERPRINT_KINDS:
         source_imports(job)
         print(json.dumps(fingerprint_module(job['kind']).contract(), sort_keys=True))
+    if job['kind'] == jobs.URI_REVIEW_KIND:
+        source_imports(job)
+        from malpdf.extraction.uri_review_job import contract
+        print(json.dumps(contract(), sort_keys=True))
     print(json.dumps({'limits': job['limits'], 'lab_output_directory': str(jobs.job_directory(job['job_id']))}, sort_keys=True))
     print('Xac nhan snapshot/recovery, tat clipboard/drag-drop/shared folders, khong credentials; NIC da ngat.')
     print('PDF/blob/ket qua chi luu tai LAB. Khong tu ket noi lai Windows.')
