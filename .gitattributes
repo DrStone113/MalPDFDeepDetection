@@ -6,3 +6,4 @@ reports/experiments/static_development_*/**/*.csv text eol=lf
 
 .githooks/pre-commit text eol=lf
 scripts/lab/*.sh text eol=lf
+configs/uri_safedocs_review_20261127.json text eol=lf

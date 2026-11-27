@@ -14,15 +14,16 @@ def export_review(job_id):
     if sys.platform != 'linux':
         raise ValueError('runtime_unavailable')
     job = jobs.load_job(job_id)
-    if job['kind'] != jobs.URI_REVIEW_KIND or job['mode'] != 'offline':
+    if job['kind'] not in jobs.URI_REVIEW_KINDS or job['mode'] != 'offline':
         raise ValueError('job_mismatch')
     metadata = side.verify_release(job['commit'], job['manifest_sha256'])
     jobs.verify_helpers(metadata)
-    sys.path.insert(0, str(side.RELEASES / job['commit'] / 'src'))
+    source = side.RELEASES / job['commit']
+    sys.path.insert(0, str(source / 'src'))
     from malpdf.extraction import uri_review_job
 
     directory = jobs.job_directory(job_id)
-    rows = uri_review_job.metadata_rows(Path(jobs.config()['data_root']))
+    rows = uri_review_job.metadata_rows(Path(jobs.config()['data_root']), job['kind'], source_root=source)
     selection = parse_json(side.bounded_read(directory / 'selection.json', 4 * 1024**2))
     if selection != {'job_id': job_id, 'rows': rows, 'selection_sha256': jobs.sha(jobs.encoded(rows))}:
         raise ValueError('manifest_unavailable')
@@ -44,7 +45,7 @@ def export_review(job_id):
                 record['status'] = 'invalid'
         records.append(record)
     return {'schema_version': 1, 'job_id': job_id, 'selection_sha256': selection['selection_sha256'],
-            'cohort': uri_review_job.contract(), 'records': records,
+            'cohort': uri_review_job.contract(job['kind']), 'records': records,
             'status_counts': dict(Counter(record['status'] for record in records))}
 
 

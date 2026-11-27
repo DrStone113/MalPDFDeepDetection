@@ -9,8 +9,15 @@ from malpdf.extraction.holdout_fingerprint_job import HEX256, pinned
 from malpdf.extraction.triggers import plan_triggers
 
 KIND = 'pdf-uri-review'
+SAFEDOCS_KIND = 'pdf-uri-safedocs-review'
 INPUT_DIRECTORY = Path('data/processed/uri_review/v1')
 RAW_ROOT = Path('data/raw')
+SAFEDOCS_RAW_ROOT = RAW_ROOT / 'uri_safedocs_review'
+SAFEDOCS_MANIFEST = Path('configs/uri_safedocs_review_20261127.json')
+SAFEDOCS_MANIFEST_SHA256 = '03000ea32587e813fc68b854cf7a78303a3db153fdd6397e3ddd2433e6103619'
+SAFEDOCS_RECEIPT_SHA256 = '8a1316aaac3c7a2b9730087824945dc202432e94334c5dcddfdcc09ea61db55a'
+SAFEDOCS_SAMPLES = 11
+SAFEDOCS_TOTAL_BYTES = 4_520_655
 SELECTION_SHA256 = '6cffc5934dca25333242018592afbc174504dc6e0c42b156a0fabe9afc05852d'
 PATH_MAP_SHA256 = 'a54c9a2da029b20a7b8c93ff43d81629676656318e076df14bd4afcf568b5031'
 SAMPLES = 151
@@ -19,13 +26,48 @@ MAX_FILE_BYTES = 10 * 1024**2
 MAX_TARGETS = 256
 
 
-def contract():
+def contract(kind=KIND):
+    if kind == SAFEDOCS_KIND:
+        return {'samples': SAFEDOCS_SAMPLES, 'bytes': SAFEDOCS_TOTAL_BYTES,
+                'roster_sha256': SAFEDOCS_MANIFEST_SHA256, 'source_receipt_sha256': SAFEDOCS_RECEIPT_SHA256,
+                'purpose': 'static external-action evidence for SafeDocs URI label review',
+                'model_evaluation_in_lab': False}
+    if kind != KIND:
+        raise ValueError('job_mismatch')
     return {'samples': SAMPLES, 'bytes': TOTAL_BYTES, 'selection_sha256': SELECTION_SHA256,
             'path_map_sha256': PATH_MAP_SHA256, 'purpose': 'static external-action evidence for URI label review',
             'model_evaluation_in_lab': False}
 
 
-def metadata_rows(root):
+def safedocs_rows(source_root):
+    if source_root is None:
+        raise ValueError('manifest_unavailable')
+    manifest = Path(source_root) / SAFEDOCS_MANIFEST
+    roster = json.loads(pinned(manifest, manifest.parent, SAFEDOCS_MANIFEST_SHA256, 8192))
+    if not isinstance(roster, list) or len(roster) != SAFEDOCS_SAMPLES:
+        raise ValueError('manifest_unavailable')
+    rows = []
+    identities = []
+    for item in roster:
+        if not isinstance(item, dict) or set(item) != {'sha256', 'bytes'}:
+            raise ValueError('manifest_unavailable')
+        identity, size = item['sha256'], item['bytes']
+        if (not isinstance(identity, str) or not HEX256.fullmatch(identity)
+                or type(size) is not int or not 0 < size <= MAX_FILE_BYTES):
+            raise ValueError('manifest_unavailable')
+        identities.append(identity)
+        rows.append({'pdf_sha256': identity, 'pdf_relative_path': (SAFEDOCS_RAW_ROOT / f'{identity}.pdf').as_posix(),
+                     'bytes': size})
+    if identities != sorted(set(identities)) or sum(row['bytes'] for row in rows) != SAFEDOCS_TOTAL_BYTES:
+        raise ValueError('manifest_unavailable')
+    return rows
+
+
+def metadata_rows(root, kind=KIND, *, source_root=None):
+    if kind == SAFEDOCS_KIND:
+        return safedocs_rows(source_root)
+    if kind != KIND:
+        raise ValueError('job_mismatch')
     directory = Path(root) / INPUT_DIRECTORY
     selection = json.loads(pinned(directory / 'review_selection.json', directory, SELECTION_SHA256, 128 * 1024))
     path_map = json.loads(pinned(directory / 'path_map.json', directory, PATH_MAP_SHA256, 128 * 1024))
@@ -59,9 +101,9 @@ def metadata_rows(root):
     return sorted(rows, key=lambda row: row['pdf_sha256'])
 
 
-def load_rows(data_root):
+def load_rows(data_root, kind=KIND, *, source_root=None):
     data_root = Path(data_root).absolute()
-    rows = metadata_rows(data_root)
+    rows = metadata_rows(data_root, kind, source_root=source_root)
     for row in rows:
         path = data_root / row['pdf_relative_path']
         try:

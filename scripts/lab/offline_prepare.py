@@ -68,10 +68,10 @@ def make_job(commit, manifest, metadata, kind):
 
 
 def cohort_contract(kind='pdf-static'):
-    if kind == jobs.URI_REVIEW_KIND:
+    if kind in jobs.URI_REVIEW_KINDS:
         from malpdf.extraction import uri_review_job
-        uri_review_job.metadata_rows(ctl.REPO)
-        return uri_review_job.contract()
+        uri_review_job.metadata_rows(ctl.REPO, kind, source_root=ctl.REPO)
+        return uri_review_job.contract(kind)
     if kind in jobs.BENIGN_OOD_KINDS:
         from lab_runner import publisher_module
         return publisher_module(kind).contract()

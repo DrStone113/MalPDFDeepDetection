@@ -12,6 +12,7 @@ from malpdf.static.code_inspector import CodeInspectionLimits, _inspect_code_byt
 from malpdf.static.evidence_v9 import inspect_evidence_v9
 
 FIXTURE = Path(__file__).parent / 'fixtures' / 'real_benign_document.pdf'
+REPO = Path(__file__).resolve().parents[1]
 
 
 def stage(tmp_path, monkeypatch, entries):
@@ -65,6 +66,43 @@ def test_duplicate_documents_are_rejected(tmp_path, monkeypatch, entry):
     stage(tmp_path, monkeypatch, [entry, {**entry, 'path': 'elsewhere.pdf'}])
     with pytest.raises(ValueError, match='manifest_unavailable'):
         review.metadata_rows(tmp_path)
+
+
+def test_safedocs_metadata_uses_sealed_release_roster(tmp_path):
+    kind = 'pdf-uri-safedocs-review'
+    rows = review.metadata_rows(tmp_path, kind, source_root=REPO)
+    contract = review.contract(kind)
+    assert len(rows) == contract['samples'] == 11
+    assert sum(row['bytes'] for row in rows) == contract['bytes'] == 4_520_655
+    assert all(row['pdf_relative_path'] == f"data/raw/uri_safedocs_review/{row['pdf_sha256']}.pdf" for row in rows)
+    assert not (tmp_path / 'data/raw').exists()
+    with pytest.raises(ValueError, match='manifest_unavailable'):
+        review.load_rows(tmp_path, kind, source_root=REPO)
+
+
+def test_safedocs_uses_the_release_not_data_root_for_roster(tmp_path):
+    kind = 'pdf-uri-safedocs-review'
+    roster = REPO / 'configs/uri_safedocs_review_20261127.json'
+    local = tmp_path / roster.relative_to(REPO)
+    local.parent.mkdir()
+    local.write_bytes(roster.read_bytes())
+    with pytest.raises(ValueError, match='manifest_unavailable'):
+        review.metadata_rows(tmp_path, kind)
+    local.write_bytes(local.read_bytes().replace(b'{', b'{\n', 1))
+    with pytest.raises(ValueError, match='manifest_unavailable'):
+        review.metadata_rows(tmp_path, kind, source_root=tmp_path)
+
+
+def test_safedocs_rejects_wrong_file_length(tmp_path):
+    kind = 'pdf-uri-safedocs-review'
+    rows = review.metadata_rows(tmp_path, kind, source_root=REPO)
+    row = rows[0]
+    path = tmp_path / row['pdf_relative_path']
+    path.parent.mkdir(parents=True)
+    path.write_bytes(FIXTURE.read_bytes())
+    assert path.stat().st_size != row['bytes']
+    with pytest.raises(ValueError, match='manifest_unavailable'):
+        review.load_rows(tmp_path, kind, source_root=REPO)
 
 
 def test_target_hash_is_read_from_the_same_typed_action_on_the_real_fixture():

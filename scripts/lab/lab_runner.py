@@ -228,9 +228,9 @@ def pdf_metadata(job):
         raise ValueError('dependency_mismatch') from None
     import yaml
     data_root = Path(cfg['data_root'])
-    if job['kind'] == jobs.URI_REVIEW_KIND:
+    if job['kind'] in jobs.URI_REVIEW_KINDS:
         from malpdf.extraction.uri_review_job import load_rows
-        return source, data_root, load_rows(data_root)
+        return source, data_root, load_rows(data_root, job['kind'], source_root=source)
     if job['kind'] in jobs.BENIGN_OOD_KINDS:
         return source, data_root, publisher_module(job['kind']).load_rows(data_root)
     if job['kind'] == 'pdf-diagnostic-replay':
@@ -454,7 +454,7 @@ def _pdf_worker(job_id, *, prepare=False, shard=0, count=1):
         claim = parse_json(side.bounded_read(jobs.job_directory(job_id) / 'claim.json', 4096))
         if claim.get('job_id') != job_id or claim.get('hypervisor_controls_attested') is not True or claim.get('parent_pid') != os.getppid():
             raise ValueError('approval_required')
-        if job['kind'] in jobs.FINGERPRINT_KINDS | jobs.BENIGN_OOD_KINDS | {jobs.URI_REVIEW_KIND} and (
+        if job['kind'] in jobs.FINGERPRINT_KINDS | jobs.BENIGN_OOD_KINDS | jobs.URI_REVIEW_KINDS and (
                 claim.get('start_ticks') is None or jobs.process_identity(os.getppid()) != claim['start_ticks']):
             raise ValueError('approval_required')
     worker_limits(prepare=prepare, wall_seconds=job['limits']['wall_seconds'], fsize_bytes=jobs.pdf_worker_fsize_limit(job['kind']))
@@ -547,9 +547,9 @@ def _pdf_worker(job_id, *, prepare=False, shard=0, count=1):
     cohort_args = {}
     boundary = 'data/raw/cve_t4pdf' if job['kind'] == 'pdf-static-cve' else 'data/raw/cic_pdf'
     publisher = None
-    if job['kind'] == jobs.URI_REVIEW_KIND:
-        from malpdf.extraction.uri_review_job import RAW_ROOT
-        boundary = RAW_ROOT
+    if job['kind'] in jobs.URI_REVIEW_KINDS:
+        from malpdf.extraction.uri_review_job import RAW_ROOT, SAFEDOCS_RAW_ROOT
+        boundary = SAFEDOCS_RAW_ROOT if job['kind'] == jobs.URI_SAFEDOCS_REVIEW_KIND else RAW_ROOT
         cohort_args = {'include_byte_images': False, 'coalesce_checkpoints': True}
     if job['kind'] in jobs.BENIGN_OOD_KINDS:
         publisher = publisher_module(job['kind'])
@@ -604,7 +604,7 @@ def _pdf_worker(job_id, *, prepare=False, shard=0, count=1):
                 expected_sha256=row['pdf_sha256'], limits=limits, arlington_catalog=catalog,
                 run_id=job['job_id'], entry_point='lab_runner.pdf_static_worker', **cohort_args)
         payload = jobs.encoded(bundle)
-        if publisher is not None or job['kind'] == jobs.URI_REVIEW_KIND:
+        if publisher is not None or job['kind'] in jobs.URI_REVIEW_KINDS:
             bundle, payload = publisher_bundle_budget(bundle, payload, row['pdf_sha256'], bundle_limit)
         if len(payload) > bundle_limit:
             jobs.write_pdf_halt(job, directory, shard=shard, index=index, reason='bundle_size_limit')
@@ -931,10 +931,10 @@ def console_run():
     if job['kind'] in jobs.FINGERPRINT_KINDS:
         source_imports(job)
         print(json.dumps(fingerprint_module(job['kind']).contract(), sort_keys=True))
-    if job['kind'] == jobs.URI_REVIEW_KIND:
+    if job['kind'] in jobs.URI_REVIEW_KINDS:
         source_imports(job)
         from malpdf.extraction.uri_review_job import contract
-        print(json.dumps(contract(), sort_keys=True))
+        print(json.dumps(contract(job['kind']), sort_keys=True))
     print(json.dumps({'limits': job['limits'], 'lab_output_directory': str(jobs.job_directory(job['job_id']))}, sort_keys=True))
     print('Xac nhan snapshot/recovery, tat clipboard/drag-drop/shared folders, khong credentials; NIC da ngat.')
     print('PDF/blob/ket qua chi luu tai LAB. Khong tu ket noi lai Windows.')

@@ -32,9 +32,11 @@ BENIGN_OOD_EXPANDED_KIND = 'pdf-benign-ood-expanded'
 BENIGN_OOD_DIVERSE_KIND = 'pdf-benign-ood-diverse'
 BENIGN_V32_COHORT_KIND = 'pdf-benign-v32-cohort'
 URI_REVIEW_KIND = 'pdf-uri-review'
+URI_SAFEDOCS_REVIEW_KIND = 'pdf-uri-safedocs-review'
+URI_REVIEW_KINDS = {URI_REVIEW_KIND, URI_SAFEDOCS_REVIEW_KIND}
 BENIGN_OOD_KINDS = {BENIGN_OOD_KIND, BENIGN_OOD_EXPANDED_KIND, BENIGN_OOD_DIVERSE_KIND, BENIGN_V32_COHORT_KIND}
 FINGERPRINT_KINDS = {HOLDOUT_TLSH_KIND, POOLED_TLSH_KIND}
-PDF_KINDS = {'pdf-static', 'pdf-static-cve', 'pdf-static-cic-full', 'pdf-diagnostic-replay', URI_REVIEW_KIND,
+PDF_KINDS = {'pdf-static', 'pdf-static-cve', 'pdf-static-cic-full', 'pdf-diagnostic-replay', *URI_REVIEW_KINDS,
              'pdf-static-bulk', *BENIGN_OOD_KINDS, *FINGERPRINT_KINDS}
 KINDS = {'syntax', 'synthetic', *PDF_KINDS}
 LIMITS = {'wall_seconds': 1800, 'file_wall_seconds': 60, 'file_cpu_seconds': 45,
@@ -90,6 +92,8 @@ def summary_valid(summary):
 
 
 def policy(kind):
+    if kind == URI_SAFEDOCS_REVIEW_KIND:
+        return {**policy(URI_REVIEW_KIND), 'samples': 11}
     if kind == URI_REVIEW_KIND:
         return {**LIMITS, 'samples': 151, 'workers': 3, 'wall_seconds': 7200}
     if kind == BENIGN_V32_COHORT_KIND:
