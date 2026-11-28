@@ -24,14 +24,17 @@ for p in (REPO, REPO / "src", REPO / "production"):
 
 from scripts.lab.train_uri_lexical_head_v4 import (
     _BENIGN_DEEP_PATHS,
+    DEFAULT_REPORT_ROOT,
     PHIUSIIL_CSV_PATH,
     PHIUSIIL_ZIP_PATH,
     PHIUSIIL_ZIP_SHA256,
+    REALWORLD_BENIGN_CHALLENGE_URLS,
     _build_annot_pdf,
     _build_flate_stream_pdf,
     _build_js_launchurl_pdf,
     _domain_grouped_split,
     _load_phiusiil_rows,
+    compute_phiusiil_split_manifest_sha256,
 )
 
 from malpdf.cdr.engine import PDFDisarmer
@@ -42,25 +45,12 @@ from malpdf.models.uri_lexical_head_v4 import (
     load_uri_head_v4_npz,
 )
 from malpdf.scanner.engine import MalPDFScannerEngine
-from malpdf.scanner.uri_lexical import _split_url_host, is_allowlisted_uri
+from malpdf.scanner.uri_lexical import _split_url_host, canonicalize_extracted_uri, is_allowlisted_uri
 from onnx_engine import ONNXMalPDFScannerEngine
 
 DEFAULT_OUT_ROOT = REPO / "reports" / "experiments" / "uri_head_independent_eval"
 
-PATH_CHALLENGE_URLS: tuple[str, ...] = (
-    "https://www.adobe.com/acrobat",
-    "https://learn.microsoft.com/dotnet/desktop/winforms/",
-    "https://github.com/example/project/blob/main/README.md",
-    "https://docs.google.com/document/d/fixture/edit",
-    "https://docs.google.com/forms/d/fixture/viewform",
-    "https://fixture.workers.dev/reference",
-    "https://fixture.workers.dev/review",
-    "https://tenant.firebaseio.com/reference",
-    "https://external-review.invalid/reference",
-    "https://child.example.invalid/reference",
-    "https://en.wikipedia.org/wiki/Portable_Document_Format",
-    "https://www.iana.org/",
-)
+PATH_CHALLENGE_URLS: tuple[str, ...] = REALWORLD_BENIGN_CHALLENGE_URLS
 
 
 def _git_rev() -> str:
@@ -125,12 +115,14 @@ def main() -> int:
     parser.add_argument("--n-per-vector", type=int, default=50)
     parser.add_argument("--n-benign-pdfs", type=int, default=150)
     parser.add_argument("--out-root", type=Path, default=DEFAULT_OUT_ROOT)
+    parser.add_argument("--train-report-root", type=Path, default=DEFAULT_REPORT_ROOT)
     args = parser.parse_args()
 
     if _sha256_file(PHIUSIIL_ZIP_PATH) != PHIUSIIL_ZIP_SHA256:
         raise ValueError("phiusiil_zip_sha256_mismatch")
     rows, csv_sha = _load_phiusiil_rows(PHIUSIIL_CSV_PATH)
-    _tr, _va, te_idx = _domain_grouped_split(rows, seed=args.seed)
+    tr_idx, va_idx, te_idx = _domain_grouped_split(rows, seed=args.seed)
+    eval_split_sha = compute_phiusiil_split_manifest_sha256(rows, tr_idx, va_idx, te_idx)
     te_rows = [rows[i] for i in te_idx]
 
     rng = np.random.default_rng(args.seed + 7)
@@ -143,6 +135,27 @@ def main() -> int:
     ox = ONNXMalPDFScannerEngine()
     assert pt.is_v4 and ox.is_v4
     assert pt.uri_head.model_loaded and ox.uri_head.model_loaded
+    expected_npz_sha = str(ox.uri_head.contract["weights_npz_sha256"])
+    if str(pt.uri_head.contract["weights_npz_sha256"]) != expected_npz_sha:
+        raise RuntimeError("pt_ox_weights_npz_sha256_mismatch")
+    matched_methodologies: list[tuple[str, dict[str, Any]]] = []
+    for meth_path in sorted(args.train_report_root.glob("run_*/locked_methodology.json")):
+        try:
+            meth_data = json.loads(meth_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if str(meth_data.get("weights_npz_sha256") or "") == expected_npz_sha:
+            matched_methodologies.append((str(meth_path.parent.name), meth_data))
+    if not matched_methodologies:
+        raise RuntimeError(f"missing_locked_methodology_for_weights:{expected_npz_sha}")
+    matched_train_run_id, matched_meth = matched_methodologies[-1]
+    recorded_seed = matched_meth.get("seed")
+    if type(recorded_seed) is not int or recorded_seed != args.seed:
+        raise RuntimeError(f"seed_mismatch:{args.seed}!={recorded_seed!r}")
+    if str(matched_meth.get("source_dataset_csv_sha256") or "") != csv_sha:
+        raise RuntimeError("phiusiil_csv_sha256_methodology_mismatch")
+    if str(matched_meth.get("phiusiil_split_manifest_sha256") or "") != eval_split_sha:
+        raise RuntimeError("phiusiil_split_manifest_sha256_mismatch")
     logit_parity = _check_uri_head_backend_logits(pt, ox)
 
     benign_base = load_real_benign_bytes()
@@ -267,6 +280,23 @@ def main() -> int:
         ):
             verdict_tier_mismatches += 1
         ox_uri = r_ox.forensic_dossier["uri_ml_analysis"]
+        ch_canon = canonicalize_extracted_uri(ch_url)
+        if ch_canon is None:
+            raise RuntimeError(f"invalid_challenge_url:{ch_url}")
+        ch_clean, _ = ch_canon
+        extracted_ch = ox.ingestion.ingest(pdf_bytes).get("extracted_uris") or []
+        extracted_clean: set[str] = set()
+        for item in extracted_ch:
+            if isinstance(item, dict):
+                item_canon = canonicalize_extracted_uri(str(item.get("raw_uri") or item.get("uri") or ""))
+                if item_canon is not None:
+                    extracted_clean.add(item_canon[0])
+        if ch_clean not in extracted_clean:
+            raise RuntimeError(f"challenge_url_missing_from_ingestion_extraction:{ch_url}")
+        if not is_allowlisted_uri(ch_clean):
+            admitted_clean = {cand for cand, _vec in ox.uri_head._evaluate_pdf_candidates(extracted_ch)["candidates"]}
+            if ch_clean not in admitted_clean:
+                raise RuntimeError(f"challenge_url_not_admitted_by_uri_head:{ch_url}")
         if ox_uri["tier"] == "or_gate":
             path_challenge_or_gate_fp += 1
         if r_ox.verdict == "MALICIOUS":
@@ -380,6 +410,9 @@ def main() -> int:
             {
                 "phiusiil_zip_sha256": PHIUSIIL_ZIP_SHA256,
                 "phiusiil_csv_sha256": csv_sha,
+                "phiusiil_split_manifest_sha256": eval_split_sha,
+                "matched_train_run_id": matched_train_run_id,
+                "weights_npz_sha256": expected_npz_sha,
                 "seed": args.seed,
                 "split": "held-out registrable-domain-disjoint PhiUSIIL Test",
                 "uri_contract_sha256": _sha256_file(

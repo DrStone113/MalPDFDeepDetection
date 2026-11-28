@@ -70,12 +70,21 @@ def validate_uri_lexical_contract(contract: dict[str, Any]) -> None:
     if tuple(contract.get("log1p_indices") or ()) != URI_LOG1P_INDICES:
         raise ValueError("invalid_uri_lexical_log1p_indices")
     mcfg = contract.get("model_config")
-    if not isinstance(mcfg, dict) or mcfg.get("in_dim") != len(URI_LEXICAL_FEATURE_NAMES):
+    dropout = mcfg.get("dropout") if isinstance(mcfg, dict) else None
+    if (
+        not isinstance(mcfg, dict)
+        or type(mcfg.get("in_dim")) is not int
+        or type(mcfg.get("hidden_dim")) is not int
+        or type(mcfg.get("bottleneck_dim")) is not int
+        or mcfg["in_dim"] != len(URI_LEXICAL_FEATURE_NAMES)
+        or mcfg["hidden_dim"] != 128
+        or mcfg["bottleneck_dim"] != 64
+        or not isinstance(dropout, (int, float))
+        or isinstance(dropout, bool)
+        or not math.isfinite(float(dropout))
+        or float(dropout) != 0.15
+    ):
         raise ValueError("invalid_uri_lexical_model_config")
-    for key in ("hidden_dim", "bottleneck_dim"):
-        val = mcfg.get(key)
-        if not isinstance(val, int) or val <= 0:
-            raise ValueError("invalid_uri_lexical_model_config")
     center = contract.get("scaler_center") or []
     scale = contract.get("scaler_scale") or []
     dim = len(URI_LEXICAL_FEATURE_NAMES)
@@ -369,7 +378,7 @@ class URILexicalHeadScorer:
         calibrated = _sigmoid_np(self.platt_a * logits + self.platt_b)
         return np.asarray(calibrated, dtype=np.float64)
 
-    def score_pdf_uris(
+    def _evaluate_pdf_candidates(
         self,
         extracted_uris: Sequence[dict[str, Any]],
         *,
@@ -429,6 +438,52 @@ class URILexicalHeadScorer:
 
         if not self.model_loaded or not candidates:
             return {
+                "candidates": candidates,
+                "probs": np.zeros((0,), dtype=np.float64),
+                "filtered_xml": filtered_xml,
+                "allowlisted": allowlisted,
+                "dropped_count": dropped_count,
+                "vector_counts": vector_counts,
+            }
+
+        probs = self.score_urls([pair[0] for pair in candidates])
+        return {
+            "candidates": candidates,
+            "probs": probs,
+            "filtered_xml": filtered_xml,
+            "allowlisted": allowlisted,
+            "dropped_count": dropped_count,
+            "vector_counts": vector_counts,
+        }
+
+    def max_or_eligible_prob(self, extracted_uris: Sequence[dict[str, Any]], *, qr_uris: Sequence[str] = ()) -> float:
+        """Return unrounded max probability across OR-gate-eligible URLs using exact runtime admission."""
+        evaluated = self._evaluate_pdf_candidates(extracted_uris, qr_uris=qr_uris)
+        probs = evaluated["probs"]
+        eligible = [
+            float(probs[i])
+            for i, (cand_url, _vec) in enumerate(evaluated["candidates"])
+            if not is_bare_dual_use_hosted_uri(cand_url)
+        ]
+        return max(eligible) if eligible else 0.0
+
+    def score_pdf_uris(
+        self,
+        extracted_uris: Sequence[dict[str, Any]],
+        *,
+        qr_uris: Sequence[str] = (),
+        max_candidates: int = 256,
+    ) -> dict[str, Any]:
+        evaluated = self._evaluate_pdf_candidates(extracted_uris, qr_uris=qr_uris, max_candidates=max_candidates)
+        candidates = evaluated["candidates"]
+        probs = evaluated["probs"]
+        filtered_xml = evaluated["filtered_xml"]
+        allowlisted = evaluated["allowlisted"]
+        dropped_count = evaluated["dropped_count"]
+        vector_counts = evaluated["vector_counts"]
+
+        if not self.model_loaded or not candidates:
+            return {
                 "model_loaded": self.model_loaded,
                 "backend": self.backend,
                 "model_version": self.model_version,
@@ -448,8 +503,6 @@ class URILexicalHeadScorer:
                 "top_url": None,
             }
 
-        urls = [pair[0] for pair in candidates]
-        probs = self.score_urls(urls)
         or_gate_indices = [
             i
             for i, (cand_url, _vec) in enumerate(candidates)

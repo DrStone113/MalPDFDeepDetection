@@ -16,9 +16,9 @@ URI_LEXICAL_MODEL_VERSION = "PDFURILexicalHead v4"
 
 @dataclass(frozen=True)
 class URILexicalHeadV4Config:
-    in_dim: int = 28
-    hidden_dim: int = 96
-    bottleneck_dim: int = 48
+    in_dim: int = 36
+    hidden_dim: int = 128
+    bottleneck_dim: int = 64
     dropout: float = 0.15
 
     def to_dict(self) -> dict[str, Any]:

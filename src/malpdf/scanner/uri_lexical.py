@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+from collections import Counter
 from collections.abc import Mapping
 import ipaddress
+import math
 import re
 from urllib.parse import unquote, urlsplit
 
 import numpy as np
 
-URI_LEXICAL_SCHEMA_VERSION = "uri_lexical_v4.1"
+URI_LEXICAL_SCHEMA_VERSION = "uri_lexical_v4.2"
 
 URI_LEXICAL_FEATURE_NAMES: tuple[str, ...] = (
     "url_length",
@@ -40,9 +42,17 @@ URI_LEXICAL_FEATURE_NAMES: tuple[str, ...] = (
     "high_risk_tld",
     "suspicious_lure_path_token",
     "shortener_or_user_content_host",
+    "host_digit_count",
+    "host_digit_ratio",
+    "host_hyphen_count",
+    "host_entropy",
+    "reg_domain_length",
+    "subdomain_length",
+    "host_char_prob",
+    "path_digit_ratio",
 )
 
-URI_LOG1P_INDICES: tuple[int, ...] = (0, 1, 6, 7, 9, 11, 13, 15, 16, 17, 18, 20, 21)
+URI_LOG1P_INDICES: tuple[int, ...] = (0, 1, 6, 7, 9, 11, 13, 15, 16, 17, 18, 20, 21, 28, 30, 32, 33)
 
 _MULTI_LABEL_PSL: frozenset[str] = frozenset(
     """
@@ -78,7 +88,7 @@ _MULTI_LABEL_PSL: frozenset[str] = frozenset(
 _XML_XMP_NAMESPACE_HOSTS: frozenset[str] = frozenset(
     """
     ns.adobe.com w3.org purl.org schemas.openxmlformats.org schemas.microsoft.com
-    xml.org aiim.org iptc.org ns.useplus.org prismstandard.org pdfa.org
+    xml.org aiim.org iptc.org ns.useplus.org prismstandard.org
     dublincore.org rdfs.org xmlns.com ns.exif.org ns.tiff.org
     """.split()
 )
@@ -86,6 +96,9 @@ _XML_XMP_NAMESPACE_HOSTS: frozenset[str] = frozenset(
 _XML_XMP_HOST_PREFIX_PATHS: tuple[tuple[str, str], ...] = (
     ("creativecommons.org", "/ns"),
     ("openoffice.org", "/xmlns"),
+    ("pdfa.org", "/ns"),
+    ("pdfa.org", "/pdfa/ns"),
+    ("pdfa.org", "/pdfua/ns"),
 )
 
 _SHARED_USER_CONTENT_ROOTS: frozenset[str] = frozenset(
@@ -144,7 +157,7 @@ _ALLOWLISTED_TLDS: frozenset[str] = frozenset(
 
 _ALLOWLISTED_DOMAINS: frozenset[str] = frozenset(
     """
-    doi.org ieee.org acm.org orcid.org arxiv.org nist.gov nasa.gov irs.gov
+    doi.org ieee.org acm.org orcid.org arxiv.org neurips.cc nips.cc nist.gov nasa.gov irs.gov
     ietf.org rfc-editor.org iso.org w3.org apache.org gnu.org python.org mozilla.org
     springer.com elsevier.com sciencedirect.com nature.com wiley.com cambridge.org
     oup.com mdpi.com tandfonline.com wikipedia.org wikimedia.org creativecommons.org
@@ -153,24 +166,62 @@ _ALLOWLISTED_DOMAINS: frozenset[str] = frozenset(
 )
 
 _OFFICIAL_BRAND_ROOTS: dict[str, frozenset[str]] = {
-    "microsoft": frozenset({"microsoft.com", "microsoftonline.com", "live.com", "office.com", "azure.com"}),
+    "microsoft": frozenset(
+        {
+            "microsoft.com",
+            "microsoftonline.com",
+            "live.com",
+            "office.com",
+            "azure.com",
+            "windows.net",
+            "visualstudio.com",
+            "github.com",
+            "aka.ms",
+            "msn.com",
+            "bing.com",
+        }
+    ),
     "office365": frozenset({"office.com", "microsoft.com", "microsoftonline.com"}),
     "onedrive": frozenset({"onedrive.live.com", "live.com", "sharepoint.com"}),
     "sharepoint": frozenset({"sharepoint.com", "microsoft.com"}),
     "docusign": frozenset({"docusign.com", "docusign.net"}),
     "paypal": frozenset({"paypal.com", "paypalobjects.com"}),
-    "apple": frozenset({"apple.com", "icloud.com"}),
+    "apple": frozenset({"apple.com", "icloud.com", "cdn-apple.com"}),
     "adobe": frozenset({"adobe.com"}),
     "dropbox": frozenset({"dropbox.com"}),
-    "google": frozenset({"google.com"}),
+    "google": frozenset(
+        {
+            "google.com",
+            "googleapis.com",
+            "googleusercontent.com",
+            "googlevideo.com",
+            "google.co.uk",
+            "google.de",
+            "google.fr",
+            "google.co.jp",
+            "google.ca",
+            "google.com.au",
+            "goo.gl",
+            "youtube.com",
+            "youtu.be",
+        }
+    ),
     "booking": frozenset({"booking.com"}),
     "dhl": frozenset({"dhl.com"}),
     "fedex": frozenset({"fedex.com"}),
     "usps": frozenset({"usps.com"}),
-    "amazon": frozenset({"amazon.com"}),
+    "amazon": frozenset({"amazon.com", "amazonaws.com", "amazon.co.uk", "amazon.de", "amazon.co.jp"}),
     "netflix": frozenset({"netflix.com"}),
     "binance": frozenset({"binance.com"}),
     "coinbase": frozenset({"coinbase.com"}),
+}
+
+_BRAND_BOUNDARY_IN_HOST: frozenset[str] = frozenset({"booking"})
+_BRAND_HOST_REGEXES: dict[str, re.Pattern[str]] = {
+    brand: re.compile(rf"(?<![a-z0-9]){re.escape(brand)}(?![a-z0-9])") for brand in _BRAND_BOUNDARY_IN_HOST
+}
+_BRAND_PATH_TOKEN_RES: dict[str, re.Pattern[str]] = {
+    brand: re.compile(rf"(?<![a-z0-9]){re.escape(brand)}(?![a-z0-9])", re.IGNORECASE) for brand in _OFFICIAL_BRAND_ROOTS
 }
 
 _HIGH_RISK_TLDS: frozenset[str] = frozenset(
@@ -190,9 +241,12 @@ _LURE_PATH_TOKEN_RE = re.compile(
 )
 
 _PCT_HEX_RE = re.compile(r"%[0-9a-fA-F]{2}")
-_IPV4_DOTTED_RE = re.compile(r"\d{1,3}(?:\.\d{1,3}){3}")
-_HEX_OR_INT_IP_RE = re.compile(r"(?:0x[0-9a-fA-F]{8}|\d{8,10})")
-_PLAINTEXT_URL_RE = re.compile(r"""https?://[^\s<>"'\)\]\}>\\]+""", re.IGNORECASE)
+_OBFUSC_PCT_RE = re.compile(r"%(?:25[0-9a-fA-F]{2}|00|2[eE]|5[cC]|3[0-9]|4[1-9a-fA-F]|5[0-9aA]|6[1-9a-fA-F]|7[0-9aA])")
+_IPV4_DOTTED_RE = re.compile(r"[0-9]{1,4}(?:\.[0-9]{1,4}){3}")
+_PLAINTEXT_URL_RE = re.compile(
+    r"""https?://(?:\[[0-9a-fA-F:.]+\][^\s<>"'\)\]\}>\\]*|[^\s<>"'\)\]\}>\\]+)""",
+    re.IGNORECASE,
+)
 _SCHEME_PREFIX_RE = re.compile(r"^[a-zA-Z][a-zA-Z0-9+.-]*://")
 
 
@@ -226,14 +280,7 @@ def _split_url_host(raw_uri: str) -> tuple[str, str, str, str, str]:
 
 
 def _is_ip_host(host: str) -> bool:
-    if not host:
-        return False
-    clean = host.strip("[]")
-    try:
-        ipaddress.ip_address(clean)
-        return True
-    except ValueError:
-        return bool(_IPV4_DOTTED_RE.fullmatch(clean) or _HEX_OR_INT_IP_RE.fullmatch(clean))
+    return _parse_ip_address(host) is not None
 
 
 def registrable_domain(host: str) -> str:
@@ -241,8 +288,11 @@ def registrable_domain(host: str) -> str:
     clean = host.strip().lower().strip("[]").rstrip(".")
     if not clean:
         return ""
-    if _is_ip_host(clean):
-        return clean
+    addr = _parse_ip_address(clean)
+    if addr is not None:
+        if isinstance(addr, ipaddress.IPv6Address) and addr.ipv4_mapped is not None:
+            addr = addr.ipv4_mapped
+        return str(addr)
     labels = [lbl for lbl in clean.split(".") if lbl]
     if len(labels) <= 2:
         return ".".join(labels)
@@ -273,7 +323,20 @@ def canonicalize_extracted_uri(raw_uri: str, *, trim_trailing_punct: bool = Fals
     if not cleaned:
         return None
     if trim_trailing_punct and cleaned.lower().startswith(("http://", "https://")):
-        cleaned = cleaned.rstrip(".,;:)]}>\"'")
+        while cleaned:
+            if cleaned[-1] in ".,;:)}>\"'":
+                cleaned = cleaned[:-1]
+            elif cleaned[-1] == "]":
+                authority = cleaned.split("://", 1)[1].split("/", 1)[0].split("?", 1)[0].split("#", 1)[0]
+                if (
+                    authority.startswith("[")
+                    and cleaned.endswith(authority)
+                    and cleaned.count("[") == cleaned.count("]")
+                ):
+                    break
+                cleaned = cleaned[:-1]
+            else:
+                break
     if not cleaned:
         return None
     if len(cleaned) > 2048:
@@ -285,9 +348,63 @@ def canonicalize_extracted_uri(raw_uri: str, *, trim_trailing_punct: bool = Fals
     return cleaned, decoded
 
 
+def _parse_ip_address(host: str) -> ipaddress.IPv4Address | ipaddress.IPv6Address | None:
+    clean = host.strip("[]")
+    if not clean:
+        return None
+    try:
+        return ipaddress.ip_address(clean)
+    except ValueError:
+        pass
+    low = clean.lower()
+    if low.startswith("0x") and re.fullmatch(r"0x[0-9a-f]{1,8}", low):
+        return ipaddress.IPv4Address(int(low, 16))
+    if clean.isascii() and clean.isdigit() and len(clean) <= 10 and 0 <= int(clean) <= 0xFFFFFFFF:
+        return ipaddress.IPv4Address(int(clean))
+    if _IPV4_DOTTED_RE.fullmatch(clean):
+        octets: list[int] = []
+        for part in clean.split("."):
+            if len(part) > 1 and part.startswith("0"):
+                if not all(ch in "01234567" for ch in part):
+                    return None
+                val = int(part, 8)
+            else:
+                val = int(part)
+            if not 0 <= val <= 255:
+                return None
+            octets.append(val)
+        return ipaddress.IPv4Address((octets[0] << 24) | (octets[1] << 16) | (octets[2] << 8) | octets[3])
+    return None
+
+
+def _is_disallowed_ip_host(host: str) -> bool:
+    addr = _parse_ip_address(host)
+    if addr is None:
+        return True
+    if isinstance(addr, ipaddress.IPv6Address) and addr.ipv4_mapped is not None:
+        addr = addr.ipv4_mapped
+    return bool(addr.is_loopback or addr.is_link_local or addr.is_unspecified)
+
+
+def _has_valid_public_dns_labels(host: str) -> bool:
+    if "." not in host:
+        return False
+    labels = host.split(".")
+    if len(labels) < 2 or any((not lbl or len(lbl) > 63) for lbl in labels):
+        return False
+    tld = labels[-1]
+    if tld.isascii() and tld.isalpha() and 2 <= len(tld) <= 24:
+        return True
+    return tld.startswith("xn--") and len(tld) >= 6
+
+
 def is_scorable_http_uri(raw_uri: str) -> bool:
     scheme, _, host, _, _ = _split_url_host(raw_uri)
-    return scheme in {"http", "https"} and bool(host)
+    if scheme not in {"http", "https"} or not host:
+        return False
+    if _is_ip_host(host):
+        return not _is_disallowed_ip_host(host)
+    return _has_valid_public_dns_labels(host)
 
 
 def is_xml_xmp_namespace_uri(raw_uri: str) -> bool:
@@ -344,7 +461,7 @@ def extract_plain_text_urls(text: str, *, max_urls: int = 64) -> list[str]:
         if canon is None:
             continue
         raw_url, _ = canon
-        if is_xml_xmp_namespace_uri(raw_url) or raw_url in seen:
+        if not is_scorable_http_uri(raw_url) or is_xml_xmp_namespace_uri(raw_url) or raw_url in seen:
             continue
         seen.add(raw_url)
         found.append(raw_url)
@@ -432,6 +549,14 @@ def is_bare_dual_use_hosted_uri(raw_uri: str) -> bool:
     )
 
 
+def _shannon_entropy_str(text: str) -> float:
+    if not text:
+        return 0.0
+    n = len(text)
+    counts = Counter(text)
+    return float(-sum((cnt / n) * math.log2(cnt / n) for cnt in counts.values()))
+
+
 def extract_url_lexical_features(
     raw_uri: str,
     *,
@@ -440,7 +565,7 @@ def extract_url_lexical_features(
     default_tld_prob: float = 0.50,
     default_char_prob: float = 1e-3,
 ) -> np.ndarray:
-    """Compute scheme-neutral, www/trailing-slash normalized 28D lexical feature vector."""
+    """Compute scheme-neutral, www/trailing-slash normalized 36D host-vs-path lexical feature vector."""
     scheme, netloc, host, path, query, body = normalize_uri_for_lexical_features(raw_uri)
 
     url_len = float(len(body))
@@ -451,10 +576,13 @@ def extract_url_lexical_features(
     ccr = _char_continuation_rate(host)
     tld_multi = extract_tld(host)
     tld_single = host.rsplit(".", 1)[-1] if ("." in host and not is_ip) else ""
+    reg = registrable_domain(host)
     if is_ip or not tld_single:
         tld_legit = 0.0
         tld_len = 0.0
         n_sub = 0.0
+        reg_dom_len = 0.0
+        sub_len = 0.0
     else:
         if tld_multi and tld_multi in tld_legit_probs:
             tld_legit = float(tld_legit_probs[tld_multi])
@@ -465,22 +593,47 @@ def extract_url_lexical_features(
         else:
             tld_legit = float(default_tld_prob)
         tld_len = float(len(tld_single))
-        reg = registrable_domain(host)
+        reg_dom_len = float(len(reg)) if reg else 0.0
         if reg and host.endswith(f".{reg}"):
             prefix = host[: -(len(reg) + 1)]
             n_sub = float(len([lbl for lbl in prefix.split(".") if lbl]))
+            sub_len = float(len(prefix))
         else:
             n_sub = 0.0
+            sub_len = 0.0
 
     body_low = body.lower()
     char_prob_sum = sum(float(char_probs.get(ch, default_char_prob)) for ch in body_low)
     url_char_p = float(char_prob_sum / denom) if body_low else float(default_char_prob)
 
-    pct_hits = len(_PCT_HEX_RE.findall(body))
-    at_in_netloc = "@" in unquote(netloc)
-    non_ascii_count = sum(1 for ch in body if ord(ch) > 127)
-    n_obfusc_chars = float(pct_hits * 3 + non_ascii_count)
-    has_obfusc = 1.0 if (pct_hits > 0 or non_ascii_count > 0 or at_in_netloc) else 0.0
+    host_low = host.lower()
+    host_char_p = (
+        float(sum(float(char_probs.get(ch, default_char_prob)) for ch in host_low) / len(host_low))
+        if host_low
+        else float(default_char_prob)
+    )
+    host_digits = sum(1 for ch in host if ch.isascii() and ch.isdigit())
+    host_digit_ratio = float(host_digits / max(len(host), 1)) if host else 0.0
+    host_hyphens = host.count("-")
+    host_entropy = _shannon_entropy_str(host_low.replace(".", ""))
+
+    pq_raw = f"{path}?{query}" if query else path
+    pq_digits = sum(1 for ch in pq_raw if ch.isascii() and ch.isdigit())
+    path_digit_ratio = float(pq_digits / len(pq_raw)) if pq_raw else 0.0
+
+    sep_idx = len(body)
+    for sep in ("/", "?", "#"):
+        pos = body.find(sep)
+        if 0 <= pos < sep_idx:
+            sep_idx = pos
+    authority_part = body[:sep_idx]
+    rest_pq = body[sep_idx:]
+    at_in_netloc = "@" in netloc or "@" in unquote(netloc)
+    netloc_pct_hits = len(_PCT_HEX_RE.findall(authority_part))
+    rest_obfusc_hits = len(_OBFUSC_PCT_RE.findall(rest_pq))
+    non_ascii_host = sum(1 for ch in host if ord(ch) > 127)
+    n_obfusc_chars = float((netloc_pct_hits + rest_obfusc_hits) * 3 + non_ascii_host)
+    has_obfusc = 1.0 if (n_obfusc_chars > 0.0 or at_in_netloc) else 0.0
     obfusc_ratio = float(min(1.0, n_obfusc_chars / denom))
 
     n_letters = sum(1 for ch in body if ch.isascii() and ch.isalpha())
@@ -492,19 +645,31 @@ def extract_url_lexical_features(
 
     path_len = float(len(path))
     query_len = float(len(query))
-    has_at = 1.0 if ("@" in netloc or "@" in unquote(netloc)) else 0.0
+    has_at = 1.0 if at_in_netloc else 0.0
     has_puny = 1.0 if (any(lbl.startswith("xn--") for lbl in host.split(".")) if host else False) else 0.0
 
     untrusted_brand = 0.0
     if host:
         for brand, official in _OFFICIAL_BRAND_ROOTS.items():
-            if brand in host and not _host_matches(host, official):
+            if _host_matches(host, official):
+                continue
+            pat_host = _BRAND_HOST_REGEXES.get(brand)
+            matched = bool(pat_host.search(host)) if pat_host is not None else (brand in host)
+            if matched:
                 untrusted_brand = 1.0
                 break
-        if untrusted_brand == 0.0:
+        if untrusted_brand == 0.0 and (
+            _host_matches(host, _HOSTING_ABUSE_INDICATOR_ROOTS)
+            or any(
+                (host == d or host.endswith(f".{d}")) and unquote(path).lower().startswith(pref)
+                for d, pref in _SHARED_USER_CONTENT_PATH_PREFIXES
+            )
+        ):
             path_q = unquote(path + "?" + query).lower()
-            if _host_matches(host, _SHARED_USER_CONTENT_ROOTS) and any(b in path_q for b in _OFFICIAL_BRAND_ROOTS):
-                untrusted_brand = 1.0
+            for brand, official in _OFFICIAL_BRAND_ROOTS.items():
+                if not _host_matches(host, official) and _BRAND_PATH_TOKEN_RES[brand].search(path_q):
+                    untrusted_brand = 1.0
+                    break
 
     high_risk = 1.0 if tld_single in _HIGH_RISK_TLDS else 0.0
     lure_haystack = f"{host}/{unquote(path)}?{unquote(query)}"
@@ -558,6 +723,14 @@ def extract_url_lexical_features(
             high_risk,
             lure_tok,
             is_user_content,
+            float(host_digits),
+            host_digit_ratio,
+            float(host_hyphens),
+            host_entropy,
+            reg_dom_len,
+            sub_len,
+            host_char_p,
+            path_digit_ratio,
         ],
         dtype=np.float32,
     )

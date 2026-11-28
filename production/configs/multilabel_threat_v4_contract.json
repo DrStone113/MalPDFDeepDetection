@@ -261,7 +261,7 @@
       "mitre_name_vi": "Dẫn hướng tới đường dẫn ngoài",
       "mitre_tactic_vi": "Truy cập ban đầu",
       "desc_vi": "Chứa hành động gửi dữ liệu biểu mẫu (/SubmitForm) hoặc mở URL ngoài",
-      "threshold": 0.962,
+      "threshold": 0.991,
       "temperature": 1.0,
       "model_flag_enabled": true,
       "uri_t_low": 0.5,

@@ -57,6 +57,7 @@ from malpdf.scanner.static_evidence import CODEC_QUOTA_REASON_CODES, is_quota_on
 from malpdf.scanner.uri_lexical import (
     canonicalize_extracted_uri,
     extract_plain_text_urls,
+    is_allowlisted_uri,
     is_xml_xmp_namespace_uri,
 )
 from malpdf.static.js_ast import CodeInspectionError
@@ -996,6 +997,15 @@ def _uri_evidence(
     }
 
 
+_PDF_TEXT_BLOCK_RE = re.compile(rb"(?:^|[\s\)\]>])(?:BT|ET|Tj|TJ)(?:$|[\s\(\[/<])")
+
+
+def _pdf_text_operand(value: Any) -> str:
+    if isinstance(value, bytes):
+        return value.decode("latin1", errors="ignore")
+    return str(value) if isinstance(value, str) else ""
+
+
 def _extract_flate_stream_urls(
     reader: PdfReader | None,
     pages_count: int,
@@ -1031,7 +1041,52 @@ def _extract_flate_stream_urls(
             if filters not in ([], ["/FlateDecode"], ["/Fl"]):
                 continue
             decoded = decode_filters(raw, filters, limits=limit_box, budget=budget)
-            if decoded.data:
+            if not decoded.data:
+                continue
+            try:
+                decoded_contents = DecodedStreamObject()
+                decoded_contents.set_data(decoded.data)
+                operations = list(ContentStream(decoded_contents, reader, "bytes").operations)
+            except (
+                AssertionError,
+                pypdf.errors.PyPdfError,
+                ValueError,
+                TypeError,
+                OverflowError,
+                KeyError,
+                IndexError,
+            ):
+                continue
+            has_text_show_op = False
+            op_chunks: list[str] = []
+            for args, op in operations:
+                if op in (b"Tj", b"'", b'"'):
+                    has_text_show_op = True
+                if op in (b"Tj", b"'") and args:
+                    part = _pdf_text_operand(args[0])
+                    if part:
+                        op_chunks.append(part)
+                elif op == b'"' and len(args) >= 3:
+                    part = _pdf_text_operand(args[2])
+                    if part:
+                        op_chunks.append(part)
+                elif op == b"TJ" and args and isinstance(args[0], (list, tuple, ArrayObject)):
+                    has_text_show_op = True
+                    parts: list[str] = []
+                    for item in args[0]:
+                        if isinstance(item, (str, bytes)):
+                            piece = _pdf_text_operand(item)
+                            if piece:
+                                parts.append(piece)
+                        elif isinstance(item, (int, float)) and not isinstance(item, bool) and float(item) <= -180.0:
+                            if parts and not parts[-1].endswith(" "):
+                                parts.append(" ")
+                    joined = "".join(parts).strip()
+                    if joined:
+                        op_chunks.append(joined)
+            if op_chunks:
+                chunks.extend(op_chunks)
+            elif not has_text_show_op and not _PDF_TEXT_BLOCK_RE.search(decoded.data):
                 chunks.append(decoded.data.decode("latin1", errors="ignore"))
         if not chunks:
             continue
@@ -1072,10 +1127,21 @@ def _page_lure_text(page: Any, budget: DecodeBudget) -> str | None:
     page_snapshot = copy(page)
     decoded_contents = DecodedStreamObject()
     decoded_contents.set_data(b"\n".join(bodies))
-    text_content = ContentStream(decoded_contents, page.pdf, "bytes")
-    text_content.operations = [(args, op) for args, op in text_content.operations if op != b"Do"]
-    page_snapshot[NameObject("/Contents")] = text_content
-    return page_snapshot.extract_text()
+    try:
+        text_content = ContentStream(decoded_contents, page.pdf, "bytes")
+        text_content.operations = [(args, op) for args, op in text_content.operations if op != b"Do"]
+        page_snapshot[NameObject("/Contents")] = text_content
+        return page_snapshot.extract_text()
+    except (
+        AssertionError,
+        pypdf.errors.PyPdfError,
+        ValueError,
+        TypeError,
+        OverflowError,
+        KeyError,
+        IndexError,
+    ):
+        return None
 
 
 def _resolve_pdf_object(value: Any) -> Any:
@@ -1167,7 +1233,10 @@ def _analyze_phishing(
     qr_uris = qr_analysis["decoded_uris"]
     overlay_pages = {item["page_index"] for item in uris if item["rect_area"] >= IMAGE_LURE_MIN_AREA}
     texts = {}
-    if reader is not None and (uris or qr_uris):
+    has_lure_eligible_uri = any(
+        is_untrusted_http_uri(item["uri"]) or not is_allowlisted_uri(item["uri"]) for item in uris
+    )
+    if reader is not None and (qr_uris or overlay_pages or has_lure_eligible_uri):
         texts = bounded_lure_page_text(
             reader, pages_count, overlay_pages, priority_pages=set(qr_analysis.get("qr_pages") or ())
         )
@@ -1253,7 +1322,7 @@ def bounded_lure_page_text(
             continue
         try:
             text = _page_lure_text(reader.pages[index], budget)
-        except (pypdf.errors.PyPdfError, ValueError, TypeError):
+        except (AssertionError, pypdf.errors.PyPdfError, ValueError, TypeError):
             continue
         if text is not None:
             texts[index] = text

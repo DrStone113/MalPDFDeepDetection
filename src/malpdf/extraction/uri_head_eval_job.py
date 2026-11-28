@@ -26,9 +26,9 @@ if TYPE_CHECKING:
 
 KIND = "pdf-uri-head-eval"
 URI_CONTRACT_RELPATH = "configs/uri_lexical_head_v4_contract.json"
-URI_CONTRACT_SHA256 = "84bf5da1108ef0061adf28e3cd6acdb18b263c7e99892bb0612ddec84ea5e714"
+URI_CONTRACT_SHA256 = "acdc1502704720a1b954ef0f604ef64eb4d12a113f0a9b40fdd3b19763c803ec"
 URI_NPZ_RELPATH = Path("data/processed/uri_head_v4/uri_lexical_head_v4.npz")
-URI_NPZ_SHA256 = "497e63c62de27ea1e7df1e6c9ec3e3b72139220cd8631b3e00653e630edc8e97"
+URI_NPZ_SHA256 = "bb66e70da72dd3477fe6527c5ddfad71795a662656897a8662d3e042c9999d60"
 COHORT_ORDER: tuple[str, ...] = (
     "benign_ood_v1",
     "benign_ood_expanded_v1",

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import ipaddress
 import json
 from pathlib import Path
 import shutil
@@ -19,17 +20,21 @@ from malpdf.cdr.engine import PDFDisarmer
 from malpdf.cdr.fixtures import load_real_benign_bytes, load_real_threat_bytes
 from malpdf.models.uri_lexical_head_v4 import PDFURILexicalHeadV4, load_uri_head_v4_npz
 from malpdf.scanner.engine import MalPDFScannerEngine
-from malpdf.scanner.uri_head import URILexicalHeadScorer
+from malpdf.scanner.uri_head import URILexicalHeadScorer, validate_uri_lexical_contract
 from malpdf.scanner.uri_lexical import (
     URI_LEXICAL_FEATURE_NAMES,
     URI_LEXICAL_SCHEMA_VERSION,
     URI_LOG1P_INDICES,
+    _is_ip_host,
+    _parse_ip_address,
     extract_plain_text_urls,
     extract_url_lexical_features,
     is_allowlisted_uri,
     is_bare_dual_use_hosted_uri,
+    is_scorable_http_uri,
     is_xml_xmp_namespace_uri,
     normalize_uri_for_lexical_features,
+    registrable_domain,
 )
 from malpdf.web.app import app as dev_app
 
@@ -37,12 +42,12 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 OR_GATE_URI = (
     "https://login-verify-microsoft-security-update-2026.top/signin/oauth/confirm.php?session=982371&token=abc"
 )
-ALT_OR_GATE_URI = "http://ab-gpdc2.ml/suth-secu/"
+ALT_OR_GATE_URI = "https://xq92-m4k1p.top/k81/d/index.php?e=1"
 GATED_FUSION_URI = "http://www.ns4.site"
 DUAL_USE_BENIGN_WORKERS = "https://fixture.workers.dev/review"
 DUAL_USE_BENIGN_FORMS = "https://docs.google.com/forms/d/fixture/viewform"
 DUAL_USE_DGA_WORKERS = "https://holy-union-137c.51g0jm50281.workers.dev/"
-DUAL_USE_LURE_FORMS = "https://docs.google.com/forms/d/e/1FAIpQLSf_verify_wallet_login/viewform"
+DUAL_USE_LURE_FORMS = "https://docs.google.com/forms/d/e/1FAIpQLSf98234_verify_wallet_login_confirm_8421/viewform"
 BENIGN_DEEP_URI = "https://www.southbankmosaics.com/docs/reference/manual-v2/section-4.pdf"
 BENIGN_ORDINARY_LINK = "https://example.org/docs"
 
@@ -92,9 +97,9 @@ def _assert_cdr_integrity(raw_bytes: bytes, cleaned_bytes: bytes, audit) -> None
 
 
 def test_uri_lexical_schema_normalization_and_tld_fallbacks() -> None:
-    assert URI_LEXICAL_SCHEMA_VERSION == "uri_lexical_v4.1"
-    assert len(URI_LEXICAL_FEATURE_NAMES) == 28
-    assert len(URI_LOG1P_INDICES) == 13
+    assert URI_LEXICAL_SCHEMA_VERSION == "uri_lexical_v4.2"
+    assert len(URI_LEXICAL_FEATURE_NAMES) == 36
+    assert len(URI_LOG1P_INDICES) == 17
 
     scorer = URILexicalHeadScorer(prefer_onnx=False)
     assert scorer.model_loaded is True
@@ -120,7 +125,7 @@ def test_uri_lexical_schema_normalization_and_tld_fallbacks() -> None:
             default_tld_prob=scorer.default_tld_prob,
             default_char_prob=scorer.default_char_prob,
         )
-        assert v_http.shape == (28,)
+        assert v_http.shape == (36,)
         assert np.array_equal(v_http, v_https)
         p_http, p_https = scorer.score_urls([http_url, https_url])
         assert abs(float(p_http) - float(p_https)) < 1e-12
@@ -433,7 +438,7 @@ def test_eight_of_eight_heads_contract_and_api_health() -> None:
     assert head6["id"] == "suspicious_uri_redirect"
     assert head6["model_flag_enabled"] is True
     assert float(head6["uri_t_low"]) == pytest.approx(0.5)
-    assert float(head6["threshold"]) == pytest.approx(0.962)
+    assert float(head6["threshold"]) == pytest.approx(0.991)
 
     with TestClient(dev_app) as dev_client, TestClient(prod_web.app) as prod_client:
         for client in (dev_client, prod_client):
@@ -538,4 +543,230 @@ def test_structured_pdf_uri_preserves_trailing_punctuation_vs_prose() -> None:
     pdf_res = scorer.score_pdf_uris([{"raw_uri": dotted_uri, "source": "annot_uri"}])
     assert pdf_res["top_url"] == dotted_uri
     assert pdf_res["max_prob"] == pytest.approx(round(direct_prob, 6))
-    assert extract_plain_text_urls("See https://example.org/docs.") == ["https://example.org/docs"]
+    assert extract_plain_text_urls("See http://www and https://example.org/docs.") == ["https://example.org/docs"]
+
+
+def test_v42_tj_kerning_stream_obfuscation_brand_and_mixed_schema_rejection(
+    engines: tuple[MalPDFScannerEngine, ONNXMalPDFScannerEngine],
+) -> None:
+    pt_engine, ox_engine = engines
+    assert is_scorable_http_uri("http://www") is False
+    assert is_scorable_http_uri("https://github") is False
+    assert is_scorable_http_uri("http://127.0.0.1/test") is False
+    assert is_scorable_http_uri("http://198.51.100.44/login") is True
+    assert (
+        is_allowlisted_uri("https://proceedings.neurips.cc/paper/2020/file/1457c0d6bfcb4967418bfb8ac142f64a-Paper.pdf")
+        is True
+    )
+
+    # TJ kerning must reconstruct without truncated http://www, while separate Tj ops never merge
+    def add_kerned_streams(pdf: pikepdf.Pdf) -> None:
+        page0 = pdf.pages[0].obj
+        _append_page_stream(
+            pdf,
+            page0,
+            b"\nBT /F1 10 Tf 40 700 Td [(https://www)-15(.example.org/docs/guide.pdf)] TJ "
+            b"0 -14 Td (https://split-a) Tj 0 -14 Td (.example.org/b) Tj ET\n",
+        )
+
+    kerned_raw = _mutate_benign_pdf(add_kerned_streams)
+    extracted = pt_engine.ingestion.ingest(kerned_raw).get("extracted_uris") or []
+    extracted_urls = [str(item.get("raw_uri") or item.get("uri") or "") for item in extracted]
+    assert "https://www.example.org/docs/guide.pdf" in extracted_urls
+    assert "http://www" not in extracted_urls
+    assert "https://www" not in extracted_urls
+    assert "https://split-a.example.org/b" not in extracted_urls
+
+    # Malformed stream with raw TJ operators must not manufacture truncated single-label http://www
+    def add_broken_tj_stream(pdf: pikepdf.Pdf) -> None:
+        _append_page_stream(pdf, pdf.pages[0].obj, b"\nBT [(http://www)-15(.ietf.org)] TJ [\x00\xff/broken\n")
+
+    broken_raw = _mutate_benign_pdf(add_broken_tj_stream)
+    broken_urls = [
+        str(item.get("raw_uri") or item.get("uri") or "")
+        for item in (ox_engine.ingestion.ingest(broken_raw).get("extracted_uris") or [])
+    ]
+    assert not any(u.rstrip("/").endswith("://www") for u in broken_urls)
+
+    # Obfuscation narrows to authority / dangerous path escapes; path brand restricted to hosting abuse roots
+    idx_obf = URI_LEXICAL_FEATURE_NAMES.index("has_obfuscation")
+    idx_brand = URI_LEXICAL_FEATURE_NAMES.index("brand_in_untrusted_host")
+    scorer = pt_engine.uri_head
+    kw = {
+        "tld_legit_probs": scorer.tld_legit_probs,
+        "char_probs": scorer.char_probs,
+        "default_tld_prob": scorer.default_tld_prob,
+        "default_char_prob": scorer.default_char_prob,
+    }
+    assert (
+        extract_url_lexical_features("https://www.example-publisher.org/files/Annual%20Report%202024.pdf", **kw)[
+            idx_obf
+        ]
+        == 0.0
+    )
+    assert extract_url_lexical_features("https://evil.example/%6c%6f%67%69%6e", **kw)[idx_obf] == 1.0
+    assert extract_url_lexical_features("https://evil.example/a%2e%2e/b", **kw)[idx_obf] == 1.0
+    gh_commit = "https://github.com/google-research/bert/commit/eedf5716ce1268e56f0a50264a88cafad334ac61"
+    assert extract_url_lexical_features(gh_commit, **kw)[idx_brand] == 0.0
+    assert float(scorer.score_urls([gh_commit])[0]) < scorer.t_high
+
+    stale_v41 = dict(scorer.contract)
+    stale_v41["schema_version"] = "uri_lexical_v4.1"
+    with pytest.raises(ValueError, match="invalid_uri_lexical_schema_version"):
+        validate_uri_lexical_contract(stale_v41)
+
+
+def test_v42_maker_checker_invariants(
+    engines: tuple[MalPDFScannerEngine, ONNXMalPDFScannerEngine],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pt_engine, ox_engine = engines
+    scorer = pt_engine.uri_head
+    kw = {
+        "tld_legit_probs": scorer.tld_legit_probs,
+        "char_probs": scorer.char_probs,
+        "default_tld_prob": scorer.default_tld_prob,
+        "default_char_prob": scorer.default_char_prob,
+    }
+    idx_brand = URI_LEXICAL_FEATURE_NAMES.index("brand_in_untrusted_host")
+
+    # Non-dotted / hex / octal / mapped loopback IP encodings must be blocked before scoring
+    for bad_ip in (
+        "http://0x7f000001/login",
+        "http://2130706433/login",
+        "http://0177.0.0.1/login",
+        "http://[::ffff:127.0.0.1]/login",
+    ):
+        assert is_scorable_http_uri(bad_ip) is False
+    assert _parse_ip_address("0177.0.0.1") == ipaddress.IPv4Address("127.0.0.1")
+    assert _is_ip_host("0177.0.0.1") is True
+    assert is_scorable_http_uri("http://0306.063.0144.054/login") is True
+    assert is_scorable_http_uri("http://198.51.100.44/login") is True
+
+    # Word boundary around 'booking' avoids matching booking2 while catching booking-portal
+    assert extract_url_lexical_features("https://booking2.example/docs", **kw)[idx_brand] == 0.0
+    assert extract_url_lexical_features("https://booking-portal.example/docs", **kw)[idx_brand] == 1.0
+
+    # Fixed 36/128/64 + 0.15 dropout contract must reject type/dimension/NaN mismatches
+    for field, bad_val in (
+        ("in_dim", 28),
+        ("in_dim", 36.0),
+        ("hidden_dim", 64),
+        ("hidden_dim", True),
+        ("bottleneck_dim", 32),
+        ("dropout", 0.2),
+        ("dropout", 0.1499999),
+        ("dropout", 0.1500001),
+        ("dropout", float("nan")),
+    ):
+        tampered = json.loads(json.dumps(scorer.contract))
+        tampered["model_config"][field] = bad_val
+        with pytest.raises(ValueError, match="invalid_uri_lexical_model_config"):
+            validate_uri_lexical_contract(tampered)
+
+    # Short hex IPv4 must agree between _is_ip_host/_parse_ip_address/registrable_domain; bad octal & Unicode digits rejected
+    assert _is_ip_host("0x8080808") is True
+    assert is_scorable_http_uri("http://0x8080808/login") is True
+    assert registrable_domain("0x8080808") == "8.8.8.8"
+    assert registrable_domain("::ffff:127.0.0.1") == "127.0.0.1"
+    assert is_scorable_http_uri("http://0188.0.0.1/login") is False
+    assert is_scorable_http_uri("http://\u00b2/login") is False
+    assert extract_plain_text_urls("See https://[2001:db8::1]/guide and (https://[2001:db8::1]).") == [
+        "https://[2001:db8::1]/guide",
+        "https://[2001:db8::1]",
+    ]
+
+    # pdfa.org XML namespace filter must keep ISO 32000-2 document URLs extracted & benign
+    assert is_xml_xmp_namespace_uri("http://www.pdfa.org/ns/xmp/") is True
+    assert is_xml_xmp_namespace_uri("https://pdfa.org/resource/iso-32000-2/") is False
+    iso_url = "https://pdfa.org/resource/iso-32000-2/"
+
+    def add_iso_annot(pdf: pikepdf.Pdf) -> None:
+        annot = pdf.make_indirect(
+            pikepdf.Dictionary(
+                Type=pikepdf.Name.Annot,
+                Subtype=pikepdf.Name.Link,
+                Rect=pikepdf.Array([20, 20, 120, 40]),
+                A=pikepdf.Dictionary(S=pikepdf.Name.URI, URI=pikepdf.String(iso_url)),
+            )
+        )
+        pdf.pages[0].obj["/Annots"] = pikepdf.Array([annot])
+
+    iso_raw = _mutate_benign_pdf(add_iso_annot)
+    iso_extracted = [
+        str(u.get("raw_uri") or "") for u in (ox_engine.ingestion.ingest(iso_raw).get("extracted_uris") or [])
+    ]
+    assert iso_url in iso_extracted
+    assert ox_engine.scan_bytes(iso_raw, file_name="iso32000.pdf", explain=False).verdict == "BENIGN"
+
+    # TJ word gap must preserve space between URL and adjacent word; failed quote-op stream stays discarded
+    def add_tj_gap_stream(pdf: pikepdf.Pdf) -> None:
+        _append_page_stream(
+            pdf,
+            pdf.pages[0].obj,
+            b"\nBT /F1 10 Tf [(https://example.org/guide)-1000(Reference)] TJ ET\n",
+        )
+
+    gap_raw = _mutate_benign_pdf(add_tj_gap_stream)
+    gap_urls = [str(u.get("raw_uri") or "") for u in (ox_engine.ingestion.ingest(gap_raw).get("extracted_uris") or [])]
+    assert "https://example.org/guide" in gap_urls
+    assert "https://example.org/guideReference" not in gap_urls
+
+    def add_broken_quote_stream(pdf: pikepdf.Pdf) -> None:
+        _append_page_stream(
+            pdf,
+            pdf.pages[0].obj,
+            b"\nBT /F1 10 Tf (https://broken-quote.example/x) ' ET\n[\x00\xff/broken",
+        )
+
+    quote_raw = _mutate_benign_pdf(add_broken_quote_stream)
+    quote_urls = [
+        str(u.get("raw_uri") or "") for u in (ox_engine.ingestion.ingest(quote_raw).get("extracted_uris") or [])
+    ]
+    assert "https://broken-quote.example/x" not in quote_urls
+
+    # Unrounded OR-gate helper must match raw score_urls output and ignore bare dual-use hosts
+    probe_url = "https://xq92-m4k1p.top/k81/d/index.php?e=1"
+    expected_prob = float(scorer.score_urls([probe_url])[0])
+    got_prob = scorer.max_or_eligible_prob(
+        [
+            {"raw_uri": probe_url, "source": "pdf_annot"},
+            {"raw_uri": "https://docs.google.com/document/d/x/edit", "source": "pdf_annot"},
+        ]
+    )
+    assert got_prob == pytest.approx(expected_prob, rel=0.0, abs=1e-6)
+
+    # Inline-image BI malformed stream & ContentStream AssertionError must never crash ingestion or scan_bytes
+    def add_malformed_bi_stream(pdf: pikepdf.Pdf) -> None:
+        _append_page_stream(
+            pdf,
+            pdf.pages[0].obj,
+            b"\nBI /W 1 /H 1 /BPC 1 /CS /G ID \x00\xff\nBT /F1 10 Tf (https://safe-bi.example.org/ok) Tj ET\n",
+        )
+
+    bi_raw = _mutate_benign_pdf(add_malformed_bi_stream)
+    bi_res = ox_engine.ingestion.ingest(bi_raw)
+    assert isinstance(bi_res.get("extracted_uris"), list)
+
+    def _raise_assertion(*_args: object, **_kwargs: object) -> object:
+        raise AssertionError("simulated ContentStream inline image assertion")
+
+    def add_annot_and_stream(pdf: pikepdf.Pdf) -> None:
+        annot = pdf.make_indirect(
+            pikepdf.Dictionary(
+                Type=pikepdf.Name.Annot,
+                Subtype=pikepdf.Name.Link,
+                Rect=pikepdf.Array([20, 20, 120, 40]),
+                A=pikepdf.Dictionary(S=pikepdf.Name.URI, URI=pikepdf.String("https://survives-bi.example.invalid/doc")),
+            )
+        )
+        pdf.pages[0].obj["/Annots"] = pikepdf.Array([annot])
+
+    annot_raw = _mutate_benign_pdf(add_annot_and_stream)
+    with monkeypatch.context() as mp:
+        mp.setattr("malpdf.scanner.ingestion.ContentStream", _raise_assertion)
+        res_assert = ox_engine.ingestion.ingest(annot_raw)
+        scan_assert = ox_engine.scan_bytes(annot_raw, file_name="bi_assert.pdf", explain=False)
+    extracted_after_assert = [str(u.get("raw_uri") or "") for u in (res_assert.get("extracted_uris") or [])]
+    assert "https://survives-bi.example.invalid/doc" in extracted_after_assert
+    assert scan_assert.verdict == "BENIGN"
