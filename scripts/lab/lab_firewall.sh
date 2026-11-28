@@ -98,11 +98,15 @@ EOF
 phase2() {
   require_root
   host_if=$(detect_hostonly_if)
-  for nat_if in $(detect_nat_ifs "$host_if"); do
-    /usr/bin/networkctl down "$nat_if" >/dev/null 2>&1 || true
-    /usr/sbin/ip addr flush dev "$nat_if" >/dev/null 2>&1 || true
-    /usr/sbin/ip link set dev "$nat_if" down >/dev/null 2>&1 || true
-  done
+  if [ -d "/sys/class/net/$host_if" ]; then
+    for nat_if in $(detect_nat_ifs "$host_if"); do
+      if /usr/bin/systemctl is-active --quiet systemd-networkd.service 2>/dev/null; then
+        /usr/bin/networkctl down "$nat_if" >/dev/null 2>&1 || true
+      fi
+      /usr/sbin/ip addr flush dev "$nat_if" >/dev/null 2>&1 || true
+      /usr/sbin/ip link set dev "$nat_if" down >/dev/null 2>&1 || true
+    done
+  fi
   apply_phase2_rules "$host_if"
   echo "phase2_locked host_only=$host_if"
 }
@@ -349,6 +353,7 @@ Wants=network-pre.target
 [Service]
 Type=oneshot
 RemainAfterExit=yes
+TimeoutStartSec=30
 ExecStart=$INSTALL_BIN phase2
 
 [Install]

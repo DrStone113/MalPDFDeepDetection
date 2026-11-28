@@ -4,6 +4,7 @@ import io
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 import sys
 import tempfile
@@ -2652,3 +2653,53 @@ def test_uri_head_eval_export_contract_and_fail_closed(modules, monkeypatch):
             mutate(current["doc"])
             with pytest.raises(ValueError, match="export_shape_invalid"):
                 admin.export_job(job["job_id"])
+
+
+def test_lab_firewall_pre_network_avoids_networkctl_deadlock(modules, monkeypatch):
+    _, admin, _, _ = modules
+    fw_script = Path(__file__).resolve().parents[1] / "scripts" / "lab" / "lab_firewall.sh"
+    raw = fw_script.read_bytes()
+    assert b"\r\n" not in raw
+    text = raw.decode("utf-8")
+    assert 'if [ -d "/sys/class/net/$host_if" ]; then' in text
+    assert "/usr/bin/systemctl is-active --quiet systemd-networkd.service" in text
+    assert "TimeoutStartSec=30" in text
+
+    unit_match = re.search(r"cat > \"\$UNIT_PATH\" <<EOF\n(.*?)\nEOF", text, flags=re.DOTALL)
+    assert unit_match is not None
+    rendered_unit = unit_match.group(1).replace("$INSTALL_BIN", "/usr/local/sbin/malpdf-firewall") + "\n"
+
+    with tempfile.TemporaryDirectory() as temp:
+        root = Path(temp)
+        unit = root / "malpdf-firewall.service"
+        unit.write_text(rendered_unit, encoding="utf-8", newline="\n")
+        wants_dir = root / "wants"
+        wants_dir.mkdir()
+        wants_link = wants_dir / "malpdf-firewall.service"
+        resolved_wants_dir = wants_dir.resolve()
+        resolved_unit = unit.resolve()
+        fake_stat = SimpleNamespace(st_mode=0o040755, st_uid=0, st_gid=0)
+        monkeypatch.setattr(
+            admin,
+            "_stdlib_trusted_root_file",
+            lambda path, expected_mode: unit if path == unit else path,
+        )
+        orig_stat = Path.stat
+        monkeypatch.setattr(
+            Path,
+            "stat",
+            lambda self, *a, **kw: fake_stat if self == resolved_wants_dir else orig_stat(self, *a, **kw),
+        )
+        orig_is_symlink = Path.is_symlink
+        orig_resolve = Path.resolve
+        monkeypatch.setattr(
+            Path,
+            "is_symlink",
+            lambda self: True if self == wants_link else orig_is_symlink(self),
+        )
+        monkeypatch.setattr(
+            Path,
+            "resolve",
+            lambda self, strict=False: resolved_unit if self == wants_link else orig_resolve(self, strict=strict),
+        )
+        assert admin.verify_firewall_pre_network(unit, wants_link) is True
