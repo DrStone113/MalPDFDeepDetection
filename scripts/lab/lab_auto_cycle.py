@@ -697,7 +697,7 @@ class Cycle:
         return lines[1:]
 
     def verify_connected(self, *, expect_disarmed=True):
-        deadline = time.monotonic() + 120
+        deadline = time.monotonic() + 240
         while True:
             try:
                 status, _ = remote_json(f"{ADMIN_COMMAND} status", timeout=40)
@@ -783,7 +783,7 @@ class Cycle:
                 raise ValueError("helper_text_rejected")
             expected_auto[name] = jobs.sha(raw)
             payload_map[name] = base64.b64encode(raw).decode("ascii")
-        deadline = time.monotonic() + 120
+        deadline = time.monotonic() + 240
         script_b64 = base64.b64encode(INSTALL_SCRIPT.encode("ascii")).decode("ascii")
         pinned_b64 = base64.b64encode(json.dumps(expected_pinned, sort_keys=True).encode("ascii")).decode("ascii")
         cmd = (
