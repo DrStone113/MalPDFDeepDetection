@@ -261,9 +261,12 @@
       "mitre_name_vi": "Dẫn hướng tới đường dẫn ngoài",
       "mitre_tactic_vi": "Truy cập ban đầu",
       "desc_vi": "Chứa hành động gửi dữ liệu biểu mẫu (/SubmitForm) hoặc mở URL ngoài",
-      "threshold": 1.01,
+      "threshold": 0.962,
       "temperature": 1.0,
-      "model_flag_enabled": false
+      "model_flag_enabled": true,
+      "uri_t_low": 0.5,
+      "uri_head_contract": "uri_lexical_head_v4_contract.json",
+      "uri_head_model_version": "PDFURILexicalHead v4"
     },
     {
       "id": "structural_parser_evasion",

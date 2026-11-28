@@ -31,6 +31,7 @@ from malpdf.scanner.forensic import (
     reconcile_taxonomy_observations,
     verified_zero_js_disproven_heads,
 )
+from malpdf.scanner.uri_head import URILexicalHeadScorer
 from malpdf.static.obfuscation import MAX_PDF_BYTES, count_escaped_pdf_names
 from malpdf.static.raw_scan import scan_raw_pdf_tokens
 
@@ -123,6 +124,7 @@ class ONNXThreatTaxonomyClassifier:
         contract_path: Path | str | None = None,
         onnx_path: Path | str | None = None,
         manifest_path: Path | str | None = None,
+        uri_head: URILexicalHeadScorer | None = None,
     ) -> None:
         man_path = Path(manifest_path) if manifest_path is not None else DEFAULT_ONNX_MANIFEST_PATH
         manifest = json.loads(man_path.read_text(encoding="utf-8")) if man_path.is_file() else {}
@@ -204,6 +206,7 @@ class ONNXThreatTaxonomyClassifier:
         self.tab29_scale: np.ndarray | None = None
         self.label_temperatures: np.ndarray | None = None
         self.mal_temperature: float = 1.0
+        self.uri_head: URILexicalHeadScorer | None = uri_head
 
         if c_path.is_file() and m_path.is_file():
             if use_manifest and ml_meta:
@@ -263,6 +266,11 @@ class ONNXThreatTaxonomyClassifier:
                 self.label_temperatures = np.asarray(contract_data["label_temperatures"], dtype=np.float64)
                 self.mal_temperature = float(contract_data["mal_temperature"])
                 self.ml_weights_loaded = True
+                if self.uri_head is None:
+                    self.uri_head = URILexicalHeadScorer(
+                        manifest_path=man_path if use_manifest else None,
+                        prefer_onnx=True,
+                    )
             else:
                 self.ml_session = sess
                 self.is_v4 = False
@@ -630,6 +638,19 @@ class ONNXThreatTaxonomyClassifier:
         ) | verified_zero_js_disproven_heads(observations, ingest_data, escaped_names)
 
         blocked_scan = verdict == "UNAVAILABLE" or bool(ingest_data.get("prediction_blockers"))
+        uri_ml = ingest_data.get("uri_ml_analysis")
+        if (
+            self.is_v4
+            and not isinstance(uri_ml, dict)
+            and not blocked_scan
+            and not password_locked
+            and self.uri_head is not None
+            and self.uri_head.model_loaded
+        ):
+            uri_ml = self.uri_head.score_pdf_uris(
+                ingest_data.get("extracted_uris") or (),
+                qr_uris=(ingest_data.get("qr_analysis") or {}).get("decoded_uris") or (),
+            )
         if blocked_scan:
             ml_out = None
         elif self.is_v4:
@@ -680,20 +701,45 @@ class ONNXThreatTaxonomyClassifier:
             threshold = float(definition.get("threshold", 0.50)) if score is not None else None
             flag_enabled = bool(definition.get("model_flag_enabled", True))
             evidence = observations.get(lid)
-            model_flagged = (
-                flag_enabled
-                and lid not in suppressed_heads
-                and score is not None
-                and threshold is not None
-                and score >= threshold
-            )
+            uri_head_active = False
+            uri_tier = "benign"
+            if self.is_v4 and lid == "suspicious_uri_redirect" and not blocked_scan:
+                if isinstance(uri_ml, dict) and uri_ml.get("model_loaded") and not password_locked:
+                    uri_head_active = True
+                    score = float(uri_ml.get("max_prob", 0.0))
+                    threshold = float(uri_ml.get("t_high", definition.get("threshold", 0.94)))
+                    uri_tier = str(uri_ml.get("tier") or "benign")
+                    uri_gated = bool(uri_ml.get("gated_fusion_triggered"))
+                    model_flagged = bool(
+                        flag_enabled and lid not in suppressed_heads and (uri_tier == "or_gate" or uri_gated)
+                    )
+                else:
+                    score = 0.0 if score is not None else None
+                    threshold = float(definition.get("threshold", 0.94)) if score is not None else None
+                    model_flagged = False
+            else:
+                model_flagged = (
+                    flag_enabled
+                    and lid not in suppressed_heads
+                    and score is not None
+                    and threshold is not None
+                    and score >= threshold
+                )
             observed = evidence is not None
             status = "observed" if observed else "model_signal" if model_flagged else "not_observed"
-            details = evidence or (
-                "Điểm mô hình vượt ngưỡng, chưa có bằng chứng tĩnh tương ứng."
-                if model_flagged
-                else "Chưa ghi nhận trong phân tích tĩnh."
-            )
+            if observed:
+                details = str(evidence)
+            elif model_flagged and uri_head_active and isinstance(uri_ml, dict) and score is not None:
+                mode_lbl = "OR-Gate" if uri_tier == "or_gate" else "Gated Fusion"
+                top_vec = str(uri_ml.get("top_url_vector") or "pdf_uri")
+                details = (
+                    f"Mô hình PDFURILexicalHead v4 phát hiện URL lừa đảo "
+                    f"({score * 100:.1f}%, nguồn: {top_vec}, chế độ: {mode_lbl})."
+                )
+            elif model_flagged:
+                details = "Điểm mô hình vượt ngưỡng, chưa có bằng chứng tĩnh tương ứng."
+            else:
+                details = "Chưa ghi nhận trong phân tích tĩnh."
             assessment = {
                 "probability": round(score, 4) if score is not None else None,
                 "probability_pct": round(score * 100.0, 2) if score is not None else None,
@@ -709,7 +755,11 @@ class ONNXThreatTaxonomyClassifier:
                 {
                     "id": lid,
                     "analyzer": label,
-                    "engine_type": "ONNX Multi-Label AI" if score is not None else "Phân tích tĩnh",
+                    "engine_type": (
+                        "ONNX URI Lexical AI"
+                        if uri_head_active
+                        else ("ONNX Multi-Label AI" if score is not None else "Phân tích tĩnh")
+                    ),
                     **assessment,
                     "result": {
                         "observed": "Có dấu hiệu tĩnh",
@@ -877,17 +927,36 @@ class ONNXThreatTaxonomyClassifier:
                 )
             severity = "CRITICAL" if (is_malicious_verdict and detected_count >= 3) else "HIGH"
         elif is_malicious_verdict:
-            threat_label = "HEUR:Trojan.PDF.StructuralAnomaly"
-            threat_title_vi = "Điểm mô hình vượt ngưỡng cảnh báo"
-            threat_categories = ["trojan", "structural-evasion"]
-            categories_vi = [{"code": "structural-evasion", "label_vi": "Cấu trúc PDF bất thường"}]
-            family_labels = ["pdfheur", "gnn-structural"]
-            families_vi = [{"code": "gnn-structural", "label_vi": f"Cấu trúc bất thường ({prob_val * 100:.0f}%)"}]
-            severity = "HIGH"
-            summary_vi = (
-                f"Điểm mô hình {prob_val * 100:.2f}%. "
-                "Phân tích tĩnh chưa ghi nhận dấu hiệu cụ thể nào trong 8 nhóm kiểm tra."
+            uri_pred = next(
+                (h for h in ml_label_predictions if h["id"] == "suspicious_uri_redirect" and h["model_flagged"]),
+                None,
             )
+            if uri_pred is not None:
+                threat_label = "HEUR:Phishing.PDF.SuspiciousURI"
+                threat_title_vi = "Tín hiệu mô hình URL lừa đảo vượt ngưỡng cảnh báo"
+                threat_categories = ["phishing"]
+                categories_vi = [{"code": "phishing", "label_vi": "Liên kết ngoài & gửi dữ liệu"}]
+                family_labels = ["pdfphish", "uri-lexical-v4"]
+                families_vi = [
+                    {
+                        "code": "suspicious_uri_redirect",
+                        "label_vi": f"Liên kết web đáng ngờ ({(uri_pred['probability'] or 0.0) * 100:.0f}%)",
+                    }
+                ]
+                severity = "HIGH"
+                summary_vi = str(uri_pred["evidence"])
+            else:
+                threat_label = "HEUR:Trojan.PDF.StructuralAnomaly"
+                threat_title_vi = "Điểm mô hình vượt ngưỡng cảnh báo"
+                threat_categories = ["trojan", "structural-evasion"]
+                categories_vi = [{"code": "structural-evasion", "label_vi": "Cấu trúc PDF bất thường"}]
+                family_labels = ["pdfheur", "gnn-structural"]
+                families_vi = [{"code": "gnn-structural", "label_vi": f"Cấu trúc bất thường ({prob_val * 100:.0f}%)"}]
+                severity = "HIGH"
+                summary_vi = (
+                    f"Điểm mô hình {prob_val * 100:.2f}%. "
+                    "Phân tích tĩnh chưa ghi nhận dấu hiệu cụ thể nào trong 8 nhóm kiểm tra."
+                )
         else:
             threat_label = "Clean.PDF.Verified" if verdict == "BENIGN" else "Analysis.Unavailable"
             threat_title_vi = (
@@ -928,6 +997,7 @@ class ONNXThreatTaxonomyClassifier:
             "encryption_analysis": encryption,
             "matched_signatures": ingest_data.get("signature_matches", []),
             "qr_analysis": ingest_data.get("qr_analysis", {}),
+            "uri_ml_analysis": uri_ml if isinstance(uri_ml, dict) else {},
             "differential_analysis": ingest_data.get("differential_analysis", {}),
             "xfa_analysis": xfa_analysis,
             "polyglot_analysis": ingest_data.get("polyglot_analysis") or {},

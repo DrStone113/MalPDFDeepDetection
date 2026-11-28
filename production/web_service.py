@@ -236,6 +236,10 @@ def health() -> dict[str, Any]:
     recent_jobs = session.store.list_jobs(limit=10) if session is not None else []
     ml_loaded = bool(scanner.taxonomy.ml_weights_loaded)
     ml_ver = getattr(scanner.taxonomy, "model_version", "PDFMultiLabelThreatNet v4")
+    uri_head = getattr(scanner, "uri_head", None)
+    uri_loaded = bool(getattr(uri_head, "model_loaded", False))
+    uri_ver = str(getattr(uri_head, "model_version", "PDFURILexicalHead v4")) if uri_loaded else "Unavailable"
+    label_defs = getattr(scanner.taxonomy, "label_defs", ()) or ()
     return {
         "status": "healthy" if (scanner.weights_loaded and ml_loaded) else "unavailable",
         "runtime": "onnxruntime",
@@ -247,6 +251,10 @@ def health() -> dict[str, Any]:
         "decision_threshold": round(scanner.decision_threshold, 6),
         "multilabel_model": f"{ml_ver} (ONNX)" if ml_loaded else "StructuralFallback",
         "multilabel_weights_loaded": ml_loaded,
+        "uri_lexical_head_loaded": uri_loaded,
+        "uri_lexical_head_model": f"{uri_ver} (ONNX)" if uri_loaded else "Unavailable",
+        "multilabel_enabled_heads": sum(1 for item in label_defs if item.get("model_flag_enabled", True)),
+        "multilabel_total_heads": len(label_defs),
         "node_in_dim": scanner.node_in_dim,
         "ood_threshold": scanner.ood_threshold,
         "cdr_engine": "pikepdf-inplace",

@@ -33,6 +33,28 @@ from malpdf.scanner.ingestion import (
     is_navigation_destination as is_navigation_destination,
 )
 from malpdf.scanner.qr_scan import scan_pdf_qr_codes, zxingcpp
+from malpdf.scanner.uri_head import URILexicalHeadScorer
+
+_URI_LEXICAL_SCORER: URILexicalHeadScorer | None = None
+
+
+def _get_uri_lexical_scorer() -> URILexicalHeadScorer | None:
+    global _URI_LEXICAL_SCORER
+    if _URI_LEXICAL_SCORER is None:
+        try:
+            _URI_LEXICAL_SCORER = URILexicalHeadScorer(prefer_onnx=False)
+        except Exception:
+            return None
+    return _URI_LEXICAL_SCORER
+
+
+def _is_uri_ml_or_gate(uri_text: str) -> bool:
+    scorer = _get_uri_lexical_scorer()
+    if scorer is None or not scorer.model_loaded:
+        return False
+    res = scorer.score_pdf_uris([{"raw_uri": uri_text, "source": "annot_uri"}])
+    return res.get("tier") == "or_gate"
+
 
 _JBIG2_MAGIC = b"\x97JB2\r\n\x1a\n"
 _MEDIA_TRIGGER_KEYS = {"/3D", "/U3D", "/PRC"}
@@ -479,7 +501,9 @@ def _active_keys(
             if isinstance(uri, bytes)
             else (str(uri) if isinstance(uri, pikepdf.String) else "")
         )
-        suspicious_uri = bool(uri_text) and is_suspicious_uri(uri_text, lure_phrases=lure_phrases)[0]
+        suspicious_uri = bool(uri_text) and (
+            is_suspicious_uri(uri_text, lure_phrases=lure_phrases)[0] or _is_uri_ml_or_gate(uri_text)
+        )
         is_page = str(value.get("/Type")) == "/Page"
         action = str(value.get("/S") or "")
         for key in list(value.keys()):

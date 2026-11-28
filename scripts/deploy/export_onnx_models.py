@@ -39,6 +39,11 @@ from malpdf.models.pdf_transgraph_v4 import (
     load_v4_weights_npz,
 )
 from malpdf.models.tabular_resnet import TabularResNet
+from malpdf.models.uri_lexical_head_v4 import (
+    PDFURILexicalHeadV4,
+    URILexicalHeadV4Config,
+    load_uri_head_v4_npz,
+)
 from malpdf.models.v4_graph_numpy import (
     EXPECTED_MULTILABEL_V4_ONNX_INPUTS,
     EXPECTED_MULTILABEL_V4_ONNX_OUTPUTS,
@@ -48,6 +53,7 @@ from malpdf.models.v4_graph_numpy import (
     validate_multilabel_v4_contract_np,
 )
 from malpdf.scanner.ingestion import REGIME_B_INDICES, InstantPDFIngestion
+from malpdf.scanner.uri_head import URILexicalHeadScorer, validate_uri_lexical_contract
 from malpdf.static.obfuscation import count_escaped_pdf_names
 from malpdf.static.raw_scan import scan_raw_pdf_tokens
 
@@ -71,6 +77,8 @@ PT_MULTILABEL_V4_PATH = (
     REPO_ROOT / "artifacts" / "models" / "multilabel_threat_v4" / "multilabel_threat_net_v4_seed42.npz"
 )
 ML_V4_CONTRACT_PATH = REPO_ROOT / "configs" / "multilabel_threat_v4_contract.json"
+PT_URI_HEAD_V4_PATH = REPO_ROOT / "artifacts" / "models" / "uri_lexical_head_v4" / "uri_lexical_head_v4.npz"
+URI_HEAD_V4_CONTRACT_PATH = REPO_ROOT / "configs" / "uri_lexical_head_v4_contract.json"
 PT_MULTILABEL_PATH = REPO_ROOT / "artifacts" / "models" / "multilabel_threat_v2" / "multilabel_threat_net_v2_best.pt"
 SCALER_PATH = REPO_ROOT / "configs" / "tabular_scaler.json"
 ML_CONTRACT_PATH = REPO_ROOT / "configs" / "multilabel_threat_contract.json"
@@ -813,6 +821,69 @@ def _export_multilabel_v4_onnx(models_dir: Path) -> tuple[PDFMultiLabelThreatNet
     return pt_ml, ml_contract, ml_onnx_path
 
 
+def _export_uri_lexical_head_v4_onnx(models_dir: Path) -> tuple[dict[str, Any], Path, float, int]:
+    uri_contract = json.loads(URI_HEAD_V4_CONTRACT_PATH.read_text(encoding="utf-8"))
+    validate_uri_lexical_contract(uri_contract)
+    if hashlib.sha256(PT_URI_HEAD_V4_PATH.read_bytes()).hexdigest() != uri_contract["weights_npz_sha256"]:
+        raise ValueError("uri_lexical_v4_npz_sha256_mismatch")
+    pt_uri = PDFURILexicalHeadV4(URILexicalHeadV4Config(**uri_contract["model_config"])).eval()
+    load_uri_head_v4_npz(pt_uri, PT_URI_HEAD_V4_PATH)
+
+    dummy_in = torch.randn(4, pt_uri.config.in_dim, dtype=torch.float32)
+    uri_onnx_path = models_dir / "uri_lexical_head_v4.onnx"
+    torch.onnx.export(
+        pt_uri,
+        (dummy_in,),
+        str(uri_onnx_path),
+        input_names=["uri_features"],
+        output_names=["logits"],
+        dynamic_axes={"uri_features": {0: "batch_size"}, "logits": {0: "batch_size"}},
+        opset_version=17,
+        do_constant_folding=True,
+        dynamo=False,
+    )
+    uri_onnx_doc = onnx.load(str(uri_onnx_path))
+    onnx.checker.check_model(uri_onnx_doc)
+    if any(node.op_type in {"If", "Loop", "Scan"} for node in uri_onnx_doc.graph.node):
+        raise ValueError("unexpected_uri_lexical_v4_onnx_control_flow")
+
+    probe_urls = [
+        "https://docs.python.org/3/library/urllib.parse.html",
+        "https://en.wikipedia.org/wiki/PDF",
+        "http://198.51.100.44/microsoft-oauth-login/verify-password",
+        "http://paypal-security-check.xyz/signin?account=verify&token=918273645",
+        "https://sites.google.com/view/invoice-urgent-login-2026",
+        "https://xn--pypal-4ve.com/auth/update-billing",
+        "https://tinyurl.com/3x9k2m8p",
+        "http://secure-docusign-document-preview.top/view%20file%3Fid%3D9912",
+    ]
+    np_scorer = URILexicalHeadScorer(
+        contract_path=URI_HEAD_V4_CONTRACT_PATH,
+        onnx_path=None,
+        npz_path=PT_URI_HEAD_V4_PATH,
+        prefer_onnx=False,
+    )
+    ox_scorer = URILexicalHeadScorer(
+        contract_path=URI_HEAD_V4_CONTRACT_PATH,
+        onnx_path=uri_onnx_path,
+        npz_path=None,
+        prefer_onnx=True,
+    )
+    feats = np_scorer.extract_scaled_batch(probe_urls)
+    with torch.no_grad():
+        pt_logits = pt_uri(torch.from_numpy(feats)).numpy().astype(np.float64)
+    np_logits = np_scorer.predict_raw_logits(probe_urls)
+    ox_logits = ox_scorer.predict_raw_logits(probe_urls)
+    max_diff = max(
+        float(np.max(np.abs(pt_logits - ox_logits))),
+        float(np.max(np.abs(pt_logits - np_logits))),
+    )
+    if max_diff >= 1e-5:
+        raise ValueError(f"uri_lexical_v4_onnx_parity_drift:{max_diff}")
+    param_count = int(sum(p.numel() for p in pt_uri.parameters()))
+    return uri_contract, uri_onnx_path, max_diff, param_count
+
+
 def _v4_ml_pytorch_forward(
     pt_ml: PDFMultiLabelThreatNetV4, feed: dict[str, np.ndarray]
 ) -> tuple[np.ndarray, np.ndarray]:
@@ -915,6 +986,7 @@ def _export_and_verify_v4(models_dir: Path, configs_dir: Path) -> dict[str, obje
     if not (PROD_MODELS_DIR / "multilabel_threat_net_v2.onnx").is_file() and PT_MULTILABEL_PATH.is_file():
         _export_multilabel_onnx(models_dir)
     pt_ml, ml_v4_contract, ml_onnx_path = _export_multilabel_v4_onnx(models_dir)
+    uri_contract, uri_onnx_path, uri_max_diff, uri_param_count = _export_uri_lexical_head_v4_onnx(models_dir)
 
     sess_opts = ort.SessionOptions()
     sess_opts.intra_op_num_threads = 2
@@ -1035,7 +1107,14 @@ def _export_and_verify_v4(models_dir: Path, configs_dir: Path) -> dict[str, obje
     assert max_bin_diff < 1e-5, f"Binary v4 ONNX parity drift too high: {max_bin_diff}"
     assert max_ml_diff < 1e-5, f"MultiLabel v4 ONNX parity drift too high: {max_ml_diff}"
 
-    for config_path in (V4_CONTRACT_PATH, V4_CONFORMAL_PATH, SCALER_PATH, ML_CONTRACT_PATH, ML_V4_CONTRACT_PATH):
+    for config_path in (
+        V4_CONTRACT_PATH,
+        V4_CONFORMAL_PATH,
+        SCALER_PATH,
+        ML_CONTRACT_PATH,
+        ML_V4_CONTRACT_PATH,
+        URI_HEAD_V4_CONTRACT_PATH,
+    ):
         if config_path.is_file():
             (configs_dir / config_path.name).write_bytes(config_path.read_bytes())
 
@@ -1110,6 +1189,22 @@ def _export_and_verify_v4(models_dir: Path, configs_dir: Path) -> dict[str, obje
             "size_bytes": ml_onnx_path.stat().st_size,
             "parameter_count": ml_param_count,
             "max_logit_abs_diff_vs_pytorch": round(max_ml_diff, 8),
+        },
+        "uri_lexical_model": {
+            "filename": uri_onnx_path.name,
+            "model_version": uri_contract["model_version"],
+            "schema_version": uri_contract["schema_version"],
+            "contract_filename": URI_HEAD_V4_CONTRACT_PATH.name,
+            "contract_sha256": hashlib.sha256(
+                URI_HEAD_V4_CONTRACT_PATH.read_bytes().replace(b"\r\n", b"\n")
+            ).hexdigest(),
+            "sha256": hashlib.sha256(uri_onnx_path.read_bytes()).hexdigest(),
+            "weights_npz_sha256": uri_contract["weights_npz_sha256"],
+            "size_bytes": uri_onnx_path.stat().st_size,
+            "parameter_count": uri_param_count,
+            "t_low": uri_contract["t_low"],
+            "t_high": uri_contract["t_high"],
+            "max_logit_abs_diff_vs_pytorch": round(uri_max_diff, 8),
         },
         "neural_forward_benchmark_cpu": {
             "pytorch_median_ms": round(pt_med, 3),

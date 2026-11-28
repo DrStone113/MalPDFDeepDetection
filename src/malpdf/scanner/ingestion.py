@@ -54,6 +54,11 @@ from malpdf.scanner.forensic import (
 from malpdf.scanner.qr_scan import empty_qr_analysis, page_has_image_xobject, scan_pdf_qr_codes
 from malpdf.scanner.signatures import match_pdf_signatures
 from malpdf.scanner.static_evidence import CODEC_QUOTA_REASON_CODES, is_quota_only_codec_reasons
+from malpdf.scanner.uri_lexical import (
+    canonicalize_extracted_uri,
+    extract_plain_text_urls,
+    is_xml_xmp_namespace_uri,
+)
 from malpdf.static.js_ast import CodeInspectionError
 from malpdf.static.raw_scan import count_acroform_names, scan_raw_pdf_tokens
 from malpdf.static.xfa_xml import inspect_xfa_xml
@@ -968,20 +973,75 @@ def _uri_evidence(
     page_index: int | None = None,
     rect_area: float = 0.0,
     page_area: float = 0.0,
+    source: str = "pdf_action",
 ) -> dict[str, Any] | None:
-    if not uri.strip():
+    canon = canonicalize_extracted_uri(uri)
+    if canon is None:
         return None
-    suspicious, reasons = is_suspicious_uri(uri)
+    raw_clean, _ = canon
+    if is_xml_xmp_namespace_uri(raw_clean):
+        return None
+    suspicious, reasons = is_suspicious_uri(raw_clean)
     return {
-        "uri": uri,
+        "uri": raw_clean,
+        "raw_uri": raw_clean,
         "evidence_id": evidence_id,
         "invoker": invoker,
+        "source": source,
         "page_index": page_index,
         "rect_area": rect_area,
         "page_area": page_area,
         "is_suspicious": suspicious,
         "reasons": reasons,
     }
+
+
+def _extract_flate_stream_urls(
+    reader: PdfReader | None,
+    pages_count: int,
+    *,
+    max_pages: int = 12,
+    byte_limit: int = 128 * 1024,
+) -> list[tuple[str, int]]:
+    if reader is None or pages_count <= 0:
+        return []
+    budget = DecodeBudget(byte_limit)
+    found: list[tuple[str, int]] = []
+    seen: set[str] = set()
+    limit_box = FilterLimits(max_input_bytes=byte_limit, max_stage_bytes=byte_limit, max_total_bytes=byte_limit)
+    for page_index in range(min(pages_count, max_pages)):
+        if budget.remaining <= 0 or len(found) >= 64:
+            break
+        try:
+            page = reader.pages[page_index]
+            contents = page.get("/Contents")
+        except (pypdf.errors.PyPdfError, IndexError, KeyError, TypeError):
+            continue
+        if contents is None:
+            continue
+        contents = _resolve_pdf_object(contents)
+        streams = contents if isinstance(contents, ArrayObject) else [contents]
+        chunks: list[str] = []
+        for stream_ref in islice(iter(streams), 16):
+            stream = _resolve_pdf_object(stream_ref)
+            raw = getattr(stream, "_data", None)
+            if not isinstance(raw, bytes) or not raw or len(raw) > budget.remaining:
+                continue
+            filters = _stream_filters(stream.get("/Filter")) if isinstance(stream, StreamObject) else []
+            if filters not in ([], ["/FlateDecode"], ["/Fl"]):
+                continue
+            decoded = decode_filters(raw, filters, limits=limit_box, budget=budget)
+            if decoded.data:
+                chunks.append(decoded.data.decode("latin1", errors="ignore"))
+        if not chunks:
+            continue
+        for url in extract_plain_text_urls("\n".join(chunks), max_urls=32):
+            if url not in seen:
+                seen.add(url)
+                found.append((url, page_index))
+                if len(found) >= 64:
+                    break
+    return found
 
 
 _LURE_TEXT_LIMIT = 128 * 1024
@@ -1510,20 +1570,38 @@ def _inspect_additional_evidence(
     has_jbig2_magic = _JBIG2_MAGIC in data
 
     def inspect_uri(value: Any, path: str, action: str) -> int:
+        candidates: list[tuple[str, str]] = []
         uri = value.get("/URI")
-        if not isinstance(uri, pikepdf.String):
-            return 0
-        target = str(uri)
-        if target not in seen_uris:
+        if isinstance(uri, pikepdf.String):
+            candidates.append((str(uri), "action_uri" if action != "/SubmitForm" else "action_submitform"))
+        if action in {"/SubmitForm", "/GoToR", "/Launch", "/ImportData"}:
+            src_name = f"action_{action.lstrip('/').lower()}"
+            for f_key in ("/F", "/UF"):
+                f_obj = value.get(f_key)
+                nested = (f_obj.get("/UF"), f_obj.get("/F")) if isinstance(f_obj, pikepdf.Dictionary) else (f_obj,)
+                for item in nested:
+                    if isinstance(item, pikepdf.String):
+                        val = str(item).strip()
+                        if val.lower().startswith(("http://", "https://")):
+                            candidates.append((val, src_name))
+        count = 0
+        for target, src_name in candidates:
+            canon = canonicalize_extracted_uri(target)
+            if canon is None:
+                continue
+            raw_clean, _ = canon
+            if raw_clean in seen_uris or len(uris) >= 256:
+                continue
             evidence_id = f"action:uri_{len(uris)}"
-            evidence = _uri_evidence(target, evidence_id, path)
+            evidence = _uri_evidence(raw_clean, evidence_id, path, source=src_name)
             if not evidence:
-                return 0
-            seen_uris.add(target)
+                continue
+            seen_uris.add(evidence["uri"])
             uris.append(evidence)
             if evidence["is_suspicious"]:
                 register(evidence_id, "action", value, path, action_role="suspicious_uri")
-        return 1 + int(action == "/URI")
+            count += 1 + int(action == "/URI")
+        return count
 
     try:
         with pikepdf.open(io.BytesIO(data)) as pdf:
@@ -1550,6 +1628,7 @@ def _inspect_additional_evidence(
                             page_index,
                             annotation_rect_area(annotation.get("/Rect")),
                             page_box_area(page.obj),
+                            source="annot_uri",
                         )
                         if evidence:
                             seen_uris.add(evidence["uri"])
@@ -2411,10 +2490,40 @@ class InstantPDFIngestion:
                     }
                 )
 
-        phishing_analysis = _analyze_phishing(reader, extracted_uris, pages_count, records, qr_analysis)
-        graph_data = self._build_hetero_graph(records, raw_edges)
         ast_tokens, ast_stats, ast_node_counts = self._extract_ast_stream(extracted_scripts, xfa_analysis["anomalies"])
         js_semantics = evaluate_javascript_semantics(extracted_scripts, ast_stats, ast_node_counts)
+
+        seen_extracted_uris = {item["uri"] for item in extracted_uris}
+        for js_url in js_semantics.get("resolved_urls", ()):
+            if len(extracted_uris) >= 256:
+                break
+            evidence = _uri_evidence(
+                js_url,
+                f"action:js_uri_{len(extracted_uris)}",
+                "/JavaScript/app.launchURL",
+                source="javascript_url",
+            )
+            if evidence and evidence["uri"] not in seen_extracted_uris:
+                seen_extracted_uris.add(evidence["uri"])
+                extracted_uris.append(evidence)
+
+        if reader is not None and not password_locked:
+            for stream_url, p_idx in _extract_flate_stream_urls(reader, pages_count):
+                if len(extracted_uris) >= 256:
+                    break
+                evidence = _uri_evidence(
+                    stream_url,
+                    f"stream:uri_p{p_idx}_{len(extracted_uris)}",
+                    f"/Page[{p_idx}]/Contents",
+                    page_index=p_idx,
+                    source="flate_text_stream",
+                )
+                if evidence and evidence["uri"] not in seen_extracted_uris:
+                    seen_extracted_uris.add(evidence["uri"])
+                    extracted_uris.append(evidence)
+
+        phishing_analysis = _analyze_phishing(reader, extracted_uris, pages_count, records, qr_analysis)
+        graph_data = self._build_hetero_graph(records, raw_edges)
         tab_features, raw_feature_vec = self._build_tabular_features(
             data=data,
             raw_tokens=raw_tokens,
@@ -2562,15 +2671,24 @@ class InstantPDFIngestion:
                     if isinstance(target, bytes):
                         target = target.decode("utf-8", errors="ignore")
                     uri = (
-                        _uri_evidence(target, evidence_id, invoker, page_index, rect_area, page_area)
+                        _uri_evidence(
+                            target,
+                            evidence_id,
+                            invoker,
+                            page_index,
+                            rect_area,
+                            page_area,
+                            source="annot_uri" if "Annot" in invoker else "action_uri",
+                        )
                         if isinstance(target, str)
                         else None
                     )
-                    if uri:
-                        extracted_uris.append(uri)
-                        if uri["is_suspicious"]:
-                            is_threat_trigger = True
-                            action_role = "suspicious_uri"
+                    if uri and not any(existing.get("uri") == uri["uri"] for existing in extracted_uris):
+                        if len(extracted_uris) < 256:
+                            extracted_uris.append(uri)
+                    if uri and uri["is_suspicious"]:
+                        is_threat_trigger = True
+                        action_role = "suspicious_uri"
             if action_role is None and not is_threat_trigger:
                 if evidence_id == "action:open_action":
                     if is_navigation_destination(obj_ref):

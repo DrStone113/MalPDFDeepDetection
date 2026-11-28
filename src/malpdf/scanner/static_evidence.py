@@ -26,6 +26,8 @@ HIGH_SEVERITY_POLICY_WEIGHTS: dict[str, float] = {
     "offline_threat_intel": 2.80,
     "hex_escaped_trigger_evasion": 2.25,
     "phishing_uri": 2.25,
+    "uri_ml_or_gate": 2.25,
+    "uri_ml_gated_fusion": 1.65,
     "parser_differential": 2.15,
     "codec_anomaly": 2.20,
     "/FileAttachment": 1.85,

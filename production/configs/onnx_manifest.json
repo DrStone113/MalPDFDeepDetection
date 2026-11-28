@@ -25,15 +25,29 @@
     "model_version": "PDFMultiLabelThreatNet v4",
     "source_run": "run_20261127T062457360374Z_c0ea9f5223d4",
     "contract_filename": "multilabel_threat_v4_contract.json",
-    "contract_sha256": "6a7a7ab6980eb0c8f4596eb0cbfaead8ac5c00bd71d44de694772a88d96ab560",
+    "contract_sha256": "7dbbf2af635590623be52d28fb19579c4044172b7ce2121ec596020a10c6f617",
     "sha256": "04be861ee0dfd58e17b2c7a56fb999a399d16d221e70fd8055551a165c4697c4",
     "size_bytes": 4022990,
     "parameter_count": 988721,
     "max_logit_abs_diff_vs_pytorch": 7.63e-06
   },
+  "uri_lexical_model": {
+    "filename": "uri_lexical_head_v4.onnx",
+    "model_version": "PDFURILexicalHead v4",
+    "schema_version": "uri_lexical_v4.1",
+    "contract_filename": "uri_lexical_head_v4_contract.json",
+    "contract_sha256": "84bf5da1108ef0061adf28e3cd6acdb18b263c7e99892bb0612ddec84ea5e714",
+    "sha256": "99dc9eee0a1224da8590d38914cb168564311ff108c51e3c684bf2d87fbe4598",
+    "weights_npz_sha256": "497e63c62de27ea1e7df1e6c9ec3e3b72139220cd8631b3e00653e630edc8e97",
+    "size_bytes": 109938,
+    "parameter_count": 26785,
+    "t_low": 0.5,
+    "t_high": 0.962,
+    "max_logit_abs_diff_vs_pytorch": 2.86e-06
+  },
   "neural_forward_benchmark_cpu": {
-    "pytorch_median_ms": 4.998,
-    "onnxruntime_median_ms": 1.548,
-    "speedup_factor": 3.23
+    "pytorch_median_ms": 15.489,
+    "onnxruntime_median_ms": 2.916,
+    "speedup_factor": 5.31
   }
 }

@@ -654,6 +654,28 @@ def _reconcile_semantic_verdict(
             for record in records
         )
     )
+    password_locked = bool(ingest_data.get("encryption_analysis", {}).get("password_locked"))
+    static_reasons = _static_verdict_reasons(ingest_data)
+    uri_ml = ingest_data.get("uri_ml_analysis") or {}
+    if isinstance(uri_ml, dict) and uri_ml.get("model_loaded") and not password_locked:
+        uri_tier = uri_ml.get("tier")
+        if uri_tier == "or_gate":
+            hardening_reasons.add("uri_ml_or_gate")
+        elif uri_tier == "gated_fusion":
+            corroborated = (
+                probability >= 0.25
+                or bool(hardening_reasons)
+                or bool(static_reasons)
+                or has_non_js_threat
+                or bool(js.get("has_scripts") and not js.get("is_verified_benign_js"))
+                or bool(ingest_data.get("qr_analysis", {}).get("suspicious_uris"))
+                or uri_ml.get("top_url_vector") in {"javascript_url", "action_submitform", "submit_form"}
+            )
+            uri_ml["gated_fusion_triggered"] = bool(corroborated)
+            if corroborated:
+                hardening_reasons.add("uri_ml_gated_fusion")
+        else:
+            uri_ml["gated_fusion_triggered"] = False
     if probability < threshold and not hardening_reasons:
         if (ingest_data["pages_count"] > 10 or len(records) >= 40) and (
             has_non_js_threat
@@ -677,7 +699,7 @@ def _reconcile_semantic_verdict(
                         "core_subgraph_prob": round(core_prob, 4),
                     }
                     return core_logit, core_prob
-    hardening_reasons.update(_static_verdict_reasons(ingest_data))
+    hardening_reasons.update(static_reasons)
     ingest_data["benign_structural_consistency"] = compute_benign_structural_consistency(ingest_data)
     if hardening_reasons:
         fusion = fuse_neural_and_static_evidence(
@@ -936,6 +958,10 @@ def reconcile_taxonomy_observations(
     observations["structural_parser_evasion"] = " ".join(details) or None
 
     qr = ingest_data.get("qr_analysis", {})
+    uri_ml = ingest_data.get("uri_ml_analysis") or {}
+    uri_ml_triggered = bool(
+        isinstance(uri_ml, dict) and (uri_ml.get("tier") == "or_gate" or uri_ml.get("gated_fusion_triggered"))
+    )
     if (
         verdict != "BENIGN"
         or not records
@@ -954,6 +980,7 @@ def reconcile_taxonomy_observations(
         or ingest_data.get("threat_intel", {}).get("hit")
         or ingest_data.get("signature_matches")
         or js_semantics.get("malicious_indicator_count")
+        or uri_ml_triggered
         or any(record.get("is_threat_trigger") for record in records)
     ):
         return suppressed
@@ -990,6 +1017,7 @@ def reconcile_taxonomy_observations(
         "embedded_dropper_or_launch": verified_form_only
         or (not scripts and not evasion_audit.get("hex_escaped_names_decoded") and no_dropper),
         "suspicious_uri_redirect": not phishing.get("suspicious_uris")
+        and not uri_ml_triggered
         and not evasion_audit.get("hex_escaped_names_decoded")
         and not any(record.get("action_type") in {"/SubmitForm", "/GoToR"} for record in records)
         and max(len(ingest_data.get("extracted_uris", ())), int(ingest_data.get("inspected_uri_tokens", 0)))
@@ -1142,9 +1170,20 @@ def deobfuscate_javascript_static(code: str) -> dict[str, Any]:
 
     def escape(match: re.Match[str]) -> str:
         kind = match[1] or match[3]
-        value = int(match[2] or match[4], 16)
-        if 32 <= value <= 126 or kind == "u" and value >= 160 or kind == "x" and value in (9, 10, 13):
-            mark("hex_escape_decode" if kind == "x" else "unicode_escape_decode")
+        if kind:
+            value = int(match[2] or match[4], 16)
+            tech = "hex_escape_decode" if kind == "x" else "unicode_escape_decode"
+        else:
+            value = int(match[5], 8)
+            tech = "octal_escape_decode"
+        if (
+            32 <= value <= 126
+            or kind == "u"
+            and value >= 160
+            or tech in ("hex_escape_decode", "octal_escape_decode")
+            and value in (9, 10, 13)
+        ):
+            mark(tech)
             return chr(value)
         return match.group()
 
@@ -1175,7 +1214,11 @@ def deobfuscate_javascript_static(code: str) -> dict[str, Any]:
             previous = transformed
             transformed = re.sub(r"\bString\s*\.\s*fromCharCode\s*\(([0-9a-fA-FxX,\s]+)\)", from_char_code, transformed)
             transformed = _JS_UNESCAPE.sub(unescape, transformed)
-            transformed = re.sub(r"\\(x)([0-9a-fA-F]{2})|\\(u)([0-9a-fA-F]{4})", escape, transformed)
+            transformed = re.sub(
+                r"\\(x)([0-9a-fA-F]{2})|\\(u)([0-9a-fA-F]{4})|\\([0-3][0-7]{2})",
+                escape,
+                transformed,
+            )
             transformed = _JS_ATOB.sub(lambda m: quoted(m, _decode_js_base64(m[2]), "base64_atob_decode"), transformed)
             transformed = _JS_JOIN.sub(join, transformed)
             transformed = _JS_REVERSE.sub(reverse, transformed)

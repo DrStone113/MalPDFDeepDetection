@@ -32,6 +32,7 @@ from malpdf.scanner.forensic import (
 from malpdf.scanner.ingestion import InstantPDFIngestion
 from malpdf.scanner.taxonomy import ThreatTaxonomyClassifier
 from malpdf.scanner.threat_intel import ThreatIntelProvider, inspect_threat_intel
+from malpdf.scanner.uri_head import URILexicalHeadScorer
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CANONICAL_V4_MODEL_PATH = REPO_ROOT / "artifacts/models/pdf_transgraph_v4/pdf_transgraph_v4_regime_b_seed42.npz"
@@ -218,7 +219,8 @@ class MalPDFScannerEngine:
         if len(feature_names) != self.tabular_in_features:
             raise ValueError("checkpoint_scaler_feature_count_mismatch")
         self.forensic = ForensicAttributionEngine()
-        self.taxonomy = ThreatTaxonomyClassifier(device=self.device)
+        self.uri_head = URILexicalHeadScorer(prefer_onnx=False)
+        self.taxonomy = ThreatTaxonomyClassifier(device=self.device, uri_head=self.uri_head)
 
     def _forward_v4(
         self,
@@ -651,6 +653,13 @@ class MalPDFScannerEngine:
         tab_key = "v4_tab_features" if self.is_v4 else ("v3_tab_features" if self.is_v3 else "tab_features")
         tab = ingest_data[tab_key].to(self.device)
         graph_present = ingest_data.get("graph_present", True)
+        password_locked = bool(ingest_data.get("encryption_analysis", {}).get("password_locked"))
+        uri_ml_analysis = self.uri_head.score_pdf_uris(
+            () if password_locked else (ingest_data.get("extracted_uris") or ()),
+            qr_uris=() if password_locked else ((ingest_data.get("qr_analysis") or {}).get("decoded_uris") or ()),
+        )
+        ingest_data["uri_ml_analysis"] = uri_ml_analysis
+        static_dossier["uri_ml_analysis"] = uri_ml_analysis
 
         def counterfactual(nodes: list[int], columns: list[int], baselines: list[float]) -> float:
             kept_nodes, kept_edges, edge_index = semantic_graph_selection(len(nf), ei.cpu().numpy(), nodes)
@@ -692,6 +701,8 @@ class MalPDFScannerEngine:
         verdict = "MALICIOUS" if prob >= self.decision_threshold else "BENIGN"
         enforcement = ingest_data.get("semantic_verdict_enforcement")
         has_policy_enforcement = bool(enforcement)
+        if has_policy_enforcement:
+            static_dossier["semantic_verdict_enforcement"] = enforcement
         policy_override = (
             verdict == "MALICIOUS" and raw_prob < self.decision_threshold and has_policy_enforcement
         ) or (verdict == "BENIGN" and raw_prob >= self.decision_threshold and has_policy_enforcement)
@@ -736,6 +747,7 @@ class MalPDFScannerEngine:
                 xai_proof_metrics=proof_metrics,
                 model_generation=model_gen,
             )
+            forensic_dossier["uri_ml_analysis"] = ingest_data["uri_ml_analysis"]
 
         graph_nodes: list[dict[str, Any]] = []
         for idx, r in enumerate(raw_recs):

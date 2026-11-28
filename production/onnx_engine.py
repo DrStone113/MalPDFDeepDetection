@@ -37,6 +37,7 @@ from malpdf.scanner.forensic import (
 )
 from malpdf.scanner.ingestion import InstantPDFIngestion
 from malpdf.scanner.threat_intel import ThreatIntelProvider, inspect_threat_intel
+from malpdf.scanner.uri_head import URILexicalHeadScorer
 from onnx_taxonomy import ONNXThreatTaxonomyClassifier
 
 DEFAULT_V4_ONNX_PATH = PROD_ROOT / "models" / "pdf_transgraph_v4.onnx"
@@ -221,7 +222,12 @@ class ONNXMalPDFScannerEngine:
         if self.is_v4 and expected_conf_sha and self.conformal is None:
             raise FileNotFoundError("conformal_calibration_v4_unavailable")
         self.forensic = ForensicAttributionEngine()
-        self.taxonomy = ONNXThreatTaxonomyClassifier(manifest_path=resolved_manifest)
+        self.uri_head = URILexicalHeadScorer(
+            manifest_path=resolved_manifest if use_manifest else None,
+            prefer_onnx=True,
+            intra_op_threads=intra_op_threads,
+        )
+        self.taxonomy = ONNXThreatTaxonomyClassifier(manifest_path=resolved_manifest, uri_head=self.uri_head)
 
     def calculate_energy_ood(self, logit: float) -> tuple[float, bool]:
         t = self.temperature
@@ -655,6 +661,13 @@ class ONNXMalPDFScannerEngine:
         tab_np = np.ascontiguousarray(ingest_data[tab_key], dtype=np.float32)
 
         graph_present = ingest_data.get("graph_present", True)
+        password_locked = bool(ingest_data.get("encryption_analysis", {}).get("password_locked"))
+        uri_ml_analysis = self.uri_head.score_pdf_uris(
+            () if password_locked else (ingest_data.get("extracted_uris") or ()),
+            qr_uris=() if password_locked else ((ingest_data.get("qr_analysis") or {}).get("decoded_uris") or ()),
+        )
+        ingest_data["uri_ml_analysis"] = uri_ml_analysis
+        static_dossier["uri_ml_analysis"] = uri_ml_analysis
         es_np, ed_np, er_feed, em_np, he_np, real_edges = self._prepare_single_edges(ei_np, er_np)
         model_inputs = {
             "node_features": nf_np,
@@ -720,6 +733,8 @@ class ONNXMalPDFScannerEngine:
         verdict = "MALICIOUS" if prob >= self.decision_threshold else "BENIGN"
         enforcement = ingest_data.get("semantic_verdict_enforcement")
         has_policy_enforcement = bool(enforcement)
+        if has_policy_enforcement:
+            static_dossier["semantic_verdict_enforcement"] = enforcement
         policy_override = (
             verdict == "MALICIOUS" and raw_prob < self.decision_threshold and has_policy_enforcement
         ) or (verdict == "BENIGN" and raw_prob >= self.decision_threshold and has_policy_enforcement)
@@ -767,6 +782,7 @@ class ONNXMalPDFScannerEngine:
                 saliency_method="occlusion",
                 model_generation=model_gen,
             )
+            forensic_dossier["uri_ml_analysis"] = ingest_data["uri_ml_analysis"]
 
         graph_nodes: list[dict[str, Any]] = []
         for idx, r in enumerate(raw_recs):
