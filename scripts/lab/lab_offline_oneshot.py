@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import re
+import signal
 import subprocess
 import sys
 import threading
@@ -39,7 +40,41 @@ def runner_env(account):
     }
 
 
+def _terminate_process_tree(process):
+    if os.name == "posix":
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except OSError:
+            pass
+    else:
+        try:
+            subprocess.run(
+                ["taskkill", "/F", "/T", "/PID", str(process.pid)],
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=5,
+                check=False,
+            )
+        except (OSError, subprocess.SubprocessError):
+            pass
+    try:
+        process.kill()
+    except OSError:
+        pass
+
+
+def _close_pipe(pipe):
+    if pipe is not None:
+        try:
+            pipe.close()
+        except OSError:
+            pass
+
+
 def bounded_command(command, limit, *, timeout, payload=None, check=True, **kwargs):
+    if os.name == "posix":
+        kwargs.setdefault("start_new_session", True)
     with subprocess.Popen(
         command,
         stdin=subprocess.DEVNULL if payload is None else subprocess.PIPE,
@@ -49,40 +84,57 @@ def bounded_command(command, limit, *, timeout, payload=None, check=True, **kwar
     ) as process:
         output = bytearray()
         errors = []
+        stop_event = threading.Event()
 
         def receive():
             try:
-                while chunk := process.stdout.read1(65536):
+                while not stop_event.is_set() and (chunk := process.stdout.read1(65536)):
                     if len(output) + len(chunk) > limit:
                         raise ValueError("command_output_limit")
                     output.extend(chunk)
             except (OSError, ValueError) as error:
-                errors.append(error)
-                process.kill()
+                if not stop_event.is_set():
+                    errors.append(error)
+                _terminate_process_tree(process)
 
         def send():
             try:
                 with process.stdin:
                     process.stdin.write(payload)
             except OSError as error:
-                errors.append(error)
-                process.kill()
+                if not stop_event.is_set():
+                    errors.append(error)
+                _terminate_process_tree(process)
 
         threads = [threading.Thread(target=receive, daemon=True)]
         if payload is not None:
             threads.append(threading.Thread(target=send, daemon=True))
         for thread in threads:
             thread.start()
+        timed_out = None
+        code = 0
         try:
             code = process.wait(timeout=timeout)
+        except subprocess.TimeoutExpired as error:
+            timed_out = error
+            stop_event.set()
         finally:
-            if process.poll() is None:
-                process.kill()
-                process.wait()
+            if process.poll() is None or timed_out is not None:
+                stop_event.set()
+                _terminate_process_tree(process)
+                try:
+                    process.wait(timeout=1.5)
+                except subprocess.TimeoutExpired:
+                    pass
+                _close_pipe(process.stdout)
+                _close_pipe(process.stdin)
+        join_timeout = 0.5 if timed_out is not None else 2.0
         for thread in threads:
-            thread.join(timeout=2)
-            if thread.is_alive():
+            thread.join(timeout=join_timeout)
+            if thread.is_alive() and timed_out is None:
                 raise ValueError("command_pipe_unavailable")
+        if timed_out is not None:
+            raise timed_out
         if errors:
             raise errors[0]
         if check and code:

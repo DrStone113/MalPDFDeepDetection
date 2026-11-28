@@ -148,15 +148,16 @@ class URILexicalHeadScorer:
         self.session: Any = None
         self.npz_arrays: dict[str, np.ndarray] | None = None
 
-        c_path = self._resolve_contract_path(contract_path)
+        manifest_meta: dict[str, Any] = {}
+        resolved_manifest = Path(manifest_path) if manifest_path is not None else None
+        if resolved_manifest is not None and resolved_manifest.is_file():
+            manifest_meta = json.loads(resolved_manifest.read_text(encoding="utf-8")).get("uri_lexical_model") or {}
+
+        c_path = self._resolve_contract_path(
+            contract_path, manifest_path=resolved_manifest, manifest_meta=manifest_meta
+        )
         if c_path is None or not c_path.is_file():
             return
-
-        manifest_meta: dict[str, Any] = {}
-        if manifest_path is not None:
-            m_file = Path(manifest_path)
-            if m_file.is_file():
-                manifest_meta = json.loads(m_file.read_text(encoding="utf-8")).get("uri_lexical_model") or {}
 
         if manifest_meta and manifest_meta.get("contract_sha256"):
             if not _sha256_lf_matches(c_path, str(manifest_meta["contract_sha256"])):
@@ -178,7 +179,7 @@ class URILexicalHeadScorer:
         self.scaler_center = np.asarray(contract["scaler_center"], dtype=np.float64).reshape(1, -1)
         self.scaler_scale = np.asarray(contract["scaler_scale"], dtype=np.float64).reshape(1, -1)
 
-        ox_candidate = self._resolve_onnx_path(onnx_path, manifest_meta)
+        ox_candidate = self._resolve_onnx_path(onnx_path, manifest_meta, c_path=c_path, manifest_path=resolved_manifest)
         npz_candidate = self._resolve_npz_path(npz_path, c_path)
 
         if prefer_onnx and ort is not None and ox_candidate is not None and ox_candidate.is_file():
@@ -250,23 +251,51 @@ class URILexicalHeadScorer:
             self.model_loaded = True
 
     @staticmethod
-    def _resolve_contract_path(contract_path: Path | str | None) -> Path | None:
+    def _resolve_contract_path(
+        contract_path: Path | str | None,
+        *,
+        manifest_path: Path | None = None,
+        manifest_meta: Mapping[str, Any] | None = None,
+    ) -> Path | None:
         if contract_path is not None:
             return Path(contract_path)
-        for path in DEFAULT_URI_CONTRACT_PATHS:
+        candidates: list[Path] = []
+        if manifest_path is not None:
+            cname = str((manifest_meta or {}).get("contract_filename") or "uri_lexical_head_v4_contract.json")
+            candidates.append(manifest_path.resolve().parent / cname)
+        candidates.extend(DEFAULT_URI_CONTRACT_PATHS)
+        for path in candidates:
             if path.is_file():
                 return path
         return None
 
     @staticmethod
-    def _resolve_onnx_path(onnx_path: Path | str | None, manifest_meta: dict[str, Any]) -> Path | None:
+    def _resolve_onnx_path(
+        onnx_path: Path | str | None,
+        manifest_meta: Mapping[str, Any],
+        *,
+        c_path: Path | None = None,
+        manifest_path: Path | None = None,
+    ) -> Path | None:
         if onnx_path is not None:
             return Path(onnx_path)
-        if manifest_meta.get("filename"):
-            candidate = REPO_ROOT / "production" / "models" / str(manifest_meta["filename"])
+        filename = str(manifest_meta.get("filename") or DEFAULT_URI_ONNX_PATH.name)
+        candidates: list[Path] = []
+        if manifest_path is not None:
+            candidates.append(manifest_path.resolve().parent.parent / "models" / filename)
+        if c_path is not None:
+            candidates.append(c_path.resolve().parent.parent / "models" / filename)
+        candidates.extend(
+            (
+                REPO_ROOT / "production" / "models" / filename,
+                REPO_ROOT / "models" / filename,
+                DEFAULT_URI_ONNX_PATH,
+            )
+        )
+        for candidate in candidates:
             if candidate.is_file():
                 return candidate
-        return DEFAULT_URI_ONNX_PATH if DEFAULT_URI_ONNX_PATH.is_file() else None
+        return None
 
     @staticmethod
     def _resolve_npz_path(npz_path: Path | str | None, c_path: Path) -> Path | None:
@@ -349,10 +378,10 @@ class URILexicalHeadScorer:
     ) -> dict[str, Any]:
         filtered_xml = 0
         allowlisted = 0
-        vector_counts: dict[str, int] = {}
-        seen: dict[str, str] = {}
+        pdf_seen: dict[str, str] = {}
+        qr_seen: dict[str, str] = {}
 
-        def consider(raw_candidate: str, source_vec: str) -> None:
+        def collect(target: dict[str, str], raw_candidate: str, source_vec: str) -> None:
             nonlocal filtered_xml, allowlisted
             canon = canonicalize_extracted_uri(raw_candidate)
             if canon is None:
@@ -366,21 +395,38 @@ class URILexicalHeadScorer:
             if is_allowlisted_uri(raw_clean):
                 allowlisted += 1
                 return
-            vector_counts[source_vec] = vector_counts.get(source_vec, 0) + 1
-            if raw_clean not in seen and len(seen) < max_candidates:
-                seen[raw_clean] = source_vec
+            if raw_clean not in target:
+                target[raw_clean] = source_vec
 
         for item in extracted_uris:
             if not isinstance(item, Mapping):
                 continue
             cand = str(item.get("raw_uri") or item.get("uri") or "")
             src = str(item.get("source") or "pdf_action")
-            consider(cand, src)
+            collect(pdf_seen, cand, src)
 
         for qr_item in qr_uris:
-            consider(str(qr_item), "qr_image")
+            collect(qr_seen, str(qr_item), "qr_image")
 
-        candidates = list(seen.items())
+        unique_pool = set(pdf_seen) | set(qr_seen)
+        limit = max(0, int(max_candidates))
+        if limit == 0:
+            candidates: list[tuple[str, str]] = []
+        elif len(unique_pool) <= limit:
+            candidates = list(pdf_seen.items()) + [(u, v) for u, v in qr_seen.items() if u not in pdf_seen]
+        else:
+            qr_cap = min(len(qr_seen), limit if limit < 2 else max(1, min(64, limit // 4)))
+            qr_admitted = list(qr_seen.items())[:qr_cap]
+            qr_admitted_set = {u for u, _ in qr_admitted}
+            pdf_cap = max(0, limit - len(qr_admitted))
+            pdf_admitted = [(u, v) for u, v in pdf_seen.items() if u not in qr_admitted_set][:pdf_cap]
+            candidates = pdf_admitted + qr_admitted
+
+        dropped_count = max(0, len(unique_pool) - len(candidates))
+        vector_counts: dict[str, int] = {}
+        for _, vec_name in candidates:
+            vector_counts[vec_name] = vector_counts.get(vec_name, 0) + 1
+
         if not self.model_loaded or not candidates:
             return {
                 "model_loaded": self.model_loaded,
@@ -395,6 +441,7 @@ class URILexicalHeadScorer:
                 "scored_url_count": len(candidates) if self.model_loaded else 0,
                 "allowlisted_url_count": allowlisted,
                 "filtered_xml_xmp_count": filtered_xml,
+                "truncated_candidate_count": dropped_count,
                 "vector_counts": vector_counts,
                 "top_url_vector": None,
                 "top_url_prob": 0.0,
@@ -434,6 +481,7 @@ class URILexicalHeadScorer:
             "scored_url_count": len(candidates),
             "allowlisted_url_count": allowlisted,
             "filtered_xml_xmp_count": filtered_xml,
+            "truncated_candidate_count": dropped_count,
             "vector_counts": vector_counts,
             "top_url_vector": top_vec,
             "top_url_prob": round(max_prob, 6),

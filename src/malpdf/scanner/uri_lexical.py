@@ -265,14 +265,14 @@ def extract_tld(host: str) -> str:
     return labels[-1]
 
 
-def canonicalize_extracted_uri(raw_uri: str) -> tuple[str, str] | None:
-    """Normalize URI whitespace/trailing punctuation while keeping raw_uri before percent-unquoting."""
+def canonicalize_extracted_uri(raw_uri: str, *, trim_trailing_punct: bool = False) -> tuple[str, str] | None:
+    """Normalize URI whitespace and optionally strip prose trailing punctuation before percent-unquoting."""
     if not isinstance(raw_uri, str):
         return None
     cleaned = _clean_control_chars(raw_uri)
     if not cleaned:
         return None
-    if cleaned.lower().startswith(("http://", "https://")):
+    if trim_trailing_punct and cleaned.lower().startswith(("http://", "https://")):
         cleaned = cleaned.rstrip(".,;:)]}>\"'")
     if not cleaned:
         return None
@@ -340,7 +340,7 @@ def extract_plain_text_urls(text: str, *, max_urls: int = 64) -> list[str]:
     found: list[str] = []
     seen: set[str] = set()
     for match in _PLAINTEXT_URL_RE.finditer(text):
-        canon = canonicalize_extracted_uri(match.group())
+        canon = canonicalize_extracted_uri(match.group(), trim_trailing_punct=True)
         if canon is None:
             continue
         raw_url, _ = canon

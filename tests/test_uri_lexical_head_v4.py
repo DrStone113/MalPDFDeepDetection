@@ -3,6 +3,8 @@ from __future__ import annotations
 import io
 import json
 from pathlib import Path
+import shutil
+import tempfile
 
 from fastapi.testclient import TestClient
 import numpy as np
@@ -22,6 +24,7 @@ from malpdf.scanner.uri_lexical import (
     URI_LEXICAL_FEATURE_NAMES,
     URI_LEXICAL_SCHEMA_VERSION,
     URI_LOG1P_INDICES,
+    extract_plain_text_urls,
     extract_url_lexical_features,
     is_allowlisted_uri,
     is_bare_dual_use_hosted_uri,
@@ -488,3 +491,51 @@ def test_cdr_in_place_or_gate_excision_preserves_benign_links_and_content(
         res = engine.scan_bytes(cleaned, explain=False)
         assert res.verdict == "BENIGN"
         assert res.forensic_dossier["uri_ml_analysis"]["tier"] == "benign"
+
+
+def test_uri_head_resolves_hf_bundle_layout_without_production_dir() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        bundle = Path(tmp)
+        (bundle / "configs").mkdir()
+        (bundle / "models").mkdir()
+        for cname in ("onnx_manifest.json", "uri_lexical_head_v4_contract.json"):
+            shutil.copy2(REPO_ROOT / "production" / "configs" / cname, bundle / "configs" / cname)
+        shutil.copy2(
+            REPO_ROOT / "production" / "models" / "uri_lexical_head_v4.onnx",
+            bundle / "models" / "uri_lexical_head_v4.onnx",
+        )
+
+        by_manifest = URILexicalHeadScorer(manifest_path=bundle / "configs" / "onnx_manifest.json", prefer_onnx=True)
+        by_contract = URILexicalHeadScorer(
+            contract_path=bundle / "configs" / "uri_lexical_head_v4_contract.json", prefer_onnx=True
+        )
+        assert by_manifest.model_loaded is True and by_manifest.backend == "onnx"
+        assert by_contract.model_loaded is True and by_contract.backend == "onnx"
+
+
+def test_score_pdf_uris_reserves_qr_budget_and_reports_truncation() -> None:
+    scorer = URILexicalHeadScorer(prefer_onnx=False)
+    bare_links = [
+        {
+            "raw_uri": f"https://docs.google.com/forms/d/fixture-{chr(97 + idx // 26)}{chr(97 + idx % 26)}/viewform",
+            "source": "annot_uri",
+        }
+        for idx in range(256)
+    ]
+    res = scorer.score_pdf_uris(bare_links, qr_uris=[OR_GATE_URI])
+    assert res["tier"] == "or_gate"
+    assert res["top_url"] == OR_GATE_URI
+    assert res["top_url_vector"] == "qr_image"
+    assert res["scored_url_count"] == 256
+    assert res["truncated_candidate_count"] == 1
+    assert res["vector_counts"] == {"annot_uri": 255, "qr_image": 1}
+
+
+def test_structured_pdf_uri_preserves_trailing_punctuation_vs_prose() -> None:
+    scorer = URILexicalHeadScorer(prefer_onnx=False)
+    dotted_uri = "https://www.example.net/#appendix."
+    direct_prob = float(scorer.score_urls([dotted_uri])[0])
+    pdf_res = scorer.score_pdf_uris([{"raw_uri": dotted_uri, "source": "annot_uri"}])
+    assert pdf_res["top_url"] == dotted_uri
+    assert pdf_res["max_prob"] == pytest.approx(round(direct_prob, 6))
+    assert extract_plain_text_urls("See https://example.org/docs.") == ["https://example.org/docs"]

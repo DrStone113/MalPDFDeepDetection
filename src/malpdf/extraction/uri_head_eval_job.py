@@ -21,6 +21,7 @@ from malpdf.extraction.holdout_fingerprint_job import HEX256, pinned
 from malpdf.extraction.normalize import normalize_profile
 from malpdf.scanner.ingestion import InstantPDFIngestion
 from malpdf.scanner.uri_head import URILexicalHeadScorer
+from malpdf.static.safety import read_bounded_bytes
 
 KIND = "pdf-uri-head-eval"
 URI_CONTRACT_RELPATH = "configs/uri_lexical_head_v4_contract.json"
@@ -121,19 +122,12 @@ def load_rows(data_root: Path, *, source_root: Path | None = None) -> list[dict[
 
 def _verify_model_artifacts(data_root: Path, source_root: Path) -> tuple[Path, Path]:
     contract_path = source_root / URI_CONTRACT_RELPATH
-    raw_contract = pinned(contract_path, contract_path.parent, _raw_or_lf_sha(contract_path), 1024**2)
+    raw_contract = read_bounded_bytes(contract_path, boundary=contract_path.parent, max_bytes=1024**2)
     if hashlib.sha256(raw_contract.replace(b"\r\n", b"\n")).hexdigest() != URI_CONTRACT_SHA256:
         raise ValueError("uri_lexical_contract_sha256_mismatch")
     npz_path = data_root / URI_NPZ_RELPATH
     pinned(npz_path, npz_path.parent, URI_NPZ_SHA256, 8 * 1024**2)
     return contract_path, npz_path
-
-
-def _raw_or_lf_sha(path: Path) -> str:
-    raw = path.read_bytes()
-    if hashlib.sha256(raw.replace(b"\r\n", b"\n")).hexdigest() != URI_CONTRACT_SHA256:
-        raise ValueError("uri_lexical_contract_sha256_mismatch")
-    return hashlib.sha256(raw).hexdigest()
 
 
 def _atomic_write_json(path: Path, payload: dict[str, Any]) -> bytes:
@@ -315,8 +309,12 @@ def run_shard(
         reused = False
         if eval_file.is_file() and bundle_file.is_file():
             try:
-                existing_eval = json.loads(eval_file.read_text(encoding="utf-8"))
-                existing_bundle = json.loads(bundle_file.read_text(encoding="utf-8"))
+                existing_eval = json.loads(
+                    read_bounded_bytes(eval_file, boundary=eval_dir, max_bytes=65536).decode("utf-8")
+                )
+                existing_bundle = json.loads(
+                    read_bounded_bytes(bundle_file, boundary=outputs, max_bytes=16 * 1024**2).decode("utf-8")
+                )
                 if (
                     existing_eval.get("sha256") == row["pdf_sha256"]
                     and existing_bundle.get("sample_sha256") == row["pdf_sha256"]

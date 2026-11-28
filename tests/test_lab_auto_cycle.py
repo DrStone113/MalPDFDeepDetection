@@ -8,6 +8,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import time
 from types import SimpleNamespace
 
 import pytest
@@ -2351,6 +2352,7 @@ def test_verify_firewall_pre_network_and_status_gate(modules, monkeypatch):
             "[Service]\n"
             "Type=oneshot\n"
             "RemainAfterExit=yes\n"
+            "TimeoutStartSec=30\n"
             "ExecStart=/usr/local/sbin/malpdf-firewall phase2\n\n"
             "[Install]\n"
             "WantedBy=network-pre.target multi-user.target\n",
@@ -2393,7 +2395,12 @@ def test_verify_firewall_pre_network_and_status_gate(modules, monkeypatch):
             admin.verify_firewall_pre_network(unit, wants_link)
         symlink_ok["flag"] = True
 
-        unit.write_text(unit.read_text(encoding="utf-8").replace("network-pre.target ", ""), encoding="utf-8")
+        base_unit = unit.read_text(encoding="utf-8")
+        unit.write_text(base_unit.replace("TimeoutStartSec=30\n", ""), encoding="utf-8")
+        with pytest.raises(ValueError, match="firewall_unit_invalid"):
+            admin.verify_firewall_pre_network(unit, wants_link)
+
+        unit.write_text(base_unit.replace("network-pre.target ", ""), encoding="utf-8")
         with pytest.raises(ValueError, match="firewall_unit_invalid"):
             admin.verify_firewall_pre_network(unit, wants_link)
 
@@ -2613,7 +2620,7 @@ def test_uri_head_eval_export_contract_and_fail_closed(modules, monkeypatch):
                 "heuristic_phishing_count": 0,
                 "max_prob_p50": 0.01,
                 "max_prob_p95": 0.01,
-                "max_prob_p99": 0.01,
+                "max_prob_p99": 0.0172 if cohort_name == "benign_ood_v1" else 0.01,
                 "max_prob_max": 0.05 if cohort_name == "benign_ood_v1" else 0.01,
                 "total_scored_urls": 1 if cohort_name == "benign_ood_v1" else 0,
                 "total_allowlisted_urls": 0,
@@ -2647,6 +2654,7 @@ def test_uri_head_eval_export_contract_and_fail_closed(modules, monkeypatch):
             lambda d: d["records"][0].__setitem__("max_prob", 1.2),
             lambda d: d["records"][0]["vector_counts"].__setitem__("https://raw.url", 1),
             lambda d: d["cohort"].__setitem__("samples", 623),
+            lambda d: d["cohort_summary"]["benign_ood_v1"].update({"or_gate_count": 83, "or_gate_rate": 1.0}),
         ]
         for mutate in bad_mutations:
             current["doc"] = json.loads(admin.json_bytes(doc))
@@ -2703,3 +2711,33 @@ def test_lab_firewall_pre_network_avoids_networkctl_deadlock(modules, monkeypatc
             lambda self, strict=False: resolved_unit if self == wants_link else orig_resolve(self, strict=strict),
         )
         assert admin.verify_firewall_pre_network(unit, wants_link) is True
+
+
+def test_bounded_command_kills_descendant_holding_stdout_within_deadline(modules):
+    _, _, offline, _ = modules
+    script = "import subprocess, sys, time; subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(4)']); time.sleep(4)"
+    started = time.monotonic()
+    with pytest.raises(subprocess.TimeoutExpired):
+        offline.bounded_command([sys.executable, "-c", script], 4096, timeout=0.5)
+    assert time.monotonic() - started < 2.5
+
+
+def test_uri_head_eval_rejects_oversized_contract_without_unbounded_read(monkeypatch):
+    from malpdf.extraction import uri_head_eval_job
+
+    with tempfile.TemporaryDirectory() as temp:
+        root = Path(temp)
+        contract_path = root / uri_head_eval_job.URI_CONTRACT_RELPATH
+        contract_path.parent.mkdir(parents=True, exist_ok=True)
+        contract_path.write_bytes(b" " * (1024**2 + 1))
+
+        orig_read_bytes = Path.read_bytes
+
+        def guarded_read_bytes(self):
+            if self.resolve() == contract_path.resolve():
+                raise AssertionError("unbounded_read_bytes_called")
+            return orig_read_bytes(self)
+
+        monkeypatch.setattr(Path, "read_bytes", guarded_read_bytes)
+        with pytest.raises(ValueError, match="byte cap"):
+            uri_head_eval_job._verify_model_artifacts(root, root)

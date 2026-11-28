@@ -229,6 +229,52 @@ CVE_FIELDS = {"sample_id", "Label", "pdf_relative_path", "pdf_sha256", "label_so
 CVE_NAMES = ("bank_statment.pdf", "link_URI.pdf", "rce_foxit.pdf", "url2_invoice_template.pdf", "xss_popup.pdf")
 
 
+def _uri_eval_quantile(sorted_vals, q):
+    if not sorted_vals:
+        return 0.0
+    pos = q * (len(sorted_vals) - 1)
+    lo = int(pos)
+    hi = min(lo + 1, len(sorted_vals) - 1)
+    frac = pos - lo
+    return round(sorted_vals[lo] * (1.0 - frac) + sorted_vals[hi] * frac, 6)
+
+
+def _recompute_uri_eval_cohort_summary(records):
+    by_cohort = {}
+    for rec in records:
+        by_cohort.setdefault(str(rec["cohort"]), []).append(rec)
+    out = {}
+    for cohort, items in sorted(by_cohort.items()):
+        probs = sorted(float(item["max_prob"]) for item in items if item["eval_status"] == "observed")
+        or_cnt = sum(1 for item in items if item["tier"] == "or_gate")
+        gf_cnt = sum(1 for item in items if item["tier"] == "gated_fusion")
+        heur_cnt = sum(1 for item in items if item["heuristic_phishing"])
+        vec_totals = {}
+        for item in items:
+            for vec, cnt in item["vector_counts"].items():
+                vec_totals[str(vec)] = vec_totals.get(str(vec), 0) + int(cnt)
+        out[cohort] = {
+            "count": len(items),
+            "observed": sum(1 for item in items if item["eval_status"] == "observed"),
+            "password_locked": sum(1 for item in items if item["eval_status"] == "password_locked"),
+            "ingest_error": sum(1 for item in items if item["eval_status"] == "ingest_error"),
+            "missing_or_invalid": sum(1 for item in items if item["eval_status"] in {"missing", "invalid"}),
+            "or_gate_count": or_cnt,
+            "gated_fusion_count": gf_cnt,
+            "or_gate_rate": round(or_cnt / max(len(items), 1), 6),
+            "heuristic_phishing_count": heur_cnt,
+            "max_prob_p50": _uri_eval_quantile(probs, 0.50),
+            "max_prob_p95": _uri_eval_quantile(probs, 0.95),
+            "max_prob_p99": _uri_eval_quantile(probs, 0.99),
+            "max_prob_max": round(probs[-1], 6) if probs else 0.0,
+            "total_scored_urls": sum(int(item["scored_url_count"]) for item in items),
+            "total_allowlisted_urls": sum(int(item["allowlisted_url_count"]) for item in items),
+            "total_filtered_xml_xmp": sum(int(item["filtered_xml_xmp_count"]) for item in items),
+            "vector_counts": vec_totals,
+        }
+    return out
+
+
 def _exact_json_equal(left, right):
     if type(left) is not type(right):
         return False
@@ -834,6 +880,7 @@ def verify_firewall_pre_network(unit_path=None, wants_link=None):
         or "network-pre.target" not in before_tokens
         or "systemd-networkd.service" not in before_tokens
         or "network-pre.target" not in wants_tokens
+        or fields.get("TimeoutStartSec") != "30"
         or fields.get("ExecStart") != "/usr/local/sbin/malpdf-firewall phase2"
     ):
         raise ValueError("firewall_unit_invalid")
@@ -1770,6 +1817,8 @@ def validate_export(raw, job):
                 )
             ):
                 raise ValueError("export_shape_invalid")
+        if not _exact_json_equal(value["cohort_summary"], _recompute_uri_eval_cohort_summary(value["records"])):
+            raise ValueError("export_shape_invalid")
     elif kind in jobs.FINGERPRINT_KINDS:
         fields = {"inputs", "fingerprints", "fingerprint_status_counts", "new_malware_labels", "runner_summary"}
         holdout = kind == jobs.HOLDOUT_TLSH_KIND

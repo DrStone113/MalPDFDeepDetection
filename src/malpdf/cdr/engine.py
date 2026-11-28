@@ -42,7 +42,7 @@ def _get_uri_lexical_scorer() -> URILexicalHeadScorer | None:
     global _URI_LEXICAL_SCORER
     if _URI_LEXICAL_SCORER is None:
         try:
-            _URI_LEXICAL_SCORER = URILexicalHeadScorer(prefer_onnx=False)
+            _URI_LEXICAL_SCORER = URILexicalHeadScorer(prefer_onnx=True)
         except Exception:
             return None
     return _URI_LEXICAL_SCORER
