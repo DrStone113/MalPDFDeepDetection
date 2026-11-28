@@ -2741,3 +2741,20 @@ def test_uri_head_eval_rejects_oversized_contract_without_unbounded_read(monkeyp
         monkeypatch.setattr(Path, "read_bytes", guarded_read_bytes)
         with pytest.raises(ValueError, match="byte cap"):
             uri_head_eval_job._verify_model_artifacts(root, root)
+
+
+def test_uri_head_eval_job_imports_cleanly_under_stdlib_only_python():
+    repo_root = Path(__file__).resolve().parents[1]
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "-S",
+            "-c",
+            "import sys; sys.path.insert(0, 'src'); from malpdf.extraction import uri_head_eval_job; assert uri_head_eval_job.contract()['samples'] == 624",
+        ],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode == 0, proc.stderr or proc.stdout

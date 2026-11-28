@@ -14,14 +14,15 @@ except ImportError:
 import sys
 import tempfile
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from malpdf.extraction import benign_ood_expanded_job, benign_ood_job, uri_review_job
 from malpdf.extraction.holdout_fingerprint_job import HEX256, pinned
-from malpdf.extraction.normalize import normalize_profile
-from malpdf.scanner.ingestion import InstantPDFIngestion
-from malpdf.scanner.uri_head import URILexicalHeadScorer
 from malpdf.static.safety import read_bounded_bytes
+
+if TYPE_CHECKING:
+    from malpdf.scanner.ingestion import InstantPDFIngestion
+    from malpdf.scanner.uri_head import URILexicalHeadScorer
 
 KIND = "pdf-uri-head-eval"
 URI_CONTRACT_RELPATH = "configs/uri_lexical_head_v4_contract.json"
@@ -152,6 +153,8 @@ def _minimal_bundle(
     bundle_status: str,
     peak_rss_bytes: int,
 ) -> dict[str, Any]:
+    from malpdf.extraction.normalize import normalize_profile
+
     primary_status = "complete" if bundle_status == "observed" else bundle_status
     profile = {
         "status": primary_status,
@@ -259,6 +262,8 @@ def run_shard(
     jobs_mod: Any,
 ) -> dict[str, Any]:
     from malpdf.extraction.jobs import require_extraction_lab
+    from malpdf.scanner.ingestion import InstantPDFIngestion
+    from malpdf.scanner.uri_head import URILexicalHeadScorer
 
     require_extraction_lab(True, repository_root=data_root)
     os.environ["MALPDF_LAB_ISOLATED"] = "1"
