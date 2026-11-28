@@ -17,175 +17,224 @@ from lab_contract import MAX_REPORT, parse_json
 import lab_jobs as jobs
 import lab_side as side
 
-CVE_NAMES = ('bank_statment.pdf', 'link_URI.pdf', 'rce_foxit.pdf', 'url2_invoice_template.pdf', 'xss_popup.pdf')
-CVE_MANIFEST = {'path': 'data/processed/source_preparation/run_20261001T133833267219Z_3efd81e782c1/cve_t4pdf/source_pdf_manifest.csv',
-                'sha256': '3dd3412cfdd277b3b14ff198db807679557b3b32bcb20af8b2f2770610eea4aa'}
+CVE_NAMES = ("bank_statment.pdf", "link_URI.pdf", "rce_foxit.pdf", "url2_invoice_template.pdf", "xss_popup.pdf")
+CVE_MANIFEST = {
+    "path": "data/processed/source_preparation/run_20261001T133833267219Z_3efd81e782c1/cve_t4pdf/source_pdf_manifest.csv",
+    "sha256": "3dd3412cfdd277b3b14ff198db807679557b3b32bcb20af8b2f2770610eea4aa",
+}
 
 
 def cve_contract():
-    return {'cohort': 'cve-t4pdf-5', 'samples': 5, 'seed': 42, 'test': 0,
-        'boundary': 'data/raw/cve_t4pdf', 'manifests': {'source_manifest': dict(CVE_MANIFEST)},
-        'filenames': list(CVE_NAMES), 'selection': 'all five named raw files; hashes from the pinned prepared-copy manifest',
-        'labels': 'historical user-assigned labels; no accuracy evaluation'}
+    return {
+        "cohort": "cve-t4pdf-5",
+        "samples": 5,
+        "seed": 42,
+        "test": 0,
+        "boundary": "data/raw/cve_t4pdf",
+        "manifests": {"source_manifest": dict(CVE_MANIFEST)},
+        "filenames": list(CVE_NAMES),
+        "selection": "all five named raw files; hashes from the pinned prepared-copy manifest",
+        "labels": "historical user-assigned labels; no accuracy evaluation",
+    }
 
 
 def cic_full_contract():
     manifests = {
-        'split_manifest': {'path': 'data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/split_manifest.csv',
-                           'sha256': 'e939a676c51c7a98b9dc4bb843e846f546e1ada2bfb576b41416c406415c0643'},
-        'source_manifest': {'path': 'data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/source_manifest.csv',
-                            'sha256': 'd74729236017dc27a71c999bc4d69f84a16fa4148573c3bbc7f4eb03709b150b'},
-        'normalization_manifest': {'path': 'data/processed/cic_normalization/run_20261003T104918756555Z_3b68d36a5705/normalization_manifest.csv',
-                                   'sha256': 'c4dc77f00849518ee56dc34d0f0cc7daf0c92b3ce9fd1e93fd63d053caf8570f'},
+        "split_manifest": {
+            "path": "data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/split_manifest.csv",
+            "sha256": "e939a676c51c7a98b9dc4bb843e846f546e1ada2bfb576b41416c406415c0643",
+        },
+        "source_manifest": {
+            "path": "data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/source_manifest.csv",
+            "sha256": "d74729236017dc27a71c999bc4d69f84a16fa4148573c3bbc7f4eb03709b150b",
+        },
+        "normalization_manifest": {
+            "path": "data/processed/cic_normalization/run_20261003T104918756555Z_3b68d36a5705/normalization_manifest.csv",
+            "sha256": "c4dc77f00849518ee56dc34d0f0cc7daf0c92b3ce9fd1e93fd63d053caf8570f",
+        },
     }
-    return {'cohort': 'cic-full-1452', 'samples': 1452, 'seed': 42,
-            'train': 870, 'validation': 291, 'test': 291,
-            'boundary': 'data/raw/cic_pdf', 'manifests': manifests,
-            'selection': 'all 1452 CIC samples partitioned under Protocol G; train 870, validation 291, test 291'}
+    return {
+        "cohort": "cic-full-1452",
+        "samples": 1452,
+        "seed": 42,
+        "train": 870,
+        "validation": 291,
+        "test": 291,
+        "boundary": "data/raw/cic_pdf",
+        "manifests": manifests,
+        "selection": "all 1452 CIC samples partitioned under Protocol G; train 870, validation 291, test 291",
+    }
 
 
-BULK_SOURCE_MANIFEST = 'data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/source_manifest.csv'
-BULK_SPLIT_MANIFEST = 'data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/split_manifest.csv'
-BULK_CORPUS_MANIFEST = 'data/raw/bulk_20261116/manifest.csv'
-BULK_OUTPUT_REL = 'data/processed/bulk_extract'
-BULK_RECOVERY_CONFIG = 'configs/pdf_static_bulk_recovery.json'
+BULK_SOURCE_MANIFEST = "data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/source_manifest.csv"
+BULK_SPLIT_MANIFEST = "data/processed/multi_cohort_v4/run_20261003T124714720715Z_c96868a21732/split_manifest.csv"
+BULK_CORPUS_MANIFEST = "data/raw/bulk_20261116/manifest.csv"
+BULK_OUTPUT_REL = "data/processed/bulk_extract"
+BULK_RECOVERY_CONFIG = "configs/pdf_static_bulk_recovery.json"
 
 
 def bulk_contract():
     return {
-        'cohort': 'bulk-corpus-v1',
-        'device': 'cpu',
-        'chunk_size': 500,
-        'boundary': 'data/raw',
-        'output_root': BULK_OUTPUT_REL,
-        'manifests': [BULK_SOURCE_MANIFEST, BULK_CORPUS_MANIFEST],
-        'split_manifest': BULK_SPLIT_MANIFEST,
-        'selection': 'deduplicated clean bulk corpus combining verified CIC-1452, Zenodo Clean 9000 / Malware 2011, CVE, VAPD v5, Zenodo Malware 2017, Govdocs1 sample, and SafeDocs',
+        "cohort": "bulk-corpus-v1",
+        "device": "cpu",
+        "chunk_size": 500,
+        "boundary": "data/raw",
+        "output_root": BULK_OUTPUT_REL,
+        "manifests": [BULK_SOURCE_MANIFEST, BULK_CORPUS_MANIFEST],
+        "split_manifest": BULK_SPLIT_MANIFEST,
+        "selection": "deduplicated clean bulk corpus combining verified CIC-1452, Zenodo Clean 9000 / Malware 2011, CVE, VAPD v5, Zenodo Malware 2017, Govdocs1 sample, and SafeDocs",
     }
 
 
 def cve_rows(data_root):
-    manifest = jobs.trusted_path(data_root / CVE_MANIFEST['path'])
+    manifest = jobs.trusted_path(data_root / CVE_MANIFEST["path"])
     try:
         payload = side.bounded_read(manifest, 65536)
     except OSError:
-        raise ValueError('manifest_unavailable') from None
-    if jobs.sha(payload) != CVE_MANIFEST['sha256']:
-        raise ValueError('manifest_unavailable')
+        raise ValueError("manifest_unavailable") from None
+    if jobs.sha(payload) != CVE_MANIFEST["sha256"]:
+        raise ValueError("manifest_unavailable")
     try:
-        reader = csv.DictReader(io.StringIO(payload.decode('utf-8', 'strict')), strict=True)
+        reader = csv.DictReader(io.StringIO(payload.decode("utf-8", "strict")), strict=True)
         fields = reader.fieldnames
         rows = list(reader)
     except (csv.Error, UnicodeError):
-        raise ValueError('manifest_unavailable') from None
-    if fields != ['sample_id', 'Label', 'pdf_relative_path', 'pdf_sha256', 'label_source']:
-        raise ValueError('manifest_unavailable')
+        raise ValueError("manifest_unavailable") from None
+    if fields != ["sample_id", "Label", "pdf_relative_path", "pdf_sha256", "label_source"]:
+        raise ValueError("manifest_unavailable")
     if len(rows) != len(CVE_NAMES):
-        raise ValueError('manifest_unavailable')
+        raise ValueError("manifest_unavailable")
     indexed = {}
     for row in rows:
         if set(row) != set(fields) or any(not isinstance(value, str) for value in row.values()):
-            raise ValueError('manifest_unavailable')
-        name = row['sample_id'].removeprefix('cve_t4pdf:')
-        expected = {'sample_id': 'cve_t4pdf:' + name, 'Label': '1',
-            'pdf_relative_path': Path(CVE_MANIFEST['path']).parent.as_posix() + '/' + name}
+            raise ValueError("manifest_unavailable")
+        name = row["sample_id"].removeprefix("cve_t4pdf:")
+        expected = {
+            "sample_id": "cve_t4pdf:" + name,
+            "Label": "1",
+            "pdf_relative_path": Path(CVE_MANIFEST["path"]).parent.as_posix() + "/" + name,
+        }
         if name not in CVE_NAMES or name in indexed or any(row[key] != value for key, value in expected.items()):
-            raise ValueError('manifest_unavailable')
-        if not jobs.HEX.fullmatch(row['pdf_sha256']) or not 1 <= len(row['label_source']) <= 256 or any(not 32 <= ord(character) < 127 for character in row['label_source']):
-            raise ValueError('manifest_unavailable')
-        indexed[name] = {**row, 'manifest_pdf_relative_path': row['pdf_relative_path'],
-            'pdf_relative_path': 'data/raw/cve_t4pdf/' + name}
-    if len({row['pdf_sha256'] for row in indexed.values()}) != len(CVE_NAMES):
-        raise ValueError('manifest_unavailable')
+            raise ValueError("manifest_unavailable")
+        if (
+            not jobs.HEX.fullmatch(row["pdf_sha256"])
+            or not 1 <= len(row["label_source"]) <= 256
+            or any(not 32 <= ord(character) < 127 for character in row["label_source"])
+        ):
+            raise ValueError("manifest_unavailable")
+        indexed[name] = {
+            **row,
+            "manifest_pdf_relative_path": row["pdf_relative_path"],
+            "pdf_relative_path": "data/raw/cve_t4pdf/" + name,
+        }
+    if len({row["pdf_sha256"] for row in indexed.values()}) != len(CVE_NAMES):
+        raise ValueError("manifest_unavailable")
     for row in indexed.values():
-        path = jobs.trusted_path(data_root / row['pdf_relative_path'])
+        path = jobs.trusted_path(data_root / row["pdf_relative_path"])
         try:
             info = path.stat(follow_symlinks=False)
         except OSError:
-            raise ValueError('manifest_unavailable') from None
-        if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or not 0 < info.st_size <= jobs.policy('pdf-static-cve')['file_max_bytes']:
-            raise ValueError('manifest_unavailable')
+            raise ValueError("manifest_unavailable") from None
+        if (
+            not stat.S_ISREG(info.st_mode)
+            or info.st_nlink != 1
+            or not 0 < info.st_size <= jobs.policy("pdf-static-cve")["file_max_bytes"]
+        ):
+            raise ValueError("manifest_unavailable")
     return [indexed[name] for name in CVE_NAMES]
 
 
 def read_frame(stream, limit):
     header = stream.read(4)
     if len(header) != 4:
-        raise ValueError('manifest_unavailable')
-    length = int.from_bytes(header, 'big')
+        raise ValueError("manifest_unavailable")
+    length = int.from_bytes(header, "big")
     if not 0 < length <= limit:
-        raise ValueError('manifest_unavailable')
+        raise ValueError("manifest_unavailable")
     payload = stream.read(length)
     if len(payload) != length:
-        raise ValueError('manifest_unavailable')
+        raise ValueError("manifest_unavailable")
     return payload
 
 
 def receive(stream, expected_id):
     jobs.config()
-    jobs.preflight('host-only')
+    jobs.preflight("host-only")
     job = jobs.validate_job(parse_json(read_frame(stream, MAX_REPORT)))
-    if job['job_id'] != expected_id:
-        raise ValueError('job_mismatch')
+    if job["job_id"] != expected_id:
+        raise ValueError("job_mismatch")
     manifest = read_frame(stream, 512 * 1024)
     archive = read_frame(stream, 40 * 1024 * 1024)
-    if stream.read(1) or jobs.sha(manifest) != job['manifest_sha256'] or jobs.sha(archive) != job['archive_sha256']:
-        raise ValueError('release_mismatch')
+    if stream.read(1) or jobs.sha(manifest) != job["manifest_sha256"] or jobs.sha(archive) != job["archive_sha256"]:
+        raise ValueError("release_mismatch")
     metadata = parse_json(manifest)
-    if metadata.get('commit') != job['commit'] or metadata.get('archive_sha256') != job['archive_sha256']:
-        raise ValueError('release_mismatch')
+    if metadata.get("commit") != job["commit"] or metadata.get("archive_sha256") != job["archive_sha256"]:
+        raise ValueError("release_mismatch")
     jobs.verify_helpers(metadata)
     side.INBOX.mkdir(parents=True, exist_ok=True)
     jobs.trusted_path(side.INBOX)
-    for suffix, payload in (('.json', manifest), ('.tar', archive)):
-        path = jobs.trusted_path(side.INBOX / (job['commit'] + suffix))
+    for suffix, payload in ((".json", manifest), (".tar", archive)):
+        path = jobs.trusted_path(side.INBOX / (job["commit"] + suffix))
         if path.exists():
             if side.bounded_read(path, 40 * 1024 * 1024) != payload:
-                raise ValueError('release_mismatch')
+                raise ValueError("release_mismatch")
         else:
-            with path.open('xb') as output:
+            with path.open("xb") as output:
                 output.write(payload)
-    if not (side.RELEASES / job['commit']).exists():
+    if not (side.RELEASES / job["commit"]).exists():
         with redirect_stdout(io.StringIO()):
-            side.install(job['commit'])
-    side.verify_release(job['commit'], job['manifest_sha256'])
+            side.install(job["commit"])
+    side.verify_release(job["commit"], job["manifest_sha256"])
     directory = jobs.save_job(job)
-    if (directory / 'result.json').exists():
-        return jobs.read_result(job['job_id'])
-    if (directory / 'claim.json').exists():
-        raise ValueError('already_claimed')
-    if (directory / 'queued.json').exists():
-        return jobs.read_result(job['job_id'])
-    if job['mode'] == 'offline':
-        with (jobs.bulk_session_lock() if job['kind'] == 'pdf-static-bulk' else nullcontext()):
-            if (directory / 'queued.json').is_file():
-                return jobs.read_result(job['job_id'])
-            if job['kind'] in jobs.PDF_KINDS:
+    if (directory / "result.json").exists():
+        return jobs.read_result(job["job_id"])
+    if (directory / "claim.json").exists():
+        raise ValueError("already_claimed")
+    if (directory / "queued.json").exists():
+        return jobs.read_result(job["job_id"])
+    if job["mode"] == "offline":
+        with jobs.bulk_session_lock() if job["kind"] == "pdf-static-bulk" else nullcontext():
+            if (directory / "queued.json").is_file():
+                return jobs.read_result(job["job_id"])
+            if job["kind"] in jobs.PDF_KINDS:
                 pdf_prepare(job, directory)
-            value = jobs.result(job, 'queued')
-            jobs.immutable(directory / 'queued.json', value)
-        return jobs.read_result(job['job_id'])
+            value = jobs.result(job, "queued")
+            jobs.immutable(directory / "queued.json", value)
+        return jobs.read_result(job["job_id"])
     return jobs.execute(job)
 
 
 def source_imports(job):
-    metadata = side.verify_release(job['commit'], job['manifest_sha256'])
+    metadata = side.verify_release(job["commit"], job["manifest_sha256"])
     jobs.verify_helpers(metadata)
-    source = side.RELEASES / job['commit']
-    sys.path.insert(0, str(source / 'src'))
+    source = side.RELEASES / job["commit"]
+    sys.path.insert(0, str(source / "src"))
     return source
 
 
 def pdf_prepare(job, directory):
     cfg = jobs.config()
     import subprocess
-    command = [cfg['python'], '-Es', '-B', str(Path(__file__).resolve()), 'pdf-prepare', job['job_id']]
+
+    command = [cfg["python"], "-Es", "-B", str(Path(__file__).resolve()), "pdf-prepare", job["job_id"]]
     with tempfile.TemporaryFile() as stdout, tempfile.TemporaryFile() as stderr:
-        process = subprocess.Popen(command, stdout=stdout, stderr=stderr, stdin=subprocess.DEVNULL,
-            start_new_session=True, env={'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8', 'HOME': str(directory),
-                'OPENBLAS_NUM_THREADS': '1', 'OMP_NUM_THREADS': '1', 'MKL_NUM_THREADS': '1'})
+        process = subprocess.Popen(
+            command,
+            stdout=stdout,
+            stderr=stderr,
+            stdin=subprocess.DEVNULL,
+            start_new_session=True,
+            env={
+                "PATH": "/usr/bin:/bin",
+                "LANG": "C.UTF-8",
+                "HOME": str(directory),
+                "OPENBLAS_NUM_THREADS": "1",
+                "OMP_NUM_THREADS": "1",
+                "MKL_NUM_THREADS": "1",
+            },
+        )
         try:
-            code = process.wait(timeout=180 if job['kind'] == 'pdf-static-bulk' else 60)
+            code = process.wait(timeout=180 if job["kind"] == "pdf-static-bulk" else 60)
         except BaseException:
             jobs.stop_worker(process)
             raise
@@ -196,22 +245,32 @@ def pdf_prepare(job, directory):
                 value = parse_json(raw) if len(raw) <= 4096 else None
             except ValueError:
                 value = None
-            if isinstance(value, dict) and set(value) == {'status', 'reason'} and value['status'] == 'blocked' and isinstance(value['reason'], str) and value['reason'] in jobs.REASONS:
-                raise ValueError(value['reason'])
-            raise ValueError('worker_failed')
+            if (
+                isinstance(value, dict)
+                and set(value) == {"status", "reason"}
+                and value["status"] == "blocked"
+                and isinstance(value["reason"], str)
+                and value["reason"] in jobs.REASONS
+            ):
+                raise ValueError(value["reason"])
+            raise ValueError("worker_failed")
 
 
 def publisher_module(kind):
     if kind == jobs.BENIGN_V32_COHORT_KIND:
         from malpdf.extraction import benign_v32_cohort_job
+
         return benign_v32_cohort_job
     if kind == jobs.BENIGN_OOD_DIVERSE_KIND:
         from malpdf.extraction import benign_ood_diverse_job
+
         return benign_ood_diverse_job
     if kind == jobs.BENIGN_OOD_EXPANDED_KIND:
         from malpdf.extraction import benign_ood_expanded_job
+
         return benign_ood_expanded_job
     from malpdf.extraction import benign_ood_job
+
     return benign_ood_job
 
 
@@ -222,74 +281,100 @@ def pdf_metadata(job):
     import tomllib
 
     from check_local import dependency_versions
+
     try:
-        dependency_versions(tomllib.loads((source / 'pyproject.toml').read_text(encoding='utf-8')))
+        dependency_versions(tomllib.loads((source / "pyproject.toml").read_text(encoding="utf-8")))
     except (importlib.metadata.PackageNotFoundError, ImportError, ValueError):
-        raise ValueError('dependency_mismatch') from None
+        raise ValueError("dependency_mismatch") from None
     import yaml
-    data_root = Path(cfg['data_root'])
-    if job['kind'] in jobs.URI_REVIEW_KINDS:
+
+    data_root = Path(cfg["data_root"])
+    if job["kind"] == jobs.URI_HEAD_EVAL_KIND:
+        from malpdf.extraction import uri_head_eval_job
+
+        return source, data_root, uri_head_eval_job.load_rows(data_root, source_root=source)
+    if job["kind"] in jobs.URI_REVIEW_KINDS:
         from malpdf.extraction.uri_review_job import load_rows
-        return source, data_root, load_rows(data_root, job['kind'], source_root=source)
-    if job['kind'] in jobs.BENIGN_OOD_KINDS:
-        return source, data_root, publisher_module(job['kind']).load_rows(data_root)
-    if job['kind'] == 'pdf-diagnostic-replay':
+
+        return source, data_root, load_rows(data_root, job["kind"], source_root=source)
+    if job["kind"] in jobs.BENIGN_OOD_KINDS:
+        return source, data_root, publisher_module(job["kind"]).load_rows(data_root)
+    if job["kind"] == "pdf-diagnostic-replay":
         from malpdf.extraction.diagnostic_replay import load_replay
+
         rows = load_replay(source, jobs.JOBS)[1]
         for row in rows:
-            path = jobs.trusted_path(data_root / row['pdf_relative_path'])
-            if not path.is_file() or path.stat().st_size > job['limits']['file_max_bytes']:
-                raise ValueError('manifest_unavailable')
+            path = jobs.trusted_path(data_root / row["pdf_relative_path"])
+            if not path.is_file() or path.stat().st_size > job["limits"]["file_max_bytes"]:
+                raise ValueError("manifest_unavailable")
         return source, data_root, rows
-    if job['kind'] == 'pdf-static-cve':
+    if job["kind"] == "pdf-static-cve":
         return source, data_root, cve_rows(data_root)
-    if job['kind'] == 'pdf-static-cic-full':
+    if job["kind"] == "pdf-static-cic-full":
         from malpdf.experiments.cic_static_benchmark import checked_table, select_corpus, verify_label_provenance
-        cohort = yaml.safe_load((source / 'configs/cic_static_benchmark.yaml').read_text(encoding='utf-8'))
-        tables = {key: checked_table(data_root, cohort[key]) for key in ('split_manifest', 'source_manifest', 'normalization_manifest')}
-        rows = select_corpus(tables['split_manifest'], tables['source_manifest'], 42)
-        verify_label_provenance(rows, tables['normalization_manifest'])
+
+        cohort = yaml.safe_load((source / "configs/cic_static_benchmark.yaml").read_text(encoding="utf-8"))
+        tables = {
+            key: checked_table(data_root, cohort[key])
+            for key in ("split_manifest", "source_manifest", "normalization_manifest")
+        }
+        rows = select_corpus(tables["split_manifest"], tables["source_manifest"], 42)
+        verify_label_provenance(rows, tables["normalization_manifest"])
         if len(rows) != 1452:
-            raise ValueError('manifest_unavailable')
+            raise ValueError("manifest_unavailable")
         return source, data_root, rows
-    if job['kind'] == 'pdf-static-bulk':
+    if job["kind"] == "pdf-static-bulk":
         for rel in (BULK_SOURCE_MANIFEST, BULK_SPLIT_MANIFEST, BULK_CORPUS_MANIFEST):
             path = jobs.trusted_path(data_root / rel)
             if not path.is_file():
-                raise ValueError('manifest_unavailable')
-        return source, data_root, [
-            jobs.trusted_path(data_root / BULK_SOURCE_MANIFEST),
-            jobs.trusted_path(data_root / BULK_CORPUS_MANIFEST),
-            jobs.trusted_path(data_root / BULK_SPLIT_MANIFEST),
-        ]
+                raise ValueError("manifest_unavailable")
+        return (
+            source,
+            data_root,
+            [
+                jobs.trusted_path(data_root / BULK_SOURCE_MANIFEST),
+                jobs.trusted_path(data_root / BULK_CORPUS_MANIFEST),
+                jobs.trusted_path(data_root / BULK_SPLIT_MANIFEST),
+            ],
+        )
     from malpdf.experiments.cic_static_benchmark import checked_table, select_subset, verify_label_provenance
-    cohort = yaml.safe_load((source / 'configs/cic_static_benchmark.yaml').read_text(encoding='utf-8'))
-    tables = {key: checked_table(data_root, cohort[key]) for key in ('split_manifest', 'source_manifest', 'normalization_manifest')}
-    rows = select_subset(tables['split_manifest'], tables['source_manifest'], 32, 42)
-    verify_label_provenance(rows, tables['normalization_manifest'])
-    if len(rows) != 64 or any(row['split'] not in ('train', 'validation') for row in rows):
-        raise ValueError('manifest_unavailable')
+
+    cohort = yaml.safe_load((source / "configs/cic_static_benchmark.yaml").read_text(encoding="utf-8"))
+    tables = {
+        key: checked_table(data_root, cohort[key])
+        for key in ("split_manifest", "source_manifest", "normalization_manifest")
+    }
+    rows = select_subset(tables["split_manifest"], tables["source_manifest"], 32, 42)
+    verify_label_provenance(rows, tables["normalization_manifest"])
+    if len(rows) != 64 or any(row["split"] not in ("train", "validation") for row in rows):
+        raise ValueError("manifest_unavailable")
     return source, data_root, rows
 
 
 def worker_limits(*, prepare=False, wall_seconds=1800, fsize_bytes=8 * 1024**2):
     import resource
+
     resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
-    for name, amount in ((resource.RLIMIT_CPU, 120 if prepare else min(1700, wall_seconds - 10)), (resource.RLIMIT_AS, 2 * 1024**3),
-                         (resource.RLIMIT_FSIZE, 32 * 1024**2 if prepare else fsize_bytes), (resource.RLIMIT_NOFILE, 64), (resource.RLIMIT_NPROC, 2048)):
+    for name, amount in (
+        (resource.RLIMIT_CPU, 120 if prepare else min(1700, wall_seconds - 10)),
+        (resource.RLIMIT_AS, 2 * 1024**3),
+        (resource.RLIMIT_FSIZE, 32 * 1024**2 if prepare else fsize_bytes),
+        (resource.RLIMIT_NOFILE, 64),
+        (resource.RLIMIT_NPROC, 2048),
+    ):
         resource.setrlimit(name, (amount, amount))
 
 
-PRE_SPAWN_PHASES = ('validation', 'profile_boundary', 'worker_admission', 'worker_start')
+PRE_SPAWN_PHASES = ("validation", "profile_boundary", "worker_admission", "worker_start")
 
 
 def _available_memory_bytes():
-    meminfo = Path('/proc/meminfo')
+    meminfo = Path("/proc/meminfo")
     if not meminfo.is_file():
         return None
     try:
-        for line in meminfo.read_text(encoding='utf-8').splitlines():
-            if line.startswith('MemAvailable:'):
+        for line in meminfo.read_text(encoding="utf-8").splitlines():
+            if line.startswith("MemAvailable:"):
                 return int(line.split()[1]) * 1024
     except (OSError, ValueError, IndexError):
         return None
@@ -306,29 +391,35 @@ def _wait_for_memory_headroom(deadline, *, min_bytes=900 * 1024**2, max_wait=30.
 
 
 def _is_prespawn_admission_failure(bundle):
-    worker = (bundle.get('coverage_report') or {}).get('worker') if isinstance(bundle, dict) else None
-    if not isinstance(worker, dict) or worker.get('worker_cleanup_complete') is not None:
+    worker = (bundle.get("coverage_report") or {}).get("worker") if isinstance(bundle, dict) else None
+    if not isinstance(worker, dict) or worker.get("worker_cleanup_complete") is not None:
         return False
-    diagnostic = worker.get('diagnostic')
+    diagnostic = worker.get("diagnostic")
     if isinstance(diagnostic, dict):
         return (
-            diagnostic.get('cleanup_complete') is None
-            and diagnostic.get('worker_exit_code') is None
-            and diagnostic.get('cleanup_exit_code') is None
-            and diagnostic.get('last_phase') in PRE_SPAWN_PHASES
+            diagnostic.get("cleanup_complete") is None
+            and diagnostic.get("worker_exit_code") is None
+            and diagnostic.get("cleanup_exit_code") is None
+            and diagnostic.get("last_phase") in PRE_SPAWN_PHASES
         )
-    return worker.get('status') == 'input_error' and worker.get('worker_exit_code') is None
+    return worker.get("status") == "input_error" and worker.get("worker_exit_code") is None
 
 
 def reusable_pdf_bundle(bundle, expected_sha256):
     from malpdf.extraction.contracts import validate_bundle
-    if (not isinstance(expected_sha256, str) or not jobs.HEX.fullmatch(expected_sha256)
-            or not isinstance(bundle, dict) or bundle.get('sample_sha256') != expected_sha256
-            or not isinstance(bundle.get('status'), str) or bundle['status'] not in jobs.PDF_STATUSES):
+
+    if (
+        not isinstance(expected_sha256, str)
+        or not jobs.HEX.fullmatch(expected_sha256)
+        or not isinstance(bundle, dict)
+        or bundle.get("sample_sha256") != expected_sha256
+        or not isinstance(bundle.get("status"), str)
+        or bundle["status"] not in jobs.PDF_STATUSES
+    ):
         return False
     try:
         validate_bundle(bundle)
-        return bundle['coverage_report']['worker'].get('worker_cleanup_complete') is True
+        return bundle["coverage_report"]["worker"].get("worker_cleanup_complete") is True
     except (ValueError, TypeError, KeyError):
         return False
 
@@ -336,141 +427,185 @@ def reusable_pdf_bundle(bundle, expected_sha256):
 def pdf_inspection_limits(job):
     from malpdf.static.code_inspector import CodeInspectionLimits
 
-    limits = job['limits']
-    wall = min(60, int(limits.get('file_wall_seconds', 60)))
-    cpu = min(wall, int(limits.get('file_cpu_seconds', 45)))
-    if job['kind'] in jobs.BENIGN_OOD_KINDS:
-        return CodeInspectionLimits(wall_seconds=wall, cpu_seconds=cpu, max_file_bytes=limits['file_max_bytes'])
+    limits = job["limits"]
+    wall = min(60, int(limits.get("file_wall_seconds", 60)))
+    cpu = min(wall, int(limits.get("file_cpu_seconds", 45)))
+    if job["kind"] in jobs.BENIGN_OOD_KINDS:
+        return CodeInspectionLimits(wall_seconds=wall, cpu_seconds=cpu, max_file_bytes=limits["file_max_bytes"])
     return CodeInspectionLimits(wall_seconds=wall, cpu_seconds=cpu)
 
 
 def publisher_bundle_budget(bundle, payload, expected_sha256, limit):
-    if len(payload) <= limit or bundle.get('sample_sha256') != expected_sha256:
+    if len(payload) <= limit or bundle.get("sample_sha256") != expected_sha256:
         return bundle, payload
-    worker = bundle['coverage_report']['worker']
-    if worker.get('worker_cleanup_complete') is not True:
+    worker = bundle["coverage_report"]["worker"]
+    if worker.get("worker_cleanup_complete") is not True:
         return bundle, payload
     from malpdf.extraction.normalize import normalize_profile
 
-    bounded = normalize_profile({**worker, 'status': 'resource_limit_or_signal', 'errors': ['bundle_size_limit']},
-                                expected_sha256, bundle['extraction_profile'],
-                                provenance={'input_identity': 'verified_original', 'full_evidence_bytes': len(payload)})
+    bounded = normalize_profile(
+        {**worker, "status": "resource_limit_or_signal", "errors": ["bundle_size_limit"]},
+        expected_sha256,
+        bundle["extraction_profile"],
+        provenance={"input_identity": "verified_original", "full_evidence_bytes": len(payload)},
+    )
     return bounded, jobs.encoded(bounded)
 
 
 def pdf_worker(job_id, *, prepare=False, shard=0, count=1):
-    if sys.platform != 'linux':
-        raise ValueError('runtime_unavailable')
+    if sys.platform != "linux":
+        raise ValueError("runtime_unavailable")
     job = jobs.load_job(job_id)
     started = time.monotonic()
     try:
         return _pdf_worker(job_id, prepare=prepare, shard=shard, count=count)
     except Exception as error:
-        if not prepare and job['kind'] in jobs.PDF_KINDS and 0 <= shard < job['limits']['workers']:
+        if not prepare and job["kind"] in jobs.PDF_KINDS and 0 <= shard < job["limits"]["workers"]:
             frames = []
             trace = error.__traceback__
             while trace is not None:
                 code = trace.tb_frame.f_code
-                frames.append({'file': Path(code.co_filename).name, 'function': code.co_name, 'line': trace.tb_lineno})
+                frames.append({"file": Path(code.co_filename).name, "function": code.co_name, "line": trace.tb_lineno})
                 trace = trace.tb_next
-            directory = jobs.job_directory(job_id) / 'private_outer'
+            directory = jobs.job_directory(job_id) / "private_outer"
             directory.mkdir(mode=0o700, exist_ok=True)
-            jobs.immutable(directory / f'exception.{shard}.json', {'schema_version': 1, 'run_id': job_id, 'shard': shard,
-                'exception_type': type(error).__name__, 'exception_errno': getattr(error, 'errno', None),
-                'traceback': frames[-32:], 'last_phase': frames[-1]['function'] if frames else None,
-                'elapsed_ms': int((time.monotonic()-started)*1000), 'preserved_before_outer_exit': True})
+            jobs.immutable(
+                directory / f"exception.{shard}.json",
+                {
+                    "schema_version": 1,
+                    "run_id": job_id,
+                    "shard": shard,
+                    "exception_type": type(error).__name__,
+                    "exception_errno": getattr(error, "errno", None),
+                    "traceback": frames[-32:],
+                    "last_phase": frames[-1]["function"] if frames else None,
+                    "elapsed_ms": int((time.monotonic() - started) * 1000),
+                    "preserved_before_outer_exit": True,
+                },
+            )
         raise
 
 
 def fingerprint_module(kind):
     if kind == jobs.POOLED_TLSH_KIND:
         from malpdf.extraction import pooled_fingerprint_job
+
         return pooled_fingerprint_job
     from malpdf.extraction import holdout_fingerprint_job
+
     return holdout_fingerprint_job
 
 
 def holdout_fingerprint_worker(job, directory, *, prepare=False):
     source_imports(job)
-    fingerprint = fingerprint_module(job['kind'])
+    fingerprint = fingerprint_module(job["kind"])
 
-    inputs = fingerprint.load_inputs(Path(jobs.config()['data_root']))
+    inputs = fingerprint.load_inputs(Path(jobs.config()["data_root"]))
     if prepare:
         return
 
     started = time.monotonic()
-    def progress(completed):
-        temporary = jobs.trusted_path(directory / 'fingerprint_progress.json.tmp')
-        temporary.write_text(json.dumps(completed), encoding='ascii')
-        os.replace(temporary, directory / 'fingerprint_progress.json')
 
-    output = jobs.trusted_path(directory / 'holdout_fingerprints.json')
+    def progress(completed):
+        temporary = jobs.trusted_path(directory / "fingerprint_progress.json.tmp")
+        temporary.write_text(json.dumps(completed), encoding="ascii")
+        os.replace(temporary, directory / "fingerprint_progress.json")
+
+    output = jobs.trusted_path(directory / "holdout_fingerprints.json")
     if output.exists():
-        report = parse_json(side.bounded_read(output, job['limits']['output_bytes']))
+        report = parse_json(side.bounded_read(output, job["limits"]["output_bytes"]))
     else:
         progress(0)
-        report = fingerprint.fingerprint_plan(inputs, timeout=job['limits']['file_wall_seconds'], progress=progress)
+        report = fingerprint.fingerprint_plan(inputs, timeout=job["limits"]["file_wall_seconds"], progress=progress)
         import resource
-        counts = report['fingerprint_status_counts']
-        measured = counts.get('measured', 0)
-        missing = counts.get('tlsh_unavailable', 0)
-        unavailable = counts.get('input_unavailable', 0)
-        mismatches = counts.get('sha256_mismatch', 0) + counts.get('publisher_sha1_mismatch', 0)
-        report['runner_summary'] = {
-            'planned': job['limits']['samples'], 'completed': sum(counts.values()),
-            'observed': measured, 'partial': missing, 'failed': unavailable + mismatches,
-            'primary_available': measured + missing, 'timeout': 0,
-            'elapsed_ms': int((time.monotonic() - started) * 1000),
-            'peak_rss_bytes': int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) * 1024,
-            'status_counts': {name: amount for name, amount in (
-                ('observed', measured), ('partial', missing), ('not_run', unavailable),
-                ('decode_error', mismatches)) if amount},
+
+        counts = report["fingerprint_status_counts"]
+        measured = counts.get("measured", 0)
+        missing = counts.get("tlsh_unavailable", 0)
+        unavailable = counts.get("input_unavailable", 0)
+        mismatches = counts.get("sha256_mismatch", 0) + counts.get("publisher_sha1_mismatch", 0)
+        report["runner_summary"] = {
+            "planned": job["limits"]["samples"],
+            "completed": sum(counts.values()),
+            "observed": measured,
+            "partial": missing,
+            "failed": unavailable + mismatches,
+            "primary_available": measured + missing,
+            "timeout": 0,
+            "elapsed_ms": int((time.monotonic() - started) * 1000),
+            "peak_rss_bytes": int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) * 1024,
+            "status_counts": {
+                name: amount
+                for name, amount in (
+                    ("observed", measured),
+                    ("partial", missing),
+                    ("not_run", unavailable),
+                    ("decode_error", mismatches),
+                )
+                if amount
+            },
         }
-        payload = jobs.encoded(report) + b'\n'
-        if len(payload) > job['limits']['output_bytes']:
-            raise ValueError('report_invalid')
-        with tempfile.NamedTemporaryFile(dir=directory, prefix='.holdout-', delete=False) as stream:
+        payload = jobs.encoded(report) + b"\n"
+        if len(payload) > job["limits"]["output_bytes"]:
+            raise ValueError("report_invalid")
+        with tempfile.NamedTemporaryFile(dir=directory, prefix=".holdout-", delete=False) as stream:
             temporary_path = Path(stream.name)
             stream.write(payload)
         os.replace(temporary_path, output)
 
-    summary = report['runner_summary']
-    if (report.get('inputs') != fingerprint.contract() or report.get('new_malware_labels') != 0
-            or {row['sha256'] for row in report['fingerprints']} != {row['sha256'] for row in inputs[1]}
-            or not jobs.summary_valid(summary) or summary['completed'] != job['limits']['samples']):
-        raise ValueError('report_invalid')
-    progress(summary['completed'])
-    jobs.immutable(directory / 'pdf_summary.0.json', {**summary, 'shard': 0, 'shards': 1})
+    summary = report["runner_summary"]
+    if (
+        report.get("inputs") != fingerprint.contract()
+        or report.get("new_malware_labels") != 0
+        or {row["sha256"] for row in report["fingerprints"]} != {row["sha256"] for row in inputs[1]}
+        or not jobs.summary_valid(summary)
+        or summary["completed"] != job["limits"]["samples"]
+    ):
+        raise ValueError("report_invalid")
+    progress(summary["completed"])
+    jobs.immutable(directory / "pdf_summary.0.json", {**summary, "shard": 0, "shards": 1})
 
 
 def _pdf_worker(job_id, *, prepare=False, shard=0, count=1):
-    if sys.platform != 'linux':
-        raise ValueError('runtime_unavailable')
+    if sys.platform != "linux":
+        raise ValueError("runtime_unavailable")
     job = jobs.load_job(job_id)
-    if job['kind'] not in jobs.PDF_KINDS or job['mode'] != 'offline':
-        raise ValueError('job_mismatch')
+    if job["kind"] not in jobs.PDF_KINDS or job["mode"] != "offline":
+        raise ValueError("job_mismatch")
     if not prepare:
-        jobs.preflight('offline', attested=True)
-        claim = parse_json(side.bounded_read(jobs.job_directory(job_id) / 'claim.json', 4096))
-        if claim.get('job_id') != job_id or claim.get('hypervisor_controls_attested') is not True or claim.get('parent_pid') != os.getppid():
-            raise ValueError('approval_required')
-        if job['kind'] in jobs.FINGERPRINT_KINDS | jobs.BENIGN_OOD_KINDS | jobs.URI_REVIEW_KINDS and (
-                claim.get('start_ticks') is None or jobs.process_identity(os.getppid()) != claim['start_ticks']):
-            raise ValueError('approval_required')
-    worker_limits(prepare=prepare, wall_seconds=job['limits']['wall_seconds'], fsize_bytes=jobs.pdf_worker_fsize_limit(job['kind']))
-    if job['kind'] in jobs.FINGERPRINT_KINDS:
+        jobs.preflight("offline", attested=True)
+        claim = parse_json(side.bounded_read(jobs.job_directory(job_id) / "claim.json", 4096))
+        if (
+            claim.get("job_id") != job_id
+            or claim.get("hypervisor_controls_attested") is not True
+            or claim.get("parent_pid") != os.getppid()
+        ):
+            raise ValueError("approval_required")
+        if job["kind"] in jobs.FINGERPRINT_KINDS | jobs.BENIGN_OOD_KINDS | jobs.URI_REVIEW_KINDS | {
+            jobs.URI_HEAD_EVAL_KIND
+        } and (claim.get("start_ticks") is None or jobs.process_identity(os.getppid()) != claim["start_ticks"]):
+            raise ValueError("approval_required")
+    worker_limits(
+        prepare=prepare,
+        wall_seconds=job["limits"]["wall_seconds"],
+        fsize_bytes=jobs.pdf_worker_fsize_limit(job["kind"]),
+    )
+    if job["kind"] in jobs.FINGERPRINT_KINDS:
         if (shard, count) != (0, 1):
-            raise ValueError('job_mismatch')
+            raise ValueError("job_mismatch")
         return holdout_fingerprint_worker(job, jobs.job_directory(job_id), prepare=prepare)
     source, data_root, rows = pdf_metadata(job)
     directory = jobs.job_directory(job_id)
-    if job['kind'] == 'pdf-static-bulk':
+    if job["kind"] == "pdf-static-bulk":
         if not prepare:
-            raise ValueError('job_mismatch')
+            raise ValueError("job_mismatch")
         from malpdf.extraction.bulk_pipeline import build_clean_corpus_manifest
+
         source_manifest, bulk_manifest, split_manifest = rows
-        if parse_json(side.bounded_read(data_root / 'configs/arlington.lock.json', 2 * 1024**2)) != parse_json(side.bounded_read(source / 'configs/arlington.lock.json', 2 * 1024**2)):
-            raise ValueError('manifest_unavailable')
+        if parse_json(side.bounded_read(data_root / "configs/arlington.lock.json", 2 * 1024**2)) != parse_json(
+            side.bounded_read(source / "configs/arlington.lock.json", 2 * 1024**2)
+        ):
+            raise ValueError("manifest_unavailable")
         entries, manifest_stats = build_clean_corpus_manifest(
             [source_manifest, bulk_manifest],
             base_dir=data_root,
@@ -481,102 +616,159 @@ def _pdf_worker(job_id, *, prepare=False, shard=0, count=1):
         from malpdf.extraction.bulk_recovery import load_baseline, select_pilot
 
         contract = parse_json(side.bounded_read(source / BULK_RECOVERY_CONFIG, 65536))
-        original_job = jobs.load_job(contract['source_job'])
-        original = jobs.job_directory(original_job['job_id'])
-        claim_bytes = side.bounded_read(original / 'claim.json', 4096)
-        if (contract['schema_version'] != 1 or contract['selection_sha256'] != sel_digest
-                or original_job['job_id'] == job_id or original_job['kind'] != job['kind']
-                or original_job['commit'] != contract['source_commit']
-                or jobs.sha(side.bounded_read(original / 'job.json', 65536)) != contract['job_sha256']
-                or jobs.sha(claim_bytes) != contract['claim_sha256']
-                or jobs.sha(side.bounded_read(data_root / 'configs/arlington.lock.json', 2 * 1024**2))
-                != contract['model_lock_sha256']):
-            raise ValueError('manifest_unavailable')
+        original_job = jobs.load_job(contract["source_job"])
+        original = jobs.job_directory(original_job["job_id"])
+        claim_bytes = side.bounded_read(original / "claim.json", 4096)
+        if (
+            contract["schema_version"] != 1
+            or contract["selection_sha256"] != sel_digest
+            or original_job["job_id"] == job_id
+            or original_job["kind"] != job["kind"]
+            or original_job["commit"] != contract["source_commit"]
+            or jobs.sha(side.bounded_read(original / "job.json", 65536)) != contract["job_sha256"]
+            or jobs.sha(claim_bytes) != contract["claim_sha256"]
+            or jobs.sha(side.bounded_read(data_root / "configs/arlington.lock.json", 2 * 1024**2))
+            != contract["model_lock_sha256"]
+        ):
+            raise ValueError("manifest_unavailable")
         claim = parse_json(claim_bytes)
-        if jobs.process_identity(claim['parent_pid']) == claim['start_ticks']:
-            raise ValueError('already_claimed')
-        if any(item['kind'] == 'pdf-static-bulk' and item['job_id'] not in {original_job['job_id'], job_id}
-               for item in jobs.pending()):
-            raise ValueError('already_claimed')
+        if jobs.process_identity(claim["parent_pid"]) == claim["start_ticks"]:
+            raise ValueError("already_claimed")
+        if any(
+            item["kind"] == "pdf-static-bulk" and item["job_id"] not in {original_job["job_id"], job_id}
+            for item in jobs.pending()
+        ):
+            raise ValueError("already_claimed")
         output = jobs.trusted_path(data_root / BULK_OUTPUT_REL)
         baseline_rows, _ = load_baseline(output, entries, contract)
-        jobs.immutable(directory / 'bulk_plan.json', {
-            'job_id': job_id, 'planned_denominator': len(entries), 'manifest_stats': manifest_stats,
-            'selection_sha256': sel_digest, 'baseline': contract, 'pilot': select_pilot(baseline_rows),
-            'output_root': BULK_OUTPUT_REL,
-        })
+        jobs.immutable(
+            directory / "bulk_plan.json",
+            {
+                "job_id": job_id,
+                "planned_denominator": len(entries),
+                "manifest_stats": manifest_stats,
+                "selection_sha256": sel_digest,
+                "baseline": contract,
+                "pilot": select_pilot(baseline_rows),
+                "output_root": BULK_OUTPUT_REL,
+            },
+        )
         return
-    if len(rows) != job['limits']['samples']:
-        raise ValueError('manifest_unavailable')
-    selection = {'job_id': job_id, 'rows': rows, 'selection_sha256': jobs.sha(jobs.encoded(rows))}
+    if len(rows) != job["limits"]["samples"]:
+        raise ValueError("manifest_unavailable")
+    selection = {"job_id": job_id, "rows": rows, "selection_sha256": jobs.sha(jobs.encoded(rows))}
     if prepare:
-        if job['kind'] == 'pdf-diagnostic-replay':
+        if job["kind"] == "pdf-diagnostic-replay":
             from malpdf.extraction.diagnostic_replay_runner import prepare_replay
+
             prepare_replay(job, directory, source, jobs)
-        jobs.immutable(directory / 'selection.json', selection)
+        jobs.immutable(directory / "selection.json", selection)
         return
-    stored = parse_json(side.bounded_read(directory / 'selection.json', 4 * 1024**2))
+    stored = parse_json(side.bounded_read(directory / "selection.json", 4 * 1024**2))
     if stored != selection:
-        raise ValueError('manifest_unavailable')
-    if not 0 <= shard < count <= job['limits']['workers']:
-        raise ValueError('job_mismatch')
+        raise ValueError("manifest_unavailable")
+    if not 0 <= shard < count <= job["limits"]["workers"]:
+        raise ValueError("job_mismatch")
     rows = [(index, row) for index, row in enumerate(rows) if index % count == shard]
+    if job["kind"] == jobs.URI_HEAD_EVAL_KIND:
+        from malpdf.extraction import uri_head_eval_job
+
+        summary = uri_head_eval_job.run_shard(
+            job=job,
+            directory=directory,
+            data_root=data_root,
+            source_root=source,
+            rows=rows,
+            shard=shard,
+            count=count,
+            jobs_mod=jobs,
+        )
+        jobs.immutable(directory / f"pdf_summary.{shard}.json", summary)
+        return
     from malpdf.extraction.arlington_model import load_model
     from malpdf.extraction.jobs import require_extraction_lab
     from malpdf.extraction.orchestrator import extract_pdf
     from malpdf.static.code_inspector import _worker_count
+
     require_extraction_lab(True, repository_root=data_root)
     limits = pdf_inspection_limits(job)
     _worker_count(1, limits)
-    if parse_json(side.bounded_read(data_root / 'configs/arlington.lock.json', 2 * 1024**2)) != parse_json(side.bounded_read(source / 'configs/arlington.lock.json', 2 * 1024**2)):
-        raise ValueError('manifest_unavailable')
+    if parse_json(side.bounded_read(data_root / "configs/arlington.lock.json", 2 * 1024**2)) != parse_json(
+        side.bounded_read(source / "configs/arlington.lock.json", 2 * 1024**2)
+    ):
+        raise ValueError("manifest_unavailable")
     catalog = load_model(data_root)
-    if job['kind'] == 'pdf-diagnostic-replay':
+    if job["kind"] == "pdf-diagnostic-replay":
         from malpdf.extraction.diagnostic_replay_runner import run_shard
+
         run_shard(job, directory, source, data_root, rows, limits, catalog, shard, count, jobs)
         return
     started = time.monotonic()
-    summary = dict.fromkeys(('planned', 'completed', 'observed', 'bounded_complete', 'partial', 'failed', 'primary_available', 'timeout', 'elapsed_ms', 'peak_rss_bytes'), 0)
-    summary['planned'] = job['limits']['samples']
-    summary['shard'], summary['shards'] = shard, count
+    summary = dict.fromkeys(
+        (
+            "planned",
+            "completed",
+            "observed",
+            "bounded_complete",
+            "partial",
+            "failed",
+            "primary_available",
+            "timeout",
+            "elapsed_ms",
+            "peak_rss_bytes",
+        ),
+        0,
+    )
+    summary["planned"] = job["limits"]["samples"]
+    summary["shard"], summary["shards"] = shard, count
     statuses = {}
-    outputs = directory / 'private_bundles'
+    outputs = directory / "private_bundles"
     outputs.mkdir(mode=0o700, exist_ok=True)
     total = 0
-    os.environ['MALPDF_LAB_ISOLATED'] = '1'
+    os.environ["MALPDF_LAB_ISOLATED"] = "1"
     cohort_args = {}
-    boundary = 'data/raw/cve_t4pdf' if job['kind'] == 'pdf-static-cve' else 'data/raw/cic_pdf'
+    boundary = "data/raw/cve_t4pdf" if job["kind"] == "pdf-static-cve" else "data/raw/cic_pdf"
     publisher = None
-    if job['kind'] in jobs.URI_REVIEW_KINDS:
+    if job["kind"] in jobs.URI_REVIEW_KINDS:
         from malpdf.extraction.uri_review_job import RAW_ROOT, SAFEDOCS_RAW_ROOT
-        boundary = SAFEDOCS_RAW_ROOT if job['kind'] == jobs.URI_SAFEDOCS_REVIEW_KIND else RAW_ROOT
-        cohort_args = {'include_byte_images': False, 'coalesce_checkpoints': True}
-    if job['kind'] in jobs.BENIGN_OOD_KINDS:
-        publisher = publisher_module(job['kind'])
+
+        boundary = SAFEDOCS_RAW_ROOT if job["kind"] == jobs.URI_SAFEDOCS_REVIEW_KIND else RAW_ROOT
+        cohort_args = {"include_byte_images": False, "coalesce_checkpoints": True}
+    if job["kind"] in jobs.BENIGN_OOD_KINDS:
+        publisher = publisher_module(job["kind"])
         boundary = publisher.RAW_ROOT
-        cohort_args = {'include_byte_images': False, 'coalesce_checkpoints': True}
-    bundle_limit = jobs.pdf_bundle_limit(job['kind'])
+        cohort_args = {"include_byte_images": False, "coalesce_checkpoints": True}
+    bundle_limit = jobs.pdf_bundle_limit(job["kind"])
     for index, row in rows:
-        if time.monotonic() - started > job['limits']['wall_seconds'] - 25:
-            jobs.write_pdf_halt(job, directory, shard=shard, index=index, reason='wall_limit')
+        if time.monotonic() - started > job["limits"]["wall_seconds"] - 25:
+            jobs.write_pdf_halt(job, directory, shard=shard, index=index, reason="wall_limit")
             break
-        target = outputs / f'{index:04d}.json'
-        target_tmp = outputs / f'{index:04d}.json.tmp'
+        target = outputs / f"{index:04d}.json"
+        target_tmp = outputs / f"{index:04d}.json.tmp"
         if publisher is not None:
-            measurement = directory / f'benign_tls.{index}.json'
+            measurement = directory / f"benign_tls.{index}.json"
             if not measurement.is_file():
                 require_extraction_lab(True, repository_root=data_root)
                 jobs.immutable(measurement, publisher.fingerprint(data_root, row))
         if target.is_file():
             try:
                 existing = parse_json(side.bounded_read(target, bundle_limit + 1024))
-                if reusable_pdf_bundle(existing, row['pdf_sha256']):
-                    summary['completed'] += 1
-                    summary['bounded_complete'] += (existing['status'] == 'bounded_complete')
-                    summary['observed' if existing['status'] in ('observed', 'bounded_complete') else 'partial' if existing['status'] == 'partial' else 'failed'] += 1
-                    statuses[existing['status']] = statuses.get(existing['status'], 0) + 1
-                    summary['primary_available'] += any(item['kind'] == 'primary_checkpoint' for item in existing.get('evidence_store', {}).get('records', []))
-                    summary['timeout'] += existing['status'] == 'timeout'
+                if reusable_pdf_bundle(existing, row["pdf_sha256"]):
+                    summary["completed"] += 1
+                    summary["bounded_complete"] += existing["status"] == "bounded_complete"
+                    summary[
+                        "observed"
+                        if existing["status"] in ("observed", "bounded_complete")
+                        else "partial"
+                        if existing["status"] == "partial"
+                        else "failed"
+                    ] += 1
+                    statuses[existing["status"]] = statuses.get(existing["status"], 0) + 1
+                    summary["primary_available"] += any(
+                        item["kind"] == "primary_checkpoint"
+                        for item in existing.get("evidence_store", {}).get("records", [])
+                    )
+                    summary["timeout"] += existing["status"] == "timeout"
                     continue
             except (OSError, ValueError):
                 pass
@@ -590,77 +782,105 @@ def _pdf_worker(job_id, *, prepare=False, shard=0, count=1):
             except OSError:
                 pass
         require_extraction_lab(True, repository_root=data_root)
-        deadline = started + job['limits']['wall_seconds'] - 25
+        deadline = started + job["limits"]["wall_seconds"] - 25
         _wait_for_memory_headroom(deadline)
-        bundle = extract_pdf(data_root / row['pdf_relative_path'], boundary=data_root / boundary,
-            expected_sha256=row['pdf_sha256'], limits=limits, arlington_catalog=catalog,
-            run_id=job['job_id'], entry_point='lab_runner.pdf_static_worker', **cohort_args)
+        bundle = extract_pdf(
+            data_root / row["pdf_relative_path"],
+            boundary=data_root / boundary,
+            expected_sha256=row["pdf_sha256"],
+            limits=limits,
+            arlington_catalog=catalog,
+            run_id=job["job_id"],
+            entry_point="lab_runner.pdf_static_worker",
+            **cohort_args,
+        )
         for delay in (1.0, 2.0, 4.0):
             if not _is_prespawn_admission_failure(bundle) or time.monotonic() + delay >= deadline:
                 break
             time.sleep(delay)
             _wait_for_memory_headroom(deadline)
-            bundle = extract_pdf(data_root / row['pdf_relative_path'], boundary=data_root / boundary,
-                expected_sha256=row['pdf_sha256'], limits=limits, arlington_catalog=catalog,
-                run_id=job['job_id'], entry_point='lab_runner.pdf_static_worker', **cohort_args)
+            bundle = extract_pdf(
+                data_root / row["pdf_relative_path"],
+                boundary=data_root / boundary,
+                expected_sha256=row["pdf_sha256"],
+                limits=limits,
+                arlington_catalog=catalog,
+                run_id=job["job_id"],
+                entry_point="lab_runner.pdf_static_worker",
+                **cohort_args,
+            )
         payload = jobs.encoded(bundle)
-        if publisher is not None or job['kind'] in jobs.URI_REVIEW_KINDS:
-            bundle, payload = publisher_bundle_budget(bundle, payload, row['pdf_sha256'], bundle_limit)
+        if publisher is not None or job["kind"] in jobs.URI_REVIEW_KINDS:
+            bundle, payload = publisher_bundle_budget(bundle, payload, row["pdf_sha256"], bundle_limit)
         if len(payload) > bundle_limit:
-            jobs.write_pdf_halt(job, directory, shard=shard, index=index, reason='bundle_size_limit')
+            jobs.write_pdf_halt(job, directory, shard=shard, index=index, reason="bundle_size_limit")
             break
-        if total + len(payload) > job['limits']['output_bytes']:
-            jobs.write_pdf_halt(job, directory, shard=shard, index=index, reason='output_limit')
+        if total + len(payload) > job["limits"]["output_bytes"]:
+            jobs.write_pdf_halt(job, directory, shard=shard, index=index, reason="output_limit")
             break
-        with target_tmp.open('wb') as output:
+        with target_tmp.open("wb") as output:
             output.write(payload)
         os.replace(target_tmp, target)
         total += len(payload)
-        summary['completed'] += 1
-        summary['bounded_complete'] += (bundle['status'] == 'bounded_complete')
-        summary['observed' if bundle['status'] in ('observed', 'bounded_complete') else 'partial' if bundle['status'] == 'partial' else 'failed'] += 1
-        statuses[bundle['status']] = statuses.get(bundle['status'], 0) + 1
-        summary['primary_available'] += any(item['kind'] == 'primary_checkpoint' for item in bundle['evidence_store']['records'])
-        worker = bundle['coverage_report']['worker']
-        summary['timeout'] += bundle['status'] == 'timeout'
-        summary['peak_rss_bytes'] = max(summary['peak_rss_bytes'], worker.get('peak_rss_bytes') or 0)
-        if worker.get('worker_cleanup_complete') is not True and not _is_prespawn_admission_failure(bundle):
-            jobs.write_pdf_halt(job, directory, shard=shard, index=index, reason='worker_cleanup_incomplete')
+        summary["completed"] += 1
+        summary["bounded_complete"] += bundle["status"] == "bounded_complete"
+        summary[
+            "observed"
+            if bundle["status"] in ("observed", "bounded_complete")
+            else "partial"
+            if bundle["status"] == "partial"
+            else "failed"
+        ] += 1
+        statuses[bundle["status"]] = statuses.get(bundle["status"], 0) + 1
+        summary["primary_available"] += any(
+            item["kind"] == "primary_checkpoint" for item in bundle["evidence_store"]["records"]
+        )
+        worker = bundle["coverage_report"]["worker"]
+        summary["timeout"] += bundle["status"] == "timeout"
+        summary["peak_rss_bytes"] = max(summary["peak_rss_bytes"], worker.get("peak_rss_bytes") or 0)
+        if worker.get("worker_cleanup_complete") is not True and not _is_prespawn_admission_failure(bundle):
+            jobs.write_pdf_halt(job, directory, shard=shard, index=index, reason="worker_cleanup_incomplete")
             break
-    summary['elapsed_ms'] = int((time.monotonic() - started) * 1000)
-    jobs.immutable(directory / f'pdf_summary.{shard}.json', {**summary, 'status_counts': statuses})
+    summary["elapsed_ms"] = int((time.monotonic() - started) * 1000)
+    jobs.immutable(directory / f"pdf_summary.{shard}.json", {**summary, "status_counts": statuses})
 
 
 def pdf_bulk_worker(job_id):
-    if sys.platform != 'linux':
-        raise ValueError('runtime_unavailable')
+    if sys.platform != "linux":
+        raise ValueError("runtime_unavailable")
     job = jobs.load_job(job_id)
-    if job['kind'] != 'pdf-static-bulk' or job['mode'] != 'offline':
-        raise ValueError('job_mismatch')
-    jobs.preflight('offline', attested=True)
+    if job["kind"] != "pdf-static-bulk" or job["mode"] != "offline":
+        raise ValueError("job_mismatch")
+    jobs.preflight("offline", attested=True)
     directory = jobs.job_directory(job_id)
-    attempt_id = os.environ.get('MALPDF_BULK_ATTEMPT', '')
-    if len(attempt_id) != 32 or not jobs.HEX.fullmatch(attempt_id * 2) or sys.stdin.buffer.read(1) != b'1':
-        raise ValueError('approval_required')
-    attempt = jobs.trusted_path(directory / 'bulk_attempts' / attempt_id)
-    claim = parse_json(side.bounded_read(directory / 'claim.json', 4096))
-    if claim.get('job_id') != job_id or claim.get('hypervisor_controls_attested') is not True or claim.get('parent_pid') != os.getppid():
-        raise ValueError('approval_required')
+    attempt_id = os.environ.get("MALPDF_BULK_ATTEMPT", "")
+    if len(attempt_id) != 32 or not jobs.HEX.fullmatch(attempt_id * 2) or sys.stdin.buffer.read(1) != b"1":
+        raise ValueError("approval_required")
+    attempt = jobs.trusted_path(directory / "bulk_attempts" / attempt_id)
+    claim = parse_json(side.bounded_read(directory / "claim.json", 4096))
+    if (
+        claim.get("job_id") != job_id
+        or claim.get("hypervisor_controls_attested") is not True
+        or claim.get("parent_pid") != os.getppid()
+    ):
+        raise ValueError("approval_required")
     started = time.monotonic()
-    deadline = float(os.environ['MALPDF_BULK_DEADLINE'])
-    if not started < deadline <= started + job['limits']['wall_seconds']:
-        raise jobs.BulkInterrupted('worker_timeout')
+    deadline = float(os.environ["MALPDF_BULK_DEADLINE"])
+    if not started < deadline <= started + job["limits"]["wall_seconds"]:
+        raise jobs.BulkInterrupted("worker_timeout")
 
     def pause_bulk(*_):
-        raise jobs.BulkInterrupted('worker_timeout')
+        raise jobs.BulkInterrupted("worker_timeout")
 
     signal.signal(signal.SIGALRM, pause_bulk)
     signal.setitimer(signal.ITIMER_REAL, deadline - started)
-    os.environ['MALPDF_LAB_ISOLATED'] = '1'
+    os.environ["MALPDF_LAB_ISOLATED"] = "1"
     source, data_root, rows = pdf_metadata(job)
     source_manifest, bulk_manifest, split_manifest = rows
-    if parse_json(side.bounded_read(data_root / 'configs/arlington.lock.json', 2 * 1024**2)) != parse_json(side.bounded_read(source / 'configs/arlington.lock.json', 2 * 1024**2)):
-        raise ValueError('manifest_unavailable')
+    if parse_json(side.bounded_read(data_root / "configs/arlington.lock.json", 2 * 1024**2)) != parse_json(
+        side.bounded_read(source / "configs/arlington.lock.json", 2 * 1024**2)
+    ):
+        raise ValueError("manifest_unavailable")
     from malpdf.extraction.arlington_model import load_model, write_catalog_snapshot
     from malpdf.extraction.batch import extract_pdfs
     from malpdf.extraction.bulk_pipeline import (
@@ -670,8 +890,9 @@ def pdf_bulk_worker(job_id):
     )
     from malpdf.extraction.bulk_recovery import checkpoint_partition, run_pilot
     from malpdf.extraction.jobs import require_extraction_lab
+
     require_extraction_lab(True, repository_root=data_root)
-    plan = parse_json(side.bounded_read(directory / 'bulk_plan.json', 65536))
+    plan = parse_json(side.bounded_read(directory / "bulk_plan.json", 65536))
     entries, manifest_stats = build_clean_corpus_manifest(
         [source_manifest, bulk_manifest],
         base_dir=data_root,
@@ -679,27 +900,34 @@ def pdf_bulk_worker(job_id):
         cic_split_manifest_csv=split_manifest,
     )
     sel_digest = jobs.sha(jobs.encoded([(e.index, e.sha256, e.label, e.label_source, e.split) for e in entries]))
-    if (plan.get('job_id') != job_id or plan.get('planned_denominator') != len(entries)
-            or plan.get('selection_sha256') != sel_digest or plan.get('output_root') != BULK_OUTPUT_REL
-            or plan.get('baseline') != parse_json(side.bounded_read(source / BULK_RECOVERY_CONFIG, 65536))):
-        raise ValueError('manifest_unavailable')
+    if (
+        plan.get("job_id") != job_id
+        or plan.get("planned_denominator") != len(entries)
+        or plan.get("selection_sha256") != sel_digest
+        or plan.get("output_root") != BULK_OUTPUT_REL
+        or plan.get("baseline") != parse_json(side.bounded_read(source / BULK_RECOVERY_CONFIG, 65536))
+    ):
+        raise ValueError("manifest_unavailable")
     catalog = load_model(data_root)
-    lim = job['limits']
+    lim = job["limits"]
     limits = default_bulk_limits(
-        wall_seconds=int(lim['file_wall_seconds']),
-        cpu_seconds=int(lim['file_cpu_seconds']),
-        memory_mb=max(512, int(lim['file_memory_bytes']) // (1024 * 1024)),
-        max_file_mb=max(1, int(lim['file_max_bytes']) // (1024 * 1024)),
+        wall_seconds=int(lim["file_wall_seconds"]),
+        cpu_seconds=int(lim["file_cpu_seconds"]),
+        memory_mb=max(512, int(lim["file_memory_bytes"]) // (1024 * 1024)),
+        max_file_mb=max(1, int(lim["file_max_bytes"]) // (1024 * 1024)),
     )
     output_dir = jobs.trusted_path(data_root / BULK_OUTPUT_REL)
     total_planned = len(entries)
-    print(f'Bulk corpus ready: {total_planned} unique clean PDFs | workers={lim["workers"]} | output={output_dir}', flush=True)
+    print(
+        f"Bulk corpus ready: {total_planned} unique clean PDFs | workers={lim['workers']} | output={output_dir}",
+        flush=True,
+    )
 
     def on_progress(ev):
-        if ev.get('event') == 'chunk_completed':
-            cid = ev['chunk_id']
-            tot = ev['total_chunks']
-            resumed = ' [resumed]' if ev.get('resumed_from_checkpoint') else ''
+        if ev.get("event") == "chunk_completed":
+            cid = ev["chunk_id"]
+            tot = ev["total_chunks"]
+            resumed = " [resumed]" if ev.get("resumed_from_checkpoint") else ""
             elapsed = int(time.monotonic() - started)
             print(
                 f"[Chunk {cid + 1:02d}/{tot}] gnn={ev['gnn_graphs']}/{ev['count']} | "
@@ -708,38 +936,44 @@ def pdf_bulk_worker(job_id):
                 flush=True,
             )
 
-    snapshot_path = attempt / 'arlington.json'
+    snapshot_path = attempt / "arlington.json"
     snapshot = (str(snapshot_path), write_catalog_snapshot(snapshot_path, catalog))
-    registry = attempt / 'workers'
+    registry = attempt / "workers"
     diagnostics = {}
-    pilot_shas = {row['sha256'] for row in plan['pilot']}
-    adopted, replacements = checkpoint_partition(plan['baseline'])
+    pilot_shas = {row["sha256"] for row in plan["pilot"]}
+    adopted, replacements = checkpoint_partition(plan["baseline"])
 
     def extract(chunk, *, limits, workers):
         from contextlib import closing
 
         stream = extract_pdfs(
-            [entry.pdf_path for entry in chunk], boundary=data_root / 'data/raw', workers=workers,
+            [entry.pdf_path for entry in chunk],
+            boundary=data_root / "data/raw",
+            workers=workers,
             expected_hashes={entry.index: entry.sha256 for entry in chunk},
-            input_indices=[entry.index for entry in chunk], profile='deep-static', limits=limits,
-            include_byte_images=False, coalesce_checkpoints=True, arlington_catalog=catalog,
+            input_indices=[entry.index for entry in chunk],
+            profile="deep-static",
+            limits=limits,
+            include_byte_images=False,
+            coalesce_checkpoints=True,
+            arlington_catalog=catalog,
             bulk_worker=(snapshot, registry),
         )
         with closing(stream):
             for index, bundle in stream:
-                sha = bundle.get('sample_sha256')
-                coverage = bundle.get('coverage_report') or {}
-                worker = coverage.get('worker', {})
-                diagnostic = worker.get('diagnostic') or {}
+                sha = bundle.get("sample_sha256")
+                coverage = bundle.get("coverage_report") or {}
+                worker = coverage.get("worker", {})
+                diagnostic = worker.get("diagnostic") or {}
                 if sha in pilot_shas:
                     diagnostics[sha] = {
-                        'cleanup_complete': worker.get('worker_cleanup_complete'),
-                        'result_verified': diagnostic.get('preserved_before_cleanup') is True
-                            and diagnostic.get('failure_kind') is None,
-                        'inventory_metadata_limit': 'inventory_metadata_limit' in coverage.get('limitations', []),
+                        "cleanup_complete": worker.get("worker_cleanup_complete"),
+                        "result_verified": diagnostic.get("preserved_before_cleanup") is True
+                        and diagnostic.get("failure_kind") is None,
+                        "inventory_metadata_limit": "inventory_metadata_limit" in coverage.get("limitations", []),
                     }
-                if diagnostic.get('bulk_stall_observed'):
-                    print(f'Worker stall observed | index={index} | worker={worker.get("status")}', flush=True)
+                if diagnostic.get("bulk_stall_observed"):
+                    print(f"Worker stall observed | index={index} | worker={worker.get('status')}", flush=True)
                 yield index, bundle
 
     def run(selection, output, chunk_size):
@@ -754,105 +988,141 @@ def pdf_bulk_worker(job_id):
         def sample():
             nonlocal rss_peak
             while not stopped.is_set():
-                pids = (int(path.stem) for path in registry.glob('*.json') if path.stem.isdecimal())
+                pids = (int(path.stem) for path in registry.glob("*.json") if path.stem.isdecimal())
                 rss_peak = max(rss_peak, resident_bytes(os.getpid()) + sum(resident_bytes(pid) for pid in pids))
                 stopped.wait(0.25)
 
-        observer = threading.Thread(target=sample, name='bulk-memory', daemon=True)
+        observer = threading.Thread(target=sample, name="bulk-memory", daemon=True)
         observer.start()
         began = time.monotonic()
         try:
             summary = run_hybrid_bulk_extraction(
-                selection, base_dir=data_root, output_dir=output, workers=int(lim['workers']),
-                chunk_size=chunk_size, limits=limits, device='cpu', include_markov=True,
+                selection,
+                base_dir=data_root,
+                output_dir=output,
+                workers=int(lim["workers"]),
+                chunk_size=chunk_size,
+                limits=limits,
+                device="cpu",
+                include_markov=True,
                 manifest_stats=manifest_stats if corpus else None,
-                extractor_fn=extract, progress=on_progress,
-                producer={'commit': job['commit'], 'job_id': job_id, 'selection_sha256': sel_digest},
+                extractor_fn=extract,
+                progress=on_progress,
+                producer={"commit": job["commit"], "job_id": job_id, "selection_sha256": sel_digest},
                 adopted_checkpoints=adopted if corpus else (),
                 replaced_checkpoints=replacements if corpus else None,
             )
         finally:
             stopped.set()
             observer.join()
-        return dict(summary, sampled_process_tree_rss_sum_peak_bytes=rss_peak,
-                    elapsed_seconds=round(time.monotonic() - began, 3))
+        return dict(
+            summary,
+            sampled_process_tree_rss_sum_peak_bytes=rss_peak,
+            elapsed_seconds=round(time.monotonic() - began, 3),
+        )
 
-    run_pilot(directory, output_dir, entries, plan, run, diagnostics, commit=job['commit'])
+    run_pilot(directory, output_dir, entries, plan, run, diagnostics, commit=job["commit"])
     summary_doc = run(entries, output_dir, 500)
-    counts = dict(summary_doc['status_counts'])
+    counts = dict(summary_doc["status_counts"])
     completed = sum(counts.values())
-    observed = counts.get('observed', 0) + counts.get('bounded_complete', 0)
-    partial = counts.get('partial', 0)
+    observed = counts.get("observed", 0) + counts.get("bounded_complete", 0)
+    partial = counts.get("partial", 0)
     failed = completed - observed - partial
     pdf_summary = {
-        'planned': summary_doc['planned_denominator'],
-        'completed': completed,
-        'observed': observed,
-        'bounded_complete': counts.get('bounded_complete', 0),
-        'partial': partial,
-        'failed': failed,
-        'primary_available': min(completed, int(summary_doc.get('primary_available_count', 0))),
-        'timeout': min(completed, int(summary_doc.get('timeout_count', 0))),
-        'elapsed_ms': int((time.monotonic() - started) * 1000),
-        'peak_rss_bytes': min(2 * 1024**3, int(summary_doc.get('peak_rss_bytes', 0))),
-        'status_counts': counts,
+        "planned": summary_doc["planned_denominator"],
+        "completed": completed,
+        "observed": observed,
+        "bounded_complete": counts.get("bounded_complete", 0),
+        "partial": partial,
+        "failed": failed,
+        "primary_available": min(completed, int(summary_doc.get("primary_available_count", 0))),
+        "timeout": min(completed, int(summary_doc.get("timeout_count", 0))),
+        "elapsed_ms": int((time.monotonic() - started) * 1000),
+        "peak_rss_bytes": min(2 * 1024**3, int(summary_doc.get("peak_rss_bytes", 0))),
+        "status_counts": counts,
     }
-    jobs.immutable(attempt / 'pdf_summary.json', pdf_summary)
+    jobs.immutable(attempt / "pdf_summary.json", pdf_summary)
 
 
 def historical(job_id):
     directory = jobs.job_directory(job_id)
-    value = parse_json(side.bounded_read(directory / 'job.json', MAX_REPORT))
-    fields = {'schema_version', 'api', 'commit', 'archive_sha256', 'manifest_sha256', 'mode', 'kind', 'limits', 'job_id', 'attempt'}
-    if not isinstance(value, dict) or set(value) != fields or value.get('job_id') != job_id or value.get('kind') not in jobs.PDF_KINDS:
-        raise ValueError('job_mismatch')
-    limits = value.get('limits')
-    max_samples = 0 if value.get('kind') == 'pdf-static-bulk' else None
-    if not isinstance(limits, dict) or type(limits.get('samples')) is not int or (max_samples is not None and limits['samples'] != 0) or (max_samples is None and not 1 <= limits['samples'] <= 4096):
-        raise ValueError('job_mismatch')
+    value = parse_json(side.bounded_read(directory / "job.json", MAX_REPORT))
+    fields = {
+        "schema_version",
+        "api",
+        "commit",
+        "archive_sha256",
+        "manifest_sha256",
+        "mode",
+        "kind",
+        "limits",
+        "job_id",
+        "attempt",
+    }
+    if (
+        not isinstance(value, dict)
+        or set(value) != fields
+        or value.get("job_id") != job_id
+        or value.get("kind") not in jobs.PDF_KINDS
+    ):
+        raise ValueError("job_mismatch")
+    limits = value.get("limits")
+    max_samples = 0 if value.get("kind") == "pdf-static-bulk" else None
+    if (
+        not isinstance(limits, dict)
+        or type(limits.get("samples")) is not int
+        or (max_samples is not None and limits["samples"] != 0)
+        or (max_samples is None and not 1 <= limits["samples"] <= 4096)
+    ):
+        raise ValueError("job_mismatch")
     return directory, value
 
 
 def replay_report(job_id):
     job = jobs.load_job(job_id)
-    if job['kind'] != 'pdf-diagnostic-replay':
-        raise ValueError('job_mismatch')
+    if job["kind"] != "pdf-diagnostic-replay":
+        raise ValueError("job_mismatch")
     source = source_imports(job)
     from malpdf.extraction.diagnostic_replay import load_replay
     from malpdf.extraction.diagnostic_replay_report import finalize_report
+
     lock, _ = load_replay(source, jobs.JOBS)
     return finalize_report(job, jobs.job_directory(job_id), lock, jobs)
 
 
 def bundle_view(directory, index, limit=8 * 1024**2 + 1024):
-    path = directory / 'private_bundles' / f'{index:04d}.json'
+    path = directory / "private_bundles" / f"{index:04d}.json"
     try:
         value = parse_json(side.bounded_read(path, limit))
     except OSError:
         return None
-    if not isinstance(value, dict) or not isinstance(value.get('status'), str) or value['status'] not in jobs.PDF_STATUSES:
-        raise ValueError('report_invalid')
-    return value['status'], jobs.sha(jobs.encoded(value.get('feature_store')))
+    if (
+        not isinstance(value, dict)
+        or not isinstance(value.get("status"), str)
+        or value["status"] not in jobs.PDF_STATUSES
+    ):
+        raise ValueError("report_invalid")
+    return value["status"], jobs.sha(jobs.encoded(value.get("feature_store")))
 
 
 def selection_id(directory):
     try:
-        value = parse_json(side.bounded_read(directory / 'selection.json', 4 * 1024**2))
+        value = parse_json(side.bounded_read(directory / "selection.json", 4 * 1024**2))
     except OSError:
         return None
-    return value.get('selection_sha256') if isinstance(value, dict) else None
+    return value.get("selection_sha256") if isinstance(value, dict) else None
 
 
 def compare(left_id, right_id):
     left, left_job = historical(left_id)
     right, right_job = historical(right_id)
-    samples = left_job['limits']['samples']
-    if samples != right_job['limits']['samples']:
-        raise ValueError('job_mismatch')
+    samples = left_job["limits"]["samples"]
+    if samples != right_job["limits"]["samples"]:
+        raise ValueError("job_mismatch")
     identical = status_mismatch = feature_mismatch = missing = 0
     first_mismatch = None
-    left_limit = jobs.pdf_bundle_limit(left_job['kind']) + 1024
-    right_limit = jobs.pdf_bundle_limit(right_job['kind']) + 1024
+    left_limit = jobs.pdf_bundle_limit(left_job["kind"]) + 1024
+    right_limit = jobs.pdf_bundle_limit(right_job["kind"]) + 1024
     for index in range(samples):
         one, two = bundle_view(left, index, left_limit), bundle_view(right, index, right_limit)
         if one is not None and two is not None and one == two:
@@ -866,184 +1136,244 @@ def compare(left_id, right_id):
         if first_mismatch is None:
             first_mismatch = index
     selection = selection_id(left)
-    return {'compared': samples, 'identical': identical, 'status_mismatch': status_mismatch,
-            'feature_mismatch': feature_mismatch, 'missing_bundles': missing,
-            'first_mismatch_index': first_mismatch,
-            'same_selection': selection is not None and selection == selection_id(right),
-            'same_commit': left_job['commit'] == right_job['commit']}
+    return {
+        "compared": samples,
+        "identical": identical,
+        "status_mismatch": status_mismatch,
+        "feature_mismatch": feature_mismatch,
+        "missing_bundles": missing,
+        "first_mismatch_index": first_mismatch,
+        "same_selection": selection is not None and selection == selection_id(right),
+        "same_commit": left_job["commit"] == right_job["commit"],
+    }
 
 
 def historical_report(job_id):
     directory, _ = historical(job_id)
-    path = directory / 'result.json'
+    path = directory / "result.json"
     if not path.is_file():
-        return {'job_id': job_id, 'status': 'interrupted', 'reason': 'already_claimed', 'pdf_summary': None}
+        return {"job_id": job_id, "status": "interrupted", "reason": "already_claimed", "pdf_summary": None}
     value = parse_json(side.bounded_read(path, MAX_REPORT))
-    fields = {'schema_version', 'job', 'status', 'reason', 'checks', 'pdf_summary', 'preflight', 'generated_utc'}
-    if (not isinstance(value, dict) or set(value) != fields
-            or value.get('status') not in ('queued', 'running', 'passed', 'partial', 'failed', 'blocked', 'interrupted')
-            or value.get('reason') is not None and value['reason'] not in jobs.REASONS):
-        raise ValueError('report_invalid')
-    summary = value['pdf_summary']
+    fields = {"schema_version", "job", "status", "reason", "checks", "pdf_summary", "preflight", "generated_utc"}
+    if (
+        not isinstance(value, dict)
+        or set(value) != fields
+        or value.get("status") not in ("queued", "running", "passed", "partial", "failed", "blocked", "interrupted")
+        or value.get("reason") is not None
+        and value["reason"] not in jobs.REASONS
+    ):
+        raise ValueError("report_invalid")
+    summary = value["pdf_summary"]
     if summary is not None:
-        current = isinstance(summary, dict) and set(summary) - {'bounded_complete'} == jobs.SUMMARY_FIELDS and jobs.summary_valid(summary)
+        current = (
+            isinstance(summary, dict)
+            and set(summary) - {"bounded_complete"} == jobs.SUMMARY_FIELDS
+            and jobs.summary_valid(summary)
+        )
         if not current and not jobs.legacy_summary_valid(summary):
-            raise ValueError('report_invalid')
-    return {'job_id': job_id, 'status': value['status'], 'reason': value['reason'], 'pdf_summary': summary}
+            raise ValueError("report_invalid")
+    return {"job_id": job_id, "status": value["status"], "reason": value["reason"], "pdf_summary": summary}
 
 
 def choose(items):
     if not items:
-        raise ValueError('manifest_unavailable')
+        raise ValueError("manifest_unavailable")
     for index, job in enumerate(items, 1):
         print(f"{index}. {job['kind']} | {job['mode']} | {job['job_id'][:12]}")
     if len(items) == 1:
         return items[0]
-    answer = input('Chon job [1]: ').strip() or '1'
+    answer = input("Chon job [1]: ").strip() or "1"
     if not answer.isdecimal() or not 1 <= int(answer) <= len(items):
-        raise ValueError('job_mismatch')
+        raise ValueError("job_mismatch")
     return items[int(answer) - 1]
 
 
 def console_preflight():
-    return {'credentials': jobs.credential_reasons(Path(jobs.config()['data_root'])),
-            'pending_jobs': len(jobs.pending()), 'network_changed': False}
+    return {
+        "credentials": jobs.credential_reasons(Path(jobs.config()["data_root"])),
+        "pending_jobs": len(jobs.pending()),
+        "network_changed": False,
+    }
 
 
 def console_run():
     if not sys.stdin.isatty() or not sys.stdout.isatty():
-        raise ValueError('approval_required')
+        raise ValueError("approval_required")
     job = choose(jobs.pending())
-    print('Job: ' + job['job_id'] + ' | kind: ' + job['kind'])
-    if job['kind'] == 'pdf-static-cve':
+    print("Job: " + job["job_id"] + " | kind: " + job["kind"])
+    if job["kind"] == "pdf-static-cve":
         print(json.dumps(cve_contract(), sort_keys=True))
-    if job['kind'] == 'pdf-static-cic-full':
+    if job["kind"] == "pdf-static-cic-full":
         print(json.dumps(cic_full_contract(), sort_keys=True))
-    if job['kind'] == 'pdf-diagnostic-replay':
+    if job["kind"] == "pdf-diagnostic-replay":
         source = source_imports(job)
         from malpdf.extraction.diagnostic_replay import cohort_contract
+
         print(json.dumps(cohort_contract(source), sort_keys=True))
-    if job['kind'] == 'pdf-static-bulk':
+    if job["kind"] == "pdf-static-bulk":
         print(json.dumps(bulk_contract(), sort_keys=True))
-    if job['kind'] in jobs.BENIGN_OOD_KINDS:
+    if job["kind"] in jobs.BENIGN_OOD_KINDS:
         source_imports(job)
-        print(json.dumps(publisher_module(job['kind']).contract(), sort_keys=True))
-    if job['kind'] in jobs.FINGERPRINT_KINDS:
+        print(json.dumps(publisher_module(job["kind"]).contract(), sort_keys=True))
+    if job["kind"] in jobs.FINGERPRINT_KINDS:
         source_imports(job)
-        print(json.dumps(fingerprint_module(job['kind']).contract(), sort_keys=True))
-    if job['kind'] in jobs.URI_REVIEW_KINDS:
+        print(json.dumps(fingerprint_module(job["kind"]).contract(), sort_keys=True))
+    if job["kind"] == jobs.URI_HEAD_EVAL_KIND:
+        source_imports(job)
+        from malpdf.extraction.uri_head_eval_job import contract
+
+        print(json.dumps(contract(), sort_keys=True))
+    if job["kind"] in jobs.URI_REVIEW_KINDS:
         source_imports(job)
         from malpdf.extraction.uri_review_job import contract
-        print(json.dumps(contract(job['kind']), sort_keys=True))
-    print(json.dumps({'limits': job['limits'], 'lab_output_directory': str(jobs.job_directory(job['job_id']))}, sort_keys=True))
-    print('Xac nhan snapshot/recovery, tat clipboard/drag-drop/shared folders, khong credentials; NIC da ngat.')
-    print('PDF/blob/ket qua chi luu tai LAB. Khong tu ket noi lai Windows.')
-    if input('Chay job da duyet? [y/N]: ').strip().lower() != 'y':
-        raise ValueError('approval_required')
-    directory = jobs.job_directory(job['job_id'])
-    is_resuming = (directory / 'claim.json').is_file()
+
+        print(json.dumps(contract(job["kind"]), sort_keys=True))
+    print(
+        json.dumps(
+            {"limits": job["limits"], "lab_output_directory": str(jobs.job_directory(job["job_id"]))}, sort_keys=True
+        )
+    )
+    print("Xac nhan snapshot/recovery, tat clipboard/drag-drop/shared folders, khong credentials; NIC da ngat.")
+    print("PDF/blob/ket qua chi luu tai LAB. Khong tu ket noi lai Windows.")
+    if input("Chay job da duyet? [y/N]: ").strip().lower() != "y":
+        raise ValueError("approval_required")
+    directory = jobs.job_directory(job["job_id"])
+    is_resuming = (directory / "claim.json").is_file()
     try:
-        prefix = 'Tiep tuc chay (resume) job ' if is_resuming else 'Bat dau chay job '
-        print(prefix + job['job_id'][:12] + '...')
-        with jobs.execution_limits(job['kind']):
+        prefix = "Tiep tuc chay (resume) job " if is_resuming else "Bat dau chay job "
+        print(prefix + job["job_id"][:12] + "...")
+        with jobs.execution_limits(job["kind"]):
             value = jobs.execute(job, attested=True, resume=is_resuming)
     except ValueError as error:
-        if str(error) != 'credential_present':
+        if str(error) != "credential_present":
             raise
-        print(json.dumps({'status': 'blocked', 'reason': 'credential_present',
-                          'credentials': jobs.credential_reasons(Path(jobs.config()['data_root']))}, sort_keys=True))
+        print(
+            json.dumps(
+                {
+                    "status": "blocked",
+                    "reason": "credential_present",
+                    "credentials": jobs.credential_reasons(Path(jobs.config()["data_root"])),
+                },
+                sort_keys=True,
+            )
+        )
         return
     print(json.dumps(value, sort_keys=True))
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=('status', 'preflight', 'run', 'report', 'compare', 'menu', 'receive', 'pdf-worker', 'pdf-prepare', 'pdf-bulk', 'replay-report'))
-    parser.add_argument('job_id', nargs='?')
-    parser.add_argument('other', nargs='?')
-    parser.add_argument('--shard', type=int, default=0)
-    parser.add_argument('--of', type=int, default=1)
+    parser.add_argument(
+        "command",
+        choices=(
+            "status",
+            "preflight",
+            "run",
+            "report",
+            "compare",
+            "menu",
+            "receive",
+            "pdf-worker",
+            "pdf-prepare",
+            "pdf-bulk",
+            "replay-report",
+        ),
+    )
+    parser.add_argument("job_id", nargs="?")
+    parser.add_argument("other", nargs="?")
+    parser.add_argument("--shard", type=int, default=0)
+    parser.add_argument("--of", type=int, default=1)
     args = parser.parse_args()
     old_handlers = {}
     old_timer = None
     timer_started = time.monotonic()
-    if sys.platform == 'linux':
+    if sys.platform == "linux":
+
         def cancelled(*unused):
             raise KeyboardInterrupt
+
         for name in (signal.SIGTERM, signal.SIGHUP):
             old_handlers[name] = signal.getsignal(name)
             signal.signal(name, cancelled)
         old_timer = signal.getitimer(signal.ITIMER_REAL)
     try:
-        if args.command in ('pdf-worker', 'pdf-prepare'):
-            pdf_worker(args.job_id, prepare=args.command == 'pdf-prepare', shard=args.shard, count=args.of)
-        elif args.command == 'pdf-bulk':
+        if args.command in ("pdf-worker", "pdf-prepare"):
+            pdf_worker(args.job_id, prepare=args.command == "pdf-prepare", shard=args.shard, count=args.of)
+        elif args.command == "pdf-bulk":
             try:
                 pdf_bulk_worker(args.job_id)
             except jobs.BulkInterrupted:
                 return 75
-        elif args.command == 'replay-report':
+        elif args.command == "replay-report":
             print(json.dumps(replay_report(args.job_id), sort_keys=True))
-        elif args.command == 'receive':
-            if sys.platform != 'linux':
-                raise ValueError('runtime_unavailable')
+        elif args.command == "receive":
+            if sys.platform != "linux":
+                raise ValueError("runtime_unavailable")
             signal.alarm(240)
             import resource
+
             resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
             resource.setrlimit(resource.RLIMIT_AS, (512 * 1024**2, 2 * 1024**3))
             resource.setrlimit(resource.RLIMIT_CPU, (180, 1800))
             resource.setrlimit(resource.RLIMIT_FSIZE, (64 * 1024**2, 64 * 1024**2))
             resource.setrlimit(resource.RLIMIT_NOFILE, (64, 64))
             resource.setrlimit(resource.RLIMIT_NPROC, (2048, 2048))
-            with jobs.execution_limits('synthetic'):
+            with jobs.execution_limits("synthetic"):
                 value = receive(sys.stdin.buffer, args.job_id)
             print(json.dumps(value, sort_keys=True))
-        elif args.command == 'status':
-            print(json.dumps({'runner': jobs.probe(), 'pending_jobs': len(jobs.pending()), 'network_changed': False}))
-        elif args.command == 'preflight':
+        elif args.command == "status":
+            print(json.dumps({"runner": jobs.probe(), "pending_jobs": len(jobs.pending()), "network_changed": False}))
+        elif args.command == "preflight":
             print(json.dumps(console_preflight(), sort_keys=True))
-        elif args.command == 'run':
+        elif args.command == "run":
             console_run()
-        elif args.command == 'report':
+        elif args.command == "report":
             if args.job_id:
                 try:
                     job = jobs.load_job(args.job_id)
                 except ValueError as error:
-                    if str(error) != 'job_mismatch':
+                    if str(error) != "job_mismatch":
                         raise
                     print(json.dumps(historical_report(args.job_id), sort_keys=True))
                 else:
-                    print(json.dumps(jobs.read_result(job['job_id']), sort_keys=True))
+                    print(json.dumps(jobs.read_result(job["job_id"]), sort_keys=True))
             else:
-                print(json.dumps(jobs.read_result(choose(jobs.catalog())['job_id']), sort_keys=True))
-        elif args.command == 'compare':
+                print(json.dumps(jobs.read_result(choose(jobs.catalog())["job_id"]), sort_keys=True))
+        elif args.command == "compare":
             if not args.job_id or not args.other:
-                raise ValueError('job_mismatch')
+                raise ValueError("job_mismatch")
             print(json.dumps(compare(args.job_id, args.other), sort_keys=True))
         else:
             while True:
-                print('MalPDF LAB Runner\n1. Kiem tra truoc khi chay\n2. Run approved job\n3. Report\n0. Exit')
-                answer = input('> ').strip()
-                if answer == '0':
+                print("MalPDF LAB Runner\n1. Kiem tra truoc khi chay\n2. Run approved job\n3. Report\n0. Exit")
+                answer = input("> ").strip()
+                if answer == "0":
                     break
-                if answer == '1':
-                    print(json.dumps({**console_preflight(), 'runner': jobs.probe()}, sort_keys=True))
-                elif answer == '2':
+                if answer == "1":
+                    print(json.dumps({**console_preflight(), "runner": jobs.probe()}, sort_keys=True))
+                elif answer == "2":
                     try:
                         console_run()
                     except (OSError, ValueError) as error:
-                        print('Blocked: ' + (str(error) if str(error) in jobs.REASONS else 'worker_failed'))
-                elif answer == '3':
+                        print("Blocked: " + (str(error) if str(error) in jobs.REASONS else "worker_failed"))
+                elif answer == "3":
                     items = jobs.catalog()
-                    print(json.dumps(jobs.read_result(choose(items)['job_id']), sort_keys=True))
+                    print(json.dumps(jobs.read_result(choose(items)["job_id"]), sort_keys=True))
         return 0
     except KeyboardInterrupt:
-        print(json.dumps({'status': 'interrupted', 'reason': 'already_claimed'}))
+        print(json.dumps({"status": "interrupted", "reason": "already_claimed"}))
         return 130
     except (OSError, ValueError, KeyError, TypeError, RuntimeError) as error:
         import errno
-        reason = str(error) if str(error) in jobs.REASONS else 'resource_unavailable' if isinstance(error, OSError) and error.errno in (errno.EAGAIN, errno.ENOMEM, errno.EMFILE, errno.ENOSPC) else 'worker_failed'
-        print(json.dumps({'status': 'blocked', 'reason': reason}))
+
+        reason = (
+            str(error)
+            if str(error) in jobs.REASONS
+            else "resource_unavailable"
+            if isinstance(error, OSError) and error.errno in (errno.EAGAIN, errno.ENOMEM, errno.EMFILE, errno.ENOSPC)
+            else "worker_failed"
+        )
+        print(json.dumps({"status": "blocked", "reason": reason}))
         return 2
     finally:
         for name, handler in old_handlers.items():
@@ -1053,5 +1383,5 @@ def main():
             signal.setitimer(signal.ITIMER_REAL, remaining, old_timer[1])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     raise SystemExit(main())

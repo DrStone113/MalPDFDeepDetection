@@ -214,6 +214,21 @@ EOF
   echo "phase1_nat host_only=$host_if nat=$nat_if gateway=$nat_gw"
 }
 
+canonicalize_rules() {
+  awk '
+    {
+      gsub(/--ctstate ESTABLISHED,RELATED/, "--ctstate RELATED,ESTABLISHED")
+      gsub(/-m tcp --dport 22/, "--dport 22")
+      if (match($0, /-s 192\.168\.217\.1\/32 -i [^ ]+/)) {
+        seg = substr($0, RSTART, RLENGTH)
+        split(seg, p, " ")
+        sub(/-s 192\.168\.217\.1\/32 -i [^ ]+/, "-i " p[4] " -s 192.168.217.1/32")
+      }
+      print
+    }
+  '
+}
+
 status() {
   require_root
   host_if=$(detect_hostonly_if)
@@ -232,7 +247,12 @@ status() {
   in_rules=$(/usr/sbin/iptables -S INPUT)
   fwd_rules=$(/usr/sbin/iptables -S FORWARD)
   out_rules=$(/usr/sbin/iptables -S OUTPUT)
+  v6_in=$(/usr/sbin/ip6tables -S INPUT)
+  v6_fwd=$(/usr/sbin/ip6tables -S FORWARD)
   v6_out=$(/usr/sbin/ip6tables -S OUTPUT)
+  nat_tbl=$(/usr/sbin/iptables -t nat -S)
+  mangle_v4=$(/usr/sbin/iptables -t mangle -S)
+  mangle_v6=$(/usr/sbin/ip6tables -t mangle -S)
   in_pol=$(printf '%s\n' "$in_rules" | awk '$1=="-P" {print $3; exit}')
   fwd_pol=$(printf '%s\n' "$fwd_rules" | awk '$1=="-P" {print $3; exit}')
   out_pol=$(printf '%s\n' "$out_rules" | awk '$1=="-P" {print $3; exit}')
@@ -247,10 +267,62 @@ status() {
     rfc_blocked='true'
   fi
   printf '%s\n' "$in_rules" | grep -Eq -- "^-A INPUT (-i $host_if -s $HOST_IP/32|-s $HOST_IP/32 -i $host_if) -p tcp (-m tcp )?--dport 22 -m conntrack --ctstate NEW -j ACCEPT$" && ssh_ok='true'
+  canon_in=$(printf '%s\n' "$in_rules" | canonicalize_rules)
+  canon_out=$(printf '%s\n' "$out_rules" | canonicalize_rules)
+  exp_in=$(cat <<EOF
+-P INPUT DROP
+-A INPUT -i lo -j ACCEPT
+-A INPUT -m conntrack --ctstate INVALID -j DROP
+-A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A INPUT -i $host_if -s $HOST_IP/32 -p tcp --dport 22 -m conntrack --ctstate NEW -j ACCEPT
+EOF
+)
+  exp_out=$(cat <<EOF
+-P OUTPUT DROP
+-A OUTPUT -o lo -j ACCEPT
+-A OUTPUT -m conntrack --ctstate INVALID -j DROP
+-A OUTPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A OUTPUT -o $host_if -j DROP
+-A OUTPUT -d 192.168.0.0/16 -j DROP
+-A OUTPUT -d 10.0.0.0/8 -j DROP
+-A OUTPUT -d 172.16.0.0/12 -j DROP
+EOF
+)
+  exp_v6_in=$(cat <<'EOF'
+-P INPUT DROP
+-A INPUT -i lo -j ACCEPT
+EOF
+)
+  exp_v6_out=$(cat <<'EOF'
+-P OUTPUT DROP
+-A OUTPUT -o lo -j ACCEPT
+EOF
+)
+  exp_nat=$(cat <<'EOF'
+-P PREROUTING ACCEPT
+-P INPUT ACCEPT
+-P OUTPUT ACCEPT
+-P POSTROUTING ACCEPT
+EOF
+)
+  exp_mangle=$(cat <<'EOF'
+-P PREROUTING ACCEPT
+-P INPUT ACCEPT
+-P FORWARD ACCEPT
+-P OUTPUT ACCEPT
+-P POSTROUTING ACCEPT
+EOF
+)
+  rules_exact='false'
+  if [ "$canon_in" = "$exp_in" ] && [ "$fwd_rules" = '-P FORWARD DROP' ] && [ "$canon_out" = "$exp_out" ] &&
+     [ "$v6_in" = "$exp_v6_in" ] && [ "$v6_fwd" = '-P FORWARD DROP' ] && [ "$v6_out" = "$exp_v6_out" ] &&
+     [ "$nat_tbl" = "$exp_nat" ] && [ "$mangle_v4" = "$exp_mangle" ] && [ "$mangle_v6" = "$exp_mangle" ]; then
+    rules_exact='true'
+  fi
   mode='unconfigured'
   if [ "$in_pol" = 'DROP' ] && [ "$fwd_pol" = 'DROP' ] && [ "$out_pol" = 'DROP' ] && [ "$v6_pol" = 'DROP' ] &&
      [ "$host_blocked" = 'true' ] && [ "$rfc_blocked" = 'true' ] && [ "$ssh_ok" = 'true' ]; then
-    if [ "$nat_up" = 'false' ] && ! printf '%s\n' "$out_rules" | grep -Fq -- '-m conntrack --ctstate NEW -j ACCEPT'; then
+    if [ "$nat_up" = 'false' ] && [ "$rules_exact" = 'true' ]; then
       mode='phase2_locked'
     elif [ "$nat_up" = 'true' ]; then
       mode='phase1_nat'
@@ -269,8 +341,10 @@ install_boot() {
   cat > "$UNIT_PATH" <<EOF
 [Unit]
 Description=MalPDF 1-way stateful firewall (Phase 2 locked)
-After=systemd-networkd.service network.target
-Wants=systemd-networkd.service
+DefaultDependencies=no
+After=local-fs.target
+Before=network-pre.target systemd-networkd.service
+Wants=network-pre.target
 
 [Service]
 Type=oneshot
@@ -278,11 +352,12 @@ RemainAfterExit=yes
 ExecStart=$INSTALL_BIN phase2
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=network-pre.target multi-user.target
 EOF
   chmod 0644 "$UNIT_PATH"
   chown root:root "$UNIT_PATH"
   /usr/bin/systemctl daemon-reload
+  /usr/bin/systemctl disable malpdf-firewall.service >/dev/null 2>&1 || true
   /usr/bin/systemctl enable malpdf-firewall.service
   "$INSTALL_BIN" phase2
 }

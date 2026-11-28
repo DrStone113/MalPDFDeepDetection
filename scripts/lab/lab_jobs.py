@@ -22,40 +22,89 @@ from lab_contract import MAX_REPORT, REV_RE, parse_json, validate_report
 import lab_side as side
 
 API = 1
-JOBS = Path('/var/lib/malpdf/jobs')
-CONFIG = Path('/etc/malpdf/runner.json')
-HEX = re.compile(r'[0-9a-f]{64}\Z')
-HOLDOUT_TLSH_KIND = 'pdf-tlsh-holdout'
-POOLED_TLSH_KIND = 'pdf-tlsh-pooled'
-BENIGN_OOD_KIND = 'pdf-benign-ood'
-BENIGN_OOD_EXPANDED_KIND = 'pdf-benign-ood-expanded'
-BENIGN_OOD_DIVERSE_KIND = 'pdf-benign-ood-diverse'
-BENIGN_V32_COHORT_KIND = 'pdf-benign-v32-cohort'
-URI_REVIEW_KIND = 'pdf-uri-review'
-URI_SAFEDOCS_REVIEW_KIND = 'pdf-uri-safedocs-review'
+JOBS = Path("/var/lib/malpdf/jobs")
+CONFIG = Path("/etc/malpdf/runner.json")
+HEX = re.compile(r"[0-9a-f]{64}\Z")
+HOLDOUT_TLSH_KIND = "pdf-tlsh-holdout"
+POOLED_TLSH_KIND = "pdf-tlsh-pooled"
+BENIGN_OOD_KIND = "pdf-benign-ood"
+BENIGN_OOD_EXPANDED_KIND = "pdf-benign-ood-expanded"
+BENIGN_OOD_DIVERSE_KIND = "pdf-benign-ood-diverse"
+BENIGN_V32_COHORT_KIND = "pdf-benign-v32-cohort"
+URI_REVIEW_KIND = "pdf-uri-review"
+URI_SAFEDOCS_REVIEW_KIND = "pdf-uri-safedocs-review"
+URI_HEAD_EVAL_KIND = "pdf-uri-head-eval"
 URI_REVIEW_KINDS = {URI_REVIEW_KIND, URI_SAFEDOCS_REVIEW_KIND}
 BENIGN_OOD_KINDS = {BENIGN_OOD_KIND, BENIGN_OOD_EXPANDED_KIND, BENIGN_OOD_DIVERSE_KIND, BENIGN_V32_COHORT_KIND}
 FINGERPRINT_KINDS = {HOLDOUT_TLSH_KIND, POOLED_TLSH_KIND}
-PDF_KINDS = {'pdf-static', 'pdf-static-cve', 'pdf-static-cic-full', 'pdf-diagnostic-replay', *URI_REVIEW_KINDS,
-             'pdf-static-bulk', *BENIGN_OOD_KINDS, *FINGERPRINT_KINDS}
-KINDS = {'syntax', 'synthetic', *PDF_KINDS}
-LIMITS = {'wall_seconds': 1800, 'file_wall_seconds': 60, 'file_cpu_seconds': 45,
-          'file_memory_bytes': 1073741824, 'file_max_bytes': 10485760,
-          'samples': 64, 'workers': 5, 'output_bytes': 536870912}
-REASONS = {'network_blocked', 'runtime_unavailable', 'manifest_unavailable', 'release_mismatch',
-           'already_claimed', 'dependency_mismatch', 'resource_unavailable', 'worker_timeout',
-           'worker_failed', 'report_invalid', 'setup_required', 'approval_required', 'job_mismatch'}
-REASONS.update({'export_requires_review', 'credential_present'})
-PDF_STATUSES = frozenset({'observed', 'absent_within_scope', 'partial', 'decode_error', 'unsupported',
-                          'encrypted', 'timeout', 'resource_limit', 'not_run', 'bounded_complete'})
-SUMMARY_COUNTS = ('completed', 'observed', 'partial', 'failed', 'primary_available', 'timeout',
-                  'elapsed_ms', 'peak_rss_bytes')
-SUMMARY_FIELDS = {*SUMMARY_COUNTS, 'planned', 'status_counts'}
+PDF_KINDS = {
+    "pdf-static",
+    "pdf-static-cve",
+    "pdf-static-cic-full",
+    "pdf-diagnostic-replay",
+    *URI_REVIEW_KINDS,
+    URI_HEAD_EVAL_KIND,
+    "pdf-static-bulk",
+    *BENIGN_OOD_KINDS,
+    *FINGERPRINT_KINDS,
+}
+KINDS = {"syntax", "synthetic", *PDF_KINDS}
+LIMITS = {
+    "wall_seconds": 1800,
+    "file_wall_seconds": 60,
+    "file_cpu_seconds": 45,
+    "file_memory_bytes": 1073741824,
+    "file_max_bytes": 10485760,
+    "samples": 64,
+    "workers": 5,
+    "output_bytes": 536870912,
+}
+REASONS = {
+    "network_blocked",
+    "runtime_unavailable",
+    "manifest_unavailable",
+    "release_mismatch",
+    "already_claimed",
+    "dependency_mismatch",
+    "resource_unavailable",
+    "worker_timeout",
+    "worker_failed",
+    "report_invalid",
+    "setup_required",
+    "approval_required",
+    "job_mismatch",
+}
+REASONS.update({"export_requires_review", "credential_present"})
+PDF_STATUSES = frozenset(
+    {
+        "observed",
+        "absent_within_scope",
+        "partial",
+        "decode_error",
+        "unsupported",
+        "encrypted",
+        "timeout",
+        "resource_limit",
+        "not_run",
+        "bounded_complete",
+    }
+)
+SUMMARY_COUNTS = (
+    "completed",
+    "observed",
+    "partial",
+    "failed",
+    "primary_available",
+    "timeout",
+    "elapsed_ms",
+    "peak_rss_bytes",
+)
+SUMMARY_FIELDS = {*SUMMARY_COUNTS, "planned", "status_counts"}
 MAX_CREDENTIAL_REASONS = 12
 
 
 def encoded(obj):
-    return json.dumps(obj, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()
+    return json.dumps(obj, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
 
 
 def sha(payload):
@@ -63,71 +112,124 @@ def sha(payload):
 
 
 def legacy_summary_valid(summary):
-    fields = {*SUMMARY_COUNTS, 'planned'}
-    if not isinstance(summary, dict) or set(summary) != fields or any(type(summary[name]) is not int or not 0 <= summary[name] <= 10**12 for name in fields):
+    fields = {*SUMMARY_COUNTS, "planned"}
+    if (
+        not isinstance(summary, dict)
+        or set(summary) != fields
+        or any(type(summary[name]) is not int or not 0 <= summary[name] <= 10**12 for name in fields)
+    ):
         return False
-    return (summary['completed'] <= summary['planned'] and summary['primary_available'] <= summary['completed']
-            and summary['timeout'] <= summary['completed']
-            and summary['observed'] + summary['partial'] + summary['failed'] == summary['completed'])
+    return (
+        summary["completed"] <= summary["planned"]
+        and summary["primary_available"] <= summary["completed"]
+        and summary["timeout"] <= summary["completed"]
+        and summary["observed"] + summary["partial"] + summary["failed"] == summary["completed"]
+    )
 
 
 def status_bucket(name):
-    return 'observed' if name in ('observed', 'bounded_complete') else name if name == 'partial' else 'failed'
+    return "observed" if name in ("observed", "bounded_complete") else name if name == "partial" else "failed"
 
 
 def summary_valid(summary):
-    if not isinstance(summary, dict) or any(type(summary.get(name)) is not int or not 0 <= summary[name] <= 10**12 for name in SUMMARY_COUNTS):
+    if not isinstance(summary, dict) or any(
+        type(summary.get(name)) is not int or not 0 <= summary[name] <= 10**12 for name in SUMMARY_COUNTS
+    ):
         return False
-    if 'bounded_complete' in summary and (type(summary['bounded_complete']) is not int or not 0 <= summary['bounded_complete'] <= summary['observed']):
+    if "bounded_complete" in summary and (
+        type(summary["bounded_complete"]) is not int or not 0 <= summary["bounded_complete"] <= summary["observed"]
+    ):
         return False
-    counts = summary.get('status_counts')
-    if not isinstance(counts, dict) or any(not isinstance(name, str) or name not in PDF_STATUSES or type(amount) is not int or not 0 <= amount <= 10**12 for name, amount in counts.items()):
+    counts = summary.get("status_counts")
+    if not isinstance(counts, dict) or any(
+        not isinstance(name, str) or name not in PDF_STATUSES or type(amount) is not int or not 0 <= amount <= 10**12
+        for name, amount in counts.items()
+    ):
         return False
     buckets = {}
     for name, amount in counts.items():
         key = status_bucket(name)
         buckets[key] = buckets.get(key, 0) + amount
-    return (sum(counts.values()) == summary['completed'] == summary['observed'] + summary['partial'] + summary['failed']
-            and all(buckets.get(name, 0) == summary[name] for name in ('observed', 'partial', 'failed')))
+    return sum(counts.values()) == summary["completed"] == summary["observed"] + summary["partial"] + summary[
+        "failed"
+    ] and all(buckets.get(name, 0) == summary[name] for name in ("observed", "partial", "failed"))
 
 
 def policy(kind):
+    if kind == URI_HEAD_EVAL_KIND:
+        return {
+            **LIMITS,
+            "samples": 624,
+            "workers": 4,
+            "wall_seconds": 3600,
+            "file_wall_seconds": 45,
+            "file_cpu_seconds": 35,
+            "file_max_bytes": 12 * 1024**2,
+            "output_bytes": 64 * 1024**2,
+        }
     if kind == URI_SAFEDOCS_REVIEW_KIND:
-        return {**policy(URI_REVIEW_KIND), 'samples': 11}
+        return {**policy(URI_REVIEW_KIND), "samples": 11}
     if kind == URI_REVIEW_KIND:
-        return {**LIMITS, 'samples': 151, 'workers': 3, 'wall_seconds': 7200}
+        return {**LIMITS, "samples": 151, "workers": 3, "wall_seconds": 7200}
     if kind == BENIGN_V32_COHORT_KIND:
-        return {**policy(BENIGN_OOD_KIND), 'samples': 974, 'workers': 5, 'wall_seconds': 21600, 'output_bytes': 1024**3}
+        return {**policy(BENIGN_OOD_KIND), "samples": 974, "workers": 5, "wall_seconds": 21600, "output_bytes": 1024**3}
     if kind == BENIGN_OOD_DIVERSE_KIND:
-        return {**policy(BENIGN_OOD_KIND), 'samples': 477, 'workers': 5, 'wall_seconds': 14400}
+        return {**policy(BENIGN_OOD_KIND), "samples": 477, "workers": 5, "wall_seconds": 14400}
     if kind == BENIGN_OOD_EXPANDED_KIND:
-        return {**policy(BENIGN_OOD_KIND), 'samples': 379, 'workers': 5, 'wall_seconds': 14400}
+        return {**policy(BENIGN_OOD_KIND), "samples": 379, "workers": 5, "wall_seconds": 14400}
     if kind == BENIGN_OOD_KIND:
-        return {**LIMITS, 'samples': 83, 'workers': 3, 'wall_seconds': 7200, 'file_max_bytes': 12 * 1024**2}
+        return {**LIMITS, "samples": 83, "workers": 3, "wall_seconds": 7200, "file_max_bytes": 12 * 1024**2}
     if kind == POOLED_TLSH_KIND:
-        return {**policy(HOLDOUT_TLSH_KIND), 'samples': 20166, 'wall_seconds': 14400}
+        return {**policy(HOLDOUT_TLSH_KIND), "samples": 20166, "wall_seconds": 14400}
     if kind == HOLDOUT_TLSH_KIND:
-        return {**LIMITS, 'samples': 21559, 'workers': 1, 'wall_seconds': 1800,
-                'file_wall_seconds': 10, 'file_cpu_seconds': 10,
-                'file_max_bytes': 50 * 1024**2, 'output_bytes': 16 * 1024**2}
-    if kind == 'pdf-diagnostic-replay':
-        return {**policy('pdf-static-cic-full'), 'samples': 74}
-    if kind == 'pdf-static':
+        return {
+            **LIMITS,
+            "samples": 21559,
+            "workers": 1,
+            "wall_seconds": 1800,
+            "file_wall_seconds": 10,
+            "file_cpu_seconds": 10,
+            "file_max_bytes": 50 * 1024**2,
+            "output_bytes": 16 * 1024**2,
+        }
+    if kind == "pdf-diagnostic-replay":
+        return {**policy("pdf-static-cic-full"), "samples": 74}
+    if kind == "pdf-static":
         return LIMITS.copy()
-    if kind == 'pdf-static-cic-full':
-        return {**LIMITS, 'samples': 1452, 'wall_seconds': 7200, 'workers': 10,
-                'file_wall_seconds': 35, 'file_cpu_seconds': 30, 'output_bytes': 2 * 1024**3}
-    if kind == 'pdf-static-bulk':
-        return {**LIMITS, 'samples': 0, 'wall_seconds': 86400, 'workers': 5,
-                'file_wall_seconds': 45, 'file_cpu_seconds': 35,
-                'file_memory_bytes': 1536 * 1024**2, 'file_max_bytes': 50 * 1024**2,
-                'output_bytes': 6 * 1024**3}
-    if kind == 'pdf-static-cve':
-        return {**LIMITS, 'samples': 5, 'wall_seconds': 180, 'output_bytes': 40 * 1024**2}
-    return {**LIMITS, 'wall_seconds': 240, 'file_wall_seconds': 90 if kind == 'synthetic' else 60,
-            'file_cpu_seconds': 60 if kind == 'synthetic' else 30,
-            'file_memory_bytes': 256 * 1024**2 if kind == 'synthetic' else 512 * 1024**2,
-            'file_max_bytes': 2 * 1024**2, 'samples': 1, 'output_bytes': 2 * 1024**2}
+    if kind == "pdf-static-cic-full":
+        return {
+            **LIMITS,
+            "samples": 1452,
+            "wall_seconds": 7200,
+            "workers": 10,
+            "file_wall_seconds": 35,
+            "file_cpu_seconds": 30,
+            "output_bytes": 2 * 1024**3,
+        }
+    if kind == "pdf-static-bulk":
+        return {
+            **LIMITS,
+            "samples": 0,
+            "wall_seconds": 86400,
+            "workers": 5,
+            "file_wall_seconds": 45,
+            "file_cpu_seconds": 35,
+            "file_memory_bytes": 1536 * 1024**2,
+            "file_max_bytes": 50 * 1024**2,
+            "output_bytes": 6 * 1024**3,
+        }
+    if kind == "pdf-static-cve":
+        return {**LIMITS, "samples": 5, "wall_seconds": 180, "output_bytes": 40 * 1024**2}
+    return {
+        **LIMITS,
+        "wall_seconds": 240,
+        "file_wall_seconds": 90 if kind == "synthetic" else 60,
+        "file_cpu_seconds": 60 if kind == "synthetic" else 30,
+        "file_memory_bytes": 256 * 1024**2 if kind == "synthetic" else 512 * 1024**2,
+        "file_max_bytes": 2 * 1024**2,
+        "samples": 1,
+        "output_bytes": 2 * 1024**2,
+    }
 
 
 def pdf_bundle_limit(kind):
@@ -135,24 +237,31 @@ def pdf_bundle_limit(kind):
 
 
 def pdf_worker_fsize_limit(kind):
-    return max(pdf_bundle_limit(kind), policy(kind)['output_bytes'] if kind in FINGERPRINT_KINDS else 8 * 1024**2)
+    return max(pdf_bundle_limit(kind), policy(kind)["output_bytes"] if kind in FINGERPRINT_KINDS else 8 * 1024**2)
 
 
 @contextmanager
 def execution_limits(kind):
     import resource
     import signal
+
     usage = resource.getrusage(resource.RUSAGE_SELF)
-    if kind == 'pdf-static-bulk':
+    if kind == "pdf-static-bulk":
         bounds = ((resource.RLIMIT_FSIZE, 8 * 1024**3), (resource.RLIMIT_NOFILE, 256), (resource.RLIMIT_NPROC, 2048))
     else:
-        bounds = ((resource.RLIMIT_AS, 512 * 1024**2),
-                  (resource.RLIMIT_CPU, math.ceil(usage.ru_utime + usage.ru_stime) + 120),
-                  (resource.RLIMIT_FSIZE, 64 * 1024**2), (resource.RLIMIT_NOFILE, 64), (resource.RLIMIT_NPROC, 2048))
+        bounds = (
+            (resource.RLIMIT_AS, 512 * 1024**2),
+            (resource.RLIMIT_CPU, math.ceil(usage.ru_utime + usage.ru_stime) + 120),
+            (resource.RLIMIT_FSIZE, 64 * 1024**2),
+            (resource.RLIMIT_NOFILE, 64),
+            (resource.RLIMIT_NPROC, 2048),
+        )
     old = {name: resource.getrlimit(name) for name, _ in bounds}
     signals = {name: signal.getsignal(name) for name in (signal.SIGALRM, signal.SIGXCPU)}
+
     def expired(*args):
-        raise ValueError('worker_timeout')
+        raise ValueError("worker_timeout")
+
     previous_timer = signal.getitimer(signal.ITIMER_REAL)
     started = time.monotonic()
     try:
@@ -161,8 +270,8 @@ def execution_limits(kind):
             resource.setrlimit(name, (amount if hard == resource.RLIM_INFINITY else min(amount, hard), hard))
         for name in signals:
             signal.signal(name, expired)
-        if kind != 'pdf-static-bulk':
-            wall = policy(kind)['wall_seconds'] + 5 if kind in PDF_KINDS else 230
+        if kind != "pdf-static-bulk":
+            wall = policy(kind)["wall_seconds"] + 5 if kind in PDF_KINDS else 230
             signal.setitimer(signal.ITIMER_REAL, min(wall, previous_timer[0]) if previous_timer[0] else wall)
         yield
     finally:
@@ -174,265 +283,420 @@ def execution_limits(kind):
             resource.setrlimit(name, limits)
 
 
-def make_job(commit, archive_sha256, manifest_sha256, *, mode='host-only', kind='synthetic', attempt=None):
-    body = {'schema_version': 1, 'api': API, 'commit': commit, 'archive_sha256': archive_sha256,
-            'manifest_sha256': manifest_sha256, 'mode': mode, 'kind': kind, 'limits': policy(kind), 'attempt': attempt or uuid.uuid4().hex}
-    return validate_job({**body, 'job_id': sha(encoded(body))})
+def make_job(commit, archive_sha256, manifest_sha256, *, mode="host-only", kind="synthetic", attempt=None):
+    body = {
+        "schema_version": 1,
+        "api": API,
+        "commit": commit,
+        "archive_sha256": archive_sha256,
+        "manifest_sha256": manifest_sha256,
+        "mode": mode,
+        "kind": kind,
+        "limits": policy(kind),
+        "attempt": attempt or uuid.uuid4().hex,
+    }
+    return validate_job({**body, "job_id": sha(encoded(body))})
 
 
 def validate_job(job):
-    fields = {'schema_version', 'api', 'commit', 'archive_sha256', 'manifest_sha256', 'mode', 'kind', 'limits', 'job_id', 'attempt'}
-    if not isinstance(job, dict) or set(job) != fields or type(job['schema_version']) is not int or job['schema_version'] != 1 or type(job['api']) is not int or job['api'] != API:
-        raise ValueError('job_mismatch')
-    if not isinstance(job['commit'], str) or not REV_RE.fullmatch(job['commit']):
-        raise ValueError('job_mismatch')
-    if not isinstance(job['attempt'], str) or not re.fullmatch(r'[0-9a-f]{32}', job['attempt']):
-        raise ValueError('job_mismatch')
-    if any(not isinstance(job[name], str) or not HEX.fullmatch(job[name]) for name in ('archive_sha256', 'manifest_sha256', 'job_id')):
-        raise ValueError('job_mismatch')
-    if not isinstance(job['kind'], str) or not isinstance(job['mode'], str) or job['mode'] not in ('host-only', 'offline') or job['kind'] not in KINDS or job['kind'] in PDF_KINDS and job['mode'] != 'offline':
-        raise ValueError('job_mismatch')
-    if type(job['limits']) is not dict or job['limits'] != policy(job['kind']) or any(type(value) is not int for value in job['limits'].values()):
-        raise ValueError('job_mismatch')
-    if sha(encoded({name: value for name, value in job.items() if name != 'job_id'})) != job['job_id']:
-        raise ValueError('job_mismatch')
+    fields = {
+        "schema_version",
+        "api",
+        "commit",
+        "archive_sha256",
+        "manifest_sha256",
+        "mode",
+        "kind",
+        "limits",
+        "job_id",
+        "attempt",
+    }
+    if (
+        not isinstance(job, dict)
+        or set(job) != fields
+        or type(job["schema_version"]) is not int
+        or job["schema_version"] != 1
+        or type(job["api"]) is not int
+        or job["api"] != API
+    ):
+        raise ValueError("job_mismatch")
+    if not isinstance(job["commit"], str) or not REV_RE.fullmatch(job["commit"]):
+        raise ValueError("job_mismatch")
+    if not isinstance(job["attempt"], str) or not re.fullmatch(r"[0-9a-f]{32}", job["attempt"]):
+        raise ValueError("job_mismatch")
+    if any(
+        not isinstance(job[name], str) or not HEX.fullmatch(job[name])
+        for name in ("archive_sha256", "manifest_sha256", "job_id")
+    ):
+        raise ValueError("job_mismatch")
+    if (
+        not isinstance(job["kind"], str)
+        or not isinstance(job["mode"], str)
+        or job["mode"] not in ("host-only", "offline")
+        or job["kind"] not in KINDS
+        or job["kind"] in PDF_KINDS
+        and job["mode"] != "offline"
+    ):
+        raise ValueError("job_mismatch")
+    if (
+        type(job["limits"]) is not dict
+        or job["limits"] != policy(job["kind"])
+        or any(type(value) is not int for value in job["limits"].values())
+    ):
+        raise ValueError("job_mismatch")
+    if sha(encoded({name: value for name, value in job.items() if name != "job_id"})) != job["job_id"]:
+        raise ValueError("job_mismatch")
     return job
 
 
 def trusted_path(path):
     path = Path(path).absolute()
     if path.resolve() != path or any(part.is_symlink() for part in (path, *path.parents)):
-        raise ValueError('setup_required')
+        raise ValueError("setup_required")
     return path
 
 
 def config():
     path = trusted_path(CONFIG)
     info = path.stat()
-    if sys.platform != 'linux' or info.st_uid != 0 or info.st_mode & 0o022:
-        raise ValueError('setup_required')
+    if sys.platform != "linux" or info.st_uid != 0 or info.st_mode & 0o022:
+        raise ValueError("setup_required")
     value = parse_json(side.bounded_read(path, 8192))
-    if set(value) != {'schema_version', 'data_root', 'python', 'uid'} or value['schema_version'] != 1 or type(value['uid']) is not int or value['uid'] < 1000 or os.getuid() != value['uid']:
-        raise ValueError('setup_required')
-    for key in ('data_root', 'python'):
+    if (
+        set(value) != {"schema_version", "data_root", "python", "uid"}
+        or value["schema_version"] != 1
+        or type(value["uid"]) is not int
+        or value["uid"] < 1000
+        or os.getuid() != value["uid"]
+    ):
+        raise ValueError("setup_required")
+    for key in ("data_root", "python"):
         if not isinstance(value[key], str) or not Path(value[key]).is_absolute():
-            raise ValueError('setup_required')
-        trusted_path(Path(value[key]).parent if key == 'python' else value[key])
-    if not Path(value['python']).is_file():
-        raise ValueError('dependency_mismatch')
+            raise ValueError("setup_required")
+        trusted_path(Path(value[key]).parent if key == "python" else value[key])
+    if not Path(value["python"]).is_file():
+        raise ValueError("dependency_mismatch")
     return value
 
 
 def guard_module():
-    installed = Path(__file__).with_name('lab_guard.py')
-    path = installed if installed.is_file() else Path(__file__).resolve().parents[2] / 'src/malpdf/static/lab_guard.py'
-    spec = importlib.util.spec_from_file_location('malpdf_installed_lab_guard', path)
+    installed = Path(__file__).with_name("lab_guard.py")
+    path = installed if installed.is_file() else Path(__file__).resolve().parents[2] / "src/malpdf/static/lab_guard.py"
+    spec = importlib.util.spec_from_file_location("malpdf_installed_lab_guard", path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
 
 
 def verify_helpers(metadata):
-    expected = {item['path']: item['sha256'] for item in metadata['files']}
-    for name in ('lab_contract.py', 'lab_readonly.py', 'lab_side.py', 'lab_jobs.py', 'lab_runner.py', 'check_local.py', 'lab_guard.py'):
-        relative = 'src/malpdf/static/lab_guard.py' if name == 'lab_guard.py' else 'scripts/lab/' + name
+    expected = {item["path"]: item["sha256"] for item in metadata["files"]}
+    for name in (
+        "lab_contract.py",
+        "lab_readonly.py",
+        "lab_side.py",
+        "lab_jobs.py",
+        "lab_runner.py",
+        "check_local.py",
+        "lab_guard.py",
+    ):
+        relative = "src/malpdf/static/lab_guard.py" if name == "lab_guard.py" else "scripts/lab/" + name
         path = Path(__file__).with_name(name)
-        if name == 'lab_guard.py' and not path.is_file():
+        if name == "lab_guard.py" and not path.is_file():
             path = Path(__file__).resolve().parents[2] / relative
-        if path.is_symlink() or relative not in expected or sha(side.bounded_read(path, 2 * 1024**2)) != expected[relative]:
-            raise ValueError('setup_required')
+        if (
+            path.is_symlink()
+            or relative not in expected
+            or sha(side.bounded_read(path, 2 * 1024**2)) != expected[relative]
+        ):
+            raise ValueError("setup_required")
 
 
 def ip_json(*args):
-    result = subprocess.run(['/usr/sbin/ip', '-j', *args], stdin=subprocess.DEVNULL,
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=5, check=True)
+    result = subprocess.run(
+        ["/usr/sbin/ip", "-j", *args],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=5,
+        check=True,
+    )
     if len(result.stdout) > 65536:
-        raise ValueError('network_blocked')
+        raise ValueError("network_blocked")
     return parse_json(result.stdout)
 
 
 def route_network(route, version):
     try:
-        network = ipaddress.ip_network(route.get('dst', 'default'), strict=False)
+        network = ipaddress.ip_network(route.get("dst", "default"), strict=False)
     except (TypeError, ValueError):
-        raise ValueError('network_blocked') from None
+        raise ValueError("network_blocked") from None
     if network.version != version:
-        raise ValueError('network_blocked')
+        raise ValueError("network_blocked")
     return network
 
 
 def _interface_active(item):
-    if item.get('ifname') == 'lo' or 'UP' not in item.get('flags', []):
+    if item.get("ifname") == "lo" or "UP" not in item.get("flags", []):
         return False
-    return not (item.get('operstate') == 'DOWN' and 'LOWER_UP' not in item.get('flags', []) and not item.get('addr_info'))
+    return not (
+        item.get("operstate") == "DOWN" and "LOWER_UP" not in item.get("flags", []) and not item.get("addr_info")
+    )
 
 
 def host_only_network():
-    addresses = ip_json('address', 'show')
+    addresses = ip_json("address", "show")
     active = [item for item in addresses if _interface_active(item)]
     if len(active) != 1:
-        raise ValueError('network_blocked')
-    v4 = [item for item in active[0].get('addr_info', []) if item.get('family') == 'inet']
-    if len(v4) != 1 or v4[0].get('local') != '192.168.217.10' or v4[0].get('prefixlen') != 24:
-        raise ValueError('network_blocked')
-    for item in active[0].get('addr_info', []):
-        if item.get('family') == 'inet6' and item.get('scope') != 'link':
-            raise ValueError('network_blocked')
-    for route in ip_json('-4', 'route', 'show', 'table', 'all'):
+        raise ValueError("network_blocked")
+    v4 = [item for item in active[0].get("addr_info", []) if item.get("family") == "inet"]
+    if len(v4) != 1 or v4[0].get("local") != "192.168.217.10" or v4[0].get("prefixlen") != 24:
+        raise ValueError("network_blocked")
+    for item in active[0].get("addr_info", []):
+        if item.get("family") == "inet6" and item.get("scope") != "link":
+            raise ValueError("network_blocked")
+    for route in ip_json("-4", "route", "show", "table", "all"):
         network = route_network(route, 4)
-        if route.get('gateway') or not any(network.subnet_of(allowed) for allowed in (ipaddress.ip_network('127.0.0.0/8'), ipaddress.ip_network('192.168.217.0/24'))):
-            raise ValueError('network_blocked')
-        if route.get('dev') not in ('lo', active[0]['ifname']):
-            raise ValueError('network_blocked')
-    for route in ip_json('-6', 'route', 'show', 'table', 'all'):
+        if route.get("gateway") or not any(
+            network.subnet_of(allowed)
+            for allowed in (ipaddress.ip_network("127.0.0.0/8"), ipaddress.ip_network("192.168.217.0/24"))
+        ):
+            raise ValueError("network_blocked")
+        if route.get("dev") not in ("lo", active[0]["ifname"]):
+            raise ValueError("network_blocked")
+    for route in ip_json("-6", "route", "show", "table", "all"):
         network = route_network(route, 6)
-        if route.get('gateway') or not any(network.subnet_of(allowed) for allowed in (ipaddress.ip_network('fe80::/10'), ipaddress.ip_network('ff00::/8'), ipaddress.ip_network('::1/128'))):
-            raise ValueError('network_blocked')
+        if route.get("gateway") or not any(
+            network.subnet_of(allowed)
+            for allowed in (
+                ipaddress.ip_network("fe80::/10"),
+                ipaddress.ip_network("ff00::/8"),
+                ipaddress.ip_network("::1/128"),
+            )
+        ):
+            raise ValueError("network_blocked")
 
 
 def preflight(mode, *, attested=False):
-    if sys.platform != 'linux' or os.getuid() == 0 or not (3, 11) <= sys.version_info[:2] < (3, 14):
-        raise ValueError('runtime_unavailable')
+    if sys.platform != "linux" or os.getuid() == 0 or not (3, 11) <= sys.version_info[:2] < (3, 14):
+        raise ValueError("runtime_unavailable")
     state = guard_module().lab_state()
-    if state['shared_mounts'] or state['unknown_interfaces']:
-        raise ValueError('network_blocked')
-    if mode == 'offline':
+    if state["shared_mounts"] or state["unknown_interfaces"]:
+        raise ValueError("network_blocked")
+    if mode == "offline":
         guard_module().require_offline_lab(attested, state=state)
     else:
         host_only_network()
-    result = subprocess.run(['/usr/bin/git', '--version'], stdin=subprocess.DEVNULL,
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=5)
+    result = subprocess.run(
+        ["/usr/bin/git", "--version"],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=5,
+    )
     if result.returncode or len(result.stdout) > 256:
-        raise ValueError('dependency_mismatch')
-    return {'mode': mode, 'guest_network_checked': True, 'stdlib_dependencies_checked': True,
-            'hypervisor_controls_attested': bool(attested)}
+        raise ValueError("dependency_mismatch")
+    return {
+        "mode": mode,
+        "guest_network_checked": True,
+        "stdlib_dependencies_checked": True,
+        "hypervisor_controls_attested": bool(attested),
+    }
 
 
 def probe():
     host_ready = offline_ready = False
     try:
-        preflight('host-only')
+        preflight("host-only")
         host_ready = True
     except (OSError, ValueError, subprocess.SubprocessError):
         pass
     try:
-        preflight('offline', attested=True)
+        preflight("offline", attested=True)
         offline_ready = True
     except (OSError, ValueError, subprocess.SubprocessError):
         pass
-    return {'api': API, 'installed': CONFIG.is_file(), 'host_only_ready': host_ready,
-            'offline_guest_ready': offline_ready, 'reason': None if host_ready or offline_ready else 'network_blocked'}
+    return {
+        "api": API,
+        "installed": CONFIG.is_file(),
+        "host_only_ready": host_ready,
+        "offline_guest_ready": offline_ready,
+        "reason": None if host_ready or offline_ready else "network_blocked",
+    }
 
 
 def job_directory(job_id):
     if not isinstance(job_id, str) or not HEX.fullmatch(job_id):
-        raise ValueError('job_mismatch')
+        raise ValueError("job_mismatch")
     return trusted_path(JOBS / job_id)
 
 
 def immutable(path, value):
     path = trusted_path(path)
-    payload = encoded(value) + b'\n'
+    payload = encoded(value) + b"\n"
     if path.exists():
         if side.bounded_read(path, len(payload)) != payload:
-            raise ValueError('job_mismatch')
+            raise ValueError("job_mismatch")
         return
-    with path.open('xb') as stream:
+    with path.open("xb") as stream:
         stream.write(payload)
 
 
 def save_job(job):
     validate_job(job)
-    directory = job_directory(job['job_id'])
+    directory = job_directory(job["job_id"])
     directory.mkdir(parents=True, exist_ok=True, mode=0o700)
-    immutable(directory / 'job.json', job)
+    immutable(directory / "job.json", job)
     return directory
 
 
 def load_job(job_id):
-    return validate_job(parse_json(side.bounded_read(job_directory(job_id) / 'job.json', MAX_REPORT)))
+    return validate_job(parse_json(side.bounded_read(job_directory(job_id) / "job.json", MAX_REPORT)))
 
 
 def validate_result(value, job):
     validate_job(job)
-    if not isinstance(value, dict) or set(value) != {'schema_version', 'job', 'status', 'reason', 'checks', 'pdf_summary', 'preflight', 'generated_utc'} or type(value['schema_version']) is not int or value['schema_version'] != 1 or value['job'] != job:
-        raise ValueError('report_invalid')
-    if not isinstance(value['status'], str) or value['status'] not in ('queued', 'running', 'passed', 'partial', 'failed', 'blocked', 'interrupted') or value['reason'] is not None and (not isinstance(value['reason'], str) or value['reason'] not in REASONS):
-        raise ValueError('report_invalid')
-    if not isinstance(value['checks'], list) or len(value['checks']) > 2:
-        raise ValueError('report_invalid')
-    for check in value['checks']:
-        validate_report(check, job['commit'])
-    expected_kinds = ['ast_syntax', 'synthetic_security'] if job['kind'] == 'synthetic' else ['ast_syntax'] if job['kind'] == 'syntax' else []
-    if [check['kind'] for check in value['checks']] != expected_kinds[:len(value['checks'])]:
-        raise ValueError('report_invalid')
-    expected = {'mode', 'guest_network_checked', 'stdlib_dependencies_checked', 'hypervisor_controls_attested'}
-    env = value['preflight']
-    if not isinstance(env, dict) or set(env) != expected or env['mode'] != job['mode'] or any(type(env[key]) is not bool for key in expected - {'mode'}):
-        raise ValueError('report_invalid')
-    summary = value['pdf_summary']
+    if (
+        not isinstance(value, dict)
+        or set(value)
+        != {"schema_version", "job", "status", "reason", "checks", "pdf_summary", "preflight", "generated_utc"}
+        or type(value["schema_version"]) is not int
+        or value["schema_version"] != 1
+        or value["job"] != job
+    ):
+        raise ValueError("report_invalid")
+    if (
+        not isinstance(value["status"], str)
+        or value["status"] not in ("queued", "running", "passed", "partial", "failed", "blocked", "interrupted")
+        or value["reason"] is not None
+        and (not isinstance(value["reason"], str) or value["reason"] not in REASONS)
+    ):
+        raise ValueError("report_invalid")
+    if not isinstance(value["checks"], list) or len(value["checks"]) > 2:
+        raise ValueError("report_invalid")
+    for check in value["checks"]:
+        validate_report(check, job["commit"])
+    expected_kinds = (
+        ["ast_syntax", "synthetic_security"]
+        if job["kind"] == "synthetic"
+        else ["ast_syntax"]
+        if job["kind"] == "syntax"
+        else []
+    )
+    if [check["kind"] for check in value["checks"]] != expected_kinds[: len(value["checks"])]:
+        raise ValueError("report_invalid")
+    expected = {"mode", "guest_network_checked", "stdlib_dependencies_checked", "hypervisor_controls_attested"}
+    env = value["preflight"]
+    if (
+        not isinstance(env, dict)
+        or set(env) != expected
+        or env["mode"] != job["mode"]
+        or any(type(env[key]) is not bool for key in expected - {"mode"})
+    ):
+        raise ValueError("report_invalid")
+    summary = value["pdf_summary"]
     if summary is not None:
-        if job['kind'] not in PDF_KINDS or not isinstance(summary, dict) or set(summary) - {'bounded_complete'} != SUMMARY_FIELDS or not summary_valid(summary):
-            raise ValueError('report_invalid')
-        planned_target = summary['planned'] if job['kind'] == 'pdf-static-bulk' and summary['planned'] >= 1 else job['limits']['samples']
-        if summary['planned'] != planned_target or summary['completed'] > summary['planned'] or summary['primary_available'] > summary['completed']:
-            raise ValueError('report_invalid')
-        if summary['timeout'] > summary['completed'] or summary['elapsed_ms'] > job['limits']['wall_seconds'] * 1000 or summary['peak_rss_bytes'] > 2 * 1024**3:
-            raise ValueError('report_invalid')
-    if value['status'] == 'queued' and (job['mode'] != 'offline' or value['checks'] or summary is not None):
-        raise ValueError('report_invalid')
-    if value['status'] in ('passed', 'partial'):
-        if not env['guest_network_checked'] or not env['stdlib_dependencies_checked'] or value['reason'] is not None:
-            raise ValueError('report_invalid')
-        if job['kind'] in PDF_KINDS:
-            if summary is None or not env['hypervisor_controls_attested'] or job['mode'] != 'offline':
-                raise ValueError('report_invalid')
-            if value['status'] == 'passed' and (summary['observed'] != summary['planned'] or summary['primary_available'] != summary['planned']):
-                raise ValueError('report_invalid')
-        elif len(value['checks']) != (2 if job['kind'] == 'synthetic' else 1):
-            raise ValueError('report_invalid')
-        elif value['status'] == 'passed' and any(check['status'] != 'passed' for check in value['checks']):
-            raise ValueError('report_invalid')
-    if not isinstance(value['generated_utc'], str) or not re.fullmatch(r'[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z', value['generated_utc']):
-        raise ValueError('report_invalid')
-    datetime.strptime(value['generated_utc'], '%Y-%m-%dT%H:%M:%SZ')
+        if (
+            job["kind"] not in PDF_KINDS
+            or not isinstance(summary, dict)
+            or set(summary) - {"bounded_complete"} != SUMMARY_FIELDS
+            or not summary_valid(summary)
+        ):
+            raise ValueError("report_invalid")
+        planned_target = (
+            summary["planned"]
+            if job["kind"] == "pdf-static-bulk" and summary["planned"] >= 1
+            else job["limits"]["samples"]
+        )
+        if (
+            summary["planned"] != planned_target
+            or summary["completed"] > summary["planned"]
+            or summary["primary_available"] > summary["completed"]
+        ):
+            raise ValueError("report_invalid")
+        if (
+            summary["timeout"] > summary["completed"]
+            or summary["elapsed_ms"] > job["limits"]["wall_seconds"] * 1000
+            or summary["peak_rss_bytes"] > 2 * 1024**3
+        ):
+            raise ValueError("report_invalid")
+    if value["status"] == "queued" and (job["mode"] != "offline" or value["checks"] or summary is not None):
+        raise ValueError("report_invalid")
+    if value["status"] in ("passed", "partial"):
+        if not env["guest_network_checked"] or not env["stdlib_dependencies_checked"] or value["reason"] is not None:
+            raise ValueError("report_invalid")
+        if job["kind"] in PDF_KINDS:
+            if summary is None or not env["hypervisor_controls_attested"] or job["mode"] != "offline":
+                raise ValueError("report_invalid")
+            if value["status"] == "passed" and (
+                summary["observed"] != summary["planned"] or summary["primary_available"] != summary["planned"]
+            ):
+                raise ValueError("report_invalid")
+        elif len(value["checks"]) != (2 if job["kind"] == "synthetic" else 1):
+            raise ValueError("report_invalid")
+        elif value["status"] == "passed" and any(check["status"] != "passed" for check in value["checks"]):
+            raise ValueError("report_invalid")
+    if not isinstance(value["generated_utc"], str) or not re.fullmatch(
+        r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", value["generated_utc"]
+    ):
+        raise ValueError("report_invalid")
+    datetime.strptime(value["generated_utc"], "%Y-%m-%dT%H:%M:%SZ")
     if len(encoded(value)) > MAX_REPORT:
-        raise ValueError('report_invalid')
+        raise ValueError("report_invalid")
     return value
 
 
 def result(job, status, *, checks=None, summary=None, environment=None, reason=None):
-    env = {'mode': job['mode'], 'guest_network_checked': False,
-           'stdlib_dependencies_checked': False, 'hypervisor_controls_attested': False}
-    return validate_result({'schema_version': 1, 'job': job, 'status': status, 'reason': reason,
-        'checks': checks or [], 'pdf_summary': summary, 'preflight': environment or env,
-        'generated_utc': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}, job)
+    env = {
+        "mode": job["mode"],
+        "guest_network_checked": False,
+        "stdlib_dependencies_checked": False,
+        "hypervisor_controls_attested": False,
+    }
+    return validate_result(
+        {
+            "schema_version": 1,
+            "job": job,
+            "status": status,
+            "reason": reason,
+            "checks": checks or [],
+            "pdf_summary": summary,
+            "preflight": environment or env,
+            "generated_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        },
+        job,
+    )
 
 
 def read_result(job_id):
     job = load_job(job_id)
     directory = job_directory(job_id)
-    if (directory / 'result.json').is_file():
-        return validate_result(parse_json(side.bounded_read(directory / 'result.json', MAX_REPORT)), job)
-    if (directory / 'claim.json').is_file():
-        claim = parse_json(side.bounded_read(directory / 'claim.json', 4096))
-        if not isinstance(claim, dict) or set(claim) != {'job_id', 'parent_pid', 'start_ticks', 'generated_utc', 'hypervisor_controls_attested'} or claim['job_id'] != job_id:
-            raise ValueError('report_invalid')
-        active = claim.get('start_ticks') is not None and process_identity(claim.get('parent_pid')) == claim.get('start_ticks')
-        value = result(job, 'running' if active else 'interrupted', reason=None if active else 'already_claimed')
-        value['generated_utc'] = claim['generated_utc']
+    if (directory / "result.json").is_file():
+        return validate_result(parse_json(side.bounded_read(directory / "result.json", MAX_REPORT)), job)
+    if (directory / "claim.json").is_file():
+        claim = parse_json(side.bounded_read(directory / "claim.json", 4096))
+        if (
+            not isinstance(claim, dict)
+            or set(claim) != {"job_id", "parent_pid", "start_ticks", "generated_utc", "hypervisor_controls_attested"}
+            or claim["job_id"] != job_id
+        ):
+            raise ValueError("report_invalid")
+        active = claim.get("start_ticks") is not None and process_identity(claim.get("parent_pid")) == claim.get(
+            "start_ticks"
+        )
+        value = result(job, "running" if active else "interrupted", reason=None if active else "already_claimed")
+        value["generated_utc"] = claim["generated_utc"]
         return validate_result(value, job)
-    if (directory / 'queued.json').is_file():
-        return validate_result(parse_json(side.bounded_read(directory / 'queued.json', MAX_REPORT)), job)
-    raise ValueError('already_claimed')
+    if (directory / "queued.json").is_file():
+        return validate_result(parse_json(side.bounded_read(directory / "queued.json", MAX_REPORT)), job)
+    raise ValueError("already_claimed")
 
 
 def process_identity(pid):
     if type(pid) is not int or pid <= 0:
         return None
     try:
-        value = side.bounded_read(Path(f'/proc/{pid}/stat'), 8192).decode('ascii')
-        return int(value[value.rfind(')') + 2:].split()[19])
+        value = side.bounded_read(Path(f"/proc/{pid}/stat"), 8192).decode("ascii")
+        return int(value[value.rfind(")") + 2 :].split()[19])
     except (OSError, ValueError, IndexError, UnicodeError):
         return None
 
@@ -444,7 +708,7 @@ def catalog():
     entries = []
     for index, directory in enumerate(JOBS.iterdir()):
         if index >= 512:
-            raise ValueError('resource_unavailable')
+            raise ValueError("resource_unavailable")
         if directory.is_dir() and HEX.fullmatch(directory.name):
             entries.append(directory.name)
     catalogued = []
@@ -452,7 +716,7 @@ def catalog():
         try:
             catalogued.append(load_job(name))
         except ValueError as error:
-            if str(error) != 'job_mismatch':
+            if str(error) != "job_mismatch":
                 raise
     return catalogued
 
@@ -461,29 +725,29 @@ def pending():
     jobs = catalog()
     superseded = set()
     for candidate in jobs:
-        if candidate['kind'] != 'pdf-static-bulk':
+        if candidate["kind"] != "pdf-static-bulk":
             continue
-        directory = job_directory(candidate['job_id'])
-        if not (directory / 'queued.json').is_file():
+        directory = job_directory(candidate["job_id"])
+        if not (directory / "queued.json").is_file():
             continue
         selection = bulk_adoption(directory)
-        if selection is not None and selection.get('job_id') == candidate['job_id']:
-            superseded.add(selection['baseline']['source_job'])
+        if selection is not None and selection.get("job_id") == candidate["job_id"]:
+            superseded.add(selection["baseline"]["source_job"])
     items = []
     for job in jobs:
-        if job['job_id'] in superseded:
+        if job["job_id"] in superseded:
             continue
-        directory = job_directory(job['job_id'])
-        if not (directory / 'queued.json').is_file() or (directory / 'result.json').is_file():
+        directory = job_directory(job["job_id"])
+        if not (directory / "queued.json").is_file() or (directory / "result.json").is_file():
             continue
-        claim_file = directory / 'claim.json'
+        claim_file = directory / "claim.json"
         if not claim_file.exists():
             items.append(job)
             continue
         try:
             claim = parse_json(side.bounded_read(claim_file, 4096))
-            pid = claim.get('parent_pid')
-            ticks = claim.get('start_ticks')
+            pid = claim.get("parent_pid")
+            ticks = claim.get("start_ticks")
             if pid is None or process_identity(pid) != ticks:
                 items.append(job)
         except (OSError, ValueError):
@@ -492,13 +756,16 @@ def pending():
 
 
 def bulk_adoption(directory):
-    path = directory / 'bulk_plan.json'
+    path = directory / "bulk_plan.json"
     if not path.is_file():
         return None
     plan = parse_json(side.bounded_read(trusted_path(path), 65536))
-    baseline = plan.get('baseline')
-    if (isinstance(baseline, dict) and isinstance(baseline.get('source_job'), str)
-            and HEX.fullmatch(baseline['source_job'])):
+    baseline = plan.get("baseline")
+    if (
+        isinstance(baseline, dict)
+        and isinstance(baseline.get("source_job"), str)
+        and HEX.fullmatch(baseline["source_job"])
+    ):
         return plan
     return None
 
@@ -509,116 +776,151 @@ class BulkInterrupted(ValueError):
 
 @contextmanager
 def bulk_session_lock():
-    with trusted_path(JOBS / '.bulk-session.lock').open('a+b') as lock:
+    with trusted_path(JOBS / ".bulk-session.lock").open("a+b") as lock:
         try:
-            if os.name == 'nt':
+            if os.name == "nt":
                 import msvcrt
+
                 lock.seek(0)
                 msvcrt.locking(lock.fileno(), msvcrt.LK_NBLCK, 1)
             else:
                 import fcntl
+
                 fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
-            raise ValueError('already_claimed') from None
+            raise ValueError("already_claimed") from None
         yield
 
 
 def execute(job, *, attested=False, resume=False):
     validate_job(job)
-    if job['kind'] != 'pdf-static-bulk':
+    if job["kind"] != "pdf-static-bulk":
         return _execute(job, attested=attested, resume=resume)
     with bulk_session_lock():
-        if not (job_directory(job['job_id']) / 'result.json').is_file():
-            ensure_bulk_sessions_stopped(job_directory(job['job_id']))
+        if not (job_directory(job["job_id"]) / "result.json").is_file():
+            ensure_bulk_sessions_stopped(job_directory(job["job_id"]))
         return _execute(job, attested=attested, resume=resume)
 
 
 def _execute(job, *, attested=False, resume=False):
     jobs_config = config()
-    if job['kind'] in PDF_KINDS:
-        check_credentials(Path(jobs_config['data_root']))
-    directory = job_directory(job['job_id'])
-    if (directory / 'result.json').exists():
-        return read_result(job['job_id'])
-    claim_file = directory / 'claim.json'
+    if job["kind"] in PDF_KINDS:
+        check_credentials(Path(jobs_config["data_root"]))
+    directory = job_directory(job["job_id"])
+    if (directory / "result.json").exists():
+        return read_result(job["job_id"])
+    claim_file = directory / "claim.json"
     if claim_file.exists():
         if not resume:
-            raise ValueError('already_claimed')
+            raise ValueError("already_claimed")
         try:
             claim = parse_json(side.bounded_read(claim_file, 4096))
-            pid = claim.get('parent_pid')
-            ticks = claim.get('start_ticks')
+            pid = claim.get("parent_pid")
+            ticks = claim.get("start_ticks")
             if pid is not None and process_identity(pid) == ticks:
-                raise ValueError('already_claimed')
+                raise ValueError("already_claimed")
         except (OSError, ValueError):
-            raise ValueError('already_claimed')
-        if job['kind'] == 'pdf-static-bulk':
-            prior = directory / 'bulk_claims'
+            raise ValueError("already_claimed")
+        if job["kind"] == "pdf-static-bulk":
+            prior = directory / "bulk_claims"
             prior.mkdir(mode=0o700, exist_ok=True)
-            immutable(prior / (sha(encoded(claim)) + '.json'), claim)
-    environment = preflight(job['mode'], attested=attested)
-    metadata = side.verify_release(job['commit'], job['manifest_sha256'])
+            immutable(prior / (sha(encoded(claim)) + ".json"), claim)
+    environment = preflight(job["mode"], attested=attested)
+    metadata = side.verify_release(job["commit"], job["manifest_sha256"])
     verify_helpers(metadata)
     directory = save_job(job)
-    claim_payload = {'job_id': job['job_id'], 'parent_pid': os.getpid(),
-                     'start_ticks': process_identity(os.getpid()),
-                     'generated_utc': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
-                     'hypervisor_controls_attested': bool(attested)}
-    claim_tmp = directory / 'claim.json.tmp'
-    with claim_tmp.open('w', encoding='ascii') as stream:
+    claim_payload = {
+        "job_id": job["job_id"],
+        "parent_pid": os.getpid(),
+        "start_ticks": process_identity(os.getpid()),
+        "generated_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "hypervisor_controls_attested": bool(attested),
+    }
+    claim_tmp = directory / "claim.json.tmp"
+    with claim_tmp.open("w", encoding="ascii") as stream:
         json.dump(claim_payload, stream)
     os.replace(claim_tmp, claim_file)
     try:
         checks = []
-        if job['kind'] in PDF_KINDS:
+        if job["kind"] in PDF_KINDS:
             summary = pdf_task(job, directory)
-            expected_samples = summary['planned'] if job['kind'] == 'pdf-static-bulk' and summary['planned'] >= 1 else job['limits']['samples']
-            passed = summary['observed'] == summary['primary_available'] == expected_samples and not pdf_halt_records(job, directory)
-            if job['kind'] == 'pdf-diagnostic-replay':
-                replay_summary = parse_json(side.bounded_read(directory / 'analysis/summary.json', 128 * 1024))
-                passed = passed and replay_summary.get('diagnostic_coverage_complete') is True
-            value = result(job, 'passed' if passed else 'partial', summary=summary, environment=environment)
+            expected_samples = (
+                summary["planned"]
+                if job["kind"] == "pdf-static-bulk" and summary["planned"] >= 1
+                else job["limits"]["samples"]
+            )
+            passed = summary["observed"] == summary["primary_available"] == expected_samples and not pdf_halt_records(
+                job, directory
+            )
+            if job["kind"] == "pdf-diagnostic-replay":
+                replay_summary = parse_json(side.bounded_read(directory / "analysis/summary.json", 128 * 1024))
+                passed = passed and replay_summary.get("diagnostic_coverage_complete") is True
+            value = result(job, "passed" if passed else "partial", summary=summary, environment=environment)
         else:
             with redirect_stdout(io.StringIO()):
-                checks.append(side.syntax(job['commit']))
-                if job['kind'] == 'synthetic' and checks[0]['status'] == 'passed':
-                    checks.append(side.synthetic(job['commit']))
-            status = 'failed' if any(check['status'] == 'failed' for check in checks) else 'partial' if any(check['status'] == 'partial' for check in checks) else 'passed'
+                checks.append(side.syntax(job["commit"]))
+                if job["kind"] == "synthetic" and checks[0]["status"] == "passed":
+                    checks.append(side.synthetic(job["commit"]))
+            status = (
+                "failed"
+                if any(check["status"] == "failed" for check in checks)
+                else "partial"
+                if any(check["status"] == "partial" for check in checks)
+                else "passed"
+            )
             value = result(job, status, checks=checks, environment=environment)
     except BulkInterrupted:
-        return result(job, 'interrupted', environment=environment, reason='worker_timeout')
+        return result(job, "interrupted", environment=environment, reason="worker_timeout")
     except (OSError, ValueError, subprocess.SubprocessError, MemoryError) as error:
-        value = result(job, 'failed', environment=environment, reason='worker_timeout' if str(error) == 'worker_timeout' else 'worker_failed')
-    immutable(directory / 'result.json', value)
+        value = result(
+            job,
+            "failed",
+            environment=environment,
+            reason="worker_timeout" if str(error) == "worker_timeout" else "worker_failed",
+        )
+    immutable(directory / "result.json", value)
     return value
 
 
 def write_pdf_halt(job, directory, *, shard, index, reason):
     validate_job(job)
-    allowed = {'wall_limit', 'output_limit', 'bundle_size_limit', 'worker_cleanup_incomplete'}
-    if (type(shard) is not int or not 0 <= shard < job['limits']['workers']
-            or type(index) is not int or not 0 <= index < job['limits']['samples']
-            or index % job['limits']['workers'] != shard or reason not in allowed):
-        raise ValueError('invalid_pdf_halt')
-    immutable(directory / f'pdf_halt.{shard}.json', {
-        'schema_version': 1, 'job_id': job['job_id'], 'shard': shard,
-        'index': index, 'reason': reason})
+    allowed = {"wall_limit", "output_limit", "bundle_size_limit", "worker_cleanup_incomplete"}
+    if (
+        type(shard) is not int
+        or not 0 <= shard < job["limits"]["workers"]
+        or type(index) is not int
+        or not 0 <= index < job["limits"]["samples"]
+        or index % job["limits"]["workers"] != shard
+        or reason not in allowed
+    ):
+        raise ValueError("invalid_pdf_halt")
+    immutable(
+        directory / f"pdf_halt.{shard}.json",
+        {"schema_version": 1, "job_id": job["job_id"], "shard": shard, "index": index, "reason": reason},
+    )
 
 
 def pdf_halt_records(job, directory):
     records = []
-    allowed = {'wall_limit', 'output_limit', 'bundle_size_limit', 'worker_cleanup_incomplete'}
-    for shard in range(job['limits']['workers']):
-        path = directory / f'pdf_halt.{shard}.json'
+    allowed = {"wall_limit", "output_limit", "bundle_size_limit", "worker_cleanup_incomplete"}
+    for shard in range(job["limits"]["workers"]):
+        path = directory / f"pdf_halt.{shard}.json"
         if not path.exists():
             continue
         value = parse_json(side.bounded_read(trusted_path(path), 4096))
-        if (not isinstance(value, dict) or set(value) != {'schema_version', 'job_id', 'shard', 'index', 'reason'}
-                or value.get('schema_version') != 1 or value.get('job_id') != job['job_id'] or value.get('shard') != shard
-                or type(value.get('index')) is not int or not 0 <= value['index'] < job['limits']['samples']
-                or value['index'] % job['limits']['workers'] != shard
-                or not isinstance(value.get('reason'), str) or value['reason'] not in allowed):
-            raise ValueError('report_invalid')
+        if (
+            not isinstance(value, dict)
+            or set(value) != {"schema_version", "job_id", "shard", "index", "reason"}
+            or value.get("schema_version") != 1
+            or value.get("job_id") != job["job_id"]
+            or value.get("shard") != shard
+            or type(value.get("index")) is not int
+            or not 0 <= value["index"] < job["limits"]["samples"]
+            or value["index"] % job["limits"]["workers"] != shard
+            or not isinstance(value.get("reason"), str)
+            or value["reason"] not in allowed
+        ):
+            raise ValueError("report_invalid")
         records.append(value)
     return records
 
@@ -627,58 +929,86 @@ def pdf_bundle_progress_status(path, *, max_bytes=16 * 1024**2 + 1024):
     try:
         value = parse_json(side.bounded_read(path, max_bytes))
     except (OSError, ValueError):
-        return 'unreadable'
-    if (not isinstance(value, dict) or not isinstance(value.get('status'), str)
-            or value['status'] not in PDF_STATUSES):
-        return 'unknown'
-    return value['status']
+        return "unreadable"
+    if not isinstance(value, dict) or not isinstance(value.get("status"), str) or value["status"] not in PDF_STATUSES:
+        return "unknown"
+    return value["status"]
 
 
 def pdf_completion_banner(job, summary, *, elapsed_seconds, workers, halted_shards=0):
     validate_job(job)
-    planned_target = summary['planned'] if isinstance(summary, dict) and job['kind'] == 'pdf-static-bulk' and type(summary.get('planned')) is int and summary['planned'] >= 1 else job['limits']['samples']
-    if (not isinstance(summary, dict) or not summary_valid(summary)
-            or summary.get('planned') != planned_target
-            or not 0 <= summary['completed'] <= summary['planned']
-            or not 0 <= summary['primary_available'] <= summary['completed']
-            or not math.isfinite(elapsed_seconds) or elapsed_seconds < 0
-            or type(workers) is not int or not 1 <= workers <= job['limits']['workers']
-            or type(halted_shards) is not int or not 0 <= halted_shards <= workers):
-        raise ValueError('report_invalid')
-    missing = summary['planned'] - summary['completed']
-    state = ('INCOMPLETE' if missing else 'COMPLETED SUCCESSFULLY'
-             if summary['observed'] == summary['primary_available'] == summary['planned'] and not halted_shards else 'PARTIAL')
+    planned_target = (
+        summary["planned"]
+        if isinstance(summary, dict)
+        and job["kind"] == "pdf-static-bulk"
+        and type(summary.get("planned")) is int
+        and summary["planned"] >= 1
+        else job["limits"]["samples"]
+    )
+    if (
+        not isinstance(summary, dict)
+        or not summary_valid(summary)
+        or summary.get("planned") != planned_target
+        or not 0 <= summary["completed"] <= summary["planned"]
+        or not 0 <= summary["primary_available"] <= summary["completed"]
+        or not math.isfinite(elapsed_seconds)
+        or elapsed_seconds < 0
+        or type(workers) is not int
+        or not 1 <= workers <= job["limits"]["workers"]
+        or type(halted_shards) is not int
+        or not 0 <= halted_shards <= workers
+    ):
+        raise ValueError("report_invalid")
+    missing = summary["planned"] - summary["completed"]
+    state = (
+        "INCOMPLETE"
+        if missing
+        else "COMPLETED SUCCESSFULLY"
+        if summary["observed"] == summary["primary_available"] == summary["planned"] and not halted_shards
+        else "PARTIAL"
+    )
     elapsed = int(elapsed_seconds)
-    return '\n'.join((
-        '=' * 80, f'MALPDF EXTRACTION {state}', '=' * 80,
-        f"Job ID: {job['job_id']}",
-        f"Processed: {summary['completed']} / {summary['planned']} | Missing: {missing}",
-        f"Observed: {summary['observed']} | Partial: {summary['partial']} | Failed/unsupported: {summary['failed']}",
-        f'Elapsed: {elapsed // 60:02d}:{elapsed % 60:02d} | Workers: {workers} | Halted shards: {halted_shards}', '=' * 80))
+    return "\n".join(
+        (
+            "=" * 80,
+            f"MALPDF EXTRACTION {state}",
+            "=" * 80,
+            f"Job ID: {job['job_id']}",
+            f"Processed: {summary['completed']} / {summary['planned']} | Missing: {missing}",
+            f"Observed: {summary['observed']} | Partial: {summary['partial']} | Failed/unsupported: {summary['failed']}",
+            f"Elapsed: {elapsed // 60:02d}:{elapsed % 60:02d} | Workers: {workers} | Halted shards: {halted_shards}",
+            "=" * 80,
+        )
+    )
 
 
 def pdf_bundle_indices(outputs, planned):
     if not outputs.is_dir():
         return set()
-    return {int(path.stem) for path in outputs.iterdir()
-            if re.fullmatch(r'[0-9]{4}\.json', path.name) and not path.is_symlink()
-            and path.is_file() and int(path.stem) < planned}
+    return {
+        int(path.stem)
+        for path in outputs.iterdir()
+        if re.fullmatch(r"[0-9]{4}\.json", path.name)
+        and not path.is_symlink()
+        and path.is_file()
+        and int(path.stem) < planned
+    }
 
 
 def bulk_attempt_stopped(attempt, *, terminate=False):
     import signal
 
-    result_file = attempt / 'result.json'
+    result_file = attempt / "result.json"
     if not terminate and result_file.is_file():
         prior = parse_json(side.bounded_read(trusted_path(result_file), 2048))
-        return prior.get('cleanup_verified') is True
-    for file in (attempt / 'writer.json', *sorted((attempt / 'workers').glob('*.json'))):
+        return prior.get("cleanup_verified") is True
+    for file in (attempt / "writer.json", *sorted((attempt / "workers").glob("*.json"))):
         if not file.is_file():
             continue
         record = parse_json(side.bounded_read(trusted_path(file), 1024))
-        pid, ticks = record['pid'], record['start_ticks']
-        if type(pid) is not int or pid <= 1 or type(ticks) is not int or record['pgid'] != pid:
-            raise ValueError('worker_failed')
+        pid, ticks = record["pid"], record["start_ticks"]
+        if type(pid) is not int or pid <= 1 or type(ticks) is not int or record["pgid"] != pid:
+            raise ValueError("worker_failed")
         if terminate and process_identity(pid) == ticks:
             try:
                 with_pidfd = os.pidfd_open(pid)
@@ -705,33 +1035,45 @@ def bulk_attempt_stopped(attempt, *, terminate=False):
 
 
 def ensure_bulk_sessions_stopped(directory):
-    attempts = trusted_path(directory / 'bulk_attempts')
+    attempts = trusted_path(directory / "bulk_attempts")
     if attempts.is_dir():
         for attempt in attempts.iterdir():
             if not attempt.is_dir() or not bulk_attempt_stopped(trusted_path(attempt)):
-                raise ValueError('already_claimed')
+                raise ValueError("already_claimed")
 
 
 def _bulk_task(job, directory, cfg, started):
-    command = [cfg['python'], '-Es', '-B', str(Path(__file__).with_name('lab_runner.py')), 'pdf-bulk', job['job_id']]
-    attempts = trusted_path(directory / 'bulk_attempts')
+    command = [cfg["python"], "-Es", "-B", str(Path(__file__).with_name("lab_runner.py")), "pdf-bulk", job["job_id"]]
+    attempts = trusted_path(directory / "bulk_attempts")
     attempts.mkdir(mode=0o700, exist_ok=True)
     attempt = attempts / uuid.uuid4().hex
     attempt.mkdir(mode=0o700)
-    (attempt / 'workers').mkdir(mode=0o700)
-    wall = job['limits']['wall_seconds']
+    (attempt / "workers").mkdir(mode=0o700)
+    wall = job["limits"]["wall_seconds"]
     reserve = min(600, max(1, wall // 10))
-    environment = {'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8', 'HOME': str(Path.home()),
-        'OPENBLAS_NUM_THREADS': '1', 'OMP_NUM_THREADS': '1', 'MKL_NUM_THREADS': '1',
-        'MALPDF_LAB_ISOLATED': '1', 'MALPDF_BULK_ATTEMPT': attempt.name,
-        'MALPDF_BULK_DEADLINE': str(started + wall - reserve)}
+    environment = {
+        "PATH": "/usr/bin:/bin",
+        "LANG": "C.UTF-8",
+        "HOME": str(Path.home()),
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "MALPDF_LAB_ISOLATED": "1",
+        "MALPDF_BULK_ATTEMPT": attempt.name,
+        "MALPDF_BULK_DEADLINE": str(started + wall - reserve),
+    }
     process = subprocess.Popen(command, stdin=subprocess.PIPE, start_new_session=True, env=environment)
     try:
-        immutable(attempt / 'writer.json', {
-            'pid': process.pid, 'pgid': process.pid, 'start_ticks': process_identity(process.pid),
-        })
+        immutable(
+            attempt / "writer.json",
+            {
+                "pid": process.pid,
+                "pgid": process.pid,
+                "start_ticks": process_identity(process.pid),
+            },
+        )
         with process.stdin:
-            process.stdin.write(b'1')
+            process.stdin.write(b"1")
         code = process.wait(timeout=max(0, started + wall - time.monotonic()))
     except subprocess.TimeoutExpired:
         stop_worker(process)
@@ -743,38 +1085,52 @@ def _bulk_task(job, directory, cfg, started):
         process.stdin.close()
         stopped = bulk_attempt_stopped(attempt, terminate=True)
     if not stopped:
-        immutable(attempt / 'result.json', {'status': 'cleanup_unverified', 'cleanup_verified': False})
-        raise ValueError('worker_failed')
-    immutable(attempt / 'result.json', {
-        'status': 'interrupted' if code == 75 else 'complete' if code == 0 else 'failed',
-        'cleanup_verified': True,
-    })
-    (attempt / 'arlington.json').unlink(missing_ok=True)
+        immutable(attempt / "result.json", {"status": "cleanup_unverified", "cleanup_verified": False})
+        raise ValueError("worker_failed")
+    immutable(
+        attempt / "result.json",
+        {
+            "status": "interrupted" if code == 75 else "complete" if code == 0 else "failed",
+            "cleanup_verified": True,
+        },
+    )
+    (attempt / "arlington.json").unlink(missing_ok=True)
     if code == 75:
-        print('Bulk session paused. Run lab run again to resume verified checkpoints.', flush=True)
-        raise BulkInterrupted('worker_timeout')
+        print("Bulk session paused. Run lab run again to resume verified checkpoints.", flush=True)
+        raise BulkInterrupted("worker_timeout")
     if code != 0:
-        raise ValueError('worker_failed')
-    summary = parse_json(side.bounded_read(attempt / 'pdf_summary.json', 16384))
+        raise ValueError("worker_failed")
+    summary = parse_json(side.bounded_read(attempt / "pdf_summary.json", 16384))
     if not summary_valid(summary):
-        raise ValueError('report_invalid')
-    print(pdf_completion_banner(job, summary, elapsed_seconds=time.monotonic() - started, workers=job['limits']['workers']), flush=True)
+        raise ValueError("report_invalid")
+    print(
+        pdf_completion_banner(
+            job, summary, elapsed_seconds=time.monotonic() - started, workers=job["limits"]["workers"]
+        ),
+        flush=True,
+    )
     return summary
 
 
 def pdf_task(job, directory):
     cfg = config()
-    if shutil.disk_usage(directory).free < job['limits']['output_bytes'] + 256 * 1024**2:
-        raise ValueError('resource_unavailable')
-    if job['kind'] == 'pdf-static-bulk':
+    if shutil.disk_usage(directory).free < job["limits"]["output_bytes"] + 256 * 1024**2:
+        raise ValueError("resource_unavailable")
+    if job["kind"] == "pdf-static-bulk":
         return _bulk_task(job, directory, cfg, time.monotonic())
-    count = job['limits']['workers']
-    deadline = time.monotonic() + job['limits']['wall_seconds']
-    environment = {'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8', 'HOME': str(Path.home()),
-        'OPENBLAS_NUM_THREADS': '1', 'OMP_NUM_THREADS': '1', 'MKL_NUM_THREADS': '1'}
+    count = job["limits"]["workers"]
+    deadline = time.monotonic() + job["limits"]["wall_seconds"]
+    environment = {
+        "PATH": "/usr/bin:/bin",
+        "LANG": "C.UTF-8",
+        "HOME": str(Path.home()),
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+    }
     streams, processes = [], []
-    outputs = directory / 'private_bundles'
-    planned = job['limits']['samples']
+    outputs = directory / "private_bundles"
+    planned = job["limits"]["samples"]
     started = time.monotonic()
     last_print = 0.0
     last_completed = -1
@@ -783,25 +1139,43 @@ def pdf_task(job, directory):
         for shard in range(count):
             stdout, stderr = tempfile.TemporaryFile(), tempfile.TemporaryFile()
             streams.extend((stdout, stderr))
-            command = [cfg['python'], '-Es', '-B', str(Path(__file__).with_name('lab_runner.py')),
-                'pdf-worker', job['job_id'], '--shard', str(shard), '--of', str(count)]
-            processes.append(subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=stdout,
-                stderr=stderr, start_new_session=True, env=environment))
+            command = [
+                cfg["python"],
+                "-Es",
+                "-B",
+                str(Path(__file__).with_name("lab_runner.py")),
+                "pdf-worker",
+                job["job_id"],
+                "--shard",
+                str(shard),
+                "--of",
+                str(count),
+            ]
+            processes.append(
+                subprocess.Popen(
+                    command,
+                    stdin=subprocess.DEVNULL,
+                    stdout=stdout,
+                    stderr=stderr,
+                    start_new_session=True,
+                    env=environment,
+                )
+            )
         while True:
             alive = [process for process in processes if process.poll() is None]
-            if job['kind'] in FINGERPRINT_KINDS:
+            if job["kind"] in FINGERPRINT_KINDS:
                 present = set()
-                progress = directory / 'fingerprint_progress.json'
+                progress = directory / "fingerprint_progress.json"
                 completed = parse_json(side.bounded_read(trusted_path(progress), 64)) if progress.is_file() else 0
                 if type(completed) is not int or not 0 <= completed <= planned:
-                    raise ValueError('report_invalid')
+                    raise ValueError("report_invalid")
             else:
                 present = pdf_bundle_indices(outputs, planned)
                 completed = len(present)
             for idx in sorted(present - seen_bundles):
                 seen_bundles.add(idx)
-                b_status = pdf_bundle_progress_status(outputs / f'{idx:04d}.json')
-                icon = '✓' if b_status in ('bounded_complete', 'observed') else '⏱' if b_status == 'timeout' else '!'
+                b_status = pdf_bundle_progress_status(outputs / f"{idx:04d}.json")
+                icon = "✓" if b_status in ("bounded_complete", "observed") else "⏱" if b_status == "timeout" else "!"
                 tag_line = f"[{icon} {idx:04d}/{planned}] PDF {idx:04d} -> {b_status} | Workers: {len(alive)}/{count}"
                 if sys.stdout.isatty():
                     sys.stdout.write(f"\r{tag_line:<80s}\n")
@@ -809,9 +1183,9 @@ def pdf_task(job, directory):
                 else:
                     print(tag_line, flush=True)
             try:
-                meminfo = side.bounded_read(Path('/proc/meminfo'), 8192).decode('ascii')
+                meminfo = side.bounded_read(Path("/proc/meminfo"), 8192).decode("ascii")
                 for mline in meminfo.splitlines():
-                    if mline.startswith('MemAvailable:'):
+                    if mline.startswith("MemAvailable:"):
                         if int(mline.split()[1]) < 1200 * 1024:
                             time.sleep(0.5)
                         break
@@ -845,35 +1219,39 @@ def pdf_task(job, directory):
             time.sleep(0.2)
         codes = [process.returncode for process in processes]
     except subprocess.TimeoutExpired:
-        if job['kind'] == 'pdf-diagnostic-replay':
-            replay_transport(job, directory, processes, streams, reason='timeout')
+        if job["kind"] == "pdf-diagnostic-replay":
+            replay_transport(job, directory, processes, streams, reason="timeout")
         for process in processes:
             stop_worker(process)
-        raise ValueError('worker_timeout') from None
+        raise ValueError("worker_timeout") from None
     except BaseException:
-        if job['kind'] == 'pdf-diagnostic-replay':
-            replay_transport(job, directory, processes, streams, reason='supervisor_exception')
+        if job["kind"] == "pdf-diagnostic-replay":
+            replay_transport(job, directory, processes, streams, reason="supervisor_exception")
         for process in processes:
             stop_worker(process)
         raise
     finally:
-        if job['kind'] == 'pdf-diagnostic-replay':
+        if job["kind"] == "pdf-diagnostic-replay":
             replay_transport(job, directory, processes, streams)
             replay_cleanup(job, directory, processes)
         for stream in streams:
             stream.close()
-        if job['kind'] == 'pdf-diagnostic-replay':
+        if job["kind"] == "pdf-diagnostic-replay":
             replay_analysis(job, cfg, environment)
     if any(code != 0 for code in codes):
-        raise ValueError('worker_failed')
+        raise ValueError("worker_failed")
     summary = merge_summary(job, directory, count)
     halts = pdf_halt_records(job, directory)
-    print(pdf_completion_banner(job, summary, elapsed_seconds=time.monotonic() - started, workers=count,
-                                halted_shards=len(halts)), flush=True)
+    print(
+        pdf_completion_banner(
+            job, summary, elapsed_seconds=time.monotonic() - started, workers=count, halted_shards=len(halts)
+        ),
+        flush=True,
+    )
     return summary
 
 
-def replay_transport(job, directory, processes, streams, *, reason='observed_process_exit'):
+def replay_transport(job, directory, processes, streams, *, reason="observed_process_exit"):
     try:
         _replay_transport(job, directory, processes, streams, reason=reason)
         return True
@@ -883,24 +1261,33 @@ def replay_transport(job, directory, processes, streams, *, reason='observed_pro
 
 def replay_cleanup(job, directory, processes):
     try:
-        immutable(directory / 'private_outer/cleanup.json', {'run_id': job['job_id'], 'exit_codes': [process.poll() for process in processes]})
+        immutable(
+            directory / "private_outer/cleanup.json",
+            {"run_id": job["job_id"], "exit_codes": [process.poll() for process in processes]},
+        )
         return True
     except (OSError, ValueError, MemoryError):
         return False
 
 
 def _replay_transport(job, directory, processes, streams, *, reason):
-    output = directory / 'private_outer'
+    output = directory / "private_outer"
     output.mkdir(mode=0o700, exist_ok=True)
     for shard, process in enumerate(processes):
-        path = output / f'transport.{shard}.json'
+        path = output / f"transport.{shard}.json"
         if path.exists():
             continue
-        record = {'schema_version': 1, 'run_id': job['job_id'], 'shard': shard, 'exit_before_cleanup': process.poll(), 'supervisor_reason': reason}
-        for key, stream in zip(('stdout', 'stderr'), streams[2*shard:2*shard+2]):
+        record = {
+            "schema_version": 1,
+            "run_id": job["job_id"],
+            "shard": shard,
+            "exit_before_cleanup": process.poll(),
+            "supervisor_reason": reason,
+        }
+        for key, stream in zip(("stdout", "stderr"), streams[2 * shard : 2 * shard + 2]):
             size = os.fstat(stream.fileno()).st_size
-            record[key+'_observed_bytes'] = size
-            if hasattr(os, 'pread'):
+            record[key + "_observed_bytes"] = size
+            if hasattr(os, "pread"):
                 payload = os.pread(stream.fileno(), min(size, 16384), 0)
             else:
                 position = stream.tell()
@@ -909,70 +1296,102 @@ def _replay_transport(job, directory, processes, streams, *, reason):
                     payload = stream.read(min(size, 16384))
                 finally:
                     stream.seek(position)
-            record[key] = payload.decode('utf-8', errors='replace')
+            record[key] = payload.decode("utf-8", errors="replace")
         immutable(path, record)
 
 
 def replay_analysis(job, cfg, environment):
-    command = [cfg['python'], '-Es', '-B', str(Path(__file__).with_name('lab_runner.py')), 'replay-report', job['job_id']]
-    checked = subprocess.run(command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        env=environment, timeout=90)
+    command = [
+        cfg["python"],
+        "-Es",
+        "-B",
+        str(Path(__file__).with_name("lab_runner.py")),
+        "replay-report",
+        job["job_id"],
+    ]
+    checked = subprocess.run(
+        command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=environment, timeout=90
+    )
     if checked.returncode or len(checked.stdout) > 128 * 1024:
-        raise ValueError('report_invalid')
+        raise ValueError("report_invalid")
 
 
 def merge_summary(job, directory, count):
-    fields = {*SUMMARY_FIELDS, 'shard', 'shards'}
-    totals = dict.fromkeys(('completed', 'observed', 'bounded_complete', 'partial', 'failed', 'primary_available', 'timeout'), 0)
+    fields = {*SUMMARY_FIELDS, "shard", "shards"}
+    totals = dict.fromkeys(
+        ("completed", "observed", "bounded_complete", "partial", "failed", "primary_available", "timeout"), 0
+    )
     counts = {}
     elapsed_ms = 0
     peak_rss_bytes = 0
     for shard in range(count):
-        value = parse_json(side.bounded_read(directory / f'pdf_summary.{shard}.json', 16384))
-        if (not isinstance(value, dict) or set(value) - {'bounded_complete'} != fields
-                or value.get('shard') != shard or value.get('shards') != count
-                or value.get('planned') != job['limits']['samples']):
-            raise ValueError('report_invalid')
-        if any(type(value[name]) is not int or not 0 <= value[name] <= 10**12 for name in set(value) - {'status_counts'}) or not summary_valid(value):
-            raise ValueError('report_invalid')
+        value = parse_json(side.bounded_read(directory / f"pdf_summary.{shard}.json", 16384))
+        if (
+            not isinstance(value, dict)
+            or set(value) - {"bounded_complete"} != fields
+            or value.get("shard") != shard
+            or value.get("shards") != count
+            or value.get("planned") != job["limits"]["samples"]
+        ):
+            raise ValueError("report_invalid")
+        if any(
+            type(value[name]) is not int or not 0 <= value[name] <= 10**12 for name in set(value) - {"status_counts"}
+        ) or not summary_valid(value):
+            raise ValueError("report_invalid")
         for name in totals:
             totals[name] += value.get(name, 0)
-        elapsed_ms = max(elapsed_ms, value['elapsed_ms'])
-        peak_rss_bytes = max(peak_rss_bytes, value['peak_rss_bytes'])
-        for name, amount in value['status_counts'].items():
+        elapsed_ms = max(elapsed_ms, value["elapsed_ms"])
+        peak_rss_bytes = max(peak_rss_bytes, value["peak_rss_bytes"])
+        for name, amount in value["status_counts"].items():
             counts[name] = counts.get(name, 0) + amount
-    totals['bounded_complete'] = counts.get('bounded_complete', totals.get('bounded_complete', 0))
-    summary = {'planned': job['limits']['samples'], 'elapsed_ms': elapsed_ms, 'peak_rss_bytes': peak_rss_bytes,
-               'status_counts': dict(sorted(counts.items())), **totals}
+    totals["bounded_complete"] = counts.get("bounded_complete", totals.get("bounded_complete", 0))
+    summary = {
+        "planned": job["limits"]["samples"],
+        "elapsed_ms": elapsed_ms,
+        "peak_rss_bytes": peak_rss_bytes,
+        "status_counts": dict(sorted(counts.items())),
+        **totals,
+    }
     if not summary_valid(summary):
-        raise ValueError('report_invalid')
-    immutable(directory / 'pdf_summary.json', summary)
+        raise ValueError("report_invalid")
+    immutable(directory / "pdf_summary.json", summary)
     return summary
 
 
 def credential_reasons(data_root):
-    sensitive = ('.codex/auth.json', '.aws/credentials', '.kaggle/kaggle.json', '.git-credentials', '.netrc', '.env', '.config/gcloud/application_default_credentials.json')
+    sensitive = (
+        ".codex/auth.json",
+        ".aws/credentials",
+        ".kaggle/kaggle.json",
+        ".git-credentials",
+        ".netrc",
+        ".env",
+        ".config/gcloud/application_default_credentials.json",
+    )
     reasons = []
-    for label, root in (('home', Path.home()), ('data', Path(data_root))):
+    for label, root in (("home", Path.home()), ("data", Path(data_root))):
         for name in sensitive:
             if (root / name).exists() or (root / name).is_symlink():
-                reasons.append(label + ':' + name)
-    ssh = Path.home() / '.ssh'
-    if ssh.is_dir() and any(path.name.startswith('id_') and path.suffix != '.pub' for path in ssh.iterdir()):
-        reasons.append('home:.ssh/id_*')
+                reasons.append(label + ":" + name)
+    ssh = Path.home() / ".ssh"
+    if ssh.is_dir() and any(path.name.startswith("id_") and path.suffix != ".pub" for path in ssh.iterdir()):
+        reasons.append("home:.ssh/id_*")
     for name in sorted(os.environ):
-        if os.environ[name] and (name in {'SSH_AUTH_SOCK', 'SSH_AGENT_PID'} or name.endswith(('_TOKEN', '_API_KEY', '_PASSWORD', '_SECRET'))):
-            reasons.append('env:' + name)
+        if os.environ[name] and (
+            name in {"SSH_AUTH_SOCK", "SSH_AGENT_PID"} or name.endswith(("_TOKEN", "_API_KEY", "_PASSWORD", "_SECRET"))
+        ):
+            reasons.append("env:" + name)
     return reasons[:MAX_CREDENTIAL_REASONS]
 
 
 def check_credentials(data_root):
     if credential_reasons(data_root):
-        raise ValueError('credential_present')
+        raise ValueError("credential_present")
 
 
 def stop_worker(process):
     import signal
+
     try:
         os.killpg(process.pid, signal.SIGTERM)
         process.wait(timeout=5)
