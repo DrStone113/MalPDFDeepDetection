@@ -8,7 +8,6 @@ import hashlib
 import json
 from pathlib import Path
 import statistics
-import subprocess
 import sys
 import time
 from typing import Any
@@ -35,6 +34,8 @@ from scripts.lab.train_uri_lexical_head_v4 import (
     _domain_grouped_split,
     _load_phiusiil_rows,
     compute_phiusiil_split_manifest_sha256,
+    require_unchanged_uri_source,
+    uri_source_provenance,
 )
 
 from malpdf.cdr.engine import PDFDisarmer
@@ -51,13 +52,6 @@ from onnx_engine import ONNXMalPDFScannerEngine
 DEFAULT_OUT_ROOT = REPO / "reports" / "experiments" / "uri_head_independent_eval"
 
 PATH_CHALLENGE_URLS: tuple[str, ...] = REALWORLD_BENIGN_CHALLENGE_URLS
-
-
-def _git_rev() -> str:
-    try:
-        return subprocess.check_output(["git", "rev-parse", "--short=12", "HEAD"], cwd=REPO, text=True).strip()
-    except Exception:
-        return "unknown"
 
 
 def _sha256_file(path: Path) -> str:
@@ -117,6 +111,7 @@ def main() -> int:
     parser.add_argument("--out-root", type=Path, default=DEFAULT_OUT_ROOT)
     parser.add_argument("--train-report-root", type=Path, default=DEFAULT_REPORT_ROOT)
     args = parser.parse_args()
+    source_provenance = uri_source_provenance(REPO)
 
     if _sha256_file(PHIUSIIL_ZIP_PATH) != PHIUSIIL_ZIP_SHA256:
         raise ValueError("phiusiil_zip_sha256_mismatch")
@@ -293,7 +288,8 @@ def main() -> int:
                     extracted_clean.add(item_canon[0])
         if ch_clean not in extracted_clean:
             raise RuntimeError(f"challenge_url_missing_from_ingestion_extraction:{ch_url}")
-        if not is_allowlisted_uri(ch_clean):
+        allowlisted = is_allowlisted_uri(ch_clean)
+        if not allowlisted:
             admitted_clean = {cand for cand, _vec in ox.uri_head._evaluate_pdf_candidates(extracted_ch)["candidates"]}
             if ch_clean not in admitted_clean:
                 raise RuntimeError(f"challenge_url_not_admitted_by_uri_head:{ch_url}")
@@ -304,6 +300,7 @@ def main() -> int:
         path_challenge_details.append(
             {
                 "url": ch_url,
+                "allowlisted": allowlisted,
                 "prob": float(ox_uri["max_prob"]),
                 "tier": str(ox_uri["tier"]),
                 "verdict": str(r_ox.verdict),
@@ -385,6 +382,7 @@ def main() -> int:
             "benign_multilink_fpr": ben_fpr_pt,
         },
         "path_challenge": {
+            "purpose": "runtime_regression",
             "total": len(PATH_CHALLENGE_URLS),
             "or_gate_fp": path_challenge_or_gate_fp,
             "verdict_fp": path_challenge_verdict_fp,
@@ -401,13 +399,15 @@ def main() -> int:
         "gates_passed": gates_passed,
     }
 
+    require_unchanged_uri_source(REPO, source_provenance)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
-    out_dir = args.out_root / f"run_{stamp}_{_git_rev()}"
+    out_dir = args.out_root / f"run_{stamp}_{source_provenance['git_commit'][:12]}"
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "metrics.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
     (out_dir / "locked_methodology.json").write_text(
         json.dumps(
             {
+                "source_provenance": source_provenance,
                 "phiusiil_zip_sha256": PHIUSIIL_ZIP_SHA256,
                 "phiusiil_csv_sha256": csv_sha,
                 "phiusiil_split_manifest_sha256": eval_split_sha,

@@ -378,19 +378,46 @@ _HOSTED_SPLIT_TOKENS: dict[str, tuple[str, ...]] = {
 }
 
 
-def _git_rev() -> str:
-    try:
-        return subprocess.check_output(["git", "rev-parse", "--short=12", "HEAD"], cwd=REPO, text=True).strip()
-    except Exception:
-        return "unknown"
-
-
 def _sha256_file(path: Path) -> str:
     h = hashlib.sha256()
     with path.open("rb") as stream:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             h.update(chunk)
     return h.hexdigest()
+
+
+def uri_source_provenance(root: Path) -> dict[str, Any]:
+    root = root.resolve()
+    revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
+    pathspecs = (
+        "src/malpdf/*.py",
+        "scripts/lab/*.py",
+        "production/*.py",
+        "configs/*.json",
+        "configs/*.yaml",
+        "production/configs/*.json",
+        "pyproject.toml",
+        "production/requirements.txt",
+        ":(exclude)configs/uri_lexical_head_v4_contract.json",
+        ":(exclude)production/configs/uri_lexical_head_v4_contract.json",
+    )
+    listed = subprocess.check_output(
+        ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z", "--", *pathspecs],
+        cwd=root,
+    )
+    digests = {}
+    for name in sorted(set(os.fsdecode(listed).split("\0")) - {""}):
+        path = root / name
+        if path.is_symlink() or not path.resolve().is_relative_to(root):
+            raise ValueError(f"uri_evaluation_source_path_outside_scope:{name}")
+        if path.is_file():
+            digests[name] = _sha256_file(path)
+    return {"git_commit": revision, "files_sha256": digests}
+
+
+def require_unchanged_uri_source(root: Path, expected: dict[str, Any]) -> None:
+    if uri_source_provenance(root) != expected:
+        raise RuntimeError("uri_evaluation_source_changed")
 
 
 def _seed_all(seed: int) -> None:
@@ -1170,6 +1197,7 @@ def main() -> int:
     parser.add_argument("--out-contract", type=Path, default=DEFAULT_OUT_CONTRACT)
     parser.add_argument("--report-root", type=Path, default=DEFAULT_REPORT_ROOT)
     args = parser.parse_args()
+    source_provenance = uri_source_provenance(REPO)
 
     assert len(REALWORLD_BENIGN_CHALLENGE_URLS) == 70
     assert len(set(REALWORLD_BENIGN_CHALLENGE_URLS)) == 70
@@ -1371,7 +1399,7 @@ def main() -> int:
             "source_dataset_zip_sha256": PHIUSIIL_ZIP_SHA256,
             "source_dataset_csv_sha256": csv_sha,
             "external_corpora_sha256": ext_meta,
-            "base_git_revision": _git_rev(),
+            "base_git_revision": source_provenance["git_commit"][:12],
         }
         stage_contract.write_text(
             json.dumps(contract, indent=2, ensure_ascii=False) + "\n",
@@ -1413,6 +1441,7 @@ def main() -> int:
             if not is_allowlisted_uri(u) and not is_bare_dual_use_hosted_uri(u) and float(p) >= contract["t_high"]
         )
 
+        require_unchanged_uri_source(REPO, source_provenance)
         args.out_npz.parent.mkdir(parents=True, exist_ok=True)
         args.out_contract.parent.mkdir(parents=True, exist_ok=True)
         tmp_out_npz = args.out_npz.with_suffix(".npz.tmp")
@@ -1427,7 +1456,7 @@ def main() -> int:
         os.replace(tmp_out_contract, args.out_contract)
 
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
-    run_id = f"run_{stamp}_{_git_rev()}"
+    run_id = f"run_{stamp}_{source_provenance['git_commit'][:12]}"
     run_dir = args.report_root / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
 
@@ -1482,6 +1511,7 @@ def main() -> int:
     }
     methodology = {
         "run_id": run_id,
+        "source_provenance": source_provenance,
         "created_utc": datetime.now(timezone.utc).isoformat(),
         "seed": int(args.seed),
         "schema_version": URI_LEXICAL_SCHEMA_VERSION,

@@ -81,6 +81,15 @@ def _uri_head_prediction(result) -> dict:
     return next(item for item in preds if item["id"] == "suspicious_uri_redirect")
 
 
+def test_uri_calibration_rejects_unloaded_scorer(tmp_path: Path) -> None:
+    scorer = URILexicalHeadScorer(contract_path=tmp_path / "missing.json", prefer_onnx=False)
+    uris = [{"uri": "https://example.net/reports/annual", "source": "annot_uri"}]
+
+    assert scorer.score_pdf_uris(uris)["model_loaded"] is False
+    with pytest.raises(RuntimeError, match="uri_lexical_model_not_loaded"):
+        scorer.max_or_eligible_prob(uris)
+
+
 def _assert_cdr_integrity(raw_bytes: bytes, cleaned_bytes: bytes, audit) -> None:
     assert audit.is_sanitized is True
     assert not audit.quarantine_recommended

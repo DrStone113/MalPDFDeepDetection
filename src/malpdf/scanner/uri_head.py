@@ -458,6 +458,8 @@ class URILexicalHeadScorer:
 
     def max_or_eligible_prob(self, extracted_uris: Sequence[dict[str, Any]], *, qr_uris: Sequence[str] = ()) -> float:
         """Return unrounded max probability across OR-gate-eligible URLs using exact runtime admission."""
+        if not self.model_loaded:
+            raise RuntimeError("uri_lexical_model_not_loaded")
         evaluated = self._evaluate_pdf_candidates(extracted_uris, qr_uris=qr_uris)
         probs = evaluated["probs"]
         eligible = [
